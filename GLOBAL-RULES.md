@@ -46,13 +46,6 @@ pwsh -NoProfile -File .\scripts\validate-swagger.ps1 -ApiDirectory API-SWAGGER\a
 - `FRONT-WEB/CORE.md` — SPA на React + TypeScript с Orval/React Query, MUI и модульной архитектурой.
 Каждый `CORE.md` расширяет глобальные правила конкретными деталями и описывает точки интеграции.
 
-## Дополнительные материалы
-- `.BRAIN`: [КЛИР-PROCEDURES.md](.BRAIN/КЛИР-PROCEDURES.md) — архивирование и очистка; [МЕНЕДЖЕР-CHECKLIST.md](.BRAIN/МЕНЕДЖЕР-CHECKLIST.md) — чеклист менеджера; [МЕНЕДЖЕР-EXAMPLES.md](.BRAIN/МЕНЕДЖЕР-EXAMPLES.md) — типовые ответы; [МЕНЕДЖЕР-PROCEDURES.md](.BRAIN/МЕНЕДЖЕР-PROCEDURES.md) — процедуры менеджера; [ARCHITECTURE.md](.BRAIN/ARCHITECTURE.md) — структура каталога.
-- `API-SWAGGER`: [АПИТАСК-ARCHITECTURE.md](API-SWAGGER/АПИТАСК-ARCHITECTURE.md) — устройство каталога API; [АПИТАСК-PROCESS.md](API-SWAGGER/АПИТАСК-PROCESS.md) — пошаговый процесс; [АПИТАСК-REQUIREMENTS.md](API-SWAGGER/АПИТАСК-REQUIREMENTS.md) — критерии спецификаций; [АПИТАСК-FAQ-EXAMPLES.md](API-SWAGGER/АПИТАСК-FAQ-EXAMPLES.md) — примеры и команды; [АПИТАСК-FAQ.md](API-SWAGGER/АПИТАСК-FAQ.md) — типичные вопросы; [ARCHITECTURE.md](API-SWAGGER/ARCHITECTURE.md) — обзор репозитория.
-- `BACK-GO`: [OPENAPI-CONTRACT-ARCHITECTURE.md](BACK-GO/OPENAPI-CONTRACT-ARCHITECTURE.md) — связь контрактов и реализации; [docs/БЭКТАСК-ARCHITECTURE.md](BACK-GO/docs/БЭКТАСК-ARCHITECTURE.md) — архитектура микросервисов; [docs/БЭКТАСК-BEST-PRACTICES.md](BACK-GO/docs/БЭКТАСК-BEST-PRACTICES.md) — практики разработки; [docs/БЭКТАСК-FAQ.md](BACK-GO/docs/БЭКТАСК-FAQ.md) — вопросы и решения; [docs/DOCKER-DEPLOYMENT.md](BACK-GO/docs/DOCKER-DEPLOYMENT.md) — деплой в Docker; [docs/DOCKER-SETUP.md](BACK-GO/docs/DOCKER-SETUP.md) — локальная БД; [docs/MANUAL-TEMPLATES.md](BACK-GO/docs/MANUAL-TEMPLATES.md) — шаблоны реализации; [docs/QUICK-START.md](BACK-GO/docs/QUICK-START.md) — быстрый старт.
-- `FRONT-WEB`: [ФРОНТТАСК-ARCHITECTURE.md](FRONT-WEB/ФРОНТТАСК-ARCHITECTURE.md) — модульная схема SPA; [ФРОНТТАСК-FAQ.md](FRONT-WEB/ФРОНТТАСК-FAQ.md) — ответы по фронтенду; [ФРОНТТАСК-REQUIREMENTS.md](FRONT-WEB/ФРОНТТАСК-REQUIREMENTS.md) — требования к фичам; [ФРОНТТАСК-PROCESS.md](FRONT-WEB/ФРОНТТАСК-PROCESS.md) — рабочий процесс; [ФРОНТТАСК-QUICKSTART.md](FRONT-WEB/ФРОНТТАСК-QUICKSTART.md) — стартовые шаги; [API-GENERATION-README.md](FRONT-WEB/API-GENERATION-README.md) — генерация клиентов; [ARCHITECTURE.md](FRONT-WEB/ARCHITECTURE.md) — архитектура фронтенда.
-- Общий контур: [DEVELOPMENT-WORKFLOW.md](DEVELOPMENT-WORKFLOW.md) — цепочка от идеи до релиза.
-
 ## Общий воркфлоу
 1. `.BRAIN` формирует и утверждает документы (`draft → review → approved`, `api-readiness`).
 2. `API-SWAGGER` создаёт задания, затем OpenAPI спецификации и синхронизирует `brain-mapping.yaml`.
