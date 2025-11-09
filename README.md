@@ -41,21 +41,42 @@ pwsh -File services/backend/scripts/generate-openapi-layers.ps1 -ApiSpec service
 # Генерация фронтенд клиента
 pwsh -File services/frontend/scripts/generate-api-orval.ps1
 
-# Pre-commit проверки (структура, очереди, OpenAPI)
+# Пре-коммит проверки (структура, очереди, OpenAPI)
 pwsh -File pipeline/scripts/run-precommit.ps1
 # Установка pre-commit hook
 pwsh -File pipeline/scripts/install-precommit.ps1
+# Генерация задач из очереди (shared/trackers/queues → pipeline/tasks) с автогенерацией ID
+pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 \
+     -QueueFile shared/trackers/queues/backend/not-started.yaml \
+     -TargetDirectory pipeline/tasks/06_backend_implementer \
+     -Prefix BE -Actor "Backend Implementer" \
+     [-Id BE-2025-029] [-TemplateFile pipeline/templates/task-from-queue-template.yaml] [-Force] [-NoQueueUpdate] [-DisableActivityLog]
 ```
 
-## Git-поток
+- Если в карточке очереди нет `id`, укажите `-Prefix` — скрипт присвоит номер (`<PREFIX>-000`, `<PREFIX>-001`, …), допишет slug из `title` и обновит очередь.
+- Имя файла формируется как `<ID>-<slug>.yaml`; если title пустой или после нормализации slug отсутствует, используется только идентификатор.
+- Параметр `-Actor` фиксирует запись в `shared/trackers/activity-log.yaml`; без него используется значение `automation`. `-DisableActivityLog` отключает автоматическую запись.
+- После генерации задач отдельное редактирование `shared/trackers/activity-log.yaml` не требуется: запись добавляется автоматически. Ручные правки допустимы только в исключительных ситуациях (например, ретроактивное восстановление истории) и фиксируются через отдельный MR.
 
-- Каждую логическую доработку фиксируйте отдельным коммитом.
-- Используйте `git worktree` либо короткоживущие ветки: `git worktree add ../feature-x feature/x`.
-- Перед push выполняйте `pipeline/scripts/run-precommit.ps1` (архитектура, очереди, OpenAPI).
+## Git-поток (lightweight GitFlow)
+
+- Основные ветки:
+  - `main` — продакшн: только Merge Requests из `develop` (release) или `hotfix/*`. Прямые push запрещены (`.github/workflows/enforce-pr-merges.yml`).
+  - `develop` — интеграционная ветка для согласованных задач.
+- Рабочие ветки:
+  - `feature/<task-id>-<slug>` — разработка новых задач.
+  - `hotfix/<issue>` — срочные исправления из `main`.
+  - `release/<version>` — подготовка релиза перед merge в `main`.
+- Каждая ветка создаётся от `develop`, для hotfix — от `main`.
+- Мержим только через Pull Request с обязательной проверкой CI и checklist агента.
+- После merge feature → develop ветку удаляем (локально и на origin).
+- Используйте `git worktree add ../feature-x feature/<task>` для параллельных потоков.
+- Перед открытием PR выполняйте `pipeline/scripts/run-precommit.ps1`.
 - Установите hook: `pwsh -File pipeline/scripts/install-precommit.ps1` (на Linux/macOS не забудьте `chmod +x .git/hooks/pre-commit`).
 - Обновление трекеров и логов (Activity, Decision) обязательно при переходе задач между стадиями.
 - Тяжёлые артефакты (рендеры, media, UE5) храните в отдельном хранилище или через git LFS.
 - Для окружений без PowerShell применяйте Python CLI `pipeline/scripts/queue_manager.py` и аналогичные обёртки.
+- Настройте защиту ветки `main` и, при необходимости, `develop` в настройках GitHub (Branch protection rules).
 
 ## CI
 
@@ -64,8 +85,14 @@ pwsh -File pipeline/scripts/install-precommit.ps1
 - `structure` — выполняет проверки архитектуры, Markdown и review-меток.
 - `openapi` — запускает `validate-swagger` при изменениях в `services/openapi/**`.
 - `backend` / `frontend` — запускают структурные проверки сервисов только при изменениях соответствующих директорий.
+- `pr-main-validation` — включается только для Pull Request в `main`, прогоняет `run-precommit`, `check-knowledge-schema`, доступность queue-manager и зарезервированные шаги для `mvn test` / `npm test`.
 
 Следите за успешным прохождением workflow перед merge.
+
+Дополнительно:
+
+- Для Pull Request в `develop` работают первые четыре job; для `main` дополнительно требуется зелёный статус `pr-main-validation`.
+- Настройте branch protection так, чтобы перечисленные статусы были обязательными перед merge.
 
 ## Требования к документации
 

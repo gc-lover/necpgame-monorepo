@@ -87,5 +87,66 @@ decision_log:
         - "pipeline/scripts/install-precommit.ps1"
         - "pipeline/agents/refactor-agent.yaml"
         - "pipeline/templates/agent-briefs/refactor-agent-brief.yaml"
+    - id: "DEC-2025-003"
+      date: "2025-11-10 00:30"
+      author: "refactor-agent"
+      summary: "Внедрение GitFlow-стратегии и запрет прямых push в main/master."
+      context: >
+        После миграции в монорепозиторий direct push в основную ветку привёл бы к обходу чеклистов и CI.
+        Для синхронной работы агентов нужен единый стандарт ветвления и обязательные Merge Requests.
+      decision:
+        - "Введена стратегия GitFlow: main (release), develop (integration), feature/*, release/*, hotfix/*."
+        - "Добавлен workflow .github/workflows/enforce-pr-merges.yml, который блокирует прямые push в main/master."
+        - "README и GLOBAL-RULES дополнены разделами про защиту веток и требования к Pull Request."
+        - "Workflow .github/workflows/ci.yml расширен job pr-main-validation с запуском run-precommit и дополнительных проверок."
+      consequences:
+        short_term:
+          - "Настроить branch protection для main/master и develop в GitHub."
+          - "Создать и опубликовать ветку develop, обновить локальные рабочие процессы."
+          - "Добавить обязательные статусы (structure, openapi, backend, frontend, pr-main-validation) к правилам защиты веток."
+        long_term:
+          - "Стабильный релизный поток через Merge Requests, меньший риск пропуска чеклистов."
+          - "Возможность масштабировать работу агентов без конфликтов из-за прямых push."
+      status: "accepted"
+      related:
+        - ".github/workflows/enforce-pr-merges.yml"
+        - ".github/workflows/ci.yml"
+        - "README.md"
+        - "pipeline/GLOBAL-RULES.yaml"
+        - "pipeline/agents/refactor-agent.yaml"
+        - "pipeline/templates/agent-briefs/refactor-agent-brief.yaml"
+    - id: "DEC-2025-004"
+      date: "2025-11-10 00:42"
+      author: "refactor-agent"
+      summary: "Автоматическая генерация файлов задач из очередей"
+      context: >
+        Карточки в shared/trackers/queues приходилось вручную копировать в pipeline/tasks, что приводило к расхождениям
+        и тратило время Vision/API/Backend/QA/DevOps агентов.
+      decision:
+        - "Создан скрипт pipeline/scripts/generate-tasks-from-queue.ps1 с поддержкой DryRun, Force, префиксов и автогенерации идентификаторов/slug (ID + название)."
+        - "Добавлен шаблон pipeline/templates/task-from-queue-template.yaml и обновлены README/GLOBAL-RULES/VALIDATION-SUMMARY."
+        - "Инструкции и брифы Vision/API/OpenAPI/Backend/Frontend/QA/DevOps рабочих ролей используют генератор вместо ручного копирования."
+        - "В Activity Log автоматически добавляется запись о созданных задачах."
+      consequences:
+        short_term:
+          - "Агентам нужно запускать скрипт при взятии задач из очередей и указывать идентификатор карточки."
+          - "Refactor Agent должен следить за актуальностью шаблонов и путей в инструкциях."
+        long_term:
+          - "Снижается риск рассинхронизации между shared/trackers/queues и pipeline/tasks."
+          - "Упрощается аналитика статусов и подготовка сводных отчётов."
+      status: "accepted"
+      related:
+        - "pipeline/scripts/generate-tasks-from-queue.ps1"
+        - "pipeline/templates/task-from-queue-template.yaml"
+        - "README.md"
+        - "pipeline/GLOBAL-RULES.yaml"
+        - "pipeline/scripts/VALIDATION-SUMMARY.yaml"
+        - "pipeline/agents/backend-implementer.yaml"
+        - "pipeline/agents/vision-manager.yaml"
+        - "pipeline/agents/api-task-architect.yaml"
+        - "pipeline/agents/openapi-executor.yaml"
+        - "pipeline/agents/frontend-implementer.yaml"
+        - "pipeline/agents/qa-agent.yaml"
+        - "pipeline/agents/devops-agent.yaml"
 
 
