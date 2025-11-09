@@ -23,11 +23,11 @@ workflow:
     scripts:
       - "pwsh -File pipeline/scripts/check-readiness-entry.ps1 -TrackerFile shared/trackers/readiness-tracker.yaml -DocumentPath <idea-file>"
   - step: sync-queues
-    description: Перенеси карточку в соответствующую YAML-очередь (`shared/trackers/queues/api/queued.yaml`, `shared/trackers/queues/vision/in-progress.yaml` и т.п.).
+    description: Перенеси карточку в соответствующую YAML-очередь (`shared/trackers/queues/api/queued.yaml`, `shared/trackers/queues/vision/in-progress.yaml` и т.п.), при создании новой задачи используй `generate-tasks-from-queue.ps1 -Actor "Readiness Reviewer"` для автоматической записи в Activity Log.
     scripts:
       - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/queued.yaml"
   - step: notify-next-agent
-    description: Сделай запись в Activity Log, укажи статус и ссылку для API Task Architect.
+    description: Убедись, что Activity Log содержит запись (генератор задач делает это автоматически); при необходимости добавь ручное сообщение со статусом и ссылкой для API Task Architect.
 handoff:
   ready:
     target_agent: API Task Architect
@@ -46,7 +46,7 @@ validation:
     - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File <queue-file>"
 outputs:
   - обновлённые трекеры и очереди
-  - Activity Log entry с результатом проверки
+  - Activity Log entry с результатом проверки (авто/ручное при необходимости)
 metrics:
   - review_time
   - rework_rate

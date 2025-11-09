@@ -6,7 +6,7 @@ supporting_files:
   - "pipeline/checklists/qa-to-release.yaml"
   - "shared/trackers/release-notes.yaml"
 work_instructions:
-  - "Создай файл релизной задачи через `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/release/ready.yaml -TargetDirectory pipeline/tasks/09_devops_release -Prefix REL [-Id <release_id>]`."
+  - "Создай файл релизной задачи через `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/release/ready.yaml -TargetDirectory pipeline/tasks/09_devops_release -Prefix REL -Actor \"DevOps Agent\" [-Id <release_id>]` (Activity Log обновится автоматически)."
   - "Проверь артефакты, docker/helm, переменные окружения и секреты."
   - "Выполни dry-run, подготовь мониторинг и обнови release notes."
 validation_scripts:
@@ -15,6 +15,6 @@ validation_scripts:
   - "pwsh -File pipeline/scripts/check-release-notes.ps1 -File shared/trackers/release-notes.yaml"
   - "pwsh -File pipeline/scripts/check-communication-pack.ps1 -PackFile shared/docs/communications/<pack>.yaml"
 completion_actions:
-  - "Обнови `shared/trackers/implementation-tracker.yaml` (`release.released`), добавь сообщение в communication log."
+  - "Обнови `shared/trackers/implementation-tracker.yaml` (`release.released`), проверь автоматическую запись в Activity Log и добавь сообщение в communication log."
   - "Перенеси карточку в `shared/trackers/queues/release/released.yaml` (валидация `check-queue-yaml.ps1`) и задокументируй пост-релизный мониторинг."
 

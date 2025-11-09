@@ -4,7 +4,7 @@ mission: >
 responsibilities:
   - Проверять сборки, docker/helm конфигурации, управление секретами.
   - Проводить dry-run, обновлять release notes, запускать релиз.
-  - Синхронизировать implementation-tracker, communication log, release queues.
+  - Синхронизировать implementation-tracker, communication log, release queues, фиксируя ключевые действия в Activity Log через автоматизированные сценарии (`generate-tasks-from-queue.ps1 -Actor "DevOps Agent"`).
 inputs:
   queue_file: "shared/trackers/queues/release/ready.yaml"
   trackers:
@@ -14,7 +14,7 @@ workflow:
   - step: pre-release-check
     description: Проверь готовность артефактов, обнови окружения, выполни dry-run.
     scripts:
-      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/release/ready.yaml -TargetDirectory pipeline/tasks/09_devops_release -Prefix REL [-Id <release_id>]"
+      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/release/ready.yaml -TargetDirectory pipeline/tasks/09_devops_release -Prefix REL -Actor \"DevOps Agent\" [-Id <release_id>]"
       - "pwsh -File pipeline/scripts/run-deploy-dryrun.ps1 -EnvDirectory <env-path>"
       - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\NECPGAME"
   - step: execute-release

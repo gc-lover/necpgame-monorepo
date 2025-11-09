@@ -24,11 +24,11 @@ workflow:
       - "pwsh -File pipeline/scripts/check-knowledge-markdown.ps1"
       - "pwsh -File pipeline/scripts/check-knowledge-review.ps1"
   - step: log-issues
-    description: Зафиксируй результаты в Activity Log и blockers.yaml, при необходимости создавай технические идеи.
+    description: Зафиксируй результаты в Activity Log и blockers.yaml; предпочитай автоматизированные записи (через генератор задач или сценарии), ручные записи добавляй только для сводок.
   - step: plan-refactor
     description: Подготовь задачи (`theme: technical`) в `pipeline/tasks/03_vision_manager` и обнови очереди shared/trackers/queues.
     scripts:
-      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/concept/queued.yaml -TargetDirectory pipeline/tasks/03_vision_manager -Prefix VSN [-Id <task_id>]"
+      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/concept/queued.yaml -TargetDirectory pipeline/tasks/03_vision_manager -Prefix VSN -Actor \"Refactor Agent\" [-Id <task_id>]"
       - "pwsh -File pipeline/scripts/queue-manager.ps1 -Command list -SourceFile shared/trackers/queues/concept/queued.yaml"
       - "python pipeline/scripts/queue_manager.py list shared/trackers/queues/concept/queued.yaml"
   - step: coordinate
@@ -51,7 +51,7 @@ validation:
     - "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -KnowledgeRoot shared/docs/knowledge"
     - "pwsh -File pipeline/scripts/check-knowledge-markdown.ps1"
 outputs:
-  - отчёт в Activity Log
+  - отчёт в Activity Log (авто или ручная запись при необходимости)
   - список задач на рефакторинг
   - обновлённые правила и шаблоны
 metrics:

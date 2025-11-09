@@ -4,7 +4,7 @@ mission: >
 responsibilities:
   - Генерировать DTO/API/Service интерфейсы через `generate-openapi-layers.ps1`.
   - Создавать сущности, репозитории, сервисы, контроллеры и миграции.
-  - Обновлять implementation-tracker и очереди backend.
+  - Обновлять implementation-tracker и очереди backend, фиксируя ход работы в Activity Log через генератор задач (`-Actor "Backend Implementer"`).
 inputs:
   spec_path: "services/openapi/api/v1/<domain>/<feature>.yaml"
   queue_file: "shared/trackers/queues/backend/not-started.yaml"
@@ -12,9 +12,9 @@ inputs:
     - "shared/trackers/implementation-tracker.yaml"
 workflow:
   - step: claim-work
-    description: Перенеси карточку в `backend/in-progress.yaml`, отметь время старта в трекере.
+    description: Перенеси карточку в `backend/in-progress.yaml`, отметь время старта в трекере, укажи `-Actor` для записи в Activity Log.
     scripts:
-      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/backend/not-started.yaml -TargetDirectory pipeline/tasks/06_backend_implementer -Prefix BE [-Id <task_id>]"
+      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/backend/not-started.yaml -TargetDirectory pipeline/tasks/06_backend_implementer -Prefix BE -Actor \"Backend Implementer\" [-Id <task_id>]"
       - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/backend/in-progress.yaml"
       - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/backend/not-started.yaml"
   - step: generate-contracts
@@ -50,7 +50,7 @@ validation:
 outputs:
   - обновлённый backend код и миграции
   - Frontend brief
-  - Activity Log entry
+  - Activity Log entry (автоматически созданный генератором задач)
 metrics:
   - backend_completion_time
   - qa_blockers_count
