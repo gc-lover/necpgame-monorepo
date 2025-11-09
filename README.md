@@ -41,11 +41,21 @@ pwsh -File services/backend/scripts/generate-openapi-layers.ps1 -ApiSpec service
 # Генерация фронтенд клиента
 pwsh -File services/frontend/scripts/generate-api-orval.ps1
 
-# Pre-commit проверки (структура, очереди, OpenAPI)
+# Пре-коммит проверки (структура, очереди, OpenAPI)
 pwsh -File pipeline/scripts/run-precommit.ps1
 # Установка pre-commit hook
 pwsh -File pipeline/scripts/install-precommit.ps1
+# Генерация задач из очереди (shared/trackers/queues → pipeline/tasks) с автогенерацией ID
+pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 \
+     -QueueFile shared/trackers/queues/backend/not-started.yaml \
+     -TargetDirectory pipeline/tasks/06_backend_implementer \
+     -Prefix BE -Actor "Backend Implementer" \
+     [-Id BE-2025-029] [-TemplateFile pipeline/templates/task-from-queue-template.yaml] [-Force] [-NoQueueUpdate] [-DisableActivityLog]
 ```
+
+- Если в карточке очереди нет `id`, укажите `-Prefix` — скрипт присвоит номер (`<PREFIX>-000`, `<PREFIX>-001`, …), допишет slug из `title` и обновит очередь.
+- Имя файла формируется как `<ID>-<slug>.yaml`; если title пустой или после нормализации slug отсутствует, используется только идентификатор.
+- Параметр `-Actor` фиксирует запись в `shared/trackers/activity-log.yaml`; без него используется значение `automation`. `-DisableActivityLog` отключает автоматическую запись.
 
 ## Git-поток (lightweight GitFlow)
 

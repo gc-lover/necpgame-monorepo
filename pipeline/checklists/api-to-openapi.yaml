@@ -8,14 +8,16 @@ checklist:
         - text: "Поля metadata, microservice, base-path, directory заполнены согласно GLOBAL-RULES."
         - text: "Для каждого endpoint описаны методы, параметры, модели и статусы ответов."
         - text: "Добавлен FAQ и критерии приёмки (минимум 10 пунктов)."
-        - text: "Запись создана в `services/openapi/tasks/config/brain-mapping.yaml`."
-        - text: "Статус задачи перенесён в `shared/trackers/queues/api/queued.yaml`."
+        - text: "Файл задания создан из очереди (префикс API) и помещён в `pipeline/tasks/04_api_task_architect`."
+          scripts:
+            - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/api/queued.yaml -TargetDirectory pipeline/tasks/04_api_task_architect -Prefix API [-Id <api_task_id>] -TemplateFile pipeline/templates/api-task-template.yaml"
+        - text: "Статус задачи перенесён в `shared/trackers/queues/api/in-progress.yaml`."
         - text: "Документ в знаниях обновлён секцией API Tasks Status."
         - text: "Выполнены валидации задания."
           scripts:
             - "pwsh -File pipeline/scripts/validate-api-task.ps1 -File <api-task-file>"
             - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <api-task-file>"
-            - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/queued.yaml"
+            - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/in-progress.yaml"
     - title: "OpenAPI Executor (перед началом)"
       items:
         - text: "В implementation-tracker.yaml добавлена запись с `api.status: in_progress`."

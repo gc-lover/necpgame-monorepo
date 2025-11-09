@@ -14,7 +14,9 @@ workflow:
   - step: claim-work
     description: Перенеси карточку в `backend/in-progress.yaml`, отметь время старта в трекере.
     scripts:
+      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/backend/not-started.yaml -TargetDirectory pipeline/tasks/06_backend_implementer -Prefix BE [-Id <task_id>]"
       - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/backend/in-progress.yaml"
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/backend/not-started.yaml"
   - step: generate-contracts
     description: >
       Запусти `pwsh -File services/backend/scripts/generate-openapi-layers.ps1 -ApiSpec <spec> [-Validate] [-DryRun]`
