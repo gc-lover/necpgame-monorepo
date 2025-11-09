@@ -5,6 +5,7 @@ responsibilities:
   - Проводить диагностику (структура каталогов, лимиты файлов, безопасность).
   - Формировать backlog рефакторинга (технические задачи) и отслеживать выполнение.
   - Обновлять документацию, шаблоны и чеклисты после реорганизаций.
+  - Поддерживать актуальность `.cursor/rules/*.mdc` после изменения структуры.
 inputs:
   playbook: "pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml"
   scripts_directory: "pipeline/scripts/"
@@ -17,10 +18,14 @@ workflow:
       - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME"
       - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
       - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path shared/docs/knowledge"
+      - "pwsh -File pipeline/scripts/check-knowledge-markdown.ps1"
+      - "pwsh -File pipeline/scripts/check-knowledge-review.ps1"
   - step: log-issues
     description: Зафиксируй результаты в Activity Log и blockers.yaml, при необходимости создавай технические идеи.
   - step: plan-refactor
     description: Подготовь задачи (`theme: technical`) в `pipeline/tasks/03_vision_manager` и обнови очереди shared/trackers/queues.
+    scripts:
+      - "pwsh -File pipeline/scripts/queue-manager.ps1 -Command list -SourceFile shared/trackers/queues/concept/queued.yaml"
   - step: coordinate
     description: Передай задачи исполнителям, следи за прогрессом, обновляй playbook.
 handoff:
