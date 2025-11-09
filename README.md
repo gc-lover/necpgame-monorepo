@@ -27,6 +27,10 @@ pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\NECPGAME
 pwsh -File pipeline/scripts/queue-manager.ps1 -Command add `
      -SourceFile shared/trackers/queues/backend/not-started.yaml `
      -Id BE-2025-999 -Title "Новый сценарий" -Owner "Backend Implementer"
+# Требуется модуль powershell-yaml (однократно): pwsh -Command "Install-Module -Name powershell-yaml -Scope CurrentUser -Force"
+# Альтернатива без PowerShell (требуется PyYAML)
+python pipeline/scripts/queue_manager.py add shared/trackers/queues/backend/not-started.yaml \
+       --id BE-2025-999 --title "Новый сценарий" --owner "Backend Implementer"
 
 # Валидация OpenAPI
 pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiDirectory services/openapi/api/v1
@@ -39,6 +43,8 @@ pwsh -File services/frontend/scripts/generate-api-orval.ps1
 
 # Pre-commit проверки (структура, очереди, OpenAPI)
 pwsh -File pipeline/scripts/run-precommit.ps1
+# Установка pre-commit hook
+pwsh -File pipeline/scripts/install-precommit.ps1
 ```
 
 ## Git-поток
@@ -46,8 +52,10 @@ pwsh -File pipeline/scripts/run-precommit.ps1
 - Каждую логическую доработку фиксируйте отдельным коммитом.
 - Используйте `git worktree` либо короткоживущие ветки: `git worktree add ../feature-x feature/x`.
 - Перед push выполняйте `pipeline/scripts/run-precommit.ps1` (архитектура, очереди, OpenAPI).
+- Установите hook: `pwsh -File pipeline/scripts/install-precommit.ps1` (на Linux/macOS не забудьте `chmod +x .git/hooks/pre-commit`).
 - Обновление трекеров и логов (Activity, Decision) обязательно при переходе задач между стадиями.
 - Тяжёлые артефакты (рендеры, media, UE5) храните в отдельном хранилище или через git LFS.
+- Для окружений без PowerShell применяйте Python CLI `pipeline/scripts/queue_manager.py` и аналогичные обёртки.
 
 ## CI
 
@@ -65,7 +73,7 @@ pwsh -File pipeline/scripts/run-precommit.ps1
 - Лимит файла — 400 строк; превышение → новые файлы с суффиксами `_0001`, `_0002`, ….
 - Запускайте `pipeline/scripts/check-file-limits.ps1`, `check-knowledge-schema.ps1`, `check-knowledge-review.ps1` перед передачей.
 - Markdown-файлы в knowledge недопустимы, проверяется `check-knowledge-markdown.ps1`.
-- Очереди обновляйте через `pipeline/scripts/queue-manager.ps1`.
+- Очереди обновляйте через `pipeline/scripts/queue-manager.ps1` или `python pipeline/scripts/queue_manager.py`.
 
 ## Связанные правила Cursor
 

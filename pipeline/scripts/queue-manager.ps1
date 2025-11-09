@@ -15,6 +15,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$yamlModuleLoaded = $false
+try {
+    Import-Module -Name powershell-yaml -ErrorAction Stop
+    $yamlModuleLoaded = $true
+} catch {
+    $yamlModuleLoaded = $false
+}
+
 $convertFromYaml = Get-Command -Name ConvertFrom-Yaml -ErrorAction SilentlyContinue
 $convertToYaml = Get-Command -Name ConvertTo-Yaml -ErrorAction SilentlyContinue
 if (-not $convertFromYaml -or -not $convertToYaml) {
@@ -48,7 +56,13 @@ function Load-Queue {
 function Save-Queue {
     param([string]$Path, $Queue)
     $Queue.last_updated = (Get-Date -Format "yyyy-MM-dd HH:mm")
-    $yaml = ConvertTo-Yaml -InputObject $Queue -Depth 10
+    $params = @{
+        Data = $Queue
+    }
+    if ($convertToYaml.Parameters.ContainsKey('Depth')) {
+        $params['Depth'] = 10
+    }
+    $yaml = ConvertTo-Yaml @params
     Set-Content -LiteralPath $Path -Value $yaml -Encoding UTF8
     Write-Output "Обновлён файл очереди: $Path"
 }
