@@ -16,3 +16,5 @@ new += \\" notes: "\\\Перепроверено 2025-11-09 10:15: NPC ростер активностей - с
 if old in text:
     path.write_text(text.replace(old, new), encoding='utf-8')
 elif '.BRAIN/03-lore/_03-lore/characters/activity-npc-roster.md' not in text:
+    addition = '\\n' + new
+    path.write_text(text + addition, encoding='utf-8')
