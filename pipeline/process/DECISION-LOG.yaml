@@ -87,5 +87,30 @@ decision_log:
         - "pipeline/scripts/install-precommit.ps1"
         - "pipeline/agents/refactor-agent.yaml"
         - "pipeline/templates/agent-briefs/refactor-agent-brief.yaml"
+    - id: "DEC-2025-003"
+      date: "2025-11-10 00:30"
+      author: "refactor-agent"
+      summary: "Внедрение GitFlow-стратегии и запрет прямых push в main/master."
+      context: >
+        После миграции в монорепозиторий direct push в основную ветку привёл бы к обходу чеклистов и CI.
+        Для синхронной работы агентов нужен единый стандарт ветвления и обязательные Merge Requests.
+      decision:
+        - "Введена стратегия GitFlow: main (release), develop (integration), feature/*, release/*, hotfix/*."
+        - "Добавлен workflow .github/workflows/enforce-pr-merges.yml, который блокирует прямые push в main/master."
+        - "README и GLOBAL-RULES дополнены разделами про защиту веток и требования к Pull Request."
+      consequences:
+        short_term:
+          - "Настроить branch protection для main/master и develop в GitHub."
+          - "Создать и опубликовать ветку develop, обновить локальные рабочие процессы."
+        long_term:
+          - "Стабильный релизный поток через Merge Requests, меньший риск пропуска чеклистов."
+          - "Возможность масштабировать работу агентов без конфликтов из-за прямых push."
+      status: "accepted"
+      related:
+        - ".github/workflows/enforce-pr-merges.yml"
+        - "README.md"
+        - "pipeline/GLOBAL-RULES.yaml"
+        - "pipeline/agents/refactor-agent.yaml"
+        - "pipeline/templates/agent-briefs/refactor-agent-brief.yaml"
 
 

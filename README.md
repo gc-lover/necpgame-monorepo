@@ -47,15 +47,25 @@ pwsh -File pipeline/scripts/run-precommit.ps1
 pwsh -File pipeline/scripts/install-precommit.ps1
 ```
 
-## Git-поток
+## Git-поток (lightweight GitFlow)
 
-- Каждую логическую доработку фиксируйте отдельным коммитом.
-- Используйте `git worktree` либо короткоживущие ветки: `git worktree add ../feature-x feature/x`.
-- Перед push выполняйте `pipeline/scripts/run-precommit.ps1` (архитектура, очереди, OpenAPI).
+- Основные ветки:
+  - `main` — продакшн: только Merge Requests из `develop` (release) или `hotfix/*`. Прямые push запрещены (`.github/workflows/enforce-pr-merges.yml`).
+  - `develop` — интеграционная ветка для согласованных задач.
+- Рабочие ветки:
+  - `feature/<task-id>-<slug>` — разработка новых задач.
+  - `hotfix/<issue>` — срочные исправления из `main`.
+  - `release/<version>` — подготовка релиза перед merge в `main`.
+- Каждая ветка создаётся от `develop`, для hotfix — от `main`.
+- Мержим только через Pull Request с обязательной проверкой CI и checklist агента.
+- После merge feature → develop ветку удаляем (локально и на origin).
+- Используйте `git worktree add ../feature-x feature/<task>` для параллельных потоков.
+- Перед открытием PR выполняйте `pipeline/scripts/run-precommit.ps1`.
 - Установите hook: `pwsh -File pipeline/scripts/install-precommit.ps1` (на Linux/macOS не забудьте `chmod +x .git/hooks/pre-commit`).
 - Обновление трекеров и логов (Activity, Decision) обязательно при переходе задач между стадиями.
 - Тяжёлые артефакты (рендеры, media, UE5) храните в отдельном хранилище или через git LFS.
 - Для окружений без PowerShell применяйте Python CLI `pipeline/scripts/queue_manager.py` и аналогичные обёртки.
+- Настройте защиту ветки `main` и, при необходимости, `develop` в настройках GitHub (Branch protection rules).
 
 ## CI
 
