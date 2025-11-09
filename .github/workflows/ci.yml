@@ -1,0 +1,74 @@
+name: Monorepo CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      openapi: ${{ steps.filter.outputs.openapi }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'services/backend/**'
+            frontend:
+              - 'services/frontend/**'
+            openapi:
+              - 'services/openapi/**'
+
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check architecture health
+        run: pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath $PWD
+      - name: Detect markdown in knowledge
+        run: pwsh -File pipeline/scripts/check-knowledge-markdown.ps1
+      - name: Validate knowledge review dates
+        run: pwsh -File pipeline/scripts/check-knowledge-review.ps1
+      - name: Validate queues
+        shell: pwsh
+        run: |
+          Get-ChildItem shared/trackers/queues -Recurse -Filter '*.yaml' |
+            ForEach-Object {
+              pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File $_.FullName
+            }
+
+  openapi:
+    needs: [changes]
+    if: needs.changes.outputs.openapi == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate OpenAPI specs
+        run: pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiDirectory services/openapi/api/v1
+
+  backend:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check backend structure
+        run: pwsh -File pipeline/scripts/check-backend-structure.ps1 -ProjectRoot services/backend
+
+  frontend:
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check frontend structure
+        run: pwsh -File pipeline/scripts/check-frontend-structure.ps1 -ProjectRoot services/frontend
+
+
