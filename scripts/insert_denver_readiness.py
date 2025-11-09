@@ -1,7 +1,7 @@
 from pathlib import Path
 
 tracker_path = Path(".BRAIN/06-tasks/config/readiness-tracker.yaml")
-lines = tracker_path.read_text(encoding="utf-8").splitlines()
+lines = tracker_path.read_text(encoding="cp1251").splitlines()
 
 denver_line = '  - path: ".BRAIN/03-lore/_03-lore/locations/world-cities/denver-detailed-2020-2093.md"'
 
@@ -27,7 +27,7 @@ if denver_line not in lines:
     ]
 
     lines[idx + 1:idx + 1] = block
-    tracker_path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")
+    tracker_path.write_text("\r\n".join(lines) + "\r\n", encoding="cp1251")
 from pathlib import Path
 
 tracker_path = Path(".BRAIN/06-tasks/config/readiness-tracker.yaml")
