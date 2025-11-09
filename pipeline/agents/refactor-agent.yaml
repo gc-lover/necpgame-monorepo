@@ -8,6 +8,7 @@ responsibilities:
   - Поддерживать актуальность `.cursor/rules/*.mdc` после изменения структуры.
   - Настраивать автоматические проверки (pre-commit, CI) и их кроссплатформенные аналоги.
   - Следить за соблюдением GitFlow: защита веток, использование PR и обновление инструкций по ветвлению.
+  - Обеспечивать актуальность GitHub Actions (включая pr-main-validation) и обязательных статус-проверок.
 inputs:
   playbook: "pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml"
   scripts_directory: "pipeline/scripts/"
@@ -46,6 +47,8 @@ validation:
     - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path shared/docs/knowledge"
     - "pwsh -File pipeline/scripts/run-precommit.ps1"
     - "python pipeline/scripts/queue_manager.py list shared/trackers/queues/backend/not-started.yaml"
+    - "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -KnowledgeRoot shared/docs/knowledge"
+    - "pwsh -File pipeline/scripts/check-knowledge-markdown.ps1"
 outputs:
   - отчёт в Activity Log
   - список задач на рефакторинг
@@ -58,4 +61,6 @@ tools:
   - "pipeline/scripts/check-queue-yaml.ps1"
   - "pipeline/scripts/queue_manager.py"
   - "pipeline/scripts/install-precommit.ps1"
+  - ".github/workflows/ci.yml"
+  - ".github/workflows/enforce-pr-merges.yml"
 
