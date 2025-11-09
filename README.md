@@ -74,8 +74,14 @@ pwsh -File pipeline/scripts/install-precommit.ps1
 - `structure` — выполняет проверки архитектуры, Markdown и review-меток.
 - `openapi` — запускает `validate-swagger` при изменениях в `services/openapi/**`.
 - `backend` / `frontend` — запускают структурные проверки сервисов только при изменениях соответствующих директорий.
+- `pr-main-validation` — включается только для Pull Request в `main`, прогоняет `run-precommit`, `check-knowledge-schema`, доступность queue-manager и зарезервированные шаги для `mvn test` / `npm test`.
 
 Следите за успешным прохождением workflow перед merge.
+
+Дополнительно:
+
+- Для Pull Request в `develop` работают первые четыре job; для `main` дополнительно требуется зелёный статус `pr-main-validation`.
+- Настройте branch protection так, чтобы перечисленные статусы были обязательными перед merge.
 
 ## Требования к документации
 
