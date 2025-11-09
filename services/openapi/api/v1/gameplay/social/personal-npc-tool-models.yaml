@@ -1,0 +1,571 @@
+openapi: 3.0.3
+info:
+  title: Personal NPC Tool Models
+  version: 1.0.0
+components:
+  schemas:
+    OwnerReference:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор владельца
+        type:
+          type: string
+          enum:
+            - player
+            - clan
+            - organization
+          description: Тип владельца
+        clanId:
+          type: string
+          format: uuid
+          description: Идентификатор клана, если владелец является кланом
+        organizationId:
+          type: string
+          format: uuid
+          description: Идентификатор организации, если владелец является организацией
+        playerId:
+          type: string
+          format: uuid
+          description: Идентификатор игрока, если владелец является игроком
+        reputation:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Репутация владельца по фракциям
+        licenses:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Активные лицензии владельца
+    OwnerLimitSummary:
+      type: object
+      required:
+        - maxNPCs
+        - maxScenarios
+      properties:
+        maxNPCs:
+          type: integer
+          minimum: 0
+          description: Максимальное количество NPC согласно лицензиям и репутации
+        maxScenarios:
+          type: integer
+          minimum: 0
+          description: Максимальное количество активных сценариев
+        maxContracts:
+          type: integer
+          minimum: 0
+          description: Максимальное количество активных контрактов
+        activeNPCs:
+          type: integer
+          minimum: 0
+          description: Текущее количество активных NPC
+        activeScenarios:
+          type: integer
+          minimum: 0
+          description: Текущее количество активных сценариев
+        activeContracts:
+          type: integer
+          minimum: 0
+          description: Текущее количество активных контрактов
+    NPCStats:
+      type: object
+      required:
+        - efficiency
+        - loyalty
+        - health
+        - energy
+        - stress
+      properties:
+        skills:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Уровни навыков NPC
+        efficiency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 200
+          description: Эффективность NPC в процентах
+        loyalty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Лояльность NPC к владельцу
+        reputation:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Репутация NPC с сущностями и фракциями
+        health:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Текущее здоровье NPC
+        energy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Энергия NPC
+        stress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Уровень стресса NPC
+    NPCCosts:
+      type: object
+      required:
+        - baseCost
+        - totalDailyCost
+      properties:
+        baseCost:
+          type: number
+          format: float
+          minimum: 0
+          description: Базовая дневная стоимость содержания
+        maintenanceCost:
+          type: number
+          format: float
+          minimum: 0
+          description: Стоимость обслуживания
+        licenseCost:
+          type: number
+          format: float
+          minimum: 0
+          description: Стоимость лицензий
+        insuranceCost:
+          type: number
+          format: float
+          minimum: 0
+          description: Стоимость страховки
+        totalDailyCost:
+          type: number
+          format: float
+          minimum: 0
+          description: Общая дневная стоимость содержания
+        currency:
+          type: string
+          description: Валюта расчета
+    RoleAssignment:
+      type: object
+      required:
+        - roleId
+        - priority
+        - assignedAt
+        - isActive
+      properties:
+        roleId:
+          type: string
+          description: Идентификатор назначенной роли
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Приоритет роли при автоматизации
+        conditions:
+          type: object
+          additionalProperties:
+            type: object
+          description: Условия активации роли
+        assignedAt:
+          type: string
+          format: date-time
+          description: Дата назначения роли
+        isActive:
+          type: boolean
+          description: Флаг активности роли
+    AutomationProfile:
+      type: object
+      required:
+        - manualAssignments
+        - templatesEnabled
+        - triggersEnabled
+      properties:
+        manualAssignments:
+          type: boolean
+          description: Доступность ручных назначений
+        templatesEnabled:
+          type: boolean
+          description: Флаг использования шаблонов сценариев
+        triggersEnabled:
+          type: boolean
+          description: Флаг использования автоматических правил
+        schedules:
+          type: array
+          items:
+            type: object
+            properties:
+              triggerType:
+                type: string
+                description: Тип триггера
+              cronExpression:
+                type: string
+                description: Расписание запуска
+              scenarioBlueprintId:
+                type: string
+                format: uuid
+                description: Идентификатор сценария для запуска
+        rules:
+          type: array
+          items:
+            type: object
+            properties:
+              ruleId:
+                type: string
+              condition:
+                type: string
+              action:
+                type: string
+    PersonalNPCSummary:
+      type: object
+      required:
+        - id
+        - ownerId
+        - name
+        - type
+        - rank
+        - level
+        - status
+        - roles
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор NPC
+        ownerId:
+          type: string
+          format: uuid
+          description: Идентификатор владельца NPC
+        owner:
+          $ref: '#/components/schemas/OwnerReference'
+        name:
+          type: string
+          description: Имя NPC
+        type:
+          type: string
+          enum:
+            - human
+            - robot
+            - android
+          description: Тип NPC
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Ранг NPC
+        level:
+          type: integer
+          minimum: 1
+          description: Уровень NPC
+        specializations:
+          type: array
+          items:
+            type: string
+          description: Специализации NPC
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleAssignment'
+          description: Назначенные роли NPC
+        status:
+          type: string
+          enum:
+            - idle
+            - working
+            - resting
+            - training
+            - maintenance
+          description: Текущий статус NPC
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата создания NPC
+        lastMaintenance:
+          type: string
+          format: date-time
+          description: Дата последнего обслуживания
+    PersonalNPCDetail:
+      type: object
+      required:
+        - summary
+        - stats
+        - costs
+        - experience
+        - automation
+      properties:
+        summary:
+          $ref: '#/components/schemas/PersonalNPCSummary'
+        stats:
+          $ref: '#/components/schemas/NPCStats'
+        costs:
+          $ref: '#/components/schemas/NPCCosts'
+        experience:
+          type: number
+          format: float
+          minimum: 0
+          description: Текущий опыт NPC
+        loyaltyTrend:
+          type: string
+          enum:
+            - increasing
+            - stable
+            - decreasing
+          description: Тенденция лояльности NPC
+        efficiencyTrend:
+          type: string
+          enum:
+            - increasing
+            - stable
+            - decreasing
+          description: Тенденция эффективности NPC
+        automation:
+          $ref: '#/components/schemas/AutomationProfile'
+        certificates:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Сертификаты NPC
+    PersonalNPCListResponse:
+      type: object
+      required:
+        - data
+        - meta
+        - limits
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonalNPCSummary'
+        meta:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+        limits:
+          $ref: '#/components/schemas/OwnerLimitSummary'
+    PersonalNPCDetailResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/PersonalNPCDetail'
+        limits:
+          $ref: '#/components/schemas/OwnerLimitSummary'
+    PersonalNPCCreateRequest:
+      type: object
+      required:
+        - ownerId
+        - name
+        - type
+        - rank
+        - level
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: Идентификатор владельца
+        name:
+          type: string
+          description: Имя NPC
+        type:
+          type: string
+          enum:
+            - human
+            - robot
+            - android
+          description: Тип NPC
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Начальный ранг NPC
+        level:
+          type: integer
+          minimum: 1
+          description: Начальный уровень NPC
+        specializations:
+          type: array
+          items:
+            type: string
+          description: Специализации NPC
+        initialRoles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleAssignment'
+          description: Начальные роли NPC
+        costs:
+          $ref: '#/components/schemas/NPCCosts'
+        automation:
+          $ref: '#/components/schemas/AutomationProfile'
+    PersonalNPCUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 10
+        level:
+          type: integer
+          minimum: 1
+        specializations:
+          type: array
+          items:
+            type: string
+        stats:
+          $ref: '#/components/schemas/NPCStats'
+        costs:
+          $ref: '#/components/schemas/NPCCosts'
+        automation:
+          $ref: '#/components/schemas/AutomationProfile'
+    AssignRoleRequest:
+      type: object
+      required:
+        - roleId
+        - priority
+      properties:
+        roleId:
+          type: string
+          description: Идентификатор роли для назначения
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Приоритет роли
+        conditions:
+          type: object
+          additionalProperties:
+            type: object
+          description: Условия активации роли
+        activateImmediately:
+          type: boolean
+          default: true
+          description: Флаг немедленной активации роли
+    LedgerEntry:
+      type: object
+      required:
+        - id
+        - timestamp
+        - type
+        - amount
+        - currency
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор записи журнала
+        transactionId:
+          type: string
+          format: uuid
+          description: Идентификатор связанной транзакции
+        timestamp:
+          type: string
+          format: date-time
+          description: Время операции
+        type:
+          type: string
+          enum:
+            - cost
+            - reward
+            - payment
+            - transfer
+            - fee
+          description: Тип операции
+        amount:
+          type: number
+          format: float
+          description: Сумма операции
+        currency:
+          type: string
+          description: Валюта операции
+        description:
+          type: string
+          description: Описание операции
+        reference:
+          type: string
+          description: Связь с контрактом или сценарием
+    LedgerListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedgerEntry'
+        meta:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    AuditLogEntry:
+      type: object
+      required:
+        - id
+        - timestamp
+        - entityType
+        - entityId
+        - action
+        - actorId
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        entityType:
+          type: string
+          enum:
+            - npc
+            - scenario
+            - contract
+            - license
+            - owner
+        entityId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum:
+            - create
+            - update
+            - delete
+            - start
+            - stop
+            - transfer
+            - breach
+            - fulfill
+        actorId:
+          type: string
+          format: uuid
+        details:
+          type: object
+          additionalProperties:
+            type: object
+        ipAddress:
+          type: string
+        signature:
+          type: string
+    AuditLogListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogEntry'
+        meta:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+

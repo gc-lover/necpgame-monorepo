@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="096-create-maintenance-windows" author="system">
+        <createTable tableName="maintenance_windows">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="window_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="environment" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="zones" type="TEXT"/>
+            <column name="services" type="TEXT"/>
+            <column name="start_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="expected_duration_minutes" type="INT"/>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="approved_by" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="shutdown_plan" type="TEXT"/>
+            <column name="notification_plan" type="TEXT"/>
+            <column name="hooks_config" type="TEXT"/>
+            <column name="notes" type="TEXT"/>
+            <column name="progress_percent" type="DOUBLE PRECISION"/>
+            <column name="affected_services" type="TEXT"/>
+            <column name="player_count" type="INT"/>
+            <column name="session_active_sessions" type="INT"/>
+            <column name="session_drained_sessions" type="INT"/>
+            <column name="session_estimated_completion" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="timeline_entries" type="TEXT"/>
+            <column name="status_updated_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="is_emergency" type="BOOLEAN" defaultValueBoolean="false"/>
+        </createTable>
+
+        <createIndex tableName="maintenance_windows" indexName="idx_maintenance_windows_status_start">
+            <column name="status"/>
+            <column name="start_at"/>
+        </createIndex>
+
+        <createIndex tableName="maintenance_windows" indexName="idx_maintenance_windows_environment">
+            <column name="environment"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="096-create-maintenance-audit-entries" author="system">
+        <createTable tableName="maintenance_audit_entries">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="window_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor" type="VARCHAR(100)"/>
+            <column name="actor_role" type="VARCHAR(100)"/>
+            <column name="action" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="details" type="TEXT"/>
+            <column name="attachments" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint constraintName="fk_maintenance_audit_window"
+                                 baseTableName="maintenance_audit_entries"
+                                 baseColumnNames="window_id"
+                                 referencedTableName="maintenance_windows"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <createIndex tableName="maintenance_audit_entries" indexName="idx_maintenance_audit_window">
+            <column name="window_id"/>
+        </createIndex>
+
+        <createIndex tableName="maintenance_audit_entries" indexName="idx_maintenance_audit_timestamp">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="096-create-maintenance-status-payloads" author="system">
+        <createTable tableName="maintenance_status_payloads">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="progress_percent" type="DOUBLE PRECISION"/>
+            <column name="message" type="TEXT"/>
+            <column name="is_public" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="maintenance_status_payloads" indexName="idx_maintenance_status_payloads_created">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
+
+

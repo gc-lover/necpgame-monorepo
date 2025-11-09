@@ -1,0 +1,244 @@
+openapi: 3.0.3
+info:
+  title: API Gateway Management API
+  description: |
+    Management API для API Gateway NECPGAME.
+    Управление routing, load balancing, health checks, metrics.
+    
+    **Функции:**
+    - Route management
+    - Service discovery
+    - Load balancing configuration
+    - Health monitoring
+    - Rate limiting rules
+    - Cache management
+  version: 1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Routes
+    description: Управление маршрутами
+  - name: Health
+    description: Health checks
+  - name: Metrics
+    description: Gateway metrics
+  - name: Cache
+    description: Cache management
+
+paths:
+  /technical/gateway/routes:
+    get:
+      tags:
+        - Routes
+      summary: Получить все маршруты
+      description: Список всех configured routes в API Gateway
+      operationId: getRoutes
+      responses:
+        '200':
+          description: Routes list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GatewayRoute'
+                  total_routes:
+                    type: integer
+
+    post:
+      tags:
+        - Routes
+      summary: Добавить новый route
+      description: Создание нового route (admin only)
+      operationId: addRoute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - path_pattern
+                - target_service
+              properties:
+                path_pattern:
+                  type: string
+                  example: "/api/v1/characters/*"
+                target_service:
+                  type: string
+                  example: "character-service"
+                load_balancing:
+                  type: string
+                  enum: ["round_robin", "least_connections", "ip_hash"]
+                rate_limit:
+                  type: object
+                  properties:
+                    requests_per_minute:
+                      type: integer
+      responses:
+        '201':
+          description: Route created
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /technical/gateway/health:
+    get:
+      tags:
+        - Health
+      summary: Health status всех backend сервисов
+      description: Aggregated health status за все микросервисы
+      operationId: getServicesHealth
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  overall_status:
+                    type: string
+                    enum: ["healthy", "degraded", "down"]
+                  services:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServiceHealthStatus'
+
+  /technical/gateway/metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Gateway metrics
+      description: Metrics для API Gateway (requests, latency, errors)
+      operationId: getGatewayMetrics
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: ["1h", "24h", "7d"]
+            default: "1h"
+      responses:
+        '200':
+          description: Metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayMetrics'
+
+  /technical/gateway/cache/invalidate:
+    post:
+      tags:
+        - Cache
+      summary: Очистить cache
+      description: Invalidate cache для определенных routes
+      operationId: invalidateCache
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routes:
+                  type: array
+                  items:
+                    type: string
+                invalidate_all:
+                  type: boolean
+      responses:
+        '200':
+          description: Cache invalidated
+
+components:
+  schemas:
+    GatewayRoute:
+      type: object
+      properties:
+        route_id:
+          type: string
+        path_pattern:
+          type: string
+          example: "/api/v1/characters/*"
+        target_service:
+          type: string
+          example: "character-service:8082"
+        load_balancing:
+          type: string
+          enum: ["round_robin", "least_connections", "ip_hash"]
+        rate_limit:
+          type: object
+          properties:
+            requests_per_minute:
+              type: integer
+            burst:
+              type: integer
+        cache_enabled:
+          type: boolean
+        cache_ttl:
+          type: integer
+          description: Cache TTL in seconds
+
+    ServiceHealthStatus:
+      type: object
+      properties:
+        service_name:
+          type: string
+        status:
+          type: string
+          enum: ["up", "degraded", "down"]
+        instances:
+          type: array
+          items:
+            type: object
+            properties:
+              instance_id:
+                type: string
+              status:
+                type: string
+              response_time_ms:
+                type: integer
+              last_check:
+                type: string
+                format: date-time
+
+    GatewayMetrics:
+      type: object
+      properties:
+        total_requests:
+          type: integer
+        successful_requests:
+          type: integer
+        failed_requests:
+          type: integer
+        average_latency_ms:
+          type: integer
+        requests_per_second:
+          type: number
+        top_routes:
+          type: array
+          items:
+            type: object
+            properties:
+              route:
+                type: string
+              requests:
+                type: integer
+
+security:
+  - BearerAuth: []
+

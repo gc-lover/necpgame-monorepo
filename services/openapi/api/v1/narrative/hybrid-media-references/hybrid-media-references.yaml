@@ -1,0 +1,345 @@
+openapi: 3.0.3
+info:
+  title: Hybrid Media References API
+  version: 1.0.0
+  description: |
+    REST API for managing hybrid media references and easter eggs inspired by iconic movies and series.
+    Source: .BRAIN/06-tasks/ideas/2025-11-07-IDEA-hybrid-media-references.md v1.0.0.
+    Integrations: world-service (events and locations), social-service (reputation), economy-service (rewards),
+    gameplay-service (PvE/PvP playlists), auth-service (alternate timeline personas).
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative/hybrid-media-references
+    directory: api/v1/narrative/hybrid-media-references
+    package: com.necpgame.narrativeservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: HybridMediaReferences
+    description: Hybrid media reference packages
+  - name: HybridMediaActivations
+    description: Activation planning and execution
+  - name: HybridMediaLocalization
+    description: Localization updates for narrative content
+paths:
+  /narrative/hybrid-media-references:
+    get:
+      tags: [HybridMediaReferences]
+      summary: List hybrid media references
+      description: Returns paginated reference packages with filters for scope, season, status and alternate timelines.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/ScopeType'
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/Season'
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/Status'
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/RequiresAlternateTimeline'
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/ContentTag'
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/Sort'
+      responses:
+        '200':
+          description: Paginated list of hybrid media references
+          content:
+            application/json:
+              schema:
+                $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferenceListResponse'
+              examples:
+                default:
+                  summary: Campaign references overview
+                  value:
+                    data:
+                      - id: "0c8f43d2-5f3c-4cdf-9c56-b9e3fc2f402b"
+                        slug: "neon-popularity-reset"
+                        title: "Neon Popularity Reset"
+                        scopeTypes: ["social_event", "world_environment"]
+                        status: "planned"
+                        season: "S03"
+                        primaryFaction: "mirror-syndicate"
+                        requiresAlternateTimeline: true
+                        spotlightRating: 78
+                        createdAt: "2025-10-31T21:15:00Z"
+                        updatedAt: "2025-11-02T09:45:00Z"
+                    meta:
+                      page: 1
+                      page_size: 20
+                      total: 2
+                      total_pages: 1
+                      has_next: false
+                      has_prev: false
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    post:
+      tags: [HybridMediaReferences]
+      summary: Create a hybrid media reference
+      description: Creates a reference package and registers integration links with world, social, economy, gameplay and auth services.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './hybrid-media-references-models.yaml#/components/schemas/HybridReferenceUpsertRequest'
+            examples:
+              campaign:
+                summary: Legendary campaign finale package
+                value:
+                  title: "Quantum Reef Siege"
+                  slug: "quantum-reef-siege"
+                  status: "planned"
+                  season: "S04"
+                  scope:
+                    - scopeType: "main_campaign"
+                      description: "Bioluminescent siege inspired by cyber-noir blockbusters."
+                      targetIds:
+                        - "1fbc0cb4-9b17-4e0f-9e8f-72d6b70f1a52"
+                      progressionRequirements:
+                        reputationLevel: "ally"
+                        minimumLevel: 35
+                      pvpGate:
+                        rankingTier: "diamond"
+                        minimumMatches: 10
+                  triggerMatrix:
+                    - triggerType: "world_event"
+                      conditionExpression: "world.event.active('reef_war')"
+                      cooldownMinutes: 1440
+                      maxConcurrentActivations: 2
+                      fallbackPlan: "defer_to_next_cycle"
+                  rewardBundles:
+                    - bundleId: "reef-bundle-01"
+                      rarity: "legendary"
+                      rewards:
+                        credits: 4500
+                        implants: ["merit-runner"]
+                        cosmetics: ["biolum-flight-suit"]
+                      pveWeight: 0.6
+                      pvpWeight: 0.4
+                      marketingTag: "cinematic_finale"
+                  visualCues:
+                    - cueId: "reef-graff-neo"
+                      medium: "environment"
+                      assetId: "env_reef_neon_graff"
+                      caption: "NOS3Dive tribute graffiti"
+                      unlockHint: "Scan alley wall after dusk"
+                      inWorldLocation: "neon-harbor-sector-7"
+                  alternateTimelineSettings:
+                    timelineLabel: "Echo Divergence"
+                    personaMaskTemplateId: "mask-reef"
+                    authPersonaStrategy: "temporary"
+                  integrationLinks:
+                    - service: "world"
+                      externalId: "reef_war_event"
+                      syncMode: "bidirectional"
+                      eventTopics: ["world.hybrid-reference.activated"]
+                      restEndpoints:
+                        - method: "GET"
+                          url: "/api/v1/world/events/{eventId}"
+      responses:
+        '201':
+          description: Reference created
+          content:
+            application/json:
+              schema:
+                $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferenceDetailResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /narrative/hybrid-media-references/{referenceId}:
+    parameters:
+      - $ref: './hybrid-media-references-models.yaml#/components/parameters/ReferenceId'
+    get:
+      tags: [HybridMediaReferences]
+      summary: Get a hybrid media reference
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Detailed reference
+          content:
+            application/json:
+              schema:
+                $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferenceDetailResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    patch:
+      tags: [HybridMediaReferences]
+      summary: Update a hybrid media reference
+      description: Applies merge-patch updates for status, timelines, rewards and localization notes. Propagates changes to world, social and economy services according to integration links.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: './hybrid-media-references-models.yaml#/components/schemas/HybridReferencePatchRequest'
+      responses:
+        '200':
+          description: Reference updated
+          content:
+            application/json:
+              schema:
+                $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferenceDetailResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /narrative/hybrid-media-references/{referenceId}/activation:
+    post:
+      tags: [HybridMediaActivations]
+      summary: Schedule or trigger an activation
+      description: Publishes `narrative.hybrid-reference.activated` and calls world, social, economy, gameplay and auth services to align world state, rewards and personas.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/ReferenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferenceActivationRequest'
+            examples:
+              alternateTimeline:
+                summary: Seasonal activation with alternate timeline
+                value:
+                  activationType: "seasonal"
+                  startAt: "2025-12-01T18:00:00Z"
+                  endAt: "2025-12-15T02:00:00Z"
+                  targetSegments:
+                    - type: "faction"
+                      value: "mirror-syndicate"
+                    - type: "rating-tier"
+                      value: "platinum+"
+                  maxParticipants: 25000
+                  worldImpactProfile:
+                    worldStateDelta: "reef_war_phase_shift"
+                    environmentChanges: ["env_neon_mist"]
+                  notificationTemplateId: "tmpl-alt-timeline"
+      responses:
+        '202':
+          description: Activation scheduled
+          content:
+            application/json:
+              schema:
+                $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/ActivationScheduleSummary'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /narrative/hybrid-media-references/{referenceId}/preview:
+    post:
+      tags: [HybridMediaReferences]
+      summary: Preview hybrid media impact
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/ReferenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferencePreviewRequest'
+      responses:
+        '200':
+          description: Aggregated impact preview across world, social, economy and combat domains
+          content:
+            application/json:
+              schema:
+                $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferencePreview'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /narrative/hybrid-media-references/{referenceId}/localizations:
+    post:
+      tags: [HybridMediaLocalization]
+      summary: Update localization entries
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/ReferenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferenceLocalizationBatch'
+      responses:
+        '200':
+          description: Localization batch applied
+          content:
+            application/json:
+              schema:
+                $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferenceDetailResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /narrative/hybrid-media-references/{referenceId}/timeline:
+    get:
+      tags: [HybridMediaReferences]
+      summary: Get timeline view
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: './hybrid-media-references-models.yaml#/components/parameters/ReferenceId'
+      responses:
+        '200':
+          description: Timeline with primary and alternate segments
+          content:
+            application/json:
+              schema:
+                $ref: './hybrid-media-references-models-operations.yaml#/components/schemas/HybridReferenceTimeline'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  responses:
+    BadRequest:
+      $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    InternalServerError:
+      $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+

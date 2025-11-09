@@ -1,0 +1,1287 @@
+openapi: 3.0.3
+info:
+  title: Living World Components
+  version: 1.0.0
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+paths: {}
+components:
+  parameters:
+    FactionId:
+      name: factionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор фракции.
+    RegionId:
+      name: regionId
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Фильтр по региону мира.
+    SettlementId:
+      name: settlementId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор поселения.
+    RouteId:
+      name: routeId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор логистического маршрута.
+    SquadId:
+      name: squadId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор автономного отряда.
+    SubscriptionId:
+      name: subscriptionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор подписки на хронику.
+    IdempotencyKeyHeader:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 64
+      description: Уникальный ключ идемпотентности для защиты от повторной обработки.
+    AuditIdHeader:
+      name: X-Audit-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор аудита для трассировки изменений.
+    OwnerFactionQuery:
+      name: ownerFactionId
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Фильтр по владеющей фракции.
+    SettlementStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [camp, outpost, stronghold, city]
+      description: Фильтр по статусу поселения.
+    SettlementTierQuery:
+      name: tier
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [tier1, tier2, tier3, tier4]
+      description: Фильтр по текущему уровню развития базы.
+    RouteTypeQuery:
+      name: type
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [trade, tax, reinforcement, aid, black_ops]
+      description: Тип логистического маршрута.
+    RouteStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [scheduled, active, under_attack, completed, failed, paused]
+      description: Статус логистического маршрута.
+    SquadMissionQuery:
+      name: mission
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [patrol, raid, escort, trade, support]
+      description: Тип миссии автономного отряда.
+    CursorQuery:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Курсор для постраничной загрузки хроники.
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов в ответе.
+    ChronicleEventTypeQuery:
+      name: eventType
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [control_shift, logistics, raid, story_arc, economy, action_xp]
+      description: Фильтр по типу события хроники.
+    MetricsWindowQuery:
+      name: window
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [5m, 15m, 1h, 24h, 7d]
+        default: 24h
+      description: Окно агрегации метрик.
+    CharacterIdQuery:
+      name: characterId
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор персонажа.
+    SkillIdQuery:
+      name: skillId
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Идентификатор навыка (например, strength, stealth).
+  schemas:
+    ChronicleEventRef:
+      type: object
+      required: [eventId, type]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        summary:
+          type: string
+    ControlShiftRequest:
+      type: object
+      required:
+        - regionId
+        - newOwnerFactionId
+        - trigger
+        - evidence
+        - controlScoreDelta
+      properties:
+        regionId:
+          type: string
+          format: uuid
+        newOwnerFactionId:
+          type: string
+          format: uuid
+        trigger:
+          type: string
+          enum: [leader_death, raid_victory, economic_collapse, player_contract, story_event]
+        evidence:
+          type: object
+          properties:
+            timelineEntries:
+              type: array
+              items:
+                type: string
+                format: uuid
+            supplyIndex:
+              type: number
+              minimum: 0
+            raidVictories:
+              type: integer
+              minimum: 0
+            reputationShift:
+              type: number
+        controlScoreDelta:
+          type: integer
+          minimum: -200
+          maximum: 200
+        justification:
+          type: string
+        requestedBy:
+          type: string
+          description: Контекст инициатора (GM, factionAI, playerContract).
+    ControlShiftResponse:
+      type: object
+      required: [eventId, timelineEntryId, scheduledAt, auditId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timelineEntryId:
+          type: string
+          format: uuid
+        scheduledAt:
+          type: string
+          format: date-time
+        approvedBy:
+          type: string
+        auditId:
+          type: string
+          format: uuid
+    FactionControl:
+      type: object
+      required:
+        - factionId
+        - regionId
+        - controlScore
+        - ownerFactionId
+        - lastChange
+        - pendingEvents
+      properties:
+        factionId:
+          type: string
+          format: uuid
+        regionId:
+          type: string
+          format: uuid
+        controlScore:
+          type: integer
+          minimum: -100
+          maximum: 100
+        ownerFactionId:
+          type: string
+          format: uuid
+        stabilityIndex:
+          type: number
+          minimum: 0
+          maximum: 1
+        trend:
+          type: string
+          enum: [rising, stable, falling]
+        pendingEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChronicleEventRef'
+        lastChange:
+          type: string
+          format: date-time
+        conflictLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        influenceBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              value:
+                type: integer
+    Settlement:
+      type: object
+      required:
+        - settlementId
+        - name
+        - status
+        - ownerFactionId
+        - population
+        - production
+        - defenseRating
+        - logisticsPressure
+      properties:
+        settlementId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [camp, outpost, stronghold, city]
+        ownerFactionId:
+          type: string
+          format: uuid
+        population:
+          type: integer
+          minimum: 0
+        production:
+          type: array
+          items:
+            type: object
+            properties:
+              resource:
+                type: string
+              outputPerHour:
+                type: number
+        defenseRating:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        logisticsPressure:
+          type: number
+          minimum: 0
+        upgradeRequirements:
+          type: array
+          items:
+            type: object
+            properties:
+              requirement:
+                type: string
+              fulfilled:
+                type: boolean
+        activeEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChronicleEventRef'
+        unrestScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        lastUpdated:
+          type: string
+          format: date-time
+    SettlementUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [camp, outpost, stronghold, city]
+        upgradePlan:
+          type: object
+          properties:
+            targetStatus:
+              type: string
+              enum: [outpost, stronghold, city]
+            expectedCompletion:
+              type: string
+              format: date-time
+            commitments:
+              type: array
+              items:
+                type: object
+                properties:
+                  requirement:
+                    type: string
+                  value:
+                    type: number
+        defenseAdjustments:
+          type: object
+          properties:
+            turrets:
+              type: integer
+            droneSupport:
+              type: integer
+            shieldLevel:
+              type: integer
+        logisticsPriority:
+          type: string
+          enum: [low, normal, high, critical]
+        notes:
+          type: string
+    LogisticsRoute:
+      type: object
+      required:
+        - routeId
+        - originSettlementId
+        - destinationSettlementId
+        - type
+        - status
+        - scheduledAt
+        - securityLevel
+        - threatLevel
+      properties:
+        routeId:
+          type: string
+          format: uuid
+        originSettlementId:
+          type: string
+          format: uuid
+        destinationSettlementId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [trade, tax, reinforcement, aid, black_ops]
+        status:
+          type: string
+          enum: [scheduled, active, under_attack, completed, failed, paused]
+        scheduledAt:
+          type: string
+          format: date-time
+        eta:
+          type: string
+          format: date-time
+        securityLevel:
+          type: integer
+          minimum: 1
+          maximum: 5
+        threatLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        requestedSecurity:
+          type: integer
+          minimum: 1
+          maximum: 5
+        cargoManifest:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+              quantity:
+                type: number
+              value:
+                type: number
+        activeSquads:
+          type: array
+          items:
+            $ref: '#/components/schemas/SquadAssignment'
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              status:
+                type: string
+              message:
+                type: string
+        lastUpdated:
+          type: string
+          format: date-time
+    SquadAssignment:
+      type: object
+      required: [squadId, mission, strength]
+      properties:
+        squadId:
+          type: string
+          format: uuid
+        mission:
+          type: string
+          enum: [escort, patrol, intercept, scout]
+        strength:
+          type: integer
+        eta:
+          type: string
+          format: date-time
+    LogisticsRouteCreateRequest:
+      type: object
+      required:
+        - originSettlementId
+        - destinationSettlementId
+        - type
+        - requestedSecurity
+      properties:
+        originSettlementId:
+          type: string
+          format: uuid
+        destinationSettlementId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [trade, tax, reinforcement, aid, black_ops]
+        requestedSecurity:
+          type: integer
+          minimum: 1
+          maximum: 5
+        cargoManifest:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+              quantity:
+                type: number
+        requestedEscortStrength:
+          type: integer
+        preferredDeparture:
+          type: string
+          format: date-time
+        notes:
+          type: string
+    LogisticsRouteUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [scheduled, active, under_attack, completed, failed, paused]
+        threatLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        assignedSquads:
+          type: array
+          items:
+            $ref: '#/components/schemas/SquadAssignment'
+        routeSegments:
+          type: array
+          items:
+            type: object
+            properties:
+              waypoint:
+                type: string
+              eta:
+                type: string
+                format: date-time
+              riskIndex:
+                type: number
+        incidentReport:
+          type: string
+        notificationScope:
+          type: array
+          items:
+            type: string
+    AutonomousSquad:
+      type: object
+      required:
+        - squadId
+        - factionId
+        - mission
+        - strength
+        - threatLevel
+        - status
+      properties:
+        squadId:
+          type: string
+          format: uuid
+        factionId:
+          type: string
+          format: uuid
+        mission:
+          type: string
+          enum: [patrol, raid, escort, trade, support]
+        status:
+          type: string
+          enum: [forming, en_route, engaged, retreating, destroyed]
+        strength:
+          type: integer
+          minimum: 1
+        threatLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        currentWaypoint:
+          type: object
+          properties:
+            name:
+              type: string
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                y:
+                  type: number
+                z:
+                  type: number
+        eta:
+          type: string
+          format: date-time
+        routeId:
+          type: string
+          format: uuid
+        composition:
+          type: array
+          items:
+            type: object
+            properties:
+              unitType:
+                type: string
+              count:
+                type: integer
+        supportAbilities:
+          type: array
+          items:
+            type: string
+        lastUpdated:
+          type: string
+          format: date-time
+    AutonomousSquadCreateRequest:
+      type: object
+      required:
+        - factionId
+        - mission
+        - strength
+      properties:
+        factionId:
+          type: string
+          format: uuid
+        mission:
+          type: string
+          enum: [patrol, raid, escort, trade, support]
+        routeId:
+          type: string
+          format: uuid
+        originSettlementId:
+          type: string
+          format: uuid
+        strength:
+          type: integer
+        composition:
+          type: array
+          items:
+            type: object
+            properties:
+              unitType:
+                type: string
+              count:
+                type: integer
+        escortingPlayerId:
+          type: string
+          format: uuid
+        expectedDurationMinutes:
+          type: integer
+        notes:
+          type: string
+    AutonomousSquadUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [forming, en_route, engaged, retreating, destroyed]
+        threatLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        currentWaypoint:
+          type: object
+          properties:
+            name:
+              type: string
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                y:
+                  type: number
+                z:
+                  type: number
+        engagementReport:
+          type: string
+        routeId:
+          type: string
+          format: uuid
+        eta:
+          type: string
+          format: date-time
+    ChronicleEvent:
+      type: object
+      required:
+        - eventId
+        - type
+        - timestamp
+        - summary
+        - regionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [control_shift, logistics, raid, story_arc, economy, action_xp]
+        timestamp:
+          type: string
+          format: date-time
+        regionId:
+          type: string
+          format: uuid
+        routeId:
+          type: string
+          format: uuid
+        factionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        summary:
+          type: string
+        description:
+          type: string
+        impact:
+          type: object
+          properties:
+            controlScoreDelta:
+              type: integer
+            economyShift:
+              type: number
+            xpModifier:
+              type: number
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        tags:
+          type: array
+          items:
+            type: string
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              href:
+                type: string
+        broadcastChannels:
+          type: array
+          items:
+            type: string
+    ChronicleFeed:
+      type: object
+      required: [events, hasMore]
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChronicleEvent'
+        nextCursor:
+          type: string
+        hasMore:
+          type: boolean
+    ChronicleSubscriptionRequest:
+      type: object
+      required:
+        - subscriberId
+        - subscriberType
+        - filters
+      properties:
+        subscriberId:
+          type: string
+          format: uuid
+        subscriberType:
+          type: string
+          enum: [player, guild, faction]
+        filters:
+          type: object
+          properties:
+            regions:
+              type: array
+              items:
+                type: string
+                format: uuid
+            eventTypes:
+              type: array
+              items:
+                type: string
+            routeIds:
+              type: array
+              items:
+                type: string
+                format: uuid
+            factionIds:
+              type: array
+              items:
+                type: string
+                format: uuid
+        deliveryChannels:
+          type: array
+          items:
+            type: string
+            enum: [websocket, notification, email]
+          default: [websocket, notification]
+        throttleSeconds:
+          type: integer
+          minimum: 0
+          maximum: 3600
+          default: 60
+    ChronicleSubscription:
+      allOf:
+        - $ref: '#/components/schemas/ChronicleSubscriptionRequest'
+        - type: object
+          required: [subscriptionId, status, createdAt]
+          properties:
+            subscriptionId:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum: [active, paused, cancelled]
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    ActionXpEntry:
+      type: object
+      required:
+        - skillId
+        - xpGained
+        - activityMultiplier
+        - fatigueScore
+      properties:
+        skillId:
+          type: string
+        actionType:
+          type: string
+        xpGained:
+          type: number
+          minimum: 0
+        activityMultiplier:
+          type: number
+          minimum: 0
+        fatigueScore:
+          type: number
+          minimum: 0
+        sourceEventId:
+          type: string
+          format: uuid
+        context:
+          type: object
+          properties:
+            combatMode:
+              type: string
+            zoneType:
+              type: string
+            fatigueModifier:
+              type: number
+    ActionXpBatchRequest:
+      type: object
+      required:
+        - characterId
+        - entries
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        traceId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        context:
+          type: object
+          properties:
+            source:
+              type: string
+            location:
+              type: string
+            fatigueSoftCap:
+              type: number
+        entries:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/ActionXpEntry'
+    SkillFatigue:
+      type: object
+      required:
+        - characterId
+        - skillId
+        - dailyXpTotal
+        - fatigueModifier
+        - softCap
+        - resetAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        skillId:
+          type: string
+        dailyXpTotal:
+          type: number
+        fatigueModifier:
+          type: number
+        fatigueScore:
+          type: number
+        softCap:
+          type: number
+        resetAt:
+          type: string
+          format: date-time
+        lastUpdated:
+          type: string
+          format: date-time
+        fatigueState:
+          type: string
+          enum: [normal, approaching_cap, soft_cap, exhausted]
+    ActionXpBatchResponse:
+      type: object
+      required:
+        - characterId
+        - entriesProcessed
+        - updatedSkills
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        entriesProcessed:
+          type: integer
+        warnings:
+          type: array
+          items:
+            type: string
+        updatedSkills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillFatigue'
+    ActionXpSummary:
+      type: object
+      required:
+        - characterId
+        - skillId
+        - dailyXpTotal
+        - fatigueModifier
+        - softCap
+        - fatigueScore
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        skillId:
+          type: string
+        dailyXpTotal:
+          type: number
+        fatigueModifier:
+          type: number
+        fatigueScore:
+          type: number
+        softCap:
+          type: number
+        nextResetAt:
+          type: string
+          format: date-time
+        boostsActive:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+    ActionXpMetrics:
+      type: object
+      required:
+        - windowStart
+        - windowEnd
+        - topSkills
+      properties:
+        windowStart:
+          type: string
+          format: date-time
+        windowEnd:
+          type: string
+          format: date-time
+        totalXp:
+          type: number
+        averageMultiplier:
+          type: number
+        fatigueOverflowRate:
+          type: number
+        topSkills:
+          type: array
+          items:
+            type: object
+            properties:
+              skillId:
+                type: string
+              xp:
+                type: number
+              fatigueOverflow:
+                type: number
+        alerts:
+          type: array
+          items:
+            type: string
+    FatigueResetRequest:
+      type: object
+      required:
+        - characterId
+        - skillId
+        - requestedBy
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        skillId:
+          type: string
+        consumableId:
+          type: string
+        reason:
+          type: string
+        requestedBy:
+          type: string
+        notes:
+          type: string
+    LivingWorldMetricsResponse:
+      type: object
+      required:
+        - windowStart
+        - windowEnd
+        - controlShiftRate
+        - fatigueOverflow
+        - routeSurvivalRate
+      properties:
+        windowStart:
+          type: string
+          format: date-time
+        windowEnd:
+          type: string
+          format: date-time
+        controlShiftRate:
+          type: number
+        controlShiftLimit:
+          type: number
+        fatigueOverflow:
+          type: number
+        routeSurvivalRate:
+          type: number
+        alerts:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+    MaintenanceCommandRequest:
+      type: object
+      required:
+        - reason
+        - initiatedBy
+      properties:
+        reason:
+          type: string
+        initiatedBy:
+          type: string
+        scope:
+          type: string
+          enum: [world_service, gameplay_service, combined]
+          default: combined
+        expectedResumeAt:
+          type: string
+          format: date-time
+        notifyChannels:
+          type: array
+          items:
+            type: string
+    MaintenanceCommandResponse:
+      type: object
+      required:
+        - commandId
+        - status
+        - issuedAt
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [accepted, rejected, in_progress]
+        issuedAt:
+          type: string
+          format: date-time
+        effectiveFrom:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        issuedBy:
+          type: string
+        notes:
+          type: string
+    ControlShiftEvent:
+      type: object
+      required:
+        - regionId
+        - previousOwner
+        - newOwner
+        - trigger
+        - timelineEntryId
+        - effectiveAt
+      properties:
+        regionId:
+          type: string
+          format: uuid
+        previousOwner:
+          type: string
+          format: uuid
+        newOwner:
+          type: string
+          format: uuid
+        trigger:
+          type: string
+        timelineEntryId:
+          type: string
+          format: uuid
+        effectiveAt:
+          type: string
+          format: date-time
+        controlScore:
+          type: integer
+    LogisticsRouteEvent:
+      type: object
+      required:
+        - routeId
+        - status
+        - threatLevel
+        - timestamp
+      properties:
+        routeId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        threatLevel:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          type: string
+        affectedCargo:
+          type: array
+          items:
+            type: string
+    LogisticsAlertEvent:
+      type: object
+      required:
+        - routeId
+        - status
+        - threatLevel
+        - timestamp
+      properties:
+        routeId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        threatLevel:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        alertType:
+          type: string
+          enum: [ambush, blockade, escort_request, supply_drop]
+        message:
+          type: string
+        recommendedAction:
+          type: string
+    AutonomousSquadEvent:
+      type: object
+      required:
+        - squadId
+        - mission
+        - status
+        - timestamp
+      properties:
+        squadId:
+          type: string
+          format: uuid
+        mission:
+          type: string
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        routeId:
+          type: string
+          format: uuid
+        threatLevel:
+          type: integer
+        currentWaypoint:
+          type: string
+    ActionXpEvent:
+      type: object
+      required:
+        - characterId
+        - skillId
+        - xp
+        - fatigueScore
+        - timestamp
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        skillId:
+          type: string
+        xp:
+          type: number
+        fatigueScore:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+        sourceEventId:
+          type: string
+          format: uuid
+        multiplier:
+          type: number
+    ActionXpSoftCapEvent:
+      type: object
+      required:
+        - characterId
+        - skillId
+        - dayTotal
+        - softCap
+        - timestamp
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        skillId:
+          type: string
+        dayTotal:
+          type: number
+        softCap:
+          type: number
+        fatigueModifier:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            type: string
+  examples:
+    ControlShiftLeaderDeath:
+      summary: Смена власти после смерти лидера
+      value:
+        regionId: "3f4f6c52-b390-4c7f-9f8f-8b0cd07714df"
+        newOwnerFactionId: "6cc54a56-a7d2-4e6b-96f2-3ce5f9820d18"
+        trigger: leader_death
+        controlScoreDelta: 25
+        justification: "Лидер Militech пал в бою, гарнизон деморализован."
+        evidence:
+          timelineEntries:
+            - "c7db3e70-1be1-47bc-a8ee-a6d43e98d34d"
+            - "5ec4adce-7b6c-4c87-933c-2990ae2ebc32"
+          supplyIndex: 0.28
+          raidVictories: 3
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

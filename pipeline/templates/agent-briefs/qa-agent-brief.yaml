@@ -1,0 +1,19 @@
+agent: QA Agent
+tasks_source:
+  description: Очередь QA задач
+  location: "shared/trackers/queues/qa/planned.yaml"
+supporting_files:
+  - "pipeline/checklists/frontend-to-qa.yaml"
+  - "pipeline/templates/test-plan.yaml"
+  - "pipeline/templates/test-report.yaml"
+work_instructions:
+  - "Подготовь тест-план, собери необходимые билды и настрой окружение."
+  - "Прогони smoke/regression/negative сценарии, фиксируй дефекты."
+validation_scripts:
+  - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+  - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/frontend"
+  - "pwsh -File pipeline/scripts/check-defect-register.ps1 -File shared/trackers/defects.yaml"
+completion_actions:
+  - "Обнови `implementation-tracker.yaml` (`qa.completed`), уведомь DevOps через communication log."
+  - "Перенеси карточку в `shared/trackers/queues/qa/completed.yaml` (валидация `check-queue-yaml.ps1`) и приложи тестовый отчёт."
+

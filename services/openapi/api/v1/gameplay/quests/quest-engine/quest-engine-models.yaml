@@ -1,0 +1,426 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine Core Models
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/quests/quest-engine
+    directory: api/v1/gameplay/quests/quest-engine
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  parameters:
+    InstanceIdPath:
+      name: instanceId
+      in: path
+      required: true
+      description: Quest instance identifier
+      schema:
+        type: string
+        format: uuid
+    TemplateIdPath:
+      name: templateId
+      in: path
+      required: true
+      description: Quest template identifier
+      schema:
+        type: string
+        maxLength: 128
+    CharacterIdQuery:
+      name: characterId
+      in: query
+      required: true
+      description: Character identifier owning quest instances
+      schema:
+        type: string
+        format: uuid
+    QuestStatusFilter:
+      name: status
+      in: query
+      description: Filter quests by status
+      schema:
+        type: string
+        enum: [ACTIVE, COMPLETED, FAILED, ABANDONED]
+    QuestCategoryFilter:
+      name: category
+      in: query
+      description: Optional quest category filter (story, contract, faction, tutorial)
+      schema:
+        type: string
+    DialogueChoiceId:
+      name: choiceId
+      in: query
+      description: Dialogue choice identifier for audit queries
+      schema:
+        type: string
+  schemas:
+    QuestInstance:
+      type: object
+      required:
+        - instanceId
+        - questTemplateId
+        - characterId
+        - status
+        - currentBranchId
+        - timestamps
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        questTemplateId:
+          type: string
+        characterId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ACTIVE, COMPLETED, FAILED, ABANDONED]
+        currentBranchId:
+          type: string
+          nullable: true
+        currentDialogueNodeId:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+          enum: [STORY, NORMAL, HARD, NIGHTMARE]
+        tags:
+          type: array
+          items:
+            type: string
+        timestamps:
+          type: object
+          required: [startedAt]
+          properties:
+            startedAt:
+              type: string
+              format: date-time
+            completedAt:
+              type: string
+              format: date-time
+              nullable: true
+            failedAt:
+              type: string
+              format: date-time
+              nullable: true
+            abandonedAt:
+              type: string
+              format: date-time
+              nullable: true
+    QuestObjective:
+      type: object
+      required:
+        - objectiveId
+        - type
+        - status
+      properties:
+        objectiveId:
+          type: string
+        type:
+          type: string
+          enum: [KILL, COLLECT, TALK, TRAVEL, INTERACT, CUSTOM]
+        description:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
+        progress:
+          type: object
+          properties:
+            current:
+              type: integer
+              default: 0
+            required:
+              type: integer
+              default: 1
+        dependencies:
+          type: array
+          items:
+            type: string
+            description: References to prerequisite objective IDs
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+    QuestProgress:
+      type: object
+      required:
+        - objectives
+        - flags
+      properties:
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+        flags:
+          type: object
+          additionalProperties:
+            type: boolean
+        externalDependencies:
+          type: array
+          items:
+            type: string
+            description: Event subscriptions driving objectives
+    DialogueNode:
+      type: object
+      required:
+        - nodeId
+        - type
+        - text
+      properties:
+        nodeId:
+          type: string
+        type:
+          type: string
+          enum: [STANDARD, CHECKPOINT, END, FAILURE]
+        speaker:
+          type: string
+          description: NPC or player speaker identifier
+        text:
+          type: string
+        cinematicCue:
+          type: string
+          nullable: true
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueChoice'
+    DialogueChoice:
+      type: object
+      required:
+        - choiceId
+        - text
+      properties:
+        choiceId:
+          type: string
+        text:
+          type: string
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestCondition'
+        skillCheck:
+          $ref: '#/components/schemas/SkillCheck'
+        nextNodeId:
+          type: string
+          nullable: true
+        failNodeId:
+          type: string
+          nullable: true
+        outcome:
+          $ref: '#/components/schemas/ChoiceOutcome'
+    QuestCondition:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum: [FLAG, ITEM, REPUTATION, SKILL_LEVEL, ATTRIBUTE, QUEST_STATUS, CUSTOM]
+        operator:
+          type: string
+          enum: [EQUALS, GREATER_OR_EQUAL, LESS_OR_EQUAL, CONTAINS, NOT_EQUALS]
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+        negate:
+          type: boolean
+          default: false
+    SkillCheck:
+      type: object
+      required:
+        - skill
+        - dice
+        - difficultyClass
+      properties:
+        skill:
+          type: string
+          example: "persuasion"
+        relatedAttribute:
+          type: string
+          example: "charisma"
+        dice:
+          type: string
+          enum: [D20, D100]
+        difficultyClass:
+          type: integer
+          minimum: 1
+        modifier:
+          type: integer
+          default: 0
+        advantageState:
+          type: string
+          enum: [NORMAL, ADVANTAGE, DISADVANTAGE]
+          default: NORMAL
+    SkillCheckResult:
+      type: object
+      required:
+        - success
+        - total
+        - diceRoll
+      properties:
+        success:
+          type: boolean
+        diceRoll:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+        breakdown:
+          type: object
+          properties:
+            skillLevel:
+              type: integer
+            attributeModifier:
+              type: integer
+            situationalModifier:
+              type: integer
+        difficultyClass:
+          type: integer
+    ChoiceOutcome:
+      type: object
+      properties:
+        flags:
+          type: object
+          additionalProperties:
+            type: boolean
+        reputationChanges:
+          type: array
+          items:
+            type: object
+            properties:
+              factionId:
+                type: string
+              delta:
+                type: integer
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestReward'
+        branchTransition:
+          type: string
+          description: Optional branch ID to transition to
+        triggers:
+          type: array
+          items:
+            type: string
+            description: External triggers to invoke (combat encounter, cutscene, etc.)
+    QuestReward:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+        currencies:
+          type: array
+          items:
+            type: object
+            properties:
+              currencyId:
+                type: string
+              amount:
+                type: integer
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+              quantity:
+                type: integer
+        reputation:
+          type: array
+          items:
+            type: object
+            properties:
+              factionId:
+                type: string
+              delta:
+                type: integer
+        unlocks:
+          type: array
+          items:
+            type: string
+            description: Unlock identifiers (quests, locations, features)
+    QuestDialogueState:
+      type: object
+      required:
+        - currentNodeId
+        - visitedNodes
+      properties:
+        currentNodeId:
+          type: string
+        visitedNodes:
+          type: array
+          items:
+            type: string
+        choicesMade:
+          type: array
+          items:
+            type: object
+            properties:
+              nodeId:
+                type: string
+              choiceId:
+                type: string
+              result:
+                type: string
+        lastUpdatedAt:
+          type: string
+          format: date-time
+    QuestAuditEntry:
+      type: object
+      required:
+        - entryId
+        - type
+        - occurredAt
+      properties:
+        entryId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [CHOICE, SKILL_CHECK, EVENT, STATUS_CHANGE, REWARD]
+        occurredAt:
+          type: string
+          format: date-time
+        actor:
+          type: object
+          properties:
+            actorType:
+              type: string
+              enum: [player, system, moderator]
+            actorId:
+              type: string
+              format: uuid
+        metadata:
+          type: object
+          additionalProperties: true
+    QuestSimulationNode:
+      type: object
+      required:
+        - nodeId
+        - probability
+      properties:
+        nodeId:
+          type: string
+        probability:
+          type: number
+          format: float
+        expectedRewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestReward'
+

@@ -1,0 +1,516 @@
+openapi: 3.0.3
+info:
+  title: MVP Content API
+  version: 1.0.0
+  description: |
+    API для MVP контента игры.
+    
+    Функционал:
+    - MVP endpoints catalog
+    - Data models reference
+    - Initial game data
+    - Content overview (2020-2093)
+    - Text version support
+    - Main game UI data
+    
+    Содержит:
+    - Список всех MVP endpoints
+    - Модели данных для MVP
+    - Начальные данные для запуска
+    - Контентный обзор по периодам
+    - Требования к UI
+    
+    Источники: .BRAIN/05-technical/api-requirements/ (6 документов)
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/mvp
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: MVP
+    description: MVP функционал
+  - name: Initial Data
+    description: Начальные данные
+  - name: Content Overview
+    description: Обзор контента
+
+paths:
+  /mvp/endpoints:
+    get:
+      summary: Получить список MVP endpoints
+      operationId: getMVPEndpoints
+      tags: [MVP]
+      responses:
+        '200':
+          description: MVP endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  endpoints:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EndpointDefinition'
+                  total_count:
+                    type: integer
+                  categories:
+                    type: object
+                    additionalProperties:
+                      type: integer
+
+  /mvp/models:
+    get:
+      summary: Получить data models для MVP
+      operationId: getMVPModels
+      tags: [MVP]
+      responses:
+        '200':
+          description: Data models
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  models:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModelDefinition'
+
+  /mvp/initial-data:
+    get:
+      summary: Получить начальные данные игры
+      operationId: getInitialData
+      tags: [Initial Data]
+      description: Данные для первого запуска игры
+      responses:
+        '200':
+          description: Начальные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitialGameData'
+
+  /mvp/content/overview:
+    get:
+      summary: Получить обзор контента
+      operationId: getContentOverview
+      tags: [Content Overview]
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [2020-2030, 2030-2045, 2045-2060, 2060-2077, 2078-2090, 2090-2093]
+      responses:
+        '200':
+          description: Обзор контента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentOverview'
+
+  /mvp/content/status:
+    get:
+      summary: Получить статус готовности контента
+      operationId: getContentStatus
+      tags: [Content Overview]
+      responses:
+        '200':
+          description: Статус контента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentStatus'
+
+  /mvp/text-version/state:
+    get:
+      summary: Получить состояние игры для текстовой версии
+      operationId: getTextVersionState
+      tags: [MVP]
+      description: Упрощенное состояние для текстового frontend
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние для текстовой версии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextVersionState'
+
+  /mvp/ui/main-game:
+    get:
+      summary: Получить данные для основного UI
+      operationId: getMainGameUI
+      tags: [MVP]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Данные для UI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MainGameUIData'
+
+  /mvp/health:
+    get:
+      summary: Проверка здоровья MVP систем
+      operationId: getMVPHealth
+      tags: [MVP]
+      responses:
+        '200':
+          description: Статус MVP систем
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [HEALTHY, DEGRADED, DOWN]
+                  systems:
+                    type: object
+                    properties:
+                      auth:
+                        type: string
+                      player_management:
+                        type: string
+                      quest_engine:
+                        type: string
+                      combat_session:
+                        type: string
+                      progression:
+                        type: string
+
+components:
+  schemas:
+    EndpointDefinition:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          example: "/api/v1/auth/login"
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+        category:
+          type: string
+          example: "Authentication"
+        required_for_mvp:
+          type: boolean
+        implemented:
+          type: boolean
+        priority:
+          type: string
+          enum: [CRITICAL, HIGH, MEDIUM, LOW]
+
+    ModelDefinition:
+      type: object
+      properties:
+        model_name:
+          type: string
+          example: "Character"
+        description:
+          type: string
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              field_name:
+                type: string
+              type:
+                type: string
+              required:
+                type: boolean
+              description:
+                type: string
+
+    InitialGameData:
+      type: object
+      properties:
+        starter_items:
+          type: array
+          description: Стартовые предметы для новых персонажей
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        starter_quests:
+          type: array
+          description: Первые квесты
+          items:
+            type: string
+        starter_locations:
+          type: array
+          description: Доступные стартовые локации
+          items:
+            type: string
+        npcs:
+          type: array
+          description: Ключевые NPC для начала
+          items:
+            type: object
+            properties:
+              npc_id:
+                type: string
+              name:
+                type: string
+              location:
+                type: string
+              role:
+                type: string
+        factions:
+          type: array
+          description: Фракции доступные с начала
+          items:
+            type: object
+
+    ContentOverview:
+      type: object
+      properties:
+        period:
+          type: string
+        total_quests:
+          type: integer
+        quests_by_type:
+          type: object
+          properties:
+            main:
+              type: integer
+            side:
+              type: integer
+            faction:
+              type: integer
+        total_locations:
+          type: integer
+        total_npcs:
+          type: integer
+        key_events:
+          type: array
+          items:
+            type: string
+        implemented_percentage:
+          type: number
+          format: float
+
+    ContentStatus:
+      type: object
+      properties:
+        mvp_content_ready:
+          type: boolean
+        total_quests_available:
+          type: integer
+        total_locations_available:
+          type: integer
+        total_npcs_available:
+          type: integer
+        systems_ready:
+          type: object
+          properties:
+            quest_engine:
+              type: boolean
+            combat:
+              type: boolean
+            progression:
+              type: boolean
+            social:
+              type: boolean
+            economy:
+              type: boolean
+
+    TextVersionState:
+      type: object
+      description: Упрощенное состояние для текстовой версии игры
+      properties:
+        character:
+          type: object
+          properties:
+            name:
+              type: string
+            level:
+              type: integer
+            location:
+              type: string
+            hp:
+              type: integer
+            hp_max:
+              type: integer
+        available_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+              description:
+                type: string
+              command:
+                type: string
+        current_quest:
+          type: object
+          nullable: true
+          properties:
+            quest_name:
+              type: string
+            objectives:
+              type: array
+              items:
+                type: string
+        inventory_summary:
+          type: object
+          properties:
+            items_count:
+              type: integer
+            weight:
+              type: number
+        nearby_npcs:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              can_interact:
+                type: boolean
+
+    MainGameUIData:
+      type: object
+      properties:
+        character:
+          type: object
+          properties:
+            name:
+              type: string
+            level:
+              type: integer
+            experience:
+              type: integer
+            hp:
+              type: integer
+            attributes:
+              type: object
+              description: Ключевые характеристики персонажа
+              additionalProperties:
+                type: integer
+        active_quests:
+          type: array
+          description: Активные квесты игрока
+          items:
+            type: object
+            properties:
+              quest_id:
+                type: string
+              title:
+                type: string
+              status:
+                type: string
+                enum: [ACTIVE, COMPLETED, FAILED]
+        inventory:
+          type: object
+          properties:
+            slots:
+              type: array
+              description: Слоты инвентаря с предметами
+              items:
+                type: object
+                properties:
+                  slot_id:
+                    type: string
+                  item_name:
+                    type: string
+                  rarity:
+                    type: string
+                  quantity:
+                    type: integer
+            weight:
+              type: number
+              format: float
+        party:
+          type: object
+          nullable: true
+          properties:
+            leader_id:
+              type: string
+              format: uuid
+            members:
+              type: array
+              items:
+                type: object
+                properties:
+                  character_id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  role:
+                    type: string
+        notifications:
+          type: array
+          description: Последние уведомления игрока
+          items:
+            type: object
+            properties:
+              message:
+                type: string
+              category:
+                type: string
+              priority:
+                type: string
+                enum: [LOW, MEDIUM, HIGH, CRITICAL]
+              created_at:
+                type: string
+                format: date-time
+        world_state:
+          type: object
+          properties:
+            time_of_day:
+              type: string
+            weather:
+              type: string
+            active_events:
+              type: array
+              description: Текущие события в мире
+              items:
+                type: object
+                properties:
+                  event_id:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

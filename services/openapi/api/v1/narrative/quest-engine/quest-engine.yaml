@@ -1,0 +1,499 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine API
+  version: 1.0.0
+  description: |
+    API для движка выполнения квестов.
+    КРИТИЧЕСКИЙ MVP БЛОКЕР! Без этого нет контента в игре!
+    
+    Функционал:
+    - Quest state machine (запуск, прогресс, завершение)
+    - Dialogue tree execution (nodes, choices)
+    - Skill check processing (D&D dice rolls)
+    - Branch selection logic
+    - Condition evaluation (player flags, reputation, items)
+    - Quest tracking & progress
+    - Multiple active quests
+    - Quest rewards (experience, items, currency, reputation)
+    
+    Источник: .BRAIN/05-technical/backend/quest-engine-backend.md v1.0.0
+
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative
+    package: com.necpgame.narrativeservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Quest Execution
+    description: Выполнение квестов
+  - name: Quest State
+    description: Состояние квестов
+  - name: Dialogue
+    description: Диалоги
+
+paths:
+  /narrative/quest-engine/start:
+    post:
+      summary: Начать новый квест
+      operationId: startQuest
+      tags: [Quest Execution]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartQuestRequest'
+      responses:
+        '201':
+          description: Квест начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /narrative/quest-engine/instances/{instance_id}:
+    get:
+      summary: Получить состояние квеста
+      operationId: getQuestInstance
+      tags: [Quest State]
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /narrative/quest-engine/instances/{instance_id}/dialogue:
+    get:
+      summary: Получить текущий диалог
+      operationId: getCurrentDialogue
+      tags: [Dialogue]
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущий диалог
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DialogueNode'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /narrative/quest-engine/instances/{instance_id}/dialogue/choose:
+    post:
+      summary: Выбрать вариант диалога
+      operationId: chooseDialogueOption
+      tags: [Dialogue]
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DialogueChoiceRequest'
+      responses:
+        '200':
+          description: Результат выбора
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DialogueChoiceResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /narrative/quest-engine/instances/{instance_id}/skill-check:
+    post:
+      summary: Выполнить skill check
+      operationId: performSkillCheck
+      tags: [Quest Execution]
+      description: D&D skill check (бросок d20 + модификатор)
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillCheckRequest'
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillCheckResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /narrative/quest-engine/instances/{instance_id}/complete:
+    post:
+      summary: Завершить квест
+      operationId: completeQuest
+      tags: [Quest Execution]
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                branch_outcome:
+                  type: string
+                  description: ID ветки, которой завершился квест
+      responses:
+        '200':
+          description: Квест завершен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestCompletionResult'
+
+  /narrative/quest-engine/instances/{instance_id}/abandon:
+    post:
+      summary: Отказаться от квеста
+      operationId: abandonQuest
+      tags: [Quest Execution]
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Квест заброшен
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /narrative/quest-engine/character/{character_id}/active:
+    get:
+      summary: Получить активные квесты персонажа
+      operationId: getActiveQuests
+      tags: [Quest State]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Активные квесты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestInstance'
+                  max_active_quests:
+                    type: integer
+                    example: 20
+
+components:
+  schemas:
+    StartQuestRequest:
+      type: object
+      required:
+        - character_id
+        - quest_template_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        quest_template_id:
+          type: string
+          example: "quest_first_contact"
+
+    QuestInstance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        quest_template_id:
+          type: string
+        quest_name:
+          type: string
+          example: "First Contact"
+        status:
+          type: string
+          enum: [ACTIVE, COMPLETED, FAILED, ABANDONED]
+        current_branch_id:
+          type: string
+          nullable: true
+        current_dialogue_node_id:
+          type: string
+          nullable: true
+        progress:
+          type: object
+          description: Прогресс по objectives
+          additionalProperties:
+            type: object
+            properties:
+              current:
+                type: integer
+              target:
+                type: integer
+              completed:
+                type: boolean
+        flags:
+          type: object
+          description: Флаги квеста для условий
+          additionalProperties: true
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    DialogueNode:
+      type: object
+      properties:
+        node_id:
+          type: string
+        speaker:
+          type: string
+          example: "Jackie Welles"
+        text:
+          type: string
+          example: "Yo, V! Ready for your first gig?"
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueOption'
+        conditions:
+          type: object
+          description: Условия показа (reputation, flags, items)
+          additionalProperties: true
+
+    DialogueOption:
+      type: object
+      properties:
+        option_id:
+          type: string
+        text:
+          type: string
+          example: "[Corpo] I'm always ready for business."
+        required_attribute:
+          type: object
+          nullable: true
+          properties:
+            attribute:
+              type: string
+              example: "INTELLIGENCE"
+            min_value:
+              type: integer
+              example: 12
+        skill_check:
+          $ref: '#/components/schemas/SkillCheckRequirement'
+          nullable: true
+        leads_to_node:
+          type: string
+          description: Следующий node диалога
+        effects:
+          type: object
+          description: Эффекты выбора (flags, reputation)
+          additionalProperties: true
+
+    SkillCheckRequirement:
+      type: object
+      properties:
+        skill:
+          type: string
+          example: "PERSUASION"
+        difficulty:
+          type: integer
+          example: 15
+          description: DC (Difficulty Class)
+        advantage:
+          type: boolean
+          description: Бросок с преимуществом (2d20, берём лучший)
+
+    DialogueChoiceRequest:
+      type: object
+      required:
+        - option_id
+      properties:
+        option_id:
+          type: string
+
+    DialogueChoiceResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        next_node:
+          $ref: '#/components/schemas/DialogueNode'
+          nullable: true
+        skill_check_performed:
+          $ref: '#/components/schemas/SkillCheckResult'
+          nullable: true
+        effects_applied:
+          type: object
+          description: Примененные эффекты
+          additionalProperties: true
+        quest_updated:
+          type: boolean
+
+    SkillCheckRequest:
+      type: object
+      required:
+        - skill
+        - difficulty
+      properties:
+        skill:
+          type: string
+          example: "STEALTH"
+        difficulty:
+          type: integer
+          example: 15
+        advantage:
+          type: boolean
+          default: false
+
+    SkillCheckResult:
+      type: object
+      properties:
+        skill:
+          type: string
+        difficulty:
+          type: integer
+        roll:
+          type: integer
+          description: Результат броска d20
+          example: 14
+        modifier:
+          type: integer
+          description: Модификатор навыка персонажа
+          example: 5
+        total:
+          type: integer
+          description: roll + modifier
+          example: 19
+        success:
+          type: boolean
+        critical_success:
+          type: boolean
+        critical_failure:
+          type: boolean
+        advantage_used:
+          type: boolean
+        rolls:
+          type: array
+          items:
+            type: integer
+          description: Если был advantage, показываем оба броска
+
+    QuestCompletionResult:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        completion_time:
+          type: string
+          format: date-time
+        rewards:
+          $ref: '#/components/schemas/QuestRewards'
+        unlocked_quests:
+          type: array
+          description: Новые квесты, которые стали доступны
+          items:
+            type: string
+        reputation_changes:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            ARASAKA: -10
+            NOMADS: 25
+
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          example: 5000
+        currency:
+          type: object
+          properties:
+            eddies:
+              type: integer
+              example: 10000
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        reputation:
+          type: object
+          additionalProperties:
+            type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

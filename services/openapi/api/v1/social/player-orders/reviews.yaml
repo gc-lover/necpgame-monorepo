@@ -1,0 +1,352 @@
+# Target Architecture:
+# - Microservice: social-service (8084)
+# - API Base: /social/player-orders/*
+# - Frontend Module: modules/social/player-orders/reviews
+# - State: useSocialStore(playerOrders.reviews)
+# - UI: ReviewList, ReviewSummaryCard, FlagBadge, DisputeBanner, PaginationControls
+# - Forms: ReviewSubmitForm, ReviewFilterForm, ReviewModerationForm
+# - Hooks: useReviewsQuery, useReviewSubmission, useReviewModeration
+# - Events: social.player-orders.review.created, social.player-orders.review.flagged, social.player-orders.rating.updated, social.player-orders.penalty.applied
+openapi: 3.0.3
+info:
+  title: Player Order Reviews API
+  version: 1.0.0
+  description: |
+    Контракт social-service для создания, модерации и выдачи отзывов по заказам игроков.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Reviews
+    description: Управление отзывами между заказчиками и исполнителями.
+  - name: Review Flags
+    description: Флаги и жалобы на отзывы.
+  - name: Review Summary
+    description: Агрегированные метрики отзывов.
+paths:
+  /social/player-orders/reviews:
+    post:
+      tags: [Reviews]
+      summary: Создать отзыв
+      description: Создаёт отзыв по заказу, инициирует пересчёт рейтинга и публикацию события.
+      operationId: createPlayerOrderReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReviewCreateRequest'
+            examples:
+              default:
+                $ref: './reviews-examples.yaml#/components/examples/ReviewCreateExample'
+      responses:
+        '201':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReview'
+              examples:
+                review:
+                  $ref: './reviews-examples.yaml#/components/examples/ReviewResponseExample'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '409': { $ref: '../../shared/common/responses.yaml#/components/responses/Conflict' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+    get:
+      tags: [Reviews]
+      summary: Получить отзывы
+      description: Возвращает отзывы с фильтрами по игроку, заказу, флагам, периодам и статусу модерации.
+      operationId: listPlayerOrderReviews
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/TargetPlayerId'
+        - $ref: './reviews-parameters.yaml#/components/parameters/ReviewerId'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Role'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Flag'
+        - $ref: './reviews-parameters.yaml#/components/parameters/ModerationStatus'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Category'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Period'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Locale'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Отзывы получены
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReviewListResponse'
+              examples:
+                list:
+                  $ref: './reviews-examples.yaml#/components/examples/ReviewListExample'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '429': { $ref: '../../shared/common/responses.yaml#/components/responses/TooManyRequests' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /social/player-orders/reviews/{reviewId}:
+    get:
+      tags: [Reviews]
+      summary: Получить отзыв
+      description: Возвращает подробности отзыва, включая флаги и модерацию.
+      operationId: getPlayerOrderReview
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/ReviewId'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Locale'
+      responses:
+        '200':
+          description: Отзыв найден
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReview'
+              examples:
+                review:
+                  $ref: './reviews-examples.yaml#/components/examples/ReviewResponseExample'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+    patch:
+      tags: [Reviews]
+      summary: Обновить отзыв
+      description: Позволяет автору редактировать текст, теги или вложения, если отзыв ещё не заархивирован.
+      operationId: updatePlayerOrderReview
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/ReviewId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReviewUpdateRequest'
+      responses:
+        '200':
+          description: Отзыв обновлён
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReview'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '409': { $ref: '../../shared/common/responses.yaml#/components/responses/Conflict' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+    delete:
+      tags: [Reviews]
+      summary: Удалить отзыв
+      description: Помечает отзыв как удалённый, сохраняя его в аудите.
+      operationId: deletePlayerOrderReview
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/ReviewId'
+      responses:
+        '202':
+          description: Отзыв помечен как удалённый
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /social/player-orders/orders/{orderId}/reviews:
+    get:
+      tags: [Reviews]
+      summary: Получить отзывы заказа
+      description: Возвращает отзывы, оставленные для конкретного заказа.
+      operationId: listPlayerOrderReviewsByOrder
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/OrderId'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Role'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Locale'
+      responses:
+        '200':
+          description: Отзывы по заказу
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReviewListResponse'
+              examples:
+                list:
+                  $ref: './reviews-examples.yaml#/components/examples/ReviewListExample'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /social/player-orders/reviews/{reviewId}/flags:
+    post:
+      tags: [Review Flags]
+      summary: Установить флаг отзыва
+      description: Добавляет флаг или жалобу к отзыву, может запускать модерацию.
+      operationId: flagPlayerOrderReview
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/ReviewId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './reviews-schemas-admin.yaml#/components/schemas/ReviewFlagRequest'
+            examples:
+              default:
+                $ref: './reviews-examples.yaml#/components/examples/ReviewFlagExample'
+      responses:
+        '200':
+          description: Флаг добавлен
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-admin.yaml#/components/schemas/ReviewFlagResponse'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /social/player-orders/reviews/{reviewId}/disputes:
+    post:
+      tags: [Review Flags]
+      summary: Подать жалобу на отзыв
+      description: Регистрирует жалобу и передаёт её в арбитраж.
+      operationId: disputePlayerOrderReview
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/ReviewId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './reviews-schemas-admin.yaml#/components/schemas/ReviewDisputeRequest'
+            examples:
+              default:
+                $ref: './reviews-examples.yaml#/components/examples/ReviewDisputeExample'
+      responses:
+        '201':
+          description: Жалоба зарегистрирована
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-admin.yaml#/components/schemas/ReviewDisputeResponse'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /social/player-orders/reviews/{reviewId}/moderation:
+    post:
+      tags: [Review Flags]
+      summary: Выполнить действие модерации
+      description: Применяет модерационное действие к отзыву (апрув, отклонение, эскалация).
+      operationId: moderatePlayerOrderReview
+      security:
+        - BearerAuth: []
+      x-required-scopes:
+        - social.reviews.moderate
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/ReviewId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './reviews-schemas-admin.yaml#/components/schemas/ReviewModerationRequest'
+      responses:
+        '200':
+          description: Модерация выполнена
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReview'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /social/player-orders/reviews/summary:
+    get:
+      tags: [Review Summary]
+      summary: Получить сводку отзывов
+      description: Возвращает агрегированную статистику по отзывам игрока и роли.
+      operationId: getPlayerOrderReviewSummary
+      parameters:
+        - $ref: './reviews-parameters.yaml#/components/parameters/TargetPlayerId'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Role'
+        - $ref: './reviews-parameters.yaml#/components/parameters/Period'
+      responses:
+        '200':
+          description: Сводка рассчитана
+          content:
+            application/json:
+              schema:
+                $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReviewSummaryResponse'
+              examples:
+                summary:
+                  $ref: './reviews-examples.yaml#/components/examples/ReviewSummaryExample'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+x-kafka-topics:
+  social.player-orders.review.created:
+    summary: Отзыв создан.
+    payload:
+      $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReview'
+  social.player-orders.review.flagged:
+    summary: Отзыв отмечен флагом или жалобой.
+    payload:
+      type: object
+      required: [reviewId, flag, setBy, setAt]
+      properties:
+        reviewId:
+          type: string
+          format: uuid
+        flag:
+          type: string
+          enum: [positive, neutral, negative, warning, dispute]
+        setBy:
+          type: string
+          format: uuid
+        setAt:
+          type: string
+          format: date-time
+  social.player-orders.review.moderated:
+    summary: Модерация отзыва выполнена.
+    payload:
+      $ref: './reviews-schemas-core.yaml#/components/schemas/PlayerOrderReview'
+  social.player-orders.rating.updated:
+    summary: Рейтинг пересчитан на основании отзывов.
+    payload:
+      type: object
+      required: [playerId, role, delta, reason]
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [executor, client]
+        delta:
+          type: number
+          format: float
+        reason:
+          type: string
+
+

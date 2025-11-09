@@ -1,0 +1,257 @@
+# Target Architecture:
+# - Microservice: social-service (port 8090)
+# - API Base: /api/v1/social/friends
+# - Dependencies: auth-service, session-service, notification-service, realtime-service, analytics-service, moderation-service
+# - Frontend Module: modules/social/friends (useFriendsStore)
+# - UI: FriendsList, FriendRequestsPanel, PresenceIndicator, BlockList, RecentPlayers, InviteFriendModal
+# - Forms: FriendSearchForm, SendRequestForm, InviteToPartyForm
+# - Hooks: useFriends, usePresence, useFriendRequests, useFriendInvites
+
+openapi: 3.0.3
+info:
+  title: Friend System API
+  version: 1.0.0
+  description: >
+    Социальная система друзей NECPGAME: запросы, статусы присутствия, блокировки,
+    рекомендации и realtime взаимодействия.
+  x-microservice:
+    name: social-service
+    port: 8090
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Friends
+    description: Управление списком друзей и отношениями
+  - name: Requests
+    description: Заявки, приглашения и прием
+  - name: Presence
+    description: Статусы присутствия и активности
+  - name: Blocks
+    description: Блокировки, mute, privacy
+  - name: SocialGraph
+    description: Рекомендации, recent players, analytics
+paths:
+  /social/friends:
+    get:
+      tags: [Friends]
+      summary: Список друзей текущего игрока
+      parameters:
+        - in: query
+          name: includePresence
+          schema: { type: boolean, default: true }
+        - in: query
+          name: includeMetadata
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Список друзей
+          content:
+            application/json:
+              schema: { $ref: './friend-components.yaml#/components/schemas/FriendListResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    post:
+      tags: [Requests]
+      summary: Отправить запрос в друзья
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './friend-components.yaml#/components/schemas/FriendRequestCreate' }
+            examples:
+              sendRequest:
+                $ref: './friend-examples.yaml#/components/examples/FriendRequestCreate'
+      responses:
+        '202': { description: Запрос создан }
+        '400': { description: Запрос невозможен, content: { application/json: { schema: { $ref: './friend-components.yaml#/components/schemas/FriendError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '429': { $ref: '../../shared/common/responses.yaml#/components/responses/TooManyRequests' }
+  /social/friends/{friendId}:
+    parameters:
+      - $ref: './friend-components.yaml#/components/parameters/FriendId'
+    delete:
+      tags: [Friends]
+      summary: Удалить игрока из друзей
+      responses:
+        '204': { description: Друг удалён }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /social/friends/requests:
+    get:
+      tags: [Requests]
+      summary: Получить входящие и исходящие запросы
+      responses:
+        '200':
+          description: Запросы дружбы
+          content:
+            application/json:
+              schema: { $ref: './friend-components.yaml#/components/schemas/FriendRequestsResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/friends/requests/{requestId}/accept:
+    parameters:
+      - $ref: './friend-components.yaml#/components/parameters/RequestId'
+    post:
+      tags: [Requests]
+      summary: Принять запрос
+      responses:
+        '200': { description: Запрос принят }
+        '400': { description: Запрос недействителен, content: { application/json: { schema: { $ref: './friend-components.yaml#/components/schemas/FriendError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/friends/requests/{requestId}/decline:
+    parameters:
+      - $ref: './friend-components.yaml#/components/parameters/RequestId'
+    post:
+      tags: [Requests]
+      summary: Отклонить запрос
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: './friend-components.yaml#/components/schemas/FriendRequestDecline' }
+      responses:
+        '200': { description: Запрос отклонён }
+        '400': { description: Запрос недействителен, content: { application/json: { schema: { $ref: './friend-components.yaml#/components/schemas/FriendError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/friends/presence:
+    get:
+      tags: [Presence]
+      summary: Получить актуальные статусы присутствия друзей
+      responses:
+        '200':
+          description: Статусы присутствия
+          content:
+            application/json:
+              schema: { $ref: './friend-components.yaml#/components/schemas/PresenceFeedResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    post:
+      tags: [Presence]
+      summary: Обновить собственный статус присутствия
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './friend-components.yaml#/components/schemas/PresenceUpdateRequest' }
+            examples:
+              presenceUpdate:
+                $ref: './friend-examples.yaml#/components/examples/PresenceUpdateRequest'
+      responses:
+        '200': { description: Статус обновлён }
+        '400': { description: Некорректное состояние, content: { application/json: { schema: { $ref: './friend-components.yaml#/components/schemas/FriendError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/friends/recent:
+    get:
+      tags: [SocialGraph]
+      summary: Недавние игроки
+      responses:
+        '200':
+          description: Список последних игроков
+          content:
+            application/json:
+              schema: { $ref: './friend-components.yaml#/components/schemas/RecentPlayersResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/friends/suggestions:
+    get:
+      tags: [SocialGraph]
+      summary: Рекомендации друзей
+      parameters:
+        - in: query
+          name: source
+          schema: { type: string }
+      responses:
+        '200':
+          description: Список рекомендаций
+          content:
+            application/json:
+              schema: { $ref: './friend-components.yaml#/components/schemas/SuggestionsResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/friends/blocks:
+    get:
+      tags: [Blocks]
+      summary: Список блокировок и игнора
+      responses:
+        '200':
+          description: Заблокированные игроки
+          content:
+            application/json:
+              schema: { $ref: './friend-components.yaml#/components/schemas/BlockListResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    post:
+      tags: [Blocks]
+      summary: Добавить игрока в блок или mute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './friend-components.yaml#/components/schemas/BlockCreateRequest' }
+      responses:
+        '201': { description: Блокировка добавлена }
+        '400': { description: Ошибка добавления, content: { application/json: { schema: { $ref: './friend-components.yaml#/components/schemas/FriendError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/friends/blocks/{blockId}:
+    parameters:
+      - $ref: './friend-components.yaml#/components/parameters/BlockId'
+    delete:
+      tags: [Blocks]
+      summary: Снять блокировку
+      responses:
+        '204': { description: Блокировка снята }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/friends/invites:
+    post:
+      tags: [Requests]
+      summary: Отправить социальное приглашение (party/guild)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './friend-components.yaml#/components/schemas/SocialInviteRequest' }
+      responses:
+        '202': { description: Приглашение отправлено }
+        '400': { description: Отправка невозможна, content: { application/json: { schema: { $ref: './friend-components.yaml#/components/schemas/FriendError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+
+x-websocket:
+  url: wss://api.necp.game/v1/social/friends/stream
+  description: Realtime события дружеской системы
+  messages:
+    friendRequest:
+      summary: Получен новый запрос в друзья
+      payload: { $ref: './friend-components.yaml#/components/schemas/FriendRequestEvent' }
+    requestAccepted:
+      summary: Запрос принят
+      payload: { $ref: './friend-components.yaml#/components/schemas/FriendEvent' }
+    friendRemoved:
+      summary: Друг удалён
+      payload: { $ref: './friend-components.yaml#/components/schemas/FriendEvent' }
+    presenceUpdate:
+      summary: Обновление статуса присутствия
+      payload: { $ref: './friend-components.yaml#/components/schemas/PresenceEvent' }
+    blockAdded:
+      summary: Игрок добавлен в блок
+      payload: { $ref: './friend-components.yaml#/components/schemas/BlockEvent' }
+    inviteReceived:
+      summary: Получено новое приглашение
+      payload: { $ref: './friend-components.yaml#/components/schemas/SocialInviteEvent' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+  parameters:
+    FriendId: { $ref: './friend-components.yaml#/components/parameters/FriendId' }
+    RequestId: { $ref: './friend-components.yaml#/components/parameters/RequestId' }
+    BlockId: { $ref: './friend-components.yaml#/components/parameters/BlockId' }
+  schemas:
+    FriendListResponse: { $ref: './friend-components.yaml#/components/schemas/FriendListResponse' }
+    FriendError: { $ref: './friend-components.yaml#/components/schemas/FriendError' }
+    PresenceFeedResponse: { $ref: './friend-components.yaml#/components/schemas/PresenceFeedResponse' }
+  examples:
+    FriendRequestCreate: { $ref: './friend-examples.yaml#/components/examples/FriendRequestCreate' }
+    PresenceUpdateRequest: { $ref: './friend-examples.yaml#/components/examples/PresenceUpdateRequest' }
+

@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+  title: Starter Content API
+  version: 1.0.0
+  description: |
+    API для стартового контента игры.
+    
+    Функционал:
+    - Origin stories (стартовые истории)
+    - Class-specific quests (квесты по классам)
+    - Faction starter quests
+    - Main story quests (по периодам 2023-2093)
+    - Tutorial quests
+    - First steps content
+    
+    Охватывает 24 стартовых квеста:
+    - 1 origin story
+    - 5 class quests
+    - 2 faction quests
+    - 14 main quests по периодам
+    - 2 special quests
+    
+    Источники: .BRAIN/04-narrative/quests/ (24 documents)
+
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative
+    package: com.necpgame.narrativeservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Origin Stories
+    description: Стартовые истории
+  - name: Class Quests
+    description: Классовые квесты
+  - name: Main Story
+    description: Основной сюжет
+
+paths:
+  /narrative/starter-content/origin-stories:
+    get:
+      summary: Получить доступные origin stories
+      operationId: getOriginStories
+      tags: [Origin Stories]
+      responses:
+        '200':
+          description: Origin stories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  origins:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OriginStory'
+
+  /narrative/starter-content/origin/{origin_id}:
+    get:
+      summary: Получить детали origin story
+      operationId: getOriginStory
+      tags: [Origin Stories]
+      parameters:
+        - name: origin_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Origin story
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OriginStoryDetailed'
+
+  /narrative/starter-content/class-quests:
+    get:
+      summary: Получить классовые стартовые квесты
+      operationId: getClassQuests
+      tags: [Class Quests]
+      parameters:
+        - name: class_id
+          in: query
+          schema:
+            type: string
+            enum: [FIXER, NETRUNNER, NOMAD, ROCKERBOY, TECHIE, SOLO, CORPO, MEDTECH]
+      responses:
+        '200':
+          description: Классовые квесты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StarterQuest'
+
+  /narrative/starter-content/main-story:
+    get:
+      summary: Получить квесты основного сюжета
+      operationId: getMainStoryQuests
+      tags: [Main Story]
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+        - name: chapter
+          in: query
+          schema:
+            type: integer
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Main story quests
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MainStoryQuest'
+
+  /narrative/starter-content/character/{character_id}/recommended:
+    get:
+      summary: Получить рекомендованный стартовый контент
+      operationId: getRecommendedStarterContent
+      tags: [Origin Stories]
+      description: На основе класса, фракции и origin
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Рекомендованный контент
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  origin_quest:
+                    $ref: '#/components/schemas/StarterQuest'
+                  class_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StarterQuest'
+                  main_story_entry:
+                    $ref: '#/components/schemas/MainStoryQuest'
+                  tutorial_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StarterQuest'
+
+  /narrative/starter-content/progression:
+    get:
+      summary: Получить прогрессию стартового контента
+      operationId: getStarterProgression
+      tags: [Main Story]
+      description: Правильный порядок квестов для новых игроков
+      responses:
+        '200':
+          description: Progression path
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommended_order:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        step:
+                          type: integer
+                        quest_id:
+                          type: string
+                        quest_name:
+                          type: string
+                        estimated_level:
+                          type: integer
+
+components:
+  schemas:
+    OriginStory:
+      type: object
+      properties:
+        origin_id:
+          type: string
+        name:
+          type: string
+          example: "Solo - Military Veteran"
+        description:
+          type: string
+        backstory:
+          type: string
+        starting_bonuses:
+          type: object
+          properties:
+            attributes:
+              type: object
+              additionalProperties:
+                type: integer
+            skills:
+              type: object
+              additionalProperties:
+                type: integer
+            items:
+              type: array
+              items:
+                type: string
+                format: uuid
+            reputation:
+              type: object
+              additionalProperties:
+                type: integer
+        compatible_classes:
+          type: array
+          items:
+            type: string
+
+    OriginStoryDetailed:
+      allOf:
+        - $ref: '#/components/schemas/OriginStory'
+        - type: object
+          properties:
+            full_backstory:
+              type: string
+            origin_quest:
+              $ref: '#/components/schemas/StarterQuest'
+            unique_dialogue_options:
+              type: array
+              items:
+                type: string
+            world_reactions:
+              type: array
+              description: Как мир реагирует на origin
+              items:
+                type: string
+
+    StarterQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [ORIGIN, CLASS, FACTION, TUTORIAL, MAIN_INTRO]
+        required_level:
+          type: integer
+          default: 1
+        estimated_time_minutes:
+          type: integer
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            items:
+              type: array
+              description: Предметы, выдаваемые за квест
+              items:
+                type: object
+                properties:
+                  item_id:
+                    type: string
+                  quantity:
+                    type: integer
+            currency:
+              type: integer
+        next_quest:
+          type: string
+          nullable: true
+          description: Следующий квест в цепочке
+
+    MainStoryQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        chapter:
+          type: integer
+        title:
+          type: string
+        period:
+          type: string
+          example: "2055"
+        description:
+          type: string
+        required_level:
+          type: integer
+        prerequisites:
+          type: array
+          description: Предыдущие квесты основного сюжета
+          items:
+            type: string
+        major_choices:
+          type: array
+          description: Важные выборы в квесте
+          items:
+            type: object
+            properties:
+              choice_id:
+                type: string
+              description:
+                type: string
+              consequences:
+                type: string
+        branches:
+          type: integer
+          description: Количество веток
+        estimated_time_hours:
+          type: number
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

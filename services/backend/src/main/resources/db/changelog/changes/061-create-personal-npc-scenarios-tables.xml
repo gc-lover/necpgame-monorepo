@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="061-create-personal-npc-scenarios-tables" author="backend-agent">
+        <createTable tableName="npc_scenario_blueprints">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="author_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="VARCHAR(32)"/>
+            <column name="category" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="required_roles_json" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parameters_json" type="TEXT"/>
+            <column name="conditions_json" type="TEXT"/>
+            <column name="steps_json" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rewards_json" type="TEXT"/>
+            <column name="costs_json" type="TEXT"/>
+            <column name="automation_hints_json" type="TEXT"/>
+            <column name="verification_notes" type="VARCHAR(2000)"/>
+            <column name="is_public" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_verified" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="NUMERIC(19,4)"/>
+            <column name="license_tier" type="VARCHAR(10)" defaultValue="L1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="visibility_scope" type="VARCHAR(20)" defaultValue="PRIVATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+                <defaultValueComputed>CURRENT_TIMESTAMP</defaultValueComputed>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+                <defaultValueComputed>CURRENT_TIMESTAMP</defaultValueComputed>
+            </column>
+        </createTable>
+
+        <createIndex tableName="npc_scenario_blueprints" indexName="idx_npc_scenario_blueprints_owner">
+            <column name="owner_id"/>
+        </createIndex>
+        <createIndex tableName="npc_scenario_blueprints" indexName="idx_npc_scenario_blueprints_category">
+            <column name="category"/>
+        </createIndex>
+        <createIndex tableName="npc_scenario_blueprints" indexName="idx_npc_scenario_blueprints_public">
+            <column name="is_public"/>
+        </createIndex>
+        <createIndex tableName="npc_scenario_blueprints" indexName="idx_npc_scenario_blueprints_license">
+            <column name="license_tier"/>
+        </createIndex>
+
+        <createTable tableName="npc_scenario_instances">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="blueprint_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="npc_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_step" type="INT"/>
+            <column name="parameters_json" type="TEXT"/>
+            <column name="kpi_json" type="TEXT"/>
+            <column name="result_json" type="TEXT"/>
+            <column name="scheduled_at" type="TIMESTAMP"/>
+            <column name="started_at" type="TIMESTAMP"/>
+            <column name="completed_at" type="TIMESTAMP"/>
+            <column name="duration" type="NUMERIC(19,4)"/>
+            <column name="priority" type="INT"/>
+            <column name="automation_rule_id" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+                <defaultValueComputed>CURRENT_TIMESTAMP</defaultValueComputed>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+                <defaultValueComputed>CURRENT_TIMESTAMP</defaultValueComputed>
+            </column>
+        </createTable>
+
+        <createIndex tableName="npc_scenario_instances" indexName="idx_npc_scenario_instances_blueprint">
+            <column name="blueprint_id"/>
+        </createIndex>
+        <createIndex tableName="npc_scenario_instances" indexName="idx_npc_scenario_instances_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="npc_scenario_instances" indexName="idx_npc_scenario_instances_npc">
+            <column name="npc_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+            constraintName="fk_npc_scenario_instances_blueprint"
+            baseTableName="npc_scenario_instances"
+            baseColumnNames="blueprint_id"
+            referencedTableName="npc_scenario_blueprints"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>
+
+

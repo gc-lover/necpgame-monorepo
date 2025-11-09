@@ -1,0 +1,132 @@
+package com.necpgame.backjava.model;
+
+import java.net.URI;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import org.springframework.lang.Nullable;
+import org.openapitools.jackson.nullable.JsonNullable;
+import java.time.OffsetDateTime;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+
+import java.util.*;
+import jakarta.annotation.Generated;
+
+/**
+ * FurniturePurchaseResponse
+ */
+
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", comments = "Generator version: 7.17.0")
+public class FurniturePurchaseResponse {
+
+  private @Nullable String itemId;
+
+  private @Nullable Integer quantity;
+
+  private @Nullable Integer remainingCurrency;
+
+  public FurniturePurchaseResponse itemId(@Nullable String itemId) {
+    this.itemId = itemId;
+    return this;
+  }
+
+  /**
+   * Get itemId
+   * @return itemId
+   */
+  
+  @Schema(name = "itemId", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("itemId")
+  public @Nullable String getItemId() {
+    return itemId;
+  }
+
+  public void setItemId(@Nullable String itemId) {
+    this.itemId = itemId;
+  }
+
+  public FurniturePurchaseResponse quantity(@Nullable Integer quantity) {
+    this.quantity = quantity;
+    return this;
+  }
+
+  /**
+   * Get quantity
+   * @return quantity
+   */
+  
+  @Schema(name = "quantity", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("quantity")
+  public @Nullable Integer getQuantity() {
+    return quantity;
+  }
+
+  public void setQuantity(@Nullable Integer quantity) {
+    this.quantity = quantity;
+  }
+
+  public FurniturePurchaseResponse remainingCurrency(@Nullable Integer remainingCurrency) {
+    this.remainingCurrency = remainingCurrency;
+    return this;
+  }
+
+  /**
+   * Get remainingCurrency
+   * @return remainingCurrency
+   */
+  
+  @Schema(name = "remainingCurrency", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("remainingCurrency")
+  public @Nullable Integer getRemainingCurrency() {
+    return remainingCurrency;
+  }
+
+  public void setRemainingCurrency(@Nullable Integer remainingCurrency) {
+    this.remainingCurrency = remainingCurrency;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    FurniturePurchaseResponse furniturePurchaseResponse = (FurniturePurchaseResponse) o;
+    return Objects.equals(this.itemId, furniturePurchaseResponse.itemId) &&
+        Objects.equals(this.quantity, furniturePurchaseResponse.quantity) &&
+        Objects.equals(this.remainingCurrency, furniturePurchaseResponse.remainingCurrency);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(itemId, quantity, remainingCurrency);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class FurniturePurchaseResponse {\n");
+    sb.append("    itemId: ").append(toIndentedString(itemId)).append("\n");
+    sb.append("    quantity: ").append(toIndentedString(quantity)).append("\n");
+    sb.append("    remainingCurrency: ").append(toIndentedString(remainingCurrency)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+}
+

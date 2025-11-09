@@ -1,0 +1,294 @@
+openapi: 3.0.3
+info:
+  title: NPC Relationships Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social/npc-relationships
+    directory: api/v1/social/npc-relationships
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    NpcRelationshipStatusResponse:
+      type: object
+      required: [data, metadata]
+      properties:
+        data:
+          $ref: './npc-relationships-models.yaml#/components/schemas/NpcRelationshipStatus'
+        metadata:
+          type: object
+          properties:
+            include:
+              type: array
+              items:
+                type: string
+            lastSyncedAt:
+              type: string
+              format: date-time
+    NpcRelationshipAdjustRequest:
+      type: object
+      required: [adjustments]
+      properties:
+        adjustments:
+          type: array
+          items:
+            $ref: './npc-relationships-models.yaml#/components/schemas/RelationshipAdjustment'
+        dryRun:
+          type: boolean
+          default: false
+    NpcRelationshipAdjustResponse:
+      type: object
+      required: [acceptedCount, rejectedCount, jobId]
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        acceptedCount:
+          type: integer
+        rejectedCount:
+          type: integer
+        cooldownsApplied:
+          type: array
+          items:
+            type: object
+            properties:
+              npcId:
+                type: string
+                format: uuid
+              seconds:
+                type: integer
+        messages:
+          type: array
+          items:
+            type: string
+    NpcInteractionLogRequest:
+      type: object
+      required:
+        - npcId
+        - playerId
+        - interactionType
+        - timestamp
+      properties:
+        npcId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        interactionType:
+          type: string
+          enum: [dialogue, gift, mission, betrayal, rescue, contract, romance]
+        timestamp:
+          type: string
+          format: date-time
+        outcome:
+          type: string
+        reputationImpact:
+          type: integer
+        visibility:
+          type: string
+          enum: [private, public, faction, friends]
+        location:
+          type: string
+        notes:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+            format: uri
+    NpcInteractionLogResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './npc-relationships-models.yaml#/components/schemas/NpcInteractionLog'
+    NpcRomanceRequest:
+      type: object
+      required: [npcId, playerId, desiredLevel]
+      properties:
+        npcId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        desiredLevel:
+          type: string
+          enum: [none, interest, affection, commitment, bond]
+        consentFlags:
+          type: array
+          items:
+            type: string
+        reputationSnapshot:
+          type: object
+          properties:
+            globalReputation:
+              type: integer
+            factionId:
+              type: string
+            factionReputation:
+              type: integer
+        notes:
+          type: string
+    NpcRomanceResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './npc-relationships-models.yaml#/components/schemas/NpcRomanceStatus'
+        warnings:
+          type: array
+          items:
+            type: string
+    NpcRelationshipHistoryResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './npc-relationships-models.yaml#/components/schemas/HistoryEvent'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    NpcRelationshipEventListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './npc-relationships-models.yaml#/components/schemas/NpcRelationshipEvent'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    NpcRelationshipModerationCaseRequest:
+      type: object
+      required: [npcId, playerId, reason]
+      properties:
+        npcId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 512
+        evidenceIds:
+          type: array
+          items:
+            type: string
+        suggestedActions:
+          type: array
+          items:
+            type: string
+    NpcRelationshipModerationCaseResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './npc-relationships-models.yaml#/components/schemas/ModerationCase'
+    NpcRelationshipMetricsResponse:
+      type: object
+      required: [data, generatedAt]
+      properties:
+        data:
+          $ref: './npc-relationships-models.yaml#/components/schemas/NpcRelationshipMetrics'
+        generatedAt:
+          type: string
+          format: date-time
+    SocialNpcRelationshipChangedMessage:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: social.npc-relationship.changed
+        producer:
+          type: string
+          example: social-service
+        payload:
+          type: object
+          properties:
+            npcId:
+              type: string
+              format: uuid
+            playerId:
+              type: string
+              format: uuid
+            reputationDelta:
+              type: integer
+            trustDelta:
+              type: integer
+            mood:
+              type: string
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [world-service, gameplay-service, telemetry]
+    SocialNpcRomanceStateMessage:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: social.npc-romance.state
+        producer:
+          type: string
+          example: social-service
+        payload:
+          type: object
+          properties:
+            npcId:
+              type: string
+              format: uuid
+            playerId:
+              type: string
+              format: uuid
+            romanceLevel:
+              type: string
+            flags:
+              type: array
+              items:
+                type: string
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [quest-service, narrative-service, telemetry]
+    WorldNpcRelationshipEventMessage:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: world.npc-relationship.event
+        producer:
+          type: string
+          example: world-service
+        payload:
+          $ref: './npc-relationships-models.yaml#/components/schemas/NpcRelationshipEvent'
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [social-service, notification-service]
+    NpcRelationshipQueues:
+      type: object
+      properties:
+        moderationQueue:
+          type: string
+          example: npc-relationship-review
+        romanceValidationQueue:
+          type: string
+          example: npc-romance-validation
+

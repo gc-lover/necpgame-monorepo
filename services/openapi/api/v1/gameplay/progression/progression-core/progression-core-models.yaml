@@ -1,0 +1,150 @@
+openapi: 3.0.3
+info:
+  title: Progression Core Models
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/progression
+    directory: api/v1/gameplay/progression/progression-core
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  parameters:
+    CharacterIdPath:
+      name: characterId
+      in: path
+      required: true
+      description: Character identifier
+      schema:
+        type: string
+        format: uuid
+    HistoryActionFilter:
+      name: type
+      in: query
+      description: History event type filter
+      schema:
+        type: string
+        enum: [LEVEL_UP, SKILL_UP, ATTRIBUTE_SPEND, SKILL_SPEND, EXPERIENCE, RESPEC]
+  schemas:
+    LevelInfo:
+      type: object
+      required: [level, experience, experienceToNextLevel]
+      properties:
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        experienceToNextLevel:
+          type: integer
+          minimum: 1
+        totalExperienceEarned:
+          type: integer
+          minimum: 0
+    PointPool:
+      type: object
+      required: [unspent, totalSpent]
+      properties:
+        unspent:
+          type: integer
+        totalSpent:
+          type: integer
+        lastSpentAt:
+          type: string
+          format: date-time
+          nullable: true
+    AttributeState:
+      type: object
+      required: [name, value, cap]
+      properties:
+        name:
+          type: string
+        value:
+          type: integer
+        cap:
+          type: integer
+        pendingIncrease:
+          type: integer
+          default: 0
+    SkillProgress:
+      type: object
+      required: [skillName, currentLevel, experience, experienceToNextLevel]
+      properties:
+        skillName:
+          type: string
+        currentLevel:
+          type: integer
+        experience:
+          type: integer
+        experienceToNextLevel:
+          type: integer
+        milestones:
+          type: array
+          items:
+            type: object
+            properties:
+              milestoneLevel:
+                type: integer
+              unlocked:
+                type: boolean
+    ProgressionState:
+      type: object
+      required:
+        - levelInfo
+        - attributePoints
+        - skillPoints
+        - attributes
+        - skillSummary
+      properties:
+        levelInfo:
+          $ref: '#/components/schemas/LevelInfo'
+        attributePoints:
+          $ref: '#/components/schemas/PointPool'
+        skillPoints:
+          $ref: '#/components/schemas/PointPool'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeState'
+        skillSummary:
+          type: object
+          properties:
+            trackedSkills:
+              type: integer
+            maxSkillLevel:
+              type: integer
+            totalSkillsLevel:
+              type: integer
+        lastSyncAt:
+          type: string
+          format: date-time
+    HistoryEntry:
+      type: object
+      required: [entryId, type, occurredAt]
+      properties:
+        entryId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [LEVEL_UP, SKILL_UP, ATTRIBUTE_SPEND, SKILL_SPEND, EXPERIENCE, RESPEC]
+        occurredAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+        before:
+          type: object
+          additionalProperties: true
+        after:
+          type: object
+          additionalProperties: true
+

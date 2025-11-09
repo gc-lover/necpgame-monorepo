@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="039-create-character-status-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_status"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_status">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="health" type="INT" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_health" type="INT" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="energy" type="INT" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_energy" type="INT" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="humanity" type="INT" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_humanity" type="INT" defaultValue="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="level" type="INT" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_level_experience" type="INT" defaultValue="1000">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_status"
+                baseColumnNames="character_id"
+                constraintName="fk_character_status_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="character_status" indexName="idx_character_status_character" unique="true">
+            <column name="character_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="character_status"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

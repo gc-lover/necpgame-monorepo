@@ -1,0 +1,429 @@
+openapi: 3.0.3
+info:
+  title: Economy Analytics Core Models
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/analytics
+    directory: api/v1/economy/analytics
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  parameters:
+    AssetPath:
+      name: asset
+      in: path
+      required: true
+      description: Asset ticker identifier (e.g., ARSK, MILT)
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 16
+    PlayerIdPath:
+      name: playerId
+      in: path
+      required: true
+      description: Player identifier owning the portfolio or alerts
+      schema:
+        type: string
+        format: uuid
+    AlertIdPath:
+      name: alertId
+      in: path
+      required: true
+      description: Alert identifier
+      schema:
+        type: string
+        format: uuid
+    TimeframeQuery:
+      name: timeframe
+      in: query
+      description: Desired timeframe window
+      schema:
+        type: string
+        enum: [1H, 24H, 7D, 30D, 90D, 1Y, ALL]
+        default: 7D
+    AggregationQuery:
+      name: aggregation
+      in: query
+      description: Aggregation granularity for chart samples
+      schema:
+        type: string
+        enum: [AUTO, 1m, 5m, 15m, 1h, 4h, 1d]
+        default: AUTO
+    CandleIntervalQuery:
+      name: interval
+      in: query
+      description: Candle interval for OHLC data
+      schema:
+        type: string
+        enum: [1m, 5m, 15m, 1h, 4h, 1d, 1w]
+        default: 1h
+    LimitQuery:
+      name: limit
+      in: query
+      description: Number of items to return (max 1000)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 250
+    HeatMapScopeQuery:
+      name: scope
+      in: query
+      description: Heat map grouping strategy
+      schema:
+        type: string
+        enum: [SECTOR, CORPORATION, REGION]
+        default: SECTOR
+  schemas:
+    ChartDataPoint:
+      type: object
+      required: [timestamp, price]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        price:
+          type: number
+          format: double
+        volume:
+          type: number
+          format: double
+          nullable: true
+        indicators:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndicatorValue'
+    Candle:
+      type: object
+      required: [timestamp, open, high, low, close]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        open:
+          type: number
+          format: double
+        high:
+          type: number
+          format: double
+        low:
+          type: number
+          format: double
+        close:
+          type: number
+          format: double
+        volume:
+          type: number
+          format: double
+        vwap:
+          type: number
+          format: double
+          nullable: true
+    VolumeBar:
+      type: object
+      required: [timestamp, value]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: double
+        cumulative:
+          type: number
+          format: double
+          nullable: true
+        side:
+          type: string
+          enum: [BUY, SELL, NEUTRAL]
+          default: NEUTRAL
+    IndicatorValue:
+      type: object
+      required: [name, value]
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+          format: double
+        period:
+          type: integer
+        upperBand:
+          type: number
+          format: double
+          nullable: true
+        lowerBand:
+          type: number
+          format: double
+          nullable: true
+    IndicatorConfig:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [SMA, EMA, RSI, MACD, BOLLINGER]
+        period:
+          type: integer
+          minimum: 1
+          maximum: 365
+          default: 14
+        fastPeriod:
+          type: integer
+          minimum: 1
+          maximum: 365
+        slowPeriod:
+          type: integer
+          minimum: 1
+          maximum: 365
+        signalPeriod:
+          type: integer
+          minimum: 1
+          maximum: 365
+        stdDevMultiplier:
+          type: number
+          format: float
+          default: 2.0
+        thresholds:
+          type: object
+          additionalProperties:
+            type: number
+    PortfolioAnalytics:
+      type: object
+      required: [totalReturn, annualizedReturn, sharpeRatio, volatility, maxDrawdown]
+      properties:
+        totalReturn:
+          type: number
+          format: double
+        annualizedReturn:
+          type: number
+          format: double
+        sharpeRatio:
+          type: number
+          format: double
+        volatility:
+          type: number
+          format: double
+        maxDrawdown:
+          type: number
+          format: double
+        beta:
+          type: number
+          format: double
+        riskMetrics:
+          $ref: '#/components/schemas/RiskMetrics'
+        tradeStats:
+          $ref: '#/components/schemas/TradeStats'
+    RiskMetrics:
+      type: object
+      required: [valueAtRisk]
+      properties:
+        valueAtRisk:
+          type: number
+          format: double
+        conditionalVaR:
+          type: number
+          format: double
+          nullable: true
+        downsideDeviation:
+          type: number
+          format: double
+          nullable: true
+        stressEvents:
+          type: array
+          items:
+            type: string
+    TradeStats:
+      type: object
+      required: [totalTrades, winRate, profitFactor]
+      properties:
+        totalTrades:
+          type: integer
+        winRate:
+          type: number
+          format: double
+        profitFactor:
+          type: number
+          format: double
+        averageWin:
+          type: number
+          format: double
+        averageLoss:
+          type: number
+          format: double
+        rrRatio:
+          type: number
+          format: double
+        holdingPeriodHours:
+          type: number
+          format: double
+    MonthlyReturn:
+      type: object
+      required: [month, returnPercent]
+      properties:
+        month:
+          type: string
+          pattern: "^20\\d{2}-(0[1-9]|1[0-2])$"
+        returnPercent:
+          type: number
+          format: double
+        cumulativeReturn:
+          type: number
+          format: double
+    HeatMapCell:
+      type: object
+      required: [label, performance]
+      properties:
+        label:
+          type: string
+        subgroup:
+          type: string
+          nullable: true
+        performance:
+          type: number
+          format: double
+        allocation:
+          type: number
+          format: double
+        weight:
+          type: number
+          format: double
+        assetId:
+          type: string
+          nullable: true
+    AlertConfig:
+      type: object
+      required: [type, condition, threshold]
+      properties:
+        type:
+          type: string
+          enum: [PRICE_TARGET, PRICE_DROP, PERCENT_CHANGE, VOLUME_SPIKE, EVENT, PORTFOLIO_DRAWDOWN]
+        condition:
+          type: string
+          enum: [GREATER_THAN, LESS_THAN, CROSS_UP, CROSS_DOWN, CHANGE_PERCENT]
+        threshold:
+          type: number
+          format: double
+        secondaryThreshold:
+          type: number
+          format: double
+          nullable: true
+        expirationAt:
+          type: string
+          format: date-time
+          nullable: true
+        deliveryChannels:
+          type: array
+          items:
+            type: string
+            enum: [IN_GAME, PUSH, EMAIL, DISCORD]
+        notes:
+          type: string
+          maxLength: 256
+    AlertStatus:
+      type: object
+      required: [state]
+      properties:
+        state:
+          type: string
+          enum: [ACTIVE, TRIGGERED, SNOOZED, CANCELLED]
+        triggeredAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastNotifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+    SentimentIndex:
+      type: object
+      required: [fearGreedScore, bullPower, bearPower]
+      properties:
+        fearGreedScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        bullPower:
+          type: number
+          format: double
+        bearPower:
+          type: number
+          format: double
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              weight:
+                type: number
+                format: double
+              score:
+                type: number
+                format: double
+    AnalyticsSettings:
+      type: object
+      required: [defaultTimeframe]
+      properties:
+        defaultTimeframe:
+          type: string
+          enum: [1H, 24H, 7D, 30D, 90D, 1Y, ALL]
+        favoriteIndicators:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndicatorConfig'
+        priceAlertsEnabled:
+          type: boolean
+        eventSubscriptions:
+          type: array
+          items:
+            type: string
+        watchlist:
+          type: array
+          items:
+            type: string
+            minLength: 2
+            maxLength: 16
+    MarketStreamMessage:
+      type: object
+      required: [type, timestamp]
+      properties:
+        type:
+          type: string
+          enum: [TICK, INDICATOR, SNAPSHOT, HEARTBEAT]
+        timestamp:
+          type: string
+          format: date-time
+        asset:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+    AlertStreamMessage:
+      type: object
+      required: [type, alertId]
+      properties:
+        type:
+          type: string
+          enum: [TRIGGERED, ACKNOWLEDGED, CANCELLED, TEST]
+        alertId:
+          type: string
+          format: uuid
+        triggeredAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="076-create-quest-catalog-entries" author="backend-agent">
+
+        <createTable tableName="quest_catalog_entries">
+            <column name="quest_id" type="VARCHAR(150)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)"/>
+            <column name="description" type="TEXT"/>
+            <column name="type" type="VARCHAR(40)"/>
+            <column name="period" type="VARCHAR(40)"/>
+            <column name="difficulty" type="VARCHAR(20)"/>
+            <column name="level_requirement" type="INT"/>
+            <column name="level_cap" type="INT"/>
+            <column name="faction" type="VARCHAR(120)"/>
+            <column name="estimated_time_minutes" type="INT"/>
+            <column name="tags_json" type="JSONB"/>
+            <column name="rewards_summary_json" type="JSONB"/>
+            <column name="completion_rate" type="NUMERIC(6,4)"/>
+            <column name="average_rating" type="NUMERIC(4,2)"/>
+            <column name="full_description" type="TEXT"/>
+            <column name="storyline" type="VARCHAR(200)"/>
+            <column name="objectives_json" type="JSONB"/>
+            <column name="key_npcs_json" type="JSONB"/>
+            <column name="locations_json" type="JSONB"/>
+            <column name="prerequisites_json" type="JSONB"/>
+            <column name="unlocks_json" type="JSONB"/>
+            <column name="branches_count" type="INT"/>
+            <column name="endings_count" type="INT"/>
+            <column name="has_dialogue_tree" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="has_skill_checks" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="has_combat" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="has_romance" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="rewards_detailed_json" type="JSONB"/>
+            <column name="dialogue_tree_json" type="JSONB"/>
+            <column name="loot_table_json" type="JSONB"/>
+            <column name="metadata_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="quest_catalog_entries" indexName="idx_quest_catalog_type">
+            <column name="type"/>
+        </createIndex>
+
+        <createIndex tableName="quest_catalog_entries" indexName="idx_quest_catalog_period">
+            <column name="period"/>
+        </createIndex>
+
+        <createIndex tableName="quest_catalog_entries" indexName="idx_quest_catalog_difficulty">
+            <column name="difficulty"/>
+        </createIndex>
+
+        <createIndex tableName="quest_catalog_entries" indexName="idx_quest_catalog_has_dialogue">
+            <column name="has_dialogue_tree"/>
+        </createIndex>
+
+        <createIndex tableName="quest_catalog_entries" indexName="idx_quest_catalog_has_combat">
+            <column name="has_combat"/>
+        </createIndex>
+
+        <createIndex tableName="quest_catalog_entries" indexName="idx_quest_catalog_tags" indexType="gin">
+            <column name="tags_json" type="jsonb"/>
+        </createIndex>
+
+        <createIndex tableName="quest_catalog_entries" indexName="idx_quest_catalog_storyline">
+            <column name="storyline"/>
+        </createIndex>
+
+        <sqlFile path="../data/quest_catalog_entries.sql" relativeToChangelogFile="true" splitStatements="true" stripComments="false"/>
+
+        <rollback>
+            <sql>DROP TABLE IF EXISTS quest_catalog_entries CASCADE;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

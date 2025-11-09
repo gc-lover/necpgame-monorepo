@@ -1,0 +1,210 @@
+openapi: 3.0.3
+info:
+  title: Inventory Core Models
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/inventory/inventory-core
+    directory: api/v1/economy/inventory/inventory-core
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  parameters:
+    CharacterIdPath:
+      name: characterId
+      in: path
+      required: true
+      description: Character identifier owning the inventory
+      schema:
+        type: string
+        format: uuid
+    ItemTemplateIdPath:
+      name: templateId
+      in: path
+      required: true
+      description: Item template identifier
+      schema:
+        type: string
+        maxLength: 100
+    AuditActionFilter:
+      name: action
+      in: query
+      description: Filter audit entries by action type
+      schema:
+        type: string
+        enum: [PICKUP, DROP, MOVE, SPLIT, EQUIP, UNEQUIP, TRANSFER]
+  schemas:
+    InventorySlot:
+      type: object
+      required: [slotIndex, storageType, item]
+      properties:
+        slotIndex:
+          type: integer
+        storageType:
+          type: string
+          enum: [BACKPACK, BANK, STASH]
+        item:
+          $ref: '#/components/schemas/ItemStack'
+    EquipmentSlot:
+      type: object
+      required: [slotId, item]
+      properties:
+        slotId:
+          type: string
+        item:
+          $ref: '#/components/schemas/ItemStack'
+    ItemStack:
+      type: object
+      required:
+        - itemId
+        - itemTemplateId
+        - quantity
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        itemTemplateId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        bindType:
+          type: string
+          enum: [NONE, BIND_ON_PICKUP, BIND_ON_EQUIP, BIND_TO_ACCOUNT]
+        isBound:
+          type: boolean
+        durability:
+          type: object
+          properties:
+            current:
+              type: integer
+            max:
+              type: integer
+        modifiers:
+          type: object
+          additionalProperties: true
+        enchantments:
+          type: array
+          items:
+            type: object
+        upgradeLevel:
+          type: integer
+    WeightSummary:
+      type: object
+      required: [currentWeight, maxWeight]
+      properties:
+        currentWeight:
+          type: number
+          format: float
+        maxWeight:
+          type: number
+          format: float
+        encumbranceLevel:
+          type: string
+          enum: [NORMAL, WARNING, OVERWEIGHT]
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              delta:
+                type: number
+                format: float
+    StashSummary:
+      type: object
+      properties:
+        maxSlots:
+          type: integer
+        usedSlots:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventorySlot'
+    EquipmentLayout:
+      type: object
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentSlot'
+    ItemTemplate:
+      type: object
+      required:
+        - itemTemplateId
+        - itemName
+        - itemType
+        - weight
+      properties:
+        itemTemplateId:
+          type: string
+        itemName:
+          type: string
+        itemType:
+          type: string
+        itemSubtype:
+          type: string
+        rarity:
+          type: string
+          enum: [COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, UNIQUE]
+        stackable:
+          type: boolean
+        maxStackSize:
+          type: integer
+        weight:
+          type: number
+          format: float
+        vendorPrice:
+          type: integer
+        bindRules:
+          type: object
+          properties:
+            bindOnPickup:
+              type: boolean
+            bindOnEquip:
+              type: boolean
+        stats:
+          type: object
+          additionalProperties: true
+        effects:
+          type: array
+          items:
+            type: object
+        tradeFlags:
+          type: object
+          properties:
+            tradeable:
+              type: boolean
+            sellable:
+              type: boolean
+            deletable:
+              type: boolean
+    AuditEntry:
+      type: object
+      required: [entryId, action, occurredAt, source]
+      properties:
+        entryId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [PICKUP, DROP, MOVE, SPLIT, EQUIP, UNEQUIP, TRANSFER]
+        occurredAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+          description: Originating subsystem (loot, craft, quest, trade, admin)
+        metadata:
+          type: object
+          additionalProperties: true
+

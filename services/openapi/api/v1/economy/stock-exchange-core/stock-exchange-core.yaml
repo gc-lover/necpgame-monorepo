@@ -1,0 +1,398 @@
+openapi: 3.0.3
+info:
+  title: Stock Exchange Core API
+  version: 1.0.0
+  description: |
+    API для биржи акций корпораций (Stock Exchange).
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-stock-exchange.md v1.0.0
+    
+    Корпоративные акции:
+    - Arasaka, Militech, Biotechnica, Kang Tao, Zetatech
+    - Цены зависят от событий мира
+    - Дивиденды акционерам
+    
+    Торговля:
+    - Buy/Sell orders (как в Player Market)
+    - Market/Limit orders
+    - Shorting (короткие позиции)
+    - Margin trading
+    
+    Влияние событий:
+    - Корпоративные войны → акции падают/растут
+    - Квесты влияют на репутацию → влияние на акции
+    - Глобальные события → рыночные шоки
+    
+    Индексы: CORPO-500 (индекс корпораций)
+    Фьючерсы: На ресурсы и товары
+    
+    Вдохновение: EVE Online, NYSE, NASDAQ
+    
+    ПРИМЕЧАНИЕ: Дополнительные файлы:
+    - stock-exchange-trading.yaml - торговля и ордера
+    - stock-exchange-indices.yaml - индексы и фьючерсы
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Stock Exchange
+    description: Биржа акций
+  - name: Companies
+    description: Корпорации
+
+paths:
+  /gameplay/economy/stock/companies:
+    get:
+      summary: Получить список корпораций
+      description: |
+        Возвращает список торгуемых корпораций на бирже.
+        Включает текущую цену акций, капитализацию, изменения.
+      operationId: getStockCompanies
+      tags:
+        - Companies
+      responses:
+        '200':
+          description: Список корпораций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  companies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StockCompany'
+              examples:
+                major_corps:
+                  summary: Основные корпорации
+                  value:
+                    companies:
+                      - ticker: "ARSK"
+                        name: "Arasaka Corporation"
+                        sector: "security_tech"
+                        current_price: 1250.50
+                        price_change_24h: -2.5
+                        market_cap: 5000000000
+                        shares_outstanding: 4000000
+                        dividend_yield: 3.2
+                      - ticker: "MILT"
+                        name: "Militech"
+                        sector: "military_tech"
+                        current_price: 980.25
+                        price_change_24h: 5.8
+                        market_cap: 3500000000
+                        shares_outstanding: 3571000
+                        dividend_yield: 2.8
+
+  /gameplay/economy/stock/companies/{ticker}:
+    get:
+      summary: Получить детали корпорации
+      description: |
+        Возвращает детальную информацию о корпорации.
+        История цен, финансовые показатели, новости, дивиденды.
+      operationId: getCompanyDetails
+      tags:
+        - Companies
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Тикер корпорации (ARSK, MILT, etc.)
+      responses:
+        '200':
+          description: Детали корпорации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDetails'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/economy/stock/portfolio:
+    get:
+      summary: Получить портфолио акций
+      description: |
+        Возвращает портфолио акций персонажа.
+        Текущие holdings, profit/loss, общая стоимость.
+      operationId: getStockPortfolio
+      tags:
+        - Stock Exchange
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Портфолио акций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockPortfolio'
+              examples:
+                portfolio:
+                  summary: Пример портфолио
+                  value:
+                    character_id: "char_123"
+                    total_value: 150000
+                    total_invested: 120000
+                    profit_loss: 30000
+                    roi_percent: 25.0
+                    holdings:
+                      - ticker: "ARSK"
+                        shares: 50
+                        avg_buy_price: 1200
+                        current_price: 1250.50
+                        profit_loss: 2525
+                      - ticker: "MILT"
+                        shares: 100
+                        avg_buy_price: 900
+                        current_price: 980.25
+                        profit_loss: 8025
+
+  /gameplay/economy/stock/dividends:
+    get:
+      summary: Получить дивиденды
+      description: |
+        Возвращает историю полученных дивидендов.
+        Предстоящие выплаты дивидендов.
+      operationId: getDividends
+      tags:
+        - Stock Exchange
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Дивиденды
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  character_id:
+                    type: string
+                  total_dividends_received:
+                    type: number
+                  upcoming_dividends:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ticker:
+                          type: string
+                        shares:
+                          type: integer
+                        dividend_per_share:
+                          type: number
+                        total_payout:
+                          type: number
+                        payout_date:
+                          type: string
+                          format: date-time
+                  history:
+                    type: array
+                    items:
+                      type: object
+
+  /gameplay/economy/stock/news:
+    get:
+      summary: Получить новости корпораций
+      description: |
+        Возвращает новости, влияющие на цены акций.
+        События, войны, квесты, глобальные изменения.
+      operationId: getStockNews
+      tags:
+        - Companies
+      parameters:
+        - name: ticker
+          in: query
+          schema:
+            type: string
+          description: Фильтр по тикеру (опционально)
+      responses:
+        '200':
+          description: Новости
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  news:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StockNews'
+
+  /gameplay/economy/stock/events-impact:
+    get:
+      summary: Получить влияние событий
+      description: |
+        Возвращает как мировые события влияют на цены акций.
+        Корпоративные войны, квесты, глобальные события.
+      operationId: getEventsImpact
+      tags:
+        - Stock Exchange
+      parameters:
+        - name: event_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Влияние событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id:
+                          type: string
+                        event_type:
+                          type: string
+                          enum: [corp_war, quest_completion, global_event, faction_war]
+                        affected_companies:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              ticker:
+                                type: string
+                              impact:
+                                type: string
+                                enum: [very_negative, negative, neutral, positive, very_positive]
+                              price_change_expected:
+                                type: number
+
+components:
+  schemas:
+    StockCompany:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: Биржевой тикер (ARSK, MILT, etc.)
+        name:
+          type: string
+        sector:
+          type: string
+          enum: [security_tech, military_tech, biotech, manufacturing, finance, media]
+        current_price:
+          type: number
+        price_change_24h:
+          type: number
+          description: Изменение за 24 часа (%)
+        market_cap:
+          type: number
+          description: Рыночная капитализация
+        shares_outstanding:
+          type: integer
+          description: Количество акций в обращении
+        dividend_yield:
+          type: number
+          description: Доходность дивидендов (%)
+        volume_24h:
+          type: integer
+          description: Объем торгов за 24 часа
+
+    CompanyDetails:
+      allOf:
+        - $ref: '#/components/schemas/StockCompany'
+        - type: object
+          properties:
+            description:
+              type: string
+            headquarters:
+              type: string
+            founded_year:
+              type: integer
+            ceo:
+              type: string
+            employees:
+              type: integer
+            financial_data:
+              type: object
+              properties:
+                revenue:
+                  type: number
+                profit:
+                  type: number
+                assets:
+                  type: number
+            price_history:
+              type: array
+              items:
+                type: object
+
+    StockPortfolio:
+      type: object
+      properties:
+        character_id:
+          type: string
+        total_value:
+          type: number
+        total_invested:
+          type: number
+        profit_loss:
+          type: number
+        roi_percent:
+          type: number
+        holdings:
+          type: array
+          items:
+            type: object
+            properties:
+              ticker:
+                type: string
+              shares:
+                type: integer
+              avg_buy_price:
+                type: number
+              current_price:
+                type: number
+              profit_loss:
+                type: number
+
+    StockNews:
+      type: object
+      properties:
+        news_id:
+          type: string
+        headline:
+          type: string
+        summary:
+          type: string
+        affected_tickers:
+          type: array
+          items:
+            type: string
+        impact:
+          type: string
+          enum: [very_negative, negative, neutral, positive, very_positive]
+        published_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+
+

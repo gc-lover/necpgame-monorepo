@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.22.xsd">
+
+    <changeSet id="089-create-world-events-framework-tables" author="backend-agent">
+        <createTable tableName="world_events">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="era" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="severity" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_date" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_date" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="is_active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="affected_regions_json" type="JSONB"/>
+            <column name="description" type="TEXT"/>
+            <column name="lore_background" type="TEXT"/>
+            <column name="quest_hooks_json" type="JSONB"/>
+            <column name="faction_involvement_json" type="JSONB"/>
+        </createTable>
+
+        <createIndex tableName="world_events" indexName="idx_world_events_active">
+            <column name="is_active"/>
+        </createIndex>
+        <createIndex tableName="world_events" indexName="idx_world_events_era">
+            <column name="era"/>
+        </createIndex>
+        <createIndex tableName="world_events" indexName="idx_world_events_type">
+            <column name="event_type"/>
+        </createIndex>
+
+        <createTable tableName="world_event_effects">
+            <column name="effect_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="event_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_world_event_effect_event" referencedTableName="world_events" referencedColumnNames="id"/>
+            </column>
+            <column name="effect_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="modifier_type" type="VARCHAR(64)"/>
+            <column name="modifier_value" type="NUMERIC(10,2)"/>
+            <column name="duration" type="VARCHAR(128)"/>
+            <column name="is_stackable" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="world_event_effects" indexName="idx_world_event_effects_event">
+            <column name="event_id"/>
+        </createIndex>
+
+        <createTable tableName="world_event_character_effects">
+            <column name="effect_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_world_character_effect" referencedTableName="world_event_effects" referencedColumnNames="effect_id"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="applied_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <addPrimaryKey tableName="world_event_character_effects" columnNames="effect_id, character_id" constraintName="pk_world_event_character_effects"/>
+
+        <createIndex tableName="world_event_character_effects" indexName="idx_world_event_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="world_event_character_effects" indexName="idx_world_event_character_effect_effect">
+            <column name="effect_id"/>
+        </createIndex>
+
+        <createTable tableName="world_eras">
+            <column name="era" type="VARCHAR(32)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="key_features_json" type="JSONB"/>
+            <column name="major_factions_json" type="JSONB"/>
+            <column name="technology_level" type="INTEGER"/>
+            <column name="danger_level" type="VARCHAR(16)"/>
+            <column name="active_events_count" type="INTEGER"/>
+            <column name="is_current" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="world_eras" indexName="idx_world_eras_current">
+            <column name="is_current"/>
+        </createIndex>
+
+        <createTable tableName="world_era_mechanics">
+            <column name="era" type="VARCHAR(32)">
+                <constraints primaryKey="true" nullable="false" foreignKeyName="fk_world_era_mechanics_era" referencedTableName="world_eras" referencedColumnNames="era"/>
+            </column>
+            <column name="base_dc" type="INTEGER"/>
+            <column name="combat_modifier" type="INTEGER"/>
+            <column name="social_modifier" type="INTEGER"/>
+            <column name="hacking_modifier" type="INTEGER"/>
+            <column name="crafting_modifier" type="INTEGER"/>
+            <column name="example_challenges_json" type="JSONB"/>
+            <column name="economic_state_json" type="JSONB"/>
+            <column name="technology_restrictions_json" type="JSONB"/>
+            <column name="social_mechanics_json" type="JSONB"/>
+        </createTable>
+
+        <createTable tableName="faction_ai_sliders">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="faction" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="influence" type="NUMERIC(10,2)"/>
+            <column name="aggression" type="NUMERIC(5,2)"/>
+            <column name="wealth" type="NUMERIC(10,2)"/>
+            <column name="technology" type="NUMERIC(5,2)"/>
+            <column name="relations_json" type="JSONB"/>
+        </createTable>
+
+        <createIndex tableName="faction_ai_sliders" indexName="idx_faction_ai_sliders_faction">
+            <column name="faction"/>
+        </createIndex>
+
+        <createTable tableName="economic_multipliers">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="price_multipliers_json" type="JSONB"/>
+            <column name="trade_restrictions_json" type="JSONB"/>
+            <column name="currency_exchange_rates_json" type="JSONB"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="technology_access">
+            <column name="technology_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="required_era" type="VARCHAR(32)"/>
+            <column name="restricted_factions_json" type="JSONB"/>
+        </createTable>
+
+        <createIndex tableName="technology_access" indexName="idx_technology_access_available">
+            <column name="available"/>
+        </createIndex>
+        <createIndex tableName="technology_access" indexName="idx_technology_access_required_era">
+            <column name="required_era"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

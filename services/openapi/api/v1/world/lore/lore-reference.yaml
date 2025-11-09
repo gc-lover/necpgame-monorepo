@@ -1,0 +1,519 @@
+openapi: 3.0.3
+info:
+  title: Lore Reference API
+  version: 1.0.0
+  description: |
+    API для справочной информации по лору игры.
+    
+    Функционал:
+    - Universe lore (временная шкала 2020-2093)
+    - Faction encyclopedia (84 организации)
+    - Location catalog (27 городов)
+    - Character database (30+ категорий NPC)
+    - Timeline events
+    - Lore search
+    - Interactive codex
+    
+    Содержит:
+    - Universe: история мира, ключевые события, симуляция
+    - Factions: 28 корпораций, 27 банд, 29 организаций
+    - Locations: города по регионам (North America, Europe, Asia, etc.)
+    - Characters: типы NPC, роли, отношения
+    
+    Источники: .BRAIN/03-lore/ (4 документа v1.1.0-v1.2.0)
+
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/lore
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Universe
+    description: Вселенная и история
+  - name: Factions
+    description: Фракции
+  - name: Locations
+    description: Локации
+  - name: Characters
+    description: Персонажи
+
+paths:
+  /lore/universe:
+    get:
+      summary: Получить информацию о вселенной
+      operationId: getUniverseLore
+      tags: [Universe]
+      responses:
+        '200':
+          description: Лор вселенной
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UniverseLore'
+
+  /lore/universe/timeline:
+    get:
+      summary: Получить временную шкалу
+      operationId: getTimeline
+      tags: [Universe]
+      parameters:
+        - name: era
+          in: query
+          schema:
+            type: string
+        - name: event_type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Временная шкала
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimelineEvent'
+
+  /lore/factions:
+    get:
+      summary: Получить список фракций
+      operationId: listFactions
+      tags: [Factions]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [CORPORATION, GANG, ORGANIZATION, GOVERNMENT]
+        - name: region
+          in: query
+          schema:
+            type: string
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Список фракций
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Faction'
+
+  /lore/factions/{faction_id}:
+    get:
+      summary: Получить детали фракции
+      operationId: getFaction
+      tags: [Factions]
+      parameters:
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали фракции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionDetailed'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /lore/locations:
+    get:
+      summary: Получить список локаций
+      operationId: listLocations
+      tags: [Locations]
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+            enum: [NORTH_AMERICA, EUROPE, ASIA, SOUTH_AMERICA, AFRICA, OCEANIA]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [CITY, BADLANDS, COMBAT_ZONE, CORPO_ZONE]
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Список локаций
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Location'
+
+  /lore/locations/{location_id}:
+    get:
+      summary: Получить детали локации
+      operationId: getLocation
+      tags: [Locations]
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали локации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationDetailed'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /lore/characters/categories:
+    get:
+      summary: Получить категории персонажей
+      operationId: getCharacterCategories
+      tags: [Characters]
+      responses:
+        '200':
+          description: Категории персонажей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CharacterCategory'
+
+  /lore/search:
+    get:
+      summary: Поиск по лору
+      operationId: searchLore
+      tags: [Universe]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [ALL, UNIVERSE, FACTIONS, LOCATIONS, CHARACTERS]
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoreSearchResult'
+
+  /lore/codex/character/{character_id}:
+    get:
+      summary: Получить записи codex персонажа
+      operationId: getCharacterCodex
+      tags: [Universe]
+      description: Открытые записи в codex
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Codex персонажа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CodexEntry'
+                  completion_percentage:
+                    type: number
+
+  /lore/codex/unlock:
+    post:
+      summary: Разблокировать запись codex
+      operationId: unlockCodexEntry
+      tags: [Universe]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                entry_id:
+                  type: string
+      responses:
+        '200':
+          description: Запись разблокирована
+
+components:
+  schemas:
+    UniverseLore:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Cyberpunk Universe"
+        setting:
+          type: string
+        time_period:
+          type: string
+          example: "2020-2093"
+        key_events:
+          type: array
+          items:
+            type: string
+        simulation_lore:
+          type: object
+          properties:
+            is_simulation:
+              type: boolean
+            revelation_stages:
+              type: array
+              items:
+                type: string
+        major_factions_count:
+          type: integer
+        locations_count:
+          type: integer
+
+    TimelineEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+        year:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [WAR, ECONOMIC, TECHNOLOGICAL, SOCIAL, CATASTROPHE]
+        impact_level:
+          type: string
+          enum: [LOCAL, REGIONAL, GLOBAL]
+        related_factions:
+          type: array
+          items:
+            type: string
+
+    Faction:
+      type: object
+      properties:
+        faction_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [CORPORATION, GANG, ORGANIZATION, GOVERNMENT]
+        region:
+          type: string
+        power_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        description_short:
+          type: string
+
+    FactionDetailed:
+      allOf:
+        - $ref: '#/components/schemas/Faction'
+        - type: object
+          properties:
+            full_description:
+              type: string
+            history:
+              type: string
+            goals:
+              type: array
+              items:
+                type: string
+            leadership:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  position:
+                    type: string
+            territories:
+              type: array
+              items:
+                type: string
+            allies:
+              type: array
+              items:
+                type: string
+            enemies:
+              type: array
+              items:
+                type: string
+            resources:
+              type: array
+              items:
+                type: string
+
+    Location:
+      type: object
+      properties:
+        location_id:
+          type: string
+        name:
+          type: string
+        region:
+          type: string
+        type:
+          type: string
+          enum: [CITY, BADLANDS, COMBAT_ZONE, CORPO_ZONE]
+        population:
+          type: integer
+        danger_level:
+          type: string
+        description_short:
+          type: string
+
+    LocationDetailed:
+      allOf:
+        - $ref: '#/components/schemas/Location'
+        - type: object
+          properties:
+            full_description:
+              type: string
+            history:
+              type: string
+            districts:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  description:
+                    type: string
+            controlling_factions:
+              type: array
+              items:
+                type: string
+            points_of_interest:
+              type: array
+              items:
+                type: string
+            economy:
+              type: object
+              properties:
+                main_industries:
+                  type: array
+                  items:
+                    type: string
+                wealth_level:
+                  type: string
+
+    CharacterCategory:
+      type: object
+      properties:
+        category_id:
+          type: string
+        name:
+          type: string
+          example: "Fixers"
+        description:
+          type: string
+        role:
+          type: string
+        example_characters:
+          type: array
+          items:
+            type: string
+
+    LoreSearchResult:
+      type: object
+      properties:
+        result_type:
+          type: string
+          enum: [FACTION, LOCATION, CHARACTER, EVENT, TIMELINE]
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        relevance_score:
+          type: number
+
+    CodexEntry:
+      type: object
+      properties:
+        entry_id:
+          type: string
+        category:
+          type: string
+          enum: [FACTIONS, LOCATIONS, CHARACTERS, EVENTS, TECHNOLOGY]
+        title:
+          type: string
+        content:
+          type: string
+        unlocked:
+          type: boolean
+        unlock_condition:
+          type: string
+          description: Как разблокировать
+        related_entries:
+          type: array
+          items:
+            type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

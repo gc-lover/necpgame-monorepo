@@ -1,0 +1,411 @@
+openapi: 3.0.3
+info:
+  title: Social Resonance Models
+  version: 1.0.0
+  description: Ключевые схемы для Social Resonance API.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  schemas:
+    MoodState:
+      type: string
+      description: Настроение общества.
+      enum: [HARMONY, NEUTRAL, UNREST]
+      example: HARMONY
+    ResonanceDimension:
+      type: string
+      description: Категория вклада в индекс доверия.
+      enum: [REPUTATION, ROMANCE, SOCIAL_EVENTS, ALLIANCE, CRISIS_BUFFER]
+      example: REPUTATION
+    ResonanceSourceBreakdown:
+      type: object
+      required: [dimension, weight, value, delta24h]
+      properties:
+        dimension:
+          $ref: '#/components/schemas/ResonanceDimension'
+        title:
+          type: string
+          example: "City Reputation"
+        weight:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.4
+        value:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 25.5
+        delta24h:
+          type: number
+          format: float
+          example: 4.2
+    WorldPulseLink:
+      type: object
+      required: [pulseLevel, crisisRisk]
+      properties:
+        pulseLevel:
+          type: string
+          example: INFLECTION
+        crisisRisk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.28
+        lastCrisisTrigger:
+          type: string
+          format: date-time
+          nullable: true
+        projectedAfterCampaign:
+          type: string
+          example: CALM
+    SocialResonanceSnapshot:
+      type: object
+      required: [trustIndex, moodState, worldPulse, resonanceSources, updatedAt]
+      properties:
+        trustIndex:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        moodState:
+          $ref: '#/components/schemas/MoodState'
+        worldPulse:
+          $ref: '#/components/schemas/WorldPulseLink'
+        resonanceSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResonanceSourceBreakdown'
+        activeCampaigns:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialCampaign'
+        forecast:
+          $ref: '#/components/schemas/TrustForecast'
+        updatedAt:
+          type: string
+          format: date-time
+    AuditMetadata:
+      type: object
+      required: [createdBy, createdAt]
+      properties:
+        createdBy:
+          type: string
+          example: "player-9841"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2077-05-18T13:22:10Z"
+        approvedBy:
+          type: string
+          nullable: true
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+    SocialCampaignStatus:
+      type: string
+      enum: [AVAILABLE, COOL_DOWN, IN_PROGRESS, COMPLETED, PENDING_APPROVAL]
+      example: AVAILABLE
+    SocialCampaignCategory:
+      type: string
+      enum: [MEDIA, COMMUNITY, SECURITY, ROMANCE, GUILD]
+      example: COMMUNITY
+    CampaignTier:
+      type: string
+      enum: [LOCAL, DISTRICT, CITY, MEGACITY]
+      example: DISTRICT
+    CampaignEffect:
+      type: object
+      required: [dimension, delta]
+      properties:
+        dimension:
+          $ref: '#/components/schemas/ResonanceDimension'
+        delta:
+          type: number
+          format: float
+          example: 6.5
+        durationHours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          example: 48
+        worldPulseImpact:
+          type: string
+          example: "Crisis risk -0.05 for 24h"
+    SocialCampaignRequirement:
+      type: object
+      required: [type, description]
+      properties:
+        type:
+          type: string
+          example: role
+        value:
+          type: string
+          nullable: true
+          example: guild-leader
+        description:
+          type: string
+          example: "Guild leader with reputation above 65"
+    SocialCampaign:
+      type: object
+      required:
+        - campaignId
+        - name
+        - category
+        - tier
+        - status
+        - expectedDelta
+        - cooldownHours
+        - cost
+        - effects
+      properties:
+        campaignId:
+          type: string
+          example: "soc-camp-b42"
+        name:
+          type: string
+          example: "Night City Mutual Aid"
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/SocialCampaignCategory'
+        tier:
+          $ref: '#/components/schemas/CampaignTier'
+        status:
+          $ref: '#/components/schemas/SocialCampaignStatus'
+        expectedDelta:
+          type: number
+          format: float
+          example: 9.4
+        cooldownHours:
+          type: integer
+          minimum: 0
+          example: 72
+        durationHours:
+          type: integer
+          minimum: 1
+          example: 24
+        cost:
+          type: object
+          required: [eddies]
+          properties:
+            eddies:
+              type: integer
+              minimum: 0
+              example: 450000
+            influenceTokens:
+              type: integer
+              minimum: 0
+              example: 12
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialCampaignRequirement'
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/CampaignEffect'
+        approval:
+          $ref: '#/components/schemas/AuditMetadata'
+    SocialCampaignLaunchRequest:
+      type: object
+      required: [campaignId, initiatedBy]
+      properties:
+        campaignId:
+          type: string
+          example: "soc-camp-b42"
+        initiatedBy:
+          type: string
+          example: "guild-emberfox"
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        approvalToken:
+          type: string
+          nullable: true
+        crisisFallbackPlan:
+          type: string
+          nullable: true
+    SocialCampaignLaunchResponse:
+      type: object
+      required: [campaignId, status, expectedDelta, worldPulsePreview]
+      properties:
+        campaignId:
+          type: string
+        status:
+          $ref: '#/components/schemas/SocialCampaignStatus'
+        simulate:
+          type: boolean
+        expectedDelta:
+          type: number
+          format: float
+        worldPulsePreview:
+          $ref: '#/components/schemas/WorldPulseLink'
+        approval:
+          $ref: '#/components/schemas/AuditMetadata'
+        forecast:
+          $ref: '#/components/schemas/TrustForecast'
+    RelationshipType:
+      type: string
+      enum: [ROMANCE, ALLIANCE, GUILD_PACT, CITY_CONTRACT]
+      example: ROMANCE
+    RelationshipTier:
+      type: string
+      enum: [ACQUAINTANCE, TRUSTED, BONDED, LEGENDARY]
+      example: TRUSTED
+    RelationshipSummary:
+      type: object
+      required: [relationshipId, type, tier, progress, moodContribution, audit]
+      properties:
+        relationshipId:
+          type: string
+          example: "rel-rom-455"
+        targetName:
+          type: string
+          example: "Aisha Frost"
+        type:
+          $ref: '#/components/schemas/RelationshipType'
+        tier:
+          $ref: '#/components/schemas/RelationshipTier'
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.72
+        moodContribution:
+          type: number
+          format: float
+          example: 3.8
+        audit:
+          $ref: '#/components/schemas/AuditMetadata'
+    RelationshipUpdateRequest:
+      type: object
+      required: [action, updatedBy]
+      properties:
+        action:
+          type: string
+          example: advance
+        updatedBy:
+          type: string
+          example: "player-9841"
+        targetTier:
+          $ref: '#/components/schemas/RelationshipTier'
+        notes:
+          type: string
+          nullable: true
+        approvalToken:
+          type: string
+          nullable: true
+        overrideDelta:
+          type: number
+          format: float
+          nullable: true
+        audit:
+          $ref: '#/components/schemas/AuditMetadata'
+    RelationshipUpdateResult:
+      type: object
+      required: [relationship, trustDelta, worldPulseImpact]
+      properties:
+        relationship:
+          $ref: '#/components/schemas/RelationshipSummary'
+        trustDelta:
+          type: number
+          format: float
+          example: 1.4
+        moodStateAfter:
+          $ref: '#/components/schemas/MoodState'
+        worldPulseImpact:
+          $ref: '#/components/schemas/WorldPulseLink'
+        crisisAlertRaised:
+          type: boolean
+          example: false
+    TrustHistoryEntry:
+      type: object
+      required: [timestamp, trustIndex, delta, reason, source]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2077-05-18T11:00:00Z"
+        trustIndex:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 63.0
+        delta:
+          type: number
+          format: float
+          example: 1.7
+        reason:
+          type: string
+        source:
+          $ref: '#/components/schemas/ResonanceDimension'
+        campaignId:
+          type: string
+          nullable: true
+        relationshipId:
+          type: string
+          nullable: true
+        worldPulseSnapshot:
+          $ref: '#/components/schemas/WorldPulseLink'
+    TrustForecastPoint:
+      type: object
+      required: [timestamp, expectedIndex, moodState]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2077-05-19T12:00:00Z"
+        expectedIndex:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 68.3
+        moodState:
+          $ref: '#/components/schemas/MoodState'
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.7
+        worldPulseProjection:
+          $ref: '#/components/schemas/WorldPulseLink'
+    TrustForecast:
+      type: object
+      required: [horizonHours, baseline, points]
+      properties:
+        horizonHours:
+          type: integer
+          enum: [24, 72]
+          example: 72
+        baseline:
+          type: number
+          format: float
+          example: 62.5
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrustForecastPoint'
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

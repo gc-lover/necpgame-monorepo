@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="014-create-quests-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="quests"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="quests">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(20)"/>
+            <column name="level" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="giver_npc_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reward_experience" type="INT"/>
+            <column name="reward_money" type="INT"/>
+            <column name="reward_items" type="VARCHAR(1000)"/>
+            <column name="reward_reputation_faction" type="VARCHAR(100)"/>
+            <column name="reward_reputation_amount" type="INT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="quests" indexName="idx_quests_type">
+            <column name="type"/>
+        </createIndex>
+        <createIndex tableName="quests" indexName="idx_quests_level">
+            <column name="level"/>
+        </createIndex>
+        <createIndex tableName="quests" indexName="idx_quests_giver_npc_id">
+            <column name="giver_npc_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="quests"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

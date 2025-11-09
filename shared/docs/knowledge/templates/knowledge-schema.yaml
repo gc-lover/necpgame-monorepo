@@ -1,0 +1,81 @@
+required_fields:
+  - metadata.id
+  - metadata.title
+  - metadata.document_type
+  - metadata.status
+  - metadata.version
+  - metadata.last_updated
+  - metadata.tags
+  - metadata.owners
+  - summary.essence
+  - content.sections
+  - history
+  - validation.schema_version
+validation_rules:
+  document_type:
+    allowed:
+      - canon
+      - mechanics
+      - content
+      - implementation
+      - analysis
+      - archive
+  status:
+    allowed:
+      - draft
+      - in-review
+      - approved
+      - reference
+      - deprecated
+  last_updated:
+    format: iso8601
+  concept_reviewed_at:
+    format: iso8601_optional
+  owners:
+    min_items: 1
+    fields:
+      - role
+      - contact
+  tags:
+    min_items: 1
+  content.sections:
+    min_items: 1
+    fields:
+      - id
+      - title
+      - body
+  history:
+    min_items: 1
+    fields:
+      - version
+      - date
+      - author
+      - changes
+  validation.schema_version:
+    allowed: ['1.0']
+type_specific_requirements:
+  canon:
+    required_fields:
+      - metadata.category
+      - summary.problem
+      - summary.goal
+  mechanics:
+    required_fields:
+      - implementation.needs_task
+      - content.sections[].mechanics_links
+  content:
+    required_fields:
+      - implementation.needs_task
+      - implementation.queue_reference
+  implementation:
+    required_fields:
+      - implementation.needs_task
+      - implementation.queue_reference
+      - summary.goal
+  analysis:
+    required_fields:
+      - summary.key_points
+  archive:
+    required_fields:
+      - summary.essence
+      - history[-1].changes

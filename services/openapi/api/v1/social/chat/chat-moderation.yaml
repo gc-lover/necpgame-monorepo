@@ -1,0 +1,284 @@
+# Target Architecture:
+# - Microservice: social-service (port 8084)
+# - API Base: /api/v1/chat/moderation
+# - Dependencies: anti-cheat-service, support-service, security-audit-service
+# - Frontend Module: modules/social/chat/moderation (useModerationStore)
+# - UI: ReportInbox, BanList, ModerationDashboard
+
+openapi: 3.0.3
+info:
+  title: Chat Moderation API
+  version: 1.0.0
+  description: >
+    REST API для модерации чат-системы NECPGAME: обработка жалоб, управление банами,
+    конфигурация фильтров и автоматизация действий.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/chat
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Reports
+    description: Управление жалобами игроков.
+  - name: Bans
+    description: Управление банами и санкциями.
+  - name: Filters
+    description: Проверка сообщений и правила фильтрации.
+  - name: Automation
+    description: Автоматические события модерации.
+paths:
+  /chat/report:
+    post:
+      tags: [Reports]
+      summary: Подать жалобу на сообщение или игрока
+      operationId: submitChatReport
+      security: [ { BearerAuth: [chat.moderation.report] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ChatReportRequest' }
+            examples: { report: { $ref: './chat-moderation-examples.yaml#/components/examples/ChatReportRequest' } }
+      responses:
+        '202':
+          description: Жалоба принята и поставлена в очередь на обработку.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ReportTicket' }
+              examples: { ticket: { $ref: './chat-moderation-examples.yaml#/components/examples/ChatReportTicket' } }
+        '400':
+          description: Некорректные данные жалобы.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ApiError' }
+        '409':
+          description: Жалоба уже была подана ранее.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ApiError' }
+  /chat/reports:
+    get:
+      tags: [Reports]
+      summary: Получить список жалоб
+      operationId: listChatReports
+      security: [ { BearerAuth: [chat.moderation.review] } ]
+      parameters:
+        - $ref: './chat-moderation-components.yaml#/components/parameters/ReportStatus'
+        - $ref: './chat-moderation-components.yaml#/components/parameters/ChannelType'
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Список жалоб.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ReportPage' }
+  /chat/reports/{reportId}/resolve:
+    post:
+      tags: [Reports]
+      summary: Принять решение по жалобе
+      operationId: resolveChatReport
+      security: [ { BearerAuth: [chat.moderation.review] } ]
+      parameters:
+        - $ref: './chat-moderation-components.yaml#/components/parameters/ReportId'
+        - $ref: './chat-moderation-components.yaml#/components/parameters/AuditReason'
+        - $ref: './chat-moderation-components.yaml#/components/parameters/ModeratorIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ReportResolutionRequest' }
+      responses:
+        '200':
+          description: Жалоба обновлена.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ReportDetail' }
+        '404':
+          description: Жалоба не найдена.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ApiError' }
+  /chat/ban:
+    post:
+      tags: [Bans]
+      summary: Выдать бан игроку
+      operationId: issueChatBan
+      security: [ { BearerAuth: [chat.moderation.ban] } ]
+      parameters:
+        - $ref: './chat-moderation-components.yaml#/components/parameters/AuditReason'
+        - $ref: './chat-moderation-components.yaml#/components/parameters/ModeratorIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ChatBanRequest' }
+            examples: { ban: { $ref: './chat-moderation-examples.yaml#/components/examples/ChatBanRequest' } }
+      responses:
+        '201':
+          description: Бан создан.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ChatBan' }
+              examples: { ban: { $ref: './chat-moderation-examples.yaml#/components/examples/ChatBanResponse' } }
+        '409':
+          description: Активный бан уже существует.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ApiError' }
+  /chat/bans:
+    get:
+      tags: [Bans]
+      summary: Получить список банов
+      operationId: listChatBans
+      security: [ { BearerAuth: [chat.moderation.read] } ]
+      parameters:
+        - $ref: './chat-moderation-components.yaml#/components/parameters/PlayerId'
+        - $ref: './chat-moderation-components.yaml#/components/parameters/ChannelType'
+        - $ref: './chat-moderation-components.yaml#/components/parameters/IncludeExpired'
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Список банов.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ChatBanPage' }
+  /chat/bans/{banId}:
+    delete:
+      tags: [Bans]
+      summary: Снять бан досрочно
+      operationId: revokeChatBan
+      security: [ { BearerAuth: [chat.moderation.ban] } ]
+      parameters:
+        - $ref: './chat-moderation-components.yaml#/components/parameters/BanId'
+        - $ref: './chat-moderation-components.yaml#/components/parameters/AuditReason'
+      responses:
+        '204': { description: Бан снят. }
+        '404':
+          description: Бан не найден.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ApiError' }
+  /chat/moderation/filters/check:
+    post:
+      tags: [Filters]
+      summary: Проверить сообщение на нарушения
+      operationId: checkMessageModeration
+      security: [ { BearerAuth: [chat.moderation.filter] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ModerationCheckRequest' }
+      responses:
+        '200':
+          description: Результат проверки.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ModerationCheckResponse' }
+              examples: { check: { $ref: './chat-moderation-examples.yaml#/components/examples/ModerationCheckResponse' } }
+  /chat/moderation/rules:
+    get:
+      tags: [Filters]
+      summary: Получить текущие правила фильтрации
+      operationId: getModerationRules
+      security: [ { BearerAuth: [chat.moderation.read] } ]
+      responses:
+        '200':
+          description: Набор правил.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ModerationRuleSet' }
+              examples: { rules: { $ref: './chat-moderation-examples.yaml#/components/examples/ModerationRuleSet' } }
+    put:
+      tags: [Filters]
+      summary: Обновить правила фильтрации
+      operationId: updateModerationRules
+      security: [ { BearerAuth: [chat.moderation.manage] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ModerationRuleSet' }
+      responses:
+        '200': { description: Правила обновлены. }
+        '403':
+          description: Нет прав на изменение правил.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ApiError' }
+  /chat/moderation/auto-ban:
+    post:
+      tags: [Automation]
+      summary: Триггер автоматического бана
+      operationId: triggerAutoBan
+      security: [ { ServiceToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './chat-moderation-components.yaml#/components/schemas/AutoBanTrigger' }
+            examples: { autoBan: { $ref: './chat-moderation-examples.yaml#/components/examples/AutoBanTrigger' } }
+      responses:
+        '202': { description: Авто-ban инициирован. }
+        '409':
+          description: Есть активный бан с таким контекстом.
+          content:
+            application/json:
+              schema: { $ref: './chat-moderation-components.yaml#/components/schemas/ApiError' }
+
+x-kafka:
+  publishes:
+    - topic: chat.moderation.reported
+      payload: { $ref: './chat-moderation-components.yaml#/components/schemas/ReportTicket' }
+    - topic: chat.moderation.ban.issued
+      payload: { $ref: './chat-moderation-components.yaml#/components/schemas/ChatBan' }
+    - topic: chat.moderation.ban.expired
+      payload:
+        type: object
+        properties:
+          banId: { type: string, format: uuid }
+          playerId: { type: string, format: uuid }
+    - topic: chat.moderation.warning.sent
+      payload:
+        type: object
+        properties:
+          playerId: { type: string, format: uuid }
+          reason: { type: string }
+  subscribes:
+    - topic: chat.command.executed
+      payload:
+        type: object
+        properties:
+          command: { type: string }
+          payload: { type: object }
+    - topic: anti-cheat.alert
+      payload:
+        type: object
+        properties:
+          playerId: { type: string, format: uuid }
+          severity: { type: string }
+          description: { type: string }
+
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+
+

@@ -1,0 +1,139 @@
+# Target Architecture:
+# - Microservice: admin-service (port 8088)
+# - Examples covering scheduling, emergency, notifications
+
+openapi: 3.0.3
+info:
+  title: Maintenance Mode Examples
+  version: 1.0.0
+  description: Примеры полезной нагрузки для Maintenance Mode API.
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/admin/system/maintenance
+    package: com.necpgame.adminservice
+paths: {}
+components:
+  examples:
+    ScheduledWindowCreate:
+      summary: Плановое обслуживание на 2 часа с уведомлениями
+      value:
+        title: "Patch 1.12 deployment"
+        description: "Роллаут контент-патча и обновление базы данных"
+        type: "SCHEDULED"
+        environment: "PRODUCTION"
+        zones: ["EU-West", "NA-East"]
+        services: ["gameplay-service", "economy-service", "chat-service"]
+        startAt: "2025-11-10T22:00:00Z"
+        endAt: "2025-11-10T24:00:00Z"
+        expectedDurationMinutes: 120
+        shutdownPlan:
+          gracePeriodMinutes: 20
+          drainSteps:
+            - step: 1
+              description: "Отключить матчмейкинг"
+              targetService: "matchmaking-service"
+            - step: 2
+              description: "Закрыть входящие сессии"
+              targetService: "session-service"
+          queueLock: true
+          forceKickAt: "2025-11-10T22:20:00Z"
+        notificationPlan:
+          channels: ["IN_GAME", "EMAIL", "PUSH", "STATUS_PAGE"]
+          templates:
+            - channel: "IN_GAME"
+              templateId: "maintenance_ingame_v1"
+            - channel: "EMAIL"
+              templateId: "maintenance_email_v3"
+              localization: ["ru-RU", "en-US", "de-DE"]
+          schedule:
+            - offsetMinutes: -1440
+              channel: "EMAIL"
+            - offsetMinutes: -60
+              channel: "IN_GAME"
+            - offsetMinutes: -5
+              channel: "PUSH"
+          audience:
+            segments: ["all-active-players"]
+            includeGuildLeaders: true
+            includeOnlinePlayers: true
+        hooks:
+          deployment:
+            hookId: "d5b19ce5-f2f6-432b-aa1d-7ab7e6fc6cf0"
+            type: "DEPLOYMENT"
+            url: "https://ci.necpgame.com/hooks/deploy"
+            secret: "***"
+            enabled: true
+          incident:
+            type: "INCIDENT"
+            url: "https://incident.necpgame.com/api/hooks/maintenance"
+            enabled: true
+
+    EmergencyEscalation:
+      summary: Эскалация в экстренный режим
+      value:
+        windowId: "4f357054-7a54-4792-9f3d-1ff3db0a7af6"
+        reason: "Подозрение на утечку памяти в realtime кластере"
+        escalationLevel: "SEVERITY_1"
+        actions:
+          - "Notify incident response team"
+          - "Broadcast emergency message to players"
+        notify:
+          channels: ["IN_GAME", "STATUS_PAGE"]
+          message: "Серверы будут перезапущены немедленно. Благодарим за понимание."
+
+    MaintenanceProgress:
+      summary: Payload для websocket события maintenance-progress
+      value:
+        windowId: "4f357054-7a54-4792-9f3d-1ff3db0a7af6"
+        status: "IN_PROGRESS"
+        progressPercent: 45.5
+        affectedServices: ["gameplay-service", "session-service"]
+        playerCount: 1284
+        sessionDrain:
+          activeSessions: 523
+          drainedSessions: 761
+          estimatedCompletion: "2025-11-10T22:35:00Z"
+        timeline:
+          - timestamp: "2025-11-10T22:05:12Z"
+            message: "Matchmaking paused"
+            actor: "ops-bot"
+          - timestamp: "2025-11-10T22:10:00Z"
+            message: "All new logins blocked"
+            actor: "ops-bot"
+        updatedAt: "2025-11-10T22:18:44Z"
+
+    MaintenanceRollback:
+      summary: Запрос на откат обслуживания
+      value:
+        reason: "Деплой миграций БД завершился ошибкой"
+        performedBy: "devops@necpgame.com"
+        actions:
+          - "Restore snapshot 2025-11-10T21:45"
+          - "Re-enable previous container version"
+          - "Notify affected guild wars"
+        notify:
+          channels: ["IN_GAME", "EMAIL"]
+          message: "Обслуживание откатано. Возможны отклонения прогресса за последние 30 минут."
+
+    MaintenanceAuditEntry:
+      summary: Пример записи аудита
+      value:
+        entryId: "9a0df0ee-9cb5-4218-8e1c-6af0a1aef4ce"
+        windowId: "4f357054-7a54-4792-9f3d-1ff3db0a7af6"
+        actor: "ops-lead@necpgame.com"
+        role: "DEVOPS_LEAD"
+        action: "APPROVE"
+        details: "Одобрил план обслуживания после проверки drain теста"
+        attachments:
+          - attachmentId: "2d0eb93c-0387-4f70-918f-ab9f0316afc8"
+            filename: "drain-test-report.pdf"
+            url: "https://ops.necpgame.com/reports/drain-test-2025-11-09.pdf"
+        timestamp: "2025-11-09T18:02:17Z"
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

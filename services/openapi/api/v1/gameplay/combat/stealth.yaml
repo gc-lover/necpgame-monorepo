@@ -1,0 +1,362 @@
+openapi: 3.0.3
+info:
+  title: Stealth API
+  version: 1.0.0
+  description: |
+    API для системы скрытности.
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-stealth.md v1.1.0
+    
+    Механики:
+    - Уровни видимости: Hidden → Detected
+    - Звук и свет: шум от действий, освещение, тени
+    - Действия: Crouch, Takedown, Hide Body, Distraction
+    - Враги: зрение, слух, поиск, тревога
+    - Импланты: оптический камуфляж, глушители звука, радар врагов
+    - Интеграция: с D&D checks, netrunning, социальными навыками
+    
+    Вдохновение: Deus Ex, Dishonored, Hitman
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Stealth
+    description: Система скрытности
+
+paths:
+  /gameplay/combat/stealth/status:
+    get:
+      summary: Получить статус скрытности
+      description: |
+        Возвращает текущий статус скрытности персонажа.
+        Уровни: Hidden, Suspicious, Detected, Combat.
+      operationId: getStealthStatus
+      tags:
+        - Stealth
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Статус скрытности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StealthStatus'
+              examples:
+                hidden:
+                  summary: Скрыт
+                  value:
+                    character_id: "char_123"
+                    stealth_level: "hidden"
+                    visibility: 0
+                    noise_level: 10
+                    light_exposure: 5
+                    enemies_aware:
+                      total: 0
+                      searching: 0
+                detected:
+                  summary: Обнаружен
+                  value:
+                    character_id: "char_456"
+                    stealth_level: "detected"
+                    visibility: 100
+                    noise_level: 80
+                    light_exposure: 95
+                    enemies_aware:
+                      total: 3
+                      searching: 3
+
+  /gameplay/combat/stealth/enter-stealth:
+    post:
+      summary: Войти в режим скрытности
+      description: |
+        Переводит персонажа в режим скрытности (crouch).
+        Уменьшает скорость, но снижает видимость и шум.
+      operationId: enterStealth
+      tags:
+        - Stealth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+                use_implants:
+                  type: boolean
+                  description: Использовать импланты (оптический камуфляж)
+      responses:
+        '200':
+          description: Режим скрытности активирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stealth_level:
+                    type: string
+                  visibility_modifier:
+                    type: number
+                  noise_modifier:
+                    type: number
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /gameplay/combat/stealth/takedown:
+    post:
+      summary: Скрытная нейтрализация
+      description: |
+        Выполняет скрытую нейтрализацию врага (lethal/non-lethal).
+        Требует: близкая дистанция, враг не в тревоге, проверка COOL.
+      operationId: performTakedown
+      tags:
+        - Stealth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - target_id
+                - takedown_type
+              properties:
+                character_id:
+                  type: string
+                target_id:
+                  type: string
+                takedown_type:
+                  type: string
+                  enum: [lethal, non_lethal]
+            examples:
+              non_lethal:
+                summary: Нелетальная нейтрализация
+                value:
+                  character_id: "char_123"
+                  target_id: "enemy_001"
+                  takedown_type: "non_lethal"
+      responses:
+        '200':
+          description: Нейтрализация выполнена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  target_id:
+                    type: string
+                  target_status:
+                    type: string
+                    enum: [unconscious, dead]
+                  detection_risk:
+                    type: number
+                    description: Риск обнаружения (%)
+                  noise_generated:
+                    type: number
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/combat/stealth/hide-body:
+    post:
+      summary: Спрятать тело
+      description: |
+        Прячет тело нейтрализованного врага.
+        Снижает риск обнаружения другими врагами.
+      operationId: hideBody
+      tags:
+        - Stealth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - body_id
+                - hiding_spot_id
+              properties:
+                character_id:
+                  type: string
+                body_id:
+                  type: string
+                hiding_spot_id:
+                  type: string
+                  description: ID места для сокрытия (контейнер, вентиляция)
+      responses:
+        '200':
+          description: Тело спрятано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  hiding_quality:
+                    type: string
+                    enum: [perfect, good, poor]
+                  detection_chance:
+                    type: number
+                    description: Шанс обнаружения (%)
+
+  /gameplay/combat/stealth/create-distraction:
+    post:
+      summary: Создать отвлечение
+      description: |
+        Создает отвлечение для врагов (звук, взрыв, hologram).
+        Перенаправляет внимание врагов.
+      operationId: createDistraction
+      tags:
+        - Stealth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - distraction_type
+                - location
+              properties:
+                character_id:
+                  type: string
+                distraction_type:
+                  type: string
+                  enum: [sound, explosion, hologram, hack_device]
+                location:
+                  type: object
+                  required: [x, y, z]
+                  properties:
+                    x: { type: number }
+                    y: { type: number }
+                    z: { type: number }
+      responses:
+        '200':
+          description: Отвлечение создано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  distraction_id:
+                    type: string
+                  duration:
+                    type: number
+                    description: Длительность отвлечения (секунды)
+                  affected_enemies:
+                    type: array
+                    items:
+                      type: string
+
+  /gameplay/combat/stealth/optical-camo:
+    post:
+      summary: Активировать оптический камуфляж
+      description: |
+        Активирует имплант оптического камуфляжа.
+        Делает персонажа почти невидимым на время.
+      operationId: activateOpticalCamo
+      tags:
+        - Stealth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+                duration:
+                  type: number
+                  description: Желаемая длительность (секунды)
+      responses:
+        '200':
+          description: Камуфляж активирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  active_duration:
+                    type: number
+                  energy_cost:
+                    type: number
+                  visibility_reduction:
+                    type: number
+                    description: Снижение видимости (%)
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+components:
+  schemas:
+    StealthStatus:
+      type: object
+      properties:
+        character_id:
+          type: string
+        stealth_level:
+          type: string
+          enum: [hidden, suspicious, detected, combat]
+          description: Текущий уровень скрытности
+        visibility:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Видимость персонажа (%)
+        noise_level:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Уровень шума (%)
+        light_exposure:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Освещенность (%)
+        enemies_aware:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Всего врагов, знающих о персонаже
+            searching:
+              type: integer
+              description: Врагов, активно ищущих
+        active_effects:
+          type: array
+          items:
+            type: string
+          description: Активные эффекты (optical_camo, sound_dampener)
+
+

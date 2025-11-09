@@ -1,0 +1,338 @@
+# Target Architecture:
+# - Microservice: mail-service (port 8094)
+# - API Base: /api/v1/mail
+# - Dependencies: auth-service, inventory-service, economy-service, notification-service, analytics-service, moderation-service, template-service, support-service
+# - Frontend Module: modules/social/mail (useMailStore)
+# - UI: MailInbox, MailViewer, MailComposer, MailAttachmentList, CODSummary, MailFilters
+# - Forms: MailComposeForm, CODForm, AttachmentPickerForm, MailSearchForm
+# - Hooks: useMail, useMailComposer, useMailFilters, useMailNotifications
+
+openapi: 3.0.3
+info:
+  title: Mail System API
+  description: "Внутриигровая почта NECPGAME: отправка, вложения, COD, системные рассылки и история операций."
+  version: 1.0.0
+servers:
+  - url: https://api.necp.game/v1
+security:
+  - BearerAuth: []
+tags:
+  - name: Inbox
+    description: Работа с входящими письмами
+  - name: Outbox
+    description: Управление отправленными письмами
+  - name: Mail
+    description: Операции с письмами и вложениями
+  - name: Settings
+    description: Настройки почтовой системы
+  - name: System Mail
+    description: Системные и GM рассылки
+  - name: Analytics
+    description: Статистика и история
+paths:
+  /mail/inbox:
+    get:
+      tags: [Inbox]
+      summary: Список входящих писем
+      parameters:
+        - in: query
+          name: unread
+          schema: { type: boolean }
+        - in: query
+          name: attachments
+          schema: { type: boolean }
+        - in: query
+          name: from
+          schema: { type: string }
+        - in: query
+          name: system
+          schema: { type: boolean }
+        - $ref: '../openapi-overrides/shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../openapi-overrides/shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Входящие письма
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailListResponse' }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/outbox:
+    get:
+      tags: [Outbox]
+      summary: Список отправленных писем
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - $ref: '../openapi-overrides/shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../openapi-overrides/shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Отправленные письма
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailListResponse' }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/{mailId}:
+    parameters:
+      - $ref: '../openapi-overrides/mail-components.yaml#/components/parameters/MailId'
+    get:
+      tags: [Mail]
+      summary: Получить детали письма
+      responses:
+        '200':
+          description: Полная информация о письме
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailDetail' }
+              examples:
+                mailDetail:
+                  $ref: '../openapi-overrides/mail-examples.yaml#/components/examples/MailDetail'
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/NotFound' }
+    delete:
+      tags: [Mail]
+      summary: Удалить письмо из почтового ящика
+      responses:
+        '204': { description: Письмо помечено к удалению }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail:
+    post:
+      tags: [Mail]
+      summary: Отправить письмо
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailSendRequest' }
+            examples:
+              sendMail:
+                $ref: '../openapi-overrides/mail-examples.yaml#/components/examples/SendMail'
+      responses:
+        '201':
+          description: Письмо отправлено
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailDetail' }
+        '400': { description: Ошибка вложений или адресата, content: { application/json: { schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' } } } }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '429': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/TooManyRequests' }
+  /mail/{mailId}/attachments/claim:
+    parameters:
+      - $ref: '../openapi-overrides/mail-components.yaml#/components/parameters/MailId'
+    post:
+      tags: [Mail]
+      summary: Забрать вложения письма
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/AttachmentClaimRequest' }
+      responses:
+        '200':
+          description: Вложения получены
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/AttachmentClaimResponse' }
+        '400': { description: Вложения недоступны, content: { application/json: { schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' } } } }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/{mailId}/cod/pay:
+    parameters:
+      - $ref: '../openapi-overrides/mail-components.yaml#/components/parameters/MailId'
+    post:
+      tags: [Mail]
+      summary: Оплатить COD и получить вложения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/CODPaymentRequest' }
+            examples:
+              payCOD:
+                $ref: '../openapi-overrides/mail-examples.yaml#/components/examples/CODPaymentRequest'
+      responses:
+        '200':
+          description: COD оплачен, вложения доступны
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/CODPaymentResponse' }
+        '400': { description: Оплата невозможна, content: { application/json: { schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' } } } }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/{mailId}/return:
+    parameters:
+      - $ref: '../openapi-overrides/mail-components.yaml#/components/parameters/MailId'
+    post:
+      tags: [Mail]
+      summary: Вернуть письмо отправителю
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailReturnRequest' }
+      responses:
+        '200': { description: Письмо возвращено }
+        '400': { description: Возврат невозможен, content: { application/json: { schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' } } } }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/{mailId}/flag:
+    parameters:
+      - $ref: '../openapi-overrides/mail-components.yaml#/components/parameters/MailId'
+    post:
+      tags: [Mail]
+      summary: Пожаловаться на письмо
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailFlagRequest' }
+      responses:
+        '202': { description: Жалоба зарегистрирована }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/settings:
+    get:
+      tags: [Settings]
+      summary: Получить почтовые настройки
+      responses:
+        '200':
+          description: Текущие настройки почты
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailSettings' }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+    put:
+      tags: [Settings]
+      summary: Обновить почтовые настройки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailSettingsUpdateRequest' }
+      responses:
+        '200': { description: Настройки обновлены }
+        '400': { description: Некорректные параметры, content: { application/json: { schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' } } } }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/system:
+    post:
+      tags: [System Mail]
+      summary: Отправить системное письмо или рассылку
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/SystemMailRequest' }
+            examples:
+              systemMail:
+                $ref: '../openapi-overrides/mail-examples.yaml#/components/examples/SystemMailRequest'
+      responses:
+        '202': { description: Системная рассылка запланирована }
+        '400': { description: Ошибка шаблона или сегмента, content: { application/json: { schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' } } } }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/system/batch:
+    post:
+      tags: [System Mail]
+      summary: Массовая отправка писем
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/SystemMailBatchRequest' }
+      responses:
+        '202': { description: Batch отправка принята }
+        '400': { description: Нарушение лимитов, content: { application/json: { schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' } } } }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/history:
+    get:
+      tags: [Analytics]
+      summary: Журнал операций почты
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string }
+        - $ref: '../openapi-overrides/shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../openapi-overrides/shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: История операций
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailHistoryResponse' }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/{mailId}/read:
+    parameters:
+      - $ref: '../openapi-overrides/mail-components.yaml#/components/parameters/MailId'
+    post:
+      tags: [Mail]
+      summary: Пометить письмо как прочитанное
+      responses:
+        '200': { description: Письмо отмечено }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/stats:
+    get:
+      tags: [Analytics]
+      summary: Статистика почтовой активности
+      parameters:
+        - in: query
+          name: range
+          schema: { type: string, enum: [24h, 7d, 30d, season] }
+      responses:
+        '200':
+          description: Почтовые метрики
+          content:
+            application/json:
+              schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailStats' }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /mail/{mailId}/resend:
+    parameters:
+      - $ref: '../openapi-overrides/mail-components.yaml#/components/parameters/MailId'
+    post:
+      tags: [Mail]
+      summary: Повторно отправить письмо
+      responses:
+        '202': { description: Повторная отправка запланирована }
+        '400': { description: Повторная отправка невозможна, content: { application/json: { schema: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' } } } }
+        '401': { $ref: '../openapi-overrides/shared/common/responses.yaml#/components/responses/Unauthorized' }
+
+x-websocket:
+  url: wss://api.necp.game/v1/mail/stream
+  description: Realtime события почтовой системы
+  messages:
+    mailReceived:
+      summary: Получено новое письмо
+      payload: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailEvent' }
+    mailRead:
+      summary: Письмо прочитано
+      payload: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailEvent' }
+    mailReturned:
+      summary: Письмо возвращено
+      payload: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailEvent' }
+    attachmentClaimed:
+      summary: Вложения получены
+      payload: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/AttachmentEvent' }
+    codPaid:
+      summary: COD оплачен
+      payload: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/Codevent' }
+    mailFlagged:
+      summary: Письмо помечено/жалоба
+      payload: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailFlagEvent' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../openapi-overrides/shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../openapi-overrides/shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+    GMToken: { $ref: '../openapi-overrides/shared/common/security.yaml#/components/securitySchemes/GMToken' }
+  parameters:
+    MailId: { $ref: '../openapi-overrides/mail-components.yaml#/components/parameters/MailId' }
+  schemas:
+    MailDetail: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailDetail' }
+    MailError: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailError' }
+    MailSettings: { $ref: '../openapi-overrides/mail-components.yaml#/components/schemas/MailSettings' }
+  examples:
+    MailDetail: { $ref: '../openapi-overrides/mail-examples.yaml#/components/examples/MailDetail' }
+    SendMail: { $ref: '../openapi-overrides/mail-examples.yaml#/components/examples/SendMail' }
+    CODPaymentRequest: { $ref: '../openapi-overrides/mail-examples.yaml#/components/examples/CODPaymentRequest' }
+    SystemMailRequest: { $ref: '../openapi-overrides/mail-examples.yaml#/components/examples/SystemMailRequest' }
+
+
+

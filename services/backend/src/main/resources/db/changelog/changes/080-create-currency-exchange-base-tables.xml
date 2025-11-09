@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="080-create-currency-exchange-base-tables" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="currency_pairs"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="currency_pairs">
+            <column name="pair" type="VARCHAR(32)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="base" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quote" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pair_type" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_trade_amount" type="NUMERIC(14,4)"/>
+            <column name="max_leverage" type="INT"/>
+            <column name="commission_rate" type="NUMERIC(8,4)"/>
+        </createTable>
+
+        <createTable tableName="currency_exchange_rates">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="base_currency" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rates_json" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timestamp" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="currency_pair_rates">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="pair" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_currency" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quote_currency" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rate" type="NUMERIC(18,8)"/>
+            <column name="bid" type="NUMERIC(18,8)"/>
+            <column name="ask" type="NUMERIC(18,8)"/>
+            <column name="spread" type="NUMERIC(18,8)"/>
+            <column name="timestamp" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="currency_rate_history">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="pair" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="period" type="VARCHAR(16)"/>
+            <column name="interval" type="VARCHAR(16)"/>
+            <column name="timestamp" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="open_rate" type="NUMERIC(18,8)"/>
+            <column name="high_rate" type="NUMERIC(18,8)"/>
+            <column name="low_rate" type="NUMERIC(18,8)"/>
+            <column name="close_rate" type="NUMERIC(18,8)"/>
+            <column name="volume" type="BIGINT"/>
+            <column name="recorded_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="currency_exchange_rates" indexName="idx_currency_exchange_rates_timestamp">
+            <column name="timestamp"/>
+        </createIndex>
+
+        <createIndex tableName="currency_pair_rates" indexName="idx_currency_pair_rates_pair">
+            <column name="pair"/>
+        </createIndex>
+        <createIndex tableName="currency_pair_rates" indexName="idx_currency_pair_rates_timestamp">
+            <column name="timestamp"/>
+        </createIndex>
+
+        <createIndex tableName="currency_rate_history" indexName="idx_currency_rate_history_pair">
+            <column name="pair"/>
+        </createIndex>
+        <createIndex tableName="currency_rate_history" indexName="idx_currency_rate_history_period">
+            <column name="period"/>
+        </createIndex>
+        <createIndex tableName="currency_rate_history" indexName="idx_currency_rate_history_interval">
+            <column name="interval"/>
+        </createIndex>
+        <createIndex tableName="currency_rate_history" indexName="idx_currency_rate_history_timestamp">
+            <column name="timestamp"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="currency_rate_history"/>
+            <dropTable tableName="currency_pair_rates"/>
+            <dropTable tableName="currency_exchange_rates"/>
+            <dropTable tableName="currency_pairs"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

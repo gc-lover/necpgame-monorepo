@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="095-create-player-orders" author="backend-agent">
+        <createTable tableName="player_orders">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="creator_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creator_name" type="VARCHAR(160)"/>
+            <column name="order_type" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="requirements_json" type="JSONB"/>
+            <column name="payment" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty" type="VARCHAR(40)"/>
+            <column name="executor_id" type="UUID"/>
+            <column name="executor_name" type="VARCHAR(160)"/>
+            <column name="npc_executor_id" type="UUID"/>
+            <column name="views" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deadline" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="accepted_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="estimated_completion" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="cancellation_reason" type="TEXT"/>
+            <column name="deliverables_json" type="JSONB"/>
+            <column name="escrow_json" type="JSONB"/>
+            <column name="completion_proof_json" type="JSONB"/>
+            <column name="recurring" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="premium" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="player_orders" indexName="idx_player_orders_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="player_orders" indexName="idx_player_orders_type">
+            <column name="order_type"/>
+        </createIndex>
+        <createIndex tableName="player_orders" indexName="idx_player_orders_creator">
+            <column name="creator_id"/>
+        </createIndex>
+        <createIndex tableName="player_orders" indexName="idx_player_orders_executor">
+            <column name="executor_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="095-create-player-order-reviews" author="backend-agent">
+        <createTable tableName="player_order_reviews">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reviewer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="player_order_reviews" indexName="idx_player_order_reviews_order">
+            <column name="order_id"/>
+        </createIndex>
+        <createIndex tableName="player_order_reviews" indexName="idx_player_order_reviews_reviewer">
+            <column name="reviewer_id"/>
+        </createIndex>
+        <addForeignKeyConstraint baseTableName="player_order_reviews"
+                                 baseColumnNames="order_id"
+                                 constraintName="fk_player_order_reviews_order"
+                                 referencedTableName="player_orders"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="095-1" author="backend-agent">
+        <createTable tableName="player_orders">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="creator_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creator_name" type="VARCHAR(160)"/>
+            <column name="order_type" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="requirements_json" type="JSONB"/>
+            <column name="payment" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty" type="VARCHAR(40)"/>
+            <column name="executor_id" type="UUID"/>
+            <column name="executor_name" type="VARCHAR(160)"/>
+            <column name="npc_executor_id" type="UUID"/>
+            <column name="views" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deadline" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="accepted_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="estimated_completion" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="cancellation_reason" type="TEXT"/>
+            <column name="deliverables_json" type="JSONB"/>
+            <column name="escrow_json" type="JSONB"/>
+            <column name="completion_proof_json" type="JSONB"/>
+            <column name="recurring" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="premium" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="player_orders" indexName="idx_player_orders_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="player_orders" indexName="idx_player_orders_type">
+            <column name="order_type"/>
+        </createIndex>
+        <createIndex tableName="player_orders" indexName="idx_player_orders_creator">
+            <column name="creator_id"/>
+        </createIndex>
+        <createIndex tableName="player_orders" indexName="idx_player_orders_executor">
+            <column name="executor_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="095-2" author="backend-agent">
+        <createTable tableName="player_order_reviews">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reviewer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="player_order_reviews" indexName="idx_player_order_reviews_order">
+            <column name="order_id"/>
+        </createIndex>
+        <createIndex tableName="player_order_reviews" indexName="idx_player_order_reviews_reviewer">
+            <column name="reviewer_id"/>
+        </createIndex>
+        <addForeignKeyConstraint baseTableName="player_order_reviews"
+                                 baseColumnNames="order_id"
+                                 constraintName="fk_player_order_reviews_order"
+                                 referencedTableName="player_orders"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

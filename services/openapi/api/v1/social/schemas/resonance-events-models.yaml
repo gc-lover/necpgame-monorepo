@@ -1,0 +1,88 @@
+openapi: 3.0.3
+info:
+  title: Social Resonance Event Models
+  version: 1.0.0
+  description: Схемы payload'ов для асинхронных событий Social Resonance.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  schemas:
+    SocialIndexChangedEvent:
+      type: object
+      required: [eventId, occurredAt, trustIndex, delta, reason, source]
+      properties:
+        eventId:
+          type: string
+          example: "evt-res-8812"
+        occurredAt:
+          type: string
+          format: date-time
+        trustIndex:
+          type: number
+          format: float
+          example: 63.5
+        delta:
+          type: number
+          format: float
+          example: 1.7
+        reason:
+          type: string
+          example: "Community outreach success"
+        source:
+          $ref: './resonance-models.yaml#/components/schemas/ResonanceDimension'
+        worldPulse:
+          $ref: './resonance-models.yaml#/components/schemas/WorldPulseLink'
+        triggeredByCampaign:
+          type: string
+          nullable: true
+        triggeredByRelationship:
+          type: string
+          nullable: true
+    SocialCampaignStartedEvent:
+      type: object
+      required: [eventId, occurredAt, campaign, expectedDelta]
+      properties:
+        eventId:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        campaign:
+          $ref: './resonance-models.yaml#/components/schemas/SocialCampaign'
+        expectedDelta:
+          type: number
+          format: float
+        simulate:
+          type: boolean
+        approval:
+          $ref: './resonance-models.yaml#/components/schemas/AuditMetadata'
+    SocialRelationshipUpdatedEvent:
+      type: object
+      required: [eventId, occurredAt, relationship, delta]
+      properties:
+        eventId:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        relationship:
+          $ref: './resonance-models.yaml#/components/schemas/RelationshipSummary'
+        delta:
+          type: number
+          format: float
+        worldPulse:
+          $ref: './resonance-models.yaml#/components/schemas/WorldPulseLink'
+        crisisAlertRaised:
+          type: boolean
+          example: false
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

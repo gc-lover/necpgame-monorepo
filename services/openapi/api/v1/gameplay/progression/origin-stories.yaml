@@ -1,0 +1,69 @@
+openapi: 3.0.3
+info:
+  title: Origin Stories API
+  version: 1.0.0
+  description: |
+    API для историй происхождения персонажа.
+    
+    Источник: .BRAIN/02-gameplay/progression/origin-stories.md v1.0.0
+    
+    Life Paths: Corpo, Street Kid, Nomad
+    Влияние: стартовые бонусы, уникальные квесты, диалоги, репутация
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/progression
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Origin Stories
+    description: Истории происхождения
+
+paths:
+  /gameplay/progression/origins:
+    get:
+      summary: Получить доступные истории происхождения
+      description: Возвращает список Life Paths для выбора
+      operationId: getOrigins
+      tags:
+        - Origin Stories
+      responses:
+        '200':
+          description: Список происхождений
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /gameplay/progression/origins/{origin_id}:
+    get:
+      summary: Получить детали происхождения
+      description: Возвращает информацию о конкретном Life Path
+      operationId: getOriginDetails
+      tags:
+        - Origin Stories
+      parameters:
+        - name: origin_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали происхождения
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas: {}
+
+

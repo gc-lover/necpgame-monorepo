@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: Faction Quest Chains Examples
+  version: 1.0.0
+  description: Примеры запросов и ответов для работы с фракционными цепочками контрактов.
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+paths: {}
+components:
+  examples:
+    ContractListResponse:
+      summary: Каталог доступных контрактов
+      value:
+        items:
+          - chainId: "4a2c3c5e-5d8a-4a1d-9f90-8d27f9a81425"
+            factionId: "a4f17d72-8d5c-4c22-bd26-448f62d63080"
+            name: "Aeon Vanguard: Echoes of Mnemosyne"
+            synopsis: "Вернуть украденные архивы и предотвратить ритуал культистов."
+            visibility: "GUILD_BOARD"
+            status: "AVAILABLE"
+            entryRequirements:
+              minimumLevel: 35
+              reputationThreshold: 420
+            contactNpc:
+              npcId: "f14ff4c4-43c3-4e91-93fd-b9698df673ce"
+              name: "Archivist Lyra"
+              location: "Aeon Spire Library"
+            estimatedDurationMinutes: 95
+            cooldownMinutes: 720
+            telemetry:
+              contractSuccessRate: 0.78
+              branchPreferenceIndex: 0.62
+        page: 1
+        pageSize: 20
+        total: 64
+    ContractDetailResponse:
+      summary: Детали цепочки Aeon Vanguard
+      value:
+        chainId: "4a2c3c5e-5d8a-4a1d-9f90-8d27f9a81425"
+        factionId: "a4f17d72-8d5c-4c22-bd26-448f62d63080"
+        name: "Aeon Vanguard: Echoes of Mnemosyne"
+        synopsis: "Mnemosyne архивы украдены фанатиками Basilisk."
+        visibility: "GUILD_BOARD"
+        status: "AVAILABLE"
+        entryRequirements:
+          minimumLevel: 35
+          reputationThreshold: 420
+          prerequisiteChains:
+            - "5f9d3d06-1a11-4c2c-991a-8c86c0dceb10"
+          worldFlagsRequired:
+            - "world.echo-dominion.alert"
+        contactNpc:
+          npcId: "f14ff4c4-43c3-4e91-93fd-b9698df673ce"
+          name: "Archivist Lyra"
+          location: "Aeon Spire Library"
+        stages:
+          - stageId: "stage-01"
+            title: "Shadow Recon"
+            order: 1
+            type: "INVESTIGATION"
+            description: "Сканировать архивные узлы."
+            objectives:
+              - objectiveId: "obj-01"
+                type: "scan"
+                target: "echo-node"
+                quantity: 5
+            branchOptions:
+              - branchId: "branch-escort"
+                title: "Escort Cipher"
+                type: "ESCORT"
+                description: "Сопроводить курьера Mnemosyne."
+                reputationPreview:
+                  - factionId: "a4f17d72-8d5c-4c22-bd26-448f62d63080"
+                    delta: 120
+                    type: "GAIN"
+                rewardPreview:
+                  rewards:
+                    - type: "ITEM"
+                      assetId: "mnemosyne-cipher"
+                      quantity: 1
+              - branchId: "branch-sabotage"
+                title: "Sabotage Ritual"
+                type: "SABOTAGE"
+                description: "Подорвать артефакт Basilisk."
+                reputationPreview:
+                  - factionId: "cdd7a1c6-92d3-4f4a-9093-4d76154b2220"
+                    delta: -80
+                    type: "LOSS"
+            worldFlagUpdates:
+              - "world.mnemosyne.node-recovered"
+        rewards:
+          rewards:
+            - type: "CREDITS"
+              assetId: "credits"
+              quantity: 12000
+            - type: "BLUEPRINT"
+              assetId: "mnemosyne-echo-rifle"
+              quantity: 1
+        reputationImpacts:
+          - factionId: "a4f17d72-8d5c-4c22-bd26-448f62d63080"
+            delta: 160
+            type: "GAIN"
+          - factionId: "cdd7a1c6-92d3-4f4a-9093-4d76154b2220"
+            delta: -100
+            type: "LOSS"
+    AcceptRequest:
+      summary: Запуск цепочки для игрока
+      value:
+        playerId: "9981c67e-4d3b-4e88-b67d-40ae9f3e81df"
+        partyId: "5511a9f1-1b72-4db4-9a85-9d83f1a7f112"
+        guildId: "83d91a5d-f95f-4ae3-9f6c-02c06c662933"
+        entryContext: "guild_board"
+    BranchSelectionRequest:
+      summary: Выбор ветви Sabotage
+      value:
+        playerId: "9981c67e-4d3b-4e88-b67d-40ae9f3e81df"
+        branchId: "branch-sabotage"
+        rationale: "Need to destabilize Basilisk ritual network"
+    ProgressUpdate:
+      summary: Обновление прогресса этапа
+      value:
+        playerId: "9981c67e-4d3b-4e88-b67d-40ae9f3e81df"
+        stageId: "stage-01"
+        branchId: "branch-sabotage"
+        objectiveId: "obj-01"
+        progressValue: 5
+        status: "COMPLETED"
+        worldFlags:
+          - "world.mnemosyne.node-recovered"
+        telemetry:
+          event: "contract_progressed"
+          metadata:
+            location: "Sable District"
+            latencyMs: 120
+    OutcomeRequest:
+      summary: Применение финала
+      value:
+        playerId: "9981c67e-4d3b-4e88-b67d-40ae9f3e81df"
+        outcome: "SUCCESS"
+        rewardsOverride:
+          rewards:
+            - type: "ITEM"
+              assetId: "aeon-signet"
+              quantity: 1
+        reputationChanges:
+          - factionId: "a4f17d72-8d5c-4c22-bd26-448f62d63080"
+            delta: 220
+            type: "GAIN"
+    OutcomeResponse:
+      summary: Результат выполнения
+      value:
+        chainId: "4a2c3c5e-5d8a-4a1d-9f90-8d27f9a81425"
+        outcome: "SUCCESS"
+        rewards:
+          rewards:
+            - type: "CREDITS"
+              assetId: "credits"
+              quantity: 12000
+            - type: "ITEM"
+              assetId: "aeon-signet"
+              quantity: 1
+        reputation:
+          - factionId: "a4f17d72-8d5c-4c22-bd26-448f62d63080"
+            delta: 220
+            type: "GAIN"
+        unlocks:
+          - "contract.quantum-fable.echo"
+        scheduledFollowUps:
+          - "b23276d0-bdf4-4d94-9d0d-8fb4d5ddc96a"
+    WebSocketStageStart:
+      summary: Сообщение StageStart
+      value:
+        event: "StageStart"
+        chainId: "4a2c3c5e-5d8a-4a1d-9f90-8d27f9a81425"
+        stageId: "stage-02"
+        branchId: "branch-sabotage"
+        progressState: "IN_PROGRESS"
+        timestamp: "2025-11-08T21:05:00Z"
+        payload:
+          objectivesRemaining: 3
+          recommendedPowerScore: 890
+    ErrorCooldown:
+      summary: Ошибка кулдауна
+      value:
+        error:
+          code: "BIZ_FACTION_CONTRACT_COOLDOWN"
+          message: "Chain locked for 02:12:00"
+          details:
+            - "cooldownMinutes=180"
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

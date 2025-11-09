@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="021-create-character-implant-stats-table" author="system">
+        <createTable tableName="character_implant_stats">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false" unique="true"
+                             foreignKeyName="fk_character_implant_stats_character" 
+                             references="characters(id)"
+                             deleteCascade="true"/>
+            </column>
+            
+            <!-- Лимиты имплантов -->
+            <column name="base_implant_limit" type="INTEGER" defaultValueNumeric="10">
+                <constraints nullable="false"/>
+            </column>
+            <column name="implant_limit_bonus" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="humanity_penalty" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_implant_limit" type="INTEGER" defaultValueNumeric="10">
+                <constraints nullable="false"/>
+            </column>
+            <column name="used_implants" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            
+            <!-- Энергетический пул -->
+            <column name="total_energy_pool" type="REAL" defaultValueNumeric="100.0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="used_energy" type="REAL" defaultValueNumeric="0.0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available_energy" type="REAL" defaultValueNumeric="100.0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="energy_regen_rate" type="REAL" defaultValueNumeric="1.0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_energy_level" type="REAL" defaultValueNumeric="100.0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_energy_level" type="REAL" defaultValueNumeric="100.0"/>
+            
+            <!-- Временные модификаторы -->
+            <column name="can_exceed_limit_temporarily" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="temporary_bonus_expires_at" type="TIMESTAMP"/>
+            
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <createIndex tableName="character_implant_stats" indexName="idx_character_implant_stats_character" unique="true">
+            <column name="character_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

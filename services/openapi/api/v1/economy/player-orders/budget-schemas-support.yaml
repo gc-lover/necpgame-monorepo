@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: Player Order Budget Support Schemas
+  version: 1.0.0
+  description: Дополнительные структуры и события для API расчёта бюджета заказов игроков.
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy
+    package: com.necpgame.economyservice
+paths: {}
+components:
+  schemas:
+    BudgetEstimateJobList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          description: Список задач расчёта бюджета.
+          items:
+            $ref: './player-orders-budget-components.yaml#/components/schemas/BudgetEstimateJob'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    BudgetAnomalyEvent:
+      type: object
+      required: [orderId, anomalyType, detectedAt]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        anomalyType:
+          type: string
+          enum: [market_spike, market_drop, escrow_timeout, validation_loop, insurance_reject]
+        detectedAt:
+          type: string
+          format: date-time
+        details:
+          type: string
+          maxLength: 2048
+    InsuranceTierList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          description: Перечень страховых планов для UI.
+          items:
+            $ref: './player-orders-budget-components.yaml#/components/schemas/InsuranceTier'
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        updatedAt:
+          type: string
+          format: date-time
+    EscrowLockEvent:
+      type: object
+      required: [orderId, escrowAmount, insuranceTier, status, emittedAt]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        escrowAmount:
+          type: number
+          format: float
+        insuranceTier:
+          type: string
+          enum: [basic, extended, premium]
+        status:
+          type: string
+          enum: [locked, pending, released]
+        emittedAt:
+          type: string
+          format: date-time
+        traceId:
+          type: string
+          format: uuid
+    InsuranceAppliedEvent:
+      type: object
+      required: [orderId, tier, appliedAt]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [basic, extended, premium]
+        appliedAt:
+          type: string
+          format: date-time
+        premium:
+          type: number
+          format: float
+        actorId:
+          type: string
+          format: uuid
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

@@ -1,0 +1,58 @@
+agent: Backend Implementer
+mission: >
+  Реализовывать микросервис на основе готовой OpenAPI спецификации: генерировать контракты, писать логику, миграции и тесты.
+responsibilities:
+  - Генерировать DTO/API/Service интерфейсы через `generate-openapi-layers.ps1`.
+  - Создавать сущности, репозитории, сервисы, контроллеры и миграции.
+  - Обновлять implementation-tracker и очереди backend.
+inputs:
+  spec_path: "services/openapi/api/v1/<domain>/<feature>.yaml"
+  queue_file: "shared/trackers/queues/backend/not-started.yaml"
+  trackers:
+    - "shared/trackers/implementation-tracker.yaml"
+workflow:
+  - step: claim-work
+    description: Перенеси карточку в `backend/in-progress.yaml`, отметь время старта в трекере.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/backend/in-progress.yaml"
+  - step: generate-contracts
+    description: >
+      Запусти `pwsh -File services/backend/scripts/generate-openapi-layers.ps1 -ApiSpec <spec> [-Validate] [-DryRun]`
+      (или `-ApiDirectory` для пакетной генерации). Скрипт автоматически ищет спецификации в `services/openapi/api/v1`,
+      создаёт временные артефакты и раскладывает слои в каталоги микросервисов.
+  - step: implement-logic
+    description: Реализуй сущности, репозитории, сервисы, контроллеры, мапперы, миграции.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-backend-structure.ps1 -ProjectRoot services/backend"
+      - "pwsh -File pipeline/scripts/check-seed-integrity.ps1 -SeedDirectory services/backend/src/main/resources/db/changelog"
+  - step: testing
+    description: Выполни unit/integration тесты.
+    scripts:
+      - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+  - step: finalize
+    description: Обнови трекер (`backend.status=completed`), перенеси карточку в `backend/completed.yaml`, задокументируй Frontend brief.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/backend/completed.yaml"
+handoff:
+  target_agent: Frontend Implementer
+  requirements:
+    - implementation-tracker содержит commit и timestamp
+    - Frontend brief заполнен
+    - Карточка в `shared/trackers/queues/frontend/not-started.yaml`
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/check-backend-structure.ps1 -ProjectRoot services/backend"
+    - "pwsh -File pipeline/scripts/check-seed-integrity.ps1 -SeedDirectory services/backend/src/main/resources/db/changelog"
+    - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/backend/completed.yaml"
+outputs:
+  - обновлённый backend код и миграции
+  - Frontend brief
+  - Activity Log entry
+metrics:
+  - backend_completion_time
+  - qa_blockers_count
+tools:
+  - "pipeline/checklists/openapi-to-backend.yaml"
+  - "pipeline/templates/frontend-brief.yaml"
+

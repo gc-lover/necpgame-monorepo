@@ -1,0 +1,519 @@
+openapi: 3.0.3
+info:
+  title: Game Start API
+  version: 1.0.0
+  description: |
+    API для запуска игры и получения начального контента.
+    
+    **Источники:**
+    - `.BRAIN/05-technical/game-start-scenario.md` (v1.0.0)
+    - `.BRAIN/05-technical/mvp-initial-data.md` (v1.0.0)
+    - `.BRAIN/05-technical/ui-game-start.md` (v1.1.0)
+    - Задание: `API-SWAGGER/tasks/active/queue/task-027-game-initial-content-api.md`
+    - Task ID: API-TASK-027
+    
+    **Игра начинается:**
+    - Локация: Downtown, Night City
+    - Год: 2020
+    - Стартовые деньги: 500 eddies
+    - Уровень: 1
+    - Стартовое снаряжение: пистолет Liberty, уличная броня
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/game
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Game Start
+    description: Запуск игры и начальный контент
+
+paths:
+  /game/start:
+    post:
+      summary: Начать игру
+      description: |
+        Начинает игру для созданного персонажа.
+        
+        **Бизнес-логика:**
+        - Персонаж появляется в стартовой локации (Downtown, Night City)
+        - Выдается стартовое снаряжение (пистолет Liberty, уличная броня)
+        - Выдаются стартовые деньги (500 eddies)
+        - Устанавливаются начальные характеристики (здоровье 100, энергия 100, человечность 100)
+        - Создается игровая сессия
+        - Опционально включается туториал
+        
+        **Источник:** `.BRAIN/05-technical/game-start-scenario.md` (Этап 1-2)
+      operationId: startGame
+      tags:
+        - Game Start
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameStartRequest'
+            examples:
+              with_tutorial:
+                summary: Начать с туториалом
+                value:
+                  characterId: "550e8400-e29b-41d4-a716-446655440000"
+                  skipTutorial: false
+              skip_tutorial:
+                summary: Пропустить туториал
+                value:
+                  characterId: "550e8400-e29b-41d4-a716-446655440000"
+                  skipTutorial: true
+      responses:
+        '200':
+          description: Игра началась успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameStartResponse'
+              example:
+                gameSessionId: "660f9511-f30c-52e5-b827-557766551111"
+                characterId: "550e8400-e29b-41d4-a716-446655440000"
+                currentLocation:
+                  id: "loc-downtown-001"
+                  name: "Downtown - Корпоративный центр"
+                  description: "Вы стоите в центре корпоративного района Night City. Вокруг вас возвышаются небоскребы мегакорпораций..."
+                  city: "Night City"
+                  district: "Downtown"
+                  dangerLevel: "low"
+                  minLevel: 1
+                  type: "corporate"
+                  connectedLocations: ["loc-watson-001"]
+                characterState:
+                  health: 100
+                  energy: 100
+                  humanity: 100
+                  money: 500
+                  level: 1
+                  experience: 0
+                startingEquipment:
+                  - itemId: "item-pistol-liberty"
+                    quantity: 1
+                  - itemId: "item-armor-street"
+                    quantity: 1
+                welcomeMessage: "Добро пожаловать в Night City. Вы стоите в центре корпоративного района Downtown. Неоновые вывески мигают на стенах зданий. Ваше приключение начинается..."
+                tutorialEnabled: true
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /game/welcome:
+    get:
+      summary: Получить приветственный экран
+      description: |
+        Возвращает приветственный экран для персонажа.
+        
+        **Бизнес-логика:**
+        - Показывает приветственное сообщение
+        - Отображает информацию о персонаже
+        - Предлагает начать игру или пропустить туториал
+        
+        **Источник:** `.BRAIN/05-technical/ui-game-start.md` (Экран приветствия)
+      operationId: getWelcomeScreen
+      tags:
+        - Game Start
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Приветственный экран
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WelcomeScreenResponse'
+              example:
+                message: "Добро пожаловать в NECPGAME"
+                subtitle: "Ночь в Night City только начинается..."
+                character:
+                  name: "Джон Доу"
+                  class: "Соло"
+                  level: 1
+                startingLocation: "Night City - Downtown"
+                buttons:
+                  - id: "start-game"
+                    label: "Начать игру"
+                  - id: "skip-tutorial"
+                    label: "Пропустить туториал"
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /game/return:
+    post:
+      summary: Вернуться в игру
+      description: |
+        Возвращает игрока в игру при повторном входе.
+        
+        **Бизнес-логика:**
+        - Загружает сохраненное состояние персонажа
+        - Восстанавливает текущую локацию
+        - Загружает активные квесты
+        - Создает новую игровую сессию
+        
+        **Источник:** `.BRAIN/05-technical/game-start-scenario.md` (Повторный вход)
+      operationId: returnToGame
+      tags:
+        - Game Start
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - characterId
+              properties:
+                characterId:
+                  type: string
+                  format: uuid
+                  description: ID персонажа
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Возврат в игру
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameReturnResponse'
+              example:
+                gameSessionId: "770g0622-g41d-63f6-c938-668877662222"
+                characterId: "550e8400-e29b-41d4-a716-446655440000"
+                currentLocation:
+                  id: "loc-watson-001"
+                  name: "Watson - Индустриальный район"
+                  description: "Вы находитесь в индустриальном районе Watson..."
+                  city: "Night City"
+                  district: "Watson"
+                  dangerLevel: "medium"
+                  minLevel: 1
+                  type: "industrial"
+                  connectedLocations: ["loc-downtown-001", "loc-westbrook-001"]
+                characterState:
+                  health: 80
+                  energy: 70
+                  humanity: 100
+                  money: 750
+                  level: 1
+                  experience: 50
+                activeQuests:
+                  - questId: "quest-delivery-001"
+                    progress: 50
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    GameStartRequest:
+      type: object
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID созданного персонажа
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        skipTutorial:
+          type: boolean
+          description: Пропустить туториал
+          default: false
+          example: false
+
+    GameStartResponse:
+      type: object
+      required:
+        - gameSessionId
+        - characterId
+        - currentLocation
+        - characterState
+        - startingEquipment
+        - welcomeMessage
+        - tutorialEnabled
+      properties:
+        gameSessionId:
+          type: string
+          format: uuid
+          description: ID игровой сессии
+          example: "660f9511-f30c-52e5-b827-557766551111"
+        characterId:
+          type: string
+          format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        currentLocation:
+          $ref: '#/components/schemas/GameLocation'
+        characterState:
+          $ref: '#/components/schemas/GameCharacterState'
+        startingEquipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameStartingItem'
+          description: Стартовое снаряжение
+        welcomeMessage:
+          type: string
+          description: Приветственное сообщение
+          minLength: 10
+          maxLength: 1000
+          example: "Добро пожаловать в Night City. Вы стоите в центре корпоративного района Downtown. Неоновые вывески мигают на стенах зданий. Ваше приключение начинается..."
+        tutorialEnabled:
+          type: boolean
+          description: Включен ли туториал
+          example: true
+
+    GameReturnResponse:
+      type: object
+      required:
+        - gameSessionId
+        - characterId
+        - currentLocation
+        - characterState
+      properties:
+        gameSessionId:
+          type: string
+          format: uuid
+          description: ID игровой сессии
+          example: "770g0622-g41d-63f6-c938-668877662222"
+        characterId:
+          type: string
+          format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        currentLocation:
+          $ref: '#/components/schemas/GameLocation'
+        characterState:
+          $ref: '#/components/schemas/GameCharacterState'
+        activeQuests:
+          type: array
+          items:
+            type: object
+            properties:
+              questId:
+                type: string
+                description: ID квеста
+              progress:
+                type: integer
+                minimum: 0
+                maximum: 100
+                description: Прогресс квеста в процентах
+          description: Активные квесты
+
+    GameLocation:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - dangerLevel
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор локации
+          example: "loc-downtown-001"
+        name:
+          type: string
+          description: Название локации
+          minLength: 1
+          maxLength: 200
+          example: "Downtown - Корпоративный центр"
+        description:
+          type: string
+          description: Детальное описание локации
+          minLength: 10
+          maxLength: 2000
+          example: "Вы стоите в центре корпоративного района Night City. Вокруг вас возвышаются небоскребы мегакорпораций..."
+        city:
+          type: string
+          description: Город
+          example: "Night City"
+        district:
+          type: string
+          description: Район города
+          example: "Downtown"
+        dangerLevel:
+          type: string
+          enum: [low, medium, high]
+          description: |
+            Уровень опасности локации:
+            - low: безопасная зона (Downtown, Westbrook)
+            - medium: средняя опасность (Watson, Santo Domingo)
+            - high: опасная зона (Heywood)
+          example: "low"
+        minLevel:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Минимальный уровень персонажа для посещения
+          example: 1
+        type:
+          type: string
+          enum: [corporate, industrial, residential, criminal]
+          description: |
+            Тип локации:
+            - corporate: корпоративная зона
+            - industrial: индустриальная зона
+            - residential: жилая зона
+            - criminal: криминальная зона
+          example: "corporate"
+        connectedLocations:
+          type: array
+          items:
+            type: string
+          description: Список ID связанных локаций (для перемещения)
+          example: ["loc-watson-001"]
+
+    GameCharacterState:
+      type: object
+      required:
+        - health
+        - energy
+        - humanity
+        - money
+        - level
+      properties:
+        health:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Здоровье персонажа
+          example: 100
+        energy:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Энергия персонажа
+          example: 100
+        humanity:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Человечность персонажа
+          example: 100
+        money:
+          type: integer
+          minimum: 0
+          description: Деньги (eddies)
+          example: 500
+        level:
+          type: integer
+          minimum: 1
+          description: Уровень персонажа
+          example: 1
+        experience:
+          type: integer
+          minimum: 0
+          description: Опыт персонажа
+          example: 0
+
+    GameStartingItem:
+      type: object
+      required:
+        - itemId
+        - quantity
+      properties:
+        itemId:
+          type: string
+          description: ID предмета из базы данных
+          example: "item-pistol-liberty"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество предметов
+          example: 1
+
+    WelcomeScreenResponse:
+      type: object
+      required:
+        - message
+        - subtitle
+        - character
+        - startingLocation
+        - buttons
+      properties:
+        message:
+          type: string
+          description: Приветственное сообщение
+          example: "Добро пожаловать в NECPGAME"
+        subtitle:
+          type: string
+          description: Подзаголовок
+          example: "Ночь в Night City только начинается..."
+        character:
+          type: object
+          required:
+            - name
+            - class
+            - level
+          properties:
+            name:
+              type: string
+              description: Имя персонажа
+              example: "Джон Доу"
+            class:
+              type: string
+              description: Класс персонажа
+              example: "Соло"
+            level:
+              type: integer
+              description: Уровень персонажа
+              example: 1
+        startingLocation:
+          type: string
+          description: Стартовая локация
+          example: "Night City - Downtown"
+        buttons:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: ID кнопки
+              label:
+                type: string
+                description: Текст кнопки
+          example:
+            - id: "start-game"
+              label: "Начать игру"
+            - id: "skip-tutorial"
+              label: "Пропустить туториал"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

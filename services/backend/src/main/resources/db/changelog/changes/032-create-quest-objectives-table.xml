@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="032-create-quest-objectives-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="quest_objectives"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="quest_objectives">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="quest_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_progress" type="INT" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="optional" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_index" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="quest_objectives"
+                baseColumnNames="quest_id"
+                constraintName="fk_quest_objectives_quest"
+                referencedTableName="quests"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="quest_objectives" indexName="idx_quest_objectives_quest_id">
+            <column name="quest_id"/>
+        </createIndex>
+        <createIndex tableName="quest_objectives" indexName="idx_quest_objectives_type">
+            <column name="type"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="quest_objectives"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

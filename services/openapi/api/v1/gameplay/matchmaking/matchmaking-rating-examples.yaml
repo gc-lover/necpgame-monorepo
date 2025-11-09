@@ -1,0 +1,183 @@
+# Target Architecture:
+# - Примеры: рейтинг, delta, leaderboard, smurf
+
+openapi: 3.0.3
+info:
+  title: Matchmaking Rating Examples
+  version: 1.0.0
+  description: Примеры запросов и ответов для Matchmaking Rating API.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+components:
+  examples:
+    RatingProfileArena:
+      summary: Рейтинг игрока в арену
+      value:
+        playerId: "6f9b1b4e-5f89-4699-8d2f-12e3f97a5d42"
+        activityType: "ARENA"
+        leagueId: "season-2077-r5"
+        rating: 2015
+        peakRating: 2130
+        tier: "DIAMOND"
+        division: 3
+        gamesPlayed: 142
+        wins: 78
+        losses: 60
+        draws: 4
+        winRate: 55.0
+        streak: 3
+        placementMatchesRemaining: 0
+        lastGameAt: "2025-11-08T21:58:10Z"
+        smurfScore: 0.24
+    RatingDeltaRequestWin:
+      summary: Применение delta после победы
+      value:
+        matchId: "a90f5d40-d43f-4160-ad9d-91ef4e229fbb"
+        playerId: "6f9b1b4e-5f89-4699-8d2f-12e3f97a5d42"
+        opponentRating: 2050
+        result: "WIN"
+        bonusAdjustments:
+          - type: "STREAK"
+            value: 8
+            description: "3 победы подряд"
+        placementFlag: false
+        queueTicketId: "5d2c9a3a-6e67-4104-b427-7dd9515b88b6"
+        processedAt: "2025-11-08T22:00:05Z"
+    RatingDeltaResultWin:
+      summary: Результат перерасчёта рейтинга
+      value:
+        oldRating: 2015
+        newRating: 2036
+        delta: 21
+        tierChange:
+          previousTier: "DIAMOND"
+          previousDivision: 4
+          newTier: "DIAMOND"
+          newDivision: 3
+          type: "PROMOTION"
+        smurfTriggered: false
+        analyticsEventId: "aa0e5c46-d0ab-4acd-9f1b-7e674231dbe4"
+    RatingHistoryPage:
+      summary: История изменений рейтинга
+      value:
+        items:
+          - timestamp: "2025-11-08T21:58:10Z"
+            matchId: "a90f5d40-d43f-4160-ad9d-91ef4e229fbb"
+            rating: 2036
+            delta: 21
+            opponentRating: 2050
+            result: "WIN"
+            bonusesApplied:
+              - type: "STREAK"
+                value: 8
+          - timestamp: "2025-11-08T21:45:22Z"
+            matchId: "1f0d8c09-d8f1-48d4-9775-5d551d6faa40"
+            rating: 2015
+            delta: -12
+            opponentRating: 1990
+            result: "LOSS"
+        nextCursor: "eyJtYXRjaElkIjoiMWYwZDhjMDkifQ=="
+    LeaderboardResponse:
+      summary: Лидерборд арены
+      value:
+        items:
+          - rank: 1
+            playerId: "8c1f0b5e-4d29-4d7a-bdaf-6125b1ea9a4f"
+            nickname: "CyberViper"
+            rating: 2450
+            tier: "GRANDMASTER"
+            division: 1
+            region: "eu-central"
+            streak: 7
+            matchesPlayed: 320
+          - rank: 2
+            playerId: "a7fbdc53-7c44-4b2e-9d8f-7d2e57cb6e11"
+            nickname: "NeonSamurai"
+            rating: 2420
+            tier: "GRANDMASTER"
+            division: 2
+            region: "eu-central"
+            streak: 2
+            matchesPlayed: 298
+        page: 1
+        pageSize: 50
+        total: 2400
+        etag: "arena-eu-central-v5"
+    SmurfFlagList:
+      summary: Подозрительные аккаунты
+      value:
+        items:
+          - playerId: "b1254f20-1e4f-4b1a-9eb8-0ff0c5f1b634"
+            score: 0.91
+            reasons: ["HIGH_WINRATE", "FAST_RATING_GROWTH"]
+            gamesPlayed: 18
+            flaggedAt: "2025-11-08T20:10:00Z"
+            placementCompleted: true
+          - playerId: "2c95caa4-032c-46d4-89d2-cd62d5809982"
+            score: 0.81
+            reasons: ["NEW_ACCOUNT"]
+            gamesPlayed: 6
+            flaggedAt: "2025-11-08T19:55:00Z"
+            placementCompleted: false
+        threshold: 0.8
+    SeasonSummary:
+      summary: Итоги сезона arena-r5
+      value:
+        leagueId: "season-2077-r5"
+        seasonName: "Neon Ascension"
+        seasonStatus: "ACTIVE"
+        startedAt: "2025-10-01T00:00:00Z"
+        endsAt: "2025-12-31T23:59:59Z"
+        averageRating: 1575
+        medianRating: 1510
+        distribution:
+          BRONZE: 0.18
+          SILVER: 0.27
+          GOLD: 0.24
+          PLATINUM: 0.18
+          DIAMOND: 0.1
+          MASTER: 0.02
+          GRANDMASTER: 0.01
+        topPlayers:
+          - rank: 1
+            playerId: "8c1f0b5e-4d29-4d7a-bdaf-6125b1ea9a4f"
+            nickname: "CyberViper"
+            rating: 2450
+            tier: "GRANDMASTER"
+            division: 1
+            region: "eu-central"
+            streak: 7
+            matchesPlayed: 320
+    TierConfig:
+      summary: Конфигурация рангов арены
+      value:
+        tiers:
+          - name: "BRONZE"
+            minRating: 0
+            divisions: 5
+            promotionThreshold: 400
+            demotionThreshold: 0
+          - name: "SILVER"
+            minRating: 500
+            divisions: 5
+            promotionThreshold: 900
+            demotionThreshold: 450
+        placementGames: 10
+        decayRules:
+          - tier: "DIAMOND"
+            inactivityDays: 7
+            penaltyPerDay: 25
+          - tier: "MASTER"
+            inactivityDays: 5
+            penaltyPerDay: 35
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

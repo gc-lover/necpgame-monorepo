@@ -1,0 +1,399 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/matchmaking
+# - Dependencies: party-service, voice-lobby-service, leaderboard-service, session-service
+# - Frontend Module: modules/gameplay/matchmaking (useMatchmakingStore)
+# - SLA: PvP search <= 120s, PvE search <= 90s
+
+openapi: 3.0.3
+info:
+  title: Matchmaking Algorithm Components
+  version: 1.0.0
+  description: Переиспользуемые параметры, заголовки и схемы Matchmaking Algorithm API.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+components:
+  parameters:
+    MatchId:
+      name: matchId
+      in: path
+      required: true
+      description: Уникальный идентификатор матча.
+      schema: { type: string, format: uuid }
+    ModeQuery:
+      name: mode
+      in: query
+      required: false
+      description: Режим матчмейкинга.
+      schema:
+        type: string
+        enum: [PVP_RANKED, PVP_CASUAL, PVE_DUNGEON, RAID, ARENA_EVENT]
+    PendingLimit:
+      name: limit
+      in: query
+      required: false
+      description: Количество возвращаемых матчей (максимум 50).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    AfterCursor:
+      name: after
+      in: query
+      required: false
+      description: Курсор для постраничного получения ожидающих матчей.
+      schema: { type: string }
+    MatchmakingRequestId:
+      name: X-Matchmaking-Request-Id
+      in: header
+      required: true
+      description: Идентификатор запроса матчмейкинга для трассировки и корреляции.
+      schema: { type: string, minLength: 8, maxLength: 64 }
+    LatencyBucketHeader:
+      name: X-Latency-Bucket
+      in: header
+      required: false
+      description: Категория латентности клиента. Используется для рекомендаций.
+      schema:
+        type: string
+        enum: [LOW, MEDIUM, HIGH]
+    TelemetryChunkHeader:
+      name: X-Telemetry-Chunk
+      in: header
+      required: true
+      description: Порядковый номер чанка телеметрии.
+      schema:
+        type: integer
+        minimum: 0
+    TelemetrySignatureHeader:
+      name: X-Telemetry-Signature
+      in: header
+      required: true
+      description: Подпись данных телеметрии (SHA-256, hex 64).
+      schema:
+        type: string
+        pattern: "^[0-9a-fA-F]{64}$"
+
+  headers:
+    MatchQualityHeader:
+      description: Итоговый Match Quality Score (0-100).
+      schema: { type: number, format: float, minimum: 0, maximum: 100 }
+    MatchLatencyHeader:
+      description: Итоговый latency bucket матча (LOW/MEDIUM/HIGH).
+      schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+
+  schemas:
+    Role:
+      type: string
+      enum: [TANK, HEALER, DPS, SUPPORT, SCOUT]
+    RoleRequirement:
+      type: object
+      required: [role, minimum, maximum]
+      properties:
+        role: { $ref: '#/components/schemas/Role' }
+        minimum: { type: integer, minimum: 0, maximum: 3 }
+        maximum: { type: integer, minimum: 1, maximum: 5 }
+
+    MatchSearchRequest:
+      type: object
+      required: [queueIds, mode]
+      properties:
+        queueIds:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items: { type: string, format: uuid }
+        mode: { type: string, enum: [PVP_RANKED, PVP_CASUAL, PVE_DUNGEON, RAID, ARENA_EVENT] }
+        requiredRoles:
+          type: array
+          items: { $ref: '#/components/schemas/RoleRequirement' }
+        latencyCapMs: { type: integer, minimum: 30, maximum: 250 }
+        allowCrossRegion: { type: boolean, default: false }
+        partyContext:
+          type: object
+          description: Информация о party, участвующих в подборе.
+          properties:
+            parties:
+              type: array
+              items:
+                type: object
+                required: [partyId, size]
+                properties:
+                  partyId: { type: string, format: uuid }
+                  size: { type: integer, minimum: 1, maximum: 8 }
+                  leaderId: { type: string, format: uuid }
+                  preferredRoles:
+                    type: array
+                    items: { $ref: '#/components/schemas/Role' }
+        preferences:
+          type: object
+          properties:
+            voiceLobby: { type: boolean, default: true }
+            avoidPlayers: { type: array, items: { type: string, format: uuid } }
+            preferredLatencyRegion: { type: string }
+
+    MatchSearchTicket:
+      type: object
+      required: [ticketId, status, estimatedWaitSeconds]
+      properties:
+        ticketId: { type: string, format: uuid }
+        status: { type: string, enum: [QUEUED, BUILDING, MATCH_FOUND] }
+        estimatedWaitSeconds: { type: integer, minimum: 0 }
+        expiresAt: { type: string, format: date-time }
+        queueIds:
+          type: array
+          items: { type: string, format: uuid }
+    MatchParticipant:
+      type: object
+      required: [playerId, rating, role]
+      properties:
+        playerId: { type: string, format: uuid }
+        partyId: { type: string, format: uuid }
+        rating: { type: integer, minimum: 0 }
+        role: { $ref: '#/components/schemas/Role' }
+        latencyMs: { type: integer, minimum: 0 }
+        latencyRegion: { type: string }
+        smurfFlag: { type: boolean, default: false }
+        ready: { type: boolean, default: false }
+    RoleSummary:
+      type: object
+      required: [role, assigned]
+      properties:
+        role: { $ref: '#/components/schemas/Role' }
+        required: { type: integer, minimum: 0, maximum: 5 }
+        assigned: { type: integer, minimum: 0, maximum: 5 }
+        deficit: { type: integer, minimum: 0, maximum: 5 }
+    MatchTeam:
+      type: object
+      required: [teamId, players]
+      properties:
+        teamId: { type: string }
+        averageRating: { type: integer }
+        players:
+          type: array
+          items: { $ref: '#/components/schemas/MatchParticipant' }
+        roleSummary:
+          type: array
+          items: { $ref: '#/components/schemas/RoleSummary' }
+        isPartyMixed: { type: boolean }
+    LatencyProfile:
+      type: object
+      required: [medianMs]
+      properties:
+        medianMs: { type: integer, minimum: 0 }
+        p95Ms: { type: integer, minimum: 0 }
+        region: { type: string }
+        bucket: { type: string, enum: [LOW, MEDIUM, HIGH] }
+        samples:
+          type: array
+          items: { $ref: '#/components/schemas/LatencySample' }
+    QualityFactor:
+      type: object
+      required: [name, score]
+      properties:
+        name: { type: string }
+        weight: { type: number, format: float }
+        score: { type: number, format: float }
+        description: { type: string }
+    MatchQualityReport:
+      type: object
+      required: [score, ratingBalance, roleFulfillment, waitTimePenalty, latencyPenalty]
+      properties:
+        score: { type: number, format: float, minimum: 0, maximum: 100 }
+        ratingBalance: { type: number, format: float }
+        roleFulfillment: { type: number, format: float }
+        waitTimePenalty: { type: number, format: float }
+        latencyPenalty: { type: number, format: float }
+        factors:
+          type: array
+          items: { $ref: '#/components/schemas/QualityFactor' }
+        computedAt: { type: string, format: date-time }
+    ReadyCheckResponse:
+      type: object
+      required: [playerId, status]
+      properties:
+        playerId: { type: string, format: uuid }
+        status: { type: string, enum: [ACCEPTED, DECLINED, TIMEOUT] }
+        respondedAt: { type: string, format: date-time }
+        reason: { type: string }
+    ReadyCheckState:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [INITIATED, IN_PROGRESS, SUCCEEDED, FAILED, EXPIRED] }
+        expiresAt: { type: string, format: date-time }
+        initiatedBy: { type: string, format: uuid }
+        responses:
+          type: array
+          items: { $ref: '#/components/schemas/ReadyCheckResponse' }
+    MatchStatus:
+      type: string
+      enum: [PENDING, READY_CHECK, LOCKED, CANCELLED, TIMEOUT]
+
+    MatchDetail:
+      type: object
+      required: [matchId, mode, status, createdAt, teams]
+      properties:
+        matchId: { type: string, format: uuid }
+        mode: { type: string, enum: [PVP_RANKED, PVP_CASUAL, PVE_DUNGEON, RAID, ARENA_EVENT] }
+        status: { $ref: '#/components/schemas/MatchStatus' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        queueIds:
+          type: array
+          items: { type: string, format: uuid }
+        teams:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/MatchTeam' }
+        quality: { $ref: '#/components/schemas/MatchQualityReport' }
+        latencyProfile: { $ref: '#/components/schemas/LatencyProfile' }
+        readyCheck: { $ref: '#/components/schemas/ReadyCheckState' }
+        voiceLobbyId: { type: string }
+        lockingDeadline: { type: string, format: date-time }
+    PendingMatchSummary:
+      type: object
+      required: [matchId, mode, status, quality]
+      properties:
+        matchId: { type: string, format: uuid }
+        mode: { type: string }
+        status: { $ref: '#/components/schemas/MatchStatus' }
+        createdAt: { type: string, format: date-time }
+        queueSize: { type: integer }
+        estimatedStartAt: { type: string, format: date-time }
+        quality: { $ref: '#/components/schemas/MatchQualityReport' }
+        latencyBucket: { type: string, enum: [LOW, MEDIUM, HIGH] }
+    PendingMatchPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PendingMatchSummary' }
+        nextCursor: { type: string }
+        total: { type: integer, minimum: 0 }
+    MatchAcceptRequest:
+      type: object
+      required: [playerId, readyCheckToken]
+      properties:
+        playerId: { type: string, format: uuid }
+        partyId: { type: string, format: uuid }
+        clientLatencyMs: { type: integer, minimum: 0 }
+        readyCheckToken: { type: string, minLength: 16, maxLength: 64 }
+    MatchDeclineRequest:
+      type: object
+      required: [playerId, reason]
+      properties:
+        playerId: { type: string, format: uuid }
+        reason:
+          type: string
+          enum: [ROLE_MISMATCH, HIGH_LATENCY, TEAMMATE_ISSUE, PERSONAL]
+        comment: { type: string, maxLength: 200 }
+    ReadyCheckCommand:
+      type: object
+      required: [initiatorId, expiresInSeconds]
+      properties:
+        initiatorId: { type: string, format: uuid }
+        expiresInSeconds: { type: integer, minimum: 5, maximum: 45 }
+        message: { type: string, maxLength: 200 }
+    MatchLockRequest:
+      type: object
+      required: [sessionServerId, lockReason]
+      properties:
+        sessionServerId: { type: string }
+        voiceLobbyId: { type: string }
+        lockReason: { type: string, enum: [READY, TIMEOUT, FORCE_START] }
+        requiresAntiCheatSync: { type: boolean, default: true }
+    MatchLockResult:
+      type: object
+      required: [matchId, status]
+      properties:
+        matchId: { type: string, format: uuid }
+        status: { type: string, enum: [LOCKED, FAILED] }
+        voiceLobbyId: { type: string }
+        sessionServerId: { type: string }
+        lockedAt: { type: string, format: date-time }
+    RangeExpansionEvent:
+      type: object
+      required: [expandedAt, ratingDelta]
+      properties:
+        expandedAt: { type: string, format: date-time }
+        ratingDelta: { type: integer }
+        reason: { type: string }
+    LatencySample:
+      type: object
+      required: [ms]
+      properties:
+        ms: { type: integer, minimum: 0 }
+        recordedAt: { type: string, format: date-time }
+        region: { type: string }
+    MatchTelemetryBatch:
+      type: object
+      required: [queueId, waitDurationMs]
+      properties:
+        queueId: { type: string, format: uuid }
+        waitDurationMs: { type: integer, minimum: 0 }
+        rangeExpansions:
+          type: array
+          maxItems: 10
+          items: { $ref: '#/components/schemas/RangeExpansionEvent' }
+        latencySamples:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/LatencySample' }
+        partySize: { type: integer, minimum: 1, maximum: 8 }
+        mode: { type: string, enum: [PVP_RANKED, PVP_CASUAL, PVE_DUNGEON, RAID, ARENA_EVENT] }
+        reconnectCount: { type: integer, minimum: 0 }
+    MatchQualityAnalytics:
+      type: object
+      required: [window, mode, samples]
+      properties:
+        window: { type: string, enum: [LAST_15M, LAST_HOUR, DAILY] }
+        mode: { type: string, enum: [PVP_RANKED, PVP_CASUAL, PVE_DUNGEON, RAID, ARENA_EVENT] }
+        region: { type: string }
+        averageScore: { type: number, format: float }
+        medianWaitSeconds: { type: integer }
+        percentile95LatencyMs: { type: integer }
+        matchesEvaluated: { type: integer }
+        samples:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required: [timestamp, score]
+            properties:
+              timestamp: { type: string, format: date-time }
+              score: { type: number, format: float }
+              waitSeconds: { type: integer }
+              ratingSpread: { type: integer }
+    MatchmakingError:
+      allOf:
+        - $ref: '../../shared/common/responses.yaml#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  enum:
+                    - BIZ_MATCH_NOT_FOUND
+                    - BIZ_MATCH_ALREADY_CONFIRMED
+                    - BIZ_MATCH_READY_CHECK_ACTIVE
+                    - VAL_MATCH_ROLE_MISMATCH
+                    - VAL_MATCH_LATENCY_CAP_EXCEEDED
+                    - VAL_MATCH_INVALID_TOKEN
+                    - INT_MATCH_SERVER_UNAVAILABLE
+                    - INT_MATCH_ANALYTICS_FAILURE
+              required: [code, message]
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

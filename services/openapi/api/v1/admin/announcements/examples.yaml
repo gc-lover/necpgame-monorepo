@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Announcement Examples
+  version: 1.0.0
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/admin
+    package: com.necpgame.adminservice
+paths: {}
+
+components:
+  examples:
+    DraftRequest:
+      summary: Черновик patch notes
+      value:
+        title: "Patch 1.2.5 Release Notes"
+        summary: "Фиксы сетевой синхронизации, новые импланты, баланс оружия."
+        body: "## Highlights\n- Улучшена задержка матчмейкинга\n- Добавлена винтовка *Nova Edge*\n- Баланс имплантов класса Assault\n\nПодробнее на портале разработчиков."
+        type: PATCH_NOTES
+        tags: [balance, patch]
+        mediaAssets:
+          - { assetId: asset-patch-125-banner, url: "https://cdn.necpgame.com/assets/patch125/banner.png", type: image, altText: "Patch 1.2.5" }
+        defaultChannels:
+          inGameBanner: { enabled: true, templateId: tpl-banner-patch, priority: 4 }
+          modal: { enabled: true, templateId: tpl-modal-default, priority: 5 }
+          chat: { enabled: false }
+          email: { enabled: true, templateId: tpl-email-patch, priority: 6 }
+          push: { enabled: false }
+          webPortal: { enabled: true, templateId: tpl-web-default, priority: 5 }
+        authorId: gm-livops-01
+    AnnouncementDetail:
+      summary: Активное объявление с локализациями
+      value:
+        announcement:
+          announcementId: ann-8831
+          title: "Patch 1.2.5 Release Notes"
+          type: PATCH_NOTES
+          status: active
+          startAt: "2025-11-08T18:00:00Z"
+          endAt: "2025-11-15T18:00:00Z"
+          channels:
+            inGameBanner: { enabled: true, templateId: tpl-banner-patch, priority: 4 }
+            modal: { enabled: true, templateId: tpl-modal-default, priority: 5 }
+            chat: { enabled: false }
+            email: { enabled: true, templateId: tpl-email-patch, priority: 6 }
+            push: { enabled: false }
+            webPortal: { enabled: true, templateId: tpl-web-default, priority: 5 }
+          audience:
+            regions: [EU, NA]
+            platforms: [pc, console]
+            minLevel: 10
+            subscriptionTags: [patch_notes]
+          authorId: gm-livops-01
+          createdAt: "2025-11-07T23:25:00Z"
+          updatedAt: "2025-11-08T17:30:00Z"
+        content:
+          body: "## Highlights\n- Улучшена задержка матчмейкинга\n- Добавлена винтовка *Nova Edge*"
+          summary: "Фиксы сетевой синхронизации, новые импланты, баланс оружия."
+          mediaAssets:
+            - { assetId: asset-patch-125-banner, url: "https://cdn.necpgame.com/assets/patch125/banner.png", type: image, altText: "Patch 1.2.5" }
+        schedule:
+          startAt: "2025-11-08T18:00:00Z"
+          endAt: "2025-11-15T18:00:00Z"
+          timezone: "UTC"
+        locales:
+          - { locale: "en-US", title: "Patch 1.2.5 Release Notes", summary: "Network fixes and weapon tuning.", body: "## Highlights\n- Improved matchmaking latency" }
+          - { locale: "ru-RU", title: "Патч 1.2.5", summary: "Фиксы сетевой синхронизации", body: "## Главное\n- Улучшена задержка матчмейкинга" }
+        history:
+          entries:
+            - { version: 1, authorId: gm-livops-01, changeType: created, timestamp: "2025-11-07T23:25:00Z" }
+            - { version: 2, authorId: gm-editor-02, changeType: translated, timestamp: "2025-11-08T12:10:00Z", comments: "Добавлена ru-RU локализация" }
+    ScheduleRequest:
+      summary: Планирование публикации на завтра
+      value:
+        startAt: "2025-11-08T18:00:00Z"
+        endAt: "2025-11-12T18:00:00Z"
+        timezone: "Europe/Berlin"
+        recurrence: { pattern: none, occurrences: 1 }
+        fallbackChannels: [email]
+    ChannelConfig:
+      summary: Настройка каналов для EU PC
+      value:
+        inGameBanner: { enabled: true, templateId: tpl-banner-event, priority: 5 }
+        modal: { enabled: true, templateId: tpl-modal-event, priority: 6 }
+        chat: { enabled: true, templateId: tpl-chat-system, priority: 8 }
+        email: { enabled: false }
+        push: { enabled: true, templateId: tpl-push-event, priority: 7 }
+        webPortal: { enabled: true, templateId: tpl-web-event, priority: 5 }
+    PreviewResponse:
+      summary: Превью для banner и push
+      value:
+        renders:
+          - channel: in_game_banner
+            content: "<div class=\"banner\"><h1>Patch 1.2.5</h1><p>Новое оружие и баланс</p></div>"
+            assets: ["https://cdn.necpgame.com/assets/patch125/banner.png"]
+          - channel: push
+            content: "Patch 1.2.5 уже доступен! Узнай детали."
+            assets: []
+    AnalyticsResponse:
+      summary: Метрики объявления за 7 дней
+      value:
+        announcementId: ann-8831
+        range: 7d
+        viewsByChannel: { in_game_banner: 182450, modal: 124330, email: 50200, push: 0, webPortal: 31200 }
+        openRate: 0.62
+        clickThroughRate: 0.28
+        ackCount: 98340
+        unsubscribeCount: 540
+        feedbackStats: { useful: 81230, neutral: 12100, notUseful: 2050 }
+    EmergencyRequest:
+      summary: Экстренное предупреждение об обслуживании
+      value:
+        message: "⚠️ Срочное обслуживание серверов начинается через 15 минут. Завершите текущие сессии."
+        channels: [in_game_banner, modal, push]
+        severity: critical
+        requireAck: true
+        expiresAt: "2025-11-07T23:55:00Z"
+    HistoryResponse:
+      summary: История изменений объявления
+      value:
+        entries:
+          - { version: 1, authorId: gm-livops-01, changeType: created, timestamp: "2025-11-07T23:25:00Z", comments: "Initial draft" }
+          - { version: 2, authorId: gm-livops-01, changeType: scheduled, timestamp: "2025-11-07T23:40:00Z", comments: "Scheduled for Nov 8" }
+          - { version: 3, authorId: gm-editor-02, changeType: translated, timestamp: "2025-11-08T12:10:00Z", comments: "ru-RU locale" }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

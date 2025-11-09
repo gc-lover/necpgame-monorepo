@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="077-update-random-events-table" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="random_events"/>
+        </preConditions>
+
+        <dropIndex tableName="random_events" indexName="idx_random_events_type"/>
+        <dropIndex tableName="random_events" indexName="idx_random_events_trigger"/>
+
+        <renameColumn tableName="random_events" oldColumnName="title" newColumnName="name"/>
+
+        <dropColumn tableName="random_events" columnName="event_type"/>
+        <dropColumn tableName="random_events" columnName="trigger_type"/>
+        <dropColumn tableName="random_events" columnName="min_level"/>
+        <dropColumn tableName="random_events" columnName="max_level"/>
+        <dropColumn tableName="random_events" columnName="rarity"/>
+        <dropColumn tableName="random_events" columnName="options"/>
+
+        <addColumn tableName="random_events">
+            <column name="category" type="VARCHAR(40)"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="period" type="VARCHAR(20)"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="base_trigger_chance" type="NUMERIC(6,4)"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="possible_outcomes_count" type="INT"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="location_types_json" type="jsonb"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="trigger_conditions_json" type="jsonb"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="trigger_locations_json" type="jsonb"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="time_restrictions_json" type="jsonb"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="npcs_involved_json" type="jsonb"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="choices_json" type="jsonb"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="outcomes_json" type="jsonb"/>
+        </addColumn>
+        <addColumn tableName="random_events">
+            <column name="full_description" type="TEXT"/>
+        </addColumn>
+
+        <createIndex tableName="random_events" indexName="idx_random_events_category">
+            <column name="category"/>
+        </createIndex>
+        <createIndex tableName="random_events" indexName="idx_random_events_period">
+            <column name="period"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="random_events" indexName="idx_random_events_category"/>
+            <dropIndex tableName="random_events" indexName="idx_random_events_period"/>
+
+            <dropColumn tableName="random_events" columnName="category"/>
+            <dropColumn tableName="random_events" columnName="period"/>
+            <dropColumn tableName="random_events" columnName="base_trigger_chance"/>
+            <dropColumn tableName="random_events" columnName="possible_outcomes_count"/>
+            <dropColumn tableName="random_events" columnName="location_types_json"/>
+            <dropColumn tableName="random_events" columnName="trigger_conditions_json"/>
+            <dropColumn tableName="random_events" columnName="trigger_locations_json"/>
+            <dropColumn tableName="random_events" columnName="time_restrictions_json"/>
+            <dropColumn tableName="random_events" columnName="npcs_involved_json"/>
+            <dropColumn tableName="random_events" columnName="choices_json"/>
+            <dropColumn tableName="random_events" columnName="outcomes_json"/>
+            <dropColumn tableName="random_events" columnName="full_description"/>
+
+            <addColumn tableName="random_events">
+                <column name="event_type" type="VARCHAR(50)"/>
+            </addColumn>
+            <addColumn tableName="random_events">
+                <column name="trigger_type" type="VARCHAR(50)"/>
+            </addColumn>
+            <addColumn tableName="random_events">
+                <column name="min_level" type="INT" defaultValueNumeric="1"/>
+            </addColumn>
+            <addColumn tableName="random_events">
+                <column name="max_level" type="INT"/>
+            </addColumn>
+            <addColumn tableName="random_events">
+                <column name="rarity" type="VARCHAR(20)"/>
+            </addColumn>
+            <addColumn tableName="random_events">
+                <column name="options" type="TEXT"/>
+            </addColumn>
+
+            <renameColumn tableName="random_events" oldColumnName="name" newColumnName="title"/>
+
+            <createIndex tableName="random_events" indexName="idx_random_events_type">
+                <column name="event_type"/>
+            </createIndex>
+            <createIndex tableName="random_events" indexName="idx_random_events_trigger">
+                <column name="trigger_type"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

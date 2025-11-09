@@ -1,0 +1,383 @@
+openapi: 3.0.3
+info:
+  title: Social Resonance Support Components
+  version: 1.0.0
+  description: Параметры, request body и примеры для Social Resonance API.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  parameters:
+    IncludeCampaignsQuery:
+      name: include_campaigns
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: Добавить активные кампании в snapshot.
+    IncludeRelationshipsQuery:
+      name: include_relationships
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: Добавить агрегат связей в snapshot.
+    CampaignStatusFilter:
+      name: status
+      in: query
+      schema:
+        $ref: './resonance-models.yaml#/components/schemas/SocialCampaignStatus'
+      description: Фильтр кампаний по статусу.
+    CampaignCategoryFilter:
+      name: category
+      in: query
+      schema:
+        $ref: './resonance-models.yaml#/components/schemas/SocialCampaignCategory'
+      description: Фильтр кампаний по категории.
+    CampaignTierFilter:
+      name: tier
+      in: query
+      schema:
+        $ref: './resonance-models.yaml#/components/schemas/CampaignTier'
+      description: Фильтр кампаний по уровню.
+    SimulateQuery:
+      name: simulate
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: Выполнить только симуляцию кампании.
+    IdempotencyKeyHeader:
+      name: X-Idempotency-Key
+      in: header
+      schema:
+        type: string
+        maxLength: 64
+      description: Идентификатор для защиты от повторных запусков.
+    RelationshipTypeFilter:
+      name: type
+      in: query
+      schema:
+        $ref: './resonance-models.yaml#/components/schemas/RelationshipType'
+      description: Фильтр связей по типу.
+    RelationshipTierFilter:
+      name: tier
+      in: query
+      schema:
+        $ref: './resonance-models.yaml#/components/schemas/RelationshipTier'
+      description: Фильтр связей по уровню.
+    OrganizationFilter:
+      name: organization_id
+      in: query
+      schema:
+        type: string
+      description: Ограничить список связей выбранной организацией.
+    RelationshipIdPath:
+      name: relationshipId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Идентификатор связи.
+    FromDateQuery:
+      name: from
+      in: query
+      schema:
+        type: string
+        format: date-time
+      description: Начало диапазона истории.
+    ToDateQuery:
+      name: to
+      in: query
+      schema:
+        type: string
+        format: date-time
+      description: Конец диапазона истории.
+    ResolutionQuery:
+      name: resolution
+      in: query
+      schema:
+        type: string
+        enum: [hour, day, week]
+        default: hour
+      description: Гранулярность временного ряда.
+    HorizonQuery:
+      name: horizon
+      in: query
+      schema:
+        type: integer
+        enum: [24, 72]
+        default: 24
+      description: Горизонт прогноза в часах.
+  requestBodies:
+    SocialCampaignLaunchRequest:
+      required: true
+      description: Параметры запуска или симуляции социальной кампании.
+      content:
+        application/json:
+          schema:
+            $ref: './resonance-models.yaml#/components/schemas/SocialCampaignLaunchRequest'
+          examples:
+            default:
+              value:
+                campaignId: "soc-camp-b42"
+                initiatedBy: "guild-emberfox"
+                scheduledAt: "2077-05-18T15:00:00Z"
+                approvalToken: "narrative-approval-992"
+                motivation: "Counter negative press from Biotechnica raid."
+                crisisFallbackPlan: "Switch to security reinforcement if index < 20."
+    RelationshipUpdateRequest:
+      required: true
+      description: Обновление статуса связи.
+      content:
+        application/json:
+          schema:
+            $ref: './resonance-models.yaml#/components/schemas/RelationshipUpdateRequest'
+          examples:
+            default:
+              value:
+                action: advance
+                updatedBy: "player-9841"
+                targetTier: BONDED
+                notes: "Completed chapter 3 of romance arc."
+                approvalToken: "romance-approval-12"
+                overrideDelta: 1.4
+                audit:
+                  createdBy: "player-9841"
+                  createdAt: "2077-05-18T12:12:00Z"
+                  approvedBy: null
+                  approvedAt: null
+  examples:
+    ResonanceSnapshotExample:
+      summary: Пример текущего snapshot
+      value:
+        trustIndex: 62.5
+        moodState: HARMONY
+        worldPulse:
+          pulseLevel: INFLECTION
+          crisisRisk: 0.28
+          lastCrisisTrigger: "2077-05-17T08:20:00Z"
+          projectedAfterCampaign: CALM
+        resonanceSources:
+          - dimension: REPUTATION
+            title: "City Reputation"
+            weight: 0.4
+            value: 24.6
+            delta24h: 2.4
+          - dimension: ROMANCE
+            title: "Romance Web"
+            weight: 0.2
+            value: 16.2
+            delta24h: 0.8
+          - dimension: SOCIAL_EVENTS
+            title: "Community Events"
+            weight: 0.4
+            value: 21.7
+            delta24h: 1.1
+        updatedAt: "2077-05-18T12:05:00Z"
+    CampaignListExample:
+      summary: Пример списка кампаний
+      value:
+        data:
+          - campaignId: "soc-camp-b42"
+            name: "Night City Mutual Aid"
+            category: COMMUNITY
+            tier: DISTRICT
+            status: AVAILABLE
+            expectedDelta: 9.4
+            cooldownHours: 72
+            durationHours: 24
+            cost:
+              eddies: 450000
+              influenceTokens: 12
+            requirements:
+              - type: role
+                value: guild-leader
+                description: "Guild leader with reputation above 65"
+            effects:
+              - dimension: SOCIAL_EVENTS
+                delta: 6.5
+                durationHours: 48
+                worldPulseImpact: "Crisis risk -0.05 for 24h"
+            approval:
+              createdBy: "ai-director"
+              createdAt: "2077-05-18T10:00:00Z"
+              approvedBy: null
+              approvedAt: null
+          - campaignId: "soc-camp-r11"
+            name: "Romance Festival Boost"
+            category: ROMANCE
+            tier: CITY
+            status: COOL_DOWN
+            expectedDelta: 5.2
+            cooldownHours: 36
+            durationHours: 12
+            cost:
+              eddies: 220000
+            effects:
+              - dimension: ROMANCE
+                delta: 4.1
+                durationHours: 12
+                worldPulseImpact: "Romance hook boost 8h"
+            approval:
+              createdBy: "city-official-12"
+              createdAt: "2077-05-16T09:00:00Z"
+              approvedBy: "city-council"
+              approvedAt: "2077-05-16T10:00:00Z"
+        meta:
+          page: 1
+          page_size: 20
+          total: 2
+          total_pages: 1
+          has_next: false
+          has_prev: false
+    CampaignLaunchExample:
+      summary: Пример ответа запуска кампании
+      value:
+        campaignId: "soc-camp-b42"
+        status: PENDING_APPROVAL
+        simulate: false
+        expectedDelta: 9.4
+        durationHours: 24
+        worldPulsePreview:
+          pulseLevel: CALM
+          crisisRisk: 0.18
+          lastCrisisTrigger: "2077-05-17T08:20:00Z"
+          projectedAfterCampaign: CALM
+        approval:
+          createdBy: "guild-emberfox"
+          createdAt: "2077-05-18T12:10:00Z"
+          approvedBy: null
+          approvedAt: null
+        forecast:
+          horizonHours: 72
+          baseline: 62.5
+          points:
+            - timestamp: "2077-05-18T18:00:00Z"
+              expectedIndex: 64.0
+              moodState: HARMONY
+              confidence: 0.75
+              worldPulseProjection:
+                pulseLevel: CALM
+                crisisRisk: 0.2
+            - timestamp: "2077-05-19T12:00:00Z"
+              expectedIndex: 68.3
+              moodState: HARMONY
+              confidence: 0.7
+              worldPulseProjection:
+                pulseLevel: CALM
+                crisisRisk: 0.18
+    RelationshipListExample:
+      summary: Пример списка связей
+      value:
+        data:
+          - relationshipId: "rel-rom-455"
+            targetName: "Aisha Frost"
+            type: ROMANCE
+            tier: TRUSTED
+            progress: 0.72
+            moodContribution: 3.8
+            resonanceWeight: 0.18
+            riskLevel: LOW
+            audit:
+              createdBy: "player-9841"
+              createdAt: "2077-04-20T18:00:00Z"
+              approvedBy: "narrative-director"
+              approvedAt: "2077-04-21T09:00:00Z"
+          - relationshipId: "rel-gld-998"
+            targetName: "Chrome Vipers"
+            type: GUILD_PACT
+            tier: BONDED
+            progress: 0.55
+            moodContribution: 2.1
+            resonanceWeight: 0.22
+            riskLevel: MEDIUM
+            audit:
+              createdBy: "guild-emberfox"
+              createdAt: "2077-03-10T11:00:00Z"
+              approvedBy: "city-council"
+              approvedAt: "2077-03-11T10:00:00Z"
+        meta:
+          page: 1
+          page_size: 20
+          total: 2
+          total_pages: 1
+          has_next: false
+          has_prev: false
+    RelationshipUpdateExample:
+      summary: Пример результата обновления связи
+      value:
+        relationship:
+          relationshipId: "rel-rom-455"
+          targetName: "Aisha Frost"
+          type: ROMANCE
+          tier: BONDED
+          progress: 0.82
+          moodContribution: 4.5
+          resonanceWeight: 0.2
+          riskLevel: LOW
+          audit:
+            createdBy: "player-9841"
+            createdAt: "2077-04-20T18:00:00Z"
+            approvedBy: "narrative-director"
+            approvedAt: "2077-05-18T12:15:00Z"
+        trustDelta: 1.4
+        moodStateAfter: HARMONY
+        worldPulseImpact:
+          pulseLevel: INFLECTION
+          crisisRisk: 0.24
+          projectedAfterCampaign: CALM
+        crisisAlertRaised: false
+    HistoryResponseExample:
+      summary: Пример ответа истории
+      value:
+        data:
+          - timestamp: "2077-05-18T09:00:00Z"
+            trustIndex: 61.3
+            delta: -3.1
+            reason: "Corporate retaliation event"
+            source: REPUTATION
+            worldPulseSnapshot:
+              pulseLevel: UNREST
+              crisisRisk: 0.44
+          - timestamp: "2077-05-18T11:00:00Z"
+            trustIndex: 63.0
+            delta: 1.7
+            reason: "Community outreach success"
+            source: SOCIAL_EVENTS
+            campaignId: "soc-camp-b42"
+            worldPulseSnapshot:
+              pulseLevel: INFLECTION
+              crisisRisk: 0.32
+        crisisAlertsTriggered: true
+        lastCrisisAt: "2077-05-18T09:05:00Z"
+    ForecastExample:
+      summary: Пример прогноза
+      value:
+        horizonHours: 72
+        baseline: 62.5
+        points:
+          - timestamp: "2077-05-18T18:00:00Z"
+            expectedIndex: 64.0
+            moodState: HARMONY
+            confidence: 0.75
+            worldPulseProjection:
+              pulseLevel: CALM
+              crisisRisk: 0.2
+          - timestamp: "2077-05-19T12:00:00Z"
+            expectedIndex: 68.3
+            moodState: HARMONY
+            confidence: 0.7
+            worldPulseProjection:
+              pulseLevel: CALM
+              crisisRisk: 0.18
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

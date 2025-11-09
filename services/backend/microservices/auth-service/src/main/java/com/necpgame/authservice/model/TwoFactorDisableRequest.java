@@ -1,0 +1,95 @@
+package com.necpgame.authservice.model;
+
+import java.net.URI;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import org.springframework.lang.Nullable;
+import org.openapitools.jackson.nullable.JsonNullable;
+import java.time.OffsetDateTime;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+
+import java.util.*;
+import jakarta.annotation.Generated;
+
+/**
+ * TwoFactorDisableRequest
+ */
+
+
+public class TwoFactorDisableRequest {
+
+  private String confirmation;
+
+  public TwoFactorDisableRequest() {
+    super();
+  }
+
+  /**
+   * Constructor with only required parameters
+   */
+  public TwoFactorDisableRequest(String confirmation) {
+    this.confirmation = confirmation;
+  }
+
+  public TwoFactorDisableRequest confirmation(String confirmation) {
+    this.confirmation = confirmation;
+    return this;
+  }
+
+  /**
+   * TOTP или recovery code для подтверждения отключения
+   * @return confirmation
+   */
+  @NotNull 
+  @Schema(name = "confirmation", description = "TOTP или recovery code для подтверждения отключения", requiredMode = Schema.RequiredMode.REQUIRED)
+  @JsonProperty("confirmation")
+  public String getConfirmation() {
+    return confirmation;
+  }
+
+  public void setConfirmation(String confirmation) {
+    this.confirmation = confirmation;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TwoFactorDisableRequest twoFactorDisableRequest = (TwoFactorDisableRequest) o;
+    return Objects.equals(this.confirmation, twoFactorDisableRequest.confirmation);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(confirmation);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class TwoFactorDisableRequest {\n");
+    sb.append("    confirmation: ").append(toIndentedString(confirmation)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+}
+

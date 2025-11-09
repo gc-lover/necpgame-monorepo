@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: Performance Monitoring API
+  description: |
+    API для мониторинга производительности всех систем NECPGAME.
+    
+    **Функции:**
+    - Real-time performance metrics
+    - Endpoint latency tracking
+    - Resource utilization monitoring
+    - Performance alerts
+    - Bottleneck detection
+    - Capacity planning data
+  version: 1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Performance Metrics
+  - name: Latency Tracking
+  - name: Performance Alerts
+  - name: Bottleneck Detection
+
+paths:
+  /technical/performance/metrics:
+    get:
+      tags:
+        - Performance Metrics
+      summary: System performance metrics
+      description: |
+        Aggregated performance metrics для всех систем:
+        - CPU, Memory, Network usage
+        - Request rates
+        - Response times
+        - Error rates
+      operationId: getPerformanceMetrics
+      parameters:
+        - name: service
+          in: query
+          schema:
+            type: string
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: ["5m", "1h", "24h", "7d"]
+            default: "1h"
+      responses:
+        '200':
+          description: Performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceMetrics'
+
+  /technical/performance/endpoints:
+    get:
+      tags:
+        - Latency Tracking
+      summary: Endpoint latency statistics
+      description: Latency stats для всех endpoints
+      operationId: getEndpointLatency
+      parameters:
+        - name: endpoint_path
+          in: query
+          schema:
+            type: string
+        - name: percentile
+          in: query
+          schema:
+            type: string
+            enum: ["p50", "p95", "p99"]
+            default: "p95"
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Endpoint latency stats
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EndpointLatencyStats'
+
+  /technical/performance/alerts:
+    post:
+      tags:
+        - Performance Alerts
+      summary: Create performance alert rule
+      description: Настройка alert rules для performance
+      operationId: createPerformanceAlert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerformanceAlertRule'
+      responses:
+        '201':
+          description: Alert rule created
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /technical/performance/bottlenecks:
+    get:
+      tags:
+        - Bottleneck Detection
+      summary: Detect performance bottlenecks
+      description: |
+        Автоматическое обнаружение bottlenecks:
+        - Slow queries
+        - High latency endpoints
+        - Resource exhaustion
+        - Memory leaks
+      operationId: detectBottlenecks
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: ["low", "medium", "high", "critical"]
+      responses:
+        '200':
+          description: Detected bottlenecks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bottlenecks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bottleneck'
+                  recommendations:
+                    type: array
+                    items:
+                      type: string
+
+  /technical/performance/capacity:
+    get:
+      tags:
+        - Performance Metrics
+      summary: Capacity planning data
+      description: Данные для capacity planning
+      operationId: getCapacityData
+      responses:
+        '200':
+          description: Capacity data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_capacity:
+                    type: object
+                    properties:
+                      cpu_usage_percent:
+                        type: number
+                      memory_usage_percent:
+                        type: number
+                      disk_usage_percent:
+                        type: number
+                      network_bandwidth_mbps:
+                        type: number
+                  projected_capacity:
+                    type: object
+                    properties:
+                      days_until_cpu_limit:
+                        type: integer
+                      days_until_memory_limit:
+                        type: integer
+                  scaling_recommendations:
+                    type: array
+                    items:
+                      type: string
+
+components:
+  schemas:
+    PerformanceMetrics:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              service_name:
+                type: string
+              cpu_usage_percent:
+                type: number
+              memory_usage_mb:
+                type: integer
+              requests_per_second:
+                type: number
+              average_response_time_ms:
+                type: integer
+              error_rate_percent:
+                type: number
+
+    EndpointLatencyStats:
+      type: object
+      properties:
+        endpoint:
+          type: string
+        method:
+          type: string
+        latency_p50_ms:
+          type: integer
+        latency_p95_ms:
+          type: integer
+        latency_p99_ms:
+          type: integer
+        requests_count:
+          type: integer
+        error_count:
+          type: integer
+
+    PerformanceAlertRule:
+      type: object
+      required:
+        - metric
+        - threshold
+        - condition
+      properties:
+        rule_name:
+          type: string
+        metric:
+          type: string
+          enum: ["cpu", "memory", "latency", "error_rate"]
+        threshold:
+          type: number
+        condition:
+          type: string
+          enum: ["greater_than", "less_than"]
+        notification_channels:
+          type: array
+          items:
+            type: string
+
+    Bottleneck:
+      type: object
+      properties:
+        bottleneck_type:
+          type: string
+          enum: ["slow_query", "high_latency_endpoint", "memory_leak", "cpu_spike"]
+        severity:
+          type: string
+          enum: ["low", "medium", "high", "critical"]
+        description:
+          type: string
+        affected_component:
+          type: string
+        metrics:
+          type: object
+          additionalProperties: true
+        recommendation:
+          type: string
+
+security:
+  - BearerAuth: []
+
+

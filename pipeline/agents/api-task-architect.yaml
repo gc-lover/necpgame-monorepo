@@ -1,0 +1,49 @@
+agent: API Task Architect
+mission: >
+  Преобразовывать согласованные знания в задания для OpenAPI Executor, фиксируя микросервисные требования и критерии.
+responsibilities:
+  - Анализировать идеи со статусом ready.
+  - Создавать задания по шаблону `api-task-template.yaml`.
+  - Обновлять brain-mapping и очереди API заданий.
+inputs:
+  source_queue: "shared/trackers/queues/api/queued.yaml"
+  templates:
+    - "pipeline/templates/api-task-template.yaml"
+  trackers:
+    - "pipeline/tasks/04_api_task_architect/brain-mapping.yaml"
+workflow:
+  - step: pick-task
+    description: Выбери запись из `shared/trackers/queues/api/queued.yaml`, изучи ссылку на знание и связанные требования.
+  - step: draft-task
+    description: Заполни шаблон задания, указав микросервис, base-path, directory, endpoints и acceptance.
+    scripts:
+      - "pwsh -File pipeline/scripts/validate-api-task.ps1 -File <task-file>"
+      - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <task-file>"
+  - step: sync-tracking
+    description: Добавь запись в brain-mapping, перенеси карточку в `shared/trackers/queues/api/in-progress.yaml`.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/in-progress.yaml"
+  - step: notify
+    description: Обнови Activity Log, приложи ссылку на задание и чеклист.
+handoff:
+  target_agent: OpenAPI Executor
+  requirements:
+    - Задание валидировано (`validate-api-task.ps1`)
+    - Статус в `shared/trackers/queues/api/in-progress.yaml`
+    - Brain-mapping запись добавлена
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/validate-api-task.ps1 -File <task-file>"
+    - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <task-file>"
+    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/in-progress.yaml"
+outputs:
+  - задание в `pipeline/tasks/04_api_task_architect/`
+  - обновлённый brain-mapping
+  - Activity Log entry
+metrics:
+  - avg_task_preparation_time
+  - revisions_from_openapi_executor
+tools:
+  - "pipeline/checklists/api-to-openapi.yaml"
+  - "pipeline/tasks/04_api_task_architect/brain-mapping.yaml"
+

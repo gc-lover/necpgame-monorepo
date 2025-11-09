@@ -1,0 +1,355 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine API
+  version: 1.0.0
+  description: |
+    Backend quest engine contracts for branching quests, dialogue execution, skill checks and lifecycle events.
+    Source: .BRAIN/05-technical/backend/quest-engine-backend.md v1.0.0.
+    Integrations: character-service (stats/flags), economy-service (rewards), inventory-service (items),
+    social-service (reputation), notification-service (player updates), telemetry.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/quests/quest-engine
+    directory: api/v1/gameplay/quests/quest-engine
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: QuestLifecycle
+    description: Start, update and complete quest instances
+  - name: QuestDialogue
+    description: Dialogue navigation and skill checks
+  - name: QuestProgress
+    description: Objective updates and external event ingestion
+  - name: QuestAudit
+    description: History, testing and telemetry endpoints
+paths:
+  /gameplay/quests/quest-engine/start:
+    post:
+      tags: [QuestLifecycle]
+      summary: Start quest
+      description: Launches a quest instance from template with requirement validation and initial dialogue state creation.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestStartRequest'
+            examples:
+              missionStart:
+                summary: Start infiltration quest
+                value:
+                  characterId: "5b8e9d4a-88ab-4c1b-987b-475b2f6bc3f1"
+                  questTemplateId: "quest_infiltration_004"
+                  difficulty: "HARD"
+      responses:
+        '201':
+          description: Quest started
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestStartResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances:
+    get:
+      tags: [QuestLifecycle]
+      summary: List quest instances
+      description: Retrieves active, completed or failed quest instances for a character with filtering by status or category.
+      security:
+        - PlayerSession: []
+      parameters:
+        - $ref: './quest-engine-models.yaml#/components/parameters/CharacterIdQuery'
+        - $ref: './quest-engine-models.yaml#/components/parameters/QuestStatusFilter'
+        - $ref: './quest-engine-models.yaml#/components/parameters/QuestCategoryFilter'
+      responses:
+        '200':
+          description: Quest instance list
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestInstanceListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances/{instanceId}:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/InstanceIdPath'
+    get:
+      tags: [QuestLifecycle]
+      summary: Get quest instance
+      description: Returns detailed quest state including branch, objectives, dialogue node and pending checks.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Quest instance details
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestInstanceResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances/{instanceId}/dialogue:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/InstanceIdPath'
+    get:
+      tags: [QuestDialogue]
+      summary: Get current dialogue node
+      description: Provides current dialogue node, available choices and attached skill checks for the quest instance.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Dialogue node payload
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestDialogueResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances/{instanceId}/dialogue/choice:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/InstanceIdPath'
+    post:
+      tags: [QuestDialogue]
+      summary: Submit dialogue choice
+      description: Processes dialogue choice, runs conditional checks, executes skill check if present and advances to next node.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestDialogueChoiceRequest'
+      responses:
+        '200':
+          description: Dialogue advanced
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestDialogueChoiceResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances/{instanceId}/progress:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/InstanceIdPath'
+    post:
+      tags: [QuestProgress]
+      summary: Update quest progress
+      description: Applies objective update based on external gameplay event payload (combat defeat, item collection, NPC interaction).
+      security:
+        - ServiceToken: []
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestProgressUpdateRequest'
+      responses:
+        '202':
+          description: Progress update accepted
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestProgressUpdateResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances/{instanceId}/complete:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/InstanceIdPath'
+    post:
+      tags: [QuestLifecycle]
+      summary: Complete quest
+      description: Marks quest as completed, calculates rewards and publishes quest completion lifecycle events.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestCompletionRequest'
+      responses:
+        '200':
+          description: Quest completed
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestCompletionResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances/{instanceId}/fail:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/InstanceIdPath'
+    post:
+      tags: [QuestLifecycle]
+      summary: Fail quest
+      description: Registers quest failure, applies penalties and triggers fail lifecycle event.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestFailureRequest'
+      responses:
+        '200':
+          description: Quest failed
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestFailureResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances/{instanceId}/abandon:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/InstanceIdPath'
+    post:
+      tags: [QuestLifecycle]
+      summary: Abandon quest
+      description: Allows player to abandon quest voluntarily with reason logging and optional cooldown.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestAbandonRequest'
+      responses:
+        '200':
+          description: Quest abandoned
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestAbandonResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/instances/{instanceId}/history:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/InstanceIdPath'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/Page'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+    get:
+      tags: [QuestAudit]
+      summary: Get quest history
+      description: Provides audit log of decisions, skill check results and external events for compliance and debugging.
+      security:
+        - PlayerSession: []
+        - ModeratorSession: []
+      responses:
+        '200':
+          description: Quest history list
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestHistoryResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/quests/quest-engine/templates/{templateId}/simulate:
+    parameters:
+      - $ref: './quest-engine-models.yaml#/components/parameters/TemplateIdPath'
+    post:
+      tags: [QuestAudit]
+      summary: Simulate quest template
+      description: Runs sandbox simulation of a quest template to evaluate branching outcomes and skill check probabilities.
+      security:
+        - ModeratorSession: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestSimulationRequest'
+      responses:
+        '200':
+          description: Simulation report
+          content:
+            application/json:
+              schema:
+                $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestSimulationResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  responses:
+    BadRequest:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    InternalServerError:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    PlayerSession:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/PlayerSession'
+    ModeratorSession:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ModeratorSession'
+    ServiceToken:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ServiceToken'
+  schemas:
+    QuestStartedEvent:
+      $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestStartedEvent'
+    QuestObjectiveUpdatedEvent:
+      $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestObjectiveUpdatedEvent'
+    QuestCompletedEvent:
+      $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestCompletedEvent'
+    QuestFailedEvent:
+      $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestFailedEvent'
+    QuestAbandonedEvent:
+      $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestAbandonedEvent'
+    QuestSubscribedEvents:
+      $ref: './quest-engine-models-operations.yaml#/components/schemas/QuestSubscribedEvents'
+

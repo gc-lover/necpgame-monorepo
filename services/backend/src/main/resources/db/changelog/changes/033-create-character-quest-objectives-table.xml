@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="033-create-character-quest-objectives-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_quest_objectives"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_quest_objectives">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quest_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="objective_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_progress" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_quest_objectives"
+                baseColumnNames="character_id"
+                constraintName="fk_cq_objectives_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="character_quest_objectives"
+                baseColumnNames="objective_id"
+                constraintName="fk_cq_objectives_objective"
+                referencedTableName="quest_objectives"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="character_quest_objectives" indexName="idx_cq_objectives_character_quest">
+            <column name="character_id"/>
+            <column name="quest_id"/>
+        </createIndex>
+        <createIndex tableName="character_quest_objectives" indexName="idx_cq_objectives_objective">
+            <column name="objective_id"/>
+        </createIndex>
+        <createIndex tableName="character_quest_objectives" indexName="idx_cq_objectives_completed">
+            <column name="completed"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                tableName="character_quest_objectives"
+                columnNames="character_id, objective_id"
+                constraintName="uk_character_objective"/>
+
+        <rollback>
+            <dropTable tableName="character_quest_objectives"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

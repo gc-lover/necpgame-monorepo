@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: Abilities Catalog API
+  version: 1.0.0
+  description: |
+    API для каталога боевых способностей.
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-abilities-catalog.md v1.0.0
+    
+    27+ способностей: Combat, Hacking, Tech, Stealth, Support, Mobility, Medic
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Abilities Catalog
+    description: Каталог способностей
+
+paths:
+  /gameplay/combat/abilities-catalog:
+    get:
+      summary: Получить каталог всех способностей
+      description: Возвращает полный каталог способностей с фильтрами
+      operationId: getAbilitiesCatalog
+      tags:
+        - Abilities Catalog
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [combat, hacking, tech, stealth, support, mobility, medic, tactical, passive, cyberware]
+        - name: slot
+          in: query
+          schema:
+            type: string
+            enum: [Q, E, R, passive, cyberdeck]
+        - name: class_affinity
+          in: query
+          schema:
+            type: string
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum: [common, rare, epic, legendary]
+      responses:
+        '200':
+          description: Каталог способностей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  abilities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AbilityDetail'
+
+  /gameplay/combat/abilities-catalog/{ability_id}:
+    get:
+      summary: Детали способности из каталога
+      operationId: getAbilityFromCatalog
+      tags:
+        - Abilities Catalog
+      parameters:
+        - name: ability_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали способности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityDetail'
+
+  /gameplay/combat/abilities-catalog/by-category/{category}:
+    get:
+      summary: Способности по категории
+      operationId: getAbilitiesByCategory
+      tags:
+        - Abilities Catalog
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Способности категории
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  abilities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AbilityDetail'
+
+  /gameplay/combat/abilities-catalog/synergy-matrix:
+    get:
+      summary: Матрица синергий
+      description: Возвращает синергии между способностями, имплантами и экипировкой
+      operationId: getSynergyMatrix
+      tags:
+        - Abilities Catalog
+      responses:
+        '200':
+          description: Матрица синергий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  synergies:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    AbilityDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        slot:
+          type: string
+        class_affinity:
+          type: array
+          items:
+            type: string
+        requirements:
+          type: object
+          properties:
+            level:
+              type: integer
+            attributes:
+              type: object
+            skills:
+              type: object
+            implants:
+              type: array
+              items:
+                type: string
+        costs:
+          type: object
+          properties:
+            energy:
+              type: number
+            cooldown:
+              type: number
+            charges:
+              type: integer
+        effects:
+          type: object
+        synergies:
+          type: array
+          items:
+            type: object
+        upgrades:
+          type: object
+

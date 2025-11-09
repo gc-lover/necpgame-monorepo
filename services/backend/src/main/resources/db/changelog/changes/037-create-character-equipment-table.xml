@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="037-create-character-equipment-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_equipment"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_equipment">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slot_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_id" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_equipment"
+                baseColumnNames="character_id"
+                constraintName="fk_character_equipment_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="character_equipment"
+                baseColumnNames="item_id"
+                constraintName="fk_character_equipment_item"
+                referencedTableName="inventory_items"
+                referencedColumnNames="id"
+                onDelete="SET NULL"/>
+
+        <createIndex tableName="character_equipment" indexName="idx_character_equipment_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_equipment" indexName="idx_character_equipment_slot">
+            <column name="slot_type"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                tableName="character_equipment"
+                columnNames="character_id, slot_type"
+                constraintName="uk_character_slot"/>
+
+        <rollback>
+            <dropTable tableName="character_equipment"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

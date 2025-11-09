@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="030-create-npc-dialogue-options-table" author="system">
+        <createTable tableName="npc_dialogue_options">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="dialogue_id" type="VARCHAR(100)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_npc_dialogue_options_dialogue" 
+                             references="npc_dialogues(id)"/>
+            </column>
+            <column name="text" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_dialogue_id" type="VARCHAR(100)">
+                <constraints foreignKeyName="fk_npc_dialogue_options_next_dialogue" 
+                             references="npc_dialogues(id)"/>
+            </column>
+            <column name="action_type" type="VARCHAR(50)"/>
+            <column name="action_data" type="JSONB"/>
+            <column name="requirement" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <createIndex tableName="npc_dialogue_options" indexName="idx_npc_dialogue_options_dialogue">
+            <column name="dialogue_id"/>
+        </createIndex>
+        <createIndex tableName="npc_dialogue_options" indexName="idx_npc_dialogue_options_next_dialogue">
+            <column name="next_dialogue_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

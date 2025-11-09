@@ -1,0 +1,40 @@
+checklist:
+  id: api-to-openapi
+  title: "API Task → OpenAPI"
+  sections:
+    - title: "API Task Architect"
+      items:
+        - text: "Использован актуальный шаблон `pipeline/templates/api-task-template.yaml`."
+        - text: "Поля metadata, microservice, base-path, directory заполнены согласно GLOBAL-RULES."
+        - text: "Для каждого endpoint описаны методы, параметры, модели и статусы ответов."
+        - text: "Добавлен FAQ и критерии приёмки (минимум 10 пунктов)."
+        - text: "Запись создана в `services/openapi/tasks/config/brain-mapping.yaml`."
+        - text: "Статус задачи перенесён в `shared/trackers/queues/api/queued.yaml`."
+        - text: "Документ в знаниях обновлён секцией API Tasks Status."
+        - text: "Выполнены валидации задания."
+          scripts:
+            - "pwsh -File pipeline/scripts/validate-api-task.ps1 -File <api-task-file>"
+            - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <api-task-file>"
+            - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/queued.yaml"
+    - title: "OpenAPI Executor (перед началом)"
+      items:
+        - text: "В implementation-tracker.yaml добавлена запись с `api.status: in_progress`."
+        - text: "Получена реальная временная метка и зафиксирована в трекере."
+        - text: "Ссылка на задание подтверждена в Activity Log."
+        - text: "Проверена структура каталога `services/openapi/api/v1`."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
+    - title: "OpenAPI Executor (перед сдачей)"
+      items:
+        - text: "Спецификация валидирована `pipeline/scripts/validate-swagger.ps1`."
+        - text: "Использованы общие компоненты (responses.yaml, pagination.yaml, security.yaml)."
+        - text: "Версия API обновлена по семантическим правилам."
+        - text: "Добавлена запись в `shared/trackers/queues/api/review.yaml`."
+        - text: "В implementation-tracker.yaml статус поменян на `needs_review`."
+        - text: "Чеклист прикреплён к заданию и спецификации."
+        - text: "Запущены контрольные скрипты."
+          scripts:
+            - "pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiSpec <spec>"
+            - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
+            - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/review.yaml"
+

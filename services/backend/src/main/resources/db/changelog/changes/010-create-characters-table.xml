@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="010-create-characters-table" author="system">
+        <createTable tableName="characters">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_character_account" 
+                             references="accounts(id)"/>
+            </column>
+            <column name="name" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="class_code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subclass_code" type="VARCHAR(50)"/>
+            <column name="gender" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="origin_code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="faction_id" type="UUID">
+                <constraints foreignKeyName="fk_character_faction" references="factions(id)"/>
+            </column>
+            <column name="city_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_character_city" 
+                             references="cities(id)"/>
+            </column>
+            <column name="appearance_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_character_appearance" 
+                             references="character_appearances(id)"/>
+            </column>
+            <column name="level" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_login" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <createIndex tableName="characters" indexName="idx_characters_account_id">
+            <column name="account_id"/>
+        </createIndex>
+
+        <createIndex tableName="characters" indexName="idx_characters_name">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex tableName="characters" indexName="idx_characters_class">
+            <column name="class_code"/>
+        </createIndex>
+
+        <createIndex tableName="characters" indexName="idx_characters_origin">
+            <column name="origin_code"/>
+        </createIndex>
+
+        <createIndex tableName="characters" indexName="idx_characters_faction_id">
+            <column name="faction_id"/>
+        </createIndex>
+
+        <createIndex tableName="characters" indexName="idx_characters_city_id">
+            <column name="city_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

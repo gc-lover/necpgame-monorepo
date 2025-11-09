@@ -1,0 +1,501 @@
+openapi: 3.0.3
+info:
+  title: League System API
+  version: 1.0.0
+  description: |
+    API для системы лиг (сезонов).
+    
+    Источник: .BRAIN/02-gameplay/meta/league-system-mechanics.md v1.0.0
+    
+    Система лиг - цикличная структура игры:
+    - Длительность: 73 года игровых (2020-2093), 3-6 месяцев реальных
+    - 5 фаз: Start → Rise → Crisis → Endgame → Finale
+    - Глобальный сброс (Wipe) 27 июля 2093
+    - Мета-прогресс: рейтинг, достижения, титулы, косметика
+    - Типы лиг: Standard, Hardcore, Event Leagues
+    - Ускорение времени: 1 день = 15-30 игровых дней
+    
+    Философия: "Вечное возвращение" + POE Leagues
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/meta
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: League
+    description: Система лиг
+  - name: Meta Progress
+    description: Мета-прогресс между лигами
+  - name: Rankings
+    description: Рейтинги и лидерборды
+
+paths:
+  /meta/league/current:
+    get:
+      summary: Получить текущую лигу
+      description: |
+        Возвращает информацию о текущей активной лиге.
+        Включает параметры, фазу, игровое время, оставшееся время до сброса.
+      operationId: getCurrentLeague
+      tags:
+        - League
+      responses:
+        '200':
+          description: Текущая лига
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/League'
+              examples:
+                current_league:
+                  summary: Лига в фазе Rise
+                  value:
+                    league_id: "league_12"
+                    name: "League of Shadows #12"
+                    start_date: "2025-09-01T00:00:00Z"
+                    end_date: "2025-12-27T00:00:00Z"
+                    current_phase: "rise"
+                    game_time_current: "2045-06-15T12:00:00Z"
+                    game_time_start: "2020-01-01T00:00:00Z"
+                    game_time_end: "2093-07-27T00:00:00Z"
+                    real_time_remaining: "2 месяца 15 дней"
+                    time_acceleration: 20
+                    league_type: "standard"
+
+  /meta/league/phase:
+    get:
+      summary: Получить текущую фазу лиги
+      description: |
+        Возвращает детали текущей фазы лиги (Start, Rise, Crisis, Endgame, Finale).
+        Каждая фаза имеет свои особенности и контент.
+      operationId: getCurrentPhase
+      tags:
+        - League
+      responses:
+        '200':
+          description: Текущая фаза
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaguePhase'
+              examples:
+                crisis_phase:
+                  summary: Фаза кризиса
+                  value:
+                    phase_name: "crisis"
+                    era_range: "2060-2090"
+                    focus: "Blackwall кризис, Пятая война, глобальные конфликты"
+                    started_at: "2025-10-01T00:00:00Z"
+                    ends_at: "2025-11-30T23:59:59Z"
+                    active_events:
+                      - "Blackwall Crisis"
+                      - "Fifth Corporate War"
+                    special_mechanics:
+                      - "Increased difficulty"
+                      - "Global events frequency +50%"
+
+  /meta/league/time:
+    get:
+      summary: Получить игровое время
+      description: |
+        Возвращает текущее игровое время в лиге и параметры ускорения.
+        Игровое время: 2020-2093 (73 года).
+      operationId: getLeagueTime
+      tags:
+        - League
+      responses:
+        '200':
+          description: Игровое время
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueTime'
+              examples:
+                mid_timeline:
+                  summary: Середина timeline
+                  value:
+                    game_time: "2055-03-20T14:30:00Z"
+                    real_time: "2025-10-15T18:45:00Z"
+                    time_acceleration: 20
+                    days_passed_game: 12861
+                    days_remaining_game: 13973
+                    era: "2045-2060"
+
+  /meta/league/leaderboard:
+    get:
+      summary: Получить рейтинг лиги
+      description: |
+        Возвращает рейтинг игроков в текущей лиге.
+        Можно фильтровать по типу (overall, pvp, pve, wealth, faction).
+      operationId: getLeagueLeaderboard
+      tags:
+        - Rankings
+      parameters:
+        - name: ranking_type
+          in: query
+          required: false
+          description: Тип рейтинга
+          schema:
+            type: string
+            enum: [overall, pvp, pve, wealth, faction_reputation, kills, quests]
+            default: overall
+        - name: limit
+          in: query
+          required: false
+          description: Количество записей
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          required: false
+          description: Смещение (пагинация)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Рейтинг
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leaderboard'
+
+  /meta/league/meta-progress/{account_id}:
+    get:
+      summary: Получить мета-прогресс аккаунта
+      description: |
+        Возвращает мета-прогресс аккаунта (сохраняется между лигами).
+        Включает: рейтинг, достижения, титулы, косметику.
+      operationId: getMetaProgress
+      tags:
+        - Meta Progress
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          description: ID аккаунта
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Мета-прогресс
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaProgress'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /meta/league/rewards:
+    get:
+      summary: Получить награды лиги
+      description: |
+        Возвращает награды за текущую лигу (по рейтингу).
+        Награды выдаются в конце лиги (Finale).
+      operationId: getLeagueRewards
+      tags:
+        - League
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Доступные награды
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueRewards'
+
+  /meta/league/types:
+    get:
+      summary: Получить типы лиг
+      description: |
+        Возвращает доступные типы лиг (Standard, Hardcore, Event).
+        Игрок выбирает тип при создании персонажа.
+      operationId: getLeagueTypes
+      tags:
+        - League
+      responses:
+        '200':
+          description: Типы лиг
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  league_types:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeagueType'
+
+components:
+  schemas:
+    League:
+      type: object
+      required:
+        - league_id
+        - name
+        - start_date
+        - end_date
+        - current_phase
+        - league_type
+      properties:
+        league_id:
+          type: string
+          example: "league_12"
+        name:
+          type: string
+          example: "League of Shadows #12"
+        start_date:
+          type: string
+          format: date-time
+          description: Дата начала лиги (реальное время)
+        end_date:
+          type: string
+          format: date-time
+          description: Дата конца лиги (реальное время)
+        current_phase:
+          type: string
+          enum: [start, rise, crisis, endgame, finale]
+          description: Текущая фаза лиги
+        game_time_current:
+          type: string
+          format: date-time
+          description: Текущее игровое время (2020-2093)
+        game_time_start:
+          type: string
+          format: date-time
+          example: "2020-01-01T00:00:00Z"
+        game_time_end:
+          type: string
+          format: date-time
+          example: "2093-07-27T00:00:00Z"
+        real_time_remaining:
+          type: string
+          description: Оставшееся реальное время до конца лиги
+        time_acceleration:
+          type: number
+          description: Ускорение времени (1 реальный день = X игровых дней)
+          example: 20
+        league_type:
+          type: string
+          enum: [standard, hardcore, event]
+        player_count:
+          type: integer
+          description: Количество активных игроков в лиге
+
+    LeaguePhase:
+      type: object
+      properties:
+        phase_name:
+          type: string
+          enum: [start, rise, crisis, endgame, finale]
+        era_range:
+          type: string
+          description: Диапазон игровых лет
+          example: "2060-2090"
+        focus:
+          type: string
+          description: Фокус фазы
+        started_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        active_events:
+          type: array
+          description: Активные глобальные события
+          items:
+            type: string
+        special_mechanics:
+          type: array
+          description: Специальные механики фазы
+          items:
+            type: string
+
+    LeagueTime:
+      type: object
+      properties:
+        game_time:
+          type: string
+          format: date-time
+          description: Текущее игровое время (2020-2093)
+        real_time:
+          type: string
+          format: date-time
+          description: Текущее реальное время
+        time_acceleration:
+          type: number
+          description: Ускорение времени
+        days_passed_game:
+          type: integer
+          description: Прошло игровых дней с начала лиги
+        days_remaining_game:
+          type: integer
+          description: Осталось игровых дней до конца лиги
+        era:
+          type: string
+          description: Текущая эра
+          example: "2045-2060"
+
+    Leaderboard:
+      type: object
+      properties:
+        ranking_type:
+          type: string
+          enum: [overall, pvp, pve, wealth, faction_reputation, kills, quests]
+        rankings:
+          type: array
+          items:
+            type: object
+            properties:
+              rank:
+                type: integer
+              account_id:
+                type: string
+              character_name:
+                type: string
+              score:
+                type: number
+              class:
+                type: string
+              level:
+                type: integer
+        total_players:
+          type: integer
+
+    MetaProgress:
+      type: object
+      properties:
+        account_id:
+          type: string
+        global_rating:
+          type: object
+          description: Глобальный рейтинг (сохраняется между лигами)
+          properties:
+            mmr:
+              type: number
+            elo:
+              type: number
+            rank:
+              type: string
+        achievements:
+          type: array
+          description: Достижения (сохраняются между лигами)
+          items:
+            type: object
+            properties:
+              achievement_id:
+                type: string
+              name:
+                type: string
+              earned_in_league:
+                type: string
+        titles:
+          type: array
+          description: Титулы (сохраняются между лигами)
+          items:
+            type: object
+            properties:
+              title_id:
+                type: string
+              name:
+                type: string
+              league_earned:
+                type: string
+        cosmetics:
+          type: array
+          description: Косметика (сохраняется между лигами)
+          items:
+            type: string
+        legacy_items:
+          type: array
+          description: Уникальные награды за прошлые лиги
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+              league_source:
+                type: string
+        hall_of_fame:
+          type: array
+          description: Лучшие результаты в прошлых лигах
+          items:
+            type: object
+            properties:
+              league_id:
+                type: string
+              rank:
+                type: integer
+              category:
+                type: string
+
+    LeagueRewards:
+      type: object
+      properties:
+        account_id:
+          type: string
+        current_rank:
+          type: integer
+        rewards:
+          type: array
+          description: Доступные награды на основе рейтинга
+          items:
+            type: object
+            properties:
+              reward_type:
+                type: string
+                enum: [title, cosmetic, legacy_item, achievement]
+              reward_id:
+                type: string
+              name:
+                type: string
+              requirement:
+                type: string
+                description: Требование для получения (например, Top 100)
+
+    LeagueType:
+      type: object
+      properties:
+        type_id:
+          type: string
+          enum: [standard, hardcore, event]
+        name:
+          type: string
+        description:
+          type: string
+        special_rules:
+          type: array
+          description: Специальные правила типа лиги
+          items:
+            type: string
+          example:
+            - "Permadeath on character death"
+            - "No trading with other players"
+        wipe_rules:
+          type: object
+          description: Правила сброса для данного типа лиги
+          properties:
+            wipes_characters:
+              type: boolean
+            wipes_items:
+              type: boolean
+            wipes_reputation:
+              type: boolean

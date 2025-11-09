@@ -1,0 +1,32 @@
+checklist:
+  id: idea-to-api
+  title: "Idea → API Task"
+  sections:
+    - title: "До старта (Vision Manager)"
+      items:
+        - text: "Документ идеи имеет заполненные метаданные: статус, версию, дату обновления."
+        - text: "Указаны целевые микросервисы и предполагаемые доменные каталоги OpenAPI."
+        - text: "Список зависимостей и внешних ссылок добавлен в раздел Related."
+        - text: "Документ не превышает лимит 400 строк или разделён на части с суффиксами."
+        - text: "Выполнена проверка лимита строк."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <idea-file>"
+    - title: "Проверка Readiness Reviewer"
+      items:
+        - text: "Статус документа переключён в in-review."
+        - text: "Пройден критерий полноты: описаны сценарии, данные, ограничения."
+        - text: "Нет блокирующих TODO или пустых разделов."
+        - text: "В `shared/trackers/readiness-tracker.yaml` создана или обновлена запись."
+        - text: "По итогам проверки установлен статус ready и указана дата."
+        - text: "Запущен скрипт проверки трекера."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-readiness-entry.ps1 -TrackerFile shared/trackers/readiness-tracker.yaml -DocumentPath <idea-file>"
+    - title: "Передача API Task Architect"
+      items:
+        - text: "Документ помечен как concept-approved и прошёл стадию Concept Director."
+        - text: "В Activity Log добавлена запись о готовности документа."
+        - text: "Чеклист приложен ссылкой в документ идеи."
+        - text: "Запись перенесена в `shared/trackers/queues/vision/in-progress.yaml` и проверена."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/vision/in-progress.yaml"
+

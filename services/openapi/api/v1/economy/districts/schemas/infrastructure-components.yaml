@@ -1,0 +1,516 @@
+openapi: 3.0.3
+info:
+  title: District Infrastructure Components
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy
+    package: com.necpgame.economyservice
+paths: {}
+components:
+  parameters:
+    CityId:
+      name: cityId
+      in: query
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор города для фильтрации.
+    DistrictId:
+      name: districtId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор района.
+    InstanceId:
+      name: instanceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор инфраструктурного объекта.
+    CategoryFilter:
+      name: category
+      in: query
+      schema:
+        type: string
+        enum: [housing, transit, security, entertainment, medical, black_market, civic]
+      description: Категория инфраструктуры.
+    StatusFilter:
+      name: state
+      in: query
+      schema:
+        type: string
+        enum: [planned, active, degraded, offline]
+      description: Фильтр по состоянию инфраструктуры.
+    SeverityFilter:
+      name: severity
+      in: query
+      schema:
+        type: string
+        enum: [info, warning, critical]
+      description: Фильтр по серьёзности алертов.
+    PriorityFilter:
+      name: priority
+      in: query
+      schema:
+        type: string
+        enum: [low, normal, high, urgent]
+      description: Фильтр по приоритету задач обслуживания.
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор задания пересчёта инфраструктуры.
+  schemas:
+    InfrastructureInstance:
+      type: object
+      required:
+        - instanceId
+        - districtId
+        - category
+        - state
+        - capacity
+        - utilization
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        districtId:
+          type: string
+          format: uuid
+        districtName:
+          type: string
+        category:
+          type: string
+          enum: [housing, transit, security, entertainment, medical, black_market, civic]
+        templateId:
+          type: string
+        name:
+          type: string
+        state:
+          type: string
+          enum: [planned, active, degraded, offline]
+        capacity:
+          type: integer
+        utilization:
+          type: number
+          minimum: 0
+        requiredStaff:
+          type: object
+          additionalProperties:
+            type: integer
+        energyCost:
+          type: integer
+        openHours:
+          type: object
+          additionalProperties:
+            type: string
+        ownerFaction:
+          type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureAlert'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureMetric'
+        maintenance:
+          $ref: '#/components/schemas/MaintenanceSchedule'
+    InfrastructureAlert:
+      type: object
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        message:
+          type: string
+        impact:
+          type: string
+        recommendedAction:
+          type: string
+        detectedAt:
+          type: string
+          format: date-time
+    InfrastructureMetric:
+      type: object
+      properties:
+        metricId:
+          type: string
+        value:
+          type: number
+        threshold:
+          type: number
+        trend:
+          type: string
+          enum: [up, down, flat]
+        unit:
+          type: string
+        window:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    MaintenanceSchedule:
+      type: object
+      properties:
+        scheduleId:
+          type: string
+        window:
+          type: string
+        nextRun:
+          type: string
+          format: date-time
+        assignedTeam:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+    DistrictInfrastructureSummary:
+      type: object
+      required:
+        - districtId
+        - metrics
+        - capacity
+        - utilization
+      properties:
+        districtId:
+          type: string
+          format: uuid
+        districtName:
+          type: string
+        profile:
+          type: string
+        capacity:
+          type: integer
+        utilization:
+          type: number
+        energyLoad:
+          type: number
+        staffDemand:
+          type: number
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureAlert'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureMetric'
+    InfrastructureRecalcRequest:
+      type: object
+      required:
+        - cityId
+        - trigger
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        districtIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        categories:
+          type: array
+          items:
+            type: string
+            enum: [housing, transit, security, entertainment, medical, black_market, civic]
+        trigger:
+          type: string
+          enum: [population-sync, maintenance, manual, emergency]
+        triggerContext:
+          type: object
+          additionalProperties: {}
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        dryRun:
+          type: boolean
+          default: false
+        notes:
+          type: string
+    InfrastructureRecalcJob:
+      type: object
+      required:
+        - jobId
+        - status
+        - submittedAt
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        trigger:
+          type: string
+        priority:
+          type: string
+        dryRun:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        progress:
+          type: number
+        affectedDistricts:
+          type: integer
+        summary:
+          type: string
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureJobLog'
+    InfrastructureJobLog:
+      type: object
+      required:
+        - timestamp
+        - level
+        - message
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [info, warning, error]
+        message:
+          type: string
+        context:
+          type: object
+          additionalProperties: {}
+    InfrastructureDiff:
+      type: object
+      required:
+        - districtId
+        - baseline
+        - current
+      properties:
+        districtId:
+          type: string
+          format: uuid
+        baselineTimestamp:
+          type: string
+          format: date-time
+        currentTimestamp:
+          type: string
+          format: date-time
+        baseline:
+          $ref: '#/components/schemas/DistrictInfrastructureSummary'
+        current:
+          $ref: '#/components/schemas/DistrictInfrastructureSummary'
+        changedInstances:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureInstanceChange'
+    InfrastructureInstanceChange:
+      type: object
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        changeType:
+          type: string
+          enum: [added, updated, removed]
+        previous:
+          $ref: '#/components/schemas/InfrastructureInstance'
+        current:
+          $ref: '#/components/schemas/InfrastructureInstance'
+    InfrastructureListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureInstance'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    InfrastructureJobListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureRecalcJob'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    InfrastructureDiffResponse:
+      type: object
+      required:
+        - districtId
+        - diff
+      properties:
+        districtId:
+          type: string
+          format: uuid
+        diff:
+          $ref: '#/components/schemas/InfrastructureDiff'
+    InfrastructureSummaryResponse:
+      type: object
+      required:
+        - cityId
+        - districts
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfrastructureMetric'
+        districts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistrictInfrastructureSummary'
+  examples:
+    InfrastructureInstanceExample:
+      summary: Инфраструктура — Transit Hub
+      value:
+        instanceId: "9f6c2a3d-7f64-4ad7-b587-7a1efc9031a5"
+        districtId: "9942c705-610f-4f5d-a9c1-271118fc2c65"
+        districtName: "Northside Docks"
+        category: "transit"
+        templateId: "transit_hub_t1"
+        name: "Northside Logistics Hub"
+        state: "degraded"
+        capacity: 120000
+        utilization: 0.88
+        requiredStaff:
+          logistics_controller: 24
+          security_officer: 12
+        energyCost: 4500
+        ownerFaction: "faction_militech"
+        riskLevel: "high"
+        alerts:
+          - code: "logistics_overload"
+            severity: "critical"
+            message: "Перегруз транзитного узла на 15%."
+            recommendedAction: "Увеличить число конвоев или перенаправить трафик."
+            detectedAt: "2025-11-08T09:40:00Z"
+        metrics:
+          - metricId: "throughput_24h"
+            value: 98000
+            threshold: 90000
+            trend: "up"
+            unit: "units"
+            window: "24h"
+            timestamp: "2025-11-08T09:45:00Z"
+        maintenance:
+          scheduleId: "maint-3421"
+          window: "02:00-04:00"
+          nextRun: "2025-11-09T02:00:00Z"
+          assignedTeam: "maintenance_team_alpha"
+          status: "scheduled"
+    InfrastructureRecalcRequestExample:
+      summary: Пересчёт инфраструктуры после population sync
+      value:
+        cityId: "5f6c9a2b-8d6d-4aa3-9df5-118c7f6a2fd0"
+        districtIds:
+          - "9942c705-610f-4f5d-a9c1-271118fc2c65"
+        categories:
+          - "transit"
+          - "security"
+        trigger: "population-sync"
+        triggerContext:
+          jobId: "92f7e3f7-6bf5-4a0b-a433-9ad1a762ffc1"
+        priority: "high"
+        dryRun: false
+        notes: "Перераспределить ресурсы после изменения NPC расписаний."
+    InfrastructureRecalcJobExample:
+      summary: Задание пересчёта инфраструктуры
+      value:
+        jobId: "0a6f12a3-d2d5-4c07-87a5-9eb1cbbe12c8"
+        status: "running"
+        trigger: "emergency"
+        priority: "urgent"
+        dryRun: false
+        submittedAt: "2025-11-08T09:52:00Z"
+        startedAt: "2025-11-08T09:52:05Z"
+        progress: 0.42
+        affectedDistricts: 3
+        logs:
+          - timestamp: "2025-11-08T09:52:10Z"
+            level: "info"
+            message: "Пересчёт мощности энергетической сети."
+          - timestamp: "2025-11-08T09:52:18Z"
+            level: "warning"
+            message: "Недостаток охраны в индустриальной зоне."
+    InfrastructureDiffExample:
+      summary: Дифф инфраструктуры после метро остановки
+      value:
+        districtId: "bbcf3e16-3245-4581-9c0c-9956c4f64c0b"
+        baselineTimestamp: "2025-11-08T08:00:00Z"
+        currentTimestamp: "2025-11-08T09:50:00Z"
+        baseline:
+          districtId: "bbcf3e16-3245-4581-9c0c-9956c4f64c0b"
+          districtName: "Watson Central"
+          profile: "mixed"
+          capacity: 250000
+          utilization: 0.78
+          energyLoad: 0.65
+          staffDemand: 0.7
+          metrics: []
+        current:
+          districtId: "bbcf3e16-3245-4581-9c0c-9956c4f64c0b"
+          districtName: "Watson Central"
+          profile: "mixed"
+          capacity: 250000
+          utilization: 0.91
+          energyLoad: 0.82
+          staffDemand: 0.9
+          metrics:
+            - metricId: "power_grid"
+              value: 0.85
+              threshold: 0.8
+              trend: "up"
+              window: "24h"
+              timestamp: "2025-11-08T09:50:00Z"
+        changedInstances:
+          - instanceId: "9f6c2a3d-7f64-4ad7-b587-7a1efc9031a5"
+            changeType: "updated"
+            previous:
+              instanceId: "9f6c2a3d-7f64-4ad7-b587-7a1efc9031a5"
+              districtId: "bbcf3e16-3245-4581-9c0c-9956c4f64c0b"
+              category: "transit"
+              state: "active"
+              capacity: 120000
+              utilization: 0.8
+            current:
+              instanceId: "9f6c2a3d-7f64-4ad7-b587-7a1efc9031a5"
+              districtId: "bbcf3e16-3245-4581-9c0c-9956c4f64c0b"
+              category: "transit"
+              state: "degraded"
+              capacity: 120000
+              utilization: 0.95
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

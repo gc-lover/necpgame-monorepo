@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="056-create-character-weapon-mastery-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_weapon_mastery"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_weapon_mastery">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weapon_class" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mastery_rank" type="INT" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_rank_experience" type="INT" defaultValue="1000">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kills_with_class" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="headshots_with_class" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_weapon_mastery"
+                baseColumnNames="character_id"
+                constraintName="fk_character_weapon_mastery_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="character_weapon_mastery" indexName="idx_character_weapon_mastery_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_weapon_mastery" indexName="idx_character_weapon_mastery_class">
+            <column name="weapon_class"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                tableName="character_weapon_mastery"
+                columnNames="character_id, weapon_class"
+                constraintName="uk_character_weapon_class"/>
+
+        <rollback>
+            <dropTable tableName="character_weapon_mastery"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

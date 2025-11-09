@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Battle Pass Examples
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+
+components:
+  examples:
+    CreateSeason:
+      summary: Создание сезона Battle Pass
+      value:
+        seasonNumber: 7
+        name: "Neon Uprising"
+        theme: "Cyberpunk Resistance"
+        description: "Сезон сопротивления корпорациям, новые миссии и награды."
+        startDate: "2025-12-01T00:00:00Z"
+        endDate: "2026-02-28T23:59:59Z"
+        maxLevel: 120
+        xpPerLevel: 8000
+        premiumPrice: 3500
+        premiumCurrency: "shards"
+        xpCapPerDay: 24000
+    XpGrantRequest:
+      summary: Начисление XP за победу в матче
+      value:
+        playerId: "player-90321"
+        seasonId: "bps-2025-07"
+        source: "MATCH_WIN"
+        amount: 1200
+        multiplier: 2.0
+        metadata:
+          matchId: "match-552211"
+          map: "NightCity-Docks"
+          mvp: true
+    PremiumPurchaseRequest:
+      summary: Покупка премиума за shards
+      value:
+        playerId: "player-90321"
+        seasonId: "bps-2025-07"
+        paymentMethod: "CURRENCY"
+        currency: "shards"
+        amount: 3500
+        platform: "pc"
+    BattlePassAnalyticsResponse:
+      summary: Аналитика за 30 дней
+      value:
+        generatedAt: "2025-11-07T23:59:00Z"
+        seasonId: "bps-2025-07"
+        range: "30d"
+        activePlayers: 182340
+        premiumConversionRate: 0.41
+        averageLevel: 58.6
+        xpDistribution:
+          - { levelRange: "1-20", playerCount: 45210 }
+          - { levelRange: "21-60", playerCount: 96230 }
+          - { levelRange: "61-100", playerCount: 35800 }
+          - { levelRange: "101-120", playerCount: 5220 }
+        retentionMetrics:
+          day7: 0.62
+          day30: 0.44
+          premiumRetention: 0.71
+    RewardsList:
+      summary: Награды сезона
+      value:
+        rewards:
+          - { rewardId: "reward-lv25-prem", level: 25, track: PREMIUM, rewardType: COSMETIC, rewardData: { cosmeticId: "skin-neon-blade" }, rarity: legendary, previewAsset: "https://cdn.necpgame.com/bp/rewards/skin-neon-blade.png" }
+          - { rewardId: "reward-lv25-free", level: 25, track: FREE, rewardType: CURRENCY, rewardData: { currency: "credits", amount: 5000 }, rarity: rare }
+          - { rewardId: "reward-lv26-prem", level: 26, track: PREMIUM, rewardType: ITEM, rewardData: { itemId: "weapon-mod-thermite" }, rarity: epic }
+    RewardClaimRequest:
+      summary: Получение награды 25 уровня
+      value:
+        level: 25
+        track: PREMIUM
+        autoClaimExtras: true
+        clientContext:
+          platform: "pc"
+          locale: "ru-RU"
+    DailyChallenges:
+      summary: Активные дневные челленджи
+      value:
+        challenges:
+          - challenge:
+              challengeId: "ch-daily-1210"
+              challengeType: DAILY
+              description: "Завершите 3 ежедневных задания"
+              objectives:
+                - { metric: "daily_quest_complete", target: 3, current: 1 }
+              xpReward: 1500
+              rewardId: "reward-token-reroll"
+              startAt: "2025-11-07T00:00:00Z"
+              endAt: "2025-11-08T00:00:00Z"
+              rerollCost: 1
+            progress: { challengeId: "ch-daily-1210", playerId: "player-90321", status: IN_PROGRESS, progressValue: 1, updatedAt: "2025-11-07T21:10:00Z" }
+        refreshAt: "2025-11-08T00:00:00Z"
+    WeeklyChallenges:
+      summary: Недельные челленджи
+      value:
+        challenges:
+          - challenge:
+              challengeId: "ch-week-0701"
+              challengeType: WEEKLY
+              description: "Выиграйте 10 матчей в Night City Arena"
+              objectives:
+                - { metric: "match_win_arena", target: 10, current: 7 }
+              xpReward: 5000
+              rewardId: "reward-lv-bonus"
+              startAt: "2025-11-04T00:00:00Z"
+              endAt: "2025-11-11T00:00:00Z"
+              rerollCost: 3
+            progress: { challengeId: "ch-week-0701", playerId: "player-90321", status: IN_PROGRESS, progressValue: 7, updatedAt: "2025-11-07T19:35:00Z" }
+        refreshAt: "2025-11-11T00:00:00Z"
+    BoostStatusResponse:
+      summary: Активные бусты
+      value:
+        activeBoosts:
+          - { boostId: "boost-xp-2h", boostType: XP, multiplier: 2.0, activatedAt: "2025-11-07T20:00:00Z", expiresAt: "2025-11-07T22:00:00Z" }
+        cooldowns:
+          - { boostId: "boost-double-drops", readyAt: "2025-11-08T18:00:00Z" }
+    RewardAnalyticsResponse:
+      summary: Аналитика наград
+      value:
+        generatedAt: "2025-11-07T23:59:30Z"
+        seasonId: "bps-2025-07"
+        range: "7d"
+        totalClaims: 152340
+        premiumClaims: 63410
+        rerollUsage: 14200
+        challengeCompletionRate: 0.68
+        boostActivationRate: 0.47
+        topRewards:
+          - { rewardId: "reward-lv25-prem", claimCount: 41890 }
+          - { rewardId: "reward-token-reroll", claimCount: 36550 }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

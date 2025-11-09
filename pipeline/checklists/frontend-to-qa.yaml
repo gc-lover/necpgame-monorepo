@@ -1,0 +1,33 @@
+checklist:
+  id: frontend-to-qa
+  title: "Frontend → QA"
+  sections:
+    - title: "Перед стартом QA"
+      items:
+        - text: "`implementation-tracker.yaml` обновлён: `frontend.status: completed`."
+        - text: "Собраны артефакты билда (frontend bundle, backend jar/docker)."
+        - text: "Подготовлен тестовый контур и описан в `templates/test-plan.yaml`."
+        - text: "Опубликованы заметки о фиче в Activity Log."
+        - text: "Проверены артефакты backend при необходимости."
+          scripts:
+            - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+    - title: "Выполнение тестов"
+      items:
+        - text: "Сценарии smoke, regression и negative cases пройдены."
+        - text: "Заведён список дефектов в `trackers/defects.yaml` с приоритетами."
+        - text: "Автоматические тесты (unit/e2e) прогнаны и результаты сохранены."
+        - text: "Проверено соответствие UI гайдам, accessibility минимум AA."
+        - text: "Запущены необходимые скрипты."
+          scripts:
+            - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/frontend"
+            - "pwsh -File pipeline/scripts/check-defect-register.ps1 -File shared/trackers/defects.yaml"
+    - title: "Передача DevOps"
+      items:
+        - text: "Все дефекты критичного уровня закрыты."
+        - text: "Подготовлен QA отчёт в `templates/test-report.yaml`."
+        - text: "`implementation-tracker.yaml` обновлён: `qa.status: completed`."
+        - text: "В communication-log отправлено уведомление DevOps агенту."
+        - text: "QA отчёт прошёл проверку ссылок."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-dashboard-links.ps1 -ReportFile <qa-report.md>"
+

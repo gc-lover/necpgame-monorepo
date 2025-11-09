@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  title: Player Order World Impact Schemas
+  version: 1.0.0
+  description: Основные схемы эффектов, кризисов и событий влияния заказов игроков.
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+paths: {}
+components:
+  schemas:
+    PlayerOrderImpact:
+      type: object
+      required:
+        - effectId
+        - cityId
+        - effectType
+        - severity
+        - magnitude
+        - status
+        - createdAt
+      properties:
+        effectId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        cityId:
+          type: string
+          pattern: '^[A-Z0-9\\-]{3,24}$'
+        effectType:
+          type: string
+          enum: [economic, social, political, security, environmental, cultural]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        magnitude:
+          $ref: '#/components/schemas/ImpactMagnitude'
+        status:
+          type: string
+          enum: [active, pending, resolved, archived]
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImpactTrigger'
+        kpi:
+          $ref: '#/components/schemas/ImpactKpi'
+        relatedCrisisId:
+          type: string
+          format: uuid
+        decayAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ImpactMagnitude:
+      type: object
+      required:
+        - economic
+        - social
+        - political
+        - security
+      properties:
+        economic:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        social:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        political:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        security:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        environmental:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        cultural:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    ImpactTrigger:
+      type: object
+      required:
+        - source
+        - description
+      properties:
+        source:
+          type: string
+          enum: [orders_volume, ratings_shift, crisis_mitigation, faction_directive, manual, analytics_threshold]
+        description:
+          type: string
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        detectedAt:
+          type: string
+          format: date-time
+    ImpactKpi:
+      type: object
+      properties:
+        orderEconomicIndex:
+          type: number
+          format: float
+        serviceDemandIndex:
+          type: number
+          format: float
+        volatilityIndex:
+          type: number
+          format: float
+        sentimentScore:
+          type: number
+          format: float
+        populationShift:
+          type: integer
+    PlayerOrderCrisis:
+      type: object
+      required:
+        - crisisId
+        - cityId
+        - severity
+        - status
+        - startedAt
+      properties:
+        crisisId:
+          type: string
+          format: uuid
+        relatedEffectIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        cityId:
+          type: string
+          pattern: '^[A-Z0-9\\-]{3,24}$'
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [active, mitigated, escalating, resolved]
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImpactTrigger'
+        mitigationPlan:
+          $ref: '#/components/schemas/CrisisMitigationPlan'
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        startedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+    CrisisMitigationPlan:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [draft, in_progress, completed, cancelled]
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MitigationAction'
+        assignedFaction:
+          type: string
+          description: Код фракции, ответственной за план.
+        estimatedResolutionAt:
+          type: string
+          format: date-time
+    MitigationAction:
+      type: object
+      required:
+        - actionId
+        - title
+        - status
+      properties:
+        actionId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [pending, scheduled, executing, completed, failed]
+        responsible:
+          type: string
+        eta:
+          type: string
+          format: date-time
+        impactReduction:
+          type: number
+          format: float
+          description: Ожидаемое снижение индекса кризиса.
+    ImpactSummaryResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrderImpact'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    ImpactDetailsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/PlayerOrderImpact'
+        crisis:
+          $ref: '#/components/schemas/PlayerOrderCrisis'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImpactHistoryEntry'
+    ImpactHistoryEntry:
+      type: object
+      required:
+        - timestamp
+        - status
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+        magnitude:
+          $ref: '#/components/schemas/ImpactMagnitude'
+    WorldEventCreateRequest:
+      type: object
+      required:
+        - eventType
+        - cityId
+        - title
+        - description
+      properties:
+        eventType:
+          type: string
+          enum: [crisis, festival, alert, announcement]
+        cityId:
+          type: string
+          pattern: '^[A-Z0-9\\-]{3,24}$'
+        relatedEffectIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, alert]
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+    WorldEvent:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - cityId
+        - title
+        - status
+        - createdAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum: [crisis, festival, alert, announcement]
+        cityId:
+          type: string
+          pattern: '^[A-Z0-9\\-]{3,24}$'
+        relatedEffectIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, alert]
+        status:
+          type: string
+          enum: [scheduled, active, completed, cancelled]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

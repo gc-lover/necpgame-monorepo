@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="093-create-lore-database-tables" author="backend-agent">
+        <createTable tableName="lore_universe">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="version" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="setting" type="TEXT"/>
+            <column name="time_period" type="VARCHAR(64)"/>
+            <column name="key_events_json" type="JSONB"/>
+            <column name="simulation_lore_json" type="JSONB"/>
+            <column name="major_factions_count" type="INT"/>
+            <column name="locations_count" type="INT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="lore_timeline_events">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="event_id" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="era" type="VARCHAR(64)"/>
+            <column name="year" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="event_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="impact_level" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="related_factions_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="lore_timeline_events" indexName="idx_lore_timeline_events_era">
+            <column name="era"/>
+        </createIndex>
+        <createIndex tableName="lore_timeline_events" indexName="idx_lore_timeline_events_type">
+            <column name="event_type"/>
+        </createIndex>
+        <createIndex tableName="lore_timeline_events" indexName="idx_lore_timeline_events_year">
+            <column name="year"/>
+        </createIndex>
+
+        <createTable tableName="lore_factions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="external_id" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="faction_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="region" type="VARCHAR(64)"/>
+            <column name="power_level" type="INT"/>
+            <column name="description_short" type="TEXT"/>
+            <column name="full_description" type="TEXT"/>
+            <column name="history" type="TEXT"/>
+            <column name="goals_json" type="JSONB"/>
+            <column name="leadership_json" type="JSONB"/>
+            <column name="territories_json" type="JSONB"/>
+            <column name="allies_json" type="JSONB"/>
+            <column name="enemies_json" type="JSONB"/>
+            <column name="resources_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="lore_factions" indexName="idx_lore_factions_name">
+            <column name="name"/>
+        </createIndex>
+        <createIndex tableName="lore_factions" indexName="idx_lore_factions_type">
+            <column name="faction_type"/>
+        </createIndex>
+        <createIndex tableName="lore_factions" indexName="idx_lore_factions_region">
+            <column name="region"/>
+        </createIndex>
+
+        <createTable tableName="lore_locations">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="external_id" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="region" type="VARCHAR(64)"/>
+            <column name="location_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="population" type="INT"/>
+            <column name="danger_level" type="VARCHAR(64)"/>
+            <column name="description_short" type="TEXT"/>
+            <column name="full_description" type="TEXT"/>
+            <column name="history" type="TEXT"/>
+            <column name="districts_json" type="JSONB"/>
+            <column name="controlling_factions_json" type="JSONB"/>
+            <column name="points_of_interest_json" type="JSONB"/>
+            <column name="economy_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="lore_locations" indexName="idx_lore_locations_name">
+            <column name="name"/>
+        </createIndex>
+        <createIndex tableName="lore_locations" indexName="idx_lore_locations_region">
+            <column name="region"/>
+        </createIndex>
+        <createIndex tableName="lore_locations" indexName="idx_lore_locations_type">
+            <column name="location_type"/>
+        </createIndex>
+
+        <createTable tableName="lore_character_categories">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="category_id" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="role" type="VARCHAR(160)"/>
+            <column name="example_characters_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="lore_character_categories" indexName="idx_lore_character_categories_name">
+            <column name="name"/>
+        </createIndex>
+
+        <createTable tableName="lore_codex_entries">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="entry_id" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="category" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="TEXT"/>
+            <column name="unlock_condition" type="TEXT"/>
+            <column name="related_entries_json" type="JSONB"/>
+            <column name="default_unlocked" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="lore_codex_entries" indexName="idx_lore_codex_entries_category">
+            <column name="category"/>
+        </createIndex>
+
+        <createTable tableName="lore_codex_progress">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entry_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_unlocked" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unlocked_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="lore_codex_progress" columnNames="character_id, entry_id"
+                             constraintName="uq_lore_codex_progress_character_entry"/>
+        <addForeignKeyConstraint baseTableName="lore_codex_progress" baseColumnNames="entry_id"
+                                 constraintName="fk_lore_codex_progress_entry"
+                                 referencedTableName="lore_codex_entries" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="lore_codex_progress" indexName="idx_lore_codex_progress_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="lore_codex_progress" indexName="idx_lore_codex_progress_entry">
+            <column name="entry_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

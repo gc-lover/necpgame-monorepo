@@ -1,0 +1,64 @@
+tradeHistory:
+  get:
+    tags:
+      - TradeHistory
+    summary: Получить историю P2P сделок
+    description: |
+      Возвращает агрегированную историю торговых операций. Поддерживает фильтрацию
+      по участнику, периоду, исходу сделки и типу валюты. Записи включают обе
+      стороны обмена и подробный список переданных ресурсов.
+    operationId: getTradeHistory
+    parameters:
+      - name: player_id
+        in: query
+        description: Идентификатор персонажа или аккаунта
+        required: false
+        schema:
+          type: string
+      - name: from
+        in: query
+        description: Начало периода в формате RFC3339
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        description: Завершение периода в формате RFC3339
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: result
+        in: query
+        description: Фильтр по исходу сделки
+        required: false
+        schema:
+          type: string
+          enum:
+            - success
+            - cancelled
+            - expired
+            - fraud_blocked
+      - name: currency_id
+        in: query
+        description: Код валюты в предложении
+        required: false
+        schema:
+          type: string
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/Page'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+    responses:
+      '200':
+        description: История торговых операций
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/TradeHistoryResponse'
+      '401':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+      '403':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+      '500':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+

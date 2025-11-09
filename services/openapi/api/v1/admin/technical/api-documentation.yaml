@@ -1,0 +1,724 @@
+openapi: 3.0.3
+info:
+  title: API Documentation & Technical Summary
+  description: |
+    Meta-API для технической документации всех API endpoints NECPGAME.
+    
+    **Покрывает:**
+    - 310+ API endpoints по категориям
+    - 50+ core data models
+    - Service mesh & integrations
+    - Event-driven architecture
+    - WebSocket channels
+    - Rate limiting & security
+    - Health monitoring
+    
+    **Используется для:**
+    - Auto-generated documentation
+    - API discovery
+    - Service mesh mapping
+    - Health monitoring
+    - Integration testing
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: API Documentation
+    description: Документация всех API endpoints
+  - name: Technical Reference
+    description: Техническая справка
+  - name: Service Mesh
+    description: Service mesh & integrations
+  - name: Health Monitoring
+    description: Мониторинг health всех сервисов
+
+paths:
+  /technical/api/endpoints:
+    get:
+      tags:
+        - API Documentation
+      summary: Получить список всех API endpoints
+      description: |
+        Возвращает полный список всех 310+ API endpoints в системе.
+        Группировка по категориям, сервисам, версиям.
+      operationId: getAllEndpoints
+      parameters:
+        - name: category
+          in: query
+          description: Фильтр по категории
+          schema:
+            type: string
+            enum: [
+              "authentication",
+              "player_management",
+              "inventory",
+              "combat",
+              "quests",
+              "economy",
+              "social",
+              "progression",
+              "world",
+              "technical"
+            ]
+        - name: service
+          in: query
+          description: Фильтр по сервису
+          schema:
+            type: string
+        - name: version
+          in: query
+          description: API version
+          schema:
+            type: string
+            default: "v1"
+        - name: method
+          in: query
+          description: HTTP method
+          schema:
+            type: string
+            enum: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Endpoints list загружен
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EndpointInfo'
+                      summary:
+                        type: object
+                        properties:
+                          total_endpoints:
+                            type: integer
+                            example: 310
+                          by_category:
+                            type: object
+                            additionalProperties:
+                              type: integer
+                          by_method:
+                            type: object
+                            additionalProperties:
+                              type: integer
+
+  /technical/api/endpoints/{endpoint_id}:
+    get:
+      tags:
+        - API Documentation
+      summary: Получить детали endpoint
+      description: |
+        Детальная информация об одном API endpoint:
+        - Полная документация
+        - Request/Response schemas
+        - Примеры
+        - Rate limiting
+        - Security requirements
+      operationId: getEndpointDetails
+      parameters:
+        - name: endpoint_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Endpoint details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndpointDetails'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /technical/api/models:
+    get:
+      tags:
+        - Technical Reference
+      summary: Получить список data models
+      description: |
+        Список всех core data models (50+):
+        - Player, Character, Inventory, Quest, etc.
+        - Relationships между models
+        - Database mappings
+      operationId: getDataModels
+      parameters:
+        - name: category
+          in: query
+          description: Категория models
+          schema:
+            type: string
+        - name: include_schemas
+          in: query
+          description: Включить JSON schemas
+          schema:
+            type: boolean
+            default: false
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Data models список
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DataModelInfo'
+
+  /technical/api/integration-map:
+    get:
+      tags:
+        - Service Mesh
+      summary: Получить карту интеграций
+      description: |
+        Service mesh & integration map:
+        - Все микросервисы
+        - Связи между сервисами
+        - Event channels
+        - WebSocket connections
+        - gRPC services
+      operationId: getIntegrationMap
+      responses:
+        '200':
+          description: Integration map загружена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationMapResponse'
+
+  /technical/api/health:
+    get:
+      tags:
+        - Health Monitoring
+      summary: Health status всех сервисов
+      description: |
+        Real-time health status:
+        - Все микросервисы
+        - Database connections
+        - Redis cache
+        - Message queues
+        - External services
+      operationId: getHealthStatus
+      responses:
+        '200':
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatusResponse'
+        '503':
+          description: Some services unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatusResponse'
+
+  /technical/api/health/{service_id}:
+    get:
+      tags:
+        - Health Monitoring
+      summary: Health status одного сервиса
+      description: Детальный health status конкретного сервиса
+      operationId: getServiceHealth
+      parameters:
+        - name: service_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceHealth'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /technical/api/events:
+    get:
+      tags:
+        - Service Mesh
+      summary: Получить список event channels
+      description: |
+        Event-driven architecture:
+        - Все event channels
+        - Publishers & subscribers
+        - Event schemas
+        - Message flow
+      operationId: getEventChannels
+      responses:
+        '200':
+          description: Event channels list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventChannel'
+                  total_channels:
+                    type: integer
+
+  /technical/api/websockets:
+    get:
+      tags:
+        - Service Mesh
+      summary: Получить список WebSocket channels
+      description: |
+        Real-time WebSocket channels:
+        - Combat updates
+        - Chat messages
+        - World events
+        - Player notifications
+      operationId: getWebSocketChannels
+      responses:
+        '200':
+          description: WebSocket channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channels:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        channel_id:
+                          type: string
+                        channel_name:
+                          type: string
+                        description:
+                          type: string
+                        event_types:
+                          type: array
+                          items:
+                            type: string
+
+  /technical/api/rate-limits:
+    get:
+      tags:
+        - Technical Reference
+      summary: Получить rate limiting rules
+      description: |
+        Rate limiting configuration:
+        - По endpoint
+        - По user tier
+        - По IP
+      operationId: getRateLimits
+      responses:
+        '200':
+          description: Rate limits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  global_limits:
+                    type: object
+                  endpoint_limits:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        endpoint:
+                          type: string
+                        limit:
+                          type: integer
+                        window:
+                          type: string
+
+  /technical/api/metrics:
+    get:
+      tags:
+        - Health Monitoring
+      summary: Получить API metrics
+      description: |
+        Aggregated metrics:
+        - Request counts
+        - Response times
+        - Error rates
+        - Popular endpoints
+      operationId: getApiMetrics
+      parameters:
+        - name: time_range
+          in: query
+          description: Time range
+          schema:
+            type: string
+            enum: ["1h", "24h", "7d", "30d"]
+            default: "24h"
+      responses:
+        '200':
+          description: API metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiMetrics'
+
+components:
+  schemas:
+    EndpointInfo:
+      type: object
+      required:
+        - endpoint_id
+        - path
+        - method
+      properties:
+        endpoint_id:
+          type: string
+          example: "auth_login"
+        path:
+          type: string
+          example: "/api/v1/auth/login"
+        method:
+          type: string
+          enum: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+        category:
+          type: string
+          example: "authentication"
+        service:
+          type: string
+          example: "auth-service"
+        description:
+          type: string
+          example: "User login endpoint"
+        parameters:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              in:
+                type: string
+                enum: ["path", "query", "header", "body"]
+              required:
+                type: boolean
+              type:
+                type: string
+        responses:
+          type: object
+          additionalProperties:
+            type: object
+        rate_limit:
+          type: object
+          properties:
+            requests:
+              type: integer
+            window:
+              type: string
+        authentication_required:
+          type: boolean
+        roles_required:
+          type: array
+          items:
+            type: string
+
+    EndpointDetails:
+      allOf:
+        - $ref: '#/components/schemas/EndpointInfo'
+        - type: object
+          properties:
+            request_schema:
+              type: object
+              description: Full JSON schema
+            response_schema:
+              type: object
+              description: Full JSON schema
+            examples:
+              type: object
+              properties:
+                request:
+                  type: object
+                response:
+                  type: object
+            error_codes:
+              type: array
+              items:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+            dependencies:
+              type: array
+              description: Зависимости от других сервисов
+              items:
+                type: string
+
+    DataModelInfo:
+      type: object
+      properties:
+        model_name:
+          type: string
+          example: "Player"
+        category:
+          type: string
+          example: "core"
+        description:
+          type: string
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              field_name:
+                type: string
+              type:
+                type: string
+              required:
+                type: boolean
+              description:
+                type: string
+        relationships:
+          type: array
+          description: Relationships с другими models
+          items:
+            type: object
+            properties:
+              related_model:
+                type: string
+              relationship_type:
+                type: string
+                enum: ["one-to-one", "one-to-many", "many-to-many"]
+        database_table:
+          type: string
+        used_in_endpoints:
+          type: array
+          description: Endpoints использующие эту model
+          items:
+            type: string
+
+    IntegrationMapResponse:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceInfo'
+        connections:
+          type: array
+          description: Связи между сервисами
+          items:
+            type: object
+            properties:
+              from_service:
+                type: string
+              to_service:
+                type: string
+              connection_type:
+                type: string
+                enum: ["http", "grpc", "event", "websocket"]
+              protocol:
+                type: string
+        event_channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventChannel'
+        architecture_diagram_url:
+          type: string
+          description: URL to architecture diagram
+
+    ServiceInfo:
+      type: object
+      properties:
+        service_id:
+          type: string
+          example: "auth-service"
+        service_name:
+          type: string
+          example: "Authentication Service"
+        description:
+          type: string
+        port:
+          type: integer
+          example: 8080
+        endpoints_count:
+          type: integer
+          example: 12
+        dependencies:
+          type: array
+          description: Зависимости
+          items:
+            type: string
+        database:
+          type: string
+          example: "postgresql"
+        cache:
+          type: string
+          example: "redis"
+        message_queue:
+          type: string
+          example: "rabbitmq"
+
+    EventChannel:
+      type: object
+      properties:
+        channel_id:
+          type: string
+        channel_name:
+          type: string
+        description:
+          type: string
+        publishers:
+          type: array
+          description: Сервисы-publishers
+          items:
+            type: string
+        subscribers:
+          type: array
+          description: Сервисы-subscribers
+          items:
+            type: string
+        event_types:
+          type: array
+          items:
+            type: object
+            properties:
+              event_type:
+                type: string
+              schema:
+                type: object
+
+    HealthStatusResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy"]
+        timestamp:
+          type: string
+          format: date-time
+        services_status:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceHealth'
+        summary:
+          type: object
+          properties:
+            total_services:
+              type: integer
+            healthy:
+              type: integer
+            degraded:
+              type: integer
+            unhealthy:
+              type: integer
+
+    ServiceHealth:
+      type: object
+      properties:
+        service_id:
+          type: string
+        service_name:
+          type: string
+        status:
+          type: string
+          enum: ["up", "degraded", "down"]
+        response_time:
+          type: integer
+          description: Response time in ms
+        uptime:
+          type: number
+          description: Uptime percentage
+        last_check:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: ["ok", "slow", "error"]
+            cache:
+              type: string
+              enum: ["ok", "slow", "error"]
+            dependencies:
+              type: array
+              items:
+                type: object
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+
+    ApiMetrics:
+      type: object
+      properties:
+        time_range:
+          type: string
+        total_requests:
+          type: integer
+        successful_requests:
+          type: integer
+        failed_requests:
+          type: integer
+        average_response_time:
+          type: integer
+          description: In milliseconds
+        requests_by_endpoint:
+          type: array
+          items:
+            type: object
+            properties:
+              endpoint:
+                type: string
+              count:
+                type: integer
+              avg_response_time:
+                type: integer
+        errors_by_code:
+          type: object
+          additionalProperties:
+            type: integer
+        top_endpoints:
+          type: array
+          description: Most used endpoints
+          items:
+            type: object
+            properties:
+              endpoint:
+                type: string
+              requests:
+                type: integer
+
+security:
+  - BearerAuth: []
+
+

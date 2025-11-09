@@ -1,0 +1,255 @@
+openapi: 3.0.3
+info:
+  title: Guild System API
+  version: 1.0.0
+  description: |
+    API для системы гильдий (backend).
+    
+    Источник: .BRAIN/05-technical/backend/guild-system-backend.md v1.0.0
+    
+    Tier 2 система. MMORPG core functionality!
+    
+    Возможности:
+    - Guild creation (создание гильдии)
+    - Membership (вступление, приглашения, кик)
+    - Ranks/permissions (звания и права)
+    - Guild bank (общее хранилище)
+    - Guild events (события гильдии)
+    - Guild progression (уровень гильдии)
+    - Guild wars (войны гильдий)
+    
+    БД структура:
+    - guilds (id, name, tag, level, created_at)
+    - guild_members (guild_id, character_id, rank, joined_at)
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Guilds
+    description: Система гильдий
+
+paths:
+  /social/guilds/create:
+    post:
+      summary: Создать гильдию
+      description: |
+        Создает новую гильдию.
+        Требует минимальный уровень и стоимость.
+      operationId: createGuild
+      tags:
+        - Guilds
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - founder_character_id
+                - name
+                - tag
+              properties:
+                founder_character_id:
+                  type: string
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                tag:
+                  type: string
+                  minLength: 2
+                  maxLength: 4
+                  description: Тег гильдии (уникальный)
+            examples:
+              new_guild:
+                summary: Новая гильдия
+                value:
+                  founder_character_id: "char_123"
+                  name: "Night City Legends"
+                  tag: "NCL"
+      responses:
+        '201':
+          description: Гильдия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+
+  /social/guilds/{guild_id}:
+    get:
+      summary: Получить информацию о гильдии
+      description: Возвращает детали гильдии, участников, звания
+      operationId: getGuild
+      tags:
+        - Guilds
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildDetails'
+
+  /social/guilds/{guild_id}/invite:
+    post:
+      summary: Пригласить в гильдию
+      description: |
+        Отправляет приглашение в гильдию.
+        Требует право INVITE_MEMBERS.
+      operationId: inviteToGuild
+      tags:
+        - Guilds
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - inviter_id
+                - invitee_character_name
+              properties:
+                inviter_id:
+                  type: string
+                invitee_character_name:
+                  type: string
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /social/guilds/{guild_id}/join:
+    post:
+      summary: Вступить в гильдию
+      description: Принимает приглашение и вступает в гильдию
+      operationId: joinGuild
+      tags:
+        - Guilds
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+      responses:
+        '200':
+          description: Вступил в гильдию
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /social/guilds/{guild_id}/leave:
+    post:
+      summary: Покинуть гильдию
+      description: Покидает гильдию
+      operationId: leaveGuild
+      tags:
+        - Guilds
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+      responses:
+        '200':
+          description: Покинул гильдию
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    Guild:
+      type: object
+      properties:
+        guild_id:
+          type: string
+        name:
+          type: string
+        tag:
+          type: string
+        level:
+          type: integer
+        member_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    GuildDetails:
+      allOf:
+        - $ref: '#/components/schemas/Guild'
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                type: object
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+

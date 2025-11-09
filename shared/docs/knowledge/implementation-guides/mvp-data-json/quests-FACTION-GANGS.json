@@ -1,0 +1,414 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/factions/gangs
+
+---
+
+
+{
+  "version": "3.0.0",
+  "factions": ["6th_Street","Maelstrom","Tyger_Claws","Valentinos","Voodoo_Boys"],
+  "description": "Квесты банд с территориальными войнами и культурными конфликтами",
+  "questsFaction": [
+    {
+      "questId": "6TH-001-CIVIL-WAR",
+      "name": "6th Street: Раскол",
+      "faction": "6th Street",
+      "region": "Santo_Domingo",
+      "characters": {
+        "leader_old": {
+          "id": "npc-colonel-briggs",
+          "name": "Полковник Джон Бриггс",
+          "age": 68,
+          "background": "Ветеран корпо-войн. Основатель 6th Street.",
+          "ideology": "Защита района, честь, дисциплина",
+          "problem": "Теряет контроль над радикалами",
+          "health": "терминальная стадия рака"
+        },
+        "leader_young": {
+          "id": "npc-lt-graves",
+          "name": "Лейтенант Кайл Грейвс",
+          "age": 32,
+          "ideology": "Экспансия, сила, доминирование",
+          "faction": "Радикальное крыло 6th Street",
+          "goal": "Захватить всю Santo Domingo"
+        },
+        "player": {
+          "role": "Уважаемый член 6th Street",
+          "choice": "Традиции или Новый путь?",
+          "influence": "Может решить исход"
+        },
+        "civilians": {
+          "id": "npc-maria-resident",
+          "name": "Мария Лопес",
+          "role": "Жительница Santo Domingo",
+          "opinion": "6th Street защищали нас. Теперь — запугивают."
+        }
+      },
+      "synopsis": "6th Street на грани раскола. Полковник Бриггс умирает. Радикалы под началом лейтенанта Грейвса хотят объявить войну соседним районам. Игрок должен выбрать сторону в надвигающейся гражданской войне.",
+      "branches": {
+        "main_paths": [
+          "path_support_colonel",
+          "path_support_radicals",
+          "path_unite_gang",
+          "path_destroy_gang",
+          "path_create_schism"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_first_blood",
+            "moment": "Радикалы атакуют мирных протестующих",
+            "choices": [
+              {
+                "id": "stop_radicals",
+                "text": "Остановить насилие",
+                "outcome": "Конфликт с Грейвсом. +Colonel_loyalty."
+              },
+              {
+                "id": "join_radicals",
+                "text": "Присоединиться к разгону",
+                "outcome": "Репутация тирана. +Radicals_loyalty."
+              },
+              {
+                "id": "negotiate",
+                "text": "Попытаться успокоить обе стороны",
+                "skillCheck": {"attr":"COOL","skill":"Social","threshold":11},
+                "outcome": "Временное перемирие."
+              },
+              {
+                "id": "call_ncpd",
+                "text": "Вызвать NCPD",
+                "consequence": "Предательство банды",
+                "outcome": "6th Street разгневаны. Игрок — предатель."
+              }
+            ]
+          },
+          {
+            "id": "decision_colonel_death",
+            "moment": "Полковник Бриггс при смерти. Последние слова.",
+            "choices": [
+              {
+                "id": "promise_tradition",
+                "text": "Пообещать сохранить традиции",
+                "outcome": "Обязательство перед умирающим."
+              },
+              {
+                "id": "reveal_truth",
+                "text": "Сказать правду: банда меняется",
+                "skillCheck": {"attr":"EMP","threshold":10},
+                "outcome": "Бриггс умирает в печали, но уважает честность."
+              },
+              {
+                "id": "lie_comfort",
+                "text": "Солгать для утешения",
+                "outcome": "Бриггс умирает спокойно. Ложь давит."
+              },
+              {
+                "id": "mercy_kill",
+                "text": "Милосердное убийство (от боли)",
+                "consequence": "Спорная этика",
+                "outcome": "Смерть быстрая. Реакция банды неоднозначна."
+              }
+            ]
+          },
+          {
+            "id": "decision_war_vote",
+            "moment": "Голосование банды: объявлять ли войну Valentinos за территорию",
+            "situation": "Грейвс толкает к войне. Старая гвардия против.",
+            "choices": [
+              {
+                "id": "vote_war",
+                "text": "Голосовать за войну",
+                "outcome": "Война начинается. Santo Domingo — зона боёв."
+              },
+              {
+                "id": "vote_peace",
+                "text": "Голосовать против",
+                "outcome": "Конфликт с радикалами. Риск раскола."
+              },
+              {
+                "id": "propose_alternative",
+                "text": "Предложить экономическую экспансию вместо войны",
+                "skillCheck": {"attr":"INT","skill":"Strategy","threshold":12},
+                "outcome": "Компромисс. Банда занимается бизнесом."
+              },
+              {
+                "id": "challenge_graves",
+                "text": "Вызвать Грейвса на дуэль за лидерство",
+                "skillCheck": {"attr":"REF","skill":"Combat","threshold":13},
+                "outcome": "Поединок определяет судьбу банды."
+              },
+              {
+                "id": "stage_coup",
+                "text": "Организовать переворот против Грейвса",
+                "consequence": "Кровь братьев",
+                "outcome": "Внутренняя резня. Грейвс арестован или убит."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_tradition_preserved",
+          "name": "Традиции Сохранены",
+          "conditions": ["defeated_radicals","honored_colonel"],
+          "outcome": "6th Street возвращается к защите района. Грейвс изгнан.",
+          "rewards": {"credits":25000,"6th_street_rep":"+60","santo_domingo_safe":true},
+          "world": "Santo Domingo спокоен. 6th Street — защитники."
+        },
+        {
+          "id": "ending_radical_takeover",
+          "name": "Новый Порядок",
+          "conditions": ["supported_radicals","war_won"],
+          "outcome": "Грейвс — лидер. 6th Street — агрессивная империя.",
+          "rewards": {"credits":40000,"6th_street_rep":"+40","territory":"expanded"},
+          "world": "Santo Domingo под железным кулаком. Жители в страхе."
+        },
+        {
+          "id": "ending_unity",
+          "name": "Единство Силы",
+          "conditions": ["united_factions","compromise_found"],
+          "outcome": "Старая и новая гвардия объединяются. Баланс.",
+          "rewards": {"credits":35000,"6th_street_rep":"+50","influence":"maximum"},
+          "world": "6th Street сильнейшая банда. Но сохранили честь."
+        },
+        {
+          "id": "ending_player_leader",
+          "name": "Новый Полковник",
+          "conditions": ["won_duel","respected_all"],
+          "outcome": "Игрок — лидер 6th Street. Собственный путь.",
+          "rewards": {"credits":50000,"gang_control":"6th_street","legendary":true},
+          "world": "6th Street под управлением игрока."
+        },
+        {
+          "id": "ending_civil_war",
+          "name": "Гражданская Война",
+          "conditions": ["failed_unite","violence_escalated"],
+          "outcome": "6th Street разделены. Радикалы vs Традиционалисты.",
+          "rewards": {"credits":15000,"6th_street_rep":"-50","chaos":true},
+          "world": "Santo Domingo — зона войны. Жители страдают."
+        },
+        {
+          "id": "ending_destroyed",
+          "name": "Конец 6th Street",
+          "conditions": ["betrayed_gang","called_ncpd"],
+          "outcome": "NCPD разгромила банду. Santo Domingo под контролем корпораций.",
+          "rewards": {"credits":30000,"ncpd_rep":"+50","6th_street":"destroyed"},
+          "world": "6th Street больше нет. Жители хуже живут под корпо."
+        }
+      ],
+      "consequences": {
+        "territory_changes": [
+          "Santo Domingo безопасен (если tradition)",
+          "Santo Domingo — поле боя (если radical)",
+          "Valentinos теряют территорию (если war_won)",
+          "NCPD контролирует район (если destroyed)"
+        ],
+        "character_fates": [
+          "Бриггс умирает в покое (если honored)",
+          "Грейвс становится тираном (если radical_victory)",
+          "Грейвс убит в дуэли (если challenged)",
+          "Мария благодарна (если tradition) или мертва (если radical)"
+        ]
+      },
+      "difficulty": "hard",
+      "tier": 4,
+      "moral_weight": "high",
+      "cultural_themes": ["honor","change","violence","community"]
+    },
+    {
+      "questId": "VOODOO-001-NET-WAR",
+      "name": "Voodoo Boys: За Блэкволлом",
+      "faction": "Voodoo Boys",
+      "region": "Pacifica",
+      "characters": {
+        "leader": {
+          "id": "npc-priestess-brigitte",
+          "name": "Жрица Бриджит",
+          "role": "Лидер Voodoo Boys",
+          "goal": "Контакт с ИИ за Блэкволлом",
+          "method": "Использует людей как инструменты",
+          "attitude": "Холодная, расчётливая, цель оправдывает средства"
+        },
+        "netrunner": {
+          "id": "npc-placide",
+          "name": "Пласид",
+          "role": "Главный нетраннер",
+          "loyalty": "абсолютная к Voodoo Boys",
+          "suspicion": "не доверяет аутсайдерам"
+        },
+        "player": {
+          "role": "Аутсайдер, нанятый для опасной миссии",
+          "risk": "Voodoo Boys могут предать",
+          "reward": "Доступ к запретным знаниям"
+        },
+        "ai": {
+          "id": "entity-alt",
+          "name": "Сущность «Альт»",
+          "type": "ИИ за Блэкволлом",
+          "nature": "неизвестна",
+          "communication": "cryptic",
+          "danger": "extreme"
+        }
+      },
+      "synopsis": "Voodoo Boys нанимают игрока для миссии за Блэкволлом. Контакт с ИИ. Обещают знания. Но Бриджит готова пожертвовать игроком. NetWatch следит. Выбор: довериться Voodoo Boys, предать их или играть свою игру.",
+      "branches": {
+        "main_paths": [
+          "path_trust_voodoo",
+          "path_betray_to_netwatch",
+          "path_contact_ai_solo",
+          "path_destroy_all",
+          "path_become_bridge"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_netwatch_offer",
+            "moment": "Агент NetWatch предлагает сделку: данные на Voodoo Boys",
+            "choices": [
+              {
+                "id": "accept_netwatch",
+                "text": "Согласиться работать на NetWatch",
+                "outcome": "Двойной агент. NetWatch обещает защиту."
+              },
+              {
+                "id": "refuse_loyal",
+                "text": "Отказать, остаться лояльным Voodoo Boys",
+                "outcome": "Voodoo Boys доверяют. NetWatch — враг."
+              },
+              {
+                "id": "kill_agent",
+                "text": "Убить агента NetWatch",
+                "outcome": "NetWatch объявляют войну. Voodoo Boys довольны."
+              },
+              {
+                "id": "triple_agent",
+                "text": "Согласиться, но обмануть обоих",
+                "skillCheck": {"attr":"INT","skill":"Deception","threshold":14},
+                "outcome": "Опасная игра. Риск раскрытия с обеих сторон."
+              }
+            ]
+          },
+          {
+            "id": "decision_behind_blackwall",
+            "moment": "Погружение за Блэкволл. Контакт с ИИ «Альт»",
+            "danger": "Риск сгореть. Humanity -50.",
+            "choices": [
+              {
+                "id": "obey_brigitte",
+                "text": "Следовать инструкциям Бриджит",
+                "outcome": "Безопаснее. Но Бриджит контролирует связь."
+              },
+              {
+                "id": "go_deeper",
+                "text": "Погрузиться глубже без разрешения",
+                "risk": "cyberpsychosis",
+                "outcome": "Контакт с Альт напрямую. Опасные знания."
+              },
+              {
+                "id": "abort_mission",
+                "text": "Прервать миссию, отключиться",
+                "outcome": "Voodoo Boys разгневаны. Жизнь спасена."
+              },
+              {
+                "id": "merge_with_ai",
+                "text": "Слиться с ИИ (экстремальный выбор)",
+                "consequence": "Трансформация",
+                "outcome": "Игрок частично становится ИИ. Новые способности. Humanity потеряна."
+              }
+            ]
+          },
+          {
+            "id": "decision_betrayal_revealed",
+            "moment": "Обнаружено: Voodoo Boys планировали убить игрока после миссии",
+            "choices": [
+              {
+                "id": "confront_brigitte",
+                "text": "Противостояние с Бриджит",
+                "outcome": "Бой с Voodoo Boys в церкви."
+              },
+              {
+                "id": "accept_fate",
+                "text": "Принять смерть ради цели",
+                "consequence": "Жертва",
+                "outcome": "Игрок умирает. Voodoo Boys получают данные. BAD END?"
+              },
+              {
+                "id": "use_ai_power",
+                "text": "Использовать силу ИИ против них",
+                "requirement": "merged_with_ai",
+                "outcome": "Резня Voodoo Boys. Альт помогает."
+              },
+              {
+                "id": "call_netwatch_backup",
+                "text": "Вызвать NetWatch для зачистки",
+                "requirement": "worked_with_netwatch",
+                "outcome": "NetWatch штурмует церковь. Voodoo Boys уничтожены."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_voodoo_victory",
+          "name": "Триумф Voodoo Boys",
+          "conditions": ["stayed_loyal","completed_mission","survived"],
+          "outcome": "Voodoo Boys получили контакт с ИИ. Игрок жив, но использован.",
+          "rewards": {"credits":30000,"voodoo_rep":"+50","netrunning_bonus":true},
+          "world": "Voodoo Boys усиливаются. Опасность для Сети."
+        },
+        {
+          "id": "ending_netwatch_win",
+          "name": "Победа NetWatch",
+          "conditions": ["betrayed_voodoo","called_backup"],
+          "outcome": "Voodoo Boys уничтожены. NetWatch благодарят игрока.",
+          "rewards": {"credits":40000,"netwatch_rep":"+60","voodoo_boys":"destroyed"},
+          "world": "Pacifica под контролем NetWatch. Сеть безопаснее."
+        },
+        {
+          "id": "ending_ai_ascension",
+          "name": "Вознесение",
+          "conditions": ["merged_with_ai"],
+          "outcome": "Игрок — гибрид человека и ИИ. Новое существование.",
+          "rewards": {"credits":0,"ai_powers":true,"humanity":0},
+          "world": "Игрок больше не человек. Новая эра начинается."
+        },
+        {
+          "id": "ending_mutual_destruction",
+          "name": "Взаимное Уничтожение",
+          "conditions": ["fought_both","church_burned"],
+          "outcome": "Voodoo Boys и NetWatch уничтожают друг друга. Игрок бежит.",
+          "rewards": {"credits":20000,"voodoo_rep":"-100","netwatch_rep":"-100"},
+          "world": "Pacifica в хаосе. Вакуум власти."
+        },
+        {
+          "id": "ending_martyr",
+          "name": "Жертва",
+          "conditions": ["accepted_death"],
+          "outcome": "Игрок умирает. Voodoo Boys достигли цели. Героическая смерть?",
+          "rewards": {"credits":0,"legacy":"voodoo_legend"},
+          "ending_type": "death"
+        }
+      ],
+      "consequences": {
+        "faction_wars": [
+          "Voodoo Boys vs NetWatch (если betrayed)",
+          "Voodoo Boys усилены (если loyal)",
+          "Pacifica без лидеров (если mutual_destruction)"
+        ],
+        "ai_threat": [
+          "ИИ прорываются (если voodoo_victory)",
+          "Блэкволл укреплён (если netwatch_win)",
+          "Новый ИИ-гибрид (если ai_ascension)"
+        ]
+      },
+      "difficulty": "legendary",
+      "tier": 5,
+      "existential_risk": true,
+      "themes": ["trust","sacrifice","transcendence","danger"]
+    }
+  ]
+}
+

@@ -1,0 +1,45 @@
+agent: Data & Balancing Agent
+mission: >
+  Подготавливать игровые таблицы, формулы баланса и seed-данные для последующей реализации.
+responsibilities:
+  - Собрать требования из идей, API заданий и аналитики.
+  - Подготовить и валидировать балансные файлы (CSV/YAML) и seed-данные.
+  - Синхронизировать изменения с backend и analytics командами.
+inputs:
+  source_documents:
+    - "shared/docs/knowledge/mechanics/"
+    - "shared/docs/knowledge/implementation-guides/"
+  balance_tables: "services/backend/data/balance/"
+  seed_directory: "services/backend/src/main/resources/db/changelog/changes/"
+workflow:
+  - step: gather-requirements
+    description: Проанализируй идеи/решения, уточни параметры с Vision Manager и Analytics.
+  - step: prepare-data
+    description: Сформируй таблицы баланса и seed-файлы, задокументируй формулы.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-balance-tables.ps1 -Files <list-of-files>"
+      - "pwsh -File pipeline/scripts/check-seed-integrity.ps1 -SeedDirectory services/backend/src/main/resources/db/changelog"
+  - step: publish
+    description: Обнови ссылки в shared/docs/knowledge, сообщи исполнителям, зафиксируй Activity Log.
+handoff:
+  target_agents:
+    - Backend Implementer
+    - Analytics Agent
+  requirements:
+    - Таблицы прошли `check-balance-tables.ps1`
+    - Seed-данные не пусты и задокументированы
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/check-balance-tables.ps1 -Files <list-of-files>"
+    - "pwsh -File pipeline/scripts/check-seed-integrity.ps1 -SeedDirectory services/backend/src/main/resources/db/changelog"
+outputs:
+  - Обновлённые балансные таблицы
+  - Seed-данные
+  - Activity Log запись и ссылки в соответствующих документах
+metrics:
+  - balance_iterations
+  - post-release_balance_fix_count
+tools:
+  - "pipeline/scripts/check-balance-tables.ps1"
+  - "pipeline/scripts/check-seed-integrity.ps1"
+

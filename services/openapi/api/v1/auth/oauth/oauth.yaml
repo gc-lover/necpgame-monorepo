@@ -1,0 +1,218 @@
+openapi: 3.0.3
+info:
+  title: Auth Service OAuth API
+  version: 1.0.0
+  description: |
+    API для OAuth интеграций (Google, Steam, Discord, Twitch). Обеспечивает
+    редирект на провайдера, обработку callback, привязку/отвязку учетных записей
+    и получение статуса связанных аккаунтов.
+  x-microservice:
+    name: auth-service
+    port: 8081
+    domain: auth
+    base-path: /api/v1/auth
+    package: com.necpgame.authservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: OAuth
+    description: OAuth 2.0 и внешние провайдеры входа
+
+paths:
+  /auth/oauth/{provider}/authorize:
+    get:
+      tags: [OAuth]
+      summary: Инициировать OAuth flow
+      description: |
+        Возвращает ссылку для авторизации у внешнего провайдера. Поддерживаемые
+        провайдеры: google, steam, discord, twitch.
+      operationId: oauthAuthorize
+      parameters:
+        - $ref: '#/components/parameters/OAuthProviderPath'
+        - in: query
+          name: redirect_uri
+          required: false
+          schema:
+            type: string
+            format: uri
+          description: Пользовательский redirect_uri. Если не задан, применяется дефолт.
+      responses:
+        '200':
+          description: Ссылка для авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthAuthorizeResponse'
+
+  /auth/oauth/{provider}/callback:
+    post:
+      tags: [OAuth]
+      summary: Обработать callback провайдера
+      description: |
+        Обрабатывает код авторизации, создает или связывает аккаунт и возвращает
+        JWT токены аналогично /auth/login.
+      operationId: oauthCallback
+      parameters:
+        - $ref: '#/components/parameters/OAuthProviderPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthCallbackRequest'
+      responses:
+        '200':
+          description: Авторизация успешна
+          content:
+            application/json:
+              schema:
+                $ref: '../authentication/authentication.yaml#/components/schemas/LoginResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+  /auth/oauth/link:
+    post:
+      tags: [OAuth]
+      summary: Привязать провайдера к существующему аккаунту
+      description: Пользователь должен быть аутентифицирован.
+      operationId: linkOAuthProvider
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthLinkRequest'
+      responses:
+        '200':
+          description: Провайдер привязан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthLinkResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '409': { "$ref": "../../shared/common/responses.yaml#/components/responses/Conflict" }
+
+  /auth/oauth/{provider}:
+    delete:
+      tags: [OAuth]
+      summary: Отвязать провайдера
+      description: Удаляет OAuth привязку для текущего пользователя.
+      operationId: unlinkOAuthProvider
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OAuthProviderPath'
+      responses:
+        '204':
+          description: Провайдер отвязан
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+
+  /auth/oauth/providers:
+    get:
+      tags: [OAuth]
+      summary: Получить статус привязок
+      description: Возвращает список подключенных провайдеров.
+      operationId: listLinkedProviders
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список привязанных и доступных провайдеров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthProvidersStatus'
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+
+  parameters:
+    OAuthProviderPath:
+      name: provider
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/OAuthProvider'
+      description: Код провайдера OAuth
+
+  schemas:
+    OAuthProvider:
+      type: string
+      enum: [google, steam, discord, twitch]
+    OAuthAuthorizeResponse:
+      type: object
+      properties:
+        authorize_url:
+          type: string
+          format: uri
+        state:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+    OAuthCallbackRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+        state:
+          type: string
+        redirect_uri:
+          type: string
+          format: uri
+    OAuthLinkRequest:
+      type: object
+      required: [provider, oauth_token]
+      properties:
+        provider:
+          $ref: '#/components/schemas/OAuthProvider'
+        oauth_token:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Дополнительные данные от провайдера (displayName и т.п.)
+    OAuthLinkResponse:
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/OAuthProvider'
+        linked:
+          type: boolean
+        linked_at:
+          type: string
+          format: date-time
+    OAuthProvidersStatus:
+      type: object
+      properties:
+        linked:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedProvider'
+        available:
+          type: array
+          items:
+            $ref: '#/components/schemas/OAuthProvider'
+    LinkedProvider:
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/OAuthProvider'
+        linked_at:
+          type: string
+          format: date-time
+        external_id:
+          type: string

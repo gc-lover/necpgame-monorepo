@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="062-create-world-drops-table" author="backend-agent">
+        <createTable tableName="world_drops">
+            <column name="drop_id" type="VARCHAR(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="source_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position_x" type="DOUBLE"/>
+            <column name="position_y" type="DOUBLE"/>
+            <column name="position_z" type="DOUBLE"/>
+            <column name="party_id" type="VARCHAR(64)"/>
+            <column name="loot_mode" type="VARCHAR(50)"/>
+            <column name="items_json" type="TEXT"/>
+            <column name="looted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <createIndex tableName="world_drops" indexName="idx_world_drops_expires_at">
+            <column name="expires_at"/>
+        </createIndex>
+
+        <createIndex tableName="world_drops" indexName="idx_world_drops_source">
+            <column name="source_type"/>
+            <column name="source_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="062-create-loot-rolls-table" author="backend-agent">
+        <createTable tableName="loot_rolls">
+            <column name="roll_id" type="VARCHAR(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="drop_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="character_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="roll_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="roll_value" type="INTEGER"/>
+            <column name="winner_id" type="VARCHAR(64)"/>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="loot_rolls" indexName="idx_loot_rolls_drop_id">
+            <column name="drop_id"/>
+        </createIndex>
+
+        <createIndex tableName="loot_rolls" indexName="idx_loot_rolls_character_id">
+            <column name="character_id"/>
+        </createIndex>
+
+        <createIndex tableName="loot_rolls" indexName="idx_loot_rolls_expires_at">
+            <column name="expires_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

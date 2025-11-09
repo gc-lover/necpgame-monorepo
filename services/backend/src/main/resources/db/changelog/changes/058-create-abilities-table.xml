@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+    <changeSet id="058-create-abilities-table" author="system">
+        <preConditions onFail="MARK_RAN"><not><tableExists tableName="abilities"/></not></preConditions>
+        <createTable tableName="abilities">
+            <column name="id" type="VARCHAR(100)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="name" type="VARCHAR(200)"><constraints nullable="false"/></column>
+            <column name="description" type="VARCHAR(2000)"/>
+            <column name="slot" type="VARCHAR(10)"><constraints nullable="false"/></column>
+            <column name="source_type" type="VARCHAR(50)"><constraints nullable="false"/></column>
+            <column name="source_id" type="VARCHAR(100)"/>
+            <column name="cooldown" type="INT"><constraints nullable="false"/></column>
+            <column name="energy_cost" type="INT"/>
+            <column name="health_cost" type="INT"/>
+            <column name="charges" type="INT"/>
+            <column name="effects" type="TEXT"/>
+            <column name="duration" type="INT"/>
+            <column name="range" type="INT"/>
+            <column name="area_of_effect" type="INT"/>
+            <column name="min_level" type="INT" defaultValue="1"/>
+            <column name="available" type="BOOLEAN" defaultValueBoolean="true"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"><constraints nullable="false"/></column>
+        </createTable>
+        <createIndex tableName="abilities" indexName="idx_abilities_slot"><column name="slot"/></createIndex>
+        <createIndex tableName="abilities" indexName="idx_abilities_source"><column name="source_type"/></createIndex>
+        <rollback><dropTable tableName="abilities"/></rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="075-create-faction-quests-tables" author="backend-agent">
+
+        <createTable tableName="faction_quests">
+            <column name="quest_id" type="VARCHAR(120)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="faction" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(120)"/>
+            <column name="difficulty" type="VARCHAR(20)"/>
+            <column name="min_level_requirement" type="INT"/>
+            <column name="min_reputation_required" type="INT"/>
+            <column name="branches_count" type="INT"/>
+            <column name="endings_count" type="INT"/>
+            <column name="estimated_time_minutes" type="INT"/>
+            <column name="requirements_json" type="JSONB"/>
+            <column name="rewards_json" type="JSONB"/>
+            <column name="storyline" type="TEXT"/>
+            <column name="key_npcs_json" type="JSONB"/>
+            <column name="locations_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="faction_quests" indexName="idx_faction_quests_faction">
+            <column name="faction"/>
+        </createIndex>
+
+        <createIndex tableName="faction_quests" indexName="idx_faction_quests_difficulty">
+            <column name="difficulty"/>
+        </createIndex>
+
+        <createTable tableName="faction_quest_branches">
+            <column name="branch_id" type="VARCHAR(120)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="quest_id" type="VARCHAR(120)">
+                <constraints nullable="false" foreignKeyName="fk_faction_quest_branches_quest"
+                             references="faction_quests(quest_id)"/>
+            </column>
+            <column name="branch_payload" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="faction_quest_branches" indexName="idx_faction_quest_branches_quest">
+            <column name="quest_id"/>
+        </createIndex>
+
+        <createTable tableName="faction_quest_endings">
+            <column name="ending_id" type="VARCHAR(120)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="quest_id" type="VARCHAR(120)">
+                <constraints nullable="false" foreignKeyName="fk_faction_quest_endings_quest"
+                             references="faction_quests(quest_id)"/>
+            </column>
+            <column name="ending_payload" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="faction_quest_endings" indexName="idx_faction_quest_endings_quest">
+            <column name="quest_id"/>
+        </createIndex>
+
+        <createTable tableName="character_faction_quest_progress">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quest_id" type="VARCHAR(120)">
+                <constraints nullable="false" foreignKeyName="fk_character_faction_quest_progress_quest"
+                             references="faction_quests(quest_id)"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_branch" type="VARCHAR(120)"/>
+            <column name="choices_json" type="JSONB"/>
+            <column name="objectives_json" type="JSONB"/>
+            <column name="ending_achieved" type="VARCHAR(120)"/>
+            <column name="completion_date" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="character_faction_quest_progress"
+                             columnNames="character_id, quest_id"
+                             constraintName="uk_character_faction_quest_progress_character_quest"/>
+
+        <createIndex tableName="character_faction_quest_progress" indexName="idx_character_faction_quest_progress_character">
+            <column name="character_id"/>
+        </createIndex>
+
+        <createIndex tableName="character_faction_quest_progress" indexName="idx_character_faction_quest_progress_quest">
+            <column name="quest_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="character_faction_quest_progress"/>
+            <dropTable tableName="faction_quest_endings"/>
+            <dropTable tableName="faction_quest_branches"/>
+            <dropTable tableName="faction_quests"/>
+        </rollback>
+
+    </changeSet>
+
+</databaseChangeLog>

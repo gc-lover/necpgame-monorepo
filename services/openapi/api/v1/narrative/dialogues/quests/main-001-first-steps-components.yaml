@@ -1,0 +1,742 @@
+openapi: 3.0.3
+info:
+  title: Main Quest 001 First Steps Dialogue Components
+  version: 1.0.0
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative
+    package: com.necpgame.narrativeservice
+paths: {}
+components:
+  parameters:
+    NodeId:
+      name: nodeId
+      in: path
+      required: true
+      schema:
+        type: string
+        example: arrival
+      description: Идентификатор узла диалога.
+    OptionId:
+      name: optionId
+      in: path
+      required: true
+      schema:
+        type: string
+        example: tech-attempt
+      description: Идентификатор опции в узле диалога.
+    IncludeNodes:
+      name: includeNodes
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: Включить ли полный список узлов в ответ.
+    IncludeOptions:
+      name: includeOptions
+      in: query
+      schema:
+        type: boolean
+        default: true
+      description: Управляет возвратом опций и проверок в ответе на запрос узла.
+    QuestState:
+      name: questState
+      in: query
+      schema:
+        type: string
+        example: started
+      description: Текущее состояние квеста для фильтрации узлов и подсказок.
+    PlayerFlags:
+      name: playerFlags
+      in: query
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - flag.main001.arrival
+          - flag.main001.parkour_done
+      description: Активные флаги игрока, влияющие на доступные опции.
+    ActiveEvents:
+      name: activeEvent
+      in: query
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - world.event.metro_shutdown
+      description: Активные события мира, влияющие на диалог.
+    Language:
+      name: language
+      in: query
+      schema:
+        type: string
+        example: ru-RU
+      description: Языковой код локализации реплик и подсказок.
+    Difficulty:
+      name: difficulty
+      in: query
+      schema:
+        type: string
+        enum: [story, default, hardcore]
+        default: default
+      description: Сложность обучения для настройки подсказок и проверок.
+  schemas:
+    ConversationSnapshot:
+      type: object
+      required:
+        - questId
+        - version
+        - entryNodes
+        - states
+      properties:
+        questId:
+          type: string
+          example: quest-main-001-first-steps
+        version:
+          type: string
+          example: 1.0.0
+        entryNodes:
+          type: array
+          items:
+            type: string
+          example:
+            - arrival
+        states:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueState'
+        availableNodes:
+          type: array
+          items:
+            type: string
+          description: Узлы, доступные при заданных флагах игрока.
+        lockedNodes:
+          type: array
+          items:
+            type: string
+          description: Узлы, недоступные из-за отсутствующих условий.
+        recommendations:
+          type: object
+          properties:
+            suggestedOrder:
+              type: array
+              items:
+                type: string
+            followUpQuest:
+              type: string
+              example: quest-main-002-choose-path
+            uiModules:
+              type: array
+              items:
+                type: string
+    DialogueState:
+      type: object
+      required:
+        - id
+        - requirements
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties:
+            type: string
+        unlocks:
+          type: array
+          items:
+            type: string
+        failureFallback:
+          type: string
+    DialogueNode:
+      type: object
+      required:
+        - id
+        - speaker
+        - nodeType
+        - textKey
+      properties:
+        id:
+          type: string
+        speaker:
+          type: string
+          example: marco_fix_sanchez
+        nodeType:
+          type: string
+          enum: [dialogue, tutorial, branch, reward]
+        textKey:
+          type: string
+          example: dialogue.quest001.arrival.marco
+        cinematic:
+          type: object
+          properties:
+            cameraPreset:
+              type: string
+            audioCue:
+              type: string
+            vfxPreset:
+              type: string
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueOption'
+        defaultNextNode:
+          type: string
+        tutorials:
+          type: array
+          items:
+            $ref: '#/components/schemas/TutorialHint'
+    DialogueOption:
+      type: object
+      required:
+        - id
+        - textKey
+      properties:
+        id:
+          type: string
+        textKey:
+          type: string
+          example: dialogue.quest001.option.arrival.ready
+        skillChecks:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueSkillCheck'
+        success:
+          $ref: '#/components/schemas/OptionOutcome'
+        failure:
+          $ref: '#/components/schemas/OptionOutcome'
+        criticalFailure:
+          $ref: '#/components/schemas/OptionOutcome'
+        nextNode:
+          type: string
+        tooltipKey:
+          type: string
+        cooldownSeconds:
+          type: integer
+        telemetryTag:
+          type: string
+    DialogueSkillCheck:
+      type: object
+      required:
+        - stat
+        - dc
+      properties:
+        stat:
+          type: string
+          enum: [Perception, Parkour, Communication, Stealth, Tech]
+        dc:
+          type: integer
+          example: 12
+        advantage:
+          type: boolean
+          default: false
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillModifier'
+        failureConsequences:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptionConsequence'
+    SkillModifier:
+      type: object
+      required:
+        - source
+        - value
+      properties:
+        source:
+          type: string
+          example: gear.smart-goggles
+        value:
+          type: number
+        condition:
+          type: string
+    OptionOutcome:
+      type: object
+      properties:
+        setFlags:
+          type: array
+          items:
+            type: string
+        clearFlags:
+          type: array
+          items:
+            type: string
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+        grants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Grant'
+        costs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cost'
+        debuffs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Debuff'
+        triggers:
+          type: array
+          items:
+            type: string
+        narrativeLog:
+          type: string
+    Reward:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [xp, reputation, loot, narrative_flag, tutorial_clip]
+        id:
+          type: string
+        amount:
+          type: number
+        metadata:
+          type: object
+          additionalProperties: {}
+    Grant:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [activity, access, cosmetic]
+        id:
+          type: string
+    Cost:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [item, resource, cooldown]
+        id:
+          type: string
+        amount:
+          type: number
+    Debuff:
+      type: object
+      properties:
+        id:
+          type: string
+        durationSeconds:
+          type: integer
+        descriptionKey:
+          type: string
+    OptionConsequence:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [alert, branch_lock, retry_penalty]
+        value:
+          type: string
+        messageKey:
+          type: string
+    ResolveOptionRequest:
+      type: object
+      required:
+        - characterId
+        - nodeId
+        - optionId
+        - skillRolls
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        nodeId:
+          type: string
+        optionId:
+          type: string
+        questContext:
+          $ref: '#/components/schemas/QuestContext'
+        skillRolls:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillRoll'
+        client:
+          type: object
+          properties:
+            locale:
+              type: string
+            platform:
+              type: string
+            buildVersion:
+              type: string
+        metadata:
+          type: object
+          additionalProperties: {}
+    QuestContext:
+      type: object
+      properties:
+        questState:
+          type: string
+        activeFlags:
+          type: array
+          items:
+            type: string
+        clearedFlags:
+          type: array
+          items:
+            type: string
+        activeEvents:
+          type: array
+          items:
+            type: string
+        gear:
+          type: array
+          items:
+            type: string
+        implants:
+          type: array
+          items:
+            type: string
+        difficulty:
+          type: string
+          enum: [story, default, hardcore]
+        fatigueState:
+          type: string
+    SkillRoll:
+      type: object
+      required:
+        - stat
+        - roll
+      properties:
+        stat:
+          type: string
+          enum: [Perception, Parkour, Communication, Stealth, Tech]
+        roll:
+          type: integer
+        modifiersApplied:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillModifier'
+        outcome:
+          type: string
+          enum: [success, failure, critical_success, critical_failure]
+    ResolveOptionResponse:
+      type: object
+      required:
+        - outcome
+        - nodeId
+        - optionId
+      properties:
+        outcome:
+          type: string
+          enum: [success, failure, critical_failure]
+        nodeId:
+          type: string
+        optionId:
+          type: string
+        appliedCheck:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillRoll'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+        grants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Grant'
+        costs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cost'
+        setFlags:
+          type: array
+          items:
+            type: string
+        clearFlags:
+          type: array
+          items:
+            type: string
+        nextNode:
+          type: string
+        triggeredEvents:
+          type: array
+          items:
+            type: string
+        telemetry:
+          $ref: '#/components/schemas/TelemetrySummary'
+        tutorialUpdates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TutorialHint'
+    DialogueNodeResponse:
+      type: object
+      required:
+        - questId
+        - node
+      properties:
+        questId:
+          type: string
+        node:
+          $ref: '#/components/schemas/DialogueNode'
+        availableOptions:
+          type: array
+          items:
+            type: string
+        lockedOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/LockedOption'
+    LockedOption:
+      type: object
+      properties:
+        optionId:
+          type: string
+        reason:
+          type: string
+        missingFlags:
+          type: array
+          items:
+            type: string
+        missingItems:
+          type: array
+          items:
+            type: string
+    TutorialHint:
+      type: object
+      required:
+        - id
+        - category
+        - priority
+        - textKey
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+          enum: [movement, stealth, tech, social, narrative]
+        priority:
+          type: integer
+        textKey:
+          type: string
+        conditions:
+          type: array
+          items:
+            type: string
+        uiBinding:
+          type: object
+          properties:
+            module:
+              type: string
+            element:
+              type: string
+            action:
+              type: string
+        cooldownSeconds:
+          type: integer
+        videoClipId:
+          type: string
+    TutorialHintResponse:
+      type: object
+      required:
+        - questId
+        - hints
+      properties:
+        questId:
+          type: string
+        hints:
+          type: array
+          items:
+            $ref: '#/components/schemas/TutorialHint'
+        replacements:
+          type: array
+          items:
+            type: string
+    TelemetrySummary:
+      type: object
+      properties:
+        recordedAt:
+          type: string
+          format: date-time
+        attemptId:
+          type: string
+          format: uuid
+        outcomes:
+          type: object
+          additionalProperties:
+            type: integer
+        tutorialShown:
+          type: array
+          items:
+            type: string
+    TelemetryEvent:
+      type: object
+      required:
+        - eventType
+        - timestamp
+      properties:
+        eventType:
+          type: string
+          enum: [node_enter, option_select, skill_check, tutorial_view]
+        timestamp:
+          type: string
+          format: date-time
+        nodeId:
+          type: string
+        optionId:
+          type: string
+        outcome:
+          type: string
+        latencyMs:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: {}
+    DialogueTelemetryRequest:
+      type: object
+      required:
+        - characterId
+        - questId
+        - events
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        questId:
+          type: string
+        sessionId:
+          type: string
+          format: uuid
+        difficulty:
+          type: string
+          enum: [story, default, hardcore]
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryEvent'
+        client:
+          type: object
+          properties:
+            platform:
+              type: string
+            buildVersion:
+              type: string
+            locale:
+              type: string
+  examples:
+    ConversationResponse:
+      summary: Полная структура диалога
+      value:
+        questId: quest-main-001-first-steps
+        version: 1.0.0
+        entryNodes: [arrival]
+        states:
+          - id: arrival
+            description: Первое знакомство с Марко
+            requirements:
+              quest.main-001: started
+          - id: market-run
+            description: Забег по рынку
+            requirements:
+              flag.main001.arrival: true
+        availableNodes:
+          - arrival
+          - market-run
+        lockedNodes:
+          - tech-door
+        recommendations:
+          suggestedOrder:
+            - arrival
+            - market-run
+            - fixer-brief
+          followUpQuest: quest-main-002-choose-path
+          uiModules:
+            - modules/narrative/quests
+            - modules/tutorial/hud
+    ResolveOptionSuccess:
+      summary: Успешное выполнение опции
+      value:
+        outcome: success
+        nodeId: tech-door
+        optionId: tech-attempt
+        appliedCheck:
+          - stat: Tech
+            roll: 15
+            outcome: success
+            modifiersApplied:
+              - source: gear.smart-goggles
+                value: 1
+        rewards:
+          - type: loot
+            id: loot.micro
+          - type: reputation
+            id: reputation.fixers.marco
+            amount: 5
+        setFlags:
+          - flag.main001.tech_open
+        nextNode: wrap-up
+        telemetry:
+          recordedAt: 2025-11-08T09:40:00Z
+          attemptId: 9b6ab94a-7555-4b0f-9e9c-6517c0938515
+          outcomes:
+            success: 1
+    ResolveOptionCriticalFailure:
+      summary: Критический провал
+      value:
+        outcome: critical_failure
+        nodeId: tech-door
+        optionId: tech-attempt
+        appliedCheck:
+          - stat: Tech
+            roll: 3
+            outcome: critical_failure
+        costs:
+          - type: item
+            id: battery-pack
+            amount: 1
+        triggers:
+          - ncpd.training-alert
+        clearFlags:
+          - flag.main001.stealth
+        nextNode: tech-door
+        telemetry:
+          recordedAt: 2025-11-08T09:41:30Z
+          attemptId: ce1d2e4a-0db0-4a94-bc8a-c3f1afd5be03
+    TutorialHintsResponse:
+      summary: Подсказки для игрока
+      value:
+        questId: quest-main-001-first-steps
+        hints:
+          - id: tutorial-hud-overlay
+            category: tech
+            priority: 1
+            textKey: tutorial.quest001.hud.overlay
+            conditions:
+              - flag.main001.market_run
+            uiBinding:
+              module: modules/tutorial/hud
+              element: overlay
+              action: highlight
+            cooldownSeconds: 120
+          - id: tutorial-parkour-line
+            category: movement
+            priority: 2
+            textKey: tutorial.quest001.parkour.line
+            conditions:
+              - flag.main001.arrival
+              - flag.main001.parkour_done:false
+            uiBinding:
+              module: modules/world/state
+              element: path_hint
+              action: pulse
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

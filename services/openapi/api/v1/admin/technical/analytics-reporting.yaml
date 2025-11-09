@@ -1,0 +1,255 @@
+openapi: 3.0.3
+info:
+  title: Analytics & Reporting API
+  description: |
+    API для бизнес-аналитики и отчетности NECPGAME.
+    
+    **Функции:**
+    - User behavior analytics
+    - Conversion tracking
+    - Revenue analytics
+    - Player retention metrics
+    - Custom reports generation
+    - Business intelligence
+  version: 1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: User Analytics
+  - name: Revenue Analytics
+  - name: Retention
+  - name: Reports
+
+paths:
+  /technical/analytics/users:
+    get:
+      tags:
+        - User Analytics
+      summary: User behavior analytics
+      description: |
+        User analytics:
+        - Daily/Monthly Active Users (DAU/MAU)
+        - New registrations
+        - User behavior patterns
+        - Popular features
+      operationId: getUserAnalytics
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: ["24h", "7d", "30d", "90d"]
+            default: "30d"
+        - name: segment
+          in: query
+          description: User segment
+          schema:
+            type: string
+            enum: ["all", "new", "active", "churned"]
+      responses:
+        '200':
+          description: User analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAnalytics'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /technical/analytics/revenue:
+    get:
+      tags:
+        - Revenue Analytics
+      summary: Revenue analytics
+      description: |
+        Revenue metrics:
+        - Total revenue
+        - ARPU (Average Revenue Per User)
+        - Conversion rates
+        - Revenue by source
+      operationId: getRevenueAnalytics
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: ["24h", "7d", "30d", "90d"]
+      responses:
+        '200':
+          description: Revenue analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueAnalytics'
+
+  /technical/analytics/retention:
+    get:
+      tags:
+        - Retention
+      summary: Player retention metrics
+      description: |
+        Retention analytics:
+        - Day 1, Day 7, Day 30 retention
+        - Cohort analysis
+        - Churn rate
+      operationId: getRetentionMetrics
+      responses:
+        '200':
+          description: Retention metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionMetrics'
+
+  /technical/analytics/reports/generate:
+    post:
+      tags:
+        - Reports
+      summary: Generate custom report
+      description: Генерация custom analytics report
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - report_type
+              properties:
+                report_type:
+                  type: string
+                  enum: ["user_behavior", "revenue", "retention", "engagement", "custom"]
+                time_range:
+                  type: object
+                  properties:
+                    from:
+                      type: string
+                      format: date-time
+                    to:
+                      type: string
+                      format: date-time
+                filters:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '202':
+          description: Report generation started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id:
+                    type: string
+                  estimated_time_minutes:
+                    type: integer
+
+  /technical/analytics/conversion:
+    get:
+      tags:
+        - User Analytics
+      summary: Conversion funnel metrics
+      description: Conversion rates по funnel
+      operationId: getConversionMetrics
+      responses:
+        '200':
+          description: Conversion metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  funnel_stages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        stage:
+                          type: string
+                        users:
+                          type: integer
+                        conversion_rate:
+                          type: number
+
+components:
+  schemas:
+    UserAnalytics:
+      type: object
+      properties:
+        time_range:
+          type: string
+        dau:
+          type: integer
+          description: Daily Active Users
+        mau:
+          type: integer
+          description: Monthly Active Users
+        new_users:
+          type: integer
+        total_users:
+          type: integer
+        popular_features:
+          type: array
+          items:
+            type: object
+            properties:
+              feature:
+                type: string
+              usage_count:
+                type: integer
+
+    RevenueAnalytics:
+      type: object
+      properties:
+        total_revenue:
+          type: number
+        arpu:
+          type: number
+          description: Average Revenue Per User
+        arppu:
+          type: number
+          description: Average Revenue Per Paying User
+        conversion_rate:
+          type: number
+        revenue_by_source:
+          type: object
+          additionalProperties:
+            type: number
+
+    RetentionMetrics:
+      type: object
+      properties:
+        day1_retention:
+          type: number
+        day7_retention:
+          type: number
+        day30_retention:
+          type: number
+        churn_rate:
+          type: number
+        cohort_analysis:
+          type: array
+          items:
+            type: object
+            properties:
+              cohort:
+                type: string
+              retention:
+                type: number
+
+security:
+  - BearerAuth: []
+
+

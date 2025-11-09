@@ -1,0 +1,637 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/factions/valentinos-maelstrom
+
+---
+
+
+{
+  "version": "3.0.0",
+  "factions": ["Valentinos","Maelstrom","Tyger_Claws"],
+  "description": "Культурные и кибер-культовые квесты банд",
+  "questsFaction": [
+    {
+      "questId": "VALENTINOS-001-OFRENDA",
+      "name": "Valentinos: La Ofrenda del Alma",
+      "faction": "Valentinos",
+      "region": "Heywood",
+      "cultural_theme": "Mexican traditions, Dia de los Muertos, family honor",
+      "characters": {
+        "leader": {
+          "id": "npc-padre-sebastian",
+          "name": "Падре Себастьян Ибарра",
+          "age": 62,
+          "role": "Духовный лидер Valentinos и католический священник",
+          "duality": "Святость днём, преступность ночью",
+          "goal": "Защитить Heywood и сохранить традиции",
+          "secret": "Болен. Умрёт в течение года. Ищет преемника."
+        },
+        "heir_traditional": {
+          "id": "npc-gustavo-ortega",
+          "name": "Густаво Ортега",
+          "role": "Традиционный кандидат",
+          "style": "Уважение, семья, старые пути",
+          "support": "Старая гвардия Valentinos"
+        },
+        "heir_modern": {
+          "id": "npc-lucia-fierro",
+          "name": "Люсия «Огонь» Фьерро",
+          "role": "Современный кандидат",
+          "style": "Бизнес, экспансия, адаптация",
+          "support": "Молодые члены банды",
+          "vision": "Valentinos как корпорация, а не банда"
+        },
+        "family": {
+          "id": "npc-isabella-ortega",
+          "name": "Изабелла Ортега",
+          "relation": "Вдова убитого члена банды",
+          "request": "Найти убийцу мужа для Día de los Muertos",
+          "importance": "Trigger quest"
+        },
+        "rival": {
+          "id": "npc-6th-street-lt",
+          "name": "Лейтенант 6th Street",
+          "suspicion": "Возможный убийца мужа Изабеллы",
+          "territory": "Спорная граница Santo Domingo"
+        }
+      },
+      "synopsis": "Перед Día de los Muertos падре Себастьян просит игрока помочь Изабелле найти убийцу мужа для ритуала ofrenda. Расследование раскрывает внутренний конфликт за будущее Valentinos и выбор преемника падре.",
+      "branches": {
+        "main_paths": [
+          "path_support_gustavo_tradition",
+          "path_support_lucia_modernization",
+          "path_unite_valentinos",
+          "path_destroy_from_within",
+          "path_external_solution"
+        ],
+        "cultural_elements": {
+          "dia_de_muertos": {
+            "importance": "Центральная тема",
+            "mechanics": "Ритуалы влияют на геймплей",
+            "ofrenda": "Подношение душе умершего — ключ к концовке"
+          },
+          "family_honor": {
+            "code": "Семья превыше всего",
+            "consequences": "Предательство семьи = изгнание"
+          },
+          "faith": {
+            "catholic_elements": "Падре — священник",
+            "sins_and_redemption": "Тема прощения"
+          }
+        },
+        "key_decisions": [
+          {
+            "id": "decision_killer_identity",
+            "moment": "Убийца найден: молодой боец 6th Street, действовал в самообороне",
+            "truth": "Муж Изабеллы первым вытащил нож",
+            "choices": [
+              {
+                "id": "tell_truth_isabella",
+                "text": "Сказать Изабелле правду",
+                "consequence": "Боль, но честность",
+                "outcome": "Изабелла убита горем, но отпускает месть."
+              },
+              {
+                "id": "lie_comfort",
+                "text": "Солгать: убийца погиб",
+                "outcome": "Изабелла находит покой во лжи."
+              },
+              {
+                "id": "deliver_killer",
+                "text": "Доставить убийцу для казни",
+                "consequence": "Несправедливая месть",
+                "outcome": "Невиновный казнён. Война с 6th Street."
+              },
+              {
+                "id": "arrange_forgiveness",
+                "text": "Организовать встречу и прощение",
+                "skillCheck": {"attr":"EMP","skill":"Empathy","threshold":14},
+                "outcome": "Изабелла прощает. Мир восстановлен. Чудо."
+              }
+            ]
+          },
+          {
+            "id": "decision_succession",
+            "moment": "Падре объявляет: выбирает преемника",
+            "candidates": "Густаво vs Люсия",
+            "player_influence": "Мнение игрока весомо",
+            "choices": [
+              {
+                "id": "endorse_gustavo",
+                "text": "Поддержать Густаво (традиции)",
+                "outcome": "Valentinos сохраняют культуру, но ослабевают экономически."
+              },
+              {
+                "id": "endorse_lucia",
+                "text": "Поддержать Люсию (модернизация)",
+                "outcome": "Valentinos богатеют, но теряют душу."
+              },
+              {
+                "id": "suggest_dual_rule",
+                "text": "Предложить совместное управление",
+                "skillCheck": {"attr":"COOL","skill":"Diplomacy","threshold":13},
+                "outcome": "Компромисс. Традиции + бизнес."
+              },
+              {
+                "id": "reveal_padre_illness",
+                "text": "Раскрыть болезнь падре публично",
+                "consequence": "Жестокость",
+                "outcome": "Паника. Хаос. Падре отстранён."
+              },
+              {
+                "id": "propose_self",
+                "text": "Заявить себя кандидатом (аутсайдер)",
+                "requirement": "Высокая репутация + Latino roots",
+                "outcome": "Шок. Может сработать или вызвать войну."
+              }
+            ]
+          },
+          {
+            "id": "decision_gang_war_brewing",
+            "moment": "6th Street готовятся к войне за территорию после инцидента",
+            "choices": [
+              {
+                "id": "prepare_war",
+                "text": "Подготовить Valentinos к войне",
+                "outcome": "Вооружение. Укрепление. Война неизбежна."
+              },
+              {
+                "id": "peace_treaty",
+                "text": "Организовать мирный договор",
+                "skillCheck": {"attr":"COOL","skill":"Negotiation","threshold":14},
+                "outcome": "Перемирие. Граница зафиксирована."
+              },
+              {
+                "id": "first_strike",
+                "text": "Превентивный удар по 6th Street",
+                "consequence": "Агрессия",
+                "outcome": "Война начинается на ваших условиях."
+              },
+              {
+                "id": "offer_duel",
+                "text": "Предложить дуэль чемпионов вместо войны",
+                "tradition": true,
+                "outcome": "Поединок решает всё. Меньше жертв."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_traditional_valentinos",
+          "name": "Традиционное Наследие",
+          "conditions": ["gustavo_leader","traditions_preserved"],
+          "outcome": "Valentinos сохранили культуру. Heywood — культурный центр.",
+          "rewards": {"credits":30000,"valentinos_rep":"+60","cultural_preservation":true},
+          "world": "Heywood — музей Latino культуры. Безопасно, но бедно."
+        },
+        {
+          "id": "ending_modern_empire",
+          "name": "Корпоративная Империя",
+          "conditions": ["lucia_leader","modernized"],
+          "outcome": "Valentinos — криминальная корпорация. Богатство и власть.",
+          "rewards": {"credits":80000,"valentinos_rep":"+40","business_empire":true},
+          "world": "Heywood процветает экономически. Душа потеряна."
+        },
+        {
+          "id": "ending_balanced_future",
+          "name": "Баланс Эпох",
+          "conditions": ["dual_leadership","peace_with_6th"],
+          "outcome": "Густаво и Люсия вместе. Традиции + Прогресс. Мир с соседями.",
+          "rewards": {"credits":60000,"valentinos_unity":true,"heywood_golden_age":true},
+          "world": "Heywood — образец. Культура и процветание.",
+          "best_ending": true
+        },
+        {
+          "id": "ending_gang_war",
+          "name": "Кровавая Война",
+          "conditions": ["war_started","territory_conflict"],
+          "outcome": "Valentinos vs 6th Street. Heywood — поле боя.",
+          "rewards": {"credits":40000,"territory":"contested","deaths":"hundreds"},
+          "world": "Война поколений. Жители страдают."
+        },
+        {
+          "id": "ending_padre_death",
+          "name": "Смерть Падре",
+          "conditions": ["succession_failed","chaos"],
+          "outcome": "Падре умирает без преемника. Valentinos раскалываются.",
+          "rewards": {"credits":20000,"valentinos":"divided"},
+          "world": "Heywood без защитника."
+        },
+        {
+          "id": "ending_forgiveness",
+          "name": "Чудо Прощения",
+          "conditions": ["isabella_forgave","peace_achieved"],
+          "outcome": "Изабелла простила. Банды помирились. Чудо в Heywood.",
+          "rewards": {"credits":35000,"miracle":true,"humanity":"+50"},
+          "world": "Пример для всего Night City.",
+          "special_ending": true
+        }
+      },
+      "cultural_depth": "extreme",
+      "difficulty": "hard",
+      "tier": 4,
+      "themes": ["tradition","modernization","forgiveness","family","death","legacy"]
+    },
+    {
+      "questId": "MAELSTROM-001-FLESH-CHROME",
+      "name": "Maelstrom: Плоть или Хром",
+      "faction": "Maelstrom",
+      "region": "Northside",
+      "cultural_theme": "Transhumanism, body horror, Chrome worship",
+      "characters": {
+        "prophet": {
+          "id": "npc-royce-chrome",
+          "name": "Пророк Ройс",
+          "role": "Лидер Maelstrom Watson",
+          "cyberware": "98% тела",
+          "humanity": "2/100",
+          "belief": "Плоть — слабость. Хром — божественность.",
+          "goal": "Полное киборгизирование банды",
+          "madness": "Начинающий киберпсихоз. Скрывает."
+        },
+        "heretic": {
+          "id": "npc-brick-human",
+          "name": "Брик «Человек»",
+          "role": "Старый лидер, свергнут Ройсом",
+          "cyberware": "60% тела",
+          "belief": "Баланс плоти и хрома. Человечность важна.",
+          "status": "Заключён в подвале завода",
+          "faction": "Гуманисты внутри Maelstrom"
+        },
+        "victim": {
+          "id": "npc-new-recruit-sarah",
+          "name": "Сара (новобранец)",
+          "age": 19,
+          "cyberware": "15% (минимальный)",
+          "situation": "Принуждают к тяжёлым имплантам или изгнание",
+          "plea": "Помогите. Не хочу терять себя."
+        },
+        "ripper": {
+          "id": "npc-doc-chrome",
+          "name": "Док «Хромовая Пила»",
+          "role": "Риппер Maelstrom",
+          "specialty": "Экстремальная киборгизация",
+          "ethics": "Нулевые. Деньги важнее.",
+          "secret": "Устанавливает глючные импланты намеренно"
+        }
+      },
+      "synopsis": "Maelstrom раскалывается: Ройс толкает к полной киборгизации (потеря человечности), Брик заключён за «ересь человечности». Новобранца Сару принуждают к имплантам. Игрок решает: освободить Брика, поддержать Ройса или спасти Сару.",
+      "branches": {
+        "main_paths": [
+          "path_chrome_supremacy",
+          "path_humanist_coup",
+          "path_save_sarah_escape",
+          "path_destroy_maelstrom",
+          "path_expose_royce_madness"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_sarah_implants",
+            "moment": "Сару ведут к риппердоку для принудительной операции",
+            "choices": [
+              {
+                "id": "allow_implants",
+                "text": "Позволить установку (следовать культуре банды)",
+                "outcome": "Сара получает тяжёлые импланты. Humanity -40. Принята в банду."
+              },
+              {
+                "id": "rescue_sarah",
+                "text": "Спасти Сару от операции",
+                "consequence": "Предательство Maelstrom",
+                "outcome": "Сара сбегает. Maelstrom охотятся."
+              },
+              {
+                "id": "sabotage_implants",
+                "text": "Саботировать импланты (качественные → базовые)",
+                "skillCheck": {"attr":"TECH","skill":"Tech","threshold":11},
+                "outcome": "Сара выглядит хромированной, но сохраняет человечность."
+              },
+              {
+                "id": "convince_royce",
+                "text": "Убедить Ройса дать ей выбор",
+                "skillCheck": {"attr":"COOL","skill":"Social","threshold":13},
+                "outcome": "Ройс разрешает. Но требует доказательство лояльности."
+              }
+            ]
+          },
+          {
+            "id": "decision_brick_fate",
+            "moment": "Найден заключённый Брик. Просит освобождения.",
+            "risk": "Ройс казнит за измену",
+            "choices": [
+              {
+                "id": "free_brick_coup",
+                "text": "Освободить Брика для переворота",
+                "outcome": "Гражданская война Maelstrom. Гуманисты vs Хром-фанатики."
+              },
+              {
+                "id": "kill_brick_loyalty",
+                "text": "Убить Брика (лояльность Ройсу)",
+                "consequence": "Убийство невинного",
+                "outcome": "Ройс благодарен. Гуманисты подавлены."
+              },
+              {
+                "id": "leave_imprisoned",
+                "text": "Оставить в тюрьме",
+                "outcome": "Избегание конфликта. Брик продолжает страдать."
+              },
+              {
+                "id": "negotiate_release",
+                "text": "Выторговать освобождение у Ройса",
+                "skillCheck": {"attr":"COOL","skill":"Negotiation","threshold":14},
+                "outcome": "Брик освобождён. Ройс требует изгнания из Northside."
+              }
+            ]
+          },
+          {
+            "id": "decision_royce_psychosis",
+            "moment": "Ройс срывается в киберпсихоз публично. Атакует своих.",
+            "trigger": "Импланты глючат. Человечность = 0.",
+            "choices": [
+              {
+                "id": "stop_royce_kill",
+                "text": "Убить Ройса (защита банды)",
+                "outcome": "Ройс мёртв. Вакуум власти."
+              },
+              {
+                "id": "try_cure_royce",
+                "text": "Попытаться вылечить (экспериментально)",
+                "requirement": "Biotechnica cure available",
+                "outcome": "Ройс вылечен. Шок. Переосмысление культа."
+              },
+              {
+                "id": "let_rampage",
+                "text": "Позволить резне (хаос)",
+                "consequence": "Смерти",
+                "outcome": "Ройс убивает десятки. MaxTac вызваны."
+              },
+              {
+                "id": "use_brick_restore",
+                "text": "Брик берёт контроль в хаосе",
+                "requirement": "Brick freed earlier",
+                "outcome": "Переворот в момент слабости. Брик — лидер."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_chrome_cult",
+          "name": "Культ Хрома",
+          "conditions": ["royce_remains","brick_dead","sarah_converted"],
+          "outcome": "Maelstrom — фанатики киборгизации. Humanity = 0 для всех.",
+          "rewards": {"credits":35000,"maelstrom_rep":"+70","humanity":"-30"},
+          "world": "Maelstrom опаснее. Охота на «мясников»."
+        },
+        {
+          "id": "ending_humanist_reform",
+          "name": "Гуманистическая Реформа",
+          "conditions": ["brick_leader","royce_deposed"],
+          "outcome": "Брик реформирует Maelstrom. Баланс плоти и хрома.",
+          "rewards": {"credits":40000,"maelstrom_rep":"+50","humanity_restored":true},
+          "world": "Maelstrom менее жестоки. Интеграция в общество."
+        },
+        {
+          "id": "ending_cured_royce",
+          "name": "Чудо Исцеления",
+          "conditions": ["royce_cured","philosophy_changed"],
+          "outcome": "Ройс вылечен от психоза. Отказывается от культа. Новый путь.",
+          "rewards": {"credits":50000,"maelstrom_transformation":true,"medical_miracle":true},
+          "world": "Maelstrom переосмысливают культ хрома.",
+          "special_ending": true
+        },
+        {
+          "id": "ending_sarah_saved",
+          "name": "Спасение Невинных",
+          "conditions": ["sarah_escaped","helped_others"],
+          "outcome": "Сара и другие новобранцы спасены. Maelstrom враждебны.",
+          "rewards": {"credits":25000,"maelstrom_rep":"-60","lives_saved":15},
+          "world": "Меньше жертв культа."
+        },
+        {
+          "id": "ending_maelstrom_destroyed",
+          "name": "Конец Культа",
+          "conditions": ["royce_killed","gang_scattered"],
+          "outcome": "MaxTac зачистили Maelstrom. Northside без контроля.",
+          "rewards": {"credits":30000,"maelstrom":"destroyed","northside":"chaos"},
+          "world": "Вакуум власти. Новые банды приходят."
+        },
+        {
+          "id": "ending_civil_war",
+          "name": "Гражданская Война Хрома",
+          "conditions": ["brick_vs_royce_war"],
+          "outcome": "Maelstrom воюют друг с другом. Northside — зона боёв.",
+          "rewards": {"credits":20000,"maelstrom":"divided"},
+          "world": "Хаос. Обе фракции ослаблены."
+        }
+      ],
+      "cultural_notes": "Maelstrom — критика трансгуманизма без этики. Культ киборгизации = потеря человечности. Вопрос: где граница?",
+      "difficulty": "extreme",
+      "tier": 4,
+      "themes": ["transhumanism","identity","madness","humanity","cult"]
+    },
+    {
+      "questId": "TYGER-001-HONOR-BLADE",
+      "name": "Tyger Claws: Честь Клинка",
+      "faction": "Tyger Claws",
+      "region": "Japantown_Westbrook",
+      "cultural_theme": "Yakuza honor code, bushido, modernity vs tradition",
+      "characters": {
+        "oyabun": {
+          "id": "npc-wakako-okada",
+          "name": "Вакако Окада",
+          "role": "Oyabun (босс) Tyger Claws",
+          "age": 58,
+          "style": "Традиционный yakuza с современным бизнесом",
+          "empire": "Пачинко, порно BD, защита бизнесов",
+          "code": "Giri-ninjo (долг и человечность)",
+          "problem": "Молодые не уважают старые пути"
+        },
+        "lieutenant": {
+          "id": "npc-hiroshi-blade",
+          "name": "Хироши «Клинок»",
+          "role": "Wakagashira (заместитель)",
+          "age": 32,
+          "style": "Яростный, импульсивный",
+          "dishonor": "Убил соперника вне поединка",
+          "status": "Должен совершить seppuku (харакири)"
+        },
+        "challenger": {
+          "id": "npc-akira-fox",
+          "name": "Акира «Лиса»",
+          "role": "Конкурент Хироши",
+          "method": "Хитрость, обман, современные методы",
+          "goal": "Занять место Wakagashira",
+          "honor": "Сомнительная"
+        },
+        "victim_family": {
+          "id": "npc-widow-yuki",
+          "name": "Вдова Юки",
+          "relation": "Жена убитого Хироши",
+          "demand": "Кровь за кровь или seppuku",
+          "emotion": "Ярость и горе"
+        }
+      },
+      "synopsis": "Хироши совершил бесчестие: убил соперника вне поединка. Кодекс требует seppuku. Но Хироши колеблется. Вакако должна решить: традиция или милосердие. Акира интригует за позицию. Игрок — kaishakunin (помощник в seppuku) или спаситель.",
+      "branches": {
+        "main_paths": [
+          "path_enforce_seppuku",
+          "path_save_hiroshi",
+          "path_expose_conspiracy",
+          "path_support_akira",
+          "path_reform_code"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_seppuku_ceremony",
+            "moment": "Церемония seppuku. Хироши готов. Игрок — kaishakunin.",
+            "tradition": "Второй должен обезглавить после удара в живот",
+            "choices": [
+              {
+                "id": "perform_kaishakunin",
+                "text": "Исполнить роль (честь восстановлена)",
+                "outcome": "Хироши умирает с честью. Традиция соблюдена."
+              },
+              {
+                "id": "stop_ceremony",
+                "text": "Остановить церемонию",
+                "consequence": "Бесчестие",
+                "outcome": "Хироши жив, но опозорен. Банда разгневана."
+              },
+              {
+                "id": "miss_intentionally",
+                "text": "Промахнуться намеренно (милосердие)",
+                "consequence": "Собственное бесчестие",
+                "outcome": "Хироши мучается. Игрок опозорен."
+              },
+              {
+                "id": "challenge_tradition",
+                "text": "Бросить вызов традиции публично",
+                "skillCheck": {"attr":"COOL","skill":"Oratory","threshold":14},
+                "outcome": "Речь о современности vs традиции. Может убедить Вакако."
+              }
+            ]
+          },
+          {
+            "id": "decision_akira_intrigue",
+            "moment": "Обнаружено: Акира подстроила убийство, спровоцировала Хироши",
+            "conspiracy": "Акира хочет власти. Манипулировала событиями.",
+            "choices": [
+              {
+                "id": "expose_akira",
+                "text": "Раскрыть заговор Акиры",
+                "outcome": "Акира должна совершить seppuku. Хироши прощён."
+              },
+              {
+                "id": "blackmail_akira",
+                "text": "Шантажировать Акиру",
+                "outcome": "Акира в долгу. Хироши спасён. Игрок имеет рычаг."
+              },
+              {
+                "id": "support_akira_coup",
+                "text": "Поддержать Акиру в захвате власти",
+                "consequence": "Бесчестие",
+                "outcome": "Хироши умирает. Акира — Wakagashira. Модернизация."
+              },
+              {
+                "id": "duel_akira",
+                "text": "Вызвать Акиру на поединок за честь",
+                "outcome": "Дуэль решает всё. Победитель прав."
+              }
+            ]
+          },
+          {
+            "id": "decision_widow_vengeance",
+            "moment": "Вдова Юки требует мести. Приносит катану мужа.",
+            "demand": "Кровь Хироши или seppuku",
+            "choices": [
+              {
+                "id": "deliver_hiroshi",
+                "text": "Выдать Хироши вдове",
+                "outcome": "Юки убивает Хироши. Месть свершилась."
+              },
+              {
+                "id": "pay_blood_money",
+                "text": "Предложить компенсацию (кровавые деньги)",
+                "cost": 100000,
+                "outcome": "Юки оскорблена. Отвергает. Или соглашается (EMP check)."
+              },
+              {
+                "id": "offer_self_blood",
+                "text": "Предложить себя для ритуальной дуэли",
+                "consequence": "Риск смерти",
+                "outcome": "Дуэль с Юки. Если побеждаешь — долг оплачен."
+              },
+              {
+                "id": "kill_widow",
+                "text": "Убить вдову (тёмный путь)",
+                "consequence": "Бесчестие абсолютное",
+                "outcome": "Проблема устранена. Tyger Claws охотятся. Humanity -50."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_honor_restored",
+          "name": "Честь Восстановлена",
+          "conditions": ["seppuku_performed","widow_satisfied"],
+          "outcome": "Хироши умер с честью. Традиции соблюдены. Юки в покое.",
+          "rewards": {"credits":30000,"tyger_claws_rep":"+60","honor":true},
+          "world": "Tyger Claws сильны в традициях."
+        },
+        {
+          "id": "ending_conspiracy_exposed",
+          "name": "Заговор Раскрыт",
+          "conditions": ["akira_exposed","hiroshi_exonerated"],
+          "outcome": "Акира совершает seppuku. Хироши прощён. Справедливость.",
+          "rewards": {"credits":40000,"tyger_claws_rep":"+50","justice":true},
+          "world": "Tyger Claws очищены от интриг."
+        },
+        {
+          "id": "ending_modernization",
+          "name": "Новая Эра Tyger Claws",
+          "conditions": ["akira_leader","traditions_abandoned"],
+          "outcome": "Акира модернизирует банду. Бизнес важнее чести.",
+          "rewards": {"credits":60000,"tyger_claws_rep":"+40","profit":"maximized"},
+          "world": "Tyger Claws — корпорация в тени. Культура потеряна."
+        },
+        {
+          "id": "ending_mercy",
+          "name": "Милосердие",
+          "conditions": ["hiroshi_saved","widow_forgave"],
+          "outcome": "Хироши прощён. Юки отпускает. Чудо в Japantown.",
+          "rewards": {"credits":35000,"tyger_claws_unity":true,"miracle":true},
+          "world": "Баланс традиций и человечности.",
+          "best_ending": true
+        },
+        {
+          "id": "ending_civil_war",
+          "name": "Война Чести",
+          "conditions": ["brick_freed","royce_vs_brick"],
+          "outcome": "Традиционалисты vs Модернисты. Japantown — поле боя.",
+          "rewards": {"credits":25000,"tyger_claws":"divided"},
+          "world": "Культурная война."
+        },
+        {
+          "id": "ending_dishonor",
+          "name": "Путь Бесчестия",
+          "conditions": ["widow_killed","traditions_violated"],
+          "outcome": "Игрок опозорен. Tyger Claws объявляют охоту.",
+          "rewards": {"credits":15000,"tyger_claws_rep":"-100","dishonored":true},
+          "world": "Игрок — враг Japantown."
+        }
+      ],
+      "cultural_depth": "extreme",
+      "difficulty": "extreme",
+      "tier": 4,
+      "themes": ["honor","tradition","modernity","sacrifice","justice","bushido"]
+    }
+  ]
+}
+

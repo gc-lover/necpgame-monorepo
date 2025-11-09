@@ -1,0 +1,102 @@
+openapi: 3.0.3
+info:
+  title: Player Order Ratings Parameters
+  version: 1.0.0
+  description: Общие параметры для API рейтингов, отзывов и санкций заказов игроков.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  parameters:
+    PlayerId:
+      name: playerId
+      in: path
+      required: true
+      description: Уникальный идентификатор игрока.
+      schema:
+        type: string
+        format: uuid
+    RatingRole:
+      name: role
+      in: query
+      description: Целевая роль в системе заказов.
+      schema:
+        type: string
+        default: executor
+        enum: [executor, client]
+    RatingCategory:
+      name: category
+      in: query
+      description: Фильтр по категории рейтинга.
+      schema:
+        type: string
+        enum: [bronze, silver, gold, platinum]
+    OrderType:
+      name: orderType
+      in: query
+      description: Тип заказа для фильтрации метрик.
+      schema:
+        type: string
+        enum: [combat, hacker, logistics, economy, social, exploration]
+    Period:
+      name: period
+      in: query
+      description: Временной диапазон, используемый для агрегации показателей.
+      schema:
+        type: string
+        default: 30d
+        enum: [7d, 14d, 30d, 90d, season, lifetime]
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      description: Идентификатор batch-задачи пересчёта рейтингов.
+      schema:
+        type: string
+        format: uuid
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: Идентификатор заказа в системе player-orders.
+      schema:
+        type: string
+        format: uuid
+    TargetPlayerId:
+      name: playerId
+      in: query
+      description: Идентификатор игрока, для которого возвращаются отзывы или санкции.
+      schema:
+        type: string
+        format: uuid
+    IncludeTrends:
+      name: includeTrends
+      in: query
+      description: Возвращать ли временные ряды рейтинга в ответе.
+      schema:
+        type: boolean
+        default: false
+    IncludeMetrics:
+      name: includeMetrics
+      in: query
+      description: Управляет включением подробных нормализованных метрик в ответы.
+      schema:
+        type: boolean
+        default: true
+    Locale:
+      name: locale
+      in: query
+      description: Локализация текстов отзывов и предупреждений.
+      schema:
+        type: string
+        pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

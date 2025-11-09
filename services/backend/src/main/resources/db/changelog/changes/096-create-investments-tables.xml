@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="096-01-create-investment-opportunities" author="gpt5-codex">
+        <createTable tableName="investment_opportunities">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(180)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_investment" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_investment" type="NUMERIC(18,2)"/>
+            <column name="expected_roi_percent" type="NUMERIC(6,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="risk_level" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="duration_days" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available_slots" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slots_total" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_updated_value_at" type="TIMESTAMPTZ"/>
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="investment_opportunities" indexName="idx_investment_opportunities_type">
+            <column name="type"/>
+        </createIndex>
+        <createIndex tableName="investment_opportunities" indexName="idx_investment_opportunities_risk_level">
+            <column name="risk_level"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="096-02-create-character-investments" author="gpt5-codex">
+        <createTable tableName="character_investments">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="opportunity_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount_invested" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_value" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_roi_percent" type="NUMERIC(6,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dividends_total" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maturity_date" type="TIMESTAMPTZ"/>
+            <column name="last_evaluated_at" type="TIMESTAMPTZ"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_investments"
+                baseColumnNames="opportunity_id"
+                referencedTableName="investment_opportunities"
+                referencedColumnNames="id"
+                constraintName="fk_character_investments_opportunity"
+                onDelete="RESTRICT"/>
+
+        <createIndex tableName="character_investments" indexName="idx_character_investments_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_investments" indexName="idx_character_investments_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="096-03-create-investment-dividends" author="gpt5-codex">
+        <createTable tableName="investment_dividends">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="investment_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="paid_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recorded_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="investment_dividends"
+                baseColumnNames="investment_id"
+                referencedTableName="character_investments"
+                referencedColumnNames="id"
+                constraintName="fk_investment_dividends_investment"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="investment_dividends" indexName="idx_investment_dividends_investment">
+            <column name="investment_id"/>
+        </createIndex>
+        <createIndex tableName="investment_dividends" indexName="idx_investment_dividends_paid_at">
+            <column name="paid_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="096-04-create-investment-funds" author="gpt5-codex">
+        <createTable tableName="investment_funds">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="manager" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_value" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="investors_count" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="performance_ytd" type="NUMERIC(6,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_investment" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="management_fee_percent" type="NUMERIC(6,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="investment_funds" indexName="idx_investment_funds_type">
+            <column name="type"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
+
+

@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.22.xsd">
+
+    <changeSet id="091-create-logistics-tables" author="backend-agent">
+
+        <createTable tableName="logistics_routes">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="origin" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="destination" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="distance_km" type="NUMERIC(10,2)"/>
+            <column name="estimated_time_hours" type="NUMERIC(10,2)"/>
+            <column name="risk_level" type="VARCHAR(16)"/>
+            <column name="cost_multiplier" type="NUMERIC(10,2)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="logistics_routes" indexName="idx_logistics_routes_origin_destination">
+            <column name="origin"/>
+            <column name="destination"/>
+        </createIndex>
+
+        <createTable tableName="logistics_route_vehicle_types">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="route_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_route_vehicle_route" referencedTableName="logistics_routes" referencedColumnNames="id"/>
+            </column>
+            <column name="vehicle_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_route_risks">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="route_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_route_risks_route" referencedTableName="logistics_routes" referencedColumnNames="id"/>
+            </column>
+            <column name="risk_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="probability" type="NUMERIC(5,2)"/>
+            <column name="severity" type="VARCHAR(16)"/>
+            <column name="description" type="TEXT"/>
+        </createTable>
+
+        <createTable tableName="logistics_route_waypoints">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="route_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_route_waypoints_route" referencedTableName="logistics_routes" referencedColumnNames="id"/>
+            </column>
+            <column name="sequence_index" type="INTEGER"/>
+            <column name="waypoint" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_vehicles">
+            <column name="vehicle_type" type="VARCHAR(32)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="speed_multiplier" type="NUMERIC(10,2)"/>
+            <column name="capacity_weight" type="NUMERIC(14,2)"/>
+            <column name="capacity_volume" type="NUMERIC(14,2)"/>
+            <column name="risk_modifier" type="NUMERIC(10,2)"/>
+            <column name="cost_multiplier" type="NUMERIC(10,2)"/>
+        </createTable>
+
+        <createTable tableName="logistics_shipments">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="origin" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="destination" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vehicle_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="insurance_plan" type="VARCHAR(16)"/>
+            <column name="route_id" type="UUID"/>
+            <column name="estimated_delivery" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="actual_delivery" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_location" type="VARCHAR(255)"/>
+            <column name="progress_percentage" type="NUMERIC(5,2)"/>
+            <column name="insurance_cost" type="NUMERIC(14,2)"/>
+            <column name="escort_requested" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="logistics_shipments" indexName="idx_logistics_shipments_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="logistics_shipments" indexName="idx_logistics_shipments_status">
+            <column name="status"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="logistics_shipments" baseColumnNames="route_id"
+                                 constraintName="fk_shipments_route" referencedTableName="logistics_routes"
+                                 referencedColumnNames="id"/>
+
+        <createTable tableName="logistics_shipment_cargo_items">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="shipment_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_cargo_shipment" referencedTableName="logistics_shipments" referencedColumnNames="id"/>
+            </column>
+            <column name="item_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight" type="NUMERIC(10,2)"/>
+            <column name="volume" type="NUMERIC(10,2)"/>
+            <column name="value" type="NUMERIC(14,2)"/>
+            <column name="fragile" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_insurance_plans">
+            <column name="plan" type="VARCHAR(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="coverage_percentage" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_coverage" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cost_percentage" type="NUMERIC(6,3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+        </createTable>
+
+        <createTable tableName="logistics_insurance">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="shipment_id" type="UUID">
+                <constraints nullable="false" unique="true" foreignKeyName="fk_insurance_shipment" referencedTableName="logistics_shipments" referencedColumnNames="id"/>
+            </column>
+            <column name="plan" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="coverage_percentage" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_coverage" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cost" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="purchased_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_cargo_value" type="NUMERIC(14,2)"/>
+        </createTable>
+
+        <createTable tableName="logistics_incidents">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="shipment_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_incident_shipment" referencedTableName="logistics_shipments" referencedColumnNames="id"/>
+            </column>
+            <column name="incident_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="severity" type="VARCHAR(16)"/>
+            <column name="description" type="TEXT"/>
+            <column name="resolved" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="insurance_claim" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="occurred_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_incident_cargo_loss">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="incident_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_incident_loss" referencedTableName="logistics_incidents" referencedColumnNames="id"/>
+            </column>
+            <column name="item_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_tracking_events">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="shipment_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_tracking_shipment" referencedTableName="logistics_shipments" referencedColumnNames="id"/>
+            </column>
+            <column name="location" type="VARCHAR(255)"/>
+            <column name="event" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="occurred_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_convoys">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="leader_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="risk_reduction" type="NUMERIC(6,2)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_convoy_members">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="convoy_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_convoy_member_convoy" referencedTableName="logistics_convoys" referencedColumnNames="id"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_convoy_shipments">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="convoy_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_convoy_shipment_convoy" referencedTableName="logistics_convoys" referencedColumnNames="id"/>
+            </column>
+            <column name="shipment_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_convoy_shipment_shipment" referencedTableName="logistics_shipments" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="logistics_escort_requests">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="shipment_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_escort_request_shipment" referencedTableName="logistics_shipments" referencedColumnNames="id"/>
+            </column>
+            <column name="escort_type" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment" type="INTEGER"/>
+            <column name="requested_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

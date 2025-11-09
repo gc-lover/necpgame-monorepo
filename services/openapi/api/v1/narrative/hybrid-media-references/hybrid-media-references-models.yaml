@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: Hybrid Media References Core Models
+  version: 1.0.0
+components:
+  parameters:
+    ReferenceId:
+      name: referenceId
+      in: path
+      description: Hybrid media reference identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ScopeType:
+      name: scopeType
+      in: query
+      description: Content scope filter
+      schema:
+        $ref: '#/components/schemas/ScopeType'
+    Season:
+      name: season
+      in: query
+      description: Season key (e.g. S03)
+      schema:
+        type: string
+        pattern: "^S\\d{2}$"
+    Status:
+      name: status
+      in: query
+      description: Reference status
+      schema:
+        $ref: '#/components/schemas/ReferenceStatus'
+    RequiresAlternateTimeline:
+      name: requiresAlternateTimeline
+      in: query
+      description: Filter by alternate timeline flag
+      schema:
+        type: boolean
+    ContentTag:
+      name: contentTag
+      in: query
+      description: Campaign or content tag
+      schema:
+        type: string
+        maxLength: 64
+    Sort:
+      name: sort
+      in: query
+      description: Sort expression such as spotlightRating,DESC
+      schema:
+        type: string
+        maxLength: 64
+  schemas:
+    ScopeType:
+      type: string
+      enum: [main_campaign, side_quest, social_event, pvp_mode, pve_raid, world_environment, item_implant, narrative_node]
+    ReferenceStatus:
+      type: string
+      enum: [draft, planned, active, archived]
+    ReferenceContentScope:
+      type: object
+      required: [scopeType, description]
+      properties:
+        scopeType:
+          $ref: '#/components/schemas/ScopeType'
+        description:
+          type: string
+          maxLength: 1000
+        targetIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        progressionRequirements:
+          type: object
+          properties:
+            reputationLevel:
+              type: string
+            minimumLevel:
+              type: integer
+              minimum: 1
+            questPrerequisites:
+              type: array
+              items:
+                type: string
+        pvpGate:
+          type: object
+          properties:
+            rankingTier:
+              type: string
+            minimumMatches:
+              type: integer
+        pveGate:
+          type: object
+          properties:
+            gearScore:
+              type: integer
+            rosterSize:
+              type: integer
+    ReferenceTriggerConfig:
+      type: object
+      required: [triggerType, conditionExpression]
+      properties:
+        triggerType:
+          type: string
+          enum: [world_event, social_threshold, economy_index, combat_stat, auth_flag]
+        conditionExpression:
+          type: string
+        cooldownMinutes:
+          type: integer
+          minimum: 0
+        maxConcurrentActivations:
+          type: integer
+          minimum: 0
+        fallbackPlan:
+          type: string
+    ReferenceRewardBundle:
+      type: object
+      required: [bundleId, rarity, rewards]
+      properties:
+        bundleId:
+          type: string
+        rarity:
+          type: string
+          enum: [common, rare, epic, legendary, mythic]
+        rewards:
+          type: object
+          properties:
+            credits:
+              type: integer
+            implants:
+              type: array
+              items:
+                type: string
+            cosmetics:
+              type: array
+              items:
+                type: string
+            consumables:
+              type: array
+              items:
+                type: string
+        pveWeight:
+          type: number
+          minimum: 0
+          maximum: 1
+        pvpWeight:
+          type: number
+          minimum: 0
+          maximum: 1
+        marketingTag:
+          type: string
+          maxLength: 64
+    ReferenceVisualCue:
+      type: object
+      required: [cueId, medium, assetId]
+      properties:
+        cueId:
+          type: string
+        medium:
+          type: string
+          enum: [environment, ui, audio, ar_overlay]
+        assetId:
+          type: string
+        caption:
+          type: string
+        unlockHint:
+          type: string
+        inWorldLocation:
+          type: string
+    AlternateTimelineSettings:
+      type: object
+      properties:
+        requiresAlternateTimeline:
+          type: boolean
+          default: true
+        timelineLabel:
+          type: string
+        personaMaskTemplateId:
+          type: string
+        authPersonaStrategy:
+          type: string
+          enum: [temporary, persistent, masked]
+        complianceNote:
+          type: string
+    ReferenceIntegrationLink:
+      type: object
+      required: [service, syncMode]
+      properties:
+        service:
+          type: string
+          enum: [world, social, economy, gameplay, auth]
+        externalId:
+          type: string
+        syncMode:
+          type: string
+          enum: [push, pull, bidirectional]
+        eventTopics:
+          type: array
+          items:
+            type: string
+        restEndpoints:
+          type: array
+          items:
+            type: object
+            required: [method, url]
+            properties:
+              method:
+                type: string
+              url:
+                type: string
+    HybridReferenceSummary:
+      type: object
+      required: [id, slug, title, scopeTypes, status, season, requiresAlternateTimeline, spotlightRating, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+        title:
+          type: string
+          maxLength: 120
+        scopeTypes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ScopeType'
+        status:
+          $ref: '#/components/schemas/ReferenceStatus'
+        season:
+          type: string
+          pattern: "^S\\d{2}$"
+        primaryFaction:
+          type: string
+          maxLength: 64
+        requiresAlternateTimeline:
+          type: boolean
+        spotlightRating:
+          type: integer
+          minimum: 0
+          maximum: 100
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    HybridReferenceDetail:
+      allOf:
+        - $ref: '#/components/schemas/HybridReferenceSummary'
+        - type: object
+          required: [description, inspirationSources, narrativeBeats, scope, triggerMatrix, rewardBundles, visualCues, integrationLinks, complianceTags]
+          properties:
+            description:
+              type: string
+              maxLength: 5000
+            inspirationSources:
+              type: array
+              items:
+                type: string
+            narrativeBeats:
+              type: array
+              items:
+                type: string
+            worldLocations:
+              type: array
+              items:
+                type: string
+            npcCarriers:
+              type: array
+              items:
+                type: string
+            scope:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ReferenceContentScope'
+            triggerMatrix:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ReferenceTriggerConfig'
+            rewardBundles:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ReferenceRewardBundle'
+            visualCues:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ReferenceVisualCue'
+            alternateTimelineSettings:
+              $ref: '#/components/schemas/AlternateTimelineSettings'
+            integrationLinks:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ReferenceIntegrationLink'
+            accessibilityNotes:
+              type: string
+            complianceTags:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            lastComplianceReviewAt:
+              type: string
+              format: date-time
+    HybridReferenceUpsertRequest:
+      type: object
+      required: [title, slug, status, season, scope, triggerMatrix, rewardBundles, visualCues]
+      properties:
+        title:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+        status:
+          $ref: '#/components/schemas/ReferenceStatus'
+        season:
+          type: string
+          pattern: "^S\\d{2}$"
+        scope:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceContentScope'
+        triggerMatrix:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceTriggerConfig'
+        rewardBundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceRewardBundle'
+        visualCues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceVisualCue'
+        alternateTimelineSettings:
+          $ref: '#/components/schemas/AlternateTimelineSettings'
+        integrationLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceIntegrationLink'
+        inspirationSources:
+          type: array
+          items:
+            type: string
+        complianceTags:
+          type: array
+          items:
+            type: string
+    HybridReferencePatchRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 120
+        status:
+          $ref: '#/components/schemas/ReferenceStatus'
+        season:
+          type: string
+          pattern: "^S\\d{2}$"
+        scope:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceContentScope'
+        triggerMatrix:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceTriggerConfig'
+        rewardBundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceRewardBundle'
+        visualCues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceVisualCue'
+        alternateTimelineSettings:
+          $ref: '#/components/schemas/AlternateTimelineSettings'
+        integrationLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceIntegrationLink'
+        accessibilityNotes:
+          type: string
+        complianceTags:
+          type: array
+          items:
+            type: string
+        manualUpdateComment:
+          type: string
+          maxLength: 500
+

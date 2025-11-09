@@ -1,0 +1,249 @@
+# Quest Triggers System
+# Version: 1.0.0
+# Date: 2025-11-06 23:25
+# Description: Квесты-триггеры, которые открывают другие квесты
+
+metadata:
+  version: "1.0.0"
+  created: "2025-11-06"
+  updated: "2025-11-06 23:25"
+  status: approved
+  description: "Система триггеров квестов - какие квесты открывают другие"
+
+# Структура:
+# trigger_quest_id:
+#   unlocks: [список квестов, которые открывает]
+#   conditions: условия для открытия
+#   timing: когда открываются (immediate, next_era, delayed)
+
+triggers:
+  # ====== MAIN QUESTS AS TRIGGERS ======
+  
+  MQ-2020-001:
+    name: "Первые шаги"
+    unlocks:
+      immediate:
+        - MQ-2020-002
+        - SQ-2020-001
+        - SQ-2020-004
+        - SQ-2020-005
+      conditional:
+        - quest: SQ-2020-003
+          condition: class_netrunner
+        - quest: SQ-2020-002
+          condition: reputation_trauma_team >= 10
+    timing: immediate
+    note: "Вводный квест - открывает начальные квесты эпохи"
+  
+  MQ-2020-005:
+    name: "Чистый канал"
+    unlocks:
+      next_era:
+        - MQ-2030-001
+        - MQ-2030-002
+      conditional:
+        - quest: SQ-2030-002
+          condition: choice_netwatch
+        - quest: SQ-2045-001
+          condition: choice_netwatch
+    timing: next_era
+    note: "Финал эпохи - открывает следующую эпоху с учетом выбора"
+  
+  MQ-2045-005:
+    name: "Часовые Blackwall"
+    unlocks:
+      immediate:
+        - SQ-2045-003
+      next_era:
+        - MQ-2060-001
+      delayed:
+        - SQ-2078-004  # Blackwall expedition (если доверял ИИ)
+    timing: mixed
+    note: "Критический выбор по отношению к ИИ"
+  
+  MQ-2078-002:
+    name: "Архивы за заслоном"
+    unlocks:
+      immediate:
+        - SQ-2078-004  # Blackwall expedition
+      finale:
+        - ending_transcendence  # Если исследовал за Blackwall
+    timing: immediate + finale
+    note: "Открывает путь к Трансцендентности"
+  
+  # ====== SIDE QUESTS AS TRIGGERS ======
+  
+  SQ-2020-001:
+    name: "Контракт Войтека"
+    unlocks:
+      immediate:
+        - SQ-2020-002  # Trauma Team contract
+      next_era:
+        - SQ-2030-001  # Media campaign
+    conditions:
+      for_SQ-2020-002:
+        reputation_trauma_team: 10
+    timing: mixed
+  
+  SQ-2020-003:
+    name: "Защита чистого канала"
+    unlocks:
+      immediate:
+        - SQ-2020-004  # Phantom tracing
+      next_era:
+        - SQ-2030-002  # Dome audit
+        - SQ-2045-001  # Phantom hunt
+    conditions:
+      for_all:
+        flag_netwatch_ally: true
+    timing: cross_era
+    note: "Длинная цепочка NetWatch квестов"
+  
+  SQ-2045-003:
+    name: "Обращение в хоре"
+    unlocks:
+      immediate:
+        - SQ-2060-003  # Concordat appeal
+      delayed:
+        - SQ-2078-004  # Blackwall expedition (помогает)
+      finale:
+        - ending_transcendence  # Требование для финала
+    conditions:
+      for_SQ-2078-004:
+        flag_choir_member: true
+    timing: cross_era + finale
+    note: "КРИТИЧНО для пути Трансцендентности"
+  
+  SQ-2078-004:
+    name: "Экспедиция за Blackwall"
+    unlocks:
+      finale:
+        - ending_transcendence
+    conditions:
+      prerequisite:
+        - quest_completed: MQ-2078-002
+        - flag: ai_sympathizer
+        - class: Netrunner
+    timing: finale_determinant
+    note: "Открывает финал Трансцендентности"
+  
+  SQ-2078-005:
+    name: "Проект конституции"
+    unlocks:
+      finale:
+        - ending_revolution
+    conditions:
+      prerequisite:
+        - quest_in_progress: MQ-2078-003
+        - reputation_people_unions: 30
+        - flag: revolutionary
+    timing: finale_determinant
+    note: "Открывает финал Революции"
+
+# ====== TRIGGER CHAINS ======
+
+trigger_chains:
+  netwatch_chain:
+    description: "Цепочка NetWatch квестов через эпохи"
+    chain:
+      - SQ-2020-003  # Защита чистого канала (триггер)
+      - MQ-2020-005  # Чистый канал (выбор NetWatch)
+      - SQ-2030-002  # Аудит купола (открыт предыдущим)
+      - SQ-2045-001  # Phantom hunt (открыт предыдущим)
+      - SQ-2078-004  # Blackwall expedition (может быть заблокирован)
+    conditions:
+      all_steps:
+        flag_netwatch_ally: true
+  
+  ai_sympathy_chain:
+    description: "Цепочка про-ИИ квестов"
+    chain:
+      - SQ-2045-003  # Choir conversion (триггер)
+      - MQ-2045-005  # Часовые Blackwall (доверие ИИ)
+      - MQ-2045-006  # Тёплые коридоры (поддержать)
+      - SQ-2078-004  # Blackwall expedition (кульминация)
+      - ending_transcendence  # Финал
+    conditions:
+      all_steps:
+        flag_ai_sympathizer: true
+  
+  revolutionary_chain:
+    description: "Цепочка народного сопротивления"
+    chain:
+      - SQ-2030-001  # Медиа кампания (информирование)
+      - MQ-2030-006  # Приватные войны (выбор народа)
+      - MQ-2060-005  # Мета-суд (политика)
+      - SQ-2078-005  # Constitution draft (манифест)
+      - ending_revolution  # Финал
+    conditions:
+      all_steps:
+        flag_revolutionary: true
+
+# ====== FINALE TRIGGERS ======
+
+finale_triggers:
+  ending_transcendence:
+    required_triggers:
+      - SQ-2078-004  # Blackwall expedition (ОБЯЗАТЕЛЬНО)
+      - MQ-2078-002  # Архивы за заслоном (завершён)
+    optional_boosters:
+      - SQ-2045-003  # Choir conversion (облегчает)
+      - MQ-2045-005  # Часовые Blackwall (выбор доверия)
+    blocks:
+      - ending_corporatocracy  # Конфликтует
+  
+  ending_revolution:
+    required_triggers:
+      - SQ-2078-005  # Constitution draft (ОБЯЗАТЕЛЬНО)
+      - MQ-2078-003  # Конституции лиг (завершён)
+    optional_boosters:
+      - MQ-2030-006  # Приватные войны (выбор народа)
+      - MQ-2060-005  # Мета-суд (поддержка независимости)
+    blocks:
+      - ending_corporatocracy  # Конфликтует
+  
+  ending_corporatocracy:
+    required_triggers:
+      - MQ-2078-001  # Параметрические ярмарки (принять Saburo)
+    optional_boosters:
+      - MQ-2020-005  # Чистый канал (NetWatch)
+      - MQ-2030-006  # Приватные войны (корпорации)
+      - SQ-2078-001  # License wars (корп-союз)
+    blocks:
+      - ending_transcendence
+      - ending_revolution
+  
+  ending_apocalypse:
+    required_triggers:
+      - chaos_threshold: 80  # Множество хаотичных выборов
+    optional_triggers:
+      - reputation_all_factions: < 0  # Враг всех
+      - cyberpsychosis_level: > 70
+    note: "Открывается через накопление хаоса, не через конкретный квест"
+
+# ====== TIMING RULES ======
+
+timing_rules:
+  immediate:
+    description: "Квест открывается сразу после завершения триггера"
+    delay: 0
+  
+  next_era:
+    description: "Квест открывается в следующей эпохе"
+    delay: era_transition
+  
+  delayed:
+    description: "Квест открывается через несколько эпох"
+    delay: 1-3_eras
+  
+  conditional:
+    description: "Квест открывается только при выполнении условий"
+    delay: conditional
+  
+  finale_determinant:
+    description: "Квест определяет доступность финала"
+    delay: finale
+
+# История изменений:
+# v1.0.0 (2025-11-06 23:25) - Создание системы триггеров квестов
+

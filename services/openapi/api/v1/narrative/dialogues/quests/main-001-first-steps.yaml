@@ -1,0 +1,189 @@
+# Target Architecture:
+# - Microservice: narrative-service (port 8087)
+# - Dependencies: quest-engine, world-service (events), social-service (quest map), analytics-service
+# - Frontend Module: modules/narrative/quests (useNarrativeStore)
+# - UI: DialoguePanel, SkillCheckMeter, TutorialOverlay, ChoiceButtons
+# - Forms: DialogueChoiceForm, SkillCheckPrompt
+openapi: 3.0.3
+info:
+  title: Main Quest Dialogue — 001 First Steps
+  version: 1.0.0
+  description: |
+    Спецификация диалога стартового квеста 001 «Первые шаги».
+    Покрывает загрузку состояния разговора, выполнение опций с проверками,
+    обучение HUD и телеметрию попыток.
+
+    Источник: `.BRAIN/04-narrative/dialogues/quest-main-001-first-steps.md` v1.0.0 (approved, api-readiness: ready).
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative
+    package: com.necpgame.narrativeservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Quest Dialogue
+    description: Основные операции диалога квеста 001
+  - name: Dialogue Execution
+    description: Выполнение опций и проверок
+  - name: Tutorial Support
+    description: HUD подсказки и обучающие материалы
+  - name: Telemetry
+    description: Сбор аналитики и попыток диалога
+paths:
+  /narrative/dialogues/quests/main/001-first-steps/conversation:
+    get:
+      tags: [Quest Dialogue]
+      summary: Получить текущее состояние разговора
+      description: Возвращает структуру узлов, состояний и рекомендаций с учётом флагов игрока и активных событий.
+      operationId: getQuestMain001Conversation
+      parameters:
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/IncludeNodes'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/QuestState'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/PlayerFlags'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/ActiveEvents'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/Language'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/Difficulty'
+      responses:
+        '200':
+          description: Снимок диалога сформирован
+          content:
+            application/json:
+              schema:
+                $ref: './main-001-first-steps-components.yaml#/components/schemas/ConversationSnapshot'
+              examples:
+                default:
+                  $ref: './main-001-first-steps-components.yaml#/components/examples/ConversationResponse'
+        '401':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+  /narrative/dialogues/quests/main/001-first-steps/nodes/{nodeId}:
+    get:
+      tags: [Quest Dialogue]
+      summary: Получить узел диалога
+      description: Возвращает реплики, опции и обучающие подсказки конкретного узла с учётом контекста игрока.
+      operationId: getQuestMain001Node
+      parameters:
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/NodeId'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/IncludeOptions'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/PlayerFlags'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/ActiveEvents'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/Language'
+      responses:
+        '200':
+          description: Узел найден
+          content:
+            application/json:
+              schema:
+                $ref: './main-001-first-steps-components.yaml#/components/schemas/DialogueNodeResponse'
+        '400':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+  /narrative/dialogues/quests/main/001-first-steps/nodes/{nodeId}/options/{optionId}/resolve:
+    post:
+      tags: [Dialogue Execution]
+      summary: Выполнить опцию диалога
+      description: Проводит проверки навыков, применяет награды и возвращает следующее состояние разговора.
+      operationId: resolveQuestMain001Option
+      parameters:
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/NodeId'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/OptionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './main-001-first-steps-components.yaml#/components/schemas/ResolveOptionRequest'
+      responses:
+        '200':
+          description: Опция выполнена
+          content:
+            application/json:
+              schema:
+                $ref: './main-001-first-steps-components.yaml#/components/schemas/ResolveOptionResponse'
+              examples:
+                success:
+                  $ref: './main-001-first-steps-components.yaml#/components/examples/ResolveOptionSuccess'
+                criticalFailure:
+                  $ref: './main-001-first-steps-components.yaml#/components/examples/ResolveOptionCriticalFailure'
+        '400':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '409':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+        '422':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+  /narrative/dialogues/quests/main/001-first-steps/tutorial-hints:
+    get:
+      tags: [Tutorial Support]
+      summary: Получить обучающие подсказки
+      description: Возвращает контекстные HUD-подсказки для текущего состояния квеста.
+      operationId: getQuestMain001TutorialHints
+      parameters:
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/QuestState'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/PlayerFlags'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/Difficulty'
+        - $ref: './main-001-first-steps-components.yaml#/components/parameters/Language'
+      responses:
+        '200':
+          description: Подсказки возвращены
+          content:
+            application/json:
+              schema:
+                $ref: './main-001-first-steps-components.yaml#/components/schemas/TutorialHintResponse'
+              examples:
+                default:
+                  $ref: './main-001-first-steps-components.yaml#/components/examples/TutorialHintsResponse'
+        '401':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+  /narrative/dialogues/quests/main/001-first-steps/telemetry:
+    post:
+      tags: [Telemetry]
+      summary: Отправить телеметрию диалога
+      description: Регистрирует события диалога для аналитики и контроля качества обучения.
+      operationId: postQuestMain001Telemetry
+      security:
+        - BearerAuth: []
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './main-001-first-steps-components.yaml#/components/schemas/DialogueTelemetryRequest'
+      responses:
+        '202':
+          description: Телеметрия принята
+        '400':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '429':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+
+

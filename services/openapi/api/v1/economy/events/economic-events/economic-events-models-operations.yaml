@@ -1,0 +1,424 @@
+openapi: 3.0.3
+info:
+  title: Economic Events Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/events
+    directory: api/v1/economy/events/economic-events
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    EventListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './economic-events-models.yaml#/components/schemas/EconomicEvent'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    EventCreateRequest:
+      type: object
+      required: [type, name, severity, scope, schedule, effects]
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+        scope:
+          type: string
+        regions:
+          type: array
+          items:
+            type: string
+        sectors:
+          type: array
+          items:
+            type: string
+        stackable:
+          type: boolean
+        cooldownDays:
+          type: integer
+          minimum: 0
+        schedule:
+          $ref: './economic-events-models.yaml#/components/schemas/EventSchedule'
+        effects:
+          type: array
+          minItems: 1
+          items:
+            $ref: './economic-events-models.yaml#/components/schemas/EventEffect'
+        alerts:
+          type: array
+          items:
+            $ref: './economic-events-models.yaml#/components/schemas/EventAlert'
+    EventCreateResponse:
+      type: object
+      required: [event]
+      properties:
+        event:
+          $ref: './economic-events-models.yaml#/components/schemas/EconomicEvent'
+        schedulerJobCreated:
+          type: boolean
+    EventDetailResponse:
+      type: object
+      required: [event, metrics]
+      properties:
+        event:
+          $ref: './economic-events-models.yaml#/components/schemas/EconomicEvent'
+        metrics:
+          $ref: './economic-events-models.yaml#/components/schemas/EventMetrics'
+        timelinePreview:
+          type: array
+          items:
+            $ref: './economic-events-models.yaml#/components/schemas/EventTimelineEntry'
+        integrations:
+          type: array
+          items:
+            type: string
+    EventUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+        regions:
+          type: array
+          items:
+            type: string
+        sectors:
+          type: array
+          items:
+            type: string
+        schedule:
+          $ref: './economic-events-models.yaml#/components/schemas/EventSchedule'
+        effects:
+          type: array
+          items:
+            $ref: './economic-events-models.yaml#/components/schemas/EventEffect'
+        alerts:
+          type: array
+          items:
+            $ref: './economic-events-models.yaml#/components/schemas/EventAlert'
+        signature:
+          type: string
+        reason:
+          type: string
+    EventAnnounceRequest:
+      type: object
+      required: [announcement]
+      properties:
+        announcement:
+          $ref: './economic-events-models.yaml#/components/schemas/EventAnnouncement'
+        reminderMinutesBefore:
+          type: integer
+          minimum: 0
+        notifyChannels:
+          type: array
+          items:
+            type: string
+        analyticsSnapshot:
+          type: boolean
+          default: false
+    EventAnnounceResponse:
+      type: object
+      required: [eventId, announcementId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        announcementId:
+          type: string
+          format: uuid
+        scheduledNotifications:
+          type: integer
+    EventLifecycleResponse:
+      type: object
+      required: [eventId, status]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        schedulerAction:
+          type: string
+          nullable: true
+        integrationsTriggered:
+          type: array
+          items:
+            type: string
+    EventCancelRequest:
+      type: object
+      required: [cancellation]
+      properties:
+        cancellation:
+          $ref: './economic-events-models.yaml#/components/schemas/EventCancellation'
+        notifyPlayers:
+          type: boolean
+          default: true
+        issueCompensation:
+          type: boolean
+          default: false
+    EventTimelineResponse:
+      type: object
+      required: [eventId, entries, pagination]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        entries:
+          type: array
+          items:
+            $ref: './economic-events-models.yaml#/components/schemas/EventTimelineEntry'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    EventMetricsResponse:
+      type: object
+      required: [activeEvents, metrics]
+      properties:
+        activeEvents:
+          type: integer
+        severeEvents:
+          type: integer
+        metrics:
+          type: array
+          items:
+            type: object
+            required: [eventId, metrics]
+            properties:
+              eventId:
+                type: string
+                format: uuid
+              metrics:
+                $ref: './economic-events-models.yaml#/components/schemas/EventMetrics'
+              priceDeviationHistory:
+                type: array
+                items:
+                  type: number
+                  format: double
+    EventFeedEnvelope:
+      type: object
+      required: [sequence, payload]
+      properties:
+        sequence:
+          type: integer
+        payload:
+          type: object
+          required: [eventId, type, status]
+          properties:
+            eventId:
+              type: string
+              format: uuid
+            type:
+              type: string
+            status:
+              type: string
+            delta:
+              type: object
+              additionalProperties: true
+        deliveredAt:
+          type: string
+          format: date-time
+    EventPlannerResponse:
+      type: object
+      required: [slots, limits]
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: './economic-events-models.yaml#/components/schemas/PlannerSlot'
+        limits:
+          type: object
+          properties:
+            globalActive:
+              type: integer
+            regionalActive:
+              type: integer
+            cooldownDays:
+              type: integer
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              conflictingEventId:
+                type: string
+                format: uuid
+              reason:
+                type: string
+    EconomicEventCreatedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: economy.events.created
+        producer:
+          type: string
+          example: economy-service
+        payload:
+          type: object
+          required: [eventId, type, schedule]
+          properties:
+            eventId:
+              type: string
+              format: uuid
+            type:
+              type: string
+            schedule:
+              $ref: './economic-events-models.yaml#/components/schemas/EventSchedule'
+            severity:
+              type: string
+            scope:
+              type: string
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [pricing-engine, stock-exchange, currency-exchange, notification-service, analytics-service]
+        key:
+          type: string
+          example: eventId
+    EconomicEventAnnouncedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.events.announced
+        payload:
+          type: object
+          required: [eventId, announcement]
+          properties:
+            eventId:
+              type: string
+              format: uuid
+            announcement:
+              $ref: './economic-events-models.yaml#/components/schemas/EventAnnouncement'
+            warningTime:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [notification-service, analytics-service, quest-service]
+    EconomicEventActivatedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.events.activated
+        payload:
+          type: object
+          required: [eventId, activationTime]
+          properties:
+            eventId:
+              type: string
+              format: uuid
+            activationTime:
+              type: string
+              format: date-time
+            effects:
+              type: array
+              items:
+                $ref: './economic-events-models.yaml#/components/schemas/EventEffect'
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [pricing-engine, stock-exchange, currency-exchange, telemetry-service]
+    EconomicEventEffectAppliedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.events.effect-applied
+        payload:
+          type: object
+          required: [eventId, effectId, success]
+          properties:
+            eventId:
+              type: string
+              format: uuid
+            effectId:
+              type: string
+            success:
+              type: boolean
+            notes:
+              type: string
+              nullable: true
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [analytics-service, telemetry-service, anti-fraud-service]
+    EconomicEventEffectRolledBackEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.events.effect-rolled-back
+        payload:
+          type: object
+          required: [eventId, rollbackStatus]
+          properties:
+            eventId:
+              type: string
+              format: uuid
+            rollbackStatus:
+              type: string
+              enum: [SUCCESS, PARTIAL, FAILED]
+            executedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [pricing-engine, analytics-service, notification-service]
+    EconomicEventArchivedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.events.archived
+        payload:
+          type: object
+          required: [eventId, archivedAt]
+          properties:
+            eventId:
+              type: string
+              format: uuid
+            archivedAt:
+              type: string
+              format: date-time
+            summaryReportId:
+              type: string
+              nullable: true
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [analytics-service, economy-dashboard, notification-service]

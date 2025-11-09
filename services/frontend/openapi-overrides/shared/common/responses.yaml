@@ -1,0 +1,177 @@
+# Стандартные ответы API
+# Источник: Общие компоненты для всех API
+# Версия: 1.0.0
+
+openapi: 3.0.3
+info:
+  title: Common API Responses
+  version: 1.0.0
+  description: |
+    Общие стандартные ответы для всех API спецификаций.
+    Используйте эти компоненты через $ref в других API файлах.
+
+components:
+  responses:
+    BadRequest:
+      description: |
+        Неверный запрос. Параметры запроса некорректны или отсутствуют обязательные поля.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            validation_error:
+              summary: Ошибка валидации
+              value:
+                error:
+                  code: "VALIDATION_ERROR"
+                  message: "Неверные параметры запроса"
+                  details:
+                    - field: "name"
+                      message: "Имя должно быть не пустым"
+                      code: "REQUIRED"
+    
+    Unauthorized:
+      description: |
+        Пользователь не аутентифицирован. Требуется валидный токен доступа.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            missing_token:
+              summary: Отсутствует токен
+              value:
+                error:
+                  code: "UNAUTHORIZED"
+                  message: "Требуется аутентификация"
+                  details: []
+    
+    Forbidden:
+      description: |
+        У пользователя нет прав для выполнения данной операции.
+        Аутентификация прошла успешно, но доступа недостаточно.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            insufficient_permissions:
+              summary: Недостаточно прав
+              value:
+                error:
+                  code: "FORBIDDEN"
+                  message: "Недостаточно прав для выполнения операции"
+                  details: []
+    
+    NotFound:
+      description: |
+        Запрошенный ресурс не найден.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            resource_not_found:
+              summary: Ресурс не найден
+              value:
+                error:
+                  code: "NOT_FOUND"
+                  message: "Запрошенный ресурс не найден"
+                  details:
+                    - field: "id"
+                      message: "NPC с указанным ID не существует"
+                      code: "RESOURCE_NOT_FOUND"
+    
+    Conflict:
+      description: |
+        Конфликт с текущим состоянием ресурса или ограничениями системы.
+        Например, превышение лимитов или нарушение бизнес-правил.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            limit_exceeded:
+              summary: Превышен лимит
+              value:
+                error:
+                  code: "LIMIT_EXCEEDED"
+                  message: "Превышен лимит NPC для владельца"
+                  details:
+                    - field: "maxNPCs"
+                      message: "Достигнут максимальный лимит NPC (10)"
+                      code: "LIMIT_EXCEEDED"
+    
+    UnprocessableEntity:
+      description: |
+        Запрос синтаксически корректен, но семантически неверен.
+        Например, некорректное состояние ресурса для операции.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            invalid_state:
+              summary: Некорректное состояние
+              value:
+                error:
+                  code: "INVALID_STATE"
+                  message: "Операция невозможна в текущем состоянии ресурса"
+                  details:
+                    - field: "status"
+                      message: "Нельзя отменить выполненный сценарий"
+                      code: "INVALID_STATE"
+    
+    InternalServerError:
+      description: |
+        Внутренняя ошибка сервера. Непредвиденная ошибка при обработке запроса.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            server_error:
+              summary: Внутренняя ошибка сервера
+              value:
+                error:
+                  code: "INTERNAL_SERVER_ERROR"
+                  message: "Произошла внутренняя ошибка сервера"
+                  details: []
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Код ошибки для программной обработки
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              description: Человекочитаемое сообщение об ошибке
+              example: "Неверные параметры запроса"
+            details:
+              type: array
+              description: Детальная информация об ошибке (опционально)
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    description: Поле с ошибкой
+                  message:
+                    type: string
+                    description: Сообщение об ошибке для поля
+                  code:
+                    type: string
+                    description: Код ошибки для поля
+

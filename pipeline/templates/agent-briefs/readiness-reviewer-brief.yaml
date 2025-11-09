@@ -1,0 +1,17 @@
+agent: Readiness Reviewer
+tasks_source:
+  description: Очередь документов для проверки
+  location: "shared/trackers/queues/vision/review.yaml"
+supporting_files:
+  - "pipeline/checklists/idea-to-api.yaml"
+  - "shared/trackers/readiness-tracker.yaml"
+work_instructions:
+  - "Пройди чеклист, убедись в полноте сценариев, данных и зависимостей."
+  - "Обнови `readiness-tracker.yaml`, установи `api-readiness` и дату."
+validation_scripts:
+  - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <idea-file>"
+  - "pwsh -File pipeline/scripts/check-readiness-entry.ps1 -TrackerFile shared/trackers/readiness-tracker.yaml -DocumentPath <idea-file>"
+completion_actions:
+  - "Перенеси карточку в соответствующий файл (`shared/trackers/queues/vision/completed.yaml` или `queued.yaml`) и проверь структуру через `check-queue-yaml.ps1`."
+  - "Сообщи API Task Architect о готовности через Activity Log."
+

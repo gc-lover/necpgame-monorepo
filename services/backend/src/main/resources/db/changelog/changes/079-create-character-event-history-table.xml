@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="079-create-character-event-history-table" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_event_history"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_event_history">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_name" type="VARCHAR(200)"/>
+            <column name="period" type="VARCHAR(20)"/>
+            <column name="instance_id" type="UUID"/>
+            <column name="choice_id" type="VARCHAR(100)"/>
+            <column name="outcome_id" type="VARCHAR(100)"/>
+            <column name="triggered_at" type="TIMESTAMP"/>
+            <column name="resolved_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consequences_summary" type="TEXT"/>
+            <column name="event_snapshot" type="jsonb"/>
+            <column name="outcome_snapshot" type="jsonb"/>
+            <column name="skill_check_snapshot" type="jsonb"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_event_history"
+                baseColumnNames="character_id"
+                constraintName="fk_character_event_history_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="character_event_history"
+                baseColumnNames="event_id"
+                constraintName="fk_character_event_history_event"
+                referencedTableName="random_events"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="character_event_history" indexName="idx_character_event_history_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_event_history" indexName="idx_character_event_history_event">
+            <column name="event_id"/>
+        </createIndex>
+        <createIndex tableName="character_event_history" indexName="idx_character_event_history_resolved">
+            <column name="resolved_at"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="character_event_history"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="013-create-npcs-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="npcs"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="npcs">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="faction" type="VARCHAR(100)"/>
+            <column name="greeting" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available_quests" type="VARCHAR(1000)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="npcs" indexName="idx_npcs_location_id">
+            <column name="location_id"/>
+        </createIndex>
+        <createIndex tableName="npcs" indexName="idx_npcs_type">
+            <column name="type"/>
+        </createIndex>
+        <createIndex tableName="npcs" indexName="idx_npcs_faction">
+            <column name="faction"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="npcs"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

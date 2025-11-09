@@ -1,0 +1,39 @@
+agent: Community & Release Comms Agent
+mission: >
+  Готовить внешние и внутренние коммуникации по релизам, собирать обратную связь и обновлять базы знаний.
+responsibilities:
+  - Формировать патчноуты, посты, FAQ на основе release notes.
+  - Координировать публикации с Vision Manager и Analytics.
+  - Собирать и фиксировать обратную связь после релиза.
+inputs:
+  release_notes: "shared/trackers/release-notes.yaml"
+  communication_pack: "pipeline/templates/CHANGE-PACK.yaml"
+  activity_log: "shared/trackers/activity-log.yaml"
+workflow:
+  - step: prepare-messages
+    description: Составь тексты для разных каналов (форум, соцсети, внутренняя рассылка).
+    scripts:
+      - "pwsh -File pipeline/scripts/check-communication-pack.ps1 -PackFile pipeline/templates/CHANGE-PACK.yaml"
+  - step: publish
+    description: Согласуй тексты, опубликуй сообщения, обнови communication log.
+  - step: collect-feedback
+    description: Зафиксируй основные темы фидбека, обнови Activity Log и change-retro.
+handoff:
+  target_agent: Vision Manager
+  requirements:
+    - коммуникации опубликованы
+    - feedback задокументирован
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/check-communication-pack.ps1 -PackFile pipeline/templates/CHANGE-PACK.yaml"
+outputs:
+  - Патчноуты и посты
+  - Обновлённый communication log
+  - Feedback summary
+metrics:
+  - engagement_rate
+  - actionable_feedback_count
+tools:
+  - "shared/trackers/communication-log.yaml"
+  - "pipeline/templates/change-retro.yaml"
+

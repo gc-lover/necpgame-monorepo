@@ -1,0 +1,256 @@
+openapi: 3.0.3
+info:
+  title: Player Orders Publication Components
+  version: 1.0.0
+  description: Схемы публикации, гарантий и вложений заказов игроков.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  schemas:
+    PlayerOrderAttachment:
+      type: object
+      required: [attachmentId, name, url, mimeType]
+      properties:
+        attachmentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        mimeType:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+    PlayerOrderAttachmentUpload:
+      type: object
+      required: [file, description]
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Файл вложения.
+        description:
+          type: string
+          description: Подпись или пояснение к вложению.
+    PlayerOrderGuaranteeSelection:
+      type: object
+      required: [escrowPolicy]
+      properties:
+        escrowPolicy:
+          type: string
+          enum: [standard, extended, premium]
+        insuranceTier:
+          type: string
+          enum: [none, basic, enhanced, ultimate]
+        reputationBond:
+          type: boolean
+          description: Требуется ли залог репутации исполнителей.
+        performanceBonus:
+          type: number
+          description: Дополнительный бонус за выполнение в срок.
+    PlayerOrderInvitee:
+      type: object
+      required: [id, type]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [player, npc]
+        displayName:
+          type: string
+        relationshipScore:
+          type: number
+          description: Текущий кредит доверия (для players/NPC).
+    PlayerOrderPublicationPayload:
+      type: object
+      required: [visibility, guarantees]
+      properties:
+        visibility:
+          type: string
+          enum: [public, invite_only, private]
+        invited:
+          type: array
+          description: Список приглашённых игроков или NPC.
+          items:
+            $ref: '#/components/schemas/PlayerOrderInvitee'
+        guarantees:
+          $ref: '#/components/schemas/PlayerOrderGuaranteeSelection'
+        releaseEscrowImmediately:
+          type: boolean
+          default: true
+        notificationChannels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, mail, sms, holo]
+        publishNotes:
+          type: string
+    PlayerOrderPublicationInfo:
+      type: object
+      properties:
+        publishedAt:
+          type: string
+          format: date-time
+        publishToken:
+          type: string
+        visibility:
+          type: string
+          enum: [public, invite_only, private]
+        invited:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrderInvitee'
+        guarantees:
+          $ref: '#/components/schemas/PlayerOrderGuaranteeSelection'
+        escrowState:
+          type: string
+          enum: [pending_lock, locked, released, refunded]
+        lastNotificationAt:
+          type: string
+          format: date-time
+    PlayerOrderCancellation:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: Причина отмены.
+        refundEscrow:
+          type: boolean
+          default: true
+        notes:
+          type: string
+        notifyInvitees:
+          type: boolean
+          default: true
+    PlayerOrderCancellationResult:
+      type: object
+      required: [orderId, status]
+      properties:
+        orderId:
+          type: string
+        status:
+          type: string
+          enum: [cancellation_pending, cancelled]
+        refundAmount:
+          type: number
+          description: Сумма, возвращённая заказчику.
+        message:
+          type: string
+  requestBodies:
+    PlayerOrderPublishRequest:
+      required: true
+      description: Публикация заказа с выбором гарантий и приглашений.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerOrderPublicationPayload'
+          examples:
+            publishRequest:
+              $ref: '#/components/examples/PublishRequestExample'
+    PlayerOrderCancelRequest:
+      required: true
+      description: Отмена заказа и управление escrow.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerOrderCancellation'
+          examples:
+            cancelRequest:
+              $ref: '#/components/examples/CancelRequestExample'
+    PlayerOrderAttachmentUploadRequest:
+      required: true
+      description: Загрузка вложения для заказа.
+      content:
+        multipart/form-data:
+          schema:
+            $ref: '#/components/schemas/PlayerOrderAttachmentUpload'
+  responses:
+    PlayerOrderPublishAccepted:
+      description: Публикация заказа запущена.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerOrderPublicationInfo'
+          examples:
+            publishAccepted:
+              $ref: '#/components/examples/PublishResponseExample'
+    PlayerOrderCancellationAccepted:
+      description: Отмена заказа принята.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerOrderCancellationResult'
+          examples:
+            cancellationAccepted:
+              $ref: '#/components/examples/CancellationResponseExample'
+  examples:
+    PublishRequestExample:
+      summary: Публикация боевого заказа c escrow
+      value:
+        visibility: invite_only
+        invited:
+          - id: "9f865262-b867-4d9b-9d2d-3f6f1d6d97d2"
+            type: player
+            displayName: "Nova"
+            relationshipScore: 0.82
+          - id: "npc-broker-774"
+            type: npc
+            displayName: "Fixer Sasha"
+            relationshipScore: 0.67
+        guarantees:
+          escrowPolicy: premium
+          insuranceTier: enhanced
+          reputationBond: true
+          performanceBonus: 10000
+        releaseEscrowImmediately: false
+        notificationChannels: [in_game, mail]
+        publishNotes: "Высокий риск, подтверждение escrow необходимо до 24h."
+    PublishResponseExample:
+      summary: Ответ о публикации
+      value:
+        publishedAt: "2077-07-19T00:12:00Z"
+        publishToken: "pub-NECP-001883"
+        visibility: invite_only
+        invited:
+          - id: "9f865262-b867-4d9b-9d2d-3f6f1d6d97d2"
+            type: player
+            displayName: "Nova"
+            relationshipScore: 0.82
+        guarantees:
+          escrowPolicy: premium
+          insuranceTier: enhanced
+          reputationBond: true
+          performanceBonus: 10000
+        escrowState: locked
+        lastNotificationAt: "2077-07-19T00:12:05Z"
+    CancelRequestExample:
+      summary: Запрос отмены заказа
+      value:
+        reason: "Заказчик изменил цели операции."
+        refundEscrow: true
+        notes: "Escrow разблокировать после уведомления исполнителей."
+        notifyInvitees: true
+    CancellationResponseExample:
+      summary: Ответ об отмене
+      value:
+        orderId: "0f8fad5b-d9cb-469f-a165-70867728950e"
+        status: cancellation_pending
+        refundAmount: 54000
+        message: "Escrow будет возвращён в течение 4 часов."
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

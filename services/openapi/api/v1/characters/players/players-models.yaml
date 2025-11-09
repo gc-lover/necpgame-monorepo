@@ -1,0 +1,318 @@
+openapi: 3.0.3
+info:
+  title: Player Character Core Models
+  version: 1.0.0
+  x-microservice:
+    name: character-service
+    port: 8082
+    domain: characters
+    base-path: /api/v1/characters/players
+    directory: api/v1/characters/players
+    package: com.necpgame.characterservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  parameters:
+    AccountIdPath:
+      name: accountId
+      in: path
+      required: true
+      description: Account identifier owning the characters
+      schema:
+        type: string
+        format: uuid
+    CharacterIdPath:
+      name: characterId
+      in: path
+      required: true
+      description: Character identifier from character-service
+      schema:
+        type: string
+        format: uuid
+    IncludeDeleted:
+      name: includeDeleted
+      in: query
+      description: Whether to include soft-deleted characters
+      schema:
+        type: boolean
+        default: false
+    IncludeSnapshots:
+      name: includeSnapshots
+      in: query
+      description: Include latest snapshot references for each character
+      schema:
+        type: boolean
+        default: false
+    ActivityTypeFilter:
+      name: activityType
+      in: query
+      description: Filter activity log by type
+      schema:
+        type: string
+        enum: [creation, deletion, restoration, switch, appearance, stats, slot, moderator]
+    ActivityDateFrom:
+      name: dateFrom
+      in: query
+      description: Activity start timestamp filter (UTC ISO-8601)
+      schema:
+        type: string
+        format: date-time
+    ActivityDateTo:
+      name: dateTo
+      in: query
+      description: Activity end timestamp filter (UTC ISO-8601)
+      schema:
+        type: string
+        format: date-time
+  schemas:
+    PlayerProfile:
+      type: object
+      required:
+        - accountId
+        - language
+        - timezone
+        - settings
+        - social
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        premiumCurrency:
+          type: integer
+          minimum: 0
+        totalPlaytimeSeconds:
+          type: integer
+          minimum: 0
+        language:
+          type: string
+          example: "ru"
+        timezone:
+          type: string
+          example: "Europe/Moscow"
+        settings:
+          type: object
+          properties:
+            ui:
+              type: object
+            audio:
+              type: object
+            graphics:
+              type: object
+        social:
+          type: object
+          properties:
+            friends:
+              type: array
+              items:
+                type: string
+                format: uuid
+            blocked:
+              type: array
+              items:
+                type: string
+                format: uuid
+    CharacterSummary:
+      type: object
+      required:
+        - characterId
+        - name
+        - origin
+        - characterClass
+        - level
+        - status
+        - createdAt
+        - lastActiveAt
+        - deleted
+        - canRestoreUntil
+        - slotState
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 50
+        origin:
+          type: string
+          enum: [CORPO, STREETKID, NOMAD, CUSTOM]
+        characterClass:
+          type: string
+          enum: [SOLO, NETRUNNER, TECHIE, FIXER, NOMAD]
+        level:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [ACTIVE, IN_COMBAT, AFK, DEAD, DELETED]
+        currentLocation:
+          type: object
+          properties:
+            zone:
+              type: string
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                  format: float
+                y:
+                  type: number
+                  format: float
+                z:
+                  type: number
+                  format: float
+        lastActiveAt:
+          type: string
+          format: date-time
+        deleted:
+          type: boolean
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        canRestoreUntil:
+          type: string
+          format: date-time
+          nullable: true
+        slotState:
+          $ref: '#/components/schemas/CharacterSlotState'
+        tags:
+          type: array
+          description: Flags for UI (starter, hardcore, permadeath)
+          items:
+            type: string
+    CharacterSlotState:
+      type: object
+      required:
+        - totalSlots
+        - usedSlots
+        - premiumSlotsPurchased
+        - maxSlots
+        - nextTierCost
+      properties:
+        totalSlots:
+          type: integer
+          minimum: 0
+        usedSlots:
+          type: integer
+          minimum: 0
+        premiumSlotsPurchased:
+          type: integer
+          minimum: 0
+        maxSlots:
+          type: integer
+          minimum: 0
+        nextTierCost:
+          type: object
+          nullable: true
+          properties:
+            currency:
+              type: string
+              example: "eddies"
+            amount:
+              type: integer
+              minimum: 0
+            requiresApproval:
+              type: boolean
+        restrictions:
+          type: array
+          items:
+            type: string
+    RestoreQueueEntry:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        queuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+    StateSnapshotRef:
+      type: object
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+        takenAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+    CharacterActivityEntry:
+      type: object
+      required:
+        - activityId
+        - activityType
+        - actor
+        - occurredAt
+        - metadata
+      properties:
+        activityId:
+          type: string
+          format: uuid
+        activityType:
+          type: string
+          enum: [creation, deletion, restoration, switch, appearance, stats, slot, moderator]
+        occurredAt:
+          type: string
+          format: date-time
+        actor:
+          type: object
+          properties:
+            actorType:
+              type: string
+              enum: [player, moderator, system]
+            actorId:
+              type: string
+              format: uuid
+        ipAddress:
+          type: string
+          format: ipv6
+          nullable: true
+        location:
+          type: string
+          description: Geo IP or in-game terminal information
+        metadata:
+          type: object
+    CharacterAppearance:
+      type: object
+      required: [bodyType, skinTone, hairStyle, eyeColor]
+      properties:
+        bodyType:
+          type: string
+          enum: [slim, athletic, heavy, cybernetic]
+        skinTone:
+          type: string
+        hairStyle:
+          type: string
+        hairColor:
+          type: string
+          pattern: '^#(?:[0-9a-fA-F]{6})$'
+        eyeColor:
+          type: string
+          pattern: '^#(?:[0-9a-fA-F]{6})$'
+        tattoos:
+          type: array
+          items:
+            type: string
+        scars:
+          type: array
+          items:
+            type: string
+        implantsVisible:
+          type: array
+          items:
+            type: string
+        makeupPreset:
+          type: string
+          nullable: true
+

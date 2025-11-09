@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="036-create-character-inventory-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_inventory"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_inventory">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INT" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slot_position" type="INT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_inventory"
+                baseColumnNames="character_id"
+                constraintName="fk_character_inventory_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="character_inventory"
+                baseColumnNames="item_id"
+                constraintName="fk_character_inventory_item"
+                referencedTableName="inventory_items"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="character_inventory" indexName="idx_character_inventory_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_inventory" indexName="idx_character_inventory_item">
+            <column name="item_id"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                tableName="character_inventory"
+                columnNames="character_id, item_id"
+                constraintName="uk_character_item"/>
+
+        <rollback>
+            <dropTable tableName="character_inventory"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

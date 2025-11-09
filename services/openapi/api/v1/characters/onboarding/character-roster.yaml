@@ -1,0 +1,273 @@
+openapi: 3.0.3
+info:
+  title: Character Onboarding API
+  version: 1.0.0
+  description: |
+    API управления персонажами аккаунта и справочниками для создания персонажей.
+    Источник: .BRAIN/05-technical/ui-character-creation.md (v1.1.0).
+    Задание: API-SWAGGER/tasks/completed/2025-11-06/task-026-character-creation-api.md.
+  x-microservice:
+    name: character-service
+    port: 8082
+    domain: characters
+    base-path: /api/v1/characters
+    directory: api/v1/characters/onboarding
+    package: com.necpgame.characterservice
+servers:
+  - url: https://api.necp.game/v1/characters
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1/characters
+    description: Local API Gateway
+paths:
+  /:
+    get:
+      summary: Список персонажей аккаунта
+      description: Возвращает текущий ростер персонажей с лимитами и метаданными.
+      operationId: listAccountCharacters
+      tags:
+        - Character Roster
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ростер персонажей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterRosterResponse'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    post:
+      summary: Создание нового персонажа
+      description: Создает нового персонажа, проверяет лимиты и соответствие происхождения фракции и города.
+      operationId: createAccountCharacter
+      tags:
+        - Character Roster
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCharacterRequest'
+      responses:
+        '201':
+          description: Персонаж создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterDetailResponse'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+  /{characterId}:
+    get:
+      summary: Информация о персонаже
+      description: Возвращает детализированную информацию и внешность персонажа аккаунта.
+      operationId: getAccountCharacter
+      tags:
+        - Character Roster
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Детали персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterDetailResponse'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+    delete:
+      summary: Удаление персонажа
+      description: Удаляет персонажа аккаунта и освобождает слот.
+      operationId: deleteAccountCharacter
+      tags:
+        - Character Roster
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '204':
+          description: Персонаж удален
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+  /{characterId}/appearance:
+    patch:
+      summary: Обновление внешности
+      description: Обновляет внешность персонажа с учетом ограничений по документу .BRAIN.
+      operationId: updateCharacterAppearance
+      tags:
+        - Character Roster
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAppearanceRequest'
+      responses:
+        '200':
+          description: Внешность обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterDetail'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+  /limits:
+    get:
+      summary: Лимиты персонажей
+      description: Возвращает текущие ограничения по количеству персонажей и свободные слоты.
+      operationId: getCharacterLimits
+      tags:
+        - Character Roster
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ограничения по персонажам
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterLimits'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+  /classes:
+    get:
+      summary: Справочник классов
+      description: Возвращает список доступных классов и подклассов.
+      operationId: listCharacterClasses
+      tags:
+        - Reference Data
+      responses:
+        '200':
+          description: Справочник классов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterClassList'
+  /origins:
+    get:
+      summary: Справочник происхождений
+      description: Возвращает список происхождений с допустимыми фракциями.
+      operationId: listCharacterOrigins
+      tags:
+        - Reference Data
+      responses:
+        '200':
+          description: Справочник происхождений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterOriginList'
+  /factions:
+    get:
+      summary: Справочник фракций
+      description: Возвращает список фракций с фильтрацией по происхождению.
+      operationId: listCharacterFactions
+      tags:
+        - Reference Data
+      parameters:
+        - name: origin
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - street_kid
+              - corpo
+              - nomad
+          description: Фильтр по происхождению.
+      responses:
+        '200':
+          description: Справочник фракций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionList'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+  /cities:
+    get:
+      summary: Справочник городов
+      description: Возвращает доступные города с фильтрами по фракции и региону.
+      operationId: listCharacterCities
+      tags:
+        - Reference Data
+      parameters:
+        - name: factionId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор фракции для фильтрации.
+        - name: region
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Регион или сервер.
+      responses:
+        '200':
+          description: Справочник городов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityList'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+components:
+  parameters:
+    CharacterId:
+      name: characterId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор персонажа.
+  schemas:
+    CharacterRosterResponse:
+      $ref: './character-roster-models.yaml#/components/schemas/CharacterRosterResponse'
+    CharacterDetailResponse:
+      $ref: './character-roster-models.yaml#/components/schemas/CharacterDetailResponse'
+    CharacterDetail:
+      $ref: './character-roster-models.yaml#/components/schemas/CharacterDetail'
+    CharacterLimits:
+      $ref: './character-roster-models.yaml#/components/schemas/CharacterLimits'
+    CharacterClassList:
+      $ref: './character-roster-models.yaml#/components/schemas/CharacterClassList'
+    CharacterOriginList:
+      $ref: './character-roster-models.yaml#/components/schemas/CharacterOriginList'
+    FactionList:
+      $ref: './character-roster-models.yaml#/components/schemas/FactionList'
+    CityList:
+      $ref: './character-roster-models.yaml#/components/schemas/CityList'
+    CreateCharacterRequest:
+      $ref: './character-roster-models.yaml#/components/schemas/CreateCharacterRequest'
+    UpdateAppearanceRequest:
+      $ref: './character-roster-models.yaml#/components/schemas/UpdateAppearanceRequest'
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+

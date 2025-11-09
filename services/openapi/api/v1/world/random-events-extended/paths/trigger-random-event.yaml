@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: Trigger Random Event
+  version: 1.0.0
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/gameplay/world
+    package: com.necpgame.worldservice
+paths:
+  /gameplay/world/random-events/trigger:
+    post:
+      summary: Триггернуть случайное событие
+      operationId: triggerRandomEvent
+      tags:
+        - Event Triggers
+      description: Используется backend системами для генерации событий
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/TriggerEventRequest'
+      responses:
+        '200':
+          description: Событие триггернуто
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/index.yaml#/components/schemas/TriggeredEventInstance'
+        '400':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

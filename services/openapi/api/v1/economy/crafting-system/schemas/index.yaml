@@ -1,0 +1,265 @@
+openapi: 3.0.3
+info:
+  title: Crafting System Schemas
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy
+    package: com.necpgame.economyservice
+paths: {}
+
+components:
+  schemas:
+    CraftingRecipe:
+      type: object
+      properties:
+        recipe_id:
+          type: string
+        name:
+          type: string
+          example: "Legendary Mantis Blades"
+        description:
+          type: string
+        category:
+          type: string
+          enum: [WEAPONS, ARMOR, IMPLANTS, MODS, CONSUMABLES]
+        tier:
+          type: string
+          enum: [T1, T2, T3, T4, T5]
+        required_skill:
+          type: string
+          example: "CRAFTING"
+        required_skill_level:
+          type: integer
+          example: 15
+        base_crafting_time_seconds:
+          type: integer
+          example: 300
+        base_success_rate:
+          type: number
+          format: float
+          example: 0.75
+        components_count:
+          type: integer
+    CraftingRecipeDetailed:
+      allOf:
+        - $ref: '#/components/schemas/CraftingRecipe'
+        - type: object
+          properties:
+            components:
+              type: array
+              items:
+                $ref: '#/components/schemas/ComponentRequirement'
+            result_item:
+              type: object
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                quality_range:
+                  type: object
+                  properties:
+                    min:
+                      type: string
+                      enum: [POOR, COMMON, UNCOMMON, RARE, EPIC, LEGENDARY]
+                    max:
+                      type: string
+            station_requirement:
+              type: string
+              nullable: true
+              example: "WEAPONS_BENCH"
+            unlock_source:
+              type: string
+              description: Откуда получен рецепт
+              example: "Blueprint: Legendary Mantis Blades"
+    ComponentRequirement:
+      type: object
+      properties:
+        component_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        quantity:
+          type: integer
+        rarity:
+          type: string
+          enum: [COMMON, UNCOMMON, RARE, EPIC, LEGENDARY]
+        alternatives:
+          type: array
+          description: Альтернативные компоненты
+          items:
+            type: object
+            properties:
+              component_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+    CraftRequest:
+      type: object
+      required:
+        - character_id
+        - recipe_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        recipe_id:
+          type: string
+        station_id:
+          type: string
+          nullable: true
+        quantity:
+          type: integer
+          default: 1
+          maximum: 100
+          description: Для mass production
+        use_boosts:
+          type: array
+          description: Использовать буст-предметы
+          items:
+            type: string
+            format: uuid
+    CraftingSession:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        recipe:
+          $ref: '#/components/schemas/CraftingRecipe'
+        status:
+          type: string
+          enum: [IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+        quantity:
+          type: integer
+        completed_count:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        time_remaining_seconds:
+          type: integer
+        success_chance:
+          type: number
+          format: float
+    CraftingResult:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        items_crafted:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quality:
+                type: string
+              quantity:
+                type: integer
+        experience_gained:
+          type: integer
+        components_consumed:
+          type: array
+          items:
+            type: object
+            properties:
+              component_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+    CraftingStation:
+      type: object
+      properties:
+        station_id:
+          type: string
+        name:
+          type: string
+          example: "Legendary Weapons Bench"
+        type:
+          type: string
+          enum: [WEAPONS_BENCH, ARMOR_BENCH, CYBERWARE_LAB, CHEMISTRY_LAB, GENERAL_WORKBENCH]
+        location_id:
+          type: string
+        available:
+          type: boolean
+        bonuses:
+          type: object
+          properties:
+            success_rate_bonus:
+              type: number
+              format: float
+            time_reduction:
+              type: number
+              format: float
+            quality_chance_bonus:
+              type: number
+              format: float
+    CraftingCalculation:
+      type: object
+      properties:
+        recipe_id:
+          type: string
+        character_skill_level:
+          type: integer
+        base_success_rate:
+          type: number
+        final_success_rate:
+          type: number
+          description: С учетом навыков и бонусов
+        base_time_seconds:
+          type: integer
+        final_time_seconds:
+          type: integer
+        quality_chances:
+          type: object
+          description: Шансы качества
+          properties:
+            poor:
+              type: number
+            common:
+              type: number
+            uncommon:
+              type: number
+            rare:
+              type: number
+            epic:
+              type: number
+            legendary:
+              type: number
+        missing_components:
+          type: array
+          items:
+            type: object
+            properties:
+              component_id:
+                type: string
+                format: uuid
+              required:
+                type: integer
+              available:
+                type: integer
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

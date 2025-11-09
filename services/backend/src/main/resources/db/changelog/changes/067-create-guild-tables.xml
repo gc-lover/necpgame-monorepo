@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="067-create-guild-tables" author="backend-agent">
+        <createTable tableName="guilds">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tag" type="VARCHAR(8)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="level" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="guilds" indexName="idx_guilds_name">
+            <column name="name"/>
+        </createIndex>
+
+        <createTable tableName="guild_members">
+            <column name="guild_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rank" type="VARCHAR(64)"/>
+            <column name="joined_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="guild_members" columnNames="guild_id, character_id" constraintName="pk_guild_members"/>
+
+        <addForeignKeyConstraint baseTableName="guild_members"
+                                 baseColumnNames="guild_id"
+                                 referencedTableName="guilds"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_guild_members_guild"
+                                 onDelete="CASCADE"/>
+
+        <createIndex tableName="guild_members" indexName="idx_guild_members_guild">
+            <column name="guild_id"/>
+        </createIndex>
+
+        <createIndex tableName="guild_members" indexName="idx_guild_members_character" unique="true">
+            <column name="character_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,456 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/quests/quest-engine
+    directory: api/v1/gameplay/quests/quest-engine
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    QuestStartRequest:
+      type: object
+      required: [characterId, questTemplateId]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        questTemplateId:
+          type: string
+        difficulty:
+          type: string
+          enum: [STORY, NORMAL, HARD, NIGHTMARE]
+        modifiers:
+          type: object
+          properties:
+            scaleEnemies:
+              type: boolean
+            timeLimitOverride:
+              type: integer
+              description: Override objective time limit in seconds
+    QuestStartResponse:
+      type: object
+      required: [quest, progress, dialogue]
+      properties:
+        quest:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestInstance'
+        progress:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestProgress'
+        dialogue:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestDialogueState'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestStartedEvent'
+    QuestInstanceListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './quest-engine-models.yaml#/components/schemas/QuestInstance'
+    QuestInstanceResponse:
+      type: object
+      required: [quest, progress, dialogue, pendingEvents]
+      properties:
+        quest:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestInstance'
+        progress:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestProgress'
+        dialogue:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestDialogueState'
+        pendingEvents:
+          type: array
+          items:
+            type: string
+          description: Pending external events awaited by the quest engine
+    QuestDialogueResponse:
+      type: object
+      required: [node, state]
+      properties:
+        node:
+          $ref: './quest-engine-models.yaml#/components/schemas/DialogueNode'
+        state:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestDialogueState'
+    QuestDialogueChoiceRequest:
+      type: object
+      required: [choiceId, characterId]
+      properties:
+        choiceId:
+          type: string
+        characterId:
+          type: string
+          format: uuid
+        overrides:
+          type: object
+          properties:
+            skipSkillCheck:
+              type: boolean
+            forceSuccess:
+              type: boolean
+            moderatorReason:
+              type: string
+              description: Required when forceSuccess is true
+    QuestDialogueChoiceResponse:
+      type: object
+      required: [node, choice, skillCheck]
+      properties:
+        node:
+          $ref: './quest-engine-models.yaml#/components/schemas/DialogueNode'
+        choice:
+          type: string
+        skillCheck:
+          $ref: './quest-engine-models.yaml#/components/schemas/SkillCheckResult'
+          nullable: true
+        events:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/QuestObjectiveUpdatedEvent'
+              - $ref: '#/components/schemas/QuestCompletedEvent'
+              - $ref: '#/components/schemas/QuestFailedEvent'
+    QuestProgressUpdateRequest:
+      type: object
+      required: [source, event]
+      properties:
+        source:
+          type: string
+          enum: [COMBAT, ITEM, NPC, WORLD, MANUAL]
+        event:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestObjective'
+        metadata:
+          type: object
+          additionalProperties: true
+    QuestProgressUpdateResponse:
+      type: object
+      required: [quest, progress, events]
+      properties:
+        quest:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestInstance'
+        progress:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestProgress'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjectiveUpdatedEvent'
+    QuestCompletionRequest:
+      type: object
+      properties:
+        completionMode:
+          type: string
+          enum: [AUTO, MANUAL, OVERRIDE]
+        verificationToken:
+          type: string
+          description: Optional token from narrative tool to confirm completion
+    QuestCompletionResponse:
+      type: object
+      required: [quest, rewards, events]
+      properties:
+        quest:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestInstance'
+        rewards:
+          type: array
+          items:
+            $ref: './quest-engine-models.yaml#/components/schemas/QuestReward'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestCompletedEvent'
+    QuestFailureRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    QuestFailureResponse:
+      type: object
+      required: [quest, events]
+      properties:
+        quest:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestInstance'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestFailedEvent'
+    QuestAbandonRequest:
+      type: object
+      required: [characterId, reason]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        penaltyAcknowledged:
+          type: boolean
+          default: false
+    QuestAbandonResponse:
+      type: object
+      required: [quest, events]
+      properties:
+        quest:
+          $ref: './quest-engine-models.yaml#/components/schemas/QuestInstance'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestAbandonedEvent'
+    QuestHistoryResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './quest-engine-models.yaml#/components/schemas/QuestAuditEntry'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    QuestSimulationRequest:
+      type: object
+      properties:
+        iterations:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        seed:
+          type: string
+        modifiers:
+          type: array
+          items:
+            type: string
+            example: "force-success-check:persuasion"
+    QuestSimulationResponse:
+      type: object
+      required: [templateId, simulations]
+      properties:
+        templateId:
+          type: string
+        simulations:
+          type: array
+          items:
+            $ref: './quest-engine-models.yaml#/components/schemas/QuestSimulationNode'
+        metrics:
+          type: object
+          properties:
+            completionRate:
+              type: number
+              format: float
+            failRate:
+              type: number
+              format: float
+            averageBranchDepth:
+              type: number
+              format: float
+            skillCheckSuccessRate:
+              type: number
+              format: float
+    QuestStartedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.quests.lifecycle
+        producer:
+          type: string
+          example: gameplay-service
+        payload:
+          type: object
+          required: [eventType, instanceId, questTemplateId, characterId, startedAt]
+          properties:
+            eventType:
+              type: string
+              enum: [quest.started]
+            instanceId:
+              type: string
+              format: uuid
+            questTemplateId:
+              type: string
+            characterId:
+              type: string
+              format: uuid
+            startedAt:
+              type: string
+              format: date-time
+        key:
+          type: string
+          description: Kafka partition key (characterId)
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [narrative-service, economy-service, telemetry, notification-service]
+    QuestObjectiveUpdatedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.quests.progress
+        producer:
+          type: string
+          example: gameplay-service
+        payload:
+          type: object
+          required: [eventType, instanceId, objectiveId, status, occurredAt]
+          properties:
+            eventType:
+              type: string
+              enum: [quest.objective-updated]
+            instanceId:
+              type: string
+              format: uuid
+            objectiveId:
+              type: string
+            status:
+              type: string
+              enum: [PENDING, IN_PROGRESS, COMPLETED, FAILED]
+            occurredAt:
+              type: string
+              format: date-time
+        key:
+          type: string
+          description: Kafka partition key (instanceId)
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [narrative-service, telemetry, notification-service]
+    QuestCompletedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.quests.lifecycle
+        producer:
+          type: string
+          example: gameplay-service
+        payload:
+          type: object
+          required: [eventType, instanceId, rewards, completedAt]
+          properties:
+            eventType:
+              type: string
+              enum: [quest.completed]
+            instanceId:
+              type: string
+              format: uuid
+            rewards:
+              type: array
+              items:
+                $ref: './quest-engine-models.yaml#/components/schemas/QuestReward'
+            completedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [economy-service, inventory-service, social-service, telemetry, notification-service]
+        retries:
+          type: object
+          properties:
+            strategy:
+              type: string
+              enum: [exponential-backoff]
+              default: exponential-backoff
+            maxRetries:
+              type: integer
+              default: 5
+    QuestFailedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.quests.lifecycle
+        producer:
+          type: string
+          example: gameplay-service
+        payload:
+          type: object
+          required: [eventType, instanceId, reason, failedAt]
+          properties:
+            eventType:
+              type: string
+              enum: [quest.failed]
+            instanceId:
+              type: string
+              format: uuid
+            reason:
+              type: string
+            failedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [narrative-service, telemetry, notification-service]
+    QuestAbandonedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.quests.lifecycle
+        producer:
+          type: string
+          example: gameplay-service
+        payload:
+          type: object
+          required: [eventType, instanceId, reason, abandonedAt]
+          properties:
+            eventType:
+              type: string
+              enum: [quest.abandoned]
+            instanceId:
+              type: string
+              format: uuid
+            reason:
+              type: string
+            abandonedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [narrative-service, telemetry, notification-service]
+    QuestSubscribedEvents:
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          items:
+            type: object
+            required: [topic, eventTypes, producer]
+            properties:
+              topic:
+                type: string
+                example: combat.events
+              eventTypes:
+                type: array
+                items:
+                  type: string
+                  example: combat.enemy-killed
+              producer:
+                type: string
+                example: combat-service
+              routingKey:
+                type: string
+                description: Routing key or partition key used for quest correlation
+

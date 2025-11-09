@@ -1,0 +1,502 @@
+package com.necpgame.economyservice.model;
+
+import java.net.URI;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.necpgame.economyservice.model.CompanyDetailsAllOfFinancialData;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.springframework.lang.Nullable;
+import org.openapitools.jackson.nullable.JsonNullable;
+import java.time.OffsetDateTime;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+
+import java.util.*;
+import jakarta.annotation.Generated;
+
+/**
+ * CompanyDetails
+ */
+
+
+public class CompanyDetails {
+
+  private @Nullable String ticker;
+
+  private @Nullable String name;
+
+  /**
+   * Gets or Sets sector
+   */
+  public enum SectorEnum {
+    SECURITY_TECH("security_tech"),
+    
+    MILITARY_TECH("military_tech"),
+    
+    BIOTECH("biotech"),
+    
+    MANUFACTURING("manufacturing"),
+    
+    FINANCE("finance"),
+    
+    MEDIA("media");
+
+    private final String value;
+
+    SectorEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static SectorEnum fromValue(String value) {
+      for (SectorEnum b : SectorEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+  }
+
+  private @Nullable SectorEnum sector;
+
+  private @Nullable BigDecimal currentPrice;
+
+  private @Nullable BigDecimal priceChange24h;
+
+  private @Nullable BigDecimal marketCap;
+
+  private @Nullable Integer sharesOutstanding;
+
+  private @Nullable BigDecimal dividendYield;
+
+  private @Nullable Integer volume24h;
+
+  private @Nullable String description;
+
+  private @Nullable String headquarters;
+
+  private @Nullable Integer foundedYear;
+
+  private @Nullable String ceo;
+
+  private @Nullable Integer employees;
+
+  private @Nullable CompanyDetailsAllOfFinancialData financialData;
+
+  @Valid
+  private List<Object> priceHistory = new ArrayList<>();
+
+  public CompanyDetails ticker(@Nullable String ticker) {
+    this.ticker = ticker;
+    return this;
+  }
+
+  /**
+   * Биржевой тикер (ARSK, MILT, etc.)
+   * @return ticker
+   */
+  
+  @Schema(name = "ticker", description = "Биржевой тикер (ARSK, MILT, etc.)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("ticker")
+  public @Nullable String getTicker() {
+    return ticker;
+  }
+
+  public void setTicker(@Nullable String ticker) {
+    this.ticker = ticker;
+  }
+
+  public CompanyDetails name(@Nullable String name) {
+    this.name = name;
+    return this;
+  }
+
+  /**
+   * Get name
+   * @return name
+   */
+  
+  @Schema(name = "name", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("name")
+  public @Nullable String getName() {
+    return name;
+  }
+
+  public void setName(@Nullable String name) {
+    this.name = name;
+  }
+
+  public CompanyDetails sector(@Nullable SectorEnum sector) {
+    this.sector = sector;
+    return this;
+  }
+
+  /**
+   * Get sector
+   * @return sector
+   */
+  
+  @Schema(name = "sector", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("sector")
+  public @Nullable SectorEnum getSector() {
+    return sector;
+  }
+
+  public void setSector(@Nullable SectorEnum sector) {
+    this.sector = sector;
+  }
+
+  public CompanyDetails currentPrice(@Nullable BigDecimal currentPrice) {
+    this.currentPrice = currentPrice;
+    return this;
+  }
+
+  /**
+   * Get currentPrice
+   * @return currentPrice
+   */
+  @Valid 
+  @Schema(name = "current_price", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("current_price")
+  public @Nullable BigDecimal getCurrentPrice() {
+    return currentPrice;
+  }
+
+  public void setCurrentPrice(@Nullable BigDecimal currentPrice) {
+    this.currentPrice = currentPrice;
+  }
+
+  public CompanyDetails priceChange24h(@Nullable BigDecimal priceChange24h) {
+    this.priceChange24h = priceChange24h;
+    return this;
+  }
+
+  /**
+   * Изменение за 24 часа (%)
+   * @return priceChange24h
+   */
+  @Valid 
+  @Schema(name = "price_change_24h", description = "Изменение за 24 часа (%)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("price_change_24h")
+  public @Nullable BigDecimal getPriceChange24h() {
+    return priceChange24h;
+  }
+
+  public void setPriceChange24h(@Nullable BigDecimal priceChange24h) {
+    this.priceChange24h = priceChange24h;
+  }
+
+  public CompanyDetails marketCap(@Nullable BigDecimal marketCap) {
+    this.marketCap = marketCap;
+    return this;
+  }
+
+  /**
+   * Рыночная капитализация
+   * @return marketCap
+   */
+  @Valid 
+  @Schema(name = "market_cap", description = "Рыночная капитализация", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("market_cap")
+  public @Nullable BigDecimal getMarketCap() {
+    return marketCap;
+  }
+
+  public void setMarketCap(@Nullable BigDecimal marketCap) {
+    this.marketCap = marketCap;
+  }
+
+  public CompanyDetails sharesOutstanding(@Nullable Integer sharesOutstanding) {
+    this.sharesOutstanding = sharesOutstanding;
+    return this;
+  }
+
+  /**
+   * Количество акций в обращении
+   * @return sharesOutstanding
+   */
+  
+  @Schema(name = "shares_outstanding", description = "Количество акций в обращении", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("shares_outstanding")
+  public @Nullable Integer getSharesOutstanding() {
+    return sharesOutstanding;
+  }
+
+  public void setSharesOutstanding(@Nullable Integer sharesOutstanding) {
+    this.sharesOutstanding = sharesOutstanding;
+  }
+
+  public CompanyDetails dividendYield(@Nullable BigDecimal dividendYield) {
+    this.dividendYield = dividendYield;
+    return this;
+  }
+
+  /**
+   * Доходность дивидендов (%)
+   * @return dividendYield
+   */
+  @Valid 
+  @Schema(name = "dividend_yield", description = "Доходность дивидендов (%)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("dividend_yield")
+  public @Nullable BigDecimal getDividendYield() {
+    return dividendYield;
+  }
+
+  public void setDividendYield(@Nullable BigDecimal dividendYield) {
+    this.dividendYield = dividendYield;
+  }
+
+  public CompanyDetails volume24h(@Nullable Integer volume24h) {
+    this.volume24h = volume24h;
+    return this;
+  }
+
+  /**
+   * Объем торгов за 24 часа
+   * @return volume24h
+   */
+  
+  @Schema(name = "volume_24h", description = "Объем торгов за 24 часа", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("volume_24h")
+  public @Nullable Integer getVolume24h() {
+    return volume24h;
+  }
+
+  public void setVolume24h(@Nullable Integer volume24h) {
+    this.volume24h = volume24h;
+  }
+
+  public CompanyDetails description(@Nullable String description) {
+    this.description = description;
+    return this;
+  }
+
+  /**
+   * Get description
+   * @return description
+   */
+  
+  @Schema(name = "description", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("description")
+  public @Nullable String getDescription() {
+    return description;
+  }
+
+  public void setDescription(@Nullable String description) {
+    this.description = description;
+  }
+
+  public CompanyDetails headquarters(@Nullable String headquarters) {
+    this.headquarters = headquarters;
+    return this;
+  }
+
+  /**
+   * Get headquarters
+   * @return headquarters
+   */
+  
+  @Schema(name = "headquarters", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("headquarters")
+  public @Nullable String getHeadquarters() {
+    return headquarters;
+  }
+
+  public void setHeadquarters(@Nullable String headquarters) {
+    this.headquarters = headquarters;
+  }
+
+  public CompanyDetails foundedYear(@Nullable Integer foundedYear) {
+    this.foundedYear = foundedYear;
+    return this;
+  }
+
+  /**
+   * Get foundedYear
+   * @return foundedYear
+   */
+  
+  @Schema(name = "founded_year", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("founded_year")
+  public @Nullable Integer getFoundedYear() {
+    return foundedYear;
+  }
+
+  public void setFoundedYear(@Nullable Integer foundedYear) {
+    this.foundedYear = foundedYear;
+  }
+
+  public CompanyDetails ceo(@Nullable String ceo) {
+    this.ceo = ceo;
+    return this;
+  }
+
+  /**
+   * Get ceo
+   * @return ceo
+   */
+  
+  @Schema(name = "ceo", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("ceo")
+  public @Nullable String getCeo() {
+    return ceo;
+  }
+
+  public void setCeo(@Nullable String ceo) {
+    this.ceo = ceo;
+  }
+
+  public CompanyDetails employees(@Nullable Integer employees) {
+    this.employees = employees;
+    return this;
+  }
+
+  /**
+   * Get employees
+   * @return employees
+   */
+  
+  @Schema(name = "employees", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("employees")
+  public @Nullable Integer getEmployees() {
+    return employees;
+  }
+
+  public void setEmployees(@Nullable Integer employees) {
+    this.employees = employees;
+  }
+
+  public CompanyDetails financialData(@Nullable CompanyDetailsAllOfFinancialData financialData) {
+    this.financialData = financialData;
+    return this;
+  }
+
+  /**
+   * Get financialData
+   * @return financialData
+   */
+  @Valid 
+  @Schema(name = "financial_data", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("financial_data")
+  public @Nullable CompanyDetailsAllOfFinancialData getFinancialData() {
+    return financialData;
+  }
+
+  public void setFinancialData(@Nullable CompanyDetailsAllOfFinancialData financialData) {
+    this.financialData = financialData;
+  }
+
+  public CompanyDetails priceHistory(List<Object> priceHistory) {
+    this.priceHistory = priceHistory;
+    return this;
+  }
+
+  public CompanyDetails addPriceHistoryItem(Object priceHistoryItem) {
+    if (this.priceHistory == null) {
+      this.priceHistory = new ArrayList<>();
+    }
+    this.priceHistory.add(priceHistoryItem);
+    return this;
+  }
+
+  /**
+   * Get priceHistory
+   * @return priceHistory
+   */
+  
+  @Schema(name = "price_history", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("price_history")
+  public List<Object> getPriceHistory() {
+    return priceHistory;
+  }
+
+  public void setPriceHistory(List<Object> priceHistory) {
+    this.priceHistory = priceHistory;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CompanyDetails companyDetails = (CompanyDetails) o;
+    return Objects.equals(this.ticker, companyDetails.ticker) &&
+        Objects.equals(this.name, companyDetails.name) &&
+        Objects.equals(this.sector, companyDetails.sector) &&
+        Objects.equals(this.currentPrice, companyDetails.currentPrice) &&
+        Objects.equals(this.priceChange24h, companyDetails.priceChange24h) &&
+        Objects.equals(this.marketCap, companyDetails.marketCap) &&
+        Objects.equals(this.sharesOutstanding, companyDetails.sharesOutstanding) &&
+        Objects.equals(this.dividendYield, companyDetails.dividendYield) &&
+        Objects.equals(this.volume24h, companyDetails.volume24h) &&
+        Objects.equals(this.description, companyDetails.description) &&
+        Objects.equals(this.headquarters, companyDetails.headquarters) &&
+        Objects.equals(this.foundedYear, companyDetails.foundedYear) &&
+        Objects.equals(this.ceo, companyDetails.ceo) &&
+        Objects.equals(this.employees, companyDetails.employees) &&
+        Objects.equals(this.financialData, companyDetails.financialData) &&
+        Objects.equals(this.priceHistory, companyDetails.priceHistory);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(ticker, name, sector, currentPrice, priceChange24h, marketCap, sharesOutstanding, dividendYield, volume24h, description, headquarters, foundedYear, ceo, employees, financialData, priceHistory);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class CompanyDetails {\n");
+    sb.append("    ticker: ").append(toIndentedString(ticker)).append("\n");
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    sector: ").append(toIndentedString(sector)).append("\n");
+    sb.append("    currentPrice: ").append(toIndentedString(currentPrice)).append("\n");
+    sb.append("    priceChange24h: ").append(toIndentedString(priceChange24h)).append("\n");
+    sb.append("    marketCap: ").append(toIndentedString(marketCap)).append("\n");
+    sb.append("    sharesOutstanding: ").append(toIndentedString(sharesOutstanding)).append("\n");
+    sb.append("    dividendYield: ").append(toIndentedString(dividendYield)).append("\n");
+    sb.append("    volume24h: ").append(toIndentedString(volume24h)).append("\n");
+    sb.append("    description: ").append(toIndentedString(description)).append("\n");
+    sb.append("    headquarters: ").append(toIndentedString(headquarters)).append("\n");
+    sb.append("    foundedYear: ").append(toIndentedString(foundedYear)).append("\n");
+    sb.append("    ceo: ").append(toIndentedString(ceo)).append("\n");
+    sb.append("    employees: ").append(toIndentedString(employees)).append("\n");
+    sb.append("    financialData: ").append(toIndentedString(financialData)).append("\n");
+    sb.append("    priceHistory: ").append(toIndentedString(priceHistory)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+}
+

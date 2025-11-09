@@ -1,0 +1,613 @@
+# Target Architecture:
+# - Microservice: world-service (port 8086)
+# - API Base: /api/v1/world/realtime
+# - Dependencies: auth-service, session-service, global-state-service, incident-service, matchmaking-service
+# - Frontend Module: modules/ops/realtime-monitoring (useOpsStore.realtimeInstances)
+# - UI: RealtimeInstanceCard, ZoneAllocationTable, TickRateChart, CellHeatmap
+# - Forms: ZoneTransferForm, InstanceRegistrationForm, EvacuationPlanForm
+# - Layouts: OpsConsoleLayout, GameMonitoringLayout
+# - Hooks: useRealtime, usePolling, useEventStream
+
+openapi: 3.0.3
+info:
+  title: Realtime Server Zones API
+  description: Управление realtime-инстансами Night City, распределением зон и эвакуацией игроков согласно `part1-architecture-zones.md`.
+  version: 1.0.0
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world/realtime
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - { name: Instances, description: Управление realtime-инстансами }
+  - { name: Zones, description: Зоны Night City и эвакуация }
+  - { name: Cells, description: Interest management по cell }
+  - { name: Players, description: Принудительный перенос игроков }
+  - { name: Alerts, description: SLA тревоги и события }
+paths:
+  /world/realtime/instances:
+    post:
+      tags: [Instances]
+      summary: Зарегистрировать realtime-инстанс
+      description: Регистрация нового realtime-сервера (tickRate 20/30/60, maxPlayers ≤ 2000).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealtimeInstanceRegistrationRequest'
+            examples:
+              watson:
+                value:
+                  instanceId: "rt-nyc-01"
+                  region: "night-city/eu-west"
+                  tickRate: 30
+                  maxZones: 6
+                  maxPlayers: 1200
+                  supportedZoneTypes: [urban, corporate, raid]
+                  metadata:
+                    build: "0.9.7"
+                    gitSha: "a1b2c3d"
+      responses:
+        '201':
+          description: Инстанс зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeInstance'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+    get:
+      tags: [Instances]
+      summary: Список realtime-инстансов
+      parameters:
+        - { in: query, name: status, schema: { type: string, enum: [ONLINE, MAINTENANCE, DRAINING, OFFLINE] } }
+        - { in: query, name: region, schema: { type: string } }
+        - { in: query, name: tickRate, schema: { type: integer, enum: [20, 30, 60] } }
+      responses:
+        '200':
+          description: Инстансы
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RealtimeInstance'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+  /world/realtime/instances/{instanceId}:
+    get:
+      tags: [Instances]
+      summary: Получить информацию об инстансе
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      responses:
+        '200':
+          description: Инстанс
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeInstance'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+    patch:
+      tags: [Instances]
+      summary: Обновить параметры инстанса
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealtimeInstanceUpdateRequest'
+      responses:
+        '200':
+          description: Инстанс обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeInstance'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+  /world/realtime/instances/{instanceId}/heartbeat:
+    post:
+      tags: [Instances]
+      summary: Heartbeat realtime-инстанса
+      description: Каждые 5 секунд сообщает активность, tickDuration, предупреждения (`tickDurationMs>50`).
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealtimeInstanceHeartbeatRequest'
+            examples:
+              overload:
+                value:
+                  timestamp: "2025-11-07T18:05:00Z"
+                  tickDurationMs: 58
+                  activeZones: 5
+                  activePlayers: 980
+                  warnings: [TICK_OVER_50MS]
+                  buildVersion: "0.9.7"
+      responses:
+        '202':
+          description: Heartbeat принят
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+  /world/realtime/instances/{instanceId}/metrics:
+    post:
+      tags: [Instances]
+      summary: Push метрик инстанса
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealtimeInstanceMetricsRequest'
+      responses:
+        '202':
+          description: Метрики приняты
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+  /world/realtime/zones:
+    get:
+      tags: [Zones]
+      summary: Список зон
+      parameters:
+        - { in: query, name: status, schema: { type: string, enum: [ONLINE, MAINTENANCE, MIGRATING, OFFLINE] } }
+        - { in: query, name: assignedServerId, schema: { type: string } }
+        - { in: query, name: isPvpEnabled, schema: { type: boolean } }
+      responses:
+        '200':
+          description: Зоны
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zone'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+  /world/realtime/zones/{zoneId}:
+    get:
+      tags: [Zones]
+      summary: Информация о зоне
+      parameters:
+        - $ref: '#/components/parameters/ZoneId'
+      responses:
+        '200':
+          description: Зона
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+    patch:
+      tags: [Zones]
+      summary: Обновить параметры зоны
+      parameters:
+        - $ref: '#/components/parameters/ZoneId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZoneUpdateRequest'
+      responses:
+        '200':
+          description: Зона обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+  /world/realtime/zones/{zoneId}/transfer:
+    post:
+      tags: [Zones]
+      summary: Запланировать перенос зоны
+      description: Запускает drain стратегию (batch evac + reassignment) с ETA.
+      parameters:
+        - $ref: '#/components/parameters/ZoneId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZoneTransferRequest'
+            examples:
+              citycenter:
+                value:
+                  targetInstanceId: "rt-nyc-03"
+                  drainStrategy: gradual
+                  priority: high
+                  reason: "CPU load 92%"
+                  scheduledFor: "2025-11-07T18:20:00Z"
+      responses:
+        '202':
+          description: Перенос запланирован
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+  /world/realtime/zones/{zoneId}/evacuate:
+    post:
+      tags: [Zones]
+      summary: Эвакуировать игроков из зоны
+      parameters:
+        - $ref: '#/components/parameters/ZoneId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZoneEvacuationPlan'
+            examples:
+              watsonDrain:
+                value:
+                  targetZoneId: "night-city.watson.safe"
+                  batchSize: 25
+                  intervalMs: 500
+                  notifyPlayers: true
+                  timeoutSeconds: 90
+      responses:
+        '202':
+          description: Эвакуация начата
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+  /world/realtime/zones/{zoneId}/cells:
+    get:
+      tags: [Cells]
+      summary: Сводка по cell в зоне
+      parameters:
+        - $ref: '#/components/parameters/ZoneId'
+        - { in: query, name: limit, schema: { type: integer, default: 100 } }
+        - { in: query, name: sort, schema: { type: string, enum: [playerCount, npcCount, latency] } }
+      responses:
+        '200':
+          description: Сводка клеток
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zoneId:
+                    type: string
+                  cells:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ZoneCellSummary'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+  /world/realtime/zones/{zoneId}/cells/{cellKey}/snapshot:
+    post:
+      tags: [Cells]
+      summary: Получить snapshot клетки
+      description: Возвращает `CellPlayerState[]` для отладки interest management. Redis ключ `zone_cell:{zoneId}:{x}:{y}`.
+      parameters:
+        - $ref: '#/components/parameters/ZoneId'
+        - $ref: '#/components/parameters/CellKey'
+      responses:
+        '200':
+          description: Snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneCellSnapshot'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+  /world/realtime/players/{playerId}/relocate:
+    post:
+      tags: [Players]
+      summary: Принудительно перенести игрока
+      parameters:
+        - $ref: '#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerRelocationRequest'
+      responses:
+        '202':
+          description: Перенос инициирован
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+  /world/realtime/alerts:
+    post:
+      tags: [Alerts]
+      summary: Зафиксировать SLA тревогу
+      description: Ops endpoint публикует событие в incident-service и Event Bus `realtime.alerts`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealtimeAlertRequest'
+            examples:
+              overCapacity:
+                value:
+                  alertType: ZONE_OVER_CAPACITY
+                  severity: critical
+                  sourceInstanceId: "rt-nyc-02"
+                  zoneId: "night-city.city-center"
+                  metrics:
+                    currentPlayers: 230
+                    maxPlayers: 200
+                  actions: [notifyOps, scheduleTransfer]
+      responses:
+        '202':
+          description: Alert зафиксирован
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+  parameters:
+    InstanceId:
+      name: instanceId
+      in: path
+      required: true
+      description: UUID realtime-инстанса
+      schema:
+        type: string
+    ZoneId:
+      name: zoneId
+      in: path
+      required: true
+      description: Идентификатор зоны (например `night-city.watson`)
+      schema:
+        type: string
+    CellKey:
+      name: cellKey
+      in: path
+      required: true
+      description: Координаты cell (x:y, шаг 100м)
+      schema:
+        type: string
+        pattern: '^[0-9]+:[0-9]+$'
+    PlayerId:
+      name: playerId
+      in: path
+      required: true
+      description: UUID игрока
+      schema:
+        type: string
+  schemas:
+    RealtimeInstance:
+      type: object
+      required: [instanceId, region, status, tickRate, maxZones, maxPlayers, currentPlayers]
+      properties:
+        instanceId: { type: string }
+        region: { type: string }
+        status: { type: string, enum: [ONLINE, MAINTENANCE, DRAINING, OFFLINE] }
+        tickRate: { type: integer, enum: [20, 30, 60] }
+        maxZones: { type: integer, minimum: 1, maximum: 12 }
+        maxPlayers: { type: integer, minimum: 100, maximum: 2000 }
+        currentPlayers: { type: integer, minimum: 0 }
+        cpuLoadPercent: { type: number, minimum: 0, maximum: 100 }
+        memoryUsageMb: { type: integer }
+        tags: { type: array, items: { type: string } }
+        startedAt: { type: string, format: date-time }
+        activeZones: { type: array, items: { type: string } }
+        health: { $ref: '#/components/schemas/InstanceHealth' }
+    InstanceHealth:
+      type: object
+      properties:
+        stabilityScore: { type: number, minimum: 0, maximum: 1 }
+        slaBreaches: { type: array, items: { type: string } }
+        lastHeartbeatAt: { type: string, format: date-time }
+    RealtimeInstanceRegistrationRequest:
+      type: object
+      required: [instanceId, region, tickRate, maxZones, maxPlayers]
+      properties:
+        instanceId: { type: string }
+        region: { type: string }
+        tickRate: { type: integer, enum: [20, 30, 60] }
+        maxZones: { type: integer, minimum: 1, maximum: 12 }
+        maxPlayers: { type: integer, minimum: 100, maximum: 2000 }
+        supportedZoneTypes: { type: array, items: { type: string } }
+        metadata: { type: object, additionalProperties: true }
+    RealtimeInstanceUpdateRequest:
+      type: object
+      properties:
+        status: { type: string, enum: [ONLINE, MAINTENANCE, DRAINING, OFFLINE] }
+        tickRate: { type: integer, enum: [20, 30, 60] }
+        maxZones: { type: integer, minimum: 1, maximum: 12 }
+        maxPlayers: { type: integer, minimum: 100, maximum: 2000 }
+        priority: { type: string, enum: [low, normal, high] }
+        metadata: { type: object, additionalProperties: true }
+    RealtimeInstanceHeartbeatRequest:
+      type: object
+      required: [timestamp, tickDurationMs, activeZones, activePlayers]
+      properties:
+        timestamp: { type: string, format: date-time }
+        tickDurationMs: { type: number, minimum: 0 }
+        activeZones: { type: integer, minimum: 0 }
+        activePlayers: { type: integer, minimum: 0 }
+        warnings: { type: array, items: { type: string, enum: [TICK_OVER_50MS, CAPACITY_OVER_85, REDIS_LATENCY_HIGH] } }
+        buildVersion: { type: string }
+    RealtimeInstanceMetricsRequest:
+      type: object
+      required: [percentileTick, packetsPerSecond]
+      properties:
+        percentileTick: { type: object, required: [p50, p95], properties: { p50: { type: number }, p95: { type: number } } }
+        packetsPerSecond: { type: integer }
+        redisLatencyMs: { type: number }
+        interestQueueDepth: { type: integer }
+        netBandwidthMbps: { type: number }
+    Zone:
+      type: object
+      required: [zoneId, zoneName, zoneType, status, maxPlayers, currentPlayers]
+      properties:
+        zoneId: { type: string }
+        zoneName: { type: string }
+        zoneType: { type: string, enum: [urban, suburban, corporate, industrial, raid, safe] }
+        status: { type: string, enum: [ONLINE, MAINTENANCE, MIGRATING, OFFLINE] }
+        assignedServerId: { type: string }
+        maxPlayers: { type: integer, minimum: 10, maximum: 400 }
+        currentPlayers: { type: integer, minimum: 0 }
+        boundaries: { type: object, properties: { minX: { type: number }, minY: { type: number }, maxX: { type: number }, maxY: { type: number } } }
+        settings: { $ref: '#/components/schemas/ZoneSettings' }
+        stability: { $ref: '#/components/schemas/ZoneState' }
+    ZoneSettings:
+      type: object
+      properties:
+        isPvpEnabled: { type: boolean }
+        isSafeZone: { type: boolean }
+        weatherProfile: { type: string }
+        timeOfDay: { type: string, enum: [day, night, dusk, dawn] }
+    ZoneState:
+      type: object
+      properties:
+        loadFactor: { type: number, minimum: 0, maximum: 1 }
+        stabilityScore: { type: number, minimum: 0, maximum: 1 }
+        lastMigratedAt: { type: string, format: date-time }
+        scheduledMaintenanceAt: { type: string, format: date-time }
+    ZoneUpdateRequest:
+      type: object
+      properties:
+        maxPlayers: { type: integer, minimum: 10, maximum: 400 }
+        status: { type: string, enum: [ONLINE, MAINTENANCE, MIGRATING, OFFLINE] }
+        settings: { $ref: '#/components/schemas/ZoneSettings' }
+    ZoneTransferRequest:
+      type: object
+      required: [targetInstanceId, drainStrategy]
+      properties:
+        targetInstanceId: { type: string }
+        drainStrategy: { type: string, enum: [instant, gradual] }
+        priority: { type: string, enum: [low, normal, high, critical] }
+        reason: { type: string }
+        scheduledFor: { type: string, format: date-time }
+    ZoneEvacuationPlan:
+      type: object
+      required: [targetZoneId, batchSize, intervalMs]
+      properties:
+        targetZoneId: { type: string }
+        batchSize: { type: integer, minimum: 5, maximum: 100 }
+        intervalMs: { type: integer, minimum: 100 }
+        notifyPlayers: { type: boolean }
+        timeoutSeconds: { type: integer, minimum: 30 }
+    ZoneCellSummary:
+      type: object
+      required: [cellKey, playerCount, npcCount]
+      properties:
+        cellKey: { type: string, pattern: '^[0-9]+:[0-9]+$' }
+        playerCount: { type: integer, minimum: 0 }
+        npcCount: { type: integer, minimum: 0 }
+        averageLatencyMs: { type: number }
+        lastUpdate: { type: string, format: date-time }
+    ZoneCellSnapshot:
+      type: object
+      required: [cellKey, players]
+      properties:
+        cellKey: { type: string }
+        players: { type: array, items: { $ref: '#/components/schemas/CellPlayerState' } }
+    CellPlayerState:
+      type: object
+      required: [playerId, position]
+      properties:
+        playerId: { type: string }
+        position: { type: object, properties: { x: { type: number }, y: { type: number }, z: { type: number } } }
+        velocity: { type: object, properties: { x: { type: number }, y: { type: number }, z: { type: number } } }
+        status: { type: string, enum: [idle, moving, combat, downed] }
+        equipmentTier: { type: string }
+    PlayerRelocationRequest:
+      type: object
+      required: [targetZoneId]
+      properties:
+        targetZoneId: { type: string }
+        targetInstanceId: { type: string }
+        reason: { type: string }
+        preserveSession: { type: boolean }
+    RealtimeAlertRequest:
+      type: object
+      required: [alertType, severity]
+      properties:
+        alertType: { type: string, enum: [TICK_OVER_50MS, ZONE_OVER_CAPACITY, INSTANCE_UNREACHABLE, REDIS_DEGRADED] }
+        severity: { type: string, enum: [info, warning, critical] }
+        sourceInstanceId: { type: string }
+        zoneId: { type: string }
+        metrics: { type: object, additionalProperties: true }
+        actions: { type: array, items: { type: string } }
+

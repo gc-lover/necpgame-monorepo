@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: CDN Management API
+  description: |
+    API для управления CDN (Content Delivery Network) NECPGAME.
+    
+    **Функции:**
+    - CDN status monitoring
+    - Cache purge
+    - Analytics (bandwidth, requests)
+    - Asset distribution
+  version: 1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: CDN Status
+  - name: CDN Management
+  - name: CDN Analytics
+
+paths:
+  /technical/cdn/status:
+    get:
+      tags:
+        - CDN Status
+      summary: CDN status
+      description: Status всех CDN PoPs (Points of Presence)
+      operationId: getCdnStatus
+      responses:
+        '200':
+          description: CDN status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pops:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PopStatus'
+                  overall_status:
+                    type: string
+                    enum: ["operational", "degraded", "down"]
+
+  /technical/cdn/purge:
+    post:
+      tags:
+        - CDN Management
+      summary: Purge CDN cache
+      description: Очистка CDN cache для определенных assets
+      operationId: purgeCdn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                urls:
+                  type: array
+                  items:
+                    type: string
+                purge_all:
+                  type: boolean
+      responses:
+        '202':
+          description: Purge started
+
+  /technical/cdn/analytics:
+    get:
+      tags:
+        - CDN Analytics
+      summary: CDN analytics
+      description: Bandwidth, requests, cache hit rate
+      operationId: getCdnAnalytics
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: ["1h", "24h", "7d", "30d"]
+      responses:
+        '200':
+          description: CDN analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdnAnalytics'
+
+components:
+  schemas:
+    PopStatus:
+      type: object
+      properties:
+        pop_id:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+          enum: ["up", "down"]
+        requests_per_second:
+          type: number
+
+    CdnAnalytics:
+      type: object
+      properties:
+        total_bandwidth_gb:
+          type: number
+        total_requests:
+          type: integer
+        cache_hit_rate:
+          type: number
+        average_latency_ms:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+

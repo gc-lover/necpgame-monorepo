@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="085-create-crafting-sessions-table" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="crafting_sessions"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="crafting_sessions">
+            <column name="session_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recipe_id" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(24)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="success_chance" type="NUMERIC(6,4)"/>
+            <column name="base_time_seconds" type="INT"/>
+            <column name="final_time_seconds" type="INT"/>
+            <column name="started_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="estimated_completion" type="TIMESTAMP"/>
+            <column name="completed_at" type="TIMESTAMP"/>
+            <column name="boosts_json" type="JSONB"/>
+            <column name="items_crafted_json" type="JSONB"/>
+            <column name="components_consumed_json" type="JSONB"/>
+            <column name="failure_reason" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="crafting_sessions"
+                                 baseColumnNames="character_id"
+                                 referencedTableName="characters"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_crafting_sessions_character"
+                                 onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint baseTableName="crafting_sessions"
+                                 baseColumnNames="recipe_id"
+                                 referencedTableName="crafting_recipes"
+                                 referencedColumnNames="recipe_id"
+                                 constraintName="fk_crafting_sessions_recipe"
+                                 onDelete="RESTRICT"/>
+
+        <createIndex tableName="crafting_sessions" indexName="idx_crafting_sessions_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="crafting_sessions" indexName="idx_crafting_sessions_recipe">
+            <column name="recipe_id"/>
+        </createIndex>
+        <createIndex tableName="crafting_sessions" indexName="idx_crafting_sessions_status">
+            <column name="status"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="crafting_sessions"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

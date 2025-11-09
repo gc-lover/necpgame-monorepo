@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="074-create-progression-backend-tables" author="backend-agent">
+        <createTable tableName="character_progression">
+            <column name="character_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="level" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience_to_next_level" type="BIGINT" defaultValueNumeric="1000">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unspent_attribute_points" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unspent_skill_points" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_experience_earned" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_attribute_points_spent" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_skill_points_spent" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="level_cap" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_progression"
+                baseColumnNames="character_id"
+                constraintName="fk_character_progression_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createTable tableName="skill_experience">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="skill_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_level" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience_to_next_level" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="skill_experience"
+                baseColumnNames="character_id"
+                constraintName="fk_skill_experience_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="skill_experience"
+                baseColumnNames="skill_id"
+                constraintName="fk_skill_experience_skill"
+                referencedTableName="skills"
+                referencedColumnNames="id"/>
+
+        <addUniqueConstraint tableName="skill_experience"
+                             columnNames="character_id, skill_id"
+                             constraintName="uk_skill_experience_character_skill"/>
+
+        <createIndex tableName="skill_experience" indexName="idx_skill_experience_character">
+            <column name="character_id"/>
+        </createIndex>
+
+        <createIndex tableName="skill_experience" indexName="idx_skill_experience_skill">
+            <column name="skill_id"/>
+        </createIndex>
+
+        <createTable tableName="progression_milestones">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="requirement_type" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_value" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reward_title" type="VARCHAR(150)"/>
+            <column name="rewards_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="character_milestones">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="milestone_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_milestones"
+                baseColumnNames="character_id"
+                constraintName="fk_character_milestones_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="character_milestones"
+                baseColumnNames="milestone_id"
+                constraintName="fk_character_milestones_milestone"
+                referencedTableName="progression_milestones"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addUniqueConstraint tableName="character_milestones"
+                             columnNames="character_id, milestone_id"
+                             constraintName="uk_character_milestones_character_milestone"/>
+
+        <createIndex tableName="character_milestones" indexName="idx_character_milestones_character">
+            <column name="character_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="character_milestones"/>
+            <dropTable tableName="progression_milestones"/>
+            <dropTable tableName="skill_experience"/>
+            <dropTable tableName="character_progression"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

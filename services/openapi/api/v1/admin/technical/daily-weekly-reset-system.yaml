@@ -1,0 +1,433 @@
+openapi: 3.0.3
+info:
+  title: Daily/Weekly Reset System API
+  version: 1.0.0
+  description: |
+    API для системы автоматических сбросов.
+    
+    Функционал:
+    - Daily resets (ежедневные сбросы в 00:00 server time)
+    - Weekly resets (еженедельные сбросы в понедельник 00:00)
+    - Quest resets (сброс daily/weekly квестов)
+    - Limit resets (сброс лимитов: auction posts, crafting, etc.)
+    - Bonus resets (сброс бонусов: first win of the day)
+    - Vendor inventory resets
+    - Instance resets (dungeons, raids)
+    - Scheduled jobs (cron)
+    - Reset notifications
+    
+    Источник: .BRAIN/05-technical/backend/daily-weekly-reset-system.md v1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Reset Status
+    description: Статус сбросов
+  - name: Reset Schedule
+    description: Расписание сбросов
+  - name: Reset Administration
+    description: Администрирование сбросов
+
+paths:
+  /technical/resets/status:
+    get:
+      summary: Получить статус всех сбросов
+      operationId: getResetStatus
+      tags: [Reset Status]
+      description: Когда был последний сброс и когда будет следующий
+      responses:
+        '200':
+          description: Статус сбросов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetStatusResponse'
+
+  /technical/resets/status/{reset_type}:
+    get:
+      summary: Получить статус конкретного типа сброса
+      operationId: getResetTypeStatus
+      tags: [Reset Status]
+      parameters:
+        - name: reset_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [DAILY, WEEKLY, MONTHLY]
+      responses:
+        '200':
+          description: Статус сброса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetTypeStatus'
+
+  /technical/resets/player/{player_id}:
+    get:
+      summary: Получить статус сбросов для игрока
+      operationId: getPlayerResetStatus
+      tags: [Reset Status]
+      description: Что было сброшено, что доступно для сброса
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус сбросов игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerResetStatus'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /technical/resets/schedule:
+    get:
+      summary: Получить расписание всех сбросов
+      operationId: getResetSchedule
+      tags: [Reset Schedule]
+      responses:
+        '200':
+          description: Расписание сбросов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetSchedule'
+
+  /technical/resets/admin/trigger:
+    post:
+      summary: Принудительно запустить сброс
+      operationId: triggerReset
+      tags: [Reset Administration]
+      description: Только для администраторов. Запускает сброс вручную.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerResetRequest'
+      responses:
+        '200':
+          description: Сброс запущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetExecutionResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /technical/resets/admin/schedule:
+    put:
+      summary: Обновить расписание сброса
+      operationId: updateResetSchedule
+      tags: [Reset Administration]
+      description: Только для администраторов
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduleRequest'
+      responses:
+        '200':
+          description: Расписание обновлено
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /technical/resets/history:
+    get:
+      summary: Получить историю сбросов
+      operationId: getResetHistory
+      tags: [Reset Status]
+      parameters:
+        - name: reset_type
+          in: query
+          schema:
+            type: string
+            enum: [DAILY, WEEKLY, MONTHLY]
+        - name: days
+          in: query
+          description: За сколько дней показать историю
+          schema:
+            type: integer
+            default: 7
+            maximum: 90
+      responses:
+        '200':
+          description: История сбросов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResetHistoryEntry'
+
+components:
+  schemas:
+    ResetStatusResponse:
+      type: object
+      properties:
+        daily:
+          $ref: '#/components/schemas/ResetTypeStatus'
+        weekly:
+          $ref: '#/components/schemas/ResetTypeStatus'
+        monthly:
+          $ref: '#/components/schemas/ResetTypeStatus'
+        server_time:
+          type: string
+          format: date-time
+
+    ResetTypeStatus:
+      type: object
+      properties:
+        reset_type:
+          type: string
+          enum: [DAILY, WEEKLY, MONTHLY]
+        last_reset:
+          type: string
+          format: date-time
+          example: "2077-06-01T00:00:00Z"
+        next_reset:
+          type: string
+          format: date-time
+          example: "2077-06-02T00:00:00Z"
+        time_until_reset:
+          type: string
+          description: Человекочитаемое время до сброса
+          example: "5 hours 30 minutes"
+        time_until_reset_seconds:
+          type: integer
+          description: Секунды до сброса
+          example: 19800
+        reset_items:
+          type: array
+          description: Что сбрасывается
+          items:
+            type: string
+          example: ["daily_quests", "daily_limits", "vendor_inventory"]
+
+    PlayerResetStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        daily:
+          $ref: '#/components/schemas/PlayerResetItems'
+        weekly:
+          $ref: '#/components/schemas/PlayerResetItems'
+        last_daily_reset:
+          type: string
+          format: date-time
+        last_weekly_reset:
+          type: string
+          format: date-time
+
+    PlayerResetItems:
+      type: object
+      properties:
+        quests:
+          type: object
+          properties:
+            available_slots:
+              type: integer
+              example: 5
+            completed_today:
+              type: integer
+              example: 3
+        limits:
+          type: object
+          properties:
+            auction_posts:
+              type: object
+              properties:
+                used:
+                  type: integer
+                max:
+                  type: integer
+            crafting_slots:
+              type: object
+              properties:
+                used:
+                  type: integer
+                max:
+                  type: integer
+        bonuses:
+          type: object
+          properties:
+            first_win_claimed:
+              type: boolean
+            daily_login_claimed:
+              type: boolean
+        instances:
+          type: array
+          items:
+            type: object
+            properties:
+              instance_id:
+                type: string
+              name:
+                type: string
+              attempts_used:
+                type: integer
+              max_attempts:
+                type: integer
+              resets_at:
+                type: string
+                format: date-time
+
+    ResetSchedule:
+      type: object
+      properties:
+        daily:
+          $ref: '#/components/schemas/ScheduleConfig'
+        weekly:
+          $ref: '#/components/schemas/ScheduleConfig'
+        monthly:
+          $ref: '#/components/schemas/ScheduleConfig'
+
+    ScheduleConfig:
+      type: object
+      properties:
+        cron_expression:
+          type: string
+          example: "0 0 * * *"
+          description: Cron выражение для расписания
+        timezone:
+          type: string
+          example: "UTC"
+        enabled:
+          type: boolean
+        items_to_reset:
+          type: array
+          items:
+            type: string
+          example: ["quests", "limits", "bonuses", "vendors", "instances"]
+
+    TriggerResetRequest:
+      type: object
+      required:
+        - reset_type
+      properties:
+        reset_type:
+          type: string
+          enum: [DAILY, WEEKLY, MONTHLY]
+        target:
+          type: string
+          enum: [ALL_PLAYERS, SINGLE_PLAYER]
+          default: ALL_PLAYERS
+        player_id:
+          type: string
+          format: uuid
+          description: Обязательно если target=SINGLE_PLAYER
+        items:
+          type: array
+          description: Что именно сбросить (если не указано - всё)
+          items:
+            type: string
+          example: ["quests", "limits"]
+        reason:
+          type: string
+          description: Причина ручного сброса
+          example: "Bug fix compensation"
+
+    UpdateScheduleRequest:
+      type: object
+      required:
+        - reset_type
+      properties:
+        reset_type:
+          type: string
+          enum: [DAILY, WEEKLY, MONTHLY]
+        cron_expression:
+          type: string
+        timezone:
+          type: string
+        enabled:
+          type: boolean
+        items_to_reset:
+          type: array
+          items:
+            type: string
+
+    ResetExecutionResult:
+      type: object
+      properties:
+        reset_id:
+          type: string
+          format: uuid
+        reset_type:
+          type: string
+        execution_time:
+          type: string
+          format: date-time
+        affected_players:
+          type: integer
+        items_reset:
+          type: array
+          items:
+            type: string
+        execution_duration_ms:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              error_message:
+                type: string
+
+    ResetHistoryEntry:
+      type: object
+      properties:
+        reset_id:
+          type: string
+          format: uuid
+        reset_type:
+          type: string
+          enum: [DAILY, WEEKLY, MONTHLY]
+        execution_time:
+          type: string
+          format: date-time
+        triggered_by:
+          type: string
+          enum: [SCHEDULED, MANUAL_ADMIN]
+        affected_players:
+          type: integer
+        success:
+          type: boolean
+        execution_duration_ms:
+          type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

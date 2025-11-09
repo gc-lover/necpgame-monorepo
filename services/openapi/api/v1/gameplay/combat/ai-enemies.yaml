@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: AI Enemies API
+  version: 1.0.0
+  description: |
+    API для AI противников и врагов.
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-ai-enemies.md v1.0.0
+    
+    10+ типов врагов, 3 босса, AI тактики, adaptive learning, morale system
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: AI Enemies
+    description: AI противники
+
+paths:
+  /gameplay/combat/ai-enemies/types:
+    get:
+      summary: Получить типы врагов
+      operationId: getEnemyTypes
+      tags:
+        - AI Enemies
+      responses:
+        '200':
+          description: Типы врагов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enemy_types:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EnemyType'
+
+  /gameplay/combat/ai-enemies/{enemy_id}:
+    get:
+      summary: Детали врага
+      operationId: getEnemy
+      tags:
+        - AI Enemies
+      parameters:
+        - name: enemy_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали врага
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Enemy'
+
+  /gameplay/combat/ai-enemies/bosses:
+    get:
+      summary: Получить боссов
+      operationId: getBosses
+      tags:
+        - AI Enemies
+      responses:
+        '200':
+          description: Список боссов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bosses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Boss'
+
+  /gameplay/combat/ai-enemies/tactics:
+    get:
+      summary: Получить AI тактики
+      operationId: getAITactics
+      tags:
+        - AI Enemies
+      responses:
+        '200':
+          description: AI тактики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tactics:
+                    type: array
+                    items:
+                      type: object
+
+  /gameplay/combat/ai-enemies/behavior:
+    post:
+      summary: Получить поведение AI
+      description: Возвращает поведение AI на основе ситуации
+      operationId: getAIBehavior
+      tags:
+        - AI Enemies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enemy_id:
+                  type: string
+                situation:
+                  type: object
+      responses:
+        '200':
+          description: Поведение AI
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /gameplay/combat/ai-enemies/difficulty-scaling:
+    get:
+      summary: Получить scaling факторы
+      operationId: getDifficultyScaling
+      tags:
+        - AI Enemies
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Scaling факторы
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    EnemyType:
+      type: object
+      properties:
+        type_id:
+          type: string
+        name:
+          type: string
+        faction:
+          type: string
+        tier:
+          type: integer
+        stats:
+          type: object
+        tactics:
+          type: array
+          items:
+            type: string
+        loot_table:
+          type: string
+
+    Enemy:
+      type: object
+      properties:
+        enemy_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        level:
+          type: integer
+        stats:
+          type: object
+        ai_behavior:
+          type: object
+        morale:
+          type: string
+          enum: [high, normal, low, broken]
+
+    Boss:
+      type: object
+      properties:
+        boss_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [raid, story, world]
+        hp:
+          type: number
+        phases:
+          type: array
+          items:
+            type: object
+        mechanics:
+          type: array
+          items:
+            type: object
+

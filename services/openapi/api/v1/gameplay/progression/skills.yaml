@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: Skills API
+  version: 1.0.0
+  description: |
+    API для системы навыков.
+    
+    Источник: .BRAIN/02-gameplay/progression/progression-skills.md v1.1.0
+    
+    7 категорий навыков (35+ навыков):
+    - Combat: Gunplay, Melee Combat, Throwing, Heavy Weapons, Explosives
+    - Stealth: Sneaking, Lockpicking, Pickpocketing, Disguise, Infiltration
+    - Tech: Engineering, Crafting, Hacking, Electronics, Demolitions
+    - Social: Persuasion, Intimidation, Barter, Leadership, Deception
+    - Knowledge: Medicine, Science, History, Languages, Streetwise
+    - Athletics: Running, Climbing, Swimming, Driving, Piloting
+    - Perception: Awareness, Investigation, Tracking, Spot Hidden, Listen
+    
+    Прокачка: "через боль" (KENSHI стиль) + классовые модификаторы
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/progression
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Skills
+    description: Система навыков
+
+paths:
+  /gameplay/progression/skills:
+    get:
+      summary: Получить навыки персонажа
+      description: |
+        Возвращает все навыки персонажа с текущими уровнями и прогрессом.
+        Включает общие и классовые навыки.
+      operationId: getSkills
+      tags:
+        - Skills
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          description: Фильтр по категории навыков
+          schema:
+            type: string
+            enum: [combat, stealth, tech, social, knowledge, athletics, perception]
+      responses:
+        '200':
+          description: Навыки персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillsResponse'
+              examples:
+                character_skills:
+                  summary: Навыки персонажа Solo
+                  value:
+                    character_id: "char_123"
+                    skills:
+                      - skill_id: "gunplay"
+                        category: "combat"
+                        rank: 5
+                        progress: 450
+                        progress_to_next: 550
+                        class_modifier: 1.2
+                      - skill_id: "athletics"
+                        category: "athletics"
+                        rank: 3
+                        progress: 120
+                        progress_to_next: 180
+                        class_modifier: 1.0
+
+  /gameplay/progression/skills/{skill_id}:
+    get:
+      summary: Получить детали навыка
+      description: Возвращает детальную информацию о навыке
+      operationId: getSkill
+      tags:
+        - Skills
+      parameters:
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали навыка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillDetails'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/progression/skills/increase:
+    post:
+      summary: Повысить навык
+      description: |
+        Повышает навык на основе действий персонажа.
+        Прокачка "через боль" (KENSHI стиль): использование в сложных ситуациях дает больше опыта.
+      operationId: increaseSkill
+      tags:
+        - Skills
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - skill_id
+                - experience_gained
+              properties:
+                character_id:
+                  type: string
+                skill_id:
+                  type: string
+                experience_gained:
+                  type: number
+                difficulty_modifier:
+                  type: number
+                  description: Модификатор сложности ситуации (x1.5 для сложных ситуаций)
+      responses:
+        '200':
+          description: Навык повышен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skill_id:
+                    type: string
+                  new_rank:
+                    type: integer
+                  new_progress:
+                    type: number
+                  rank_increased:
+                    type: boolean
+                  bonuses_unlocked:
+                    type: array
+                    items:
+                      type: string
+
+  /gameplay/progression/skills/categories:
+    get:
+      summary: Получить категории навыков
+      description: Возвращает все категории навыков с описаниями
+      operationId: getSkillCategories
+      tags:
+        - Skills
+      responses:
+        '200':
+          description: Категории навыков
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        category_id:
+                          type: string
+                        name:
+                          type: string
+                        skills_count:
+                          type: integer
+
+components:
+  schemas:
+    SkillsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+
+    Skill:
+      type: object
+      properties:
+        skill_id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        rank:
+          type: integer
+          description: Текущий ранг навыка (0-10)
+        progress:
+          type: number
+          description: Прогресс к следующему рангу
+        progress_to_next:
+          type: number
+        class_modifier:
+          type: number
+          description: Модификатор от класса персонажа
+
+    SkillDetails:
+      type: object
+      properties:
+        skill_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        max_rank:
+          type: integer
+        requirements:
+          type: object
+          description: Требования для продвинутых навыков
+        bonuses_by_rank:
+          type: array
+          description: Бонусы на каждом ранге
+          items:
+            type: object

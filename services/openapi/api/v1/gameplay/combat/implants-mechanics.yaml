@@ -1,0 +1,339 @@
+openapi: 3.0.3
+info:
+  title: Implants Mechanics API
+  version: 1.0.0
+  description: |
+    API для дополнительных механик имплантов.
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-implants-mechanics.md v1.1.0
+    
+    Хакерство имплантов:
+    - Отключение способностей (требует подключение к сети)
+    - Взлом защиты (ICE уровни)
+    - Временный контроль (роботы/дроны, некоторые импланты)
+    - Защита: ICE-импланты, анти-хакерство навыки
+    
+    Совместимость:
+    - Несовместимость: конфликты (Сандевистан + кибердека = конфликт)
+    - Сет-бонусы: бренды (2/4/6 сет-бонусы)
+    - Синергии: комбинации усиливают друг друга
+    
+    Долговечность:
+    - Износ: использование снижает эффективность
+    - Ремонт: у риппердоков, самостоятельно (TECH навык)
+    - Поломка: при 0% эффективности отключается
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Implants Mechanics
+    description: Продвинутые механики имплантов
+
+paths:
+  /gameplay/combat/implants/{implant_id}/hack:
+    post:
+      summary: Хакнуть имплант врага
+      description: |
+        Пытается взломать имплант врага.
+        Требует подключение к сети, преодоление ICE защиты.
+      operationId: hackEnemyImplant
+      tags:
+        - Implants Mechanics
+      parameters:
+        - name: implant_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - target_id
+                - hack_type
+              properties:
+                character_id:
+                  type: string
+                target_id:
+                  type: string
+                hack_type:
+                  type: string
+                  enum: [disable, control, overload, data_steal]
+                quickhack_id:
+                  type: string
+                  description: ID quickhack для использования
+            examples:
+              disable_implant:
+                summary: Отключить имплант
+                value:
+                  character_id: "char_123"
+                  target_id: "enemy_001"
+                  hack_type: "disable"
+                  quickhack_id: "quickhack_disable_implant"
+      responses:
+        '200':
+          description: Взлом выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  target_id:
+                    type: string
+                  implant_id:
+                    type: string
+                  effect:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      duration:
+                        type: number
+                  ice_bypassed:
+                    type: boolean
+                  trace_risk:
+                    type: number
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/combat/implants/compatibility-check:
+    post:
+      summary: Проверить совместимость имплантов
+      description: |
+        Проверяет совместимость набора имплантов.
+        Выявляет конфликты, сет-бонусы, синергии.
+      operationId: checkImplantCompatibility
+      tags:
+        - Implants Mechanics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - implant_ids
+              properties:
+                character_id:
+                  type: string
+                implant_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: Список ID имплантов для проверки
+            examples:
+              check_set:
+                summary: Проверка сет-бонусов
+                value:
+                  character_id: "char_123"
+                  implant_ids:
+                    - "implant_arasaka_001"
+                    - "implant_arasaka_002"
+                    - "implant_arasaka_003"
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityResult'
+              examples:
+                set_bonus:
+                  summary: Сет-бонус активирован
+                  value:
+                    compatible: true
+                    conflicts: []
+                    set_bonuses:
+                      - set_name: "Arasaka Elite"
+                        pieces: 3
+                        active_bonuses:
+                          - "+10% damage"
+                          - "+5% crit chance"
+                    synergies:
+                      - type: "cyberdeck_sandevistan"
+                        description: "Кибердек и Сандевистан конфликтуют"
+                        active: false
+
+  /gameplay/combat/implants/{implant_id}/repair:
+    post:
+      summary: Отремонтировать имплант
+      description: |
+        Ремонтирует изношенный имплант.
+        Можно у риппердока или самостоятельно (требует TECH навык).
+      operationId: repairImplant
+      tags:
+        - Implants Mechanics
+      parameters:
+        - name: implant_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - repair_method
+              properties:
+                character_id:
+                  type: string
+                repair_method:
+                  type: string
+                  enum: [ripperdoc, self_repair]
+                ripperdoc_id:
+                  type: string
+                  description: ID риппердока (если repair_method=ripperdoc)
+                materials:
+                  type: array
+                  items:
+                    type: string
+                  description: Материалы для ремонта
+      responses:
+        '200':
+          description: Имплант отремонтирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  implant_id:
+                    type: string
+                  durability_before:
+                    type: number
+                  durability_after:
+                    type: number
+                  cost:
+                    type: number
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/combat/implants/{implant_id}/durability:
+    get:
+      summary: Получить состояние импланта
+      description: |
+        Возвращает текущее состояние импланта.
+        Долговечность, эффективность, статус.
+      operationId: getImplantDurability
+      tags:
+        - Implants Mechanics
+      parameters:
+        - name: implant_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Состояние импланта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantDurability'
+              examples:
+                worn_implant:
+                  summary: Изношенный имплант
+                  value:
+                    implant_id: "implant_001"
+                    durability: 35
+                    efficiency: 70
+                    status: "degraded"
+                    repair_required: true
+                    estimated_failure: 15
+                    description: "Имплант изношен, эффективность снижена"
+
+components:
+  schemas:
+    CompatibilityResult:
+      type: object
+      properties:
+        compatible:
+          type: boolean
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              implant_1:
+                type: string
+              implant_2:
+                type: string
+              conflict_type:
+                type: string
+              description:
+                type: string
+        set_bonuses:
+          type: array
+          items:
+            type: object
+            properties:
+              set_name:
+                type: string
+              pieces:
+                type: integer
+              active_bonuses:
+                type: array
+                items:
+                  type: string
+        synergies:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              description:
+                type: string
+              active:
+                type: boolean
+
+    ImplantDurability:
+      type: object
+      properties:
+        implant_id:
+          type: string
+        durability:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Долговечность (%)
+        efficiency:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Эффективность (%)
+        status:
+          type: string
+          enum: [perfect, good, degraded, critical, broken]
+        repair_required:
+          type: boolean
+        estimated_failure:
+          type: number
+          description: Оценка до поломки (часов использования)

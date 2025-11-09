@@ -1,0 +1,348 @@
+tradeSessionsRoot:
+  post:
+    tags:
+      - TradeSessions
+    summary: Создать торговую сессию
+    description: |
+      Инициирует окно P2P торговли между двумя персонажами. Сессия проверяет
+      дистанцию не более десяти метров, наличие активных сделок у обоих игроков и
+      блокирует повторные приглашения до завершения текущей сессии.
+    operationId: createTradeSession
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/index.yaml#/components/schemas/CreateTradeSessionRequest'
+          examples:
+            default:
+              value:
+                initiator_character_id: "1b3c5f60-40b5-4b62-8438-4e7d6daa58da"
+                recipient_character_id: "4f3f59bb-945e-4f6e-8b15-742908e6a2fa"
+                zone_id: "neon_market_district"
+                initiator_position:
+                  x: 134.21
+                  y: 12.4
+                  z: 8.9
+                recipient_position:
+                  x: 135.02
+                  y: 12.31
+                  z: 9.05
+                expires_in_seconds: 300
+                metadata:
+                  channel_id: "trade-hall-05"
+    responses:
+      '201':
+        description: Торговая сессия создана
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/TradeSession'
+            examples:
+              created:
+                value:
+                  session_id: "f9cdb4d8-5c24-4c11-9360-8fe1dcad3b9e"
+                  status: pending
+                  created_at: "2025-11-08T19:05:32Z"
+                  expires_at: "2025-11-08T19:10:32Z"
+                  zone_id: "neon_market_district"
+                  distance_meters: 4.6
+                  participants:
+                    initiator:
+                      character_id: "1b3c5f60-40b5-4b62-8438-4e7d6daa58da"
+                      account_id: "a84f8f18-5f7d-4ffd-9321-2c2b56d5c201"
+                      display_name: "RageKit"
+                    counterparty:
+                      character_id: "4f3f59bb-945e-4f6e-8b15-742908e6a2fa"
+                      account_id: "bfc28ce4-9ee9-4f71-836e-87ec794d1bd8"
+                      display_name: "NovaFox"
+                  offers:
+                    initiator:
+                      version: 1
+                      items: []
+                      currencies: []
+                      confirmed: false
+                      locked: false
+                    counterparty:
+                      version: 1
+                      items: []
+                      currencies: []
+                      confirmed: false
+                      locked: false
+                  confirmation_state:
+                    initiator_confirmed: false
+                    counterparty_confirmed: false
+                    final_status: waiting
+      '400':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+      '401':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+      '403':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+      '409':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+      '422':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+      '429':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+      '500':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+tradeSessionById:
+  get:
+    tags:
+      - TradeSessions
+    summary: Получить состояние торговой сессии
+    description: Возвращает актуальные предложения, подтверждения и дистанцию для указанной сессии.
+    operationId: getTradeSession
+    parameters:
+      - $ref: '../schemas/index.yaml#/components/parameters/SessionId'
+    responses:
+      '200':
+        description: Состояние торговой сессии
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/TradeSession'
+      '401':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+      '403':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+      '404':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+      '410':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/ResourceGone'
+      '500':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+tradeSessionOffer:
+  post:
+    tags:
+      - TradeSessions
+    summary: Обновить предложение участника
+    description: |
+      Синхронизирует список предметов и валюты одной стороны. Поддерживает
+      добавление, обновление и удаление предметов. После блокировки повторное
+      изменение невозможно.
+    operationId: updateTradeOffer
+    parameters:
+      - $ref: '../schemas/index.yaml#/components/parameters/SessionId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/index.yaml#/components/schemas/UpdateTradeOfferRequest'
+          examples:
+            default:
+              value:
+                character_id: "1b3c5f60-40b5-4b62-8438-4e7d6daa58da"
+                offer_version: 1
+                items:
+                  - item_id: "57aa0c24-1e3e-4e4a-93cb-2ad574d8b94a"
+                    inventory_entry_id: "e741e974-884c-4dcf-8e46-3595a2dfb54f"
+                    quantity: 1
+                    bind_type: "none"
+                currencies:
+                  - currency_id: "eurodollars"
+                    amount: 2500
+                note: "Добавляю имплант и немного евро"
+    responses:
+      '200':
+        description: Предложение обновлено
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/TradeSession'
+      '400':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+      '401':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+      '403':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+      '404':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+      '409':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+      '422':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+      '500':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+tradeSessionLock:
+  post:
+    tags:
+      - TradeSessions
+    summary: Заблокировать предложение перед подтверждением
+    description: Переводит предложение участника в неизменяемое состояние до завершения сделки.
+    operationId: lockTradeOffer
+    parameters:
+      - $ref: '../schemas/index.yaml#/components/parameters/SessionId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/index.yaml#/components/schemas/LockTradeOfferRequest'
+          examples:
+            default:
+              value:
+                character_id: "1b3c5f60-40b5-4b62-8438-4e7d6daa58da"
+                offer_version: 2
+    responses:
+      '200':
+        description: Предложение заблокировано
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/TradeSession'
+      '400':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+      '401':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+      '403':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+      '404':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+      '409':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+      '422':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+      '500':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+tradeSessionAccept:
+  post:
+    tags:
+      - TradeSessions
+    summary: Подтвердить сделку участником
+    description: |
+      Участник подтверждает готовность завершить обмен. После двойного
+      подтверждения происходит передача предметов и валюты.
+    operationId: confirmTradeSession
+    parameters:
+      - $ref: '../schemas/index.yaml#/components/parameters/SessionId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/index.yaml#/components/schemas/ConfirmTradeSessionRequest'
+          examples:
+            default:
+              value:
+                character_id: "4f3f59bb-945e-4f6e-8b15-742908e6a2fa"
+                offer_version: 2
+                confirmation_signature: "b2c938d4-49ad-4b10-8e64-4c7999feb436"
+    responses:
+      '200':
+        description: Подтверждение принято
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/TradeSession'
+      '400':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+      '401':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+      '403':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+      '404':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+      '409':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+      '422':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+      '500':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+tradeSessionCancel:
+  post:
+    tags:
+      - TradeSessions
+    summary: Отменить торговую сессию
+    description: Завершает активную торговлю по инициативе участника или системного сервиса.
+    operationId: cancelTradeSession
+    parameters:
+      - $ref: '../schemas/index.yaml#/components/parameters/SessionId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/index.yaml#/components/schemas/CancelTradeSessionRequest'
+          examples:
+            default:
+              value:
+                character_id: "1b3c5f60-40b5-4b62-8438-4e7d6daa58da"
+                reason: "initiator_cancelled"
+                comment: "Игрок отошел от терминала"
+    responses:
+      '200':
+        description: Торговая сессия отменена
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/TradeSession'
+      '400':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+      '401':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+      '403':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+      '404':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+      '422':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+      '500':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+tradeSessionDistanceCheck:
+  post:
+    tags:
+      - TradeSessions
+    summary: Обновить дистанцию между участниками
+    description: |
+      Выполняет ручную проверку расстояния между персонажами и завершает сделку при
+      превышении лимита. Доступно клиентским приложениям и сервисам, подписанным на
+      события перемещения.
+    operationId: tradeSessionDistanceCheck
+    parameters:
+      - $ref: '../schemas/index.yaml#/components/parameters/SessionId'
+    security:
+      - BearerAuth: []
+      - ServiceToken: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/index.yaml#/components/schemas/DistanceCheckRequest'
+          examples:
+            default:
+              value:
+                character_id: "4f3f59bb-945e-4f6e-8b15-742908e6a2fa"
+                current_position:
+                  x: 135.02
+                  y: 12.31
+                  z: 9.05
+                counterparty_position:
+                  x: 134.21
+                  y: 12.4
+                  z: 8.9
+    responses:
+      '200':
+        description: Дистанция обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/index.yaml#/components/schemas/DistanceCheckResponse'
+      '400':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+      '401':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+      '403':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+      '404':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+      '409':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+      '422':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+      '500':
+        $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+

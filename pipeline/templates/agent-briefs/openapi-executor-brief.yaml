@@ -1,0 +1,17 @@
+agent: OpenAPI Executor
+tasks_source:
+  description: Очередь заданий API
+  location: "shared/trackers/queues/api/queued.yaml"
+supporting_files:
+  - "services/openapi/tasks/templates/api-generation-task-template.md"
+  - "pipeline/checklists/api-to-openapi.yaml"
+work_instructions:
+  - "Создавай или обновляй спецификацию в `services/openapi/api/v1/<domain>/`, соблюдая `info.x-microservice` и общие компоненты."
+  - "Поддерживай DRY: выноси общие схемы в shared, следи за версиями и servers."
+validation_scripts:
+  - "pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiSpec <spec>"
+  - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
+completion_actions:
+  - "Обнови `implementation-tracker.yaml` (`api.completed`) и перенеси карточку в `shared/trackers/queues/api/review.yaml` (валидация `check-queue-yaml.ps1`)."
+  - "Зафиксируй Activity Log с ссылкой на спецификацию и чеклист."
+

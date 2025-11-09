@@ -1,0 +1,553 @@
+openapi: 3.0.3
+info:
+  title: World Events Framework API
+  version: 1.0.0
+  description: |
+    API для фреймворка мировых событий.
+    
+    Функционал:
+    - World events по эпохам (1990-2093)
+    - DC scaling по временным периодам
+    - AI sliders для фракций
+    - D&D event generators (d100)
+    - Economic multipliers
+    - Technology access levels
+    - Quest hooks
+    - Travel events integration
+    - Era-specific mechanics
+    
+    Эпохи:
+    - 1990-2000: Pre-Collapse
+    - 2000-2020: Fourth Corporate War
+    - 2020-2040: Destruction & Restoration
+    - 2040-2060: Time of the Red
+    - 2060-2077: Corporate Control (Canon)
+    - 2078-2090: New Equilibrium
+    - 2090-2093: Pre-Revolution
+    
+    Источники: .BRAIN/02-gameplay/world/events/ (5 документов v0.1.0-v1.0.0)
+
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/gameplay/world
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: World Events
+    description: Мировые события
+  - name: Era Mechanics
+    description: Механики эпох
+  - name: Event Generation
+    description: Генерация событий
+
+paths:
+  /gameplay/world/events:
+    get:
+      summary: Получить активные мировые события
+      operationId: getActiveWorldEvents
+      tags: [World Events]
+      parameters:
+        - name: era
+          in: query
+          schema:
+            type: string
+            enum: [1990-2000, 2000-2020, 2020-2040, 2040-2060, 2060-2077, 2078-2090, 2090-2093]
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [GLOBAL, REGIONAL, LOCAL, FACTION, ECONOMIC, TECHNOLOGICAL]
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Активные события
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WorldEvent'
+                      current_era:
+                        type: string
+
+  /gameplay/world/events/{event_id}:
+    get:
+      summary: Получить детали мирового события
+      operationId: getWorldEvent
+      tags: [World Events]
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEventDetailed'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/world/events/generate:
+    post:
+      summary: Сгенерировать событие
+      operationId: generateWorldEvent
+      tags: [Event Generation]
+      description: Используется backend для генерации случайных событий (d100)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateEventRequest'
+      responses:
+        '200':
+          description: Событие сгенерировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedEvent'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/world/era/current:
+    get:
+      summary: Получить информацию о текущей эре
+      operationId: getCurrentEra
+      tags: [Era Mechanics]
+      responses:
+        '200':
+          description: Текущая эра
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EraInfo'
+
+  /gameplay/world/era/{era}/mechanics:
+    get:
+      summary: Получить механики эры
+      operationId: getEraMechanics
+      tags: [Era Mechanics]
+      parameters:
+        - name: era
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Механики эры
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EraMechanics'
+
+  /gameplay/world/era/{era}/dc-scaling:
+    get:
+      summary: Получить DC скейлинг для эры
+      operationId: getDCScaling
+      tags: [Era Mechanics]
+      description: Сложность проверок (D&D DC) зависит от эры
+      parameters:
+        - name: era
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: DC скейлинг
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DCScaling'
+
+  /gameplay/world/factions/ai-sliders:
+    get:
+      summary: Получить AI-слайдеры фракций
+      operationId: getFactionAISliders
+      tags: [Era Mechanics]
+      description: Влияние и агрессивность фракций
+      responses:
+        '200':
+          description: AI слайдеры
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  factions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FactionAISlider'
+
+  /gameplay/world/events/character/{character_id}/affected:
+    get:
+      summary: Получить события, влияющие на персонажа
+      operationId: getCharacterAffectedEvents
+      tags: [World Events]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: События, влияющие на персонажа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_effects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventEffect'
+
+  /gameplay/world/events/economy/multipliers:
+    get:
+      summary: Получить экономические множители от событий
+      operationId: getEconomicMultipliers
+      tags: [World Events]
+      responses:
+        '200':
+          description: Экономические множители
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicMultipliers'
+
+  /gameplay/world/events/technology/access:
+    get:
+      summary: Получить доступные технологии
+      operationId: getTechnologyAccess
+      tags: [Era Mechanics]
+      description: Зависит от текущей эры
+      responses:
+        '200':
+          description: Доступ к технологиям
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available_tech:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TechnologyAccess'
+
+components:
+  schemas:
+    WorldEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+        name:
+          type: string
+          example: "The DataKrash (2020)"
+        type:
+          type: string
+          enum: [GLOBAL, REGIONAL, LOCAL, FACTION, ECONOMIC, TECHNOLOGICAL]
+        era:
+          type: string
+        severity:
+          type: string
+          enum: [MINOR, MODERATE, MAJOR, CATASTROPHIC]
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+        affected_regions:
+          type: array
+          items:
+            type: string
+
+    WorldEventDetailed:
+      allOf:
+        - $ref: '#/components/schemas/WorldEvent'
+        - type: object
+          properties:
+            description:
+              type: string
+            lore_background:
+              type: string
+            effects:
+              type: array
+              items:
+                $ref: '#/components/schemas/EventEffect'
+            quest_hooks:
+              type: array
+              description: Квесты, связанные с событием
+              items:
+                type: object
+                properties:
+                  quest_id:
+                    type: string
+                  trigger_condition:
+                    type: string
+            faction_involvement:
+              type: array
+              items:
+                type: object
+                properties:
+                  faction:
+                    type: string
+                  role:
+                    type: string
+                    enum: [INSTIGATOR, VICTIM, BENEFICIARY, NEUTRAL]
+
+    EventEffect:
+      type: object
+      properties:
+        effect_id:
+          type: string
+        effect_type:
+          type: string
+          enum: [ECONOMIC, SOCIAL, TECHNOLOGICAL, COMBAT, REPUTATION]
+        description:
+          type: string
+        modifier:
+          type: object
+          properties:
+            type:
+              type: string
+            value:
+              type: number
+        duration:
+          type: string
+          description: Длительность эффекта
+        stackable:
+          type: boolean
+
+    GenerateEventRequest:
+      type: object
+      required:
+        - era
+        - location
+      properties:
+        era:
+          type: string
+        location:
+          type: string
+        event_type:
+          type: string
+          nullable: true
+        force_generate:
+          type: boolean
+          default: false
+          description: Для тестирования
+
+    GeneratedEvent:
+      type: object
+      properties:
+        event:
+          $ref: '#/components/schemas/WorldEvent'
+        generation_roll:
+          type: integer
+          description: Результат броска d100
+          minimum: 1
+          maximum: 100
+        generation_table:
+          type: string
+          description: Какая таблица использована
+
+    EraInfo:
+      type: object
+      properties:
+        era:
+          type: string
+          example: "2060-2077"
+        name:
+          type: string
+          example: "Corporate Control"
+        description:
+          type: string
+        key_features:
+          type: array
+          items:
+            type: string
+        major_factions:
+          type: array
+          items:
+            type: string
+        technology_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        danger_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, EXTREME]
+        active_events_count:
+          type: integer
+
+    EraMechanics:
+      type: object
+      properties:
+        era:
+          type: string
+        dc_scaling:
+          $ref: '#/components/schemas/DCScaling'
+        economic_state:
+          type: object
+          properties:
+            inflation_rate:
+              type: number
+            average_prices_multiplier:
+              type: number
+            currency_stability:
+              type: string
+        technology_restrictions:
+          type: array
+          description: Недоступные технологии
+          items:
+            type: string
+        social_mechanics:
+          type: object
+          properties:
+            reputation_volatility:
+              type: number
+            faction_hostility_multiplier:
+              type: number
+
+    DCScaling:
+      type: object
+      properties:
+        era:
+          type: string
+        base_dc:
+          type: integer
+          description: Базовая сложность проверок
+        modifiers:
+          type: object
+          properties:
+            combat:
+              type: integer
+            social:
+              type: integer
+            hacking:
+              type: integer
+            crafting:
+              type: integer
+        example_challenges:
+          type: array
+          items:
+            type: object
+            properties:
+              challenge:
+                type: string
+              dc:
+                type: integer
+
+    FactionAISlider:
+      type: object
+      properties:
+        faction:
+          type: string
+        influence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Влияние в мире (0-100)
+        aggression:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Агрессивность (0-10)
+        wealth:
+          type: number
+          format: float
+          description: Экономическая мощь
+        technology:
+          type: number
+          format: float
+          minimum: 1
+          maximum: 10
+          description: Технологический уровень
+        relations:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Отношения с другими фракциями (-100 to 100)
+
+    EconomicMultipliers:
+      type: object
+      properties:
+        price_multipliers:
+          type: object
+          additionalProperties:
+            type: number
+          example:
+            weapons: 1.5
+            cyberware: 2.0
+            food: 0.8
+        trade_restrictions:
+          type: array
+          items:
+            type: object
+            properties:
+              item_category:
+                type: string
+              restriction_type:
+                type: string
+                enum: [BANNED, REGULATED, TAXED]
+              multiplier:
+                type: number
+        currency_exchange_rates:
+          type: object
+          additionalProperties:
+            type: number
+
+    TechnologyAccess:
+      type: object
+      properties:
+        technology_id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          enum: [WEAPONS, CYBERWARE, VEHICLES, NETRUNNING, MANUFACTURING]
+        available:
+          type: boolean
+        required_era:
+          type: string
+        restricted_factions:
+          type: array
+          items:
+            type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

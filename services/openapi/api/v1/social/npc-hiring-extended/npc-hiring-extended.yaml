@@ -1,0 +1,405 @@
+openapi: 3.0.3
+info:
+  title: NPC Hiring Extended API
+  version: 1.0.0
+  description: |
+    API для расширенной системы найма NPC.
+    
+    Функционал:
+    - NPC types (Combat, Tech, Hacker, Medic, Driver, Merchant)
+    - Hiring process (поиск, переговоры, контракт)
+    - Management (команды, assignments, performance)
+    - Effectiveness tracking (KPI, bonuses, penalties)
+    - Limits (max NPC, slots, costs)
+    - Economy impact (salaries, bonuses, equipment)
+    - Advanced features (training, loyalty, dismissal)
+    - World impact (NPC availability, market)
+    
+    Источники: .BRAIN/02-gameplay/social/npc-hiring-*.md (8 documents v1.0.0)
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/gameplay/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: NPC Hiring
+    description: Найм NPC
+  - name: NPC Management
+    description: Управление нанятыми NPC
+  - name: NPC Performance
+    description: Эффективность NPC
+
+paths:
+  /gameplay/social/npc-hiring/available:
+    get:
+      summary: Получить доступных NPC для найма
+      operationId: getAvailableNPCsForHire
+      tags: [NPC Hiring]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [COMBAT, TECH, HACKER, MEDIC, DRIVER, MERCHANT, BODYGUARD]
+        - name: min_skill_level
+          in: query
+          schema:
+            type: integer
+        - name: max_cost_per_day
+          in: query
+          schema:
+            type: integer
+        - name: region
+          in: query
+          schema:
+            type: string
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Доступные NPC
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HireableNPC'
+
+  /gameplay/social/npc-hiring/hire:
+    post:
+      summary: Нанять NPC
+      operationId: hireNPC
+      tags: [NPC Hiring]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HireRequest'
+      responses:
+        '201':
+          description: NPC нанят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiredNPC'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/social/npc-hiring/character/{character_id}/hired:
+    get:
+      summary: Получить нанятых NPC персонажа
+      operationId: getHiredNPCs
+      tags: [NPC Management]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Нанятые NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hired_npcs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HiredNPC'
+                  total_cost_per_day:
+                    type: integer
+                  slots_used:
+                    type: integer
+                  max_slots:
+                    type: integer
+
+  /gameplay/social/npc-hiring/{hire_id}/assign:
+    post:
+      summary: Назначить задание NPC
+      operationId: assignTaskToNPC
+      tags: [NPC Management]
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTaskRequest'
+      responses:
+        '200':
+          description: Задание назначено
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/social/npc-hiring/{hire_id}/performance:
+    get:
+      summary: Получить показатели эффективности NPC
+      operationId: getNPCPerformance
+      tags: [NPC Performance]
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Показатели эффективности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCPerformance'
+
+  /gameplay/social/npc-hiring/{hire_id}/dismiss:
+    post:
+      summary: Уволить NPC
+      operationId: dismissNPC
+      tags: [NPC Management]
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                severance_pay:
+                  type: integer
+                  description: Выходное пособие
+      responses:
+        '200':
+          description: NPC уволен
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/social/npc-hiring/{hire_id}/train:
+    post:
+      summary: Обучить NPC
+      operationId: trainNPC
+      tags: [NPC Management]
+      description: Улучшить навыки нанятого NPC
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                skill:
+                  type: string
+                training_duration_hours:
+                  type: integer
+                cost:
+                  type: integer
+      responses:
+        '200':
+          description: Обучение начато
+
+  /gameplay/social/npc-hiring/market:
+    get:
+      summary: Получить состояние рынка найма
+      operationId: getHiringMarket
+      tags: [NPC Hiring]
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Рынок найма
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  average_costs:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  availability:
+                    type: object
+                    description: Доступность по типам
+                    additionalProperties:
+                      type: integer
+                  market_trends:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    HireableNPC:
+      type: object
+      properties:
+        npc_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [COMBAT, TECH, HACKER, MEDIC, DRIVER, MERCHANT, BODYGUARD]
+        skills:
+          type: object
+          additionalProperties:
+            type: integer
+        cost_per_day:
+          type: integer
+        loyalty:
+          type: integer
+          minimum: 0
+          maximum: 100
+        specialization:
+          type: string
+        equipment:
+          type: array
+          items:
+            type: string
+        availability:
+          type: string
+          enum: [AVAILABLE, BUSY, EXCLUSIVE]
+
+    HireRequest:
+      type: object
+      required:
+        - character_id
+        - npc_id
+        - contract_duration_days
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+        contract_duration_days:
+          type: integer
+        offered_salary_per_day:
+          type: integer
+        bonuses:
+          type: object
+          nullable: true
+
+    HiredNPC:
+      type: object
+      properties:
+        hire_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        npc:
+          $ref: '#/components/schemas/HireableNPC'
+        contract:
+          type: object
+          properties:
+            duration_days:
+              type: integer
+            salary_per_day:
+              type: integer
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        current_assignment:
+          type: string
+          nullable: true
+        loyalty:
+          type: integer
+        performance_rating:
+          type: number
+          format: float
+
+    AssignTaskRequest:
+      type: object
+      required:
+        - task_type
+      properties:
+        task_type:
+          type: string
+          enum: [COMBAT_SUPPORT, CRAFTING, TRADING, PROTECTION, TRANSPORT, GATHERING]
+        task_details:
+          type: object
+          additionalProperties: true
+        duration_hours:
+          type: integer
+
+    NPCPerformance:
+      type: object
+      properties:
+        hire_id:
+          type: string
+          format: uuid
+        tasks_completed:
+          type: integer
+        tasks_failed:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+        value_generated:
+          type: integer
+          description: Экономическая ценность созданная NPC
+        cost_total:
+          type: integer
+        roi:
+          type: number
+          format: float
+        loyalty_changes:
+          type: array
+          items:
+            type: object
+        performance_trend:
+          type: string
+          enum: [IMPROVING, STABLE, DECLINING]
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

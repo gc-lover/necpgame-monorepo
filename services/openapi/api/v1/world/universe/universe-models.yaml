@@ -1,0 +1,335 @@
+openapi: 3.0.3
+info:
+  title: Universe Core Models
+  version: 1.0.0
+components:
+  parameters:
+    LeagueId:
+      name: league_id
+      in: query
+      description: League identifier (UUID)
+      schema:
+        type: string
+        format: uuid
+    LeagueIdPath:
+      name: leagueId
+      in: path
+      description: League identifier (UUID)
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PhaseCode:
+      name: phase
+      in: query
+      description: Phase code filter (kebab-case)
+      schema:
+        type: string
+        pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+    EventType:
+      name: eventType
+      in: query
+      description: Filter by timeline event type
+      schema:
+        type: string
+        enum: [technology, faction, narrative, economy, anomaly, other]
+    FromYear:
+      name: from_year
+      in: query
+      description: Game year start (2020-2090)
+      schema:
+        type: integer
+        minimum: 2020
+        maximum: 2090
+    ToYear:
+      name: to_year
+      in: query
+      description: Game year end (2020-2090)
+      schema:
+        type: integer
+        minimum: 2020
+        maximum: 2090
+    EventId:
+      name: eventId
+      in: path
+      description: Timeline event identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RealYear:
+      name: real_year
+      in: query
+      description: Real world year filter for league start/end
+      schema:
+        type: integer
+        minimum: 2020
+        maximum: 2090
+    LeagueStatus:
+      name: status
+      in: query
+      description: League lifecycle status
+      schema:
+        type: string
+        enum: [active, scheduled, concluded, archived]
+    AnomalySeverity:
+      name: severity
+      in: query
+      description: Filter anomalies by severity
+      schema:
+        type: string
+        enum: [low, medium, high, critical]
+    AccessLevel:
+      name: access_level
+      in: query
+      description: Required access level for blackwall insights
+      schema:
+        type: string
+        enum: [public, restricted, classified, blacksite]
+  schemas:
+    League:
+      type: object
+      required: [id, title, startYear, endYear, realDurationDays, accelerationFactor, resetType, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 120
+        startYear:
+          type: integer
+          minimum: 2020
+          maximum: 2090
+        endYear:
+          type: integer
+          minimum: 2020
+          maximum: 2090
+        realDurationDays:
+          type: integer
+          minimum: 1
+          maximum: 240
+        accelerationFactor:
+          type: number
+          format: float
+          minimum: 1
+          maximum: 365
+        resetType:
+          type: string
+          enum: [soft, partial, full]
+        status:
+          type: string
+          enum: [active, scheduled, concluded, archived]
+        description:
+          type: string
+    LeaguePhase:
+      type: object
+      required: [id, leagueId, code, displayName, timeframe, technologyLevel]
+      properties:
+        id:
+          type: string
+          format: uuid
+        leagueId:
+          type: string
+          format: uuid
+        code:
+          type: string
+        displayName:
+          type: string
+        timeframe:
+          type: object
+          required: [fromYear, toYear]
+          properties:
+            fromYear:
+              type: integer
+              minimum: 2020
+              maximum: 2090
+            toYear:
+              type: integer
+              minimum: 2020
+              maximum: 2090
+            realStartDate:
+              type: string
+              format: date-time
+            realEndDate:
+              type: string
+              format: date-time
+        technologyLevel:
+          type: string
+          enum: [baseline, augmented, singularity, transhuman, post-singularity]
+        unlocks:
+          type: array
+          items:
+            type: string
+        narrativeHooks:
+          type: array
+          items:
+            type: string
+    TimelineEvent:
+      type: object
+      required: [id, leagueId, phaseCode, eventType, timestampGame, description]
+      properties:
+        id:
+          type: string
+          format: uuid
+        leagueId:
+          type: string
+          format: uuid
+        phaseCode:
+          type: string
+        eventType:
+          type: string
+          enum: [technology, faction, narrative, economy, anomaly, other]
+        timestampGame:
+          type: string
+        timestampReal:
+          type: string
+          format: date-time
+        description:
+          type: string
+        relatedEntities:
+          type: array
+          items:
+            type: object
+            required: [entityType, entityId]
+            properties:
+              entityType:
+                type: string
+              entityId:
+                type: string
+        impact:
+          type: object
+          properties:
+            gameplay:
+              type: string
+            economy:
+              type: string
+            narrative:
+              type: string
+    SimulationStage:
+      type: object
+      required: [id, order, name, description, visibilityLevel]
+      properties:
+        id:
+          type: string
+          format: uuid
+        order:
+          type: integer
+          minimum: 1
+          maximum: 10
+        name:
+          type: string
+        description:
+          type: string
+        visibilityLevel:
+          type: string
+          enum: [public, restricted, classified]
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationTrigger'
+        unlockedSystems:
+          type: array
+          items:
+            type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high, extreme]
+        isCurrent:
+          type: boolean
+    SimulationTrigger:
+      type: object
+      required: [id, triggerType, conditionExpression]
+      properties:
+        id:
+          type: string
+          format: uuid
+        triggerType:
+          type: string
+          enum: [global_event, progression, anomaly, admin]
+        conditionExpression:
+          type: string
+        source:
+          type: string
+        requiredProgress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        autoAdvance:
+          type: boolean
+    Anomaly:
+      type: object
+      required: [id, detectedAt, location, severity, description]
+      properties:
+        id:
+          type: string
+          format: uuid
+        detectedAt:
+          type: string
+          format: date-time
+        location:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        description:
+          type: string
+        mitigation:
+          type: string
+        linkedEvents:
+          type: array
+          items:
+            type: string
+    BlackwallInsight:
+      type: object
+      required: [id, accessLevel, summary, discoveredBy]
+      properties:
+        id:
+          type: string
+          format: uuid
+        accessLevel:
+          type: string
+          enum: [public, restricted, classified, blacksite]
+        summary:
+          type: string
+        discoveredBy:
+          type: string
+        relatedQuestIds:
+          type: array
+          items:
+            type: string
+        unlocks:
+          type: array
+          items:
+            type: string
+    ProgressionMetrics:
+      type: object
+      required: [leagueId, currentStage, completionPercent, averageRevealRatePerDay, forecastNextStageDate]
+      properties:
+        leagueId:
+          type: string
+          format: uuid
+        currentStage:
+          type: string
+        completionPercent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        averageRevealRatePerDay:
+          type: number
+          format: float
+        forecastNextStageDate:
+          type: string
+          format: date-time
+        participantShare:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        alerts:
+          type: array
+          items:
+            type: string
+

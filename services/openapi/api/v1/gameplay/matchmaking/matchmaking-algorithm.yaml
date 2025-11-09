@@ -1,0 +1,410 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/matchmaking
+# - Dependencies: party-service, voice-lobby-service, leaderboard-service, session-service, analytics-service
+# - Frontend Module: modules/gameplay/matchmaking (useMatchmakingStore)
+# - UI: MatchCard, QueueStatusPanel, ReadyCheckDialog, LatencyBadge
+# - Hooks: useRealtime, useCountdown, usePolling
+
+openapi: 3.0.3
+info:
+  title: Matchmaking Algorithm API
+  version: 1.0.0
+  description: |
+    REST API для алгоритмического слоя матчмейкинга NECPGAME.
+    Поддерживает подбор PvP/PvE матчей, ready-check, метрики качества и телеметрию ожидания.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/matchmaking
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+  - ServiceToken: []
+tags:
+  - name: Matches
+    description: Операции подбора и управления матчами.
+  - name: ReadyCheck
+    description: Ready-check и подтверждения участников.
+  - name: Quality
+    description: Отчёты о качестве матчей.
+  - name: Analytics
+    description: Агрегированная аналитика матчмейкинга.
+  - name: Telemetry
+    description: Сбор телеметрии ожидания и диапазонов.
+paths:
+  /matchmaking/matches/search:
+    post:
+      tags: [Matches]
+      summary: Инициировать подбор матча
+      description: |
+        Запускает алгоритм поиска подходящего матча. SLA: PvP ≤ 120 секунд, PvE ≤ 90 секунд.
+        Требует заголовок `X-Matchmaking-Request-Id` для трассировки.
+      operationId: searchMatches
+      security: [ { BearerAuth: [] } ]
+      parameters:
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchmakingRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchSearchRequest' }
+            examples: { ranked: { $ref: './matchmaking-algorithm-examples.yaml#/components/examples/RankedMatchSearch' } }
+      responses:
+        '202':
+          description: Запрос на подбор принят, дальнейшие обновления через события.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchSearchTicket' }
+        '409':
+          description: Заявка уже участвует в подборе или конфликт ролей.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+              examples:
+                already_in_progress:
+                  summary: Подбор уже выполняется
+                  value:
+                    error:
+                      code: "BIZ_MATCH_READY_CHECK_ACTIVE"
+                      message: "Запрос уже участвует в активном подборе"
+                      details: []
+        '422':
+          description: Запрос не удовлетворяет требованиям ролей или latency cap.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+              examples:
+                latency_cap:
+                  summary: Превышен лимит латентности
+                  value:
+                    error:
+                      code: "VAL_MATCH_LATENCY_CAP_EXCEEDED"
+                      message: "Латентность выше допустимого порога"
+                      details: []
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /matchmaking/matches/pending:
+    get:
+      tags: [Matches]
+      summary: Получить ожидающие матчи
+      description: Возвращает матчи в статусах `PENDING` и `READY_CHECK` для UI и аналитики. Ответ не кэшируется.
+      operationId: listPendingMatches
+      security: [ { BearerAuth: [] } ]
+      parameters:
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/ModeQuery'
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/PendingLimit'
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/AfterCursor'
+      responses:
+        '200':
+          description: Список ожидающих матчей.
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              description: Устанавливается в `no-store`.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/PendingMatchPage' }
+              examples: { pending: { $ref: './matchmaking-algorithm-examples.yaml#/components/examples/PendingMatchesResponse' } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /matchmaking/matches/{matchId}:
+    parameters:
+      - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchId'
+    get:
+      tags: [Matches]
+      summary: Получить детали матча
+      description: Возвращает состав команд, ready-check и параметры качества матча. Заголовки возвращают итоговый качество и bucket латентности.
+      operationId: getMatchById
+      security: [ { BearerAuth: [] } ]
+      responses:
+        '200':
+          description: Детали матча.
+          headers:
+            X-Match-Quality: { $ref: './matchmaking-algorithm-components.yaml#/components/headers/MatchQualityHeader' }
+            X-Match-Latency-Bucket: { $ref: './matchmaking-algorithm-components.yaml#/components/headers/MatchLatencyHeader' }
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchDetail' }
+              examples: { detail: { $ref: './matchmaking-algorithm-examples.yaml#/components/examples/MatchDetailResponse' } }
+        '404':
+          description: Матч не найден.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+              examples:
+                not_found:
+                  summary: Матч отсутствует
+                  value:
+                    error:
+                      code: "BIZ_MATCH_NOT_FOUND"
+                      message: "Матч не найден или завершён"
+                      details: []
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /matchmaking/matches/{matchId}/accept:
+    parameters:
+      - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchId'
+    post:
+      tags: [ReadyCheck]
+      summary: Подтвердить участие в матче
+      description: Принимает участие игрока или party. Требует валидный ready-check token.
+      operationId: acceptMatch
+      security: [ { BearerAuth: [] } ]
+      parameters:
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchmakingRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchAcceptRequest' }
+      responses:
+        '204': { description: Участие подтверждено. }
+        '409':
+          description: Матч уже подтверждён или истёк ready-check.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /matchmaking/matches/{matchId}/decline:
+    parameters:
+      - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchId'
+    post:
+      tags: [ReadyCheck]
+      summary: Отклонить матч
+      description: Фиксирует причину отказа и инициирует пересоздание матча.
+      operationId: declineMatch
+      security: [ { BearerAuth: [] } ]
+      parameters:
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchmakingRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchDeclineRequest' }
+      responses:
+        '204': { description: Отказ принят. }
+        '409':
+          description: Готовность уже подтверждена другим участником.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+        '410':
+          description: Матч закрыт или уже перезапущен.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+              examples:
+                closed:
+                  summary: Матч закрыт
+                  value:
+                    error:
+                      code: "BIZ_MATCH_NOT_FOUND"
+                      message: "Матч завершён"
+                      details: []
+  /matchmaking/matches/{matchId}/ready-check:
+    parameters:
+      - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchId'
+    post:
+      tags: [ReadyCheck]
+      summary: Инициировать или обновить ready-check
+      description: Используется для party/raid матчей, запускает отсчёт готовности.
+      operationId: startReadyCheck
+      security: [ { BearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/ReadyCheckCommand' }
+      responses:
+        '202':
+          description: Ready-check инициирован.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/ReadyCheckState' }
+        '409':
+          description: Active ready-check уже существует.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /matchmaking/matches/{matchId}/lock:
+    parameters:
+      - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchId'
+    post:
+      tags: [ReadyCheck]
+      summary: Зафиксировать состав матча и подготовить сессию
+      description: Привязывает матч к серверу сессий и создаёт голосовой лобби при необходимости.
+      operationId: lockMatch
+      security: [ { ServiceToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchLockRequest' }
+      responses:
+        '200':
+          description: Матч успешно зафиксирован.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchLockResult' }
+        '412':
+          description: Не все игроки подтвердили участие.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+        '503':
+          description: Недоступен сервер сессий или голосовой лобби.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+  /matchmaking/matches/{matchId}/quality:
+    parameters:
+      - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchId'
+    get:
+      tags: [Quality]
+      summary: Получить Match Quality Score
+      description: Возвращает разложение Match Quality Score. Опционально пересчитывает метрику при `refresh=true`.
+      operationId: getMatchQuality
+      security: [ { BearerAuth: [] } ]
+      parameters:
+        - in: query
+          name: includeBreakdown
+          required: false
+          schema: { type: boolean, default: true }
+          description: Возвращать детальную разбивку факторов.
+        - in: query
+          name: refresh
+          required: false
+          schema: { type: boolean, default: false }
+          description: Форсировать пересчёт показателей перед возвратом.
+      responses:
+        '200':
+          description: Отчёт по качеству матча.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchQualityReport' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '409':
+          description: Пересчёт невозможен (матч в неподходящем статусе).
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+  /matchmaking/analytics/quality:
+    get:
+      tags: [Analytics]
+      summary: Получить агрегированные метрики качества
+      description: Метрики Match Quality по окнам времени и регионам. Максимум 100 образцов.
+      operationId: getQualityAnalytics
+      security: [ { ServiceToken: [] } ]
+      parameters:
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/ModeQuery'
+        - in: query
+          name: window
+          required: true
+          schema: { type: string, enum: [LAST_15M, LAST_HOUR, DAILY] }
+        - in: query
+          name: region
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Агрегированная статистика качества рядом матчей.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchQualityAnalytics' }
+        '400':
+          description: Неверные параметры окна или режима.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /matchmaking/matches/{matchId}/telemetry:
+    parameters:
+      - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/MatchId'
+    post:
+      tags: [Telemetry]
+      summary: Зарегистрировать телеметрию ожидания
+      description: Принимает детализированную телеметрию ожидания и расширения диапазонов. Требует подписанный payload.
+      operationId: postMatchTelemetry
+      security: [ { ServiceToken: [] } ]
+      parameters:
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/TelemetryChunkHeader'
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/TelemetrySignatureHeader'
+        - $ref: './matchmaking-algorithm-components.yaml#/components/parameters/LatencyBucketHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchTelemetryBatch' }
+            examples: { telemetry: { $ref: './matchmaking-algorithm-examples.yaml#/components/examples/TelemetryBatch' } }
+      responses:
+        '202': { description: Телеметрия принята к обработке. }
+        '413':
+          description: Превышен размер метрик (максимум 256KB).
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+        '422':
+          description: Неверный формат телеметрии или подписи.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+
+x-websocket:
+  url: wss://api.necp.game/v1/matchmaking/stream
+  description: Поток realtime событий матчмейкинга для UI и аналитики.
+  messages:
+    matchCreated:
+      summary: Найдён новый матч
+      payload: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchDetail' }
+    readyCheckUpdated:
+      summary: Состояние ready-check обновлено
+      payload: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/ReadyCheckState' }
+    matchLocked:
+      summary: Матч зафиксирован и готов к запуску сессии
+      payload: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchLockResult' }
+    matchCancelled:
+      summary: Матч отменён (decline/timeout)
+      payload: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+    qualitySnapshot:
+      summary: Обновление качества матчей для UI
+      payload: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchQualityAnalytics' }
+
+x-kafka:
+  publishes:
+    - topic: matchmaking.match.created
+      payload: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchDetail' }
+    - topic: matchmaking.match.locked
+      payload: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchLockResult' }
+    - topic: matchmaking.match.timeout
+      payload: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchmakingError' }
+  subscribes:
+    - topic: matchmaking.queue.ready
+      payload:
+        type: object
+        properties:
+          queueId: { type: string, format: uuid }
+          players:
+            type: array
+            items: { $ref: './matchmaking-algorithm-components.yaml#/components/schemas/MatchParticipant' }
+    - topic: matchmaking.queue.cancelled
+      payload:
+        type: object
+        properties:
+          queueId: { type: string, format: uuid }
+          reason: { type: string }
+
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+
+

@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: Party Components
+  version: 1.0.0
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social/party
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      description: Идентификатор party
+      schema: { type: string }
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      description: Идентификатор участника party
+      schema: { type: string }
+    InviteId:
+      name: inviteId
+      in: path
+      required: true
+      description: Идентификатор приглашения
+      schema: { type: string }
+    QuestId:
+      name: questId
+      in: path
+      required: true
+      description: Идентификатор квеста
+      schema: { type: string }
+  schemas:
+    PartySummary:
+      type: object
+      properties:
+        partyId: { type: string }
+        name: { type: string }
+        leaderId: { type: string }
+        mode: { type: string, enum: [ADVENTURE, RAID, COMPETITIVE] }
+        visibility: { type: string, enum: [PRIVATE, FRIENDS, PUBLIC], default: PRIVATE }
+        maxMembers: { type: integer }
+    PartyDetail:
+      type: object
+      properties:
+        partyId: { type: string }
+        name: { type: string }
+        leaderId: { type: string }
+        mode: { type: string }
+        visibility: { type: string }
+        status: { type: string, enum: [IDLE, MATCHMAKING, IN_COMBAT, COMPLETED] }
+        maxMembers: { type: integer }
+        lootSettings: { $ref: '#/components/schemas/LootSettings' }
+        queueStatus: { $ref: '#/components/schemas/PartyQueueStatus' }
+        createdAt: { type: string, format: date-time }
+        members:
+          type: array
+          items: { $ref: '#/components/schemas/PartyMember' }
+    PartyCreateRequest:
+      type: object
+      required: [name, mode]
+      properties:
+        name: { type: string }
+        mode: { type: string }
+        visibility: { type: string, enum: [PRIVATE, FRIENDS, PUBLIC], default: PRIVATE }
+        maxMembers: { type: integer, minimum: 2, maximum: 12 }
+        lootSettings: { $ref: '#/components/schemas/LootSettings' }
+        autoFill: { type: boolean, default: false }
+    PartyUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        mode: { type: string }
+        visibility: { type: string, enum: [PRIVATE, FRIENDS, PUBLIC] }
+        maxMembers: { type: integer }
+        lootSettings: { $ref: '#/components/schemas/LootSettings' }
+    PartyDisbandRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string }
+        migrateToGuild: { type: boolean }
+    PartyMembersResponse:
+      type: object
+      properties:
+        partyId: { type: string }
+        members:
+          type: array
+          items: { $ref: '#/components/schemas/PartyMember' }
+    PartyMember:
+      type: object
+      properties:
+        memberId: { type: string }
+        playerId: { type: string }
+        displayName: { type: string }
+        role: { type: string, enum: [LEADER, TANK, HEALER, DPS, SUPPORT] }
+        isLeader: { type: boolean }
+        readyState: { type: string, enum: [UNKNOWN, READY, NOT_READY] }
+        voiceChannel: { type: string }
+        joinTime: { type: string, format: date-time }
+        stats:
+          type: object
+          properties:
+            gearScore: { type: integer }
+            averageDps: { type: number }
+    PartyMemberAddRequest:
+      type: object
+      properties:
+        inviteCode: { type: string }
+        playerId: { type: string }
+        autoAssignRole: { type: boolean }
+        idempotencyKey: { type: string }
+    PartyMemberUpdateRequest:
+      type: object
+      properties:
+        role: { type: string }
+        promoteToLeader: { type: boolean }
+        focusTarget: { type: string }
+    PartyInvitesResponse:
+      type: object
+      properties:
+        invites:
+          type: array
+          items: { $ref: '#/components/schemas/PartyInvite' }
+    PartyInvite:
+      type: object
+      properties:
+        inviteId: { type: string }
+        partyId: { type: string }
+        senderId: { type: string }
+        targetId: { type: string }
+        code: { type: string }
+        visibility: { type: string, enum: [PRIVATE, FRIENDS, PUBLIC] }
+        expiresAt: { type: string, format: date-time }
+        status: { type: string, enum: [PENDING, ACCEPTED, DECLINED, EXPIRED] }
+    PartyInviteRequest:
+      type: object
+      required: [targetId]
+      properties:
+        targetId: { type: string }
+        message: { type: string }
+        crossPlatform: { type: boolean }
+        autoJoin: { type: boolean }
+        notify: { type: boolean }
+    LootSettings:
+      type: object
+      properties:
+        mode: { type: string, enum: [PERSONAL, NEED_GREED, ROUND_ROBIN, MASTER_LOOTER], default: PERSONAL }
+        threshold: { type: string, enum: [COMMON, RARE, EPIC, LEGENDARY], default: RARE }
+        masterLooter: { type: string }
+        roundRobinIndex: { type: integer }
+        autoDistribute: { type: boolean }
+    LootSettingsUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/LootSettings'
+    LootDistributeRequest:
+      type: object
+      required: [itemId]
+      properties:
+        itemId: { type: string }
+        itemRarity: { type: string }
+        winnerMemberId: { type: string }
+        votes:
+          type: array
+          items:
+            type: object
+            properties:
+              memberId: { type: string }
+              choice: { type: string, enum: [NEED, GREED, PASS] }
+        idempotencyKey: { type: string }
+    ReadyCheckRequest:
+      type: object
+      properties:
+        durationSeconds: { type: integer, default: 30 }
+        autoNotify: { type: boolean }
+    ReadyCheck:
+      type: object
+      properties:
+        readyCheckId: { type: string }
+        initiatorId: { type: string }
+        expiresAt: { type: string, format: date-time }
+        responses:
+          type: array
+          items: { $ref: '#/components/schemas/ReadyCheckResponse' }
+    ReadyCheckResponseRequest:
+      type: object
+      required: [ready]
+      properties:
+        ready: { type: boolean }
+        note: { type: string }
+    ReadyCheckResponse:
+      type: object
+      properties:
+        memberId: { type: string }
+        ready: { type: boolean }
+        respondedAt: { type: string, format: date-time }
+    VoteKickRequest:
+      type: object
+      required: [targetMemberId]
+      properties:
+        targetMemberId: { type: string }
+        reason: { type: string }
+        timeoutSeconds: { type: integer, default: 60 }
+    PartyQueueRequest:
+      type: object
+      required: [contentType]
+      properties:
+        contentType: { type: string }
+        difficulty: { type: string }
+        matchmakingMode: { type: string, enum: [FILL, FLEX, RANKED] }
+        region: { type: string }
+        idempotencyKey: { type: string }
+    PartyQueueStatus:
+      type: object
+      properties:
+        queueId: { type: string }
+        state: { type: string, enum: [IDLE, QUEUED, MATCH_FOUND, CANCELLED] }
+        estimatedWait: { type: integer }
+        matchId: { type: string }
+        placedAt: { type: string, format: date-time }
+    PartyQuestsResponse:
+      type: object
+      properties:
+        quests:
+          type: array
+          items: { $ref: '#/components/schemas/QuestSyncEvent' }
+    QuestSyncRequest:
+      type: object
+      required: [step]
+      properties:
+        step: { type: string }
+        progress: { type: integer }
+        completionState: { type: string, enum: [IN_PROGRESS, COMPLETED] }
+        sharedObjectives:
+          type: array
+          items:
+            type: object
+            properties:
+              objectiveId: { type: string }
+              state: { type: string }
+    QuestSyncEvent:
+      type: object
+      properties:
+        questId: { type: string }
+        step: { type: string }
+        progress: { type: integer }
+        sharedObjectives:
+          type: array
+          items:
+            type: object
+            properties:
+              objectiveId: { type: string }
+              state: { type: string }
+        updatedAt: { type: string, format: date-time }
+    PartyStatus:
+      type: object
+      properties:
+        state: { type: string, enum: [IDLE, READY_CHECK, MATCHMAKING, COMBAT] }
+        location: { type: string }
+        queueStatus: { $ref: '#/components/schemas/PartyQueueStatus' }
+        readyCheck: { $ref: '#/components/schemas/ReadyCheck' }
+    PartySearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items: { $ref: '#/components/schemas/PartySummary' }
+        pagination: { $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta' }
+    PartyMemberEvent:
+      type: object
+      properties:
+        partyId: { type: string }
+        member: { $ref: '#/components/schemas/PartyMember' }
+        event: { type: string, enum: [JOINED, LEFT, ROLE_CHANGED] }
+        timestamp: { type: string, format: date-time }
+    LootEvent:
+      type: object
+      properties:
+        partyId: { type: string }
+        lootSettings: { $ref: '#/components/schemas/LootSettings' }
+        itemId: { type: string }
+        winnerMemberId: { type: string }
+        timestamp: { type: string, format: date-time }
+    PartyQueueStatusEvent:
+      type: object
+      properties:
+        partyId: { type: string }
+        queueStatus: { $ref: '#/components/schemas/PartyQueueStatus' }
+        timestamp: { type: string, format: date-time }
+    PartyError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [PARTY_FULL, INVITE_INVALID, ROLE_LOCKED, NOT_LEADER, QUEUE_CONFLICT, READY_TIMEOUT, VOTE_FAILED]
+        message: { type: string }
+        traceId: { type: string }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

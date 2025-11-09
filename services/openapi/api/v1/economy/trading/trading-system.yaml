@@ -1,0 +1,321 @@
+openapi: 3.0.3
+info:
+  title: Trading API
+  version: 1.0.0
+  description: |
+    API для системы торговли.
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-trading.md v1.0.0
+    
+    Типы торговли: NPC vendors, Auction House, Player-to-Player, Black Market
+    Влияние: репутация, социальные навыки, региональные цены
+    Торговые маршруты: межрегиональная торговля
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/trading
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Trading
+    description: Система торговли
+  - name: Markets
+    description: Рынки и торговцы
+
+paths:
+  /markets:
+    get:
+      summary: Получить доступные рынки
+      description: |
+        Возвращает список доступных рынков для торговли.
+        Включает NPC vendors, Auction House, Black Market.
+      operationId: getMarkets
+      tags:
+        - Markets
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: region_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: market_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [npc_vendor, auction_house, player_market, black_market]
+      responses:
+        '200':
+          description: Список рынков
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  markets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Market'
+              examples:
+                night_city_markets:
+                  summary: Рынки Night City
+                  value:
+                    markets:
+                      - market_id: "watson_weapons_vendor"
+                        name: "Watson Arms Dealer"
+                        type: "npc_vendor"
+                        region: "watson"
+                        reputation_required: 0
+                        available: true
+                      - market_id: "nc_auction_house"
+                        name: "Night City Auction House"
+                        type: "auction_house"
+                        region: "city_center"
+                        reputation_required: -500
+
+  /vendor/{vendor_id}/inventory:
+    get:
+      summary: Получить инвентарь торговца
+      description: |
+        Возвращает товары, доступные у NPC торговца.
+        Ассортимент зависит от репутации, времени, региона.
+      operationId: getVendorInventory
+      tags:
+        - Trading
+      parameters:
+        - name: vendor_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Инвентарь торговца
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vendor_id:
+                    type: string
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VendorItem'
+                  refresh_time:
+                    type: string
+                    format: date-time
+                    description: Время обновления ассортимента
+
+  /buy:
+    post:
+      summary: Купить предмет
+      description: |
+        Покупает предмет у торговца или на рынке.
+        Применяет модификаторы цен (репутация, навыки, события).
+      operationId: buyItem
+      tags:
+        - Trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - vendor_id
+                - item_id
+                - quantity
+              properties:
+                character_id:
+                  type: string
+                vendor_id:
+                  type: string
+                item_id:
+                  type: string
+                quantity:
+                  type: integer
+                  minimum: 1
+                currency:
+                  type: string
+                  description: "Валюта оплаты"
+                  default: eurodollar
+      responses:
+        '200':
+          description: Предмет куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /sell:
+    post:
+      summary: Продать предмет
+      description: |
+        Продает предмет торговцу или на рынок.
+        Цена зависит от репутации, навыков, состояния предмета.
+      operationId: sellItem
+      tags:
+        - Trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - vendor_id
+                - item_id
+                - quantity
+              properties:
+                character_id:
+                  type: string
+                vendor_id:
+                  type: string
+                item_id:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Предмет продан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeResult'
+
+  /price-check:
+    post:
+      summary: Проверить цену
+      description: |
+        Рассчитывает цену предмета с учетом всех модификаторов.
+        Не выполняет сделку, только показывает итоговую цену.
+      operationId: checkPrice
+      tags:
+        - Trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - vendor_id
+                - item_id
+                - trade_type
+              properties:
+                character_id:
+                  type: string
+                vendor_id:
+                  type: string
+                item_id:
+                  type: string
+                trade_type:
+                  type: string
+                  enum: [buy, sell]
+      responses:
+        '200':
+          description: Расчет цены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceCalculation'
+
+components:
+  schemas:
+    Market:
+      type: object
+      properties:
+        market_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [npc_vendor, auction_house, player_market, black_market]
+        region:
+          type: string
+        reputation_required:
+          type: number
+        available:
+          type: boolean
+
+    VendorItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: integer
+        base_price:
+          type: number
+        final_price:
+          type: number
+          description: С учетом репутации и модификаторов
+        currency:
+          type: string
+        rarity:
+          type: string
+
+    TradeResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        item_id:
+          type: string
+        quantity:
+          type: integer
+        total_price:
+          type: number
+        currency_used:
+          type: string
+        reputation_change:
+          type: number
+        experience_gained:
+          type: number
+
+    PriceCalculation:
+      type: object
+      properties:
+        item_id:
+          type: string
+        base_price:
+          type: number
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: number
+        final_price:
+          type: number

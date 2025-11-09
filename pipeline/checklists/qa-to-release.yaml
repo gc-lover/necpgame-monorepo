@@ -1,0 +1,35 @@
+checklist:
+  id: qa-to-release
+  title: "QA → Release"
+  sections:
+    - title: "DevOps подготовка"
+      items:
+        - text: "`implementation-tracker.yaml` подтверждает `qa.status: completed`."
+        - text: "Docker-образы собраны и загружены в регистр."
+        - text: "Helm/Compose файлы обновлены и проходят lint/validate."
+        - text: "Настроены переменные окружения и секреты."
+        - text: "Проведён dry-run развёртывания в staging."
+        - text: "Выполнены скрипты dry-run и проверки."
+          scripts:
+            - "pwsh -File pipeline/scripts/run-deploy-dryrun.ps1 -EnvDirectory <env-path>"
+            - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME"
+    - title: "Релиз"
+      items:
+        - text: "Обновлён `shared/trackers/release-notes.yaml` с номером версии и списком изменений."
+        - text: "Мониторинг и алерты настроены, dashboards обновлены."
+        - text: "Выполнен деплой в production/целевое окружение."
+        - text: "Задокументированы параметры отката."
+        - text: "В `shared/trackers/communication-log.yaml` отправлено сообщение для Community & Analytics."
+        - text: "Проверены release notes и коммуникационный пакет."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-release-notes.ps1 -File shared/trackers/release-notes.yaml"
+            - "pwsh -File pipeline/scripts/check-communication-pack.ps1 -PackFile shared/docs/communications/<pack>.yaml"
+    - title: "Пост-релиз"
+      items:
+        - text: "`implementation-tracker.yaml` обновлён: `release.status: released`, указаны время и агент."
+        - text: "QA и DevOps подтвердили отсутствие критических инцидентов в течение контрольного окна."
+        - text: "Заполнён блок `Lessons Learned` в `pipeline/templates/change-retro.yaml`."
+        - text: "Обновлённые dashboards проверены."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-dashboard-links.ps1 -ReportFile <post-release-report.md>"
+

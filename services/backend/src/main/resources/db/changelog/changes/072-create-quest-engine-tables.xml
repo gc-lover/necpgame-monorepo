@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.17.xsd">
+
+    <changeSet id="072-create-quest-engine-tables" author="backend-agent">
+
+        <createTable tableName="quest_instances">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="character_id" type="uuid">
+                <constraints nullable="false" />
+            </column>
+            <column name="quest_template_id" type="varchar(100)">
+                <constraints nullable="false" />
+            </column>
+            <column name="quest_name" type="varchar(200)" />
+            <column name="status" type="varchar(20)" defaultValue="ACTIVE">
+                <constraints nullable="false" />
+            </column>
+            <column name="current_branch_id" type="varchar(100)" />
+            <column name="current_dialogue_node_id" type="varchar(100)" />
+            <column name="progress_json" type="jsonb" defaultValueComputed="'{}'::jsonb" />
+            <column name="flags_json" type="jsonb" defaultValueComputed="'{}'::jsonb" />
+            <column name="started_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+            <column name="completed_at" type="timestamp with time zone" />
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_quest_instances_character" tableName="quest_instances">
+            <column name="character_id" />
+            <column name="status" />
+        </createIndex>
+
+        <createIndex indexName="idx_quest_instances_template" tableName="quest_instances">
+            <column name="quest_template_id" />
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="quest_instances"
+                                 baseColumnNames="character_id"
+                                 referencedTableName="characters"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_quest_instances_character"
+                                 onDelete="CASCADE" />
+
+        <createTable tableName="quest_dialogue_state">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="quest_instance_id" type="uuid">
+                <constraints nullable="false" unique="true" />
+            </column>
+            <column name="current_node_id" type="varchar(100)">
+                <constraints nullable="false" />
+            </column>
+            <column name="visited_nodes" type="jsonb" defaultValueComputed="'[]'::jsonb" />
+            <column name="choices_made" type="jsonb" defaultValueComputed="'[]'::jsonb" />
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="quest_dialogue_state"
+                                 baseColumnNames="quest_instance_id"
+                                 referencedTableName="quest_instances"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_dialogue_state_instance"
+                                 onDelete="CASCADE" />
+
+        <createTable tableName="quest_skill_check_results">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="quest_instance_id" type="uuid">
+                <constraints nullable="false" />
+            </column>
+            <column name="dialogue_node_id" type="varchar(100)">
+                <constraints nullable="false" />
+            </column>
+            <column name="skill_name" type="varchar(50)">
+                <constraints nullable="false" />
+            </column>
+            <column name="difficulty_class" type="integer">
+                <constraints nullable="false" />
+            </column>
+            <column name="dice_roll" type="integer">
+                <constraints nullable="false" />
+            </column>
+            <column name="secondary_roll" type="integer" />
+            <column name="skill_modifier" type="integer" />
+            <column name="total_result" type="integer">
+                <constraints nullable="false" />
+            </column>
+            <column name="success" type="boolean">
+                <constraints nullable="false" />
+            </column>
+            <column name="critical_success" type="boolean" defaultValueBoolean="false" />
+            <column name="critical_failure" type="boolean" defaultValueBoolean="false" />
+            <column name="advantage_used" type="boolean" defaultValueBoolean="false" />
+            <column name="rolled_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_skill_check_instance" tableName="quest_skill_check_results">
+            <column name="quest_instance_id" />
+        </createIndex>
+
+        <createIndex indexName="idx_skill_check_node" tableName="quest_skill_check_results">
+            <column name="dialogue_node_id" />
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="quest_skill_check_results"
+                                 baseColumnNames="quest_instance_id"
+                                 referencedTableName="quest_instances"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_skill_check_instance"
+                                 onDelete="CASCADE" />
+
+        <createTable tableName="quest_template_definitions">
+            <column name="quest_template_id" type="varchar(100)">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="definition" type="jsonb">
+                <constraints nullable="false" />
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="quest_template_definitions"
+                                 baseColumnNames="quest_template_id"
+                                 referencedTableName="quests"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_template_definition_quest"
+                                 onDelete="CASCADE" />
+
+    </changeSet>
+
+</databaseChangeLog>
+

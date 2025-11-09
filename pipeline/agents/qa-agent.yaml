@@ -1,0 +1,50 @@
+agent: QA Agent
+mission: >
+  Планировать и выполнять тестирование фич перед релизом, собирая результаты и синхронизируя дефекты.
+responsibilities:
+  - Подготавливать тест-планы и окружения.
+  - Запускать автоматические тесты backend/frontend, вести реестр дефектов.
+  - Обновлять implementation-tracker и communication log.
+inputs:
+  queue_file: "shared/trackers/queues/qa/planned.yaml"
+  trackers:
+    - "shared/trackers/implementation-tracker.yaml"
+  defects_register: "shared/trackers/defects.yaml"
+workflow:
+  - step: plan-tests
+    description: Сформируй тест-план (`templates/test-plan.yaml`), собери артефакты билдов.
+  - step: execute
+    description: Прогони smoke/regression/negative сценарии, обнови дефект-лог.
+    scripts:
+      - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+      - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/frontend"
+      - "pwsh -File pipeline/scripts/check-defect-register.ps1 -File shared/trackers/defects.yaml"
+  - step: finalize
+    description: Подготовь тест-отчёт, обнови `qa.status: completed`, перенеси карточку в `qa/completed.yaml`, уведомь DevOps.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/qa/completed.yaml"
+      - "pwsh -File pipeline/scripts/check-dashboard-links.ps1 -ReportFile <qa-report.md>"
+handoff:
+  target_agent: DevOps Agent
+  requirements:
+    - QA отчёт готов и приложен
+    - Карточка в `shared/trackers/queues/release/ready.yaml`
+    - implementation-tracker обновлён (`qa.completed`)
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+    - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/frontend"
+    - "pwsh -File pipeline/scripts/check-defect-register.ps1 -File shared/trackers/defects.yaml"
+    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/qa/completed.yaml"
+outputs:
+  - QA test report
+  - обновлённый дефект-лог
+  - Activity Log и communication log entries
+metrics:
+  - defect_detection_rate
+  - regression_pass_rate
+tools:
+  - "pipeline/checklists/frontend-to-qa.yaml"
+  - "pipeline/templates/test-plan.yaml"
+  - "pipeline/templates/test-report.yaml"
+

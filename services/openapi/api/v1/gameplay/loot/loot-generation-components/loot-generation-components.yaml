@@ -1,0 +1,180 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/gameplay/loot
+# - Dependencies: combat-service, quest-service, inventory-service, progression-service, analytics-service, notification-service, economy-service, party-service
+# - Frontend Module: modules/gameplay/loot (useLootStore)
+# - UI: LootDropModal, RollResultPanel, RaidLootSummary, LootHistoryList, LootProbabilityView, GuaranteedDropTracker
+# - Forms: LootTableEditorForm, RollChoiceForm, LootDistributionForm
+# - Hooks: useLootDrops, useLootHistory, useRollSystem, useLootTables
+
+openapi: 3.0.3
+info:
+  title: Loot Generation Components
+  version: 1.0.0
+  description: Компоненты для Loot Generation API.
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/loot
+    package: com.necpgame.gameplayservice
+paths: {}
+
+components:
+  parameters:
+    SourceId:
+      name: sourceId
+      in: path
+      required: true
+      description: Идентификатор источника лута.
+      schema: { type: string }
+    TableId:
+      name: tableId
+      in: path
+      required: true
+      description: Идентификатор таблицы лута.
+      schema: { type: string }
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: Идентификатор сессии Need/Greed.
+      schema: { type: string, format: uuid }
+
+  schemas:
+    LootGenerationRequest:
+      type: object
+      required: [tableId, context]
+      properties:
+        tableId: { type: string }
+        distributionHint: { type: string, enum: [PERSONAL, SHARED, RAID] }
+        context: { $ref: '#/components/schemas/LootGenerationContext' }
+
+    LootGenerationContext:
+      type: object
+      required: [sourceType, participants]
+      properties:
+        sourceType: { type: string, enum: [NPC, CONTAINER, EVENT, QUEST, RAID, WORLD_BOSS] }
+        zoneId: { type: string }
+        difficultyTier: { type: string, enum: [STORY, NORMAL, HARD, NIGHTMARE, LEGENDARY] }
+        participants:
+          type: array
+          items: { $ref: '#/components/schemas/LootParticipant' }
+        luckModifiers:
+          type: object
+          properties:
+            personal: { type: number, format: float }
+            party: { type: number, format: float }
+            global: { type: number, format: float }
+        eventFlags:
+          type: array
+          items: { type: string }
+        killTimestamp: { type: string, format: date-time }
+        seed: { type: string }
+
+    LootParticipant:
+      type: object
+      required: [playerId, characterId]
+      properties:
+        playerId: { type: string, format: uuid }
+        characterId: { type: string, format: uuid }
+        level: { type: integer }
+        contribution: { type: number, format: float }
+        luckBonus: { type: number, format: float }
+        role: { type: string }
+
+    LootGenerationResult:
+      type: object
+      required: [resultId, distributionMode, items]
+      properties:
+        resultId: { type: string, format: uuid }
+        distributionMode: { type: string, enum: [PERSONAL, SHARED, RAID, GUARANTEED] }
+        items:
+          type: array
+          items: { $ref: './loot-advanced-components.yaml#/components/schemas/LootItem' }
+        currency:
+          type: array
+          items: { $ref: '#/components/schemas/LootCurrency' }
+        rollSessions:
+          type: array
+          items: { $ref: './loot-advanced-components.yaml#/components/schemas/LootRoll' }
+        guarantees:
+          type: array
+          items: { $ref: '#/components/schemas/GuaranteedReward' }
+        auditTrailId: { type: string, format: uuid }
+
+    LootCurrency:
+      type: object
+      required: [type, amount]
+      properties:
+        type: { type: string, enum: [EDDIES, BATTLE_TOKEN, RAID_TOKEN, ARENA_POINT] }
+        amount: { type: integer, minimum: 0 }
+
+    GuaranteedReward:
+      type: object
+      required: [rewardId, templateId]
+      properties:
+        rewardId: { type: string, format: uuid }
+        templateId: { type: string }
+        description: { type: string }
+        deliveryMode: { type: string, enum: [DIRECT, MAIL, VENDOR, TOKEN] }
+
+    SimulationRequest:
+      type: object
+      required: [iterations]
+      properties:
+        iterations: { type: integer, minimum: 10, maximum: 5000 }
+        context: { $ref: '#/components/schemas/LootGenerationContext' }
+        metrics:
+          type: array
+          items: { type: string, enum: [RARITY_DISTRIBUTION, CURRENCY_EXPECTATION, TOKEN_DROP_RATE, PITY_TRIGGER] }
+
+    SimulationResponse:
+      type: object
+      required: [iterations, results]
+      properties:
+        iterations: { type: integer }
+        results:
+          type: array
+          items: { $ref: '#/components/schemas/SimulationBucket' }
+        totalCurrency:
+          type: array
+          items: { $ref: '#/components/schemas/CurrencyExpectation' }
+
+    SimulationBucket:
+      type: object
+      required: [key, probability]
+      properties:
+        key: { type: string }
+        probability: { type: number, format: float }
+        averageQuantity: { type: number, format: float }
+
+    CurrencyExpectation:
+      type: object
+      required: [type, average]
+      properties:
+        type: { type: string }
+        average: { type: number, format: float }
+
+    LootGenerationError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, enum: [TABLE_NOT_FOUND, ENTRY_INVALID, ROLL_DUPLICATE, NO_ELIGIBLE_PLAYERS, RESERVATION_FAILED, PITY_DISABLED, CONFIG_LOCKED, DISTRIBUTION_ERROR] }
+        message: { type: string }
+        details: { type: object, additionalProperties: true }
+
+    LootRealtimeEvent:
+      type: object
+      required: [type, payload]
+      properties:
+        type: { type: string, enum: [loot-generated, loot-distributed, roll-updated, rare-drop, pity-triggered, loot-table-updated] }
+        payload: { type: object, additionalProperties: true }
+
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

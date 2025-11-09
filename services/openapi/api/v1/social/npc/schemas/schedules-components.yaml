@@ -1,0 +1,495 @@
+openapi: 3.0.3
+info:
+  title: NPC Schedule Components
+  version: 1.0.0
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  parameters:
+    ScheduleId:
+      name: scheduleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор расписания NPC.
+    NpcId:
+      name: npcId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор NPC.
+    DistrictFilter:
+      name: districtId
+      in: query
+      schema:
+        type: string
+        format: uuid
+      description: Фильтр по району города.
+    ModeFilter:
+      name: mode
+      in: query
+      schema:
+        type: string
+        enum: [normal_day, night_shift, event_mode, emergency, underground]
+      description: Фильтр по режиму расписания.
+    RoleFilter:
+      name: role
+      in: query
+      schema:
+        type: string
+      description: Фильтр по роли NPC (например, vendor, medic, fixer).
+    TemplateFilter:
+      name: templateType
+      in: query
+      schema:
+        type: string
+        enum: [vendor, guard, entertainer, corporate, underground, quest_unique]
+      description: Тип шаблона расписания.
+    StatusFilter:
+      name: status
+      in: query
+      schema:
+        type: string
+        enum: [queued, running, completed, failed, cancelled]
+      description: Фильтр по статусу заданий пересчёта расписаний.
+    TriggerFilter:
+      name: trigger
+      in: query
+      schema:
+        type: string
+        enum: [event, manual, player-impact, infrastructure-change]
+      description: Фильтр по триггеру задачи пересчёта.
+    WindowFilter:
+      name: window
+      in: query
+      schema:
+        type: string
+        enum: [1h, 6h, 12h, 24h, 72h]
+        default: 24h
+      description: Тайм-окно для агрегированных метрик расписаний.
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор задания пересчёта расписаний.
+  schemas:
+    NpcSchedule:
+      type: object
+      required:
+        - scheduleId
+        - npcId
+        - mode
+        - validFrom
+        - slots
+      properties:
+        scheduleId:
+          type: string
+          format: uuid
+        npcId:
+          type: string
+          format: uuid
+        npcName:
+          type: string
+        role:
+          type: string
+        rarity:
+          type: string
+        districtId:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [normal_day, night_shift, event_mode, emergency, underground]
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+        fsm:
+          type: string
+          description: Название автомата состояний, управляющего расписанием.
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleSlot'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleAlert'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleMetric'
+        generatedFromTemplate:
+          type: string
+    ScheduleSlot:
+      type: object
+      required:
+        - from
+        - to
+        - locationId
+        - activity
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        locationId:
+          type: string
+          format: uuid
+        locationName:
+          type: string
+        activity:
+          type: string
+        transport:
+          type: string
+          enum: [walk, metro, maglev, vehicle, drone, teleport]
+        crowdLevel:
+          type: number
+        factionHeat:
+          type: number
+        questHooks:
+          type: array
+          items:
+            type: string
+    ScheduleAlert:
+      type: object
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        message:
+          type: string
+        suggestedAction:
+          type: string
+    ScheduleMetric:
+      type: object
+      properties:
+        metricId:
+          type: string
+        value:
+          type: number
+        threshold:
+          type: number
+        trend:
+          type: string
+          enum: [up, down, flat]
+        window:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    ScheduleTemplate:
+      type: object
+      required:
+        - templateId
+        - templateType
+        - slots
+      properties:
+        templateId:
+          type: string
+        templateType:
+          type: string
+          enum: [vendor, guard, entertainer, corporate, underground, quest_unique]
+        description:
+          type: string
+        supportsEvents:
+          type: boolean
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleTemplateSlot'
+    ScheduleTemplateSlot:
+      type: object
+      required:
+        - timeRange
+        - activity
+      properties:
+        timeRange:
+          type: string
+          example: "06:00-10:00"
+        activity:
+          type: string
+        locationHints:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+    ScheduleRecalcRequest:
+      type: object
+      required:
+        - npcIds
+        - trigger
+      properties:
+        npcIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        trigger:
+          type: string
+          enum: [event, manual, player-impact, infrastructure-change]
+        cityId:
+          type: string
+          format: uuid
+        districtIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        dryRun:
+          type: boolean
+          default: false
+        notes:
+          type: string
+    ScheduleRecalcJob:
+      type: object
+      required:
+        - jobId
+        - status
+        - submittedAt
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        trigger:
+          type: string
+          enum: [event, manual, player-impact, infrastructure-change]
+        dryRun:
+          type: boolean
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        submittedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        progress:
+          type: number
+        affectedNpcCount:
+          type: integer
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleJobLog'
+        summary:
+          type: string
+    ScheduleJobLog:
+      type: object
+      required:
+        - timestamp
+        - level
+        - message
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [info, warning, error]
+        message:
+          type: string
+        context:
+          type: object
+          additionalProperties: {}
+    ScheduleDiff:
+      type: object
+      required:
+        - npcId
+        - baselineSchedule
+        - currentSchedule
+      properties:
+        npcId:
+          type: string
+          format: uuid
+        baselineTimestamp:
+          type: string
+          format: date-time
+        currentTimestamp:
+          type: string
+          format: date-time
+        baselineSchedule:
+          $ref: '#/components/schemas/NpcSchedule'
+        currentSchedule:
+          $ref: '#/components/schemas/NpcSchedule'
+        changedSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleSlotChange'
+    ScheduleSlotChange:
+      type: object
+      properties:
+        slotId:
+          type: string
+        changeType:
+          type: string
+          enum: [added, updated, removed]
+        previous:
+          $ref: '#/components/schemas/ScheduleSlot'
+        current:
+          $ref: '#/components/schemas/ScheduleSlot'
+    ScheduleListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NpcSchedule'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    ScheduleJobListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleRecalcJob'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    ScheduleTemplateListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleTemplate'
+    ScheduleDiffResponse:
+      type: object
+      required:
+        - npcId
+        - diff
+      properties:
+        npcId:
+          type: string
+          format: uuid
+        diff:
+          $ref: '#/components/schemas/ScheduleDiff'
+  examples:
+    ScheduleWatsonVendor:
+      summary: Расписание торговца в Watson
+      value:
+        scheduleId: "d4b51236-3503-4faf-a8bd-594b3d9c5f90"
+        npcId: "a3f5970d-8229-44f8-a700-6cef8b1a9f5c"
+        npcName: "Mira 'Fix' Delgado"
+        role: "vendor"
+        rarity: "uncommon"
+        districtId: "3c4db931-7789-4d3a-a4f0-1de4b63f1b53"
+        mode: "normal_day"
+        validFrom: "2025-11-08T04:00:00Z"
+        validTo: "2025-11-12T04:00:00Z"
+        slots:
+          - from: "2025-11-08T04:00:00Z"
+            to: "2025-11-08T06:00:00Z"
+            locationId: "a1bb58f0-6eed-4c03-a5c7-4f98adfcb6de"
+            locationName: "Watson Market Depot"
+            activity: "restock"
+            transport: "metro"
+          - from: "2025-11-08T06:00:00Z"
+            to: "2025-11-08T12:00:00Z"
+            locationId: "6c5e7a94-8c4d-4f77-8c2c-b1f7261285ac"
+            locationName: "Little China Plaza"
+            activity: "market_stall"
+            transport: "walk"
+            questHooks:
+              - "quest-main-001-first-steps"
+        metrics:
+          - metricId: "uptime"
+            value: 0.92
+            threshold: 0.9
+            trend: "up"
+            window: "24h"
+            timestamp: "2025-11-08T06:00:00Z"
+    ScheduleRecalcPlayerImpact:
+      summary: Пересчёт расписаний после влияния игроков
+      value:
+        npcIds:
+          - "a3f5970d-8229-44f8-a700-6cef8b1a9f5c"
+          - "e5c6391d-6e06-4d6c-9e51-7b9fb8d70cf1"
+        trigger: "player-impact"
+        cityId: "5f6c9a2b-8d6d-4aa3-9df5-118c7f6a2fd0"
+        districtIds:
+          - "9942c705-610f-4f5d-a9c1-271118fc2c65"
+        priority: "high"
+        dryRun: false
+        notes: "Перераспределить расписания после рейда игроков."
+    ScheduleJobRunning:
+      summary: Задание пересчёта в процессе
+      value:
+        jobId: "c2a0f1f9-9d9d-4f57-bbde-0f2bb6cb6c36"
+        status: "running"
+        trigger: "event"
+        dryRun: false
+        priority: "urgent"
+        submittedAt: "2025-11-08T07:10:00Z"
+        startedAt: "2025-11-08T07:10:05Z"
+        progress: 0.48
+        affectedNpcCount: 124
+        logs:
+          - timestamp: "2025-11-08T07:10:12Z"
+            level: "info"
+            message: "Обновление FSM для режима event_mode."
+          - timestamp: "2025-11-08T07:10:20Z"
+            level: "warning"
+            message: "Конфликт расписаний в Little China, применена корректировка."
+    ScheduleTemplateVendor:
+      summary: Шаблон расписания торговца
+      value:
+        templateId: "vendor_day_cycle"
+        templateType: "vendor"
+        description: "Базовое расписание торговца днем"
+        supportsEvents: false
+        slots:
+          - timeRange: "06:00-08:00"
+            activity: "setup_stall"
+            locationHints:
+              - "market_core"
+          - timeRange: "08:00-16:00"
+            activity: "market_stall"
+            locationHints:
+              - "market_core"
+          - timeRange: "16:00-18:00"
+            activity: "delivery_run"
+            locationHints:
+              - "warehouse"
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

@@ -1,0 +1,260 @@
+openapi: 3.0.3
+info:
+  title: Party System API
+  version: 1.0.0
+  description: |
+    API для системы групп (party).
+    
+    Источник: .BRAIN/05-technical/backend/party-system.md v1.0.0
+    
+    Tier 2 система. Критична для group content!
+    
+    Возможности:
+    - Party creation/dissolution
+    - Invites/join/leave/kick
+    - Party leader (смена лидера)
+    - Party composition (роли, размер 2-5 игроков)
+    - Loot settings (need/greed/personal/master looter)
+    - Shared quest progress
+    - Party chat integration
+    
+    БД структура:
+    - parties (id, leader_id, loot_mode, max_members, created_at)
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Party
+    description: Система групп
+
+paths:
+  /social/party/create:
+    post:
+      summary: Создать группу
+      description: |
+        Создает новую группу.
+        Создатель становится лидером.
+      operationId: createParty
+      tags:
+        - Party
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leader_character_id
+              properties:
+                leader_character_id:
+                  type: string
+                max_members:
+                  type: integer
+                  default: 5
+                  minimum: 2
+                  maximum: 5
+                loot_mode:
+                  type: string
+                  enum: [personal, need_greed, master_looter]
+                  default: need_greed
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+
+  /social/party/{party_id}/invite:
+    post:
+      summary: Пригласить в группу
+      description: |
+        Отправляет приглашение в группу.
+        Только лидер может приглашать.
+      operationId: inviteToParty
+      tags:
+        - Party
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - inviter_id
+                - invitee_id
+              properties:
+                inviter_id:
+                  type: string
+                invitee_id:
+                  type: string
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /social/party/{party_id}/join:
+    post:
+      summary: Присоединиться к группе
+      description: Принимает приглашение и присоединяется к группе
+      operationId: joinParty
+      tags:
+        - Party
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+      responses:
+        '200':
+          description: Присоединился к группе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+
+  /social/party/{party_id}/leave:
+    post:
+      summary: Покинуть группу
+      description: |
+        Покидает группу.
+        Если лидер - лидерство передается другому.
+      operationId: leaveParty
+      tags:
+        - Party
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+      responses:
+        '200':
+          description: Покинул группу
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /social/party/{party_id}:
+    get:
+      summary: Получить информацию о группе
+      description: Возвращает детали группы, участников, настройки
+      operationId: getParty
+      tags:
+        - Party
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о группе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyDetails'
+
+components:
+  schemas:
+    Party:
+      type: object
+      properties:
+        party_id:
+          type: string
+        leader_id:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+        max_members:
+          type: integer
+        loot_mode:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    PartyDetails:
+      allOf:
+        - $ref: '#/components/schemas/Party'
+        - type: object
+          properties:
+            member_details:
+              type: array
+              items:
+                type: object
+                properties:
+                  character_id:
+                    type: string
+                  name:
+                    type: string
+                  class:
+                    type: string
+                  level:
+                    type: integer
+                  is_online:
+                    type: boolean
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+

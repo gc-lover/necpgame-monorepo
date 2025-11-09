@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="018-seed-game-start-data" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM locations WHERE id = 'loc-downtown-001'</sqlCheck>
+        </preConditions>
+
+        <!-- Seed Locations -->
+        <insert tableName="locations">
+            <column name="id" value="loc-downtown-001"/>
+            <column name="name" value="Downtown - Корпоративный центр"/>
+            <column name="description" value="Вы стоите в центре корпоративного района Night City. Вокруг вас возвышаются небоскребы мегакорпораций. Неоновые вывески освещают улицы. Здесь находятся офисы Arasaka, Militech и других корпораций."/>
+            <column name="city" value="Night City"/>
+            <column name="district" value="Downtown"/>
+            <column name="danger_level" value="LOW"/>
+            <column name="min_level" valueNumeric="1"/>
+            <column name="type" value="CORPORATE"/>
+            <column name="connected_locations" value='["loc-watson-001"]'/>
+        </insert>
+
+        <insert tableName="locations">
+            <column name="id" value="loc-watson-001"/>
+            <column name="name" value="Watson - Индустриальный район"/>
+            <column name="description" value="Вы находитесь в индустриальном районе Watson. Здесь расположены заводы, склады и мастерские. В воздухе витает запах машинного масла и металла."/>
+            <column name="city" value="Night City"/>
+            <column name="district" value="Watson"/>
+            <column name="danger_level" value="MEDIUM"/>
+            <column name="min_level" valueNumeric="1"/>
+            <column name="type" value="INDUSTRIAL"/>
+            <column name="connected_locations" value='["loc-downtown-001"]'/>
+        </insert>
+
+        <!-- Seed NPCs -->
+        <insert tableName="npcs">
+            <column name="id" value="npc-sarah-miller"/>
+            <column name="name" value="Сара Миллер"/>
+            <column name="description" value="Офицер NCPD, работает в корпоративном районе Downtown."/>
+            <column name="type" value="QUEST_GIVER"/>
+            <column name="faction" value="ncpd"/>
+            <column name="greeting" value="Привет. Я офицер Миллер. Если ты хочешь помочь полиции, у меня есть несколько заданий."/>
+            <column name="location_id" value="loc-downtown-001"/>
+            <column name="available_quests" value='["quest-delivery-001"]'/>
+        </insert>
+
+        <insert tableName="npcs">
+            <column name="id" value="npc-jake-archer"/>
+            <column name="name" value="Джейк Арчер"/>
+            <column name="description" value="Торговец оружием и снаряжением."/>
+            <column name="type" value="TRADER"/>
+            <column name="greeting" value="Привет, чомбата. Что тебе нужно? У меня есть оружие, броня, все что нужно для выживания в Night City."/>
+            <column name="location_id" value="loc-downtown-001"/>
+            <column name="available_quests" value="[]"/>
+        </insert>
+
+        <insert tableName="npcs">
+            <column name="id" value="npc-victor-vector"/>
+            <column name="name" value="Виктор Вектор"/>
+            <column name="description" value="Риппердок, устанавливает и обслуживает кибернетические импланты."/>
+            <column name="type" value="CITIZEN"/>
+            <column name="greeting" value="Привет. Я Виктор, риппердок. Если тебе нужны импланты или ремонт - обращайся."/>
+            <column name="location_id" value="loc-downtown-001"/>
+            <column name="available_quests" value="[]"/>
+        </insert>
+
+        <insert tableName="npcs">
+            <column name="id" value="npc-rita-moreno"/>
+            <column name="name" value="Рита Морено"/>
+            <column name="description" value="Торговка в районе Watson, принимает посылки и товары."/>
+            <column name="type" value="TRADER"/>
+            <column name="greeting" value="Привет. Я Рита. Если у тебя есть товары для продажи или доставки - я твой человек."/>
+            <column name="location_id" value="loc-watson-001"/>
+            <column name="available_quests" value="[]"/>
+        </insert>
+
+        <!-- Seed Quests -->
+        <insert tableName="quests">
+            <column name="id" value="quest-delivery-001"/>
+            <column name="name" value="Доставка груза"/>
+            <column name="description" value="Офицер NCPD Сара Миллер просит доставить посылку в Watson торговке Рите Морено. Это простое задание для новичка."/>
+            <column name="type" value="SIDE"/>
+            <column name="level" valueNumeric="1"/>
+            <column name="giver_npc_id" value="npc-sarah-miller"/>
+            <column name="reward_experience" valueNumeric="100"/>
+            <column name="reward_money" valueNumeric="200"/>
+            <column name="reward_items" value="[]"/>
+            <column name="reward_reputation_faction" value="ncpd"/>
+            <column name="reward_reputation_amount" valueNumeric="5"/>
+        </insert>
+
+        <rollback>
+            <delete tableName="quests">
+                <where>id = 'quest-delivery-001'</where>
+            </delete>
+            <delete tableName="npcs">
+                <where>id IN ('npc-sarah-miller', 'npc-jake-archer', 'npc-victor-vector', 'npc-rita-moreno')</where>
+            </delete>
+            <delete tableName="locations">
+                <where>id IN ('loc-downtown-001', 'loc-watson-001')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

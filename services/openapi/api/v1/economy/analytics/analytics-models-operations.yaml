@@ -1,0 +1,402 @@
+openapi: 3.0.3
+info:
+  title: Economy Analytics Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/analytics
+    directory: api/v1/economy/analytics
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    ChartSeriesResponse:
+      type: object
+      required: [asset, timeframe, points]
+      properties:
+        asset:
+          type: string
+        timeframe:
+          type: string
+        aggregation:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: './analytics-models.yaml#/components/schemas/ChartDataPoint'
+        indicators:
+          type: array
+          items:
+            $ref: './analytics-models.yaml#/components/schemas/IndicatorConfig'
+    CandleSeriesResponse:
+      type: object
+      required: [asset, interval, candles]
+      properties:
+        asset:
+          type: string
+        interval:
+          type: string
+        candles:
+          type: array
+          items:
+            $ref: './analytics-models.yaml#/components/schemas/Candle'
+    VolumeSeriesResponse:
+      type: object
+      required: [asset, timeframe, histogram]
+      properties:
+        asset:
+          type: string
+        timeframe:
+          type: string
+        histogram:
+          type: array
+          items:
+            $ref: './analytics-models.yaml#/components/schemas/VolumeBar'
+        cumulativeVolume:
+          type: number
+          format: double
+        liquidityRank:
+          type: string
+          enum: [LOW, NORMAL, HIGH]
+        anomalies:
+          type: array
+          items:
+            type: string
+    IndicatorCalculationRequest:
+      type: object
+      required: [indicators]
+      properties:
+        indicators:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            $ref: './analytics-models.yaml#/components/schemas/IndicatorConfig'
+        includeHistorical:
+          type: boolean
+          default: false
+    IndicatorCalculationResponse:
+      type: object
+      required: [asset, results]
+      properties:
+        asset:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            required: [config, series]
+            properties:
+              config:
+                $ref: './analytics-models.yaml#/components/schemas/IndicatorConfig'
+              series:
+                type: array
+                items:
+                  $ref: './analytics-models.yaml#/components/schemas/IndicatorValue'
+              lastSignal:
+                type: string
+                enum: [BUY, SELL, HOLD]
+              lastUpdatedAt:
+                type: string
+                format: date-time
+    PortfolioAnalyticsResponse:
+      type: object
+      required: [playerId, analytics]
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        analytics:
+          $ref: './analytics-models.yaml#/components/schemas/PortfolioAnalytics'
+        holdingsSnapshot:
+          type: array
+          items:
+            type: object
+            properties:
+              asset:
+                type: string
+              quantity:
+                type: number
+                format: double
+              currentValue:
+                type: number
+                format: double
+              allocationPercent:
+                type: number
+                format: double
+        updatedAt:
+          type: string
+          format: date-time
+    PortfolioHistoryResponse:
+      type: object
+      required: [playerId, history, pagination]
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        history:
+          type: array
+          items:
+            $ref: './analytics-models.yaml#/components/schemas/MonthlyReturn'
+        tradeStats:
+          $ref: './analytics-models.yaml#/components/schemas/TradeStats'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    MarketHeatMapResponse:
+      type: object
+      required: [scope, cells]
+      properties:
+        scope:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        cells:
+          type: array
+          items:
+            $ref: './analytics-models.yaml#/components/schemas/HeatMapCell'
+    PortfolioHeatMapResponse:
+      type: object
+      required: [playerId, cells]
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        totalValue:
+          type: number
+          format: double
+        diversificationScore:
+          type: number
+          format: double
+        cells:
+          type: array
+          items:
+            $ref: './analytics-models.yaml#/components/schemas/HeatMapCell'
+    AlertUpsertRequest:
+      type: object
+      required: [playerId, asset, config]
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        alertId:
+          type: string
+          format: uuid
+          nullable: true
+        asset:
+          type: string
+        config:
+          $ref: './analytics-models.yaml#/components/schemas/AlertConfig'
+    AlertUpsertResponse:
+      type: object
+      required: [alertId, status]
+      properties:
+        alertId:
+          type: string
+          format: uuid
+        status:
+          $ref: './analytics-models.yaml#/components/schemas/AlertStatus'
+        nextEvaluationAt:
+          type: string
+          format: date-time
+    AlertDeleteResponse:
+      type: object
+      required: [alertId, deleted]
+      properties:
+        alertId:
+          type: string
+          format: uuid
+        deleted:
+          type: boolean
+    AlertListResponse:
+      type: object
+      required: [playerId, alerts]
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        alerts:
+          type: array
+          items:
+            type: object
+            required: [alertId, asset, config, status]
+            properties:
+              alertId:
+                type: string
+                format: uuid
+              asset:
+                type: string
+              config:
+                $ref: './analytics-models.yaml#/components/schemas/AlertConfig'
+              status:
+                $ref: './analytics-models.yaml#/components/schemas/AlertStatus'
+    SentimentIndexResponse:
+      type: object
+      required: [generatedAt, sentiment]
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        sentiment:
+          $ref: './analytics-models.yaml#/components/schemas/SentimentIndex'
+        narrative:
+          type: string
+          description: Human-readable summary for UI messaging
+    AnalyticsSettingsResponse:
+      type: object
+      required: [playerId, settings]
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        settings:
+          $ref: './analytics-models.yaml#/components/schemas/AnalyticsSettings'
+        updatedAt:
+          type: string
+          format: date-time
+    AnalyticsSettingsUpdateRequest:
+      type: object
+      required: [settings]
+      properties:
+        settings:
+          $ref: './analytics-models.yaml#/components/schemas/AnalyticsSettings'
+        clientVersion:
+          type: string
+    MarketStreamEnvelope:
+      type: object
+      required: [stream, message]
+      properties:
+        stream:
+          type: string
+          enum: [market]
+        message:
+          $ref: './analytics-models.yaml#/components/schemas/MarketStreamMessage'
+    AlertStreamEnvelope:
+      type: object
+      required: [stream, message]
+      properties:
+        stream:
+          type: string
+          enum: [alerts]
+        message:
+          $ref: './analytics-models.yaml#/components/schemas/AlertStreamMessage'
+    AnalyticsMarketUpdatedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: economy.analytics.market-updated
+        producer:
+          type: string
+          example: economy-service
+        payload:
+          type: object
+          required: [asset, price, volume, indicatorSummary, generatedAt]
+          properties:
+            asset:
+              type: string
+            price:
+              type: number
+              format: double
+            volume:
+              type: number
+              format: double
+            indicatorSummary:
+              type: object
+              additionalProperties:
+                type: number
+            generatedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [auction-house, contracts-service, analytics-service, telemetry-service]
+        key:
+          type: string
+          example: asset
+    AnalyticsAlertTriggeredEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.analytics.alert-triggered
+        payload:
+          type: object
+          required: [alertId, playerId, asset, triggerType, triggeredAt]
+          properties:
+            alertId:
+              type: string
+              format: uuid
+            playerId:
+              type: string
+              format: uuid
+            asset:
+              type: string
+            triggerType:
+              type: string
+            triggeredAt:
+              type: string
+              format: date-time
+            deliveryChannels:
+              type: array
+              items:
+                type: string
+            metadata:
+              type: object
+              additionalProperties: true
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [notification-service, anti-fraud-service, analytics-service]
+    AnalyticsSentimentUpdatedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.analytics.sentiment-updated
+        payload:
+          type: object
+          required: [fearGreedScore, bullPower, bearPower, generatedAt]
+          properties:
+            fearGreedScore:
+              type: integer
+            bullPower:
+              type: number
+              format: double
+            bearPower:
+              type: number
+              format: double
+            generatedAt:
+              type: string
+              format: date-time
+            components:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  score:
+                    type: number
+                    format: double
+                  weight:
+                    type: number
+                    format: double
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [frontend-service, analytics-dashboard, notification-service]

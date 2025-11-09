@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: Random Events Extended - Get Random Event
+  version: 1.0.0
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/gameplay/world
+    package: com.necpgame.worldservice
+paths:
+  /gameplay/world/random-events/{event_id}:
+    get:
+      summary: Получить детали события
+      operationId: getRandomEvent
+      tags:
+        - Random Events
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали события
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/index.yaml#/components/schemas/RandomEventDetailed'
+        '401':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+        '400':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

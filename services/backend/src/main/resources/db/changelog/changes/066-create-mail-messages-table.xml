@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="066-create-mail-messages-table" author="backend-agent">
+        <createTable tableName="mail_messages">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="sender_character_id" type="UUID"/>
+            <column name="recipient_character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recipient_character_name" type="VARCHAR(200)"/>
+            <column name="mail_type" type="VARCHAR(50)" defaultValue="PLAYER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="body" type="TEXT"/>
+            <column name="attached_items" type="TEXT" defaultValue="[]"/>
+            <column name="attached_gold" type="BIGINT" defaultValueNumeric="0"/>
+            <column name="cod_amount" type="BIGINT" defaultValueNumeric="0"/>
+            <column name="is_read" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="is_claimed" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="is_deleted" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="sent_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="read_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="claimed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="returned" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="returned_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <createIndex tableName="mail_messages" indexName="idx_mail_messages_recipient">
+            <column name="recipient_character_id"/>
+            <column name="is_deleted"/>
+            <column name="sent_at"/>
+        </createIndex>
+
+        <createIndex tableName="mail_messages" indexName="idx_mail_messages_expires" where="is_deleted = false AND is_claimed = false">
+            <column name="expires_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

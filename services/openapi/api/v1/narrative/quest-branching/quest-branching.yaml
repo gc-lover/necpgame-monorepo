@@ -1,0 +1,460 @@
+openapi: 3.0.3
+info:
+  title: Quest Branching API
+  description: |
+    API для управления quest branching и narrative choices.
+    Поддерживает сложные деревья квестов, dynamic branching, player choices tracking.
+    
+    **Основано на:**
+    - Quest branching documentation (3 части)
+    - Narrative coherence system
+    - Player choice impact tracking
+    
+    **Features:**
+    - Dynamic quest branches
+    - Choice consequence tracking
+    - Branch conditions and prerequisites
+    - Narrative coherence validation
+  version: 1.0.0
+
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative
+    package: com.necpgame.narrativeservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Quest Branches
+    description: Управление quest branches
+  - name: Player Choices
+    description: Отслеживание player choices
+  - name: Branch Validation
+    description: Валидация branching logic
+
+paths:
+  /narrative/quests/{quest_id}/branches:
+    get:
+      tags:
+        - Quest Branches
+      summary: Получить все branches квеста
+      description: |
+        Возвращает все возможные branches для квеста.
+        Включает условия активации, последствия, interconnections.
+      operationId: getQuestBranches
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: player_state
+          in: query
+          description: Current player state для фильтрации доступных branches
+          schema:
+            type: object
+      responses:
+        '200':
+          description: Branches загружены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quest_id:
+                    type: string
+                  branches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestBranch'
+                  active_branches:
+                    type: array
+                    description: Currently active branches
+                    items:
+                      type: string
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /narrative/quests/{quest_id}/branches/{branch_id}/activate:
+    post:
+      tags:
+        - Quest Branches
+      summary: Активировать branch
+      description: |
+        Активирует определенную quest branch на основе player choice.
+        Валидирует условия, применяет consequences.
+      operationId: activateQuestBranch
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: branch_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - choice_id
+              properties:
+                character_id:
+                  type: string
+                choice_id:
+                  type: string
+                  description: Choice that triggered branch
+                context:
+                  type: object
+                  description: Additional context data
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Branch activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchActivationResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /narrative/player/{character_id}/choices:
+    get:
+      tags:
+        - Player Choices
+      summary: Получить историю choices игрока
+      description: |
+        Возвращает все choices сделанные игроком.
+        Используется для narrative coherence и branch validation.
+      operationId: getPlayerChoices
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: quest_filter
+          in: query
+          description: Фильтр по quest_id
+          schema:
+            type: string
+        - name: significance_filter
+          in: query
+          description: Фильтр по значимости choice
+          schema:
+            type: string
+            enum: ["minor", "moderate", "major", "critical"]
+      responses:
+        '200':
+          description: Player choices загружены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  character_id:
+                    type: string
+                  total_choices:
+                    type: integer
+                  choices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerChoice'
+
+  /narrative/quests/{quest_id}/branch-tree:
+    get:
+      tags:
+        - Quest Branches
+      summary: Получить полное branch tree
+      description: |
+        Возвращает полное дерево branching для квеста.
+        Включает все nodes, branches, conditions, consequences.
+      operationId: getQuestBranchTree
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Branch tree загружен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchTree'
+
+  /narrative/validate/branch-coherence:
+    post:
+      tags:
+        - Branch Validation
+      summary: Валидировать narrative coherence
+      description: |
+        Проверяет согласованность narrative branches с player choices.
+        Выявляет конфликты и несоответствия.
+      operationId: validateBranchCoherence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - quest_id
+              properties:
+                character_id:
+                  type: string
+                quest_id:
+                  type: string
+                proposed_branch_id:
+                  type: string
+                  description: Branch для валидации
+      responses:
+        '200':
+          description: Валидация выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoherenceValidation'
+
+components:
+  schemas:
+    QuestBranch:
+      type: object
+      required:
+        - branch_id
+        - branch_name
+      properties:
+        branch_id:
+          type: string
+          example: "corporate_path"
+        branch_name:
+          type: string
+          example: "Corporate Alliance Path"
+        description:
+          type: string
+          example: "Align with corporate forces"
+        branch_type:
+          type: string
+          enum: ["main", "side", "parallel", "exclusive"]
+        conditions:
+          type: array
+          description: Условия для активации branch
+          items:
+            $ref: '#/components/schemas/BranchCondition'
+        consequences:
+          type: array
+          description: Последствия активации branch
+          items:
+            $ref: '#/components/schemas/Consequence'
+        next_branches:
+          type: array
+          description: Branches доступные после этого
+          items:
+            type: string
+        mutually_exclusive_with:
+          type: array
+          description: Branches несовместимые с этим
+          items:
+            type: string
+        significance:
+          type: string
+          enum: ["minor", "moderate", "major", "critical"]
+          description: Значимость branch для narrative
+
+    BranchCondition:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [
+            "quest_completed",
+            "choice_made",
+            "reputation_threshold",
+            "item_owned",
+            "skill_level",
+            "relationship_level",
+            "faction_standing",
+            "world_state"
+          ]
+        parameters:
+          type: object
+          description: Параметры условия
+          additionalProperties: true
+        required:
+          type: boolean
+          default: true
+
+    Consequence:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [
+            "reputation_change",
+            "relationship_change",
+            "item_reward",
+            "quest_unlock",
+            "quest_lock",
+            "world_state_change",
+            "faction_standing_change"
+          ]
+        value:
+          type: object
+          additionalProperties: true
+        description:
+          type: string
+          example: "Arasaka reputation +50"
+
+    BranchActivationResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        branch_id:
+          type: string
+        consequences_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consequence'
+        unlocked_content:
+          type: array
+          description: New quests/content unlocked
+          items:
+            type: string
+        locked_content:
+          type: array
+          description: Content locked by this choice
+          items:
+            type: string
+        narrative_impact:
+          type: object
+          properties:
+            significance:
+              type: string
+              enum: ["minor", "moderate", "major", "critical"]
+            affected_quests:
+              type: array
+              items:
+                type: string
+            affected_relationships:
+              type: array
+              items:
+                type: string
+
+    PlayerChoice:
+      type: object
+      properties:
+        choice_id:
+          type: string
+        quest_id:
+          type: string
+        quest_name:
+          type: string
+        choice_text:
+          type: string
+          example: "Side with Militech"
+        timestamp:
+          type: string
+          format: date-time
+        branch_activated:
+          type: string
+          description: Branch ID активированный choice
+        significance:
+          type: string
+          enum: ["minor", "moderate", "major", "critical"]
+        consequences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consequence'
+
+    BranchTree:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        quest_name:
+          type: string
+        branches:
+          type: array
+          description: Все branches в дереве
+          items:
+            $ref: '#/components/schemas/QuestBranch'
+        branch_relationships:
+          type: array
+          description: Связи между branches
+          items:
+            type: object
+            properties:
+              from_branch:
+                type: string
+              to_branch:
+                type: string
+              relationship_type:
+                type: string
+                enum: ["leads_to", "exclusive_with", "requires", "blocks"]
+        critical_paths:
+          type: array
+          description: Critical narrative paths
+          items:
+            type: object
+            properties:
+              path_id:
+                type: string
+              branches:
+                type: array
+                items:
+                  type: string
+
+    CoherenceValidation:
+      type: object
+      properties:
+        is_coherent:
+          type: boolean
+          description: Согласованны ли branches с choices
+        conflicts:
+          type: array
+          description: Обнаруженные конфликты
+          items:
+            type: object
+            properties:
+              conflict_type:
+                type: string
+                enum: ["mutually_exclusive", "missing_prerequisite", "state_mismatch"]
+              description:
+                type: string
+              affected_branches:
+                type: array
+                items:
+                  type: string
+        warnings:
+          type: array
+          description: Предупреждения о potential issues
+          items:
+            type: string
+        recommendations:
+          type: array
+          description: Рекомендации по исправлению
+          items:
+            type: string
+
+security:
+  - BearerAuth: []
+
+

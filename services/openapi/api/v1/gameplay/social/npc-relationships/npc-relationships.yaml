@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: NPC Relationships API
+  version: 1.0.0
+  description: |
+    REST API for managing player-to-NPC relationships, trust, loyalty, moods, romance and world-driven events.
+    Source: .BRAIN/02-gameplay/social/npc-relationships-system-детально.md v1.0.0.
+    Integrations: world-service (events), economy-service (gifts/contracts), notification-service (alerts),
+    gameplay-service (missions) and analytics telemetry.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/gameplay/social/npc-relationships
+    directory: api/v1/gameplay/social/npc-relationships
+    package: com.necpgame.social
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: NpcRelationshipStatus
+    description: Snapshot of relationship layers and current state
+  - name: NpcRelationshipInteractions
+    description: Interactions, adjustments and romance actions
+  - name: NpcRelationshipHistory
+    description: Auditable history and world events
+  - name: NpcRelationshipModeration
+    description: Moderation workflows and analytics metrics
+paths:
+  /gameplay/social/npc-relationships/{npcId}:
+    parameters:
+      - $ref: './npc-relationships-models.yaml#/components/parameters/NpcIdPath'
+      - $ref: './npc-relationships-models.yaml#/components/parameters/PlayerIdQuery'
+      - $ref: './npc-relationships-models.yaml#/components/parameters/IncludeLayer'
+    get:
+      tags: [NpcRelationshipStatus]
+      summary: Get relationship status for an NPC
+      description: Retrieves aggregated affinity, trust, loyalty, mood and romance levels for the player and NPC pair.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Relationship status payload
+          content:
+            application/json:
+              schema:
+                $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipStatusResponse'
+              examples:
+                default:
+                  summary: Status including trust and romance
+                  value:
+                    data:
+                      npcId: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+                      playerId: "f79c3a9e-7d2b-45c0-8c60-1bf243f0d1ce"
+                      affinity: 42
+                      trust:
+                        value: 58
+                        stability: "steady"
+                        modifiers:
+                          - source: "quest"
+                            delta: 12
+                            expiresAt: null
+                      loyalty: 37
+                      mood:
+                        code: "curious"
+                        intensity: 0.66
+                        lastUpdated: "2025-11-09T10:05:00Z"
+                      romance:
+                        level: "affection"
+                        consentFlags: ["player_consented", "npc_consented"]
+                        cooldownEndsAt: "2025-11-12T00:00:00Z"
+                      tags: ["story-npc", "mentor"]
+                      classModifiers:
+                        primaryClass: "face"
+                        affinityBonus: 5
+                      factionState:
+                        factionId: "arasaka"
+                        alignment: "allied"
+                        reputation: 72
+                      lastInteractionAt: "2025-11-09T10:03:00Z"
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/social/npc-relationships/adjust:
+    post:
+      tags: [NpcRelationshipInteractions]
+      summary: Apply relationship adjustments
+      description: Applies a batch of affinity/trust/loyalty deltas derived from quests, gifts, betrayals or world events.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipAdjustRequest'
+      responses:
+        '202':
+          description: Adjustments accepted and queued for processing
+          content:
+            application/json:
+              schema:
+                $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipAdjustResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/social/npc-relationships/interactions:
+    post:
+      tags: [NpcRelationshipInteractions]
+      summary: Record player-NPC interaction
+      description: Records a social interaction (dialogue, gift, betrayal) and triggers recalculation of emotional state.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcInteractionLogRequest'
+      responses:
+        '201':
+          description: Interaction stored
+          content:
+            application/json:
+              schema:
+                $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcInteractionLogResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/social/npc-relationships/romance:
+    post:
+      tags: [NpcRelationshipInteractions]
+      summary: Manage romance status
+      description: Updates romance progression (interest→bond) with consent validation and reputation gates.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRomanceRequest'
+      responses:
+        '200':
+          description: Romance status updated
+          content:
+            application/json:
+              schema:
+                $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRomanceResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/social/npc-relationships/history/{npcId}:
+    parameters:
+      - $ref: './npc-relationships-models.yaml#/components/parameters/NpcIdPath'
+      - $ref: './npc-relationships-models.yaml#/components/parameters/PlayerIdQuery'
+      - $ref: './npc-relationships-models.yaml#/components/parameters/HistoryType'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/Page'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+    get:
+      tags: [NpcRelationshipHistory]
+      summary: Retrieve relationship history
+      description: Returns paginated audit trail of relationship changes, interactions and trigger sources.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: History payload
+          content:
+            application/json:
+              schema:
+                $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipHistoryResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/social/npc-relationships/events:
+    get:
+      tags: [NpcRelationshipHistory]
+      summary: List world events impacting NPC relationships
+      description: Proxy endpoint exposing world-service events that influence relationships, scoped by severity and region.
+      security:
+        - PlayerSession: []
+      parameters:
+        - $ref: './npc-relationships-models.yaml#/components/parameters/RegionFilter'
+        - $ref: './npc-relationships-models.yaml#/components/parameters/EventSeverity'
+        - $ref: '../../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: World event list
+          content:
+            application/json:
+              schema:
+                $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipEventListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/social/npc-relationships/moderation/review:
+    post:
+      tags: [NpcRelationshipModeration]
+      summary: Submit moderation case
+      description: Submits a moderation case to the `npc-relationship-review` queue for suspicious or abusive interactions.
+      security:
+        - ModeratorSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipModerationCaseRequest'
+      responses:
+        '202':
+          description: Moderation case accepted
+          content:
+            application/json:
+              schema:
+                $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipModerationCaseResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/social/npc-relationships/metrics/summary:
+    get:
+      tags: [NpcRelationshipModeration]
+      summary: Get relationship metrics summary
+      description: Provides aggregated metrics for trust stability, romance progress and defection risk for dashboards.
+      security:
+        - ModeratorSession: []
+      parameters:
+        - $ref: './npc-relationships-models.yaml#/components/parameters/PlayerIdQuery'
+        - $ref: './npc-relationships-models.yaml#/components/parameters/NpcIdOptional'
+      responses:
+        '200':
+          description: Metrics payload
+          content:
+            application/json:
+              schema:
+                $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipMetricsResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  responses:
+    BadRequest:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    InternalServerError:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    PlayerSession:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/PlayerSession'
+    ModeratorSession:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ModeratorSession'
+  schemas:
+    SocialNpcRelationshipChangedMessage:
+      $ref: './npc-relationships-models-operations.yaml#/components/schemas/SocialNpcRelationshipChangedMessage'
+    SocialNpcRomanceStateMessage:
+      $ref: './npc-relationships-models-operations.yaml#/components/schemas/SocialNpcRomanceStateMessage'
+    WorldNpcRelationshipEventMessage:
+      $ref: './npc-relationships-models-operations.yaml#/components/schemas/WorldNpcRelationshipEventMessage'
+    NpcRelationshipQueues:
+      $ref: './npc-relationships-models-operations.yaml#/components/schemas/NpcRelationshipQueues'
+

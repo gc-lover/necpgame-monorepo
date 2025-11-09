@@ -1,0 +1,232 @@
+openapi: 3.0.3
+info:
+  title: Faction Analytics Balance Components
+  version: 1.0.0
+  description: Переиспользуемые параметры, схемы и ошибки для Faction Analytics Balance API.
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/admin
+    package: com.necpgame.adminservice
+paths: {}
+components:
+  parameters:
+    FactionId:
+      name: factionId
+      in: query
+      required: false
+      description: Идентификатор фракции или агрегирующей группы.
+      schema: { type: string }
+    MetricKey:
+      name: metric
+      in: query
+      required: false
+      description: Фильтр по ключу метрики.
+      schema:
+        type: string
+        enum: [contractSuccessRate, raidClearTime, ecoAssetVelocity, legacyImpactScore, affinityGrowthRate, climateStabilityIndex, metanetComplianceRate]
+    Period:
+      name: period
+      in: query
+      required: false
+      description: Период агрегации метрик.
+      schema:
+        type: string
+        enum: [1h, 6h, 24h, 7d, 30d, 90d]
+    SandboxQuery:
+      name: sandbox
+      in: query
+      required: false
+      description: Укажите `true`, чтобы выполнить запрос в sandbox-режиме.
+      schema: { type: boolean, default: false }
+    MetricId:
+      name: metricId
+      in: path
+      required: true
+      description: Идентификатор метрики или дэшбордного индикатора.
+      schema: { type: string }
+    AlertId:
+      name: alertId
+      in: query
+      required: false
+      schema: { type: string }
+    SandboxHeader:
+      name: X-Sandbox-Mode
+      in: header
+      required: false
+      description: Укажите `true`, чтобы задействовать sandbox-профиль для auto-tune/алертов.
+      schema: { type: string, enum: ["true", "false"], default: "false" }
+  schemas:
+    MetricUnit:
+      type: string
+      enum: [percentage, seconds, credits_per_hour, score, index, compliance_ratio]
+    MetricSnapshot:
+      type: object
+      required: [metricId, value, unit, period, source, updatedAt]
+      properties:
+        metricId: { type: string }
+        factionId: { type: string }
+        value: { type: number, format: float }
+        unit: { $ref: '#/components/schemas/MetricUnit' }
+        period: { type: string }
+        source: { type: string }
+        updatedAt: { type: string, format: date-time }
+        trend: { type: number, format: float }
+        threshold:
+          type: object
+          properties:
+            lower: { type: number, format: float }
+            upper: { type: number, format: float }
+    MetricPoint:
+      type: object
+      required: [timestamp, value]
+      properties:
+        timestamp: { type: string, format: date-time }
+        value: { type: number, format: float }
+        unit: { $ref: '#/components/schemas/MetricUnit' }
+        sampleSize: { type: integer, minimum: 0 }
+    MetricDetail:
+      type: object
+      required: [metricId, buckets]
+      properties:
+        metricId: { type: string }
+        factionId: { type: string }
+        buckets:
+          type: array
+          items: { $ref: '#/components/schemas/MetricPoint' }
+        metadata:
+          type: object
+          properties:
+            calculationMethod: { type: string }
+            dataSources:
+              type: array
+              items: { type: string }
+            lastJobLatencyMs: { type: integer, minimum: 0 }
+    AdjustmentAction:
+      type: object
+      required: [target, field, delta]
+      properties:
+        actionId: { type: string }
+        target: { type: string, description: "Например, raidId, questId или economyProfile" }
+        field: { type: string, description: "Параметр для изменения, например hpMultiplier, taxRate" }
+        delta: { type: number, format: float }
+        reason: { type: string }
+        expectedImpact:
+          type: object
+          properties:
+            metricId: { type: string }
+            direction: { type: string, enum: [increase, decrease, stabilize] }
+            magnitude: { type: number, format: float }
+    AutotuneRequest:
+      type: object
+      required: [initiator, adjustments, version]
+      properties:
+        initiator:
+          type: object
+          properties:
+            type: { type: string, enum: [analytics_job, gm_manual, simulation] }
+            actorId: { type: string }
+        adjustments:
+          type: array
+          items: { $ref: '#/components/schemas/AdjustmentAction' }
+          minItems: 1
+          maxItems: 25
+        sandbox: { type: boolean, default: false }
+        version: { type: integer, minimum: 1, description: "Optimistic locking version" }
+        notes: { type: string, maxLength: 500 }
+    AutotuneResult:
+      type: object
+      properties:
+        actionBatchId: { type: string }
+        status: { type: string, enum: [accepted, rejected, partially_applied] }
+        appliedActions:
+          type: array
+          items: { $ref: '#/components/schemas/AdjustmentAction' }
+        rejectedActions:
+          type: array
+          items:
+            type: object
+            properties:
+              action: { $ref: '#/components/schemas/AdjustmentAction' }
+              reason: { type: string }
+        scheduledRollbacks:
+          type: array
+          items:
+            type: object
+            properties:
+              actionId: { type: string }
+              rollbackAt: { type: string, format: date-time }
+    AlertSeverity:
+      type: string
+      enum: [low, medium, high, critical]
+    Alert:
+      type: object
+      required: [alertId, severity, message, detectedAt]
+      properties:
+        alertId: { type: string }
+        severity: { $ref: '#/components/schemas/AlertSeverity' }
+        message: { type: string }
+        metricId: { type: string }
+        factionId: { type: string }
+        recommendedAction: { type: string }
+        impactedSystems:
+          type: array
+          items: { type: string }
+        detectedAt: { type: string, format: date-time }
+        acknowledged: { type: boolean, default: false }
+        sandbox: { type: boolean, default: false }
+    AlertAck:
+      type: object
+      required: [alertId, ackBy]
+      properties:
+        alertId: { type: string }
+        ackBy: { type: string, format: uuid }
+        reason: { type: string }
+        resolved: { type: boolean, default: false }
+    TelemetrySnapshot:
+      type: object
+      properties:
+        analyticsJobLatencyMs: { type: integer, minimum: 0 }
+        autotuneActionsTotal: { type: integer, minimum: 0 }
+        alertsOpenTotal: { type: integer, minimum: 0 }
+        updatedAt: { type: string, format: date-time }
+    MetricsResponse:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items: { $ref: '#/components/schemas/MetricSnapshot' }
+        telemetry: { $ref: '#/components/schemas/TelemetrySnapshot' }
+    AlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items: { $ref: '#/components/schemas/Alert' }
+        telemetry: { $ref: '#/components/schemas/TelemetrySnapshot' }
+    AnalyticsError:
+      allOf:
+        - $ref: '../../../shared/common/responses.yaml#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  enum:
+                    - BIZ_ANALYTICS_METRIC_NOT_FOUND
+                    - BIZ_ANALYTICS_ALERT_NOT_FOUND
+                    - BIZ_ANALYTICS_AUTOTUNE_CONFLICT
+                    - VAL_ANALYTICS_INVALID_PERIOD
+                    - VAL_ANALYTICS_SANDBOX_ONLY
+                    - VAL_ANALYTICS_VERSION_MISMATCH
+                    - INT_ANALYTICS_JOB_FAILURE
+                    - INT_ANALYTICS_STREAM_FAILURE
+              required: [code, message]
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

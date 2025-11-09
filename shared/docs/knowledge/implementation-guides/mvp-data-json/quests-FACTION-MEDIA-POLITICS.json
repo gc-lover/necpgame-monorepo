@@ -1,0 +1,388 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/factions/media-politics
+
+---
+
+
+{
+  "version": "3.0.0",
+  "factions": ["Media_Networks","NUSA_Government","Corpo_Council"],
+  "description": "Квесты медиа-войн и политических интриг",
+  "questsFaction": [
+    {
+      "questId": "MEDIA-001-TRUTH-KILLER",
+      "name": "Убийца Правды",
+      "faction": "Network_54",
+      "region": "City_Wide",
+      "characters": {
+        "journalist": {
+          "id": "npc-gillian-truth",
+          "name": "Гиллиан Джордан",
+          "role": "Журналист-расследователь Network 54",
+          "age": 38,
+          "reputation": "Раскрыла 12 корпо-скандалов",
+          "awards": "3x Pulitzer equivalent",
+          "current": "Расследует крупнейший заговор",
+          "danger": "Корпорации хотят её смерти",
+          "ally": "Игрок — её телохранитель или источник"
+        },
+        "conspiracy": {
+          "target": "Council of Corporations",
+          "members": ["Arasaka","Militech","Biotechnica","Petrochem","Zetatech"],
+          "crime": "Совместный контроль мировых цен, искусственный голод, войны",
+          "evidence": "99% убедительности",
+          "consequence": "Раскрытие разрушит мировую экономику"
+        },
+        "editor": {
+          "id": "npc-editor-marcus",
+          "name": "Главный редактор Маркус Вейл",
+          "pressure": "Совет давит. Грозят закрыть канал.",
+          "choice": "Публиковать или зарыть",
+          "bribe": "$10M за молчание"
+        },
+        "assassin": {
+          "id": "npc-corpo-cleaner",
+          "name": "«Чистильщик» корпораций",
+          "role": "Профессиональный убийца",
+          "target": "Гиллиан и все свидетели",
+          "method": "Любые. Неуловим."
+        },
+        "source": {
+          "id": "npc-whistleblower",
+          "name": "Инсайдер «Глубокая Глотка»",
+          "identity": "Неизвестна",
+          "danger": "Если раскрыт — смерть",
+          "motivation": "Совесть"
+        }
+      },
+      "synopsis": "Гиллиан на грани величайшего разоблачения: Совет Корпораций управляет миром. Но публикация разрушит экономику, вызовет хаос. Корпорации посылают убийц. Редакция под давлением. Игрок защищает Гиллиан и решает: правда или стабильность?",
+      "branches": {
+        "main_paths": [
+          "path_publish_truth",
+          "path_accept_bribe_silence",
+          "path_leak_anonymous",
+          "path_negotiate_deal",
+          "path_destroy_evidence"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_assassination_attempt_1",
+            "moment": "Чистильщик атакует квартиру Гиллиан",
+            "choices": [
+              {
+                "id": "fight_protect",
+                "text": "Сразиться с убийцей",
+                "skillCheck": {"attr":"REF","skill":"Combat","threshold":13},
+                "outcome": "Intense boss fight. Победа = Гиллиан спасена."
+              },
+              {
+                "id": "escape_hide",
+                "text": "Сбежать и спрятаться",
+                "outcome": "Временная безопасность. Ищут дальше."
+              },
+              {
+                "id": "negotiate_assassin",
+                "text": "Попытаться договориться с убийцей",
+                "skillCheck": {"attr":"COOL","skill":"Negotiation","threshold":15},
+                "outcome": "Может предложить больше денег или показать доказательства."
+              },
+              {
+                "id": "sacrifice_self",
+                "text": "Отвлечь убийцу на себя",
+                "consequence": "Героическая жертва",
+                "outcome": "Игрок ранен/убит. Гиллиан сбегает."
+              }
+            ]
+          },
+          {
+            "id": "decision_editor_pressure",
+            "moment": "Редактор: «Не публикуем. Закроют канал. 500 потеряют работу.»",
+            "dilemma": "Правда vs 500 рабочих мест",
+            "choices": [
+              {
+                "id": "convince_editor",
+                "text": "Убедить редактора публиковать",
+                "skillCheck": {"attr":"COOL","skill":"Persuasion","threshold":14},
+                "outcome": "Редактор соглашается. Героизм или безумие?"
+              },
+              {
+                "id": "accept_censorship",
+                "text": "Согласиться с цензурой",
+                "outcome": "Материал зарыт. Канал спасён. Правда погребена."
+              },
+              {
+                "id": "leak_independent",
+                "text": "Слить материал независимым медиа",
+                "outcome": "Публикация без Network 54. Гиллиан уволена."
+              },
+              {
+                "id": "threaten_editor",
+                "text": "Шантажировать редактора (найти компромат)",
+                "outcome": "Редактор вынужден публиковать."
+              }
+            ]
+          },
+          {
+            "id": "decision_source_identity",
+            "moment": "Корпорации требуют: назовите источник или все умрут",
+            "threat": "Убийство Гиллиан, игрока и всей редакции",
+            "choices": [
+              {
+                "id": "reveal_source",
+                "text": "Раскрыть источник (предательство)",
+                "outcome": "Инсайдер убит. Остальные спасены. Журналистская этика нарушена."
+              },
+              {
+                "id": "refuse_die",
+                "text": "Отказать (героизм)",
+                "outcome": "Все под угрозой. Standoff."
+              },
+              {
+                "id": "fake_source",
+                "text": "Подставить ложный источник",
+                "skillCheck": {"attr":"INT","skill":"Deception","threshold":14},
+                "outcome": "Корпорации обмануты. Временно."
+              },
+              {
+                "id": "counter_expose",
+                "text": "Контр-публикация: раскрыть шантаж",
+                "outcome": "Публичность защищает. Корпорации отступают."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_truth_published",
+          "name": "Правда Раскрыта",
+          "conditions": ["published_scandal","survived_attempts"],
+          "outcome": "Заговор раскрыт. Мир в шоке. Экономика рушится. Хаос.",
+          "rewards": {"credits":50000,"pulitzer":true,"gillian_alive":true},
+          "world": "Корпо-система подорвана. Революции. Анархия.",
+          "moral": "Truth at any cost"
+        },
+        {
+          "id": "ending_silence_bought",
+          "name": "Купленное Молчание",
+          "conditions": ["accepted_bribe","buried_story"],
+          "outcome": "Материал зарыт. Корпорации торжествуют. Гиллиан ломается.",
+          "rewards": {"credits":10000000,"media_rep":"-100","soul":"sold"},
+          "world": "Заговор продолжается. Миллионы страдают."
+        },
+        {
+          "id": "ending_anonymous_leak",
+          "name": "Анонимная Правда",
+          "conditions": ["leaked_independent","gillian_safe"],
+          "outcome": "Правда в Сети. Автор неизвестен. Корпорации не могут мстить.",
+          "rewards": {"credits":30000,"anonymous_hero":true},
+          "world": "Информация свободна. Перемены начинаются."
+        },
+        {
+          "id": "ending_martyrs",
+          "name": "Мученики Правды",
+          "conditions": ["published","gillian_killed","player_killed"],
+          "outcome": "Правда раскрыта. Гиллиан и игрок убиты. Легенды навсегда.",
+          "rewards": {"credits":0,"legacy":"eternal","statues":true},
+          "ending_type": "heroic_death"
+        },
+        {
+          "id": "ending_source_betrayed",
+          "name": "Предательство Инсайдера",
+          "conditions": ["revealed_source"],
+          "outcome": "Инсайдер мёртв. Гиллиан жива, но сломлена. Журналистика осквернена.",
+          "rewards": {"credits":20000,"gillian_trauma":"permanent","journalism":"betrayed"},
+          "world": "Никто больше не доверяет журналистам."
+        }
+      ],
+      "difficulty": "legendary",
+      "tier": 5,
+      "world_impact": "catastrophic",
+      "themes": ["truth","power","sacrifice","journalism","conspiracy","price_of_truth"]
+    },
+    {
+      "questId": "POLITICS-001-ELECTION",
+      "name": "Выборы в Night City",
+      "faction": "NUSA_Government",
+      "region": "City_Wide",
+      "characters": {
+        "incumbent": {
+          "id": "npc-mayor-rhyne",
+          "name": "Мэр Лу Райн",
+          "term": "Второй срок",
+          "reputation": "Стабильность, но коррупция",
+          "backers": "Arasaka, старые корпорации",
+          "record": "Город безопаснее, но неравенство выросло"
+        },
+        "reformer": {
+          "id": "npc-candidate-jefferson",
+          "name": "Джефферсон Перальта",
+          "platform": "Реформы, права людей, ограничение корпораций",
+          "background": "Бывший активист",
+          "problem": "Нет денег на кампанию",
+          "vulnerability": "Тёмное прошлое — был в банде"
+        },
+        "populist": {
+          "id": "npc-candidate-holt",
+          "name": "Ханна Холт",
+          "platform": "Популизм, национализм, изгнание иммигрантов",
+          "backers": "Militech, ксенофобы",
+          "danger": "Фашизм под маской порядка"
+        },
+        "player": {
+          "role": "Политический консультант, фиксер или активист",
+          "power": "Может изменить исход выборов"
+        }
+      },
+      "synopsis": "Выборы мэра Night City. Три кандидата: коррумпированный инкумбент, идеалистический реформатор, опасный популист. Игрок может: помочь одному, саботировать другого, купить выборы или устроить анархию.",
+      "branches": {
+        "main_paths": [
+          "path_support_rhyne_stability",
+          "path_support_jefferson_reform",
+          "path_support_holt_populism",
+          "path_rig_elections",
+          "path_expose_all_anarchy"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_jefferson_past",
+            "moment": "Найдены улики: Джефферсон был в Valentinos 20 лет назад",
+            "opponent_plan": "Райн планирует раскрыть это перед выборами",
+            "choices": [
+              {
+                "id": "hide_evidence",
+                "text": "Спрятать/уничтожить улики",
+                "outcome": "Джефферсон защищён. Но ложь."
+              },
+              {
+                "id": "preemptive_reveal",
+                "text": "Раскрыть самому (честность)",
+                "outcome": "Джефферсон признаётся. Общество решает."
+              },
+              {
+                "id": "counter_dirt_rhyne",
+                "text": "Найти компромат на Райн в ответ",
+                "outcome": "Взаимное уничтожение репутаций."
+              },
+              {
+                "id": "frame_rhyne",
+                "text": "Подбросить улики на Райн (грязные методы)",
+                "outcome": "Райн обвинён в убийстве. Ложь."
+              }
+            ]
+          },
+          {
+            "id": "decision_election_rigging",
+            "moment": "Предложение: взломать систему голосования",
+            "cost": 100000,
+            "risk": "Если раскрыто — тюрьма",
+            "choices": [
+              {
+                "id": "rig_for_candidate",
+                "text": "Подтасовать голоса",
+                "skillCheck": {"attr":"INT","skill":"Hacking","threshold":14},
+                "outcome": "Твой кандидат побеждает. Демократия уничтожена."
+              },
+              {
+                "id": "refuse_integrity",
+                "text": "Отказаться (честность)",
+                "outcome": "Честные выборы. Исход неизвестен."
+              },
+              {
+                "id": "expose_rigging_attempt",
+                "text": "Раскрыть попытку подтасовки",
+                "outcome": "Скандал. Виновные арестованы."
+              }
+            ]
+          },
+          {
+            "id": "decision_holt_danger",
+            "moment": "Раскрыто: Холт планирует путч после победы",
+            "plan": "Militech поддержит. Диктатура.",
+            "choices": [
+              {
+                "id": "expose_coup",
+                "text": "Раскрыть заговор публично",
+                "outcome": "Холт дисквалифицирована. Militech разгневана."
+              },
+              {
+                "id": "allow_happen",
+                "text": "Позволить (хаос или порядок?)",
+                "outcome": "Холт побеждает. Начинается диктатура."
+              },
+              {
+                "id": "assassinate_holt",
+                "text": "Устранить Холт (терроризм)",
+                "consequence": "Политическое убийство",
+                "outcome": "Холт мертва. Хаос. Игрок — террорист."
+              },
+              {
+                "id": "join_coup",
+                "text": "Присоединиться к путчу",
+                "consequence": "Предательство демократии",
+                "outcome": "Игрок — соучастник диктатуры."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_reform_victory",
+          "name": "Победа Реформ",
+          "conditions": ["jefferson_won","fair_election"],
+          "outcome": "Джефферсон — мэр. Реформы начинаются. Корпорации сопротивляются.",
+          "rewards": {"credits":40000,"reform_supporter":true,"hope":true},
+          "world": "Night City меняется к лучшему. Медленно."
+        },
+        {
+          "id": "ending_stability",
+          "name": "Стабильность Коррупции",
+          "conditions": ["rhyne_won"],
+          "outcome": "Райн остаётся. Коррупция продолжается. Стабильность сохранена.",
+          "rewards": {"credits":60000,"corpo_ally":true,"change":"none"},
+          "world": "Статус-кво. Богатые богатеют."
+        },
+        {
+          "id": "ending_dictatorship",
+          "name": "Диктатура Холт",
+          "conditions": ["holt_won","coup_successful"],
+          "outcome": "Холт объявляет военное положение. Militech поддерживает.",
+          "rewards": {"credits":80000,"dictator_ally":true,"freedom":"lost"},
+          "world": "Night City — полицейское государство."
+        },
+        {
+          "id": "ending_rigged",
+          "name": "Украденные Выборы",
+          "conditions": ["election_rigged","not_exposed"],
+          "outcome": "Победил кандидат через подтасовку. Демократия — иллюзия.",
+          "rewards": {"credits":150000,"puppet_master":true,"democracy":"dead"},
+          "world": "Фальшивая демократия. Игрок контролирует."
+        },
+        {
+          "id": "ending_anarchy",
+          "name": "Анархия",
+          "conditions": ["exposed_all","no_winner"],
+          "outcome": "Все кандидаты дисквалифицированы. Вакуум власти.",
+          "rewards": {"credits":20000,"chaos":true},
+          "world": "Night City без правительства. Банды захватывают."
+        },
+        {
+          "id": "ending_martyrs_truth",
+          "name": "Мученики за Правду",
+          "conditions": ["truth_published","gillian_killed"],
+          "outcome": "Правда раскрыта. Гиллиан убита. Легенда навсегда.",
+          "rewards": {"credits":0,"gillian_statue":true,"journalism":"sacred"},
+          "world": "Реформы в честь Гиллиан. Свободная пресса."
+        }
+      ],
+      "difficulty": "legendary",
+      "tier": 5,
+      "political_impact": "city_defining",
+      "themes": ["truth_vs_stability","democracy","corruption","journalism","sacrifice"]
+    }
+  ]
+}
+

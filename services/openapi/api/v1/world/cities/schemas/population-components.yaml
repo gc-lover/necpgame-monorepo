@@ -1,0 +1,584 @@
+openapi: 3.0.3
+info:
+  title: City Population Components
+  version: 1.0.0
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+paths: {}
+components:
+  parameters:
+    CityId:
+      name: cityId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор города.
+    DistrictId:
+      name: districtId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор района внутри города.
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор задания пересчёта населения.
+    IncludeDiff:
+      name: includeDiff
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: >
+        Возвращать ли дифф-карточки при запросе агрегированных данных.
+    SegmentFilter:
+      name: segment
+      in: query
+      schema:
+        type: string
+        enum: [residential, corporate, industrial, cultural, criminal, mixed]
+      description: Фильтр по типу сегмента района.
+    StatusFilter:
+      name: status
+      in: query
+      schema:
+        type: string
+        enum: [queued, running, completed, failed, cancelled]
+      description: Фильтр по статусу заданий пересчёта.
+    TriggerFilter:
+      name: trigger
+      in: query
+      schema:
+        type: string
+        enum: [event, manual, player-impact, schedule]
+      description: Фильтр по источнику запуска пересчёта.
+    MetricWindow:
+      name: window
+      in: query
+      schema:
+        type: string
+        enum: [1h, 6h, 12h, 24h, 7d]
+        default: 24h
+      description: Окно агрегации метрик.
+  schemas:
+    CityPopulationProfile:
+      type: object
+      required:
+        - cityId
+        - timestamp
+        - populationTotal
+        - capacityUsage
+        - densityScore
+        - segments
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        cityName:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        populationTotal:
+          type: integer
+          minimum: 0
+        capacityUsage:
+          type: number
+          minimum: 0
+          maximum: 1
+        densityScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        energyLoad:
+          type: number
+        eventPressure:
+          type: number
+        populationTarget:
+          type: integer
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistrictPopulationState'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationMetric'
+        diff:
+          $ref: '#/components/schemas/PopulationDiff'
+    DistrictPopulationState:
+      type: object
+      required:
+        - districtId
+        - name
+        - segment
+        - npcCount
+        - capacity
+        - growthRate
+      properties:
+        districtId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        segment:
+          type: string
+          enum: [residential, corporate, industrial, cultural, criminal, mixed]
+        npcCount:
+          type: integer
+          minimum: 0
+        capacity:
+          type: integer
+          minimum: 0
+        capacityUsage:
+          type: number
+          minimum: 0
+          maximum: 1
+        growthRate:
+          type: number
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationAlert'
+        dominantFaction:
+          type: string
+        influence:
+          type: object
+          additionalProperties:
+            type: number
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationMetric'
+    PopulationAlert:
+      type: object
+      required:
+        - code
+        - severity
+        - message
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        message:
+          type: string
+        recommendedAction:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    PopulationMetric:
+      type: object
+      required:
+        - metricId
+        - value
+      properties:
+        metricId:
+          type: string
+        value:
+          type: number
+        threshold:
+          type: number
+        trend:
+          type: string
+          enum: [up, down, flat]
+        unit:
+          type: string
+        window:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    PopulationRecalcRequest:
+      type: object
+      required:
+        - cityId
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        districtIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        trigger:
+          type: string
+          enum: [event, manual, player-impact, schedule]
+          default: manual
+        triggerContext:
+          type: object
+          additionalProperties: {}
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        dryRun:
+          type: boolean
+          default: false
+        notes:
+          type: string
+    PopulationRecalcJob:
+      type: object
+      required:
+        - jobId
+        - status
+        - submittedAt
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        cityId:
+          type: string
+          format: uuid
+        trigger:
+          type: string
+          enum: [event, manual, player-impact, schedule]
+        dryRun:
+          type: boolean
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        submittedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        resultSummary:
+          type: string
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationJobLog'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationMetric'
+    PopulationJobLog:
+      type: object
+      required:
+        - timestamp
+        - level
+        - message
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [info, warning, error]
+        message:
+          type: string
+        context:
+          type: object
+          additionalProperties: {}
+    PopulationDiff:
+      type: object
+      required:
+        - cityId
+        - baselineTimestamp
+        - currentTimestamp
+        - npcDelta
+        - capacityDelta
+        - districtChanges
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        baselineTimestamp:
+          type: string
+          format: date-time
+        currentTimestamp:
+          type: string
+          format: date-time
+        npcDelta:
+          type: integer
+        capacityDelta:
+          type: integer
+        districtChanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistrictChange'
+    DistrictChange:
+      type: object
+      required:
+        - districtId
+        - newState
+      properties:
+        districtId:
+          type: string
+          format: uuid
+        oldState:
+          $ref: '#/components/schemas/DistrictPopulationState'
+        newState:
+          $ref: '#/components/schemas/DistrictPopulationState'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationAlert'
+        playerImpact:
+          $ref: '#/components/schemas/PlayerImpactSummary'
+        eventImpacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventImpact'
+    PlayerImpactSummary:
+      type: object
+      properties:
+        playerGroupId:
+          type: string
+        factionId:
+          type: string
+        influenceDelta:
+          type: number
+        activities:
+          type: array
+          items:
+            type: string
+    EventImpact:
+      type: object
+      required:
+        - eventId
+        - type
+        - severity
+      properties:
+        eventId:
+          type: string
+        type:
+          type: string
+          enum: [world, social, economy, gameplay]
+        severity:
+          type: string
+          enum: [low, medium, high, catastrophic]
+        durationMinutes:
+          type: integer
+        applied:
+          type: boolean
+        notes:
+          type: string
+    PopulationListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityPopulationProfile'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    PopulationJobsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationRecalcJob'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    DistrictPopulationListResponse:
+      type: object
+      required:
+        - cityId
+        - data
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistrictPopulationState'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    PopulationDiffResponse:
+      type: object
+      required:
+        - cityId
+        - diff
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        baselineTimestamp:
+          type: string
+          format: date-time
+        currentTimestamp:
+          type: string
+          format: date-time
+        diff:
+          $ref: '#/components/schemas/PopulationDiff'
+    PopulationSummaryResponse:
+      type: object
+      required:
+        - cityId
+        - profile
+      properties:
+        cityId:
+          type: string
+          format: uuid
+        profile:
+          $ref: '#/components/schemas/CityPopulationProfile'
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationRecalcJob'
+        updatedAt:
+          type: string
+          format: date-time
+  examples:
+    CityPopulationWatson:
+      summary: Город Watson — агрегированная конфигурация
+      value:
+        cityId: "5f6c9a2b-8d6d-4aa3-9df5-118c7f6a2fd0"
+        cityName: "Watson"
+        timestamp: "2025-11-08T09:45:00Z"
+        populationTotal: 1850000
+        populationTarget: 1900000
+        capacityUsage: 0.92
+        densityScore: 0.78
+        energyLoad: 0.81
+        eventPressure: 0.35
+        metrics:
+          - metricId: "density_avg"
+            value: 0.78
+            threshold: 0.85
+            trend: "up"
+            unit: "ratio"
+            window: "24h"
+            timestamp: "2025-11-08T09:45:00Z"
+        segments:
+          - districtId: "3c4db931-7789-4d3a-a4f0-1de4b63f1b53"
+            name: "Little China"
+            segment: "residential"
+            npcCount: 420000
+            capacity: 450000
+            capacityUsage: 0.93
+            growthRate: 0.04
+            dominantFaction: "faction_tyger_claws"
+            alerts:
+              - code: "housing_pressure"
+                severity: "warning"
+                message: "Жилищный фонд перегружен на 8%."
+                recommendedAction: "Увеличить строительство жилых модулей."
+            metrics:
+              - metricId: "crime_level"
+                value: 0.62
+                threshold: 0.5
+                trend: "up"
+                unit: "ratio"
+                window: "24h"
+                timestamp: "2025-11-08T09:45:00Z"
+          - districtId: "9942c705-610f-4f5d-a9c1-271118fc2c65"
+            name: "Northside Docks"
+            segment: "industrial"
+            npcCount: 260000
+            capacity: 320000
+            capacityUsage: 0.81
+            growthRate: -0.03
+            dominantFaction: "faction_militech"
+            alerts:
+              - code: "labor_shortage"
+                severity: "info"
+                message: "Недостаток специалистов 5%."
+    RecalcRequestPlayerImpact:
+      summary: Пересчёт по влиянию игроков
+      value:
+        cityId: "5f6c9a2b-8d6d-4aa3-9df5-118c7f6a2fd0"
+        districtIds:
+          - "3c4db931-7789-4d3a-a4f0-1de4b63f1b53"
+        trigger: "player-impact"
+        triggerContext:
+          missionId: "quest-blackwall-raid"
+          playersOnline: 1823
+        priority: "high"
+        dryRun: false
+        notes: "После захвата склада."
+    RecalcJobRunning:
+      summary: Задание пересчёта — выполняется
+      value:
+        jobId: "92f7e3f7-6bf5-4a0b-a433-9ad1a762ffc1"
+        status: "running"
+        cityId: "5f6c9a2b-8d6d-4aa3-9df5-118c7f6a2fd0"
+        trigger: "event"
+        dryRun: false
+        priority: "urgent"
+        submittedAt: "2025-11-08T09:40:00Z"
+        startedAt: "2025-11-08T09:40:05Z"
+        progress: 0.54
+        logs:
+          - timestamp: "2025-11-08T09:40:10Z"
+            level: "info"
+            message: "Сегментация районов завершена."
+          - timestamp: "2025-11-08T09:40:20Z"
+            level: "warning"
+            message: "Пробки в метро — добавлена корректировка расписаний."
+    PopulationDiffMetroShutdown:
+      summary: Дифф после события metro_shutdown
+      value:
+        cityId: "5f6c9a2b-8d6d-4aa3-9df5-118c7f6a2fd0"
+        baselineTimestamp: "2025-11-08T08:00:00Z"
+        currentTimestamp: "2025-11-08T09:45:00Z"
+        npcDelta: -25000
+        capacityDelta: 12000
+        districtChanges:
+          - districtId: "bbcf3e16-3245-4581-9c0c-9956c4f64c0b"
+            oldState:
+              districtId: "bbcf3e16-3245-4581-9c0c-9956c4f64c0b"
+              name: "Watson Central"
+              segment: "mixed"
+              npcCount: 380000
+              capacity: 420000
+              capacityUsage: 0.9
+              growthRate: 0.02
+            newState:
+              districtId: "bbcf3e16-3245-4581-9c0c-9956c4f64c0b"
+              name: "Watson Central"
+              segment: "mixed"
+              npcCount: 340000
+              capacity: 420000
+              capacityUsage: 0.81
+              growthRate: -0.06
+            alerts:
+              - code: "transit_failure"
+                severity: "critical"
+                message: "Метро остановлено, требуется пересчёт логистики."
+            eventImpacts:
+              - eventId: "world.event.metro_shutdown"
+                type: "world"
+                severity: "high"
+                durationMinutes: 120
+                applied: true
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

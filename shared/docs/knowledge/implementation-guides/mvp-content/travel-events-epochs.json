@@ -1,0 +1,667 @@
+{
+  "travelEvents": {
+    "description": "События перемещения между локациями, привязанные к эпохам 2020-2093",
+    "epochs": {
+      "2020-2030": [
+        {
+          "id": "travel-2025-corp-checkpoint",
+          "name": "Корпоративный блокпост (2025)",
+          "description": "При перемещении между Downtown и Watson вы натыкаетесь на корпоративный блокпост. Arasaka контролирует движение. Проверка документов обязательна.",
+          "triggerLocations": ["loc-downtown-001", "loc-watson-001"],
+          "probability": 0.3,
+          "dangerLevel": "medium",
+          "options": [
+            {
+              "id": "show-docs",
+              "text": "Показать документы",
+              "description": "Вы показываете документы. Охрана проверяет и пропускает вас.",
+              "skillCheck": null,
+              "effects": {
+                "time": 5,
+                "reputation": { "arasaka": 1 }
+              }
+            },
+            {
+              "id": "bribe",
+              "text": "Дать взятку (100 eddies)",
+              "description": "Вы даете взятку охране. Они пропускают вас без проверки.",
+              "skillCheck": { "type": "cool", "dc": 12 },
+              "effects": {
+                "money": -100,
+                "time": 2
+              }
+            },
+            {
+              "id": "sneak",
+              "text": "Обойти блокпост",
+              "description": "Вы пытаетесь обойти блокпост через переулки.",
+              "skillCheck": { "type": "stealth", "dc": 13 },
+              "effects": {
+                "success": { "time": 10 },
+                "failure": { "combat": true, "enemies": 2 }
+              }
+            }
+          ]
+        },
+        {
+          "id": "travel-2028-nomad-convoy",
+          "name": "Конвой номадов (2028)",
+          "description": "Вы встречаете конвой номадов на дороге. Они движутся через город, везут припасы. Предлагают подвезти вас за небольшую плату или услугу.",
+          "triggerLocations": ["loc-watson-001", "loc-santo-domingo-001"],
+          "probability": 0.2,
+          "dangerLevel": "low",
+          "options": [
+            {
+              "id": "accept-ride",
+              "text": "Принять предложение (50 eddies)",
+              "description": "Вы платите 50 eddies и едете с номадами. Быстро и безопасно.",
+              "effects": {
+                "money": -50,
+                "time": -5,
+                "reputation": { "nomads": 3 }
+              }
+            },
+            {
+              "id": "trade-info",
+              "text": "Обменять информацию на поездку",
+              "description": "Вы рассказываете номадам о безопасных маршрутах. Они везут вас бесплатно.",
+              "skillCheck": { "type": "cool", "dc": 11 },
+              "effects": {
+                "success": { "time": -5, "reputation": { "nomads": 5 } },
+                "failure": { "money": -50, "time": -5 }
+              }
+            },
+            {
+              "id": "decline",
+              "text": "Отказаться",
+              "description": "Вы отказываетесь и идете пешком.",
+              "effects": {}
+            }
+          ]
+        }
+      ],
+      "2030-2045": [
+        {
+          "id": "travel-2035-red-dust-storm",
+          "name": "Буря красной пыли (2035)",
+          "description": "При перемещении начинается буря красной пыли. Видимость нулевая, радиация повышена. Нужно найти укрытие или продолжить путь с риском.",
+          "triggerLocations": ["loc-downtown-001", "loc-watson-001", "loc-santo-domingo-001"],
+          "probability": 0.25,
+          "dangerLevel": "high",
+          "options": [
+            {
+              "id": "find-shelter",
+              "text": "Найти укрытие",
+              "description": "Вы ищете укрытие от бури.",
+              "skillCheck": { "type": "perception", "dc": 12 },
+              "effects": {
+                "success": { "time": 15, "health": 0 },
+                "failure": { "time": 20, "health": -15 }
+              }
+            },
+            {
+              "id": "push-through",
+              "text": "Продолжить путь",
+              "description": "Вы решаете продолжить путь через бурю.",
+              "effects": {
+                "health": -25,
+                "time": 10
+              }
+            },
+            {
+              "id": "use-protection",
+              "text": "Использовать защиту от радиации",
+              "description": "Вы используете защитное снаряжение и продолжаете путь.",
+              "requirements": { "item": "item-rad-protection" },
+              "effects": {
+                "health": -5,
+                "time": 10
+              }
+            }
+          ]
+        },
+        {
+          "id": "travel-2040-scavenger-ambush",
+          "name": "Засада скавов (2040)",
+          "description": "Скавы устроили засаду на маршруте. Они охотятся за имплантами и припасами. Вы можете попытаться избежать или противостоять им.",
+          "triggerLocations": ["loc-watson-001", "loc-heywood-001"],
+          "probability": 0.35,
+          "dangerLevel": "high",
+          "options": [
+            {
+              "id": "fight",
+              "text": "Сражаться",
+              "description": "Вы вступаете в бой со скавами.",
+              "effects": {
+                "combat": true,
+                "enemies": 3,
+                "loot": { "money": 80, "items": ["item-electronics-standard"] }
+              }
+            },
+            {
+              "id": "stealth-escape",
+              "text": "Скрыться",
+              "description": "Вы пытаетесь незаметно уйти.",
+              "skillCheck": { "type": "stealth", "dc": 14 },
+              "effects": {
+                "success": { "time": 10 },
+                "failure": { "combat": true, "enemies": 3 }
+              }
+            },
+            {
+              "id": "intimidate",
+              "text": "Напугать скавов",
+              "description": "Вы демонстрируете силу и пытаетесь испугать скавов.",
+              "skillCheck": { "type": "intimidation", "dc": 13 },
+              "effects": {
+                "success": { "money": -50, "time": 5 },
+                "failure": { "combat": true, "enemies": 3 }
+              }
+            }
+          ]
+        }
+      ],
+      "2045-2060": [
+        {
+          "id": "travel-2050-network-ghost",
+          "name": "Призрак сети (2050)",
+          "description": "Ваш нейроинтерфейс ловит странный сигнал. Старый ИИ, поврежденный DataKrash, пытается связаться. Это может быть опасно.",
+          "triggerLocations": ["loc-downtown-001", "loc-westbrook-001"],
+          "probability": 0.15,
+          "dangerLevel": "medium",
+          "options": [
+            {
+              "id": "listen",
+              "text": "Послушать ИИ",
+              "description": "Вы открываете канал связи.",
+              "skillCheck": { "type": "int", "dc": 14 },
+              "effects": {
+                "success": { "item": "item-ai-fragment", "reputation": { "independent": 5 } },
+                "failure": { "health": -20, "status": "stunned-1-round" }
+              }
+            },
+            {
+              "id": "ignore",
+              "text": "Игнорировать сигнал",
+              "description": "Вы блокируете сигнал и продолжаете путь.",
+              "effects": {}
+            },
+            {
+              "id": "trace",
+              "text": "Отследить источник",
+              "description": "Вы пытаетесь найти источник сигнала.",
+              "skillCheck": { "type": "tech", "dc": 15 },
+              "effects": {
+                "success": { "quest": "side-quest-ai-fragment", "reputation": { "independent": 8 } },
+                "failure": { "time": 10 }
+              }
+            }
+          ]
+        },
+        {
+          "id": "travel-2055-6th-street-patrol",
+          "name": "Патруль 6th Street (2055)",
+          "description": "Вы встречаете патруль 6th Street в Santo Domingo. Они защищают рабочих от банд. Спрашивают, нужна ли помощь.",
+          "triggerLocations": ["loc-santo-domingo-001"],
+          "probability": 0.25,
+          "dangerLevel": "low",
+          "options": [
+            {
+              "id": "accept-escort",
+              "text": "Принять сопровождение",
+              "description": "Патруль сопровождает вас. Безопасный путь.",
+              "effects": {
+                "time": 5,
+                "reputation": { "6th-street": 5 }
+              }
+            },
+            {
+              "id": "decline",
+              "text": "Отказаться",
+              "description": "Вы отказываетесь от помощи.",
+              "effects": {}
+            },
+            {
+              "id": "ask-info",
+              "text": "Спросить о ситуации",
+              "description": "Вы спрашиваете о безопасности района.",
+              "effects": {
+                "information": "gang-activity-map",
+                "reputation": { "6th-street": 2 }
+              }
+            }
+          ]
+        }
+      ],
+      "2060-2077": [
+        {
+          "id": "travel-2065-corpo-drone",
+          "name": "Корпоративный дрон (2065)",
+          "description": "Корпоративный дрон сканирует район. Он проверяет всех прохожих. У вас есть незаконные предметы?",
+          "triggerLocations": ["loc-downtown-001", "loc-westbrook-001"],
+          "probability": 0.3,
+          "dangerLevel": "medium",
+          "options": [
+            {
+              "id": "allow-scan",
+              "text": "Позволить сканирование",
+              "description": "Вы позволяете дрону сканировать вас.",
+              "requirements": { "no-illegal-items": true },
+              "effects": {
+                "time": 3,
+                "reputation": { "corporations": 1 }
+              }
+            },
+            {
+              "id": "hack-drone",
+              "text": "Взломать дрон",
+              "description": "Вы пытаетесь взломать дрон.",
+              "skillCheck": { "type": "int", "dc": 15 },
+              "effects": {
+                "success": { "time": 5, "item": "item-drone-parts" },
+                "failure": { "alert": true, "reputation": { "corporations": -10 } }
+              }
+            },
+            {
+              "id": "evade",
+              "text": "Уклониться от дрона",
+              "description": "Вы пытаетесь скрыться от дрона.",
+              "skillCheck": { "type": "stealth", "dc": 13 },
+              "effects": {
+                "success": { "time": 10 },
+                "failure": { "alert": true, "combat": true, "enemies": 2 }
+              }
+            }
+          ]
+        },
+        {
+          "id": "travel-2070-nusa-convoy",
+          "name": "Конвой NUSA (2070)",
+          "description": "Военный конвой NUSA движется через город. Напряжение между NUSA и Найт-Сити растет. Конвой блокирует маршрут.",
+          "triggerLocations": ["loc-downtown-001", "loc-westbrook-001"],
+          "probability": 0.2,
+          "dangerLevel": "high",
+          "options": [
+            {
+              "id": "wait",
+              "text": "Подождать",
+              "description": "Вы ждете, пока конвой пройдет.",
+              "effects": {
+                "time": 15
+              }
+            },
+            {
+              "id": "detour",
+              "text": "Объехать через переулки",
+              "description": "Вы выбираете обходной путь.",
+              "effects": {
+                "time": 20,
+                "chance-encounter": { "type": "gang", "probability": 0.4 }
+              }
+            },
+            {
+              "id": "observe",
+              "text": "Наблюдать за конвоем",
+              "description": "Вы наблюдаете за конвоем и собираете информацию.",
+              "skillCheck": { "type": "perception", "dc": 14 },
+              "effects": {
+                "success": { "information": "nusa-military-data", "time": 10 },
+                "failure": { "time": 15 }
+              }
+            }
+          ]
+        },
+        {
+          "id": "travel-2075-valentinos-turf",
+          "name": "Территория Valentinos (2075)",
+          "description": "Вы проходите через территорию Valentinos в Heywood. Банда контролирует район. Вас останавливают.",
+          "triggerLocations": ["loc-heywood-001"],
+          "probability": 0.35,
+          "dangerLevel": "medium",
+          "options": [
+            {
+              "id": "show-respect",
+              "text": "Показать уважение",
+              "description": "Вы приветствуете бандитов по-испански и показываете уважение.",
+              "skillCheck": { "type": "cool", "dc": 12 },
+              "effects": {
+                "success": { "reputation": { "valentinos": 5 }, "time": 5 },
+                "failure": { "money": -100, "time": 10 }
+              }
+            },
+            {
+              "id": "pay-toll",
+              "text": "Заплатить 'налог' (150 eddies)",
+              "description": "Вы платите проходной налог.",
+              "effects": {
+                "money": -150,
+                "time": 5
+              }
+            },
+            {
+              "id": "fight",
+              "text": "Отказаться и сражаться",
+              "description": "Вы отказываетесь платить.",
+              "effects": {
+                "combat": true,
+                "enemies": 3,
+                "reputation": { "valentinos": -15 }
+              }
+            }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2062-smuggler-route",
+          "name": "Контрабандный маршрут (2062)",
+          "description": "Слухи о тайном тоннеле между Westbrook и Downtown.",
+          "triggerLocations": ["loc-westbrook-001", "loc-downtown-001"],
+          "probability": 0.18,
+          "dangerLevel": "medium",
+          "options": [
+            { "id": "enter", "text": "Войти", "skillCheck": { "type": "stealth", "dc": 14 }, "effects": { "success": { "time": -10 }, "failure": { "combat": true, "enemies": 2 } } },
+            { "id": "pay", "text": "Заплатить проводнику (120)", "effects": { "money": -120, "time": -15 } },
+            { "id": "ignore", "text": "Игнорировать", "effects": {} }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2066-power-outage",
+          "name": "Отключение питания (2066)",
+          "description": "Район без электричества. Камеры и турели не работают.",
+          "triggerLocations": ["loc-downtown-001"],
+          "probability": 0.22,
+          "dangerLevel": "low",
+          "options": [
+            { "id": "rush", "text": "Проскочить быстро", "effects": { "time": -10 } },
+            { "id": "scavenge", "text": "Поживиться деталями", "skillCheck": { "type": "perception", "dc": 13 }, "effects": { "success": { "item": "item-electronics-standard" }, "failure": { "time": 10 } } }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2068-media-expose",
+          "name": "Репортёры на месте (2068)",
+          "description": "Media снимают репортаж о насилии банд.",
+          "triggerLocations": ["loc-heywood-001"],
+          "probability": 0.12,
+          "dangerLevel": "low",
+          "options": [
+            { "id": "give-quote", "text": "Дать комментарий", "skillCheck": { "type": "cool", "dc": 14 }, "effects": { "success": { "reputation": { "independent": 5 } }, "failure": { "reputation": { "independent": -3 } } } },
+            { "id": "decline", "text": "Отказаться", "effects": {} }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2073-street-protest",
+          "name": "Уличный протест (2073)",
+          "description": "Толпа блокирует путь. Требуют реформ.",
+          "triggerLocations": ["loc-downtown-001"],
+          "probability": 0.2,
+          "dangerLevel": "medium",
+          "options": [
+            { "id": "negotiate", "text": "Убедить пропустить", "skillCheck": { "type": "cool", "dc": 16 }, "effects": { "success": { "time": 5 }, "failure": { "time": 20 } } },
+            { "id": "detour", "text": "Обойти квартал", "effects": { "time": 15 } }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2074-cyberpsycho-alert",
+          "name": "Тревога: киберпсих (2074)",
+          "description": "В районе замечен киберпсих. Опасно.",
+          "triggerLocations": ["loc-watson-001"],
+          "probability": 0.1,
+          "dangerLevel": "high",
+          "options": [
+            { "id": "avoid", "text": "Избежать", "skillCheck": { "type": "stealth", "dc": 16 }, "effects": { "success": { "time": 10 }, "failure": { "combat": true, "enemies": 1 } } },
+            { "id": "report-ncpd", "text": "Сообщить NCPD", "effects": { "reputation": { "ncpd": 10 }, "time": 10 } }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2076-cargo-raid",
+          "name": "Налёт на груз (2076)",
+          "description": "Банда атакует грузовой фургон.",
+          "triggerLocations": ["loc-santo-domingo-001"],
+          "probability": 0.18,
+          "dangerLevel": "high",
+          "options": [
+            { "id": "help", "text": "Помочь водителю", "effects": { "combat": true, "enemies": 3, "loot": { "items": ["item-weapon-parts"] } } },
+            { "id": "ignore", "text": "Проигнорировать", "effects": {} }
+          ]
+        }
+      ],
+      ],
+      "2077-2093": [
+        {
+          "id": "travel-2080-relic-glitch",
+          "name": "Сбой Реликта (2080)",
+          "description": "Если у вас есть имплант связанный с технологией Relic, он начинает сбоить. Галлюцинации, боль, видения прошлого.",
+          "triggerLocations": ["loc-downtown-001", "loc-watson-001", "loc-westbrook-001"],
+          "probability": 0.1,
+          "dangerLevel": "low",
+          "requirements": { "implant": "relic-type" },
+          "options": [
+            {
+              "id": "endure",
+              "text": "Перетерпеть",
+              "description": "Вы стараетесь игнорировать боль.",
+              "skillCheck": { "type": "cool", "dc": 15 },
+              "effects": {
+                "success": { "time": 5 },
+                "failure": { "health": -15, "time": 10 }
+              }
+            },
+            {
+              "id": "use-medication",
+              "text": "Использовать медикаменты",
+              "description": "Вы принимаете обезболивающее.",
+              "requirements": { "item": "item-medkit-basic" },
+              "effects": {
+                "item-consumed": "item-medkit-basic",
+                "time": 5
+              }
+            },
+            {
+              "id": "analyze",
+              "text": "Проанализировать сбой",
+              "description": "Вы пытаетесь понять причину сбоя.",
+              "skillCheck": { "type": "int", "dc": 16 },
+              "effects": {
+                "success": { "information": "relic-data-fragment", "time": 15 },
+                "failure": { "health": -10, "time": 15 }
+              }
+            }
+          ]
+        },
+        {
+          "id": "travel-2085-blackwall-echo",
+          "name": "Эхо Blackwall (2085)",
+          "description": "Ваш нейроинтерфейс ловит странные сигналы с границы Blackwall. Это может быть опасно, но интересно.",
+          "triggerLocations": ["loc-downtown-001"],
+          "probability": 0.08,
+          "dangerLevel": "extreme",
+          "options": [
+            {
+              "id": "investigate",
+              "text": "Исследовать сигнал",
+              "description": "Вы открываете канал и пытаетесь понять источник.",
+              "skillCheck": { "type": "int", "dc": 18 },
+              "effects": {
+                "success": { "quest": "main-quest-blackwall-secret", "reputation": { "independent": 10 } },
+                "failure": { "health": -30, "status": "cyberpsychosis-risk" }
+              }
+            },
+            {
+              "id": "block",
+              "text": "Заблокировать сигнал",
+              "description": "Вы немедленно блокируете сигнал.",
+              "effects": {
+                "time": 5
+              }
+            },
+            {
+              "id": "report",
+              "text": "Сообщить NetWatch",
+              "description": "Вы передаете данные о сигнале в NetWatch.",
+              "effects": {
+                "money": 500,
+                "reputation": { "netwatch": 15 },
+                "time": 10
+              }
+            }
+          ]
+        },
+        {
+          "id": "travel-2090-simulation-glitch",
+          "name": "Сбой симуляции (2090)",
+          "description": "Вы видите странные артефакты в окружении: повторяющиеся паттерны, невозможные углы, люди с одинаковыми лицами. Это напоминает сбой симуляции.",
+          "triggerLocations": ["loc-downtown-001", "loc-watson-001"],
+          "probability": 0.05,
+          "dangerLevel": "medium",
+          "options": [
+            {
+              "id": "document",
+              "text": "Зафиксировать аномалию",
+              "description": "Вы записываете видео и делаете снимки.",
+              "effects": {
+                "item": "item-simulation-evidence",
+                "time": 10
+              }
+            },
+            {
+              "id": "ignore",
+              "text": "Игнорировать",
+              "description": "Вы продолжаете путь, игнорируя странности.",
+              "effects": {}
+            },
+            {
+              "id": "investigate",
+              "text": "Исследовать глубже",
+              "description": "Вы пытаетесь понять природу аномалии.",
+              "skillCheck": { "type": "int", "dc": 17 },
+              "effects": {
+                "success": { "quest": "side-quest-simulation-truth", "reputation": { "independent": 12 } },
+                "failure": { "health": -20, "status": "confused" }
+              }
+            }
+          ]
+        },
+        {
+          "id": "travel-2092-corpo-war-zone",
+          "name": "Зона корпоративной войны (2092)",
+          "description": "Вы входите в зону активных боевых действий между корпорациями Arasaka и Militech. Дроны, турели, солдаты. Крайне опасно.",
+          "triggerLocations": ["loc-downtown-001", "loc-westbrook-001"],
+          "probability": 0.15,
+          "dangerLevel": "extreme",
+          "options": [
+            {
+              "id": "retreat",
+              "text": "Отступить",
+              "description": "Вы немедленно покидаете зону.",
+              "effects": {
+                "time": 20
+              }
+            },
+            {
+              "id": "stealth-through",
+              "text": "Пройти скрытно",
+              "description": "Вы пытаетесь пройти через зону незаметно.",
+              "skillCheck": { "type": "stealth", "dc": 17 },
+              "effects": {
+                "success": { "time": 15, "item": "item-corpo-weapon-parts" },
+                "failure": { "combat": true, "enemies": 4, "health": -30 }
+              }
+            },
+            {
+              "id": "negotiate",
+              "text": "Попытаться договориться",
+              "description": "Вы пытаетесь убедить обе стороны пропустить вас.",
+              "skillCheck": { "type": "cool", "dc": 18 },
+              "effects": {
+                "success": { "time": 10, "reputation": { "arasaka": 5, "militech": 5 } },
+                "failure": { "combat": true, "enemies": 5 }
+              }
+            }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2079-parameter-fair",
+          "name": "Параметрическая ярмарка (2079)",
+          "description": "Массовое событие с тестами параметров и дебатами.",
+          "triggerLocations": ["loc-downtown-001"],
+          "probability": 0.12,
+          "dangerLevel": "low",
+          "options": [
+            { "id": "participate", "text": "Участвовать", "effects": { "xp": 50, "reputation": { "independent": 5 } } },
+            { "id": "debate", "text": "Дебаты (COOL 17)", "skillCheck": { "type": "cool", "dc": 17 }, "effects": { "success": { "reputation": { "independent": 10 } }, "failure": { "reputation": { "independent": -5 } } } }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2081-corp-shadow-trade",
+          "name": "Теневая сделка корпораций (2081)",
+          "description": "Вы замечаете тайный обмен данными.",
+          "triggerLocations": ["loc-westbrook-001"],
+          "probability": 0.14,
+          "dangerLevel": "medium",
+          "options": [
+            { "id": "record", "text": "Записать", "effects": { "item": "item-corporate-data" } },
+            { "id": "interfere", "text": "Вмешаться (STEALTH 18)", "skillCheck": { "type": "stealth", "dc": 18 }, "effects": { "success": { "item": "item-corporate-data" }, "failure": { "combat": true, "enemies": 4 } } }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2083-black-market-auction",
+          "name": "Аукцион чёрного рынка (2083)",
+          "description": "Редкие импланты и артефакты.",
+          "triggerLocations": ["loc-heywood-001"],
+          "probability": 0.1,
+          "dangerLevel": "medium",
+          "options": [
+            { "id": "bid", "text": "Сделать ставку (500)", "effects": { "money": -500, "item": "item-implant-basic" } },
+            { "id": "steal", "text": "Украсть (STEALTH 19)", "skillCheck": { "type": "stealth", "dc": 19 }, "effects": { "success": { "item": "item-implant-military" }, "failure": { "combat": true, "enemies": 5 } } }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2086-netwatch-sweep",
+          "name": "Зачистка NetWatch (2086)",
+          "description": "NetWatch проводит операцию против rogue-ИИ.",
+          "triggerLocations": ["loc-downtown-001"],
+          "probability": 0.12,
+          "dangerLevel": "high",
+          "options": [
+            { "id": "assist", "text": "Помочь", "effects": { "combat": true, "enemies": 3, "reputation": { "netwatch": 10 } } },
+            { "id": "observe", "text": "Наблюдать (INT 17)", "skillCheck": { "type": "int", "dc": 17 }, "effects": { "success": { "item": "item-blackwall-data" }, "failure": { "time": 10 } } }
+          ]
+        }
+        ,
+        {
+          "id": "travel-2089-maelstrom-upgrade-ritual",
+          "name": "Ритуал апгрейда Maelstrom (2089)",
+          "description": "Maelstrom проводит групповой апгрейд киберware.",
+          "triggerLocations": ["loc-watson-001"],
+          "probability": 0.1,
+          "dangerLevel": "medium",
+          "options": [
+            { "id": "join", "text": "Присоединиться (деньги 600)", "effects": { "money": -600, "item": "item-implant-basic", "reputation": { "maelstrom": 10 } } },
+            { "id": "decline", "text": "Отказаться", "effects": {} }
+          ]
+        }
+      ],
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created": "2025-11-05",
+    "description": "События перемещения между локациями, привязанные к временным периодам 2020-2093. Каждая эпоха имеет уникальные события, отражающие состояние мира.",
+    "totalEvents": 39,
+    "epochsCovered": ["2020-2030", "2030-2045", "2045-2060", "2060-2077", "2077-2093"]
+  }
+}
+
+
+
+

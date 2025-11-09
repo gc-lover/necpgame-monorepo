@@ -1,0 +1,349 @@
+openapi: 3.0.3
+info:
+  title: Combat Session Components
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+
+components:
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: Идентификатор боевой сессии
+      schema: { type: string }
+  schemas:
+    CombatSession:
+      type: object
+      properties:
+        sessionId: { type: string }
+        mode: { type: string, enum: [PVE, PVP, RAID, DUEL, SIMULATION] }
+        map: { type: string }
+        status: { type: string, enum: [PENDING, ACTIVE, COMPLETED, ABORTED] }
+        rules: { type: object, additionalProperties: true }
+        settings: { type: object, additionalProperties: true }
+        startTime: { type: string, format: date-time }
+        createdBy: { type: string }
+        teams:
+          type: array
+          items: { $ref: '#/components/schemas/Team' }
+    Team:
+      type: object
+      properties:
+        teamId: { type: string }
+        name: { type: string }
+        side: { type: string }
+        participants:
+          type: array
+          items: { $ref: '#/components/schemas/Participant' }
+    Participant:
+      type: object
+      properties:
+        participantId: { type: string }
+        kind: { type: string, enum: [PLAYER, NPC, SUMMON, PET] }
+        referenceId: { type: string }
+        teamId: { type: string }
+        class: { type: string }
+        stats: { $ref: '#/components/schemas/StatsSnapshot' }
+        resources: { type: object, additionalProperties: true }
+        position: { $ref: '#/components/schemas/Vector3' }
+        statusEffects:
+          type: array
+          items: { $ref: '#/components/schemas/StatusEffect' }
+    StatsSnapshot:
+      type: object
+      properties:
+        health: { type: number }
+        healthMax: { type: number }
+        shield: { type: number }
+        stamina: { type: number }
+        haste: { type: number }
+        critChance: { type: number }
+        modifiers: { type: object, additionalProperties: true }
+    Vector3:
+      type: object
+      properties:
+        x: { type: number }
+        y: { type: number }
+        z: { type: number }
+    CombatSessionCreateRequest:
+      type: object
+      required: [mode, map, teams]
+      properties:
+        mode: { type: string }
+        map: { type: string }
+        rules: { type: object, additionalProperties: true }
+        settings: { type: object, additionalProperties: true }
+        teams:
+          type: array
+          items: { $ref: '#/components/schemas/TeamSetup' }
+        allowLateJoin: { type: boolean }
+        maxDurationSeconds: { type: integer }
+        telemetryId: { type: string }
+    TeamSetup:
+      type: object
+      properties:
+        teamId: { type: string }
+        name: { type: string }
+        participants:
+          type: array
+          items: { $ref: '#/components/schemas/ParticipantSetup' }
+    ParticipantSetup:
+      type: object
+      properties:
+        participantId: { type: string }
+        kind: { type: string }
+        referenceId: { type: string }
+        loadout: { type: object, additionalProperties: true }
+        spawnPoint: { $ref: '#/components/schemas/Vector3' }
+    CombatSessionStateResponse:
+      type: object
+      properties:
+        session: { $ref: '#/components/schemas/CombatSession' }
+        timeline: { type: array, items: { $ref: '#/components/schemas/TurnState' } }
+        activeEffects:
+          type: array
+          items: { $ref: '#/components/schemas/StatusEffect' }
+        log: { $ref: '#/components/schemas/CombatLogResponse' }
+    TurnState:
+      type: object
+      properties:
+        turnNumber: { type: integer }
+        currentActorId: { type: string }
+        phase: { type: string, enum: [PREPARE, ACTION, RESOLUTION] }
+        remainingTimeMs: { type: integer }
+    SessionJoinRequest:
+      type: object
+      required: [participant]
+      properties:
+        participant: { $ref: '#/components/schemas/ParticipantSetup' }
+        mode: { type: string, enum: [ACTIVE, SPECTATOR] }
+        reason: { type: string }
+    ActionRequest:
+      type: object
+      required: [action]
+      properties:
+        action: { $ref: '#/components/schemas/Action' }
+        clientTimestamp: { type: string, format: date-time }
+        idempotencyKey: { type: string }
+    Action:
+      type: object
+      properties:
+        actionId: { type: string }
+        category: { type: string, enum: [ABILITY, ITEM, MOVE, DEFEND, CUSTOM] }
+        abilityId: { type: string }
+        casterId: { type: string }
+        targetIds:
+          type: array
+          items: { type: string }
+        castTimeMs: { type: integer }
+        channelDurationMs: { type: integer }
+        parameters: { type: object, additionalProperties: true }
+    ActionResult:
+      type: object
+      properties:
+        actionId: { type: string }
+        applied:
+          type: array
+          items: { $ref: '#/components/schemas/DamagePacket' }
+        newEffects:
+          type: array
+          items: { $ref: '#/components/schemas/StatusEffect' }
+        cooldowns: { type: object, additionalProperties: true }
+        logEntry: { $ref: '#/components/schemas/CombatLogEntry' }
+    DamagePreviewRequest:
+      type: object
+      required: [action]
+      properties:
+        action: { $ref: '#/components/schemas/Action' }
+        includeMitigation: { type: boolean, default: true }
+    DamagePreviewResponse:
+      type: object
+      properties:
+        previewPackets:
+          type: array
+          items: { $ref: '#/components/schemas/DamagePacket' }
+        estimatedTimeMs: { type: integer }
+    DamagePacket:
+      type: object
+      properties:
+        sourceId: { type: string }
+        targetId: { type: string }
+        baseDamage: { type: number }
+        critMultiplier: { type: number }
+        mitigation: { type: number }
+        shieldAbsorbed: { type: number }
+        finalDamage: { type: number }
+        tags:
+          type: array
+          items: { type: string }
+    StatusEffect:
+      type: object
+      properties:
+        effectId: { type: string }
+        type: { type: string }
+        stacks: { type: integer }
+        durationMs: { type: integer }
+        remainingMs: { type: integer }
+        sourceId: { type: string }
+        modifiers: { type: object, additionalProperties: true }
+    LagCompensationRequest:
+      type: object
+      required: [eventId, participantId]
+      properties:
+        eventId: { type: string }
+        participantId: { type: string }
+        clientTimestamp: { type: string, format: date-time }
+        reportedPosition: { $ref: '#/components/schemas/Vector3' }
+        latencyMs: { type: integer }
+    LagCompensationResponse:
+      type: object
+      properties:
+        eventId: { type: string }
+        outcome: { type: string, enum: [REFRESHED, DENIED, RETAINED] }
+        adjusted: { type: boolean }
+        corrections: { type: object, additionalProperties: true }
+    ReviveRequest:
+      type: object
+      properties:
+        participantId: { type: string }
+        reviveMethod: { type: string, enum: [PLAYER, NPC, CHECKPOINT] }
+        cost: { type: object, additionalProperties: true }
+    SurrenderRequest:
+      type: object
+      properties:
+        teamId: { type: string }
+        votes:
+          type: array
+          items:
+            type: object
+            properties:
+              participantId: { type: string }
+              vote: { type: string, enum: [YES, NO, ABSTAIN] }
+    SessionCompleteRequest:
+      type: object
+      properties:
+        winningTeamId: { type: string }
+        reason: { type: string }
+        telemetry: { type: object, additionalProperties: true }
+    SessionCompleteResponse:
+      type: object
+      properties:
+        rewards: { $ref: '#/components/schemas/RewardBundle' }
+        achievements:
+          type: array
+          items: { type: string }
+        questProgress:
+          type: array
+          items: { type: object, additionalProperties: true }
+    SessionAbortRequest:
+      type: object
+      properties:
+        reason: { type: string }
+        incidentId: { type: string }
+        preserveRewards: { type: boolean }
+    CombatLogEntry:
+      type: object
+      properties:
+        entryId: { type: string }
+        timestamp: { type: string, format: date-time }
+        eventType: { type: string }
+        payload: { type: object, additionalProperties: true }
+    CombatLogResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/CombatLogEntry' }
+    CombatMetricsResponse:
+      type: object
+      properties:
+        sessionId: { type: string }
+        metrics: { type: object, additionalProperties: true }
+    SimulationRequest:
+      type: object
+      properties:
+        iterations: { type: integer, minimum: 1 }
+        parameters: { type: object, additionalProperties: true }
+    StatusEvent:
+      type: object
+      properties:
+        sessionId: { type: string }
+        participantId: { type: string }
+        effects:
+          type: array
+          items: { $ref: '#/components/schemas/StatusEffect' }
+        occurredAt: { type: string, format: date-time }
+    ActionEvent:
+      type: object
+      properties:
+        sessionId: { type: string }
+        action: { $ref: '#/components/schemas/Action' }
+        result: { $ref: '#/components/schemas/ActionResult' }
+        occurredAt: { type: string, format: date-time }
+    TurnEvent:
+      type: object
+      properties:
+        sessionId: { type: string }
+        turnNumber: { type: integer }
+        actorId: { type: string }
+        occurredAt: { type: string, format: date-time }
+    DamageEvent:
+      type: object
+      properties:
+        sessionId: { type: string }
+        packets:
+          type: array
+          items: { $ref: '#/components/schemas/DamagePacket' }
+        occurredAt: { type: string, format: date-time }
+    ParticipantEvent:
+      type: object
+      properties:
+        sessionId: { type: string }
+        participantId: { type: string }
+        state: { type: string, enum: [DEAD, REVIVED] }
+        occurredAt: { type: string, format: date-time }
+    SessionCompleteEvent:
+      type: object
+      properties:
+        sessionId: { type: string }
+        winningTeamId: { type: string }
+        rewards: { $ref: '#/components/schemas/RewardBundle' }
+        occurredAt: { type: string, format: date-time }
+    RewardBundle:
+      type: object
+      properties:
+        xp: { type: integer }
+        currency:
+          type: array
+          items:
+            type: object
+            properties:
+              currencyId: { type: string }
+              amount: { type: integer }
+        items:
+          type: array
+          items: { type: object, additionalProperties: true }
+        ratingChange: { type: integer }
+        reputation: { type: integer }
+    CombatError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [SESSION_NOT_FOUND, ACTION_DENIED, OUT_OF_TURN, LAG_COMPENSATION_FAILED, REVIVE_BLOCKED, SURRENDER_PENDING, SIMULATION_ERROR]
+        message: { type: string }
+        traceId: { type: string }
+        details: { type: object, additionalProperties: true }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

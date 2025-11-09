@@ -1,0 +1,472 @@
+openapi: 3.0.3
+info:
+  title: Player Character Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: character-service
+    port: 8082
+    domain: characters
+    base-path: /api/v1/characters/players
+    directory: api/v1/characters/players
+    package: com.necpgame.characterservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    CharacterListResponse:
+      type: object
+      required: [data, slots, player, restoreQueue]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './players-models.yaml#/components/schemas/CharacterSummary'
+        slots:
+          $ref: './players-models.yaml#/components/schemas/CharacterSlotState'
+        player:
+          $ref: './players-models.yaml#/components/schemas/PlayerProfile'
+        restoreQueue:
+          type: array
+          items:
+            $ref: './players-models.yaml#/components/schemas/RestoreQueueEntry'
+        snapshots:
+          type: array
+          items:
+            $ref: './players-models.yaml#/components/schemas/StateSnapshotRef'
+    CharacterCreateRequest:
+      type: object
+      required: [name, origin, characterClass, appearance]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 20
+          pattern: '^[a-zA-Z0-9 \\-]+$'
+        origin:
+          type: string
+          enum: [CORPO, STREETKID, NOMAD, CUSTOM]
+        characterClass:
+          type: string
+          enum: [SOLO, NETRUNNER, TECHIE, FIXER, NOMAD]
+        appearance:
+          $ref: './players-models.yaml#/components/schemas/CharacterAppearance'
+        seed:
+          type: string
+          minLength: 8
+          maxLength: 32
+        acceptTerms:
+          type: boolean
+          default: true
+        tutorialPreferences:
+          type: array
+          items:
+            type: string
+    CharacterCreateResponse:
+      type: object
+      required: [character, slots, events]
+      properties:
+        character:
+          $ref: './players-models.yaml#/components/schemas/CharacterSummary'
+        slots:
+          $ref: './players-models.yaml#/components/schemas/CharacterSlotState'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterCreatedEvent'
+    CharacterDeleteResponse:
+      type: object
+      required: [characterId, deletedAt, canRestoreUntil]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        deletedAt:
+          type: string
+          format: date-time
+        canRestoreUntil:
+          type: string
+          format: date-time
+        slots:
+          $ref: './players-models.yaml#/components/schemas/CharacterSlotState'
+    CharacterRestoreRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          example: "undo_delete"
+        paymentReference:
+          type: string
+        skipCost:
+          type: boolean
+          default: false
+    CharacterRestoreResponse:
+      type: object
+      required: [character, restoreQueueEntry]
+      properties:
+        character:
+          $ref: './players-models.yaml#/components/schemas/CharacterSummary'
+        restoreQueueEntry:
+          $ref: './players-models.yaml#/components/schemas/RestoreQueueEntry'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterRestoredEvent'
+    CharacterRestoreExpiredResponse:
+      type: object
+      required: [characterId, lastAvailableDate]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        lastAvailableDate:
+          type: string
+          format: date-time
+        supportTicketHint:
+          type: string
+          description: Guidance for escalation to support
+    CharacterSwitchRequest:
+      type: object
+      required: [characterId, sessionContext]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        suppressNotifications:
+          type: boolean
+          default: false
+        sessionContext:
+          type: object
+          required: [currentCharacterId, sessionId]
+          properties:
+            sessionId:
+              type: string
+              format: uuid
+            currentCharacterId:
+              type: string
+              format: uuid
+            location:
+              type: string
+            inCombat:
+              type: boolean
+            pendingQuests:
+              type: array
+              items:
+                type: string
+    CharacterSwitchResponse:
+      type: object
+      required: [activeCharacterId, snapshot, events]
+      properties:
+        activeCharacterId:
+          type: string
+          format: uuid
+        snapshot:
+          $ref: './players-models.yaml#/components/schemas/StateSnapshotRef'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSwitchedEvent'
+    CharacterSwitchLockedResponse:
+      type: object
+      required: [lockReason, expiresAt]
+      properties:
+        lockReason:
+          type: string
+          enum: [combat, cinematic, mission_critical, maintenance]
+        expiresAt:
+          type: string
+          format: date-time
+    CharacterAppearancePatch:
+      type: object
+      additionalProperties: false
+      properties:
+        appearance:
+          $ref: './players-models.yaml#/components/schemas/CharacterAppearance'
+        loadoutPreview:
+          type: boolean
+          default: false
+    CharacterAppearanceResponse:
+      type: object
+      required: [characterId, appearance, events]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        appearance:
+          $ref: './players-models.yaml#/components/schemas/CharacterAppearance'
+        events:
+          type: array
+          items:
+            type: string
+    CharacterStatsRecalculateRequest:
+      type: object
+      required: [triggers]
+      properties:
+        triggers:
+          type: array
+          items:
+            type: string
+            enum: [equipmentChange, skillChange, externalModifier, manual]
+        includeInventory:
+          type: boolean
+          default: true
+        forceSnapshot:
+          type: boolean
+          default: false
+    CharacterRecalculateResponse:
+      type: object
+      required: [characterId, jobId]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        jobId:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterStatsUpdatedEvent'
+    CharacterActivityListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './players-models.yaml#/components/schemas/CharacterActivityEntry'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    CharacterSlotStateResponse:
+      type: object
+      required: [slots, pendingPayments]
+      properties:
+        slots:
+          $ref: './players-models.yaml#/components/schemas/CharacterSlotState'
+        pendingPayments:
+          type: array
+          items:
+            type: object
+            properties:
+              referenceId:
+                type: string
+              amount:
+                type: integer
+              status:
+                type: string
+                enum: [pending, failed, completed]
+    CharacterSlotPurchaseRequest:
+      type: object
+      required: [paymentMethod, currency, amount]
+      properties:
+        paymentMethod:
+          type: string
+          enum: [wallet, external, voucher]
+        currency:
+          type: string
+          example: "eddies"
+        amount:
+          type: integer
+          minimum: 1
+        promoCode:
+          type: string
+          nullable: true
+    CharacterSlotPurchaseResponse:
+      type: object
+      required: [transactionId, slots, status]
+      properties:
+        transactionId:
+          type: string
+        slots:
+          $ref: './players-models.yaml#/components/schemas/CharacterSlotState'
+        status:
+          type: string
+          enum: [pending, completed]
+        economyLink:
+          type: string
+          format: uri
+          nullable: true
+    CharacterSlotPaymentRequiredResponse:
+      type: object
+      required: [paymentUrl, expiresAt]
+      properties:
+        paymentUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+    CharacterCreatedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: characters.lifecycle.created
+        producer:
+          type: string
+          example: character-service
+        payload:
+          type: object
+          required: [characterId, accountId, name, origin, characterClass, createdAt]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            accountId:
+              type: string
+              format: uuid
+            name:
+              type: string
+            origin:
+              type: string
+            characterClass:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [gameplay-service, economy-service, social-service, notification-service, telemetry]
+    CharacterDeletedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: characters.lifecycle.deleted
+        producer:
+          type: string
+          example: character-service
+        payload:
+          type: object
+          required: [characterId, accountId, deletedAt, canRestoreUntil]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            accountId:
+              type: string
+              format: uuid
+            deletedAt:
+              type: string
+              format: date-time
+            canRestoreUntil:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [gameplay-service, economy-service, social-service, notification-service, telemetry]
+    CharacterRestoredEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: characters.lifecycle.restored
+        producer:
+          type: string
+          example: character-service
+        payload:
+          type: object
+          required: [characterId, accountId, restoredAt]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            accountId:
+              type: string
+              format: uuid
+            restoredAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [gameplay-service, economy-service, social-service, notification-service, telemetry]
+    CharacterSwitchedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: characters.lifecycle.switched
+        producer:
+          type: string
+          example: character-service
+        payload:
+          type: object
+          required: [accountId, newCharacterId, previousCharacterId, switchedAt]
+          properties:
+            accountId:
+              type: string
+              format: uuid
+            newCharacterId:
+              type: string
+              format: uuid
+            previousCharacterId:
+              type: string
+              format: uuid
+            switchedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [session-service, gameplay-service, notification-service, telemetry]
+    CharacterStatsUpdatedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: characters.lifecycle.stats-updated
+        producer:
+          type: string
+          example: character-service
+        payload:
+          type: object
+          required: [characterId, accountId, recalculatedAt, delta]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            accountId:
+              type: string
+              format: uuid
+            recalculatedAt:
+              type: string
+              format: date-time
+            delta:
+              type: object
+              additionalProperties:
+                type: number
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [gameplay-service, economy-service, telemetry]
+    CharacterLifecycleQueues:
+      type: object
+      properties:
+        restoreQueue:
+          type: string
+          example: character-restore-queue
+        deleteExpiryCron:
+          type: string
+          example: character-soft-delete-expirer
+        sessionInvalidation:
+          type: string
+          example: session-service.invalidate-character
+

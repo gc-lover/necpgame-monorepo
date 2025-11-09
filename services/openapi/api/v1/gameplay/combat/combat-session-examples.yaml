@@ -1,0 +1,94 @@
+openapi: 3.0.3
+info:
+  title: Combat Session Examples
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+
+components:
+  examples:
+    RaidSessionCreate:
+      summary: Создание рейдовой сессии с боссом
+      value:
+        mode: "RAID"
+        map: "blackwall_citadel"
+        rules:
+          turnMode: "HYBRID"
+          timeLimitSeconds: 1800
+        settings:
+          reviveLimit: 3
+          lagCompWindowMs: 150
+        teams:
+          - teamId: "team-alpha"
+            name: "Strike Team"
+            participants:
+              - participantId: "p-neo"
+                kind: "PLAYER"
+                referenceId: "player-neo-01"
+                loadout:
+                  primaryAbility: "overclock"
+                spawnPoint: { x: 10, y: 0, z: -3 }
+          - teamId: "team-boss"
+            name: "Blackwall Guardian"
+            participants:
+              - participantId: "boss-unit"
+                kind: "NPC"
+                referenceId: "npc-blackwall-guardian"
+                loadout:
+                  difficulty: "MYTHIC"
+                spawnPoint: { x: 0, y: 0, z: 0 }
+    CombatSessionState:
+      summary: Состояние активного боя
+      value:
+        session:
+          sessionId: "combat-8821"
+          mode: "RAID"
+          map: "blackwall_citadel"
+          status: "ACTIVE"
+          startTime: "2025-11-08T05:10:00Z"
+          teams:
+            - teamId: "team-alpha"
+              participants:
+                - participantId: "p-neo"
+                  stats: { health: 3200, healthMax: 4000 }
+                - participantId: "p-glitch"
+                  stats: { health: 1800, healthMax: 2500 }
+            - teamId: "team-boss"
+              participants:
+                - participantId: "boss-unit"
+                  stats: { health: 95000, healthMax: 120000 }
+        timeline:
+          - turnNumber: 12
+            currentActorId: "boss-unit"
+            phase: "ACTION"
+            remainingTimeMs: 4300
+        activeEffects:
+          - effectId: "dot-radiation"
+            type: "DoT"
+            sourceId: "boss-unit"
+            stacks: 2
+            remainingMs: 6000
+    ActionRequest:
+      summary: Применение способности с DoT эффектом
+      value:
+        action:
+          actionId: "act-neo-789"
+          category: "ABILITY"
+          abilityId: "plasma_burst"
+          casterId: "p-neo"
+          targetIds: ["boss-unit"]
+          castTimeMs: 1200
+          parameters:
+            overcharge: true
+        clientTimestamp: "2025-11-08T05:12:24.120Z"
+        idempotencyKey: "act-neo-789"
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

@@ -1,0 +1,92 @@
+# Docker Compose конфигурация для локальной разработки
+# Использование: 
+#   docker-compose up -d              # Запуск всех сервисов
+#   docker-compose up -d postgres     # Только база данных
+#   docker-compose up -d --build      # Пересборка образов
+#   docker-compose logs -f backend    # Просмотр логов бекенда
+#   docker-compose down               # Остановка всех сервисов
+
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:15
+    container_name: necpgame-postgres
+    environment:
+      POSTGRES_USER: necpgame
+      POSTGRES_PASSWORD: necpgame
+      POSTGRES_DB: necpgame
+    ports:
+      - "5433:5432"  # Используем порт 5433, так как 5432 уже занят
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U necpgame"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - necpgame-network
+
+  # Java Spring Boot Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: necpgame-backend
+    environment:
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: docker
+      
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/necpgame
+      SPRING_DATASOURCE_USERNAME: necpgame
+      SPRING_DATASOURCE_PASSWORD: necpgame
+      
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+      
+      # Liquibase
+      SPRING_LIQUIBASE_ENABLED: "true"
+      SPRING_LIQUIBASE_CHANGE_LOG: classpath:db/changelog/db.changelog-master.xml
+      
+      # Server
+      SERVER_PORT: 8080
+      
+      # JWT (замените на свой секрет в production!)
+      JWT_SECRET: dev-secret-key-change-in-production-please-use-at-least-256-bits
+      JWT_EXPIRATION: 86400000
+      
+      # Logging
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_NECPGAME: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: DEBUG
+      
+      # CORS (в production настроить правильно!)
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    volumes:
+      # Маппинг логов для доступа с хоста
+      - ./logs:/app/logs
+    networks:
+      - necpgame-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  necpgame-network:
+    driver: bridge
+

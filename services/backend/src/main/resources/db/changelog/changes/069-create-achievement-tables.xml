@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="069-create-achievement-tables" author="backend-agent">
+        <createTable tableName="achievements">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="category" type="VARCHAR(50)"/>
+            <column name="rarity" type="VARCHAR(20)"/>
+            <column name="icon" type="VARCHAR(255)"/>
+            <column name="requirements" type="JSONB"/>
+            <column name="rewards" type="JSONB"/>
+            <column name="points" type="INT"/>
+            <column name="is_hidden" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="achievement_type" type="VARCHAR(20)"/>
+            <column name="tier" type="INT" defaultValueNumeric="1"/>
+            <column name="parent_achievement_id" type="UUID"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="achievements" indexName="idx_achievements_category">
+            <column name="category"/>
+        </createIndex>
+
+        <createIndex tableName="achievements" indexName="idx_achievements_rarity">
+            <column name="rarity"/>
+        </createIndex>
+
+        <createIndex tableName="achievements" indexName="idx_achievements_type">
+            <column name="achievement_type"/>
+        </createIndex>
+
+        <createTable tableName="player_achievements">
+            <column name="player_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="achievement_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="LOCKED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_progress" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_progress" type="INT"/>
+            <column name="progress_percent" type="NUMERIC(5,2)" defaultValueNumeric="0"/>
+            <column name="reward_claimed" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unlocked_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addPrimaryKey tableName="player_achievements" constraintName="pk_player_achievements" columnNames="player_id, achievement_id"/>
+
+        <addForeignKeyConstraint baseTableName="player_achievements"
+                                 baseColumnNames="achievement_id"
+                                 referencedTableName="achievements"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_player_achievements_achievement"/>
+
+        <createIndex tableName="player_achievements" indexName="idx_player_achievements_player">
+            <column name="player_id"/>
+        </createIndex>
+
+        <createIndex tableName="player_achievements" indexName="idx_player_achievements_status">
+            <column name="player_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <createTable tableName="player_titles">
+            <column name="player_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(120)"/>
+            <column name="display_name" type="VARCHAR(160)"/>
+            <column name="color" type="VARCHAR(20)"/>
+            <column name="rarity" type="VARCHAR(20)"/>
+            <column name="unlocked_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addPrimaryKey tableName="player_titles" constraintName="pk_player_titles" columnNames="player_id, title_id"/>
+
+        <createIndex tableName="player_titles" indexName="idx_player_titles_player">
+            <column name="player_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

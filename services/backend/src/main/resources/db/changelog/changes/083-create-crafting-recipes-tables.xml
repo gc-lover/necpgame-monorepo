@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="083-create-crafting-recipes-tables" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="crafting_recipes"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="crafting_recipes">
+            <column name="recipe_id" type="VARCHAR(120)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="category" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tier" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="required_skill" type="VARCHAR(60)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="required_skill_level" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_crafting_time_seconds" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_success_rate" type="NUMERIC(6,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="components_count" type="INT"/>
+            <column name="station_requirement" type="VARCHAR(100)"/>
+            <column name="unlock_source" type="VARCHAR(200)"/>
+            <column name="result_item_id" type="VARCHAR(120)"/>
+            <column name="result_item_name" type="VARCHAR(200)"/>
+            <column name="result_quality_min" type="VARCHAR(20)"/>
+            <column name="result_quality_max" type="VARCHAR(20)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="crafting_recipe_components">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="recipe_id" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="component_id" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="component_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rarity" type="VARCHAR(20)"/>
+            <column name="alternatives_json" type="JSONB"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="crafting_recipe_components"
+                                 baseColumnNames="recipe_id"
+                                 referencedTableName="crafting_recipes"
+                                 referencedColumnNames="recipe_id"
+                                 constraintName="fk_crafting_recipe_components_recipe"
+                                 onDelete="CASCADE"/>
+
+        <createTable tableName="crafting_stations">
+            <column name="station_id" type="VARCHAR(120)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="station_type" type="VARCHAR(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location_id" type="VARCHAR(120)"/>
+            <column name="available" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="success_rate_bonus" type="NUMERIC(6,4)"/>
+            <column name="time_reduction" type="NUMERIC(6,4)"/>
+            <column name="quality_chance_bonus" type="NUMERIC(6,4)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="crafting_recipes" indexName="idx_crafting_recipes_category">
+            <column name="category"/>
+        </createIndex>
+        <createIndex tableName="crafting_recipes" indexName="idx_crafting_recipes_tier">
+            <column name="tier"/>
+        </createIndex>
+        <createIndex tableName="crafting_recipes" indexName="idx_crafting_recipes_skill_level">
+            <column name="required_skill_level"/>
+        </createIndex>
+
+        <createIndex tableName="crafting_recipe_components" indexName="idx_crafting_recipe_components_recipe">
+            <column name="recipe_id"/>
+        </createIndex>
+
+        <createIndex tableName="crafting_stations" indexName="idx_crafting_stations_type">
+            <column name="station_type"/>
+        </createIndex>
+        <createIndex tableName="crafting_stations" indexName="idx_crafting_stations_available">
+            <column name="available"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="crafting_recipe_components"/>
+            <dropTable tableName="crafting_stations"/>
+            <dropTable tableName="crafting_recipes"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: Reputation Tiers API
+  version: 1.0.0
+  description: |
+    API для системы уровней репутации.
+    
+    Источник: .BRAIN/02-gameplay/social/reputation-system-formulas.md v2.0.0
+    
+    Тиры репутации: Hated → Hostile → Unfriendly → Neutral → Friendly → Honored → Revered → Exalted
+    Значения: от -3000 (Hated) до +3000 (Exalted)
+    Влияние: доступ к контенту, цены, квесты, способности
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/gameplay/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Reputation
+    description: Система репутации
+
+paths:
+  /gameplay/social/reputation:
+    get:
+      summary: Получить репутацию персонажа
+      description: Возвращает репутацию персонажа с разными фракциями
+      operationId: getReputation
+      tags:
+        - Reputation
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Репутация персонажа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reputations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        faction_id:
+                          type: string
+                        value:
+                          type: number
+                        tier:
+                          type: string
+
+  /gameplay/social/reputation/modify:
+    post:
+      summary: Изменить репутацию
+      description: Изменяет репутацию персонажа с фракцией
+      operationId: modifyReputation
+      tags:
+        - Reputation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - faction_id
+                - change
+              properties:
+                character_id:
+                  type: string
+                faction_id:
+                  type: string
+                change:
+                  type: number
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Репутация изменена
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas: {}

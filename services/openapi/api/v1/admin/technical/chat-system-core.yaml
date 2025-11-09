@@ -1,0 +1,274 @@
+openapi: 3.0.3
+info:
+  title: Chat System Core API
+  version: 1.0.0
+  description: |
+    API для системы внутриигрового чата.
+    
+    Источник: .BRAIN/05-technical/backend/chat-system.md v1.0.0
+    
+    Каналы: Global, Local, Party, Guild, Whisper, Trade, Combat
+    Функции: Отправка/получение сообщений, mentions, emojis, slash commands, rich formatting
+    Модерация: Фильтры, spam protection, mute/ban
+    
+    WebSocket: Real-time доставка сообщений
+    
+    ПРИМЕЧАНИЕ: Дополнительные файлы:
+    - chat-system-channels.yaml - управление каналами
+    - chat-system-moderation.yaml - модерация
+    - chat-system-ws.yaml - WebSocket endpoints
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Chat
+    description: Система чата
+
+paths:
+  /technical/chat/send:
+    post:
+      summary: Отправить сообщение
+      description: |
+        Отправляет сообщение в указанный канал.
+        Применяет спам-защиту и фильтры.
+      operationId: sendMessage
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - channel
+                - message
+              properties:
+                character_id:
+                  type: string
+                channel:
+                  type: string
+                  enum: [global, local, party, guild, whisper, trade, combat]
+                message:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+                recipient_id:
+                  type: string
+                  description: Только для whisper
+                formatting:
+                  type: object
+                  description: Rich formatting (bold, italic, etc)
+            examples:
+              global_message:
+                summary: Глобальное сообщение
+                value:
+                  character_id: "char_123"
+                  channel: "global"
+                  message: "Looking for party for heist!"
+              whisper:
+                summary: Личное сообщение
+                value:
+                  character_id: "char_123"
+                  channel: "whisper"
+                  message: "Hey, want to trade?"
+                  recipient_id: "char_456"
+      responses:
+        '200':
+          description: Сообщение отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message_id:
+                    type: string
+                  sent_at:
+                    type: string
+                    format: date-time
+                  channel:
+                    type: string
+        '429':
+          description: Spam cooldown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  cooldown_remaining:
+                    type: number
+
+  /technical/chat/history:
+    get:
+      summary: Получить историю сообщений
+      description: |
+        Возвращает историю сообщений из канала.
+        Поддерживает пагинацию.
+      operationId: getChatHistory
+      tags:
+        - Chat
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: channel
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: before
+          in: query
+          description: Message ID для пагинации
+          schema:
+            type: string
+      responses:
+        '200':
+          description: История сообщений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+
+  /technical/chat/channels:
+    get:
+      summary: Получить доступные каналы
+      description: Возвращает список каналов, доступных персонажу
+      operationId: getAvailableChannels
+      tags:
+        - Chat
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Доступные каналы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatChannel'
+
+  /technical/chat/command:
+    post:
+      summary: Выполнить slash command
+      description: |
+        Выполняет команду чата (slash command).
+        Примеры: /help, /invite, /trade, /roll
+      operationId: executeCommand
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - command
+              properties:
+                character_id:
+                  type: string
+                command:
+                  type: string
+                arguments:
+                  type: array
+                  items:
+                    type: string
+            examples:
+              roll_dice:
+                summary: Бросить кубик
+                value:
+                  character_id: "char_123"
+                  command: "/roll"
+                  arguments: ["d20"]
+      responses:
+        '200':
+          description: Команда выполнена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    type: string
+                  message_sent:
+                    type: boolean
+
+components:
+  schemas:
+    ChatMessage:
+      type: object
+      properties:
+        message_id:
+          type: string
+        sender_id:
+          type: string
+        sender_name:
+          type: string
+        channel:
+          type: string
+        message:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+        formatting:
+          type: object
+        mentions:
+          type: array
+          items:
+            type: string
+
+    ChatChannel:
+      type: object
+      properties:
+        channel_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [global, local, party, guild, whisper, trade, combat]
+        description:
+          type: string
+        member_count:
+          type: integer
+        is_muted:
+          type: boolean
+
+

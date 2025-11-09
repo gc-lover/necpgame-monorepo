@@ -1,0 +1,340 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/gameplay/battle-pass
+# - Dependencies: auth-service, economy-service, analytics-service, notification-service, quest-service, match-service, progression-service, incident-service
+# - Frontend Module: modules/progression/battle-pass (useBattlePassStore)
+# - UI: BattlePassOverview, LevelProgressBar, SeasonTimeline, PremiumUpsellCard, XPSourcesList
+# - Forms: PurchasePremiumForm, XpGrantDebugForm, SeasonConfigForm
+# - Layout: ProgressionHubLayout
+# - Hooks: useBattlePassProgress, usePremiumStatus, useSeasonAnalytics
+
+openapi: 3.0.3
+info:
+  title: Battle Pass Core API
+  description: "Ядро Battle Pass NECPGAME: сезоны, прогресс игроков, премиум-доступ, XP-источники и аналитика."
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/battle-pass
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Seasons
+    description: Управление сезонами battle pass
+  - name: Progress
+    description: Прогресс игроков и начисление XP
+  - name: Premium
+    description: Покупка и статус премиум-трека
+  - name: Analytics
+    description: Отчёты по сезонной активности и удержанию
+paths:
+  /gameplay/battle-pass/seasons:
+    post:
+      tags: [Seasons]
+      summary: Создать сезон battle pass
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassSeasonCreateRequest' }
+            examples:
+              createSeason:
+                $ref: './examples.yaml#/components/examples/CreateSeason'
+      responses:
+        '201':
+          description: Сезон создан
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassSeason' }
+        '400':
+          description: Ошибка в параметрах сезона
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    get:
+      tags: [Seasons]
+      summary: Получить список сезонов
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [SCHEDULED, ACTIVE, ENDED, ARCHIVED] }
+      responses:
+        '200':
+          description: Список сезонов
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassSeasonListResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/seasons/current:
+    get:
+      tags: [Seasons]
+      summary: Получить текущий активный сезон
+      responses:
+        '200':
+          description: Активный сезон и таймеры
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassSeason' }
+        '404':
+          description: Активный сезон отсутствует
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+  /gameplay/battle-pass/seasons/{seasonId}:
+    parameters:
+      - $ref: './battle-pass-components.yaml#/components/parameters/SeasonId'
+    put:
+      tags: [Seasons]
+      summary: Обновить параметры сезона
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassSeasonUpdateRequest' }
+      responses:
+        '200':
+          description: Сезон обновлён
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassSeason' }
+        '400':
+          description: Некорректные параметры
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /gameplay/battle-pass/seasons/{seasonId}/status:
+    parameters:
+      - $ref: './battle-pass-components.yaml#/components/parameters/SeasonId'
+    post:
+      tags: [Seasons]
+      summary: Изменить статус сезона
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/SeasonStatusChangeRequest' }
+      responses:
+        '200': { description: Статус сезона обновлён }
+        '400':
+          description: Невозможно перейти в указанный статус
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/seasons/{seasonId}/premium:
+    parameters:
+      - $ref: './battle-pass-components.yaml#/components/parameters/SeasonId'
+    post:
+      tags: [Premium]
+      summary: Обновить конфигурацию премиум-трека сезона
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/PremiumConfigRequest' }
+      responses:
+        '200':
+          description: Премиум-конфигурация обновлена
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassSeason' }
+        '400':
+          description: Ошибка в конфигурации премиума
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/progress:
+    get:
+      tags: [Progress]
+      summary: Получить прогресс игрока по текущему сезону
+      responses:
+        '200':
+          description: Текущий уровень, XP и флаги премиума
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/PlayerBattlePassProgress' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404':
+          description: Прогресс не найден (новый игрок)
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+  /gameplay/battle-pass/progress/xp:
+    post:
+      tags: [Progress]
+      summary: Начислить XP battle pass (сервисная операция)
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/XpGrantRequest' }
+            examples:
+              xpGrant:
+                $ref: './examples.yaml#/components/examples/XpGrantRequest'
+      responses:
+        '200':
+          description: XP начислено, прогресс обновлён
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/XpGrantResponse' }
+        '400':
+          description: Источник XP отключён или превышен лимит
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/progress/sync:
+    post:
+      tags: [Progress]
+      summary: Синхронизировать прогресс игрока
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/ProgressSyncRequest' }
+      responses:
+        '200': { description: Прогресс синхронизирован }
+        '400':
+          description: Конфликт данных или отсутствует сезон
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/progress/reset:
+    post:
+      tags: [Progress]
+      summary: Сбросить прогресс игроков (новый сезон)
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/ProgressResetRequest' }
+      responses:
+        '202': { description: Задача сброса поставлена в очередь }
+        '400':
+          description: Сезон нельзя сбросить (не завершён)
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/premium/purchase:
+    post:
+      tags: [Premium]
+      summary: Купить премиум-трек
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/PremiumPurchaseRequest' }
+            examples:
+              premiumPurchase:
+                $ref: './examples.yaml#/components/examples/PremiumPurchaseRequest'
+      responses:
+        '200':
+          description: Премиум активирован
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/PremiumPurchaseResponse' }
+        '400':
+          description: Недостаточно валюты или премиум уже активен
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/premium/status:
+    get:
+      tags: [Premium]
+      summary: Узнать статус премиум-трека
+      responses:
+        '200':
+          description: Информация о премиуме
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/PremiumStatusResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/xp-sources:
+    get:
+      tags: [Progress]
+      summary: Список активных источников XP
+      responses:
+        '200':
+          description: Источники XP, множители и лимиты
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/XpSourcesResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/levels/skip:
+    post:
+      tags: [Premium]
+      summary: Купить пропуск уровней
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-components.yaml#/components/schemas/LevelSkipRequest' }
+      responses:
+        '200':
+          description: Уровни пропущены, прогресс обновлён
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/LevelSkipResponse' }
+        '400':
+          description: Превышен лимит или недостаточно средств
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/analytics/progression:
+    get:
+      tags: [Analytics]
+      summary: Получить аналитику прогресса по сезону
+      parameters:
+        - in: query
+          name: seasonId
+          schema: { type: string }
+        - in: query
+          name: range
+          schema: { type: string, enum: [7d, 30d, season], default: 7d }
+      responses:
+        '200':
+          description: Аналитический отчёт
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassAnalyticsResponse' }
+              examples:
+                analytics:
+                  $ref: './examples.yaml#/components/examples/BattlePassAnalyticsResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+  parameters:
+    SeasonId: { $ref: './battle-pass-components.yaml#/components/parameters/SeasonId' }
+  schemas:
+    BattlePassSeason: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassSeason' }
+    PlayerBattlePassProgress: { $ref: './battle-pass-components.yaml#/components/schemas/PlayerBattlePassProgress' }
+    BattlePassError: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassError' }
+    BattlePassAnalyticsResponse: { $ref: './battle-pass-components.yaml#/components/schemas/BattlePassAnalyticsResponse' }
+  examples:
+    CreateSeason: { $ref: './examples.yaml#/components/examples/CreateSeason' }
+    XpGrantRequest: { $ref: './examples.yaml#/components/examples/XpGrantRequest' }
+    PremiumPurchaseRequest: { $ref: './examples.yaml#/components/examples/PremiumPurchaseRequest' }
+    BattlePassAnalyticsResponse: { $ref: './examples.yaml#/components/examples/BattlePassAnalyticsResponse' }
+

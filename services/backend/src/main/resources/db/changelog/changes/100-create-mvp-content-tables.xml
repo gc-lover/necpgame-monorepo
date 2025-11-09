@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="100-create-mvp-content-tables" author="backend-agent">
+        <createTable tableName="mvp_endpoints">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="endpoint" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="method" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="required_for_mvp" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="implemented" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_endpoints" indexName="idx_mvp_endpoints_category">
+            <column name="category"/>
+        </createIndex>
+
+        <createIndex tableName="mvp_endpoints" indexName="idx_mvp_endpoints_priority">
+            <column name="priority"/>
+        </createIndex>
+
+        <createTable tableName="mvp_models">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="model_name" type="VARCHAR(120)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_models" indexName="idx_mvp_models_name">
+            <column name="model_name"/>
+        </createIndex>
+
+        <createTable tableName="mvp_model_fields">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="model_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="field_name" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="field_type" type="VARCHAR(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_required" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="field_description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_model_fields" indexName="idx_mvp_model_fields_model">
+            <column name="model_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="mvp_model_fields"
+                                 baseColumnNames="model_id"
+                                 referencedTableName="mvp_models"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_mvp_model_fields_model"
+                                 onDelete="CASCADE"/>
+
+        <createTable tableName="mvp_starter_items">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="item_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_starter_items" indexName="idx_mvp_starter_items_item">
+            <column name="item_id"/>
+        </createIndex>
+
+        <createTable tableName="mvp_starter_quests">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="quest_code" type="VARCHAR(120)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="mvp_starter_locations">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="location_name" type="VARCHAR(120)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="mvp_starter_npcs">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="npc_id" type="VARCHAR(120)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location_id" type="UUID"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="mvp_starter_npcs"
+                                 baseColumnNames="location_id"
+                                 referencedTableName="mvp_starter_locations"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_mvp_starter_npcs_location"
+                                 onDelete="SET NULL"/>
+
+        <createTable tableName="mvp_starter_factions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="faction_id" type="VARCHAR(120)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="mvp_content_overview">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="period" type="VARCHAR(32)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="total_quests" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="main_quests" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="side_quests" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="faction_quests" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_locations" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_npcs" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="implemented_percentage" type="NUMERIC(5,2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_content_overview" indexName="idx_mvp_content_overview_period" unique="true">
+            <column name="period"/>
+        </createIndex>
+
+        <createTable tableName="mvp_content_overview_events">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="overview_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_content_overview_events" indexName="idx_mvp_content_overview_events_overview">
+            <column name="overview_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="mvp_content_overview_events"
+                                 baseColumnNames="overview_id"
+                                 referencedTableName="mvp_content_overview"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_mvp_content_events_overview"
+                                 onDelete="CASCADE"/>
+
+        <createTable tableName="mvp_content_status">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="mvp_content_ready" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_quests_available" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_locations_available" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_npcs_available" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quest_engine_ready" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="combat_ready" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="progression_ready" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="social_ready" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="economy_ready" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="mvp_text_actions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="command" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_text_actions" indexName="idx_mvp_text_actions_action">
+            <column name="action"/>
+        </createIndex>
+
+        <createTable tableName="mvp_text_nearby_npcs">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="location_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="npc_name" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="can_interact" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_text_nearby_npcs" indexName="idx_mvp_text_nearby_npcs_location">
+            <column name="location_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="mvp_text_nearby_npcs"
+                                 baseColumnNames="location_id"
+                                 referencedTableName="game_locations"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_mvp_text_nearby_npcs_location"
+                                 onDelete="CASCADE"/>
+
+        <createTable tableName="mvp_world_state">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="captured_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_of_day" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weather" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_world_state" indexName="idx_mvp_world_state_created_at">
+            <column name="captured_at"/>
+        </createIndex>
+
+        <createTable tableName="mvp_world_state_events">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="world_state_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="severity" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="mvp_world_state_events" indexName="idx_mvp_world_state_events_state">
+            <column name="world_state_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="mvp_world_state_events"
+                                 baseColumnNames="world_state_id"
+                                 referencedTableName="mvp_world_state"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_mvp_world_state_events_state"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: Player Order World Impact Batch Schemas
+  version: 1.0.0
+  description: Схемы запросов и ответов для batch-пересчётов влияния.
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+paths: {}
+components:
+  schemas:
+    ImpactRecalculateRequest:
+      type: object
+      required:
+        - scope
+        - period
+        - triggerSource
+      properties:
+        scope:
+          type: string
+          enum: [global, cities, factions, custom]
+        cityIds:
+          type: array
+          items:
+            type: string
+            pattern: '^[A-Z0-9\\-]{3,24}$'
+          minItems: 1
+        factionIds:
+          type: array
+          items:
+            type: string
+            pattern: '^[A-Z0-9\\-]{3,24}$'
+        period:
+          type: string
+          enum: [24h, 7d, 30d, season, year]
+        triggerSource:
+          type: string
+          enum: [scheduled, manual, anomaly_detected, crisis_escalation]
+        force:
+          type: boolean
+          default: false
+        correlationId:
+          type: string
+          format: uuid
+        requestedBy:
+          type: string
+          format: uuid
+    ImpactRecalculateJob:
+      type: object
+      required:
+        - jobId
+        - status
+        - scope
+        - createdAt
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        scope:
+          type: string
+          enum: [global, cities, factions, custom]
+        processed:
+          type: integer
+          minimum: 0
+        failed:
+          type: integer
+          minimum: 0
+        errors:
+          type: array
+          items:
+            type: string
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        requestedBy:
+          type: string
+          format: uuid
+    ImpactRecalculateJobResponse:
+      type: object
+      required:
+        - jobId
+        - status
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        job:
+          $ref: '#/components/schemas/ImpactRecalculateJob'
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

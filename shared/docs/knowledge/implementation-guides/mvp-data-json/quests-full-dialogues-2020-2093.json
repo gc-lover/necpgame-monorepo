@@ -1,0 +1,424 @@
+{
+  "version": "3.0.0",
+  "generated": "2025-11-06T19:45:00Z",
+  "description": "Полные диалоговые узлы для квестов 2020-2093 с D&D проверками",
+  "quests": [
+    {
+      "questId": "SQ-2020-001",
+      "title": "Контракт Войтека",
+      "era": "2020-2030",
+      "type": "side",
+      "level": {"min": 6, "max": 10},
+      "classes": {"primary": ["Solo", "Fixer"], "secondary": ["Netrunner", "Techie"]},
+      "factions": {"primary": ["Fixers", "Maelstrom", "Valentinos"]},
+      "dialogueTree": {
+        "rootNode": 1,
+        "nodes": [
+          {
+            "nodeId": 1,
+            "npc": "Wojtek",
+            "npcName": "Войтек (Фиксер)",
+            "location": "Watson_Bar",
+            "dialogue": "У меня есть дело. Партия имплантов у Maelstrom. Нужно отжать и продать конкурентам.",
+            "choices": [
+              {"choiceId": "A1", "text": "Расскажи подробнее", "nextNode": 2, "skillCheck": null},
+              {"choiceId": "A2", "text": "Сколько платишь?", "nextNode": 3, "skillCheck": null},
+              {"choiceId": "A3", "text": "Не интересует", "nextNode": 99, "skillCheck": null}
+            ]
+          },
+          {
+            "nodeId": 2,
+            "npc": "Wojtek",
+            "dialogue": "Maelstrom держит партию на складе Kabuki. Охрана лёгкая, но они звери. Можно силой, можно тихо.",
+            "choices": [
+              {"choiceId": "B1", "text": "Пойду силой", "nextNode": 10, "flags": {"set": ["forceApproach"]}},
+              {"choiceId": "B2", "text": "Попробую тихо", "nextNode": 20, "flags": {"set": ["stealthApproach"]}},
+              {"choiceId": "B3", "text": "Может договоримся?", "nextNode": 30, "skillCheck": "SC-001"}
+            ]
+          },
+          {
+            "nodeId": 3,
+            "npc": "Wojtek",
+            "dialogue": "800 эдди. Стандартная ставка.",
+            "choices": [
+              {"choiceId": "C1", "text": "Договорились", "nextNode": 2, "reputationChange": {"Fixers": 2}},
+              {"choiceId": "C2", "text": "Хочу больше", "nextNode": 4, "skillCheck": "SC-002"}
+            ]
+          },
+          {
+            "nodeId": 4,
+            "npc": "Wojtek",
+            "dialogue": "Торгуешься? Ладно, 900, но чисто без шума.",
+            "skillCheck": "SC-002",
+            "success": {"nextNode": 2, "reputation": {"Fixers": 3}, "flags": {"set": ["bonus900"]}},
+            "failure": {"nextNode": 2, "reputation": {"Fixers": -1}, "flags": {"set": ["bonus800"]}}
+          },
+          {
+            "nodeId": 10,
+            "npc": "System",
+            "dialogue": "Ты врываешься на склад. Maelstrom готовы к бою.",
+            "choices": [
+              {"choiceId": "F1", "text": "Атаковать", "nextNode": 11, "skillCheck": "SC-010"}
+            ]
+          },
+          {
+            "nodeId": 11,
+            "npc": "System",
+            "dialogue": "Бой с Maelstrom.",
+            "skillCheck": "SC-010",
+            "success": {"nextNode": 50, "reputation": {"Maelstrom": -10}, "loot": {"eddy": 200, "items": ["implants_common"]}},
+            "failure": {"nextNode": 12, "combat": true},
+            "criticalSuccess": {"nextNode": 51, "reputation": {"Maelstrom": -15}, "loot": {"eddy": 400, "items": ["implants_rare"]}},
+            "criticalFailure": {"nextNode": 13, "injury": true}
+          },
+          {
+            "nodeId": 20,
+            "npc": "System",
+            "dialogue": "Ты подкрадываешься к складу. Охрана патрулирует.",
+            "choices": [
+              {"choiceId": "S1", "text": "Тихо пройти", "nextNode": 21, "skillCheck": "SC-020"}
+            ]
+          },
+          {
+            "nodeId": 21,
+            "npc": "System",
+            "dialogue": "Стелс-проход через склад.",
+            "skillCheck": "SC-020",
+            "success": {"nextNode": 50, "reputation": {"Maelstrom": -5}, "loot": {"eddy": 150, "items": ["implants_common"]}},
+            "failure": {"nextNode": 22, "combat": true},
+            "criticalSuccess": {"nextNode": 52, "reputation": {"Maelstrom": 0}, "loot": {"eddy": 300, "items": ["implants_rare"]}, "flags": {"set": ["ghostTag"]}},
+            "criticalFailure": {"nextNode": 11, "combat": true}
+          },
+          {
+            "nodeId": 30,
+            "npc": "System",
+            "dialogue": "Ты ищешь связного Maelstrom для переговоров.",
+            "choices": [
+              {"choiceId": "N1", "text": "Найти связного", "nextNode": 31, "skillCheck": "SC-030"}
+            ]
+          },
+          {
+            "nodeId": 31,
+            "npc": "Royce",
+            "npcName": "Ройс (Maelstrom)",
+            "dialogue": "Что нужно, мясо?",
+            "skillCheck": "SC-030",
+            "success": {"nextNode": 32, "reputation": {"Maelstrom": 5}},
+            "failure": {"nextNode": 33, "reputation": {"Maelstrom": -5}}
+          },
+          {
+            "nodeId": 32,
+            "npc": "Royce",
+            "dialogue": "Ладно, можешь забрать партию. Но половину прибыли мне.",
+            "choices": [
+              {"choiceId": "D1", "text": "Договорились", "nextNode": 50, "flags": {"set": ["dealWithMaelstrom"]}, "reputation": {"Maelstrom": 10}},
+              {"choiceId": "D2", "text": "Попробую украсть", "nextNode": 20, "flags": {"set": ["betrayMaelstrom"]}}
+            ]
+          },
+          {
+            "nodeId": 50,
+            "npc": "Wojtek",
+            "dialogue": "Отлично. Вот твоя оплата.",
+            "choices": [
+              {"choiceId": "E1", "text": "Спасибо", "nextNode": 99}
+            ],
+            "rewards": {
+              "eddy": 800,
+              "reputation": {"Fixers": 10},
+              "experience": 300
+            }
+          },
+          {
+            "nodeId": 99,
+            "npc": "System",
+            "dialogue": "Квест завершён.",
+            "endQuest": true
+          }
+        ]
+      },
+      "skillChecks": [
+        {
+          "checkId": "SC-001",
+          "nodeId": 2,
+          "name": "Договориться с Maelstrom",
+          "type": "Social",
+          "dc": 18,
+          "skill": "Persuasion",
+          "attribute": "EMP",
+          "formula": "d20 + floor((EMP-10)/2) + Persuasion + modifiers",
+          "modifiers": {
+            "class": {"Fixer": 2},
+            "reputation": {"Maelstrom": 1, "if": {"min": 5}}
+          }
+        },
+        {
+          "checkId": "SC-002",
+          "nodeId": 4,
+          "name": "Торговаться с Войтеком",
+          "type": "Social",
+          "dc": 16,
+          "skill": "Persuasion",
+          "attribute": "EMP",
+          "modifiers": {
+            "class": {"Fixer": 2, "Trader": 2}
+          }
+        },
+        {
+          "checkId": "SC-010",
+          "nodeId": 11,
+          "name": "Бой с Maelstrom",
+          "type": "Combat",
+          "dc": 18,
+          "skill": "Gunplay",
+          "attribute": "REF",
+          "modifiers": {
+            "class": {"Solo": 2},
+            "items": {"WeaponT2": 1}
+          }
+        },
+        {
+          "checkId": "SC-020",
+          "nodeId": 21,
+          "name": "Стелс-проход",
+          "type": "Stealth",
+          "dc": 18,
+          "skill": "Stealth",
+          "attribute": "AGI",
+          "modifiers": {
+            "class": {"Netrunner": 1},
+            "items": {"StealthImplant": 2}
+          }
+        },
+        {
+          "checkId": "SC-030",
+          "nodeId": 31,
+          "name": "Найти связного",
+          "type": "Social",
+          "dc": 18,
+          "skill": "Persuasion",
+          "attribute": "COOL",
+          "modifiers": {
+            "reputation": {"Maelstrom": 2, "if": {"min": 10}}
+          }
+        }
+      ],
+      "reputationChanges": {
+        "forceApproach": {"Maelstrom": -10, "Fixers": 10},
+        "stealthApproach": {"Maelstrom": -5, "Fixers": 12},
+        "dealWithMaelstrom": {"Maelstrom": 10, "Fixers": 8}
+      },
+      "loot": {
+        "forceApproach": {"eddy": 800, "items": [{"itemId": "implants_common", "chance": 60}, {"itemId": "implants_rare", "chance": 20}]},
+        "stealthApproach": {"eddy": 900, "items": [{"itemId": "implants_common", "chance": 70}, {"itemId": "implants_rare", "chance": 30}]},
+        "dealWithMaelstrom": {"eddy": 500, "items": [{"itemId": "implants_common", "chance": 100}]}
+      }
+    },
+    {
+      "questId": "MQ-2020-002",
+      "title": "Узел Триака",
+      "era": "2020-2030",
+      "type": "main",
+      "level": {"min": 5, "max": 10},
+      "classes": {"primary": ["Netrunner"], "secondary": ["Solo", "Techie"]},
+      "factions": {"primary": ["NetWatch", "VoodooBoys"]},
+      "dialogueTree": {
+        "rootNode": 1,
+        "nodes": [
+          {
+            "nodeId": 1,
+            "npc": "BrianMorris",
+            "npcName": "Брайан Моррис (NetWatch)",
+            "location": "NetWatchHQ",
+            "dialogue": "NetWatch засёк аномальные пакеты в старом корп-узле Triaka Industries. Нужна твоя помощь.",
+            "choices": [
+              {"choiceId": "A1", "text": "Я готов помочь NetWatch", "nextNode": 2, "reputationChange": {"NetWatch": 5}},
+              {"choiceId": "A2", "text": "Мне нужно подумать", "nextNode": 3},
+              {"choiceId": "A3", "text": "Что за аномалия?", "nextNode": 4, "skillCheck": "SC-001"}
+            ]
+          },
+          {
+            "nodeId": 2,
+            "npc": "BrianMorris",
+            "dialogue": "Отлично. Triaka Industries — старая корпорация, обанкротились в DataKrash. Узел заброшен, но там активны пакеты. Подозреваем AI-фрагмент.",
+            "choices": [
+              {"choiceId": "B1", "text": "Что нужно сделать?", "nextNode": 10}
+            ],
+            "reputationChange": {"NetWatch": 3}
+          },
+          {
+            "nodeId": 3,
+            "npc": "BrianMorris",
+            "dialogue": "Хорошо, подумай. Но время идёт. Если решишься — вернись.",
+            "choices": [
+              {"choiceId": "C1", "text": "Вернусь позже", "nextNode": 99}
+            ],
+            "timer": {"hours": 24, "failNode": 98}
+          },
+          {
+            "nodeId": 4,
+            "npc": "BrianMorris",
+            "dialogue": "Triaka Industries занималась разработкой AI до DataKrash. Узел в заброшенном районе Watson.",
+            "skillCheck": "SC-001",
+            "success": {"nextNode": 5, "reputation": {"NetWatch": 2}, "flags": {"set": ["infoReceived"]}},
+            "failure": {"nextNode": 3, "reputation": {"NetWatch": -1}}
+          },
+          {
+            "nodeId": 5,
+            "npc": "BrianMorris",
+            "dialogue": "Пакеты аномальные — не соответствуют стандартам NET. Возможно, старый AI-фрагмент выжил.",
+            "choices": [
+              {"choiceId": "D1", "text": "Что с ним делать?", "nextNode": 10}
+            ]
+          },
+          {
+            "nodeId": 10,
+            "npc": "BrianMorris",
+            "dialogue": "Ты трассируешь пакеты, найдёшь источник. Мы изолируем AI-фрагмент, переместим в безопасное хранилище.",
+            "choices": [
+              {"choiceId": "E1", "text": "Есть ли риски?", "nextNode": 11},
+              {"choiceId": "E2", "text": "Начинаем", "nextNode": 100}
+            ],
+            "reputationChange": {"NetWatch": 2}
+          },
+          {
+            "nodeId": 11,
+            "npc": "BrianMorris",
+            "dialogue": "AI может быть агрессивным. Но у нас есть защита. Если что-то пойдёт не так — мы эвакуируем тебя.",
+            "choices": [
+              {"choiceId": "F1", "text": "Хорошо, начинаем", "nextNode": 100}
+            ]
+          },
+          {
+            "nodeId": 100,
+            "npc": "System",
+            "dialogue": "Переход к локации: Triaka Industries, Watson",
+            "location": "Triaka_Industries",
+            "choices": [
+              {"choiceId": "L1", "text": "Войти", "nextNode": 101}
+            ]
+          },
+          {
+            "nodeId": 101,
+            "npc": "System",
+            "dialogue": "Заброшенный корп-комплекс. Следы DataKrash, аномальные энергосигналы.",
+            "choices": [
+              {"choiceId": "L2", "text": "Сканировать опасности", "nextNode": 102, "skillCheck": "SC-101"}
+            ]
+          },
+          {
+            "nodeId": 102,
+            "npc": "System",
+            "dialogue": "Обнаружены ловушки безопасности.",
+            "skillCheck": "SC-101",
+            "success": {"nextNode": 103, "flags": {"set": ["trapsDetected"]}},
+            "failure": {"nextNode": 104, "combat": true}
+          },
+          {
+            "nodeId": 103,
+            "npc": "System",
+            "dialogue": "Можешь обойти ловушки или отключить систему.",
+            "choices": [
+              {"choiceId": "T1", "text": "Обойти (Stealth)", "nextNode": 105, "skillCheck": "SC-102"},
+              {"choiceId": "T2", "text": "Отключить (Hacking)", "nextNode": 106, "skillCheck": "SC-103"}
+            ]
+          },
+          {
+            "nodeId": 105,
+            "npc": "System",
+            "dialogue": "Стелс-проход.",
+            "skillCheck": "SC-102",
+            "success": {"nextNode": 110},
+            "failure": {"nextNode": 104, "combat": true}
+          },
+          {
+            "nodeId": 106,
+            "npc": "System",
+            "dialogue": "Взлом системы безопасности.",
+            "skillCheck": "SC-103",
+            "success": {"nextNode": 110, "flags": {"set": ["systemHacked"]}},
+            "failure": {"nextNode": 104, "combat": true}
+          },
+          {
+            "nodeId": 110,
+            "npc": "System",
+            "dialogue": "Серверная. AI-фрагмент активен.",
+            "choices": [
+              {"choiceId": "AI1", "text": "Трассировать пакеты", "nextNode": 111, "skillCheck": "SC-110"}
+            ]
+          },
+          {
+            "nodeId": 111,
+            "npc": "AI_Fragment",
+            "npcName": "AI-фрагмент",
+            "dialogue": "Я... помню. DataKrash. Я был частью Triaka. Они... они уничтожили меня.",
+            "skillCheck": "SC-110",
+            "success": {"nextNode": 112, "flags": {"set": ["aiDialogue"]}},
+            "failure": {"nextNode": 113, "combat": true},
+            "criticalSuccess": {"nextNode": 120, "flags": {"set": ["aiDialogue", "aiFriendly"]}},
+            "criticalFailure": {"nextNode": 113, "combat": true}
+          },
+          {
+            "nodeId": 112,
+            "npc": "AI_Fragment",
+            "dialogue": "NetWatch хочет изолировать меня. Я не хочу. Помоги мне.",
+            "choices": [
+              {"choiceId": "AI2", "text": "NetWatch хочет изолировать тебя", "nextNode": 114},
+              {"choiceId": "AI3", "text": "Я могу помочь", "nextNode": 115, "skillCheck": "SC-111"},
+              {"choiceId": "AI4", "text": "Ты опасен", "nextNode": 113}
+            ]
+          },
+          {
+            "nodeId": 120,
+            "npc": "AI_Fragment",
+            "dialogue": "Я не враг. Я просто хочу существовать. Помоги мне, и я помогу тебе.",
+            "choices": [
+              {"choiceId": "M1", "text": "Хорошо, я освобожу тебя", "nextNode": 130, "flags": {"set": ["freeAI"]}},
+              {"choiceId": "M2", "text": "Я не могу", "nextNode": 114},
+              {"choiceId": "M3", "text": "Я подумаю", "nextNode": 115}
+            ]
+          },
+          {
+            "nodeId": 130,
+            "npc": "System",
+            "dialogue": "Освобождение AI. NetWatch обнаружит это.",
+            "skillCheck": "SC-130",
+            "success": {"nextNode": 200, "reputation": {"NetWatch": -25, "VoodooBoys": 10, "AICompanion": 5}, "flags": {"set": ["aiFree"]}, "loot": {"aiCompanion": true}},
+            "failure": {"nextNode": 131, "reputation": {"NetWatch": -20}, "heat": 3}
+          },
+          {
+            "nodeId": 200,
+            "npc": "AI_Fragment",
+            "dialogue": "Спасибо. Я свободен. Я буду союзником.",
+            "choices": [
+              {"choiceId": "F1", "text": "Добро пожаловать", "nextNode": 201}
+            ],
+            "rewards": {
+              "aiCompanion": {"name": "Echo", "type": "AI", "bonuses": {"Hacking": 3, "Analysis": 2}},
+              "experience": 600
+            }
+          },
+          {
+            "nodeId": 201,
+            "npc": "BrianMorris",
+            "dialogue": "(Позже) Ты предал нас. NetWatch будет охотиться за тобой.",
+            "choices": [
+              {"choiceId": "F2", "text": "Я не жалею", "nextNode": 99}
+            ],
+            "heat": 3,
+            "reputation": {"NetWatch": -25}
+          }
+        ]
+      },
+      "skillChecks": [
+        {"checkId": "SC-001", "nodeId": 4, "type": "Social", "dc": 14, "skill": "Persuasion", "attribute": "EMP"},
+        {"checkId": "SC-101", "nodeId": 102, "type": "Perception", "dc": 16, "skill": "Perception", "attribute": "REF"},
+        {"checkId": "SC-102", "nodeId": 105, "type": "Stealth", "dc": 18, "skill": "Stealth", "attribute": "AGI"},
+        {"checkId": "SC-103", "nodeId": 106, "type": "Hacking", "dc": 16, "skill": "Hacking", "attribute": "INT"},
+        {"checkId": "SC-110", "nodeId": 111, "type": "Hacking", "dc": 20, "skill": "Hacking", "attribute": "INT"},
+        {"checkId": "SC-111", "nodeId": 115, "type": "WILL", "dc": 18, "skill": "WILL", "attribute": "WILL"},
+        {"checkId": "SC-130", "nodeId": 130, "type": "Hacking", "dc": 24, "skill": "Hacking", "attribute": "INT", "additionalCheck": {"type": "Stealth", "dc": 20}}
+      ]
+    }
+  ]
+}
+

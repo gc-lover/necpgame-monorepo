@@ -1,0 +1,658 @@
+# Locations API
+# Источник: .BRAIN/05-technical/ui-main-game.md (v1.1.0)
+# Task ID: API-TASK-028
+
+openapi: 3.0.3
+info:
+  title: Locations API
+  version: 1.0.0
+  description: |
+    API для системы локаций и перемещения в текстовой версии NECPGAME.
+    Реализует просмотр локаций, перемещение между ними и доступные действия.
+    
+    ## Источники
+    - Оригинальный документ: `.BRAIN/05-technical/ui-main-game.md` (v1.1.0)
+    - Задание: `API-SWAGGER/tasks/active/queue/task-028-locations-api.md`
+    - Task ID: API-TASK-028
+    - Дополнительные данные: `.BRAIN/05-technical/mvp-data-json/locations.json`
+
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/locations
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+paths:
+  /locations:
+    get:
+      summary: Список всех доступных локаций
+      description: |
+        Возвращает список всех доступных локаций с возможностью фильтрации.
+        
+        **Бизнес-логика:**
+        - Возвращаются только локации, доступные для персонажа (по уровню и квестам)
+        - Можно фильтровать по региону и уровню опасности
+        - Содержит краткую информацию о каждой локации
+        
+        **Источник:** `.BRAIN/05-technical/ui-main-game.md` (Раздел 4.1)
+      operationId: getLocations
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа (для проверки доступности локаций)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: region
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [night_city, badlands, outskirts]
+          description: Фильтр по региону
+          example: "night_city"
+        - name: dangerLevel
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high, extreme]
+          description: Фильтр по уровню опасности
+          example: "low"
+        - name: minLevel
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: Фильтр по минимальному уровню персонажа
+          example: 1
+      responses:
+        '200':
+          description: Список локаций
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - locations
+                  - total
+                properties:
+                  locations:
+                    type: array
+                    description: Список доступных локаций
+                    items:
+                      $ref: '#/components/schemas/GameLocation'
+                  total:
+                    type: integer
+                    description: Общее количество локаций
+                    example: 15
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+
+  /locations/{locationId}:
+    get:
+      summary: Детальная информация о локации
+      description: |
+        Возвращает детальную информацию о конкретной локации, включая атмосферное
+        описание, точки интереса и доступных NPC.
+        
+        **Бизнес-логика:**
+        - Проверяет доступность локации для персонажа
+        - Возвращает полное описание и атмосферу
+        - Включает список NPC и точек интереса
+        
+        **Источник:** `.BRAIN/05-technical/ui-main-game.md` (Раздел 1.2)
+      operationId: getLocationDetails
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID локации
+          example: "downtown_city_center"
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Детальная информация о локации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationDetails'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+
+  /locations/current:
+    get:
+      summary: Текущая локация персонажа
+      description: |
+        Возвращает текущую локацию персонажа с полным описанием и доступными действиями.
+        
+        **Бизнес-логика:**
+        - Загружает текущую локацию персонажа из БД
+        - Возвращает атмосферное описание
+        - Возвращает список доступных действий в локации
+        - Возвращает список доступных NPC
+        
+        **Источник:** `.BRAIN/05-technical/ui-main-game.md` (Раздел 1.2)
+      operationId: getCurrentLocation
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Текущая локация персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationDetails'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+
+  /locations/travel:
+    post:
+      summary: Перемещение в другую локацию
+      description: |
+        Перемещает персонажа в другую локацию. Проверяет доступность, расходует
+        энергию и время.
+        
+        **Бизнес-логика:**
+        - Проверяет доступность целевой локации (уровень, квесты, связанность)
+        - Проверяет наличие энергии у персонажа
+        - Расходует энергию и время на перемещение
+        - Может генерировать случайные события во время перемещения
+        - Fast travel мгновенное, если локация открыта
+        
+        **Источник:** `.BRAIN/05-technical/ui-main-game.md` (Раздел 4.2)
+      operationId: travelToLocation
+      tags:
+        - Locations
+        - Travel
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TravelRequest'
+            examples:
+              walk_travel:
+                summary: Перемещение пешком
+                value:
+                  characterId: "550e8400-e29b-41d4-a716-446655440000"
+                  targetLocationId: "watson_kabuki"
+                  travelMethod: "walk"
+              fast_travel:
+                summary: Быстрое перемещение
+                value:
+                  characterId: "550e8400-e29b-41d4-a716-446655440000"
+                  targetLocationId: "westbrook_japantown"
+                  travelMethod: "fast_travel"
+      responses:
+        '200':
+          description: Успешное перемещение
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelResponse'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+
+  /locations/{locationId}/actions:
+    get:
+      summary: Доступные действия в локации
+      description: |
+        Возвращает список доступных действий в конкретной локации для персонажа.
+        
+        **Бизнес-логика:**
+        - Возвращает только действия, доступные для персонажа
+        - Проверяет требования (уровень, навыки, предметы, квесты)
+        - Возвращает информацию о том, почему действие недоступно
+        
+        **Источник:** `.BRAIN/05-technical/ui-main-game.md` (Раздел 2.1)
+      operationId: getLocationActions
+      tags:
+        - Locations
+        - Actions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID локации
+          example: "downtown_city_center"
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Список доступных действий
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - actions
+                properties:
+                  actions:
+                    type: array
+                    description: Список доступных действий
+                    items:
+                      $ref: '#/components/schemas/LocationAction'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+
+  /locations/{locationId}/connected:
+    get:
+      summary: Связанные локации
+      description: |
+        Возвращает список локаций, связанных с текущей, с информацией о доступности
+        и времени пути.
+        
+        **Бизнес-логика:**
+        - Возвращает только связанные локации
+        - Проверяет доступность каждой локации
+        - Возвращает время пути и расстояние
+        - Указывает требования для недоступных локаций
+        
+        **Источник:** `.BRAIN/05-technical/ui-main-game.md` (Раздел 4.1, 4.2)
+      operationId: getConnectedLocations
+      tags:
+        - Locations
+        - Travel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID локации
+          example: "downtown_city_center"
+        - name: characterId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа (для проверки доступности)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Список связанных локаций
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - connectedLocations
+                properties:
+                  connectedLocations:
+                    type: array
+                    description: Список связанных локаций
+                    items:
+                      $ref: '#/components/schemas/ConnectedLocation'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+
+components:
+  schemas:
+    GameLocation:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - city
+        - district
+        - region
+        - dangerLevel
+        - minLevel
+        - type
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор локации
+          example: "downtown_city_center"
+        name:
+          type: string
+          description: Название локации
+          example: "City Center"
+        description:
+          type: string
+          description: Краткое описание локации
+          example: "Сердце Night City, центр корпоративной власти"
+        city:
+          type: string
+          description: Город
+          example: "Night City"
+        district:
+          type: string
+          description: Район города
+          example: "Downtown"
+        region:
+          type: string
+          enum: [night_city, badlands, outskirts]
+          description: Регион
+          example: "night_city"
+        dangerLevel:
+          type: string
+          enum: [low, medium, high, extreme]
+          description: Уровень опасности локации
+          example: "low"
+        minLevel:
+          type: integer
+          minimum: 1
+          description: Минимальный уровень персонажа для доступа
+          example: 1
+        type:
+          type: string
+          enum: [corporate, industrial, residential, criminal, commercial, cultural]
+          description: Тип локации
+          example: "corporate"
+        accessible:
+          type: boolean
+          description: Доступна ли локация для персонажа
+          example: true
+
+    LocationDetails:
+      allOf:
+        - $ref: '#/components/schemas/GameLocation'
+        - type: object
+          required:
+            - atmosphere
+            - availableActions
+          properties:
+            atmosphere:
+              type: string
+              description: Атмосферное описание локации
+              example: "Небоскребы упираются в облака, неоновые огни..."
+            pointsOfInterest:
+              type: array
+              description: Точки интереса в локации
+              items:
+                type: object
+                required:
+                  - id
+                  - name
+                  - description
+                properties:
+                  id:
+                    type: string
+                    description: ID точки интереса
+                  name:
+                    type: string
+                    description: Название точки интереса
+                  description:
+                    type: string
+                    description: Описание точки интереса
+              example:
+                - id: "arasaka_tower"
+                  name: "Башня Arasaka"
+                  description: "Впечатляющий небоскреб корпорации Arasaka"
+            availableActions:
+              type: array
+              description: Доступные действия в локации
+              items:
+                $ref: '#/components/schemas/LocationAction'
+            availableNPCs:
+              type: array
+              description: Доступные NPC в локации
+              items:
+                type: string
+                format: uuid
+                description: ID NPC
+              example: ["npc_id_1", "npc_id_2"]
+            connectedLocations:
+              type: array
+              description: Связанные локации (ID)
+              items:
+                type: string
+              example: ["watson_kabuki", "westbrook_japantown"]
+            events:
+              type: array
+              description: Текущие события в локации (опционально)
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+
+    LocationAction:
+      type: object
+      required:
+        - id
+        - label
+        - description
+        - enabled
+        - actionType
+      properties:
+        id:
+          type: string
+          description: ID действия
+          example: "explore_market"
+        label:
+          type: string
+          description: Название действия для отображения
+          example: "Исследовать рынок"
+        description:
+          type: string
+          description: Описание действия
+          example: "Посетить местный рынок и посмотреть товары"
+        enabled:
+          type: boolean
+          description: Доступно ли действие для персонажа
+          example: true
+        actionType:
+          type: string
+          enum: [exploration, interaction, combat, trade, quest, travel]
+          description: Тип действия
+          example: "exploration"
+        requirements:
+          type: object
+          description: Требования для выполнения действия (если enabled=false)
+          properties:
+            minLevel:
+              type: integer
+              description: Минимальный уровень персонажа
+            requiredSkills:
+              type: array
+              items:
+                type: string
+              description: Требуемые навыки
+            requiredItems:
+              type: array
+              items:
+                type: string
+              description: Требуемые предметы
+            requiredQuests:
+              type: array
+              items:
+                type: string
+              description: Требуемые завершенные квесты
+        disabledReason:
+          type: string
+          description: Причина недоступности (если enabled=false)
+          example: "Требуется уровень 5"
+
+    TravelRequest:
+      type: object
+      required:
+        - characterId
+        - targetLocationId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID персонажа
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        targetLocationId:
+          type: string
+          description: ID целевой локации
+          example: "watson_kabuki"
+        travelMethod:
+          type: string
+          enum: [walk, fast_travel, vehicle]
+          default: walk
+          description: |
+            Метод перемещения:
+            - walk: пешком (расходует энергию и время)
+            - fast_travel: быстрое перемещение (мгновенное, требует открытой локации)
+            - vehicle: на транспорте (быстрее пешком, расходует топливо)
+          example: "walk"
+
+    TravelResponse:
+      type: object
+      required:
+        - success
+        - newLocation
+        - timeSpent
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Успешно ли перемещение
+          example: true
+        newLocation:
+          $ref: '#/components/schemas/GameLocation'
+        timeSpent:
+          type: integer
+          description: Затраченное время в минутах (0 для fast_travel)
+          example: 15
+        energySpent:
+          type: integer
+          description: Затраченная энергия (0 для fast_travel)
+          example: 10
+        message:
+          type: string
+          description: Сообщение о перемещении
+          example: "Вы прибыли в Watson - Kabuki"
+        events:
+          type: array
+          description: События, произошедшие во время перемещения (опционально)
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              description:
+                type: string
+
+    ConnectedLocation:
+      type: object
+      required:
+        - id
+        - name
+        - distance
+        - travelTime
+        - accessible
+      properties:
+        id:
+          type: string
+          description: ID локации
+          example: "watson_kabuki"
+        name:
+          type: string
+          description: Название локации
+          example: "Watson - Kabuki"
+        distance:
+          type: string
+          description: Расстояние до локации
+          example: "2.5 km"
+        travelTime:
+          type: integer
+          description: Время пути пешком в минутах
+          example: 30
+        accessible:
+          type: boolean
+          description: Доступна ли локация для персонажа
+          example: true
+        requirements:
+          type: object
+          description: Требования для доступа (если accessible=false)
+          properties:
+            minLevel:
+              type: integer
+              description: Минимальный уровень
+            requiredQuests:
+              type: array
+              items:
+                type: string
+              description: Требуемые завершенные квесты
+        fastTravelAvailable:
+          type: boolean
+          description: Доступно ли быстрое перемещение
+          example: false
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+

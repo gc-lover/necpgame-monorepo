@@ -1,0 +1,37 @@
+checklist:
+  id: openapi-to-backend
+  title: "OpenAPI → Backend"
+  sections:
+    - title: "Перед стартом Backend Implementer"
+      items:
+        - text: "В implementation-tracker.yaml есть запись с `backend.status: not_started`."
+        - text: "Получена спецификация из каталога `api/v1/...` и подтверждена версия."
+        - text: "Проведён обзор API с OpenAPI Executor, уточнены модели и ошибки."
+        - text: "Сгенерированы контракты (DTO, API, Service) и результат зафиксирован в Activity Log."
+        - text: "В трекере статус обновлён на `backend.status: in_progress`, указано время старта и агент."
+        - text: "Запущен контроль спецификации."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
+    - title: "Реализация"
+      items:
+        - text: "Созданы сущности, репозитории, сервисы, контроллеры без дублирования аннотаций."
+        - text: "Реализованы миграции БД в `src/main/resources/db/changelog/`."
+        - text: "Добавлены тесты с покрытием ≥50%."
+        - text: "Настроены MapStruct-мапперы и обработка ошибок по ErrorCode."
+        - text: "В trackers/blockers.yaml нет открытых блокеров по данной задаче."
+        - text: "Выполнены скрипты контроля."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-backend-structure.ps1 -ProjectRoot services/backend"
+            - "pwsh -File pipeline/scripts/check-seed-integrity.ps1 -SeedDirectory services/backend/src/main/resources/db/changelog"
+    - title: "Передача результата"
+      items:
+        - text: "Запущены `mvn clean compile` и `mvn test`, результаты успешны."
+        - text: "В implementation-tracker.yaml заполнены поля `completed`, `commit`, `notes`."
+        - text: "Статус обновлён на `backend.status: completed`."
+        - text: "Запись в очереди перенесена в `trackers/queues/backend/completed.yaml`."
+        - text: "Чеклист прикреплён к коммиту или Activity Log."
+        - text: "Выполнен контроль очереди и запуск тестов."
+          scripts:
+            - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+            - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/backend/completed.yaml"
+

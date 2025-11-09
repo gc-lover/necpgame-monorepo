@@ -1,0 +1,384 @@
+openapi: 3.0.3
+info:
+  title: Stock Exchange Trading API
+  version: 1.0.0
+  description: |
+    API для торговли акциями на бирже.
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-stock-exchange.md v1.0.0
+    
+    Типы ордеров:
+    - Market Orders (мгновенное исполнение по рыночной цене)
+    - Limit Orders (исполнение при достижении целевой цены)
+    
+    Продвинутые механики:
+    - Short Selling (короткие позиции - ставка на падение)
+    - Margin Trading (торговля с плечом)
+    - Stop Loss / Take Profit
+    
+    Основной файл: stock-exchange-core.yaml
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Stock Trading
+    description: Торговля акциями
+
+paths:
+  /gameplay/economy/stock/buy:
+    post:
+      summary: Купить акции
+      description: |
+        Покупает акции корпорации.
+        Поддерживает market и limit orders.
+      operationId: buyStock
+      tags:
+        - Stock Trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - ticker
+                - quantity
+                - order_type
+              properties:
+                character_id:
+                  type: string
+                ticker:
+                  type: string
+                  description: Тикер корпорации (ARSK, MILT, etc.)
+                quantity:
+                  type: integer
+                  minimum: 1
+                order_type:
+                  type: string
+                  enum: [market, limit]
+                limit_price:
+                  type: number
+                  description: Цена для limit order (обязательно для limit)
+            examples:
+              market_order:
+                summary: Market order
+                value:
+                  character_id: "char_123"
+                  ticker: "ARSK"
+                  quantity: 50
+                  order_type: "market"
+              limit_order:
+                summary: Limit order
+                value:
+                  character_id: "char_123"
+                  ticker: "MILT"
+                  quantity: 100
+                  order_type: "limit"
+                  limit_price: 950.00
+      responses:
+        '200':
+          description: Ордер размещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockOrderResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /gameplay/economy/stock/sell:
+    post:
+      summary: Продать акции
+      description: |
+        Продает акции корпорации.
+        Поддерживает market и limit orders.
+      operationId: sellStock
+      tags:
+        - Stock Trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - ticker
+                - quantity
+                - order_type
+              properties:
+                character_id:
+                  type: string
+                ticker:
+                  type: string
+                quantity:
+                  type: integer
+                  minimum: 1
+                order_type:
+                  type: string
+                  enum: [market, limit]
+                limit_price:
+                  type: number
+      responses:
+        '200':
+          description: Ордер размещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockOrderResult'
+
+  /gameplay/economy/stock/short:
+    post:
+      summary: Открыть короткую позицию
+      description: |
+        Открывает короткую позицию (short selling).
+        Ставка на падение цены акций.
+        Требует margin account.
+      operationId: shortStock
+      tags:
+        - Stock Trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - ticker
+                - quantity
+              properties:
+                character_id:
+                  type: string
+                ticker:
+                  type: string
+                quantity:
+                  type: integer
+                stop_loss:
+                  type: number
+                  description: Автоматическое закрытие при достижении цены
+      responses:
+        '200':
+          description: Короткая позиция открыта
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  position_id:
+                    type: string
+                  ticker:
+                    type: string
+                  quantity:
+                    type: integer
+                  entry_price:
+                    type: number
+                  margin_required:
+                    type: number
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /gameplay/economy/stock/close-short:
+    post:
+      summary: Закрыть короткую позицию
+      description: |
+        Закрывает короткую позицию.
+        Выкупает акции обратно по текущей цене.
+      operationId: closeShortPosition
+      tags:
+        - Stock Trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - position_id
+              properties:
+                character_id:
+                  type: string
+                position_id:
+                  type: string
+      responses:
+        '200':
+          description: Позиция закрыта
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  position_id:
+                    type: string
+                  profit_loss:
+                    type: number
+                  roi_percent:
+                    type: number
+
+  /gameplay/economy/stock/margin/enable:
+    post:
+      summary: Активировать margin trading
+      description: |
+        Активирует возможность margin trading.
+        Позволяет торговать с плечом.
+        Требует минимальный баланс и репутацию.
+      operationId: enableMarginTrading
+      tags:
+        - Stock Trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+      responses:
+        '200':
+          description: Margin trading активирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approved:
+                    type: boolean
+                  leverage_limit:
+                    type: number
+                    description: Максимальное плечо (2x, 3x, etc.)
+                  margin_requirement:
+                    type: number
+
+  /gameplay/economy/stock/orders/active:
+    get:
+      summary: Получить активные ордера
+      description: Возвращает список активных (pending) ордеров персонажа
+      operationId: getActiveStockOrders
+      tags:
+        - Stock Trading
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Активные ордера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StockOrder'
+
+  /gameplay/economy/stock/orders/{order_id}/cancel:
+    post:
+      summary: Отменить ордер
+      description: Отменяет активный ордер (только для limit orders)
+      operationId: cancelStockOrder
+      tags:
+        - Stock Trading
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+      responses:
+        '200':
+          description: Ордер отменен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  order_id:
+                    type: string
+
+components:
+  schemas:
+    StockOrderResult:
+      type: object
+      properties:
+        order_id:
+          type: string
+        ticker:
+          type: string
+        quantity:
+          type: integer
+        order_type:
+          type: string
+        status:
+          type: string
+          enum: [filled, partially_filled, pending]
+        filled_quantity:
+          type: integer
+        avg_fill_price:
+          type: number
+        total_cost:
+          type: number
+        commission:
+          type: number
+
+    StockOrder:
+      type: object
+      properties:
+        order_id:
+          type: string
+        character_id:
+          type: string
+        ticker:
+          type: string
+        side:
+          type: string
+          enum: [buy, sell, short]
+        quantity:
+          type: integer
+        filled_quantity:
+          type: integer
+        order_type:
+          type: string
+          enum: [market, limit]
+        limit_price:
+          type: number
+        status:
+          type: string
+          enum: [pending, partially_filled, filled, cancelled]
+        created_at:
+          type: string
+          format: date-time
+
+

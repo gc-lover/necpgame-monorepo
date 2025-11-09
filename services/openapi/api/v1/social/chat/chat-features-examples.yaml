@@ -1,0 +1,148 @@
+# Target Architecture:
+# - Примеры команд, форматирования, голоса, перевода и истории
+
+openapi: 3.0.3
+info:
+  title: Chat Features Examples
+  version: 1.0.0
+  description: Примеры запросов и ответов для Chat Features API.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  examples:
+    ChatCommandRequestWhisper:
+      summary: Запуск команды /whisper
+      value:
+        command: "/whisper"
+        arguments: ["GlitchBlade", "Собираемся на рейд?" ]
+        channelId: "global-general"
+        targetPlayerId: "3c9614d5-1869-4c84-8c3b-4e5817d4d8fb"
+        context:
+          channelType: "GLOBAL"
+          zoneId: "neo_tokyo_17"
+    ChatCommandResultSuccess:
+      summary: Ответ на slash-команду
+      value:
+        status: "SUCCESS"
+        message: "Сообщение отправлено в личный канал"
+        payload:
+          channelId: "whisper-2d6f8331-3c9614d5"
+        cooldownSeconds: 2
+    CommandCatalog:
+      summary: Каталог доступных команд
+      value:
+        commands:
+          - command: "/help"
+            description: "Список доступных команд"
+            scope: "GENERAL"
+            arguments: []
+            examples: ["/help"]
+          - command: "/party"
+            description: "ПРИГЛАШЕНИЕ игрока в группу"
+            scope: "PARTY"
+            arguments: ["player"]
+            examples: ["/party CyberFox"]
+          - command: "/dance"
+            description: "Анимация танца"
+            scope: "GENERAL"
+            arguments: []
+        helpUrl: "https://docs.necpgame.com/chat/commands"
+    FormatPreviewResponse:
+      summary: Preview форматирования
+      value:
+        html: "<strong>Добро пожаловать</strong>, <mention data-player-id=\"2d6f8331-20bf-4d45-bad8-19f8613bc1c5\">CyberFox</mention>!"
+        mentions:
+          - playerId: "2d6f8331-20bf-4d45-bad8-19f8613bc1c5"
+            displayName: "CyberFox"
+        emotes: [":wave:"]
+        sanitized: true
+    VoiceJoinRequest:
+      summary: Подключение к рейдовому голосовому каналу
+      value:
+        channelType: "RAID"
+        channelId: "raid-0d42f5ba-7d53-4f6c-8dc5-e8423f3446f7"
+        sdpOffer: "v=0\r\no=- 46117325 2 IN IP4 127.0.0.1\r\n..."
+        deviceCapabilities: ["opus", "vp8"]
+    VoiceJoinResponse:
+      summary: Ответ на подключение к голосу
+      value:
+        voiceSessionId: "0c9bc9f3-1f78-4f41-9fdb-687a25cfb97b"
+        sdpAnswer: "v=0\r\no=- 46117325 2 IN IP4 127.0.0.1\r\n..."
+        iceServers:
+          - urls: ["stun:stun1.example.com"]
+          - urls: ["turn:turn.example.com"]
+            username: "user"
+            credential: "secret"
+        expiresAt: "2025-11-08T23:10:00Z"
+    VoiceParticipantsResponse:
+      summary: Участники голосового канала
+      value:
+        participants:
+          - playerId: "2d6f8331-20bf-4d45-bad8-19f8613bc1c5"
+            displayName: "CyberFox"
+            muted: false
+            speaking: true
+            joinedAt: "2025-11-08T22:35:10Z"
+          - playerId: "8a9d5f1c-9a9d-4f04-8e56-d2ab665dcae4"
+            displayName: "NightAegis"
+            muted: true
+            speaking: false
+            joinedAt: "2025-11-08T22:35:45Z"
+    TranslationSettings:
+      summary: Настройки автоперевода пользователя
+      value:
+        enabled: true
+        preferredLanguages: ["en", "de"]
+        autoDetect: true
+        lastUpdatedAt: "2025-11-08T22:15:00Z"
+    TranslateMessageResponse:
+      summary: Перевод сообщения на несколько языков
+      value:
+        translations:
+          - language: "en"
+            text: "Raid starts in 5 minutes"
+            confidence: 0.93
+          - language: "de"
+            text: "Der Raid beginnt in 5 Minuten"
+            confidence: 0.9
+    ChatHistoryResponse:
+      summary: История сообщений канала
+      value:
+        channelId: "global-general"
+        channelType: "GLOBAL"
+        messages:
+          - messageId: "1a2b3c4d-5e6f-7081-92ab-3cd45e6f7091"
+            senderId: "2d6f8331-20bf-4d45-bad8-19f8613bc1c5"
+            displayName: "CyberFox"
+            content: "<strong>Всем привет!</strong>"
+            rawContent: "**Всем привет!**"
+            translatedContent: { "en": "Hello everyone!" }
+            sentAt: "2025-11-08T22:20:00Z"
+            metadata:
+              messageType: "TEXT"
+              edited: false
+              pinned: false
+          - messageId: "5f6e7d81-92ab-3cd4-5e6f-708192ab3cd4"
+            senderId: "system"
+            displayName: "System"
+            content: "<em>Голосовой канал открыт</em>"
+            rawContent: "Голосовой канал открыт"
+            sentAt: "2025-11-08T22:21:10Z"
+            metadata:
+              messageType: "SYSTEM"
+              edited: false
+              pinned: false
+        hasMoreBefore: true
+        hasMoreAfter: false
+        nextCursor: "eyJtZXNzYWdlSWQiOiI1ZjZlN2Q4MS0..."
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

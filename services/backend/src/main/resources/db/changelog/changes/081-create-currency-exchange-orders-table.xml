@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="081-create-currency-exchange-orders-table" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="currency_exchange_orders"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="currency_exchange_orders">
+            <column name="order_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pair" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="side" type="VARCHAR(8)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="NUMERIC(18,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_type" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="limit_price" type="NUMERIC(18,8)"/>
+            <column name="leverage" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stop_loss" type="NUMERIC(18,8)"/>
+            <column name="take_profit" type="NUMERIC(18,8)"/>
+            <column name="status" type="VARCHAR(24)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filled_amount" type="NUMERIC(18,4)"/>
+            <column name="average_price" type="NUMERIC(18,8)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filled_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="currency_exchange_orders"
+                baseColumnNames="character_id"
+                constraintName="fk_currency_exchange_orders_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="currency_exchange_orders"
+                baseColumnNames="pair"
+                constraintName="fk_currency_exchange_orders_pair"
+                referencedTableName="currency_pairs"
+                referencedColumnNames="pair"
+                onDelete="RESTRICT"/>
+
+        <createIndex tableName="currency_exchange_orders" indexName="idx_currency_exchange_orders_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="currency_exchange_orders" indexName="idx_currency_exchange_orders_pair">
+            <column name="pair"/>
+        </createIndex>
+        <createIndex tableName="currency_exchange_orders" indexName="idx_currency_exchange_orders_status">
+            <column name="status"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="currency_exchange_orders"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

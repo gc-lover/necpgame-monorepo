@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: Hybrid Media References Operation Models
+  version: 1.0.0
+components:
+  schemas:
+    HybridReferenceListResponse:
+      allOf:
+        - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: './hybrid-media-references-models.yaml#/components/schemas/HybridReferenceSummary'
+    HybridReferenceDetailResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './hybrid-media-references-models.yaml#/components/schemas/HybridReferenceDetail'
+    HybridReferenceActivationRequest:
+      type: object
+      required: [activationType, startAt, targetSegments]
+      properties:
+        activationType:
+          type: string
+          enum: [scheduled, immediate, seasonal]
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        targetSegments:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [type, value]
+            properties:
+              type:
+                type: string
+                enum: [faction, rating-tier, region, playlist, custom]
+              value:
+                type: string
+        maxParticipants:
+          type: integer
+          minimum: 0
+        worldImpactProfile:
+          type: object
+          properties:
+            worldStateDelta:
+              type: string
+            environmentChanges:
+              type: array
+              items:
+                type: string
+        notificationTemplateId:
+          type: string
+          maxLength: 64
+    ActivationScheduleSummary:
+      type: object
+      required: [activationId, startsAt, status]
+      properties:
+        activationId:
+          type: string
+          format: uuid
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, running, completed, cancelled]
+        worldImpactScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        linkedEvents:
+          type: array
+          items:
+            type: string
+    HybridReferencePreviewRequest:
+      type: object
+      properties:
+        worldStateSnapshotId:
+          type: string
+          format: uuid
+        includeRewards:
+          type: boolean
+          default: true
+        includeNpcBriefings:
+          type: boolean
+          default: false
+    HybridReferencePreview:
+      type: object
+      required: [worldImpact, socialRipple, economyInfluence, combatAdjustments, uiHighlights]
+      properties:
+        worldImpact:
+          type: object
+          properties:
+            affectedZones:
+              type: array
+              items:
+                type: string
+            predictedTimelineShiftHours:
+              type: number
+        socialRipple:
+          type: object
+          properties:
+            reputationDelta:
+              type: number
+            subscriberGrowthForecast:
+              type: number
+        economyInfluence:
+          type: object
+          properties:
+            rewardValueEstimate:
+              type: number
+            marketIndexImpact:
+              type: number
+        combatAdjustments:
+          type: object
+          properties:
+            requiredRoles:
+              type: array
+              items:
+                type: string
+            pvpBalanceNotes:
+              type: string
+        uiHighlights:
+          type: array
+          items:
+            type: string
+    HybridReferenceLocalizationBatch:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [locale, title, description, uiTokens]
+            properties:
+              locale:
+                type: string
+                pattern: "^[a-z]{2}(-[A-Z]{2})?$"
+              title:
+                type: string
+                maxLength: 120
+              description:
+                type: string
+                maxLength: 5000
+              uiTokens:
+                type: object
+                additionalProperties:
+                  type: string
+              audioCueIds:
+                type: array
+                items:
+                  type: string
+              arOverlayHints:
+                type: array
+                items:
+                  type: string
+    HybridReferenceTimeline:
+      type: object
+      required: [segments]
+      properties:
+        segments:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [startAt, timelineType, playerFacingSummary]
+            properties:
+              startAt:
+                type: string
+                format: date-time
+              endAt:
+                type: string
+                format: date-time
+              timelineType:
+                type: string
+                enum: [primary, alternate, flashback, flashforward]
+              linkedEventId:
+                type: string
+              playerFacingSummary:
+                type: string
+              alternateTimelineDiff:
+                type: string
+        nextWindow:
+          type: string
+          format: date-time
+        lastUpdatedBy:
+          type: string
+

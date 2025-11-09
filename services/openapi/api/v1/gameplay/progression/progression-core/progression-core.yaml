@@ -1,0 +1,322 @@
+openapi: 3.0.3
+info:
+  title: Progression Core API
+  version: 1.0.0
+  description: |
+    Core character progression contracts for leveling, experience awards, attribute and skill point management.
+    Source: .BRAIN/05-technical/backend/progression-backend.md v1.0.0.
+    Integrations: combat (experience awards), quest-engine (rewards), character-service (attributes/skills),
+    economy-service (respec costs), notification-service (player updates), telemetry.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/progression
+    directory: api/v1/gameplay/progression/progression-core
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: ProgressionState
+    description: Read-only endpoints for progression state and history
+  - name: ProgressionExperience
+    description: Experience award operations
+  - name: ProgressionAttributes
+    description: Attribute point spending and respec
+  - name: ProgressionSkills
+    description: Skill point and skill experience management
+paths:
+  /gameplay/progression/characters/{characterId}:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    get:
+      tags: [ProgressionState]
+      summary: Get progression state
+      description: Returns level, experience, unspent points and summary statistics for the character.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Progression state payload
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/ProgressionStateResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/experience:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    post:
+      tags: [ProgressionExperience]
+      summary: Award experience
+      description: Awards experience to the character with optional bonuses and metadata, triggers level up when applicable.
+      security:
+        - ServiceToken: []
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './progression-core-models-operations.yaml#/components/schemas/ExperienceAwardRequest'
+      responses:
+        '202':
+          description: Experience award accepted
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/ExperienceAwardResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/experience/batch:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    post:
+      tags: [ProgressionExperience]
+      summary: Batch award experience
+      description: Processes batch of experience events (combat, quest, exploration) in a single request.
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './progression-core-models-operations.yaml#/components/schemas/ExperienceBatchRequest'
+      responses:
+        '202':
+          description: Batch processed
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/ExperienceBatchResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/attributes/spend:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    post:
+      tags: [ProgressionAttributes]
+      summary: Spend attribute points
+      description: Allocates attribute points to specified attributes while enforcing caps and rate limits.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './progression-core-models-operations.yaml#/components/schemas/AttributeSpendRequest'
+      responses:
+        '200':
+          description: Attribute points spent
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/AttributeSpendResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/skills/spend:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    post:
+      tags: [ProgressionSkills]
+      summary: Spend skill points
+      description: Spends unallocated skill points on skill tree nodes and updates derived bonuses.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './progression-core-models-operations.yaml#/components/schemas/SkillPointSpendRequest'
+      responses:
+        '200':
+          description: Skill points spent
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/SkillPointSpendResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/skills/experience:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    post:
+      tags: [ProgressionSkills]
+      summary: Award skill experience
+      description: Adds skill-specific experience and handles skill level ups with milestone hooks.
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './progression-core-models-operations.yaml#/components/schemas/SkillExperienceAwardRequest'
+      responses:
+        '202':
+          description: Skill experience accepted
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/SkillExperienceAwardResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/skills:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    get:
+      tags: [ProgressionSkills]
+      summary: List skill progression
+      description: Returns all tracked skills, their current levels and experience requirements.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Skill progression state
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/SkillProgressListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/history:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/Page'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+    get:
+      tags: [ProgressionState]
+      summary: Get progression history
+      description: Provides paginated record of level ups, skill increases and point allocations with metadata.
+      security:
+        - PlayerSession: []
+        - ModeratorSession: []
+      responses:
+        '200':
+          description: Progression history list
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/ProgressionHistoryResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/respec:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    post:
+      tags: [ProgressionAttributes]
+      summary: Request respec
+      description: Initiates respec workflow, verifies costs with economy-service and schedules point reset.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './progression-core-models-operations.yaml#/components/schemas/RespecRequest'
+      responses:
+        '202':
+          description: Respec initiated
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/RespecResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/characters/{characterId}/sync:
+    parameters:
+      - $ref: './progression-core-models.yaml#/components/parameters/CharacterIdPath'
+    post:
+      tags: [ProgressionState]
+      summary: Sync external progression state
+      description: Synchronizes progression state when external services adjust attributes or skills.
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './progression-core-models-operations.yaml#/components/schemas/ProgressionSyncRequest'
+      responses:
+        '200':
+          description: Sync applied
+          content:
+            application/json:
+              schema:
+                $ref: './progression-core-models-operations.yaml#/components/schemas/ProgressionSyncResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  responses:
+    BadRequest:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    TooManyRequests:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+    InternalServerError:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    PlayerSession:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/PlayerSession'
+    ModeratorSession:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ModeratorSession'
+    ServiceToken:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ServiceToken'
+  schemas:
+    ProgressionLevelUpEvent:
+      $ref: './progression-core-models-operations.yaml#/components/schemas/ProgressionLevelUpEvent'
+    ProgressionSkillLeveledEvent:
+      $ref: './progression-core-models-operations.yaml#/components/schemas/ProgressionSkillLeveledEvent'
+    ProgressionAttributeIncreasedEvent:
+      $ref: './progression-core-models-operations.yaml#/components/schemas/ProgressionAttributeIncreasedEvent'
+    ProgressionExperienceAwardedEvent:
+      $ref: './progression-core-models-operations.yaml#/components/schemas/ProgressionExperienceAwardedEvent'
+

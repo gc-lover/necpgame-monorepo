@@ -1,0 +1,206 @@
+openapi: 3.0.3
+info:
+  title: Loot Roll System API
+  version: 1.1.0
+  description: |
+    REST API для управления системой Need/Greed/Pass и выбора победителей в
+    общих дропах. Поддерживает таймер 60 секунд, массовый pass и публикацию
+    результатов. Основано на `.BRAIN/05-technical/backend/loot-system/`
+    (v1.0.2).
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/loot
+    package: com.necpgame.gameplay.loot
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: LootRolls
+    description: Need/Greed/Pass сессии и результаты
+
+paths:
+  /loot/drops/{dropId}/rolls:
+    get:
+      tags: [LootRolls]
+      summary: Получить все roll-и по дропу
+      description: Возвращает список заявок игроков с типами Need/Greed/Pass и итоговыми значениями.
+      operationId: getLootRolls
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropId'
+      responses:
+        '200':
+          description: Roll-и по дропу
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rolls:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LootRoll'
+                  timer_expires_at:
+                    type: string
+                    format: date-time
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+    post:
+      tags: [LootRolls]
+      summary: Сделать roll на предмет
+      description: Регистрирует Need/Greed/Pass на указанный предмет внутри drop-а. Один персонаж → один roll.
+      operationId: submitLootRoll
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LootRollRequest'
+      responses:
+        '200':
+          description: Roll зафиксирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootRoll'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+        '409': { "$ref": "../../shared/common/responses.yaml#/components/responses/Conflict" }
+
+  /loot/drops/{dropId}/winner:
+    get:
+      tags: [LootRolls]
+      summary: Получить победителя roll-а
+      description: Возвращает победителя Need/Greed. Если таймер ещё идёт — возвращает текущего лидера и timestamp завершения.
+      operationId: getLootWinner
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropId'
+      responses:
+        '200':
+          description: Победитель roll-а
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootRollWinner'
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+
+  /loot/drops/{dropId}/pass-all:
+    post:
+      tags: [LootRolls]
+      summary: Отказаться от всех предметов
+      description: Помечает все предметы дропа как pass для указанного персонажа и завершает roll без победителя.
+      operationId: passAllLoot
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [character_id]
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200': { description: Pass зафиксирован }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+
+  parameters:
+    DropId:
+      name: dropId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    LootRollRequest:
+      type: object
+      required: [character_id, item_id, roll_type]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+        roll_type:
+          type: string
+          enum: [need, greed, pass]
+    LootRoll:
+      type: object
+      required: [roll_id, character_id, item_id, roll_type, roll_value]
+      properties:
+        roll_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+        roll_type:
+          type: string
+          enum: [need, greed, pass]
+        roll_value:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+        created_at:
+          type: string
+          format: date-time
+        priority_rank:
+          type: integer
+          format: int32
+          description: Приоритет (Need=1, Greed=2, Pass=3)
+    LootRollWinner:
+      type: object
+      required: [item_id, winner]
+      properties:
+        item_id:
+          type: string
+        winner:
+          type: object
+          required: [character_id]
+          properties:
+            character_id:
+              type: string
+              format: uuid
+            roll_type:
+              type: string
+              enum: [need, greed, pass]
+            roll_value:
+              type: integer
+              format: int32
+            decided_at:
+              type: string
+              format: date-time
+        timeout_expires_at:
+          type: string
+          format: date-time
+          description: Время автозавершения (60 секунд с момента первого roll-а)

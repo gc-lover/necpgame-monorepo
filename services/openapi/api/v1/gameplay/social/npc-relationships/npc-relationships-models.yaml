@@ -1,0 +1,410 @@
+openapi: 3.0.3
+info:
+  title: NPC Relationships Core Models
+  version: 1.0.0
+components:
+  parameters:
+    NpcIdPath:
+      name: npcId
+      in: path
+      description: NPC identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PlayerIdQuery:
+      name: playerId
+      in: query
+      description: Player identifier (required when using player-personalised endpoints)
+      schema:
+        type: string
+        format: uuid
+    NpcIdOptional:
+      name: npcId
+      in: query
+      description: Optional NPC filter for metrics
+      schema:
+        type: string
+        format: uuid
+    IncludeLayer:
+      name: include[]
+      in: query
+      description: Relationship layers to include (affinity, trust, loyalty, mood, romance)
+      schema:
+        type: string
+        enum: [affinity, trust, loyalty, mood, romance, tags, modifiers]
+    HistoryType:
+      name: eventType
+      in: query
+      description: History event type filter
+      schema:
+        type: string
+        enum: [quest, gift, betrayal, world-event, moderation, system]
+    RegionFilter:
+      name: region
+      in: query
+      description: World region filter for events
+      schema:
+        type: string
+        maxLength: 64
+    EventSeverity:
+      name: severity
+      in: query
+      description: Severity filter for relationship events
+      schema:
+        type: string
+        enum: [low, medium, high, critical]
+  schemas:
+    RelationshipTags:
+      type: array
+      items:
+        type: string
+        maxLength: 64
+    ClassModifier:
+      type: object
+      required: [primaryClass, affinityBonus]
+      properties:
+        primaryClass:
+          type: string
+        affinityBonus:
+          type: integer
+        secondaryClass:
+          type: string
+        notes:
+          type: string
+    FactionState:
+      type: object
+      required: [factionId, alignment, reputation]
+      properties:
+        factionId:
+          type: string
+        alignment:
+          type: string
+          enum: [allied, neutral, hostile]
+        reputation:
+          type: integer
+          minimum: -100
+          maximum: 100
+        influenceModifier:
+          type: number
+          format: float
+    TrustState:
+      type: object
+      required: [value, stability]
+      properties:
+        value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        stability:
+          type: string
+          enum: [volatile, declining, steady, rising]
+        modifiers:
+          type: array
+          items:
+            type: object
+            required: [source, delta]
+            properties:
+              source:
+                type: string
+              delta:
+                type: integer
+              expiresAt:
+                type: string
+                format: date-time
+    MoodState:
+      type: object
+      required: [code, intensity, lastUpdated]
+      properties:
+        code:
+          type: string
+          enum: [neutral, happy, angry, sad, anxious, curious, excited]
+        intensity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        lastUpdated:
+          type: string
+          format: date-time
+    RomanceState:
+      type: object
+      required: [level]
+      properties:
+        level:
+          type: string
+          enum: [none, interest, affection, commitment, bond]
+        consentFlags:
+          type: array
+          items:
+            type: string
+        requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: string
+        cooldownEndsAt:
+          type: string
+          format: date-time
+    NpcRelationshipStatus:
+      type: object
+      required:
+        - npcId
+        - playerId
+        - affinity
+        - trust
+        - loyalty
+        - mood
+        - romance
+        - tags
+        - classModifiers
+        - factionState
+      properties:
+        npcId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        affinity:
+          type: integer
+          minimum: -100
+          maximum: 100
+        trust:
+          $ref: '#/components/schemas/TrustState'
+        loyalty:
+          type: integer
+          minimum: -100
+          maximum: 100
+        mood:
+          $ref: '#/components/schemas/MoodState'
+        romance:
+          $ref: '#/components/schemas/RomanceState'
+        tags:
+          $ref: '#/components/schemas/RelationshipTags'
+        classModifiers:
+          $ref: '#/components/schemas/ClassModifier'
+        factionState:
+          $ref: '#/components/schemas/FactionState'
+        lastInteractionAt:
+          type: string
+          format: date-time
+    RelationshipAdjustment:
+      type: object
+      required: [npcId, playerId, source, deltas]
+      properties:
+        npcId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [quest, gift, betrayal, world-event, dialogue, custom]
+        metadata:
+          type: object
+        deltas:
+          type: object
+          properties:
+            affinity:
+              type: integer
+              minimum: -100
+              maximum: 100
+            trust:
+              type: integer
+              minimum: -100
+              maximum: 100
+            loyalty:
+              type: integer
+              minimum: -100
+              maximum: 100
+            moodCode:
+              type: string
+              enum: [neutral, happy, angry, sad, anxious, curious, excited]
+        cooldown:
+          type: object
+          properties:
+            seconds:
+              type: integer
+              minimum: 0
+            appliedAt:
+              type: string
+              format: date-time
+    InteractionContext:
+      type: object
+      properties:
+        location:
+          type: string
+        channel:
+          type: string
+          enum: [dialogue, gift, combat, cutscene, contract]
+        visibility:
+          type: string
+          enum: [private, public, faction, friends]
+        worldEventId:
+          type: string
+    NpcInteractionLog:
+      type: object
+      required: [interactionId, npcId, playerId, timestamp, interactionType, outcome]
+      properties:
+        interactionId:
+          type: string
+          format: uuid
+        npcId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        interactionType:
+          type: string
+          enum: [dialogue, gift, mission, betrayal, rescue, contract, romance]
+        outcome:
+          type: string
+        reputationImpact:
+          type: integer
+        context:
+          $ref: '#/components/schemas/InteractionContext'
+        notes:
+          type: string
+    NpcRomanceStatus:
+      type: object
+      required: [npcId, playerId, currentLevel]
+      properties:
+        npcId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        currentLevel:
+          type: string
+          enum: [none, interest, affection, commitment, bond]
+        nextEligibleLevel:
+          type: string
+        requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              requirementType:
+                type: string
+              value:
+                type: string
+              met:
+                type: boolean
+        consentFlags:
+          type: array
+          items:
+            type: string
+        cooldownEndsAt:
+          type: string
+          format: date-time
+    HistoryEvent:
+      type: object
+      required: [eventId, eventType, occurredAt]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum: [quest, gift, betrayal, world-event, moderation, system]
+        occurredAt:
+          type: string
+          format: date-time
+        sourceId:
+          type: string
+        details:
+          type: object
+        deltas:
+          type: object
+          additionalProperties:
+            type: integer
+    NpcRelationshipEvent:
+      type: object
+      required: [eventId, npcId, severity, region, effectVector]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        npcId:
+          type: string
+          format: uuid
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        region:
+          type: string
+        eventType:
+          type: string
+        effectVector:
+          type: object
+          properties:
+            affinity:
+              type: integer
+            trust:
+              type: integer
+            loyalty:
+              type: integer
+        issuedAt:
+          type: string
+          format: date-time
+    ModerationCase:
+      type: object
+      required: [caseId, npcId, playerId, reason, submittedAt]
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        npcId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        submittedAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [pending, investigating, resolved, rejected]
+        assignedModerator:
+          type: string
+        notes:
+          type: string
+    NpcRelationshipMetrics:
+      type: object
+      required:
+        - npcTrustStability
+        - romanceProgressRate
+        - interactionQualityScore
+        - npcDefectionRisk
+        - eventImpactIndex
+      properties:
+        npcTrustStability:
+          type: number
+          format: float
+        romanceProgressRate:
+          type: number
+          format: float
+        interactionQualityScore:
+          type: number
+          format: float
+        npcDefectionRisk:
+          type: number
+          format: float
+        eventImpactIndex:
+          type: number
+          format: float
+

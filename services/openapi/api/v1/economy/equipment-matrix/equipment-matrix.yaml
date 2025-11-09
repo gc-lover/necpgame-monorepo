@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+  title: Equipment Matrix API
+  version: 1.0.0
+  description: |
+    API для матрицы экипировки.
+    
+    Источник: .BRAIN/02-gameplay/economy/equipment-matrix.md v1.2.0
+    
+    Категории: оружие, броня, импланты, киберварь, аксессуары
+    Параметры: tier, rarity, stats, mods, set bonuses
+    Прогрессия: от T1 Common до T5 Legendary
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Equipment
+    description: Экипировка
+
+paths:
+  /gameplay/economy/equipment:
+    get:
+      summary: Получить каталог экипировки
+      description: Возвращает список доступной экипировки
+      operationId: getEquipment
+      tags:
+        - Equipment
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: tier
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список экипировки
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /gameplay/economy/equipment/{item_id}:
+    get:
+      summary: Получить детали экипировки
+      description: Возвращает детальную информацию о предмете
+      operationId: getEquipmentDetails
+      tags:
+        - Equipment
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали предмета
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas: {}

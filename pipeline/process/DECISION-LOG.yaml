@@ -1,0 +1,59 @@
+decision_log:
+  purpose: "Фиксировать архитектурные и процессные решения, влияющие на нескольких агентов."
+  entry_template:
+    id: "DEC-YYYY-XXX"
+    date: "YYYY-MM-DD HH:MM"
+    author: "<agent>"
+    summary: "<краткое описание>"
+    context: "<предпосылки>"
+    decision:
+      - "<пункт решения>"
+    consequences:
+      short_term:
+        - "<краткосрочные последствия>"
+      long_term:
+        - "<долгосрочные последствия>"
+    status: "proposed|accepted|rejected|deprecated"
+    related:
+      - process/PIPELINE-OVERVIEW.yaml
+      - trackers/implementation-tracker.yaml
+  rules:
+    - "Каждая запись имеет уникальный id."
+    - "date фиксируется в формате YYYY-MM-DD HH:MM с системным временем."
+    - "status обновляется при смене решения."
+    - "related содержит файлы, требующие пересмотра."
+  responsibilities:
+    - "Vision Manager создаёт запись."
+    - "API Task Architect и OpenAPI Executor подтверждают или отклоняют изменения, влияющие на API."
+    - "Backend и Frontend агенты обновляют руководства при статусе accepted."
+  revisions:
+    - "Еженедельно Readiness Reviewer проверяет выполнение последствий."
+    - "При устаревании решения статус меняется на deprecated с ссылкой на заменяющий документ."
+  entries:
+    - id: "DEC-2025-001"
+      date: "2025-11-09 22:20"
+      author: "refactor-agent"
+      summary: "Переход на монорепозиторий с shared/docs, shared/trackers, services/* и обновлёнными агентскими инструкциями."
+      context: >
+        Исторически знания, трекеры и код лежали в отдельных репозиториях (.BRAIN, API-SWAGGER, BACK-GO, FRONT-WEB).
+        Для упрощения работы агентов и автоматизации валидаций принято решение объединить структуру в одном репозитории.
+      decision:
+        - "Вся концептуальная документация переезжает в shared/docs/knowledge в формате YAML."
+        - "Очереди и трекеры хранятся в shared/trackers с единым валидатором."
+        - "Агентские инструкции, шаблоны и скрипты поддерживаются в pipeline/."
+        - "Исходный код и генераторы размещаются в services/openapi, services/backend, services/frontend."
+        - "Добавлен скрипт pipeline/scripts/check-knowledge-schema.ps1 для проверки знаний."
+      consequences:
+        short_term:
+          - "Необходимо обновить все агентские инструкции и чеклисты на новые пути."
+          - "Добавить записи в changelog знаний и синхронизировать activity log."
+        long_term:
+          - "Упрощение CI/CD и единая точка входа для всех агентов."
+          - "Возможность последовательного удаления TO_REFACTOR/* после переноса кода."
+      status: "accepted"
+      related:
+        - "shared/docs/knowledge/index.yaml"
+        - "shared/docs/knowledge/changelog.yaml"
+        - "pipeline/agents/"
+        - "pipeline/scripts/check-knowledge-schema.ps1"
+

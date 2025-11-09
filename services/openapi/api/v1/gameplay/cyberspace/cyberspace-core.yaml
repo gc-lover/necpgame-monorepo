@@ -1,0 +1,255 @@
+openapi: 3.0.3
+info:
+  title: Cyberspace Core API
+  version: 1.0.0
+  description: |
+    API для Киберпространства - полноценного режима игры.
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-cyberspace.md v1.0.0
+    
+    Роль: Полноценный режим игры + гибридный + модульная система
+    
+    Структура многоуровневая:
+    - Базовый взлом
+    - Хабы (системные, пользовательские, корпоративные)
+    - Арены (тренировочные, турнирные)
+    - Глобальные события
+    - PvE-зоны (рейды, инстансы)
+    - Глубокие зоны
+    - Пользовательские зоны
+    
+    Доступ: Базовый (всем с кибердекой) → Средний → Продвинутый (Netrunner)
+    Лор: После DataKrash доступ ограничен, требуется кибердека (имплант)
+    
+    ПРИМЕЧАНИЕ: Дополнительные файлы:
+    - cyberspace-hubs.yaml - хабы
+    - cyberspace-events.yaml - события
+    - cyberspace-pvp-pve.yaml - PvP/PvE зоны
+    - cyberspace-tournaments.yaml - турниры
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/cyberspace
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Cyberspace
+    description: Киберпространство
+
+paths:
+  /gameplay/cyberspace/enter:
+    post:
+      summary: Войти в киберпространство
+      description: |
+        Переводит персонажа в режим киберпространства.
+        Требует наличия кибердеки (имплант).
+      operationId: enterCyberspace
+      tags:
+        - Cyberspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+                entry_point:
+                  type: string
+                  description: Точка входа (location в реальном мире)
+      responses:
+        '200':
+          description: Вход выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cyberspace_location:
+                    type: string
+                  avatar_id:
+                    type: string
+                  access_level:
+                    type: string
+                    enum: [basic, medium, advanced]
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /gameplay/cyberspace/exit:
+    post:
+      summary: Выйти из киберпространства
+      description: Возвращает персонажа в реальный мир
+      operationId: exitCyberspace
+      tags:
+        - Cyberspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+      responses:
+        '200':
+          description: Выход выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  real_world_location:
+                    type: string
+
+  /gameplay/cyberspace/zones:
+    get:
+      summary: Получить доступные зоны
+      description: |
+        Возвращает список зон киберпространства, доступных персонажу.
+        Зависит от уровня доступа (basic/medium/advanced).
+      operationId: getCyberspaceZones
+      tags:
+        - Cyberspace
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: zone_type
+          in: query
+          schema:
+            type: string
+            enum: [hub, arena, pve_zone, deep_zone, custom]
+      responses:
+        '200':
+          description: Доступные зоны
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zones:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CyberspaceZone'
+
+  /gameplay/cyberspace/navigate:
+    post:
+      summary: Переместиться в зону
+      description: Перемещает аватар в указанную зону киберпространства
+      operationId: navigateToCyberspaceZone
+      tags:
+        - Cyberspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - zone_id
+              properties:
+                character_id:
+                  type: string
+                zone_id:
+                  type: string
+      responses:
+        '200':
+          description: Перемещение выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  zone_id:
+                    type: string
+                  zone_info:
+                    type: object
+
+  /gameplay/cyberspace/avatar:
+    get:
+      summary: Получить информацию об аватаре
+      description: |
+        Возвращает данные аватара в киберпространстве.
+        Аватар отличается от реального персонажа (другие способности).
+      operationId: getCyberspaceAvatar
+      tags:
+        - Cyberspace
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация об аватаре
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberspaceAvatar'
+
+components:
+  schemas:
+    CyberspaceZone:
+      type: object
+      properties:
+        zone_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [hub, arena, pve_zone, deep_zone, custom]
+        access_level:
+          type: string
+          enum: [basic, medium, advanced]
+        is_pvp:
+          type: boolean
+        player_count:
+          type: integer
+        description:
+          type: string
+
+    CyberspaceAvatar:
+      type: object
+      properties:
+        avatar_id:
+          type: string
+        character_id:
+          type: string
+        current_zone:
+          type: string
+        access_level:
+          type: string
+        cyberdeck_rating:
+          type: integer
+        ice_programs:
+          type: array
+          items:
+            type: string
+        reputation:
+          type: integer
+
+

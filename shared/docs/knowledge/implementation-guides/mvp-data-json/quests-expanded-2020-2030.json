@@ -1,0 +1,839 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/side
+---
+
+
+{
+  "version": "2.0.0",
+  "period": "2020-2030",
+  "description": "Расширенные квесты с диалоговыми деревьями, skill-checks и лут-таблицами",
+  "quests": [
+    {
+      "questId": "SQ-2021-TRIAK",
+      "name": "Трассировка «Узла Триака»",
+      "type": "side",
+      "tags": ["hacking", "stealth", "investigation"],
+      "level": {
+        "min": 2,
+        "max": 4
+      },
+      "duration": "45-60min",
+      "repeatable": true,
+      "repeatCooldown": "7days",
+      "synopsis": "Фиксер Марко «Фикс» Санчес получил заказ от анонимного клиента — отследить фантомные пакеты данных в «чистом» корпоративном сегменте сети Downtown.",
+      "giverNpcId": "npc-marco-fix",
+      "objectives": [
+        {
+          "id": "obj-meet-marco",
+          "description": "Встретиться с Марко в Watson (Kabuki Market)",
+          "type": "npc",
+          "target": {"type": "npc", "id": "npc-marco-fix"},
+          "quantity": 1,
+          "optional": false
+        },
+        {
+          "id": "obj-node-1",
+          "description": "Установить сенсор на первый узел (Downtown — Corporate Plaza)",
+          "type": "location",
+          "target": {"type": "location", "id": "loc-downtown-corporate-plaza"},
+          "quantity": 1,
+          "optional": false,
+          "skillChecks": [
+            {
+              "id": "check-tech-fast-install",
+              "attribute": "TECH",
+              "threshold": 8,
+              "successEffect": {
+                "type": "time_reduction",
+                "value": 5,
+                "unit": "seconds",
+                "description": "Быстрая установка сенсора"
+              },
+              "failEffect": {
+                "type": "standard",
+                "description": "Стандартная установка"
+              }
+            },
+            {
+              "id": "check-hacking-bonus-data",
+              "skill": "Hacking",
+              "rank": 2,
+              "successEffect": {
+                "type": "bonus_data",
+                "experience": 200,
+                "items": ["item-arasaka-subnet-data"],
+                "description": "Взлом протокола, дополнительные данные"
+              },
+              "failEffect": {
+                "type": "standard",
+                "description": "Стандартная установка"
+              }
+            },
+            {
+              "id": "check-stealth-avoid-patrol",
+              "attribute": "STEALTH",
+              "threshold": 10,
+              "successEffect": {
+                "type": "avoid_combat",
+                "description": "Патруль не заметил"
+              },
+              "failEffect": {
+                "type": "combat",
+                "enemies": ["enemy-corpo-guard", "enemy-corpo-guard"],
+                "description": "Патруль обнаружил вторжение"
+              }
+            }
+          ]
+        },
+        {
+          "id": "obj-node-2",
+          "description": "Установить сенсор на второй узел (Downtown — Arasaka Tower Perimeter)",
+          "type": "location",
+          "target": {"type": "location", "id": "loc-downtown-arasaka-perimeter"},
+          "quantity": 1,
+          "optional": false,
+          "skillChecks": [
+            {
+              "id": "check-stealth-infiltration",
+              "attribute": "STEALTH",
+              "threshold": 12,
+              "successEffect": {
+                "type": "stealth_success",
+                "description": "Скрытное проникновение"
+              },
+              "failEffect": {
+                "type": "combat",
+                "enemies": ["enemy-corpo-guard", "enemy-corpo-guard", "enemy-corpo-guard"],
+                "description": "Обнаружение, бой с охраной"
+              }
+            },
+            {
+              "id": "check-hacking-disable-turrets",
+              "skill": "Hacking",
+              "rank": 3,
+              "successEffect": {
+                "type": "disable_turrets",
+                "description": "Турели отключены"
+              },
+              "failEffect": {
+                "type": "combat",
+                "enemies": ["enemy-corpo-guard", "enemy-corpo-guard", "enemy-corpo-guard", "enemy-turret", "enemy-turret"],
+                "description": "Бой с охраной и турелями"
+              }
+            }
+          ]
+        },
+        {
+          "id": "obj-node-3",
+          "description": "Установить сенсор на третий узел (Downtown — Blackwall Monitoring Station)",
+          "type": "location",
+          "target": {"type": "location", "id": "loc-downtown-blackwall-station"},
+          "quantity": 1,
+          "optional": false,
+          "skillChecks": [
+            {
+              "id": "check-cool-bluff-netwatch",
+              "attribute": "COOL",
+              "threshold": 14,
+              "successEffect": {
+                "type": "bluff_success",
+                "reputation": {"faction": "netwatch", "amount": 5},
+                "description": "Блеф успешен, NetWatch пропустил"
+              },
+              "failEffect": {
+                "type": "combat",
+                "enemies": ["enemy-netwatch-agent", "enemy-netwatch-agent"],
+                "description": "Блеф провален, бой с агентами"
+              }
+            },
+            {
+              "id": "check-hacking-forge-id",
+              "skill": "Hacking",
+              "rank": 4,
+              "successEffect": {
+                "type": "forge_id_success",
+                "items": ["item-netwatch-fake-id"],
+                "description": "ID NetWatch подделан"
+              },
+              "failEffect": {
+                "type": "combat",
+                "enemies": ["enemy-netwatch-agent", "enemy-netwatch-agent"],
+                "description": "Подделка обнаружена, бой"
+              }
+            }
+          ]
+        },
+        {
+          "id": "obj-return-marco",
+          "description": "Вернуться к Марко с логами",
+          "type": "npc",
+          "target": {"type": "npc", "id": "npc-marco-fix"},
+          "quantity": 1,
+          "optional": false
+        }
+      ],
+      "dialogueTree": {
+        "rootNode": "NODE-01",
+        "nodes": [
+          {
+            "id": "NODE-01",
+            "speaker": "npc-marco-fix",
+            "text": "Эй, чумба! Есть дельце — чистый сегмент сети глючит. Кто-то шарит там, где не должен.",
+            "choices": [
+              {"id": "A", "text": "Что за пакеты?", "nextNode": "NODE-02"},
+              {"id": "B", "text": "Сколько платишь?", "nextNode": "NODE-03"},
+              {
+                "id": "C",
+                "text": "Это похоже на корпоративную диверсию",
+                "nextNode": "NODE-04",
+                "skillCheck": {"attribute": "INT", "threshold": 12}
+              },
+              {"id": "D", "text": "Не интересует", "nextNode": "QUEST_DECLINE"}
+            ]
+          },
+          {
+            "id": "NODE-02",
+            "speaker": "npc-marco-fix",
+            "text": "Фантомы. Появляются на секунду, потом исчезают. NetWatch в ахуе, корпы нервничают.",
+            "choices": [
+              {"id": "A", "text": "NetWatch уже в деле?", "nextNode": "NODE-05"},
+              {"id": "B", "text": "Где искать?", "nextNode": "NODE-06"},
+              {"id": "C", "text": "Понял, беру", "nextNode": "NODE-07"}
+            ]
+          },
+          {
+            "id": "NODE-03",
+            "speaker": "npc-marco-fix",
+            "text": "Стандарт — 800 эдди, плюс бонус за скорость. Если без шума — ещё 200 сверху.",
+            "choices": [
+              {
+                "id": "A",
+                "text": "Маловато. Сделай 1200",
+                "nextNode": "NODE-08",
+                "skillCheck": {"attribute": "EMP", "threshold": 10},
+                "successEffect": {"money": 400}
+              },
+              {"id": "B", "text": "Годится", "nextNode": "NODE-07"},
+              {"id": "C", "text": "Подумаю", "nextNode": "NODE-09"}
+            ]
+          },
+          {
+            "id": "NODE-04",
+            "speaker": "npc-marco-fix",
+            "text": "Умный. Да, пахнет корпоративной возней. Arasaka vs Militech, старая песня.",
+            "choices": [
+              {"id": "A", "text": "Кто заказчик?", "nextNode": "NODE-10"},
+              {"id": "B", "text": "Не важно, беру", "nextNode": "NODE-07"}
+            ]
+          },
+          {
+            "id": "NODE-05",
+            "speaker": "npc-marco-fix",
+            "text": "NetWatch в курсе, но им руки связаны. Корпы не дают лезть. Вот и нужен фрилансер.",
+            "choices": [
+              {"id": "A", "text": "Понятно", "nextNode": "NODE-06"}
+            ]
+          },
+          {
+            "id": "NODE-06",
+            "speaker": "npc-marco-fix",
+            "text": "Downtown, корпоративная зона. Три узла — координаты скину на чип. Сенсоры вот.",
+            "choices": [
+              {"id": "A", "text": "Беру", "nextNode": "NODE-07"}
+            ]
+          },
+          {
+            "id": "NODE-07",
+            "speaker": "npc-marco-fix",
+            "text": "Отлично! Координаты на чипе. Сенсоры активируются автоматом — просто прикрепи к узлу.",
+            "choices": [
+              {"id": "A", "text": "Выдвигаюсь", "nextNode": "QUEST_START"}
+            ]
+          },
+          {
+            "id": "NODE-08",
+            "speaker": "npc-marco-fix",
+            "text": "Ладно, ладно. 1200, но без косяков. Один прокол — минус 300.",
+            "choices": [
+              {"id": "A", "text": "Договорились", "nextNode": "NODE-07"}
+            ]
+          },
+          {
+            "id": "NODE-09",
+            "speaker": "npc-marco-fix",
+            "text": "Не тяни. Окно узкое — через 48 часов пакеты могут исчезнуть.",
+            "choices": [
+              {"id": "A", "text": "Хорошо, беру", "nextNode": "NODE-07"},
+              {"id": "B", "text": "Пас", "nextNode": "QUEST_DECLINE"}
+            ]
+          },
+          {
+            "id": "NODE-10",
+            "speaker": "npc-marco-fix",
+            "text": "Анонимный клиент. Платит хорошо, вопросов не задаёт. Тебе тоже не стоит.",
+            "choices": [
+              {"id": "A", "text": "Понял", "nextNode": "NODE-07"},
+              {
+                "id": "B",
+                "text": "Не люблю работать вслепую",
+                "nextNode": "NODE-11",
+                "skillCheck": {"attribute": "COOL", "threshold": 14}
+              }
+            ]
+          },
+          {
+            "id": "NODE-11",
+            "speaker": "npc-marco-fix",
+            "text": "Слушай, я сам не знаю. Но деньги чистые, проверял. Если не веришь — проваливай.",
+            "choices": [
+              {"id": "A", "text": "Ладно, беру", "nextNode": "NODE-07"},
+              {"id": "B", "text": "Пас", "nextNode": "QUEST_DECLINE"}
+            ]
+          },
+          {
+            "id": "NODE-29",
+            "speaker": "npc-marco-fix",
+            "text": "Отличная работа! Логи чистые, клиент доволен. Держи свои эдди.",
+            "choices": [
+              {"id": "A", "text": "Что в логах?", "nextNode": "NODE-30"},
+              {"id": "B", "text": "Спасибо", "nextNode": "QUEST_REWARD"},
+              {
+                "id": "C",
+                "text": "Это была Arasaka. Что они искали?",
+                "nextNode": "NODE-31",
+                "skillCheck": {"attribute": "INT", "threshold": 14}
+              }
+            ]
+          },
+          {
+            "id": "NODE-30",
+            "speaker": "npc-marco-fix",
+            "text": "Не твоё дело, чумба. Деньги получил — и хорош.",
+            "choices": [
+              {"id": "A", "text": "Понял", "nextNode": "QUEST_REWARD"}
+            ]
+          },
+          {
+            "id": "NODE-31",
+            "speaker": "npc-marco-fix",
+            "text": "Умный. Да, Arasaka. Но подробности — выше моей зарплаты. Забудь.",
+            "choices": [
+              {"id": "A", "text": "Хорошо", "nextNode": "QUEST_REWARD"},
+              {
+                "id": "B",
+                "text": "Я запомню это",
+                "nextNode": "NODE-32",
+                "skillCheck": {"attribute": "COOL", "threshold": 16}
+              }
+            ]
+          },
+          {
+            "id": "NODE-32",
+            "speaker": "npc-marco-fix",
+            "text": "Смелый. Ладно, если что всплывёт — дам знать. Но осторожнее, чумба.",
+            "choices": [
+              {"id": "A", "text": "Договорились", "nextNode": "QUEST_REWARD_BONUS"}
+            ]
+          }
+        ]
+      },
+      "rewards": {
+        "base": {
+          "experience": 400,
+          "money": 800,
+          "items": ["item-network-sensor-t1-recipe"],
+          "reputation": [
+            {"faction": "fixer-marco", "amount": 10}
+          ]
+        },
+        "bonuses": [
+          {
+            "id": "stealth-bonus",
+            "condition": "no_combat",
+            "experience": 100,
+            "money": 200,
+            "description": "Бонус за стелс-прохождение"
+          },
+          {
+            "id": "hacker-bonus",
+            "condition": "hacking_path",
+            "experience": 200,
+            "items": ["item-arasaka-subnet-token"],
+            "unlocks": ["quest-chain-arasaka-conspiracy"],
+            "description": "Бонус за хакерский путь"
+          },
+          {
+            "id": "combat-bonus",
+            "condition": "combat_path",
+            "items": ["item-corpo-security-keycard", "item-military-components"],
+            "money": 320,
+            "description": "Лут с боёв"
+          },
+          {
+            "id": "negotiation-bonus",
+            "condition": "emp_check_success",
+            "money": 400,
+            "description": "Бонус за успешный торг"
+          },
+          {
+            "id": "unlock-bonus",
+            "condition": "cool_16_check_success",
+            "unlocks": ["quest-chain-arasaka-conspiracy"],
+            "description": "Unlock квест-цепочки Arasaka"
+          }
+        ]
+      },
+      "lootTables": [
+        {
+          "source": "enemy-corpo-guard",
+          "items": [
+            {"id": "item-corpo-security-keycard", "chance": 1.0, "quantity": 1},
+            {"id": "item-eddies", "chance": 0.8, "quantity": {"min": 50, "max": 120}},
+            {"id": "item-standard-ammo", "chance": 0.6, "quantity": {"min": 20, "max": 40}},
+            {"id": "item-health-booster", "chance": 0.4, "quantity": {"min": 1, "max": 3}}
+          ]
+        },
+        {
+          "source": "combat-heavy",
+          "items": [
+            {"id": "item-military-components", "chance": 1.0, "quantity": 2},
+            {"id": "item-eddies", "chance": 1.0, "quantity": {"min": 150, "max": 200}},
+            {"id": "item-rare-weapon-mod", "chance": 0.3, "quantity": 1}
+          ]
+        },
+        {
+          "source": "quest-completion",
+          "items": [
+            {"id": "item-network-sensor-t1-recipe", "chance": 1.0, "quantity": 1}
+          ]
+        }
+      ],
+      "requirements": {
+        "level": 2,
+        "reputation": null,
+        "completedQuests": []
+      },
+      "alternativePaths": [
+        {
+          "id": "stealth-path",
+          "name": "Стелс-путь",
+          "requirements": {"STEALTH": 12, "REF": 10},
+          "description": "Без боёв, максимальная награда"
+        },
+        {
+          "id": "hacker-path",
+          "name": "Хакер-путь",
+          "requirements": {"Hacking": "R2-R4", "INT": 12},
+          "description": "Бонус данные, unlock квест-цепочек"
+        },
+        {
+          "id": "combat-path",
+          "name": "Боевой путь",
+          "requirements": {"Combat": "R2+", "REF": 10},
+          "description": "Больше лута, риск провала"
+        },
+        {
+          "id": "social-path",
+          "name": "Социальный путь",
+          "requirements": {"COOL": 14, "EMP": 10, "Social": "R2+"},
+          "description": "Блеф, торг, дополнительные опции"
+        }
+      ]
+    },
+    {
+      "questId": "SQ-2022-MAXTAC",
+      "name": "Слепые зоны МАКСТАК",
+      "type": "side",
+      "tags": ["combat", "defense", "tech"],
+      "level": {
+        "min": 3,
+        "max": 5
+      },
+      "duration": "30-45min",
+      "repeatable": true,
+      "repeatCooldown": "7days",
+      "synopsis": "Офицер NCPD Сара Миллер просит помощи в ликвидации «слепых зон» телеметрии МАКСТАК. После разрушений 2023 года городская система мониторинга имеет пробелы.",
+      "giverNpcId": "npc-sarah-miller",
+      "objectives": [
+        {
+          "id": "obj-meet-sarah",
+          "description": "Встретиться с Сарой Миллер в NCPD HQ (Downtown)",
+          "type": "npc",
+          "target": {"type": "npc", "id": "npc-sarah-miller"},
+          "quantity": 1
+        },
+        {
+          "id": "obj-zone-watson",
+          "description": "Зачистить и установить ретранслятор в Watson",
+          "type": "defense",
+          "target": {"type": "location", "id": "loc-watson-kabuki"},
+          "quantity": 1,
+          "waves": [
+            {
+              "wave": 1,
+              "enemies": ["enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav"],
+              "timer": 60
+            },
+            {
+              "wave": 2,
+              "enemies": ["enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav", "enemy-heavy-scav"],
+              "timer": 60
+            },
+            {
+              "wave": 3,
+              "enemies": ["enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav", "enemy-scav", "enemy-heavy-scav", "enemy-heavy-scav"],
+              "timer": 60
+            }
+          ],
+          "skillChecks": [
+            {
+              "id": "check-tech-fast-install",
+              "attribute": "TECH",
+              "threshold": 10,
+              "successEffect": {
+                "type": "time_reduction",
+                "value": 15,
+                "unit": "seconds",
+                "description": "Установка ускорена до 45 сек"
+              }
+            },
+            {
+              "id": "check-hacking-auto-defense",
+              "skill": "Hacking",
+              "rank": 2,
+              "successEffect": {
+                "type": "deploy_turrets",
+                "quantity": 2,
+                "description": "Развёрнуты 2 защитные турели"
+              }
+            }
+          ]
+        },
+        {
+          "id": "obj-zone-santo-domingo",
+          "description": "Зачистить и установить ретранслятор в Santo Domingo",
+          "type": "defense",
+          "target": {"type": "location", "id": "loc-santo-domingo-industrial"},
+          "quantity": 1,
+          "waves": [
+            {
+              "wave": 1,
+              "enemies": ["enemy-wraith", "enemy-wraith", "enemy-wraith", "enemy-wraith"],
+              "timer": 60
+            },
+            {
+              "wave": 2,
+              "enemies": ["enemy-wraith", "enemy-wraith", "enemy-wraith", "enemy-wraith", "enemy-wraith", "enemy-heavy-wraith"],
+              "timer": 60
+            },
+            {
+              "wave": 3,
+              "enemies": ["enemy-wraith", "enemy-wraith", "enemy-wraith", "enemy-wraith", "enemy-wraith", "enemy-wraith", "enemy-heavy-wraith", "enemy-heavy-wraith"],
+              "timer": 60
+            }
+          ]
+        },
+        {
+          "id": "obj-zone-pacifica",
+          "description": "Зачистить и установить ретранслятор в Pacifica",
+          "type": "defense",
+          "target": {"type": "location", "id": "loc-pacifica-coastview"},
+          "quantity": 1,
+          "waves": [
+            {
+              "wave": 1,
+              "enemies": ["enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom"],
+              "timer": 60
+            },
+            {
+              "wave": 2,
+              "enemies": ["enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-heavy-maelstrom"],
+              "timer": 60
+            },
+            {
+              "wave": 3,
+              "enemies": ["enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-maelstrom", "enemy-heavy-maelstrom", "enemy-heavy-maelstrom"],
+              "timer": 60
+            }
+          ]
+        },
+        {
+          "id": "obj-return-sarah",
+          "description": "Вернуться к Саре Миллер",
+          "type": "npc",
+          "target": {"type": "npc", "id": "npc-sarah-miller"},
+          "quantity": 1
+        }
+      ],
+      "dialogueTree": {
+        "rootNode": "NODE-01",
+        "nodes": [
+          {
+            "id": "NODE-01",
+            "speaker": "npc-sarah-miller",
+            "text": "Привет. Нужна помощь — слепые зоны по всему городу. МАКСТАК не видит, что там творится.",
+            "choices": [
+              {"id": "A", "text": "Что за зоны?", "nextNode": "NODE-02"},
+              {"id": "B", "text": "Сколько платит город?", "nextNode": "NODE-03"},
+              {
+                "id": "C",
+                "text": "Это опасно. Нужна поддержка",
+                "nextNode": "NODE-04",
+                "skillCheck": {"attribute": "REF", "threshold": 12}
+              },
+              {"id": "D", "text": "Не моё дело", "nextNode": "QUEST_DECLINE"}
+            ]
+          },
+          {
+            "id": "NODE-03",
+            "speaker": "npc-sarah-miller",
+            "text": "1000 эдди за зону, плюс бонус за идеальную защиту — ещё 500. Итого до 4500.",
+            "choices": [
+              {
+                "id": "A",
+                "text": "Мало для такого риска. 2000 за зону",
+                "nextNode": "NODE-07",
+                "skillCheck": {"attribute": "EMP", "threshold": 12},
+                "successEffect": {"money": 3000}
+              },
+              {"id": "B", "text": "Годится", "nextNode": "NODE-06"},
+              {"id": "C", "text": "Подумаю", "nextNode": "NODE-08"}
+            ]
+          }
+        ]
+      },
+      "rewards": {
+        "base": {
+          "experience": 600,
+          "money": 3000,
+          "items": ["item-armor-mod-noise-dampening"],
+          "reputation": [
+            {"faction": "ncpd", "amount": 15},
+            {"faction": "city-services", "amount": 10}
+          ]
+        },
+        "bonuses": [
+          {
+            "id": "perfect-defense-bonus",
+            "condition": "no_retranslator_damage",
+            "experience": 200,
+            "money": 1500,
+            "description": "Бонус за идеальную защиту всех зон"
+          },
+          {
+            "id": "tech-bonus",
+            "condition": "tech_path",
+            "experience": 150,
+            "description": "Бонус за технический путь"
+          },
+          {
+            "id": "negotiation-bonus",
+            "condition": "emp_check_success",
+            "money": 3000,
+            "description": "Бонус за успешный торг"
+          }
+        ]
+      },
+      "lootTables": [
+        {
+          "source": "enemy-scav",
+          "items": [
+            {"id": "item-eddies", "chance": 0.7, "quantity": {"min": 30, "max": 80}},
+            {"id": "item-medical-supplies", "chance": 0.5, "quantity": {"min": 1, "max": 3}},
+            {"id": "item-weapon-parts", "chance": 0.4, "quantity": {"min": 1, "max": 2}}
+          ]
+        },
+        {
+          "source": "enemy-heavy-scav",
+          "items": [
+            {"id": "item-eddies", "chance": 1.0, "quantity": {"min": 100, "max": 200}},
+            {"id": "item-heavy-armor-piece", "chance": 0.4, "quantity": 1},
+            {"id": "item-weapon-parts", "chance": 0.7, "quantity": {"min": 2, "max": 4}},
+            {"id": "item-rare-implant-component", "chance": 0.2, "quantity": 1}
+          ]
+        }
+      ],
+      "requirements": {
+        "level": 3,
+        "reputation": null,
+        "completedQuests": []
+      },
+      "alternativePaths": [
+        {
+          "id": "tech-path",
+          "name": "Технический путь",
+          "requirements": {"TECH": 12, "Hacking": "R2"},
+          "description": "Быстрая установка + турели, легче"
+        },
+        {
+          "id": "combat-path",
+          "name": "Боевой путь",
+          "requirements": {"Combat": "R2+", "REF": 10},
+          "description": "Полные волны, больше лута"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "eventId": "event-2021-network-surge",
+      "name": "Сетевой всплеск",
+      "period": "2021-2023",
+      "type": "random_encounter",
+      "triggerLocations": ["loc-downtown-001", "loc-watson-001"],
+      "triggerConditions": {
+        "playerLevel": {"min": 2, "max": 5},
+        "timeOfDay": ["night"],
+        "weatherRequired": null,
+        "chance": 0.15
+      },
+      "description": "Внезапный всплеск сетевой активности. Фантомные пакеты данных появляются в локальной сети.",
+      "outcomes": [
+        {
+          "id": "investigate",
+          "description": "Исследовать всплеск",
+          "skillCheck": {"skill": "Hacking", "rank": 2},
+          "success": {
+            "rewards": {"experience": 50, "items": ["item-data-shard-encrypted"]},
+            "unlocks": ["quest-SQ-2021-TRIAK"]
+          },
+          "failure": {
+            "effects": ["cyberpsychosis_+1", "health_-20"]
+          }
+        },
+        {
+          "id": "ignore",
+          "description": "Игнорировать",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "eventId": "event-2022-maxtac-patrol",
+      "name": "Патруль МАКСТАК",
+      "period": "2022-2024",
+      "type": "random_encounter",
+      "triggerLocations": ["loc-all"],
+      "triggerConditions": {
+        "playerLevel": {"min": 3, "max": 10},
+        "timeOfDay": ["any"],
+        "chance": 0.10
+      },
+      "description": "Усиленный патруль NCPD. Проверка документов.",
+      "outcomes": [
+        {
+          "id": "cooperate",
+          "description": "Сотрудничать",
+          "skillCheck": null,
+          "success": {
+            "rewards": {"reputation": {"faction": "ncpd", "amount": 2}}
+          }
+        },
+        {
+          "id": "bribe",
+          "description": "Дать взятку",
+          "skillCheck": {"attribute": "EMP", "threshold": 10},
+          "success": {
+            "rewards": {"reputation": {"faction": "ncpd", "amount": -1}},
+            "cost": {"money": 100}
+          },
+          "failure": {
+            "effects": ["reputation_ncpd_-5", "wanted_level_+1"]
+          }
+        },
+        {
+          "id": "flee",
+          "description": "Сбежать",
+          "skillCheck": {"attribute": "AGI", "threshold": 12},
+          "success": {
+            "effects": []
+          },
+          "failure": {
+            "effects": ["wanted_level_+2", "combat_ncpd_patrol"]
+          }
+        }
+      ]
+    }
+  ],
+  "lootTables": {
+    "corpo-guard-2020s": {
+      "name": "Corpo Guard (2020s)",
+      "items": [
+        {"id": "item-eddies", "chance": 0.8, "quantity": {"min": 50, "max": 120}},
+        {"id": "item-corpo-security-keycard", "chance": 1.0, "quantity": 1},
+        {"id": "item-standard-ammo", "chance": 0.6, "quantity": {"min": 20, "max": 40}},
+        {"id": "item-health-booster", "chance": 0.4, "quantity": {"min": 1, "max": 3}}
+      ]
+    },
+    "scav-2020s": {
+      "name": "Scav (2020s)",
+      "items": [
+        {"id": "item-eddies", "chance": 0.7, "quantity": {"min": 30, "max": 80}},
+        {"id": "item-medical-supplies", "chance": 0.5, "quantity": {"min": 1, "max": 3}},
+        {"id": "item-weapon-parts", "chance": 0.4, "quantity": {"min": 1, "max": 2}},
+        {"id": "item-implant-component-low", "chance": 0.2, "quantity": 1}
+      ]
+    },
+    "heavy-scav-2020s": {
+      "name": "Heavy Scav (2020s)",
+      "items": [
+        {"id": "item-eddies", "chance": 1.0, "quantity": {"min": 100, "max": 200}},
+        {"id": "item-heavy-armor-piece", "chance": 0.4, "quantity": 1},
+        {"id": "item-weapon-parts", "chance": 0.7, "quantity": {"min": 2, "max": 4}},
+        {"id": "item-rare-implant-component", "chance": 0.2, "quantity": 1}
+      ]
+    },
+    "netwatch-agent-2020s": {
+      "name": "NetWatch Agent (2020s)",
+      "items": [
+        {"id": "item-eddies", "chance": 0.9, "quantity": {"min": 150, "max": 300}},
+        {"id": "item-netwatch-access-token", "chance": 0.6, "quantity": 1},
+        {"id": "item-advanced-cyberdeck-component", "chance": 0.3, "quantity": 1},
+        {"id": "item-encrypted-data-shard", "chance": 0.5, "quantity": 1}
+      ]
+    }
+  },
+  "reputationFormulas": {
+    "baseFormula": "ΔReputation = BaseAmount × (1 + ClassModifier + SkillModifier) × OutcomeMultiplier",
+    "classModifiers": {
+      "Netrunner": {
+        "NetWatch": 0.20,
+        "Fixers": 0.10
+      },
+      "Solo": {
+        "NCPD": 0.20,
+        "Gangs": 0.10
+      },
+      "Techie": {
+        "Ripperdocs": 0.20,
+        "CityServices": 0.10
+      },
+      "Corpo": {
+        "Corporations": 0.20,
+        "Gangs": -0.10
+      }
+    },
+    "skillModifiers": {
+      "description": "+5% за каждые 2 пункта EMP/COOL выше 10, +10% за ранг Social Skill"
+    },
+    "outcomeMultipliers": {
+      "Perfect": 1.5,
+      "Good": 1.2,
+      "Standard": 1.0,
+      "Poor": 0.8,
+      "Failed": 0.0
+    },
+    "reputationThresholds": {
+      "Stranger": {"min": 0, "max": 49, "effects": "Нет бонусов"},
+      "Known": {"min": 50, "max": 99, "effects": "Скидка 5%, базовые контракты"},
+      "Trusted": {"min": 100, "max": 199, "effects": "Скидка 10%, редкие контракты"},
+      "Respected": {"min": 200, "max": 399, "effects": "Скидка 15%, эксклюзивные контракты"},
+      "Legendary": {"min": 400, "max": 999, "effects": "Скидка 20%, уникальные предметы"}
+    }
+  }
+}
+
+
+

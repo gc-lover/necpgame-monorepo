@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: Player Order Insurance Schemas
+  version: 1.0.0
+  description: Схемы страховых планов и escrow для заказов игроков.
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy
+    package: com.necpgame.economyservice
+paths: {}
+components:
+  schemas:
+    InsurancePlan:
+      type: object
+      required:
+        - planId
+        - tier
+        - coverage
+        - premiumRate
+      properties:
+        planId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        tier:
+          type: string
+          enum: [basic, enhanced, premium, corporate]
+        coverage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        premiumRate:
+          type: number
+          format: float
+          minimum: 0
+        escrowMultiplier:
+          type: number
+          format: float
+          minimum: 0
+        benefits:
+          type: array
+          items:
+            type: string
+        exclusions:
+          type: array
+          items:
+            type: string
+        updatedAt:
+          type: string
+          format: date-time
+    InsuranceQuoteRequest:
+      type: object
+      required:
+        - orderId
+        - riskScore
+        - desiredCoverage
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        riskScore:
+          type: number
+          format: float
+        desiredCoverage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        planTier:
+          type: string
+          enum: [basic, enhanced, premium, corporate]
+        preferEscrowIncrease:
+          type: boolean
+    InsuranceQuoteResponse:
+      type: object
+      required:
+        - quoteId
+        - plan
+        - premium
+      properties:
+        quoteId:
+          type: string
+          format: uuid
+        plan:
+          $ref: '#/components/schemas/InsurancePlan'
+        premium:
+          type: number
+          format: float
+        escrowRequired:
+          type: number
+          format: float
+        validUntil:
+          type: string
+          format: date-time
+        discounts:
+          type: array
+          items:
+            type: string
+    EscrowStatus:
+      type: object
+      required:
+        - orderId
+        - amount
+        - status
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        status:
+          type: string
+          enum: [pending, locked, released]
+        lockedAt:
+          type: string
+          format: date-time
+        releaseAt:
+          type: string
+          format: date-time
+        releaseConditions:
+          type: array
+          items:
+            type: string
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

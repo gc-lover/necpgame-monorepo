@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="048-create-character-locations-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_locations"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_locations">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="current_location_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="previous_location_id" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_locations"
+                baseColumnNames="character_id"
+                constraintName="fk_character_locations_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="character_locations"
+                baseColumnNames="current_location_id"
+                constraintName="fk_character_locations_current"
+                referencedTableName="game_locations"
+                referencedColumnNames="id"/>
+
+        <createIndex tableName="character_locations" indexName="idx_character_locations_character" unique="true">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_locations" indexName="idx_character_locations_location">
+            <column name="current_location_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="character_locations"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

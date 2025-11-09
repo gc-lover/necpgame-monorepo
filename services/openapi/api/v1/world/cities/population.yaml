@@ -1,0 +1,222 @@
+# Target Architecture:
+# - Microservice: world-service (8086)
+# - Frontend Module: modules/world/cities
+# - State: useWorldStore(cities)
+# - UI: CityHeatmap, DistrictTable, CapacityGauge, StatusPill, Timeline
+# - Forms: PopulationRecalcForm, FilterForm, ThresholdForm
+# - Layouts: OperationsSplitView, GameLayout
+# - Hooks: useRealtime, useWorldFilters, useDebounce
+# - Events: world.population.updated, world.population.job.*
+# - API Base: /api/v1/world/cities/*
+openapi: 3.0.3
+info:
+  title: City Population Pipeline API
+  version: 1.0.0
+  description: |
+    Контракт для управления населением городов NECPGAME: агрегация, пересчёт
+    и публикация конфигураций NPC и инфраструктуры.
+
+    Источник: `.BRAIN/05-technical/content-generation/city-life-population-algorithm.md` v1.0.0
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: City Population
+    description: Агрегированные данные и аналитика по городам
+  - name: District Population
+    description: Детальные данные по районам города
+  - name: Population Jobs
+    description: Управление заданиями пересчёта населения
+paths:
+  /world/cities/population:
+    get:
+      tags: [City Population]
+      summary: Получить агрегированные данные по городам
+      description: Возвращает список городов с метриками населения, плотности и диффами при необходимости.
+      operationId: listCityPopulation
+      parameters:
+        - $ref: './schemas/population-components.yaml#/components/parameters/IncludeDiff'
+        - $ref: './schemas/population-components.yaml#/components/parameters/MetricWindow'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Список городов сформирован
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/population-components.yaml#/components/schemas/PopulationListResponse'
+              examples:
+                watson:
+                  $ref: './schemas/population-components.yaml#/components/examples/CityPopulationWatson'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /world/cities/{cityId}/population:
+    parameters:
+      - $ref: './schemas/population-components.yaml#/components/parameters/CityId'
+    get:
+      tags: [City Population]
+      summary: Получить профиль населения города
+      description: Возвращает профиль населения выбранного города, включая сегменты районов, метрики и текущий дифф.
+      operationId: getCityPopulation
+      parameters:
+        - $ref: './schemas/population-components.yaml#/components/parameters/IncludeDiff'
+        - $ref: './schemas/population-components.yaml#/components/parameters/MetricWindow'
+      responses:
+        '200':
+          description: Профиль города сформирован
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/population-components.yaml#/components/schemas/PopulationSummaryResponse'
+              examples:
+                watson:
+                  $ref: './schemas/population-components.yaml#/components/examples/CityPopulationWatson'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /world/cities/{cityId}/population/districts:
+    parameters:
+      - $ref: './schemas/population-components.yaml#/components/parameters/CityId'
+    get:
+      tags: [District Population]
+      summary: Получить список районов и их состояние
+      description: Возвращает состояния районов с возможностью фильтра по сегментам и пагинацией.
+      operationId: listCityDistrictPopulation
+      parameters:
+        - $ref: './schemas/population-components.yaml#/components/parameters/SegmentFilter'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Состояния районов получены
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/population-components.yaml#/components/schemas/DistrictPopulationListResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /world/cities/{cityId}/population/diff:
+    parameters:
+      - $ref: './schemas/population-components.yaml#/components/parameters/CityId'
+    get:
+      tags: [City Population]
+      summary: Получить дифф населения города
+      description: Возвращает изменения в населении и инфраструктуре по сравнению с baseline.
+      operationId: getCityPopulationDiff
+      responses:
+        '200':
+          description: Дифф сформирован
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/population-components.yaml#/components/schemas/PopulationDiffResponse'
+              examples:
+                metroShutdown:
+                  $ref: './schemas/population-components.yaml#/components/examples/PopulationDiffMetroShutdown'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /world/cities/population/recalculate:
+    post:
+      tags: [Population Jobs]
+      summary: Запустить пересчёт населения
+      description: Стартует задание пересчёта населения для выбранного города или районов, возвращает созданный job.
+      operationId: recalcCityPopulation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/population-components.yaml#/components/schemas/PopulationRecalcRequest'
+            examples:
+              playerImpact:
+                $ref: './schemas/population-components.yaml#/components/examples/RecalcRequestPlayerImpact'
+      responses:
+        '202':
+          description: Пересчёт запущен
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/population-components.yaml#/components/schemas/PopulationRecalcJob'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '409': { $ref: '../../shared/common/responses.yaml#/components/responses/Conflict' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+  /world/cities/population/jobs:
+    get:
+      tags: [Population Jobs]
+      summary: Получить список заданий пересчёта
+      description: Возвращает задания пересчёта с фильтрами по статусу и триггеру.
+      operationId: listPopulationJobs
+      parameters:
+        - $ref: './schemas/population-components.yaml#/components/parameters/StatusFilter'
+        - $ref: './schemas/population-components.yaml#/components/parameters/TriggerFilter'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Список заданий сформирован
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/population-components.yaml#/components/schemas/PopulationJobsResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+  /world/cities/population/jobs/{jobId}:
+    parameters:
+      - $ref: './schemas/population-components.yaml#/components/parameters/JobId'
+    get:
+      tags: [Population Jobs]
+      summary: Получить статус задания пересчёта
+      description: Возвращает детальную информацию о задании пересчёта, прогресс, метрики и лог.
+      operationId: getPopulationJob
+      responses:
+        '200':
+          description: Задание найдено
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/population-components.yaml#/components/schemas/PopulationRecalcJob'
+              examples:
+                running:
+                  $ref: './schemas/population-components.yaml#/components/examples/RecalcJobRunning'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+x-kafka-topics:
+  world.population.updated:
+    summary: Публикация обновлённой конфигурации населения города
+    payload:
+      $ref: './schemas/population-components.yaml#/components/schemas/CityPopulationProfile'
+  world.population.job.started:
+    summary: Старт задания пересчёта
+    payload:
+      $ref: './schemas/population-components.yaml#/components/schemas/PopulationRecalcJob'
+  world.population.job.completed:
+    summary: Завершение задания пересчёта
+    payload:
+      $ref: './schemas/population-components.yaml#/components/schemas/PopulationRecalcJob'
+  world.population.job.failed:
+    summary: Сбой задания пересчёта
+    payload:
+      $ref: './schemas/population-components.yaml#/components/schemas/PopulationRecalcJob'
+
+

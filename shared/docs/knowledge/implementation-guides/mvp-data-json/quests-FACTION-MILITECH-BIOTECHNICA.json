@@ -1,0 +1,463 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/factions/militech-biotechnica
+
+---
+
+
+{
+  "version": "3.0.0",
+  "factions": ["Militech","Biotechnica","Petrochem"],
+  "description": "Корпоративные квесты с военными операциями и био-этикой",
+  "questsFaction": [
+    {
+      "questId": "MILITECH-001-ASSET-EXTRACTION",
+      "name": "Militech: Операция «Феникс»",
+      "faction": "Militech",
+      "region": "Multiple",
+      "characters": {
+        "commander": {
+          "id": "npc-colonel-mason",
+          "name": "Полковник Дженнифер Мейсон",
+          "role": "Командир специальных операций Militech",
+          "age": 45,
+          "background": "20 лет службы. Участвовала в Корпо-войнах.",
+          "personality": "Военная дисциплина. Эффективность превыше всего.",
+          "conflict": "Приказы vs мораль",
+          "secret": "Сомневается в методах Militech, но слишком вложилась"
+        },
+        "asset": {
+          "id": "npc-dr-volkov",
+          "name": "Доктор Алексей Волков",
+          "role": "Бывший учёный Arasaka",
+          "expertise": "Кибер-оружие нового поколения",
+          "status": "Дефектор, хочет убежища",
+          "secret": "Разработал оружие, способное уничтожить Блэкволл"
+        },
+        "opposition": [
+          {
+            "id": "npc-arasaka-hunter",
+            "name": "Агент Arasaka «Тень»",
+            "role": "Охотник за дефекторами",
+            "method": "Любые средства",
+            "threat": "Убить Волкова или вернуть"
+          },
+          {
+            "id": "npc-netwatch-observer",
+            "name": "Наблюдатель NetWatch Чен",
+            "role": "Контроль за оружием",
+            "goal": "Не допустить создания анти-Блэкволл оружия"
+          }
+        ],
+        "team": [
+          {
+            "id": "npc-lt-torres",
+            "name": "Лейтенант Карлос Торрес",
+            "role": "Напарник игрока",
+            "loyalty": "questionable",
+            "secret": "Шпион Arasaka"
+          },
+          {
+            "id": "npc-specialist-kerry",
+            "name": "Специалист Керри Браун",
+            "role": "Взрывотехник",
+            "attitude": "Follows orders blindly"
+          }
+        ]
+      },
+      "synopsis": "Militech нанимает команду для извлечения дефектора Arasaka. Доктор Волков создал оружие, опасное для всего человечества. Arasaka охотится. NetWatch хочет уничтожить оружие. Игрок в центре корпо-войны с судьбой мира на кону.",
+      "branches": {
+        "main_paths": [
+          "path_extract_to_militech",
+          "path_return_to_arasaka",
+          "path_give_to_netwatch",
+          "path_destroy_weapon_data",
+          "path_steal_for_self"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_volkov_truth",
+            "moment": "Волков рассказывает о оружии: уничтожит Блэкволл, освободит все ИИ",
+            "danger": "Конец человечества возможен",
+            "choices": [
+              {
+                "id": "continue_extraction",
+                "text": "Продолжить миссию Militech",
+                "outcome": "Militech получит супероружие. Баланс сил нарушен."
+              },
+              {
+                "id": "destroy_data",
+                "text": "Уничтожить все данные оружия",
+                "consequence": "Предательство Militech",
+                "outcome": "Человечество спасено. Militech объявляют врагом."
+              },
+              {
+                "id": "deliver_to_netwatch",
+                "text": "Передать NetWatch для нейтрализации",
+                "outcome": "NetWatch уничтожает данные. Militech и Arasaka враги."
+              },
+              {
+                "id": "keep_for_leverage",
+                "text": "Украсть данные для себя",
+                "skillCheck": {"attr":"INT","skill":"Hacking","threshold":14},
+                "outcome": "Игрок владеет супероружием. Все корпорации охотятся."
+              }
+            ]
+          },
+          {
+            "id": "decision_traitor_revealed",
+            "moment": "Лейтенант Торрес — шпион Arasaka. Готовит засаду.",
+            "choices": [
+              {
+                "id": "kill_traitor",
+                "text": "Убить Торреса",
+                "outcome": "Миссия продолжается. Команда без напарника."
+              },
+              {
+                "id": "turn_traitor",
+                "text": "Использовать Торреса для дезинформации",
+                "skillCheck": {"attr":"INT","skill":"Deception","threshold":13},
+                "outcome": "Arasaka ждут в неправильном месте."
+              },
+              {
+                "id": "join_arasaka",
+                "text": "Перейти на сторону Arasaka с Торресом",
+                "consequence": "Предательство Militech",
+                "outcome": "Двойной агент. Волков возвращается в Arasaka."
+              },
+              {
+                "id": "let_live_spy",
+                "text": "Оставить в живых, следить",
+                "outcome": "Торрес может раскрыть план позже."
+              }
+            ]
+          },
+          {
+            "id": "decision_arasaka_ambush",
+            "moment": "Засада Arasaka на точке извлечения",
+            "situation": "Агент «Тень» и 20 солдат",
+            "choices": [
+              {
+                "id": "fight_arasaka",
+                "text": "Прорываться с боем",
+                "outcome": "Массовая перестрелка. Высокие потери."
+              },
+              {
+                "id": "negotiate_exchange",
+                "text": "Предложить обмен: Волков за проход",
+                "skillCheck": {"attr":"COOL","skill":"Negotiation","threshold":12},
+                "outcome": "Возможен компромисс или ловушка."
+              },
+              {
+                "id": "sacrifice_volkov",
+                "text": "Отдать Волкова, спасти команду",
+                "consequence": "Трусость",
+                "outcome": "Команда жива. Миссия провалена."
+              },
+              {
+                "id": "call_militech_backup",
+                "text": "Вызвать подкрепление Militech",
+                "outcome": "Корпо-война в реальном времени."
+              },
+              {
+                "id": "use_weapon",
+                "text": "Активировать оружие Волкова (крайность)",
+                "consequence": "Катастрофа",
+                "outcome": "Все Arasaka импланты отключены. Массовая смерть."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_militech_superweapon",
+          "name": "Милитаристическое Превосходство",
+          "conditions": ["delivered_volkov","weapon_active"],
+          "outcome": "Militech получает супероружие. Доминация над Arasaka.",
+          "rewards": {"credits":80000,"militech_rank":"colonel","world_danger":"extreme"},
+          "world": "Militech запускает новую Корпо-войну. Тысячи погибших.",
+          "moral": "Bloodstained victory"
+        },
+        {
+          "id": "ending_humanity_saved",
+          "name": "Человечество Спасено",
+          "conditions": ["destroyed_weapon","protected_volkov"],
+          "outcome": "Оружие уничтожено. Волков в безопасности у NetWatch.",
+          "rewards": {"credits":40000,"netwatch_rep":"+70","hero_status":true},
+          "world": "Блэкволл в безопасности. Баланс сохранён.",
+          "moral": "Heroic sacrifice"
+        },
+        {
+          "id": "ending_arasaka_return",
+          "name": "Возвращение в Arasaka",
+          "conditions": ["betrayed_militech","returned_volkov"],
+          "outcome": "Волков вернулся в Arasaka. Игрок — агент Arasaka.",
+          "rewards": {"credits":60000,"arasaka_rank":"operative","militech_enemy":true},
+          "world": "Arasaka усиливается. Militech ослаблена."
+        },
+        {
+          "id": "ending_player_weapon",
+          "name": "Владелец Судного Оружия",
+          "conditions": ["stole_weapon","escaped_all"],
+          "outcome": "Игрок владеет супероружием. Все корпорации охотятся.",
+          "rewards": {"credits":100000,"superweapon":true,"wanted":"global"},
+          "world": "Игрок — мировая угроза. Легенда или террорист.",
+          "unlock": "Secret Ending Path"
+        },
+        {
+          "id": "ending_catastrophe",
+          "name": "Катастрофа",
+          "conditions": ["weapon_activated","blackwall_breach"],
+          "outcome": "Оружие активировано. Блэкволл рухнул. ИИ вырвались.",
+          "rewards": {"credits":0,"humanity":"extinct?"},
+          "world": "Апокалипсис. Rogue AI захватывают системы.",
+          "ending_type": "apocalyptic"
+        },
+        {
+          "id": "ending_team_destroyed",
+          "name": "Провал Миссии",
+          "conditions": ["team_killed","volkov_captured"],
+          "outcome": "Команда уничтожена. Волков у Arasaka. Игрок выжил?",
+          "rewards": {"credits":10000,"militech_rep":"-80","trauma":true},
+          "world": "Militech ослаблена. Arasaka торжествует."
+        }
+      ],
+      "consequences": {
+        "global_impact": [
+          "Корпо-война Militech vs Arasaka (если militech_victory)",
+          "Блэкволл рушится (если catastrophe)",
+          "Новое оружие изменяет баланс сил (если weapon_exists)",
+          "NetWatch усиливает контроль (если humanity_saved)"
+        ],
+        "character_fates": [
+          "Волков работает на Militech (если extracted)",
+          "Волков возвращён в Arasaka (если betrayed)",
+          "Волков убит агентом Тень (если failed)",
+          "Торрес раскрыт и казнён (если exposed)",
+          "Мейсон получает звание генерала (если success)"
+        ],
+        "unlock_content": [
+          "Corpo War Campaign (если militech_victory)",
+          "Apocalypse Survival (если catastrophe)",
+          "Shadow Agent Path (если player_weapon)",
+          "NetWatch Elite Ops (если humanity_saved)"
+        ]
+      },
+      "difficulty": "legendary",
+      "tier": 5,
+      "world_threat_level": "apocalyptic",
+      "themes": ["power","ethics","war","sacrifice","responsibility"]
+    },
+    {
+      "questId": "BIOTECH-001-HUMAN-TRIALS",
+      "name": "Biotechnica: Человеческие Испытания",
+      "faction": "Biotechnica",
+      "region": "Laguna_Bend",
+      "characters": {
+        "scientist": {
+          "id": "npc-dr-amara-singh",
+          "name": "Доктор Амара Сингх",
+          "role": "Главный исследователь Biotechnica",
+          "project": "Лекарство от киберпсихоза",
+          "method": "Тестирование на бездомных без согласия",
+          "justification": "Спасём миллионы. Сотни — приемлемая жертва.",
+          "conflict": "Наука vs этика"
+        },
+        "test_subject": {
+          "id": "npc-marcus-homeless",
+          "name": "Маркус (бездомный)",
+          "age": 34,
+          "backstory": "Ветеран. ПТСР. Живёт на улице.",
+          "role": "Невольный испытуемый №47",
+          "fate": "player_determines"
+        },
+        "activist": {
+          "id": "npc-rosa-medina",
+          "name": "Роза Медина",
+          "role": "Активистка прав человека",
+          "goal": "Раскрыть преступления Biotechnica",
+          "method": "Публичность и саботаж"
+        },
+        "executive": {
+          "id": "npc-exec-harrington",
+          "name": "Вице-президент Харрингтон",
+          "role": "Руководитель проекта",
+          "priority": "Прибыль. Результаты. Секретность.",
+          "threat": "Устранит любого, кто угрожает проекту"
+        }
+      },
+      "synopsis": "Игрок — наёмный медик или охранник на секретном объекте Biotechnica. Обнаруживает нелегальные испытания на бездомных. Лекарство работает, но 30% умирают. Раскрыть, присоединиться или саботировать?",
+      "branches": {
+        "main_paths": [
+          "path_expose_crimes",
+          "path_join_research",
+          "path_save_subjects",
+          "path_steal_cure",
+          "path_destroy_facility"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_witness_death",
+            "moment": "Испытуемый №43 умирает в агонии от лекарства",
+            "emotion": "Шок и ужас",
+            "choices": [
+              {
+                "id": "report_to_executive",
+                "text": "Доложить о смерти начальству",
+                "outcome": "Харрингтон записывает как «приемлемую потерю»."
+              },
+              {
+                "id": "document_evidence",
+                "text": "Тайно задокументировать для разоблачения",
+                "skillCheck": {"attr":"INT","skill":"Investigation","threshold":10},
+                "outcome": "Улики собраны. Риск раскрытия."
+              },
+              {
+                "id": "confront_doctor",
+                "text": "Противостояние с доктором Сингх",
+                "outcome": "Сингх оправдывается наукой. Может разоблачить игрока."
+              },
+              {
+                "id": "quit_project",
+                "text": "Уволиться немедленно",
+                "consequence": "Трусость",
+                "outcome": "Испытания продолжаются. Игрок в безопасности."
+              }
+            ]
+          },
+          {
+            "id": "decision_marcus_fate",
+            "moment": "Маркус — следующий испытуемый. 30% шанс смерти.",
+            "choices": [
+              {
+                "id": "let_test_proceed",
+                "text": "Позволить испытанию (следовать протоколу)",
+                "outcome": "Маркус либо излечен, либо мёртв (RNG 70/30)."
+              },
+              {
+                "id": "save_marcus",
+                "text": "Спасти Маркуса тайно",
+                "skillCheck": {"attr":"AGI","skill":"Stealth","threshold":11},
+                "outcome": "Маркус сбежал. Охрана ищет. Риск раскрытия."
+              },
+              {
+                "id": "volunteer_self",
+                "text": "Добровольцем пройти испытание вместо него",
+                "consequence": "Самопожертвование",
+                "outcome": "Игрок рискует. Маркус спасён. Humanity +20."
+              },
+              {
+                "id": "sabotage_test",
+                "text": "Саботировать лекарство (гарантированная смерть → прекращение программы)",
+                "consequence": "Убийство ради раскрытия",
+                "outcome": "Маркус умирает. Скандал. Программа закрыта."
+              }
+            ]
+          },
+          {
+            "id": "decision_cure_revelation",
+            "moment": "Лекарство работает! 47 человек вылечены от киберпсихоза.",
+            "dilemma": "30 умерли. Стоило ли?",
+            "choices": [
+              {
+                "id": "publish_success",
+                "text": "Опубликовать успех, скрыть смерти",
+                "outcome": "Biotechnica — герои. Преступления скрыты."
+              },
+              {
+                "id": "publish_full_truth",
+                "text": "Раскрыть всю правду (успех и жертвы)",
+                "outcome": "Скандал. Но лекарство доступно. Biotechnica судят."
+              },
+              {
+                "id": "steal_cure_distribute",
+                "text": "Украсть формулу, распространить бесплатно",
+                "consequence": "Воровство интеллектуальной собственности",
+                "outcome": "Лекарство доступно всем. Biotechnica враг."
+              },
+              {
+                "id": "destroy_all_data",
+                "text": "Уничтожить всё (лекарство и улики)",
+                "consequence": "Жертвы напрасны",
+                "outcome": "Преступления скрыты. Лекарство потеряно."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_cure_available",
+          "name": "Лекарство для Мира",
+          "conditions": ["published_truth","prosecuted_biotechnica"],
+          "outcome": "Лекарство доступно. Biotechnica наказаны. Киберпсихоз излечим.",
+          "rewards": {"credits":50000,"medical_breakthrough":true,"lives_saved":"thousands"},
+          "world": "Новая эра для киберпсихов. Надежда.",
+          "moral": "Justice and progress"
+        },
+        {
+          "id": "ending_biotech_profit",
+          "name": "Корпоративный Триумф",
+          "conditions": ["hidden_crimes","cure_monetized"],
+          "outcome": "Biotechnica продаёт лекарство за огромные деньги. Жертвы забыты.",
+          "rewards": {"credits":100000,"biotechnica_shares":true,"guilt":"eternal"},
+          "world": "Богатые излечены. Бедные страдают.",
+          "moral": "Profit over people"
+        },
+        {
+          "id": "ending_stolen_cure",
+          "name": "Народное Лекарство",
+          "conditions": ["stole_formula","distributed_free"],
+          "outcome": "Формула украдена и распространена. Biotechnica врагда.",
+          "rewards": {"credits":20000,"biotechnica_rep":"-100","street_legend":true},
+          "world": "Лекарство доступно всем. Биотех охотится.",
+          "moral": "Robin Hood medicine"
+        },
+        {
+          "id": "ending_coverup",
+          "name": "Замалчивание",
+          "conditions": ["destroyed_evidence","silenced_witnesses"],
+          "outcome": "Все улики уничтожены. Преступления скрыты. Лекарство есть.",
+          "rewards": {"credits":70000,"biotechnica_rep":"+50","victims":"forgotten"},
+          "world": "Правда погребена. Испытания продолжаются.",
+          "moral": "Dark compromise"
+        },
+        {
+          "id": "ending_facility_destroyed",
+          "name": "Огонь Возмездия",
+          "conditions": ["sabotaged_facility","explosion"],
+          "outcome": "Лаборатория взорвана. Лекарство потеряно. Biotechnica в хаосе.",
+          "rewards": {"credits":30000,"biotech":"destroyed","cure":"lost"},
+          "world": "Правосудие свершилось. Но цена высока.",
+          "moral": "Pyrrhic justice"
+        }
+      ],
+      "consequences": {
+        "medical_impact": [
+          "Киберпсихоз излечим (если cure_available)",
+          "Лекарство только для богатых (если profit)",
+          "Лекарство бесплатно для всех (если stolen)",
+          "Лекарство потеряно (если destroyed)"
+        ],
+        "character_fates": [
+          "Доктор Сингх арестована (если exposed)",
+          "Доктор Сингх продолжает исследования (если covered)",
+          "Маркус вылечен (если saved)",
+          "Маркус мёртв (если sacrificed)"
+        ],
+        "biotechnica": [
+          "Акции рухнули (если scandal)",
+          "Монополия на лекарство (если profit)",
+          "Компания разрушена (если facility_destroyed)"
+        ]
+      },
+      "difficulty": "extreme",
+      "tier": 5,
+      "moral_weight": "crushing",
+      "themes": ["ethics","science","sacrifice","justice","corporate_evil"]
+    }
+  ]
+}
+

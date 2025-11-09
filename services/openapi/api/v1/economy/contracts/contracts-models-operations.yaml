@@ -1,0 +1,566 @@
+openapi: 3.0.3
+info:
+  title: Economy Contracts Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/contracts
+    directory: api/v1/economy/contracts
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    ContractCreateRequest:
+      type: object
+      required: [contractType, invitedAccountId, terms]
+      properties:
+        contractType:
+          type: string
+          enum: [ITEM_EXCHANGE, DELIVERY, CRAFTING, SERVICE, AUCTION]
+        invitedAccountId:
+          type: string
+          format: uuid
+        terms:
+          $ref: './contracts-models.yaml#/components/schemas/ContractTerms'
+        collateral:
+          $ref: './contracts-models.yaml#/components/schemas/CollateralRules'
+        deadline:
+          type: string
+          format: date-time
+        rateLimitToken:
+          type: string
+    ContractCreateResponse:
+      type: object
+      properties:
+        contract:
+          $ref: './contracts-models.yaml#/components/schemas/Contract'
+        eligibilityChecks:
+          type: array
+          items:
+            type: string
+    ContractDetailResponse:
+      type: object
+      properties:
+        contract:
+          $ref: './contracts-models.yaml#/components/schemas/Contract'
+        stateMachine:
+          type: object
+          properties:
+            currentState:
+              type: string
+            availableActions:
+              type: array
+              items:
+                type: string
+        integrations:
+          type: array
+          items:
+            type: string
+    ContractProposalRequest:
+      type: object
+      required: [proposalVersion, termsDelta]
+      properties:
+        proposalVersion:
+          type: integer
+        termsDelta:
+          type: object
+          additionalProperties: true
+        message:
+          type: string
+        requiresTwoFactor:
+          type: boolean
+    ContractProposalResponse:
+      type: object
+      properties:
+        proposalId:
+          type: string
+          format: uuid
+        negotiationStatus:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    ContractAcceptResponse:
+      type: object
+      properties:
+        contractId:
+          type: string
+        status:
+          type: string
+        escrowRequired:
+          type: boolean
+        twoFactorRequired:
+          type: boolean
+    EscrowDepositRequest:
+      type: object
+      required: [walletId]
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        currencyAmount:
+          type: integer
+        currencyId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              inventoryItemId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        collateralOnly:
+          type: boolean
+        antiFraudContext:
+          type: object
+          additionalProperties: true
+    EscrowDepositResponse:
+      type: object
+      properties:
+        depositId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        escrow:
+          $ref: './contracts-models.yaml#/components/schemas/EscrowDeposit'
+    EscrowReleaseRequest:
+      type: object
+      required: [releaseReason]
+      properties:
+        releaseReason:
+          type: string
+          enum: [COMPLETED, CANCELLED, DISPUTE_RESOLUTION, ADMIN_OVERRIDE]
+        releaseDecisionId:
+          type: string
+          format: uuid
+        notifiedServices:
+          type: array
+          items:
+            type: string
+    EscrowReleaseResponse:
+      type: object
+      properties:
+        contractId:
+          type: string
+        releasedAmount:
+          type: integer
+        releasedItems:
+          type: array
+          items:
+            type: object
+            properties:
+              inventoryItemId:
+                type: string
+              quantity:
+                type: integer
+    DeliverableSubmitRequest:
+      type: object
+      required: [deliverableType]
+      properties:
+        deliverableType:
+          type: string
+          enum: [INVENTORY_REFERENCE, LOGISTICS_MANIFEST, PROOF_LINK]
+        inventoryReference:
+          type: object
+          properties:
+            inventoryItemId:
+              type: string
+              format: uuid
+            quantity:
+              type: integer
+        logisticsManifestId:
+          type: string
+        proofLink:
+          type: string
+          format: uri
+        metadata:
+          type: object
+          additionalProperties: true
+    DeliverableSubmitResponse:
+      type: object
+      properties:
+        deliverableId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        timelineEvent:
+          $ref: './contracts-models.yaml#/components/schemas/TimelineEvent'
+    ContractCompleteRequest:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        feedback:
+          type: string
+        releaseAllEscrow:
+          type: boolean
+    ContractCompleteResponse:
+      type: object
+      properties:
+        contractId:
+          type: string
+        status:
+          type: string
+        reputationUpdateId:
+          type: string
+          format: uuid
+    ContractCancelRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+        revokeEscrow:
+          type: boolean
+    ContractCancelResponse:
+      type: object
+      properties:
+        contractId:
+          type: string
+        status:
+          type: string
+        escrowReturn:
+          type: object
+          additionalProperties: true
+    DisputeOpenRequest:
+      type: object
+      required: [reasonCode]
+      properties:
+        reasonCode:
+          type: string
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              note:
+                type: string
+        requestedOutcome:
+          type: string
+    DisputeOpenResponse:
+      type: object
+      properties:
+        disputeId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        reviewEta:
+          type: string
+          format: date-time
+    DisputeResolveRequest:
+      type: object
+      required: [decision, payout]
+      properties:
+        decision:
+          type: string
+        payout:
+          type: object
+          properties:
+            creatorAmount:
+              type: integer
+            contractorAmount:
+              type: integer
+            notes:
+              type: string
+        penalties:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: string
+                format: uuid
+              penaltyType:
+                type: string
+              amount:
+                type: integer
+    DisputeResolveResponse:
+      type: object
+      properties:
+        disputeId:
+          type: string
+        status:
+          type: string
+        resolution:
+          $ref: './contracts-models.yaml#/components/schemas/DisputeCase'
+    ContractTimelineResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './contracts-models.yaml#/components/schemas/TimelineEvent'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    ContractListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './contracts-models.yaml#/components/schemas/ContractSummary'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    ContractAnalyticsResponse:
+      type: object
+      properties:
+        averageContractValue:
+          type: number
+          format: double
+        completionRate:
+          type: number
+          format: float
+        disputeRate:
+          type: number
+          format: float
+        escrowLockedValue:
+          type: integer
+        fraudAlerts:
+          type: integer
+        metricsWindow:
+          type: string
+    ContractCreatedEvent:
+      type: object
+      required: [topic, producer, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.contracts.created
+        producer:
+          type: string
+          example: economy-service
+        payload:
+          type: object
+          required: [contractId, contractType, status, participants, createdAt]
+          properties:
+            contractId:
+              type: string
+              format: uuid
+            contractType:
+              type: string
+            status:
+              type: string
+            participants:
+              type: array
+              items:
+                $ref: './contracts-models.yaml#/components/schemas/ContractParticipant'
+            createdAt:
+              type: string
+              format: date-time
+        key:
+          type: string
+          example: contractId
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [inventory-service, wallet-service, notification-service, analytics-service, anti-fraud-service]
+    ContractProposalEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.contracts.proposal-submitted
+        payload:
+          type: object
+          required: [contractId, proposalId, proposer]
+          properties:
+            contractId:
+              type: string
+              format: uuid
+            proposalId:
+              type: string
+              format: uuid
+            proposer:
+              $ref: './contracts-models.yaml#/components/schemas/ContractParticipant'
+            expiresAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [notification-service, anti-fraud-service, analytics-service]
+    ContractEscrowLockedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.contracts.escrow-locked
+        payload:
+          type: object
+          required: [contractId, escrow]
+          properties:
+            contractId:
+              type: string
+              format: uuid
+            escrow:
+              type: array
+              items:
+                $ref: './contracts-models.yaml#/components/schemas/EscrowDeposit'
+            lockedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [inventory-service, wallet-service, notification-service, analytics-service]
+    ContractDeliverableEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.contracts.deliverable-submitted
+        payload:
+          type: object
+          required: [contractId, deliverableId, submitter]
+          properties:
+            contractId:
+              type: string
+              format: uuid
+            deliverableId:
+              type: string
+              format: uuid
+            submitter:
+              $ref: './contracts-models.yaml#/components/schemas/ContractParticipant'
+            deliverableType:
+              type: string
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [logistics-service, notification-service, analytics-service]
+    ContractCompletedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.contracts.completed
+        payload:
+          type: object
+          required: [contractId, rating, escrowReleased]
+          properties:
+            contractId:
+              type: string
+              format: uuid
+            rating:
+              type: integer
+            escrowReleased:
+              type: boolean
+            completionAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [reputation-service, notification-service, analytics-service]
+    ContractCancelledEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.contracts.cancelled
+        payload:
+          type: object
+          required: [contractId, cancelledBy, reason]
+          properties:
+            contractId:
+              type: string
+              format: uuid
+            cancelledBy:
+              $ref: './contracts-models.yaml#/components/schemas/ContractParticipant'
+            reason:
+              type: string
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [notification-service, analytics-service]
+    ContractDisputeOpenedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.contracts.dispute-opened
+        payload:
+          type: object
+          required: [contractId, disputeId, openedBy]
+          properties:
+            contractId:
+              type: string
+              format: uuid
+            disputeId:
+              type: string
+              format: uuid
+            openedBy:
+              $ref: './contracts-models.yaml#/components/schemas/ContractParticipant'
+            reasonCode:
+              type: string
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [moderation-service, anti-fraud-service, analytics-service, notification-service]
+    ContractDisputeResolvedEvent:
+      type: object
+      required: [topic, payload]
+      properties:
+        topic:
+          type: string
+          example: economy.contracts.dispute-resolved
+        payload:
+          type: object
+          required: [contractId, disputeId, decision]
+          properties:
+            contractId:
+              type: string
+              format: uuid
+            disputeId:
+              type: string
+              format: uuid
+            decision:
+              type: string
+            payout:
+              type: object
+              properties:
+                creatorAmount:
+                  type: integer
+                contractorAmount:
+                  type: integer
+            resolvedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [wallet-service, inventory-service, notification-service, analytics-service, reputation-service]

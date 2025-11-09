@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: Investments API
+  version: 1.0.0
+  description: |
+    API для инвестиционной системы.
+    
+    Функционал:
+    - 5 типов инвестиций
+    - Portfolio management
+    - Risk diversification
+    - ROI calculations
+    - Dividends
+    - Investment funds
+    - Risk analysis
+    - Market trends
+    
+    Типы инвестиций:
+    - CORPORATE: акции корпораций
+    - FACTION: вклад в фракции
+    - REGIONAL: региональные проекты
+    - REAL_ESTATE: недвижимость
+    - PRODUCTION_CHAINS: производственные цепочки
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-investments.md v1.0.0
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Investments
+    description: Инвестиции
+  - name: Portfolio
+    description: Портфель
+  - name: Analysis
+    description: Анализ и расчеты
+
+paths:
+  /gameplay/economy/investments/opportunities:
+    get:
+      summary: Получить доступные инвестиции
+      operationId: getInvestmentOpportunities
+      tags: [Investments]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [CORPORATE, FACTION, REGIONAL, REAL_ESTATE, PRODUCTION_CHAINS]
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+            enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
+        - name: min_roi
+          in: query
+          description: Минимальный ROI (%)
+          schema:
+            type: number
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Инвестиционные возможности
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InvestmentOpportunity'
+
+  /gameplay/economy/investments/invest:
+    post:
+      summary: Инвестировать средства
+      operationId: invest
+      tags: [Investments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvestRequest'
+      responses:
+        '201':
+          description: Инвестиция создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Investment'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/economy/investments/{investment_id}:
+    get:
+      summary: Получить информацию об инвестиции
+      operationId: getInvestment
+      tags: [Investments]
+      parameters:
+        - name: investment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали инвестиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestmentDetailed'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/economy/investments/{investment_id}/withdraw:
+    post:
+      summary: Вывести средства из инвестиции
+      operationId: withdrawInvestment
+      tags: [Investments]
+      parameters:
+        - name: investment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: integer
+                  description: Частичный вывод (если null - полностью)
+                  nullable: true
+      responses:
+        '200':
+          description: Средства выведены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  withdrawn_amount:
+                    type: integer
+                  penalty:
+                    type: integer
+                  net_amount:
+                    type: integer
+                  roi:
+                    type: number
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/economy/investments/portfolio/{character_id}:
+    get:
+      summary: Получить портфель инвестиций
+      operationId: getPortfolio
+      tags: [Portfolio]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Портфель
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+
+  /gameplay/economy/investments/portfolio/{character_id}/analysis:
+    get:
+      summary: Получить анализ портфеля
+      operationId: getPortfolioAnalysis
+      tags: [Analysis]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Анализ портфеля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioAnalysis'
+
+  /gameplay/economy/investments/calculate-roi:
+    post:
+      summary: Рассчитать потенциальный ROI
+      operationId: calculateROI
+      tags: [Analysis]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                opportunity_id:
+                  type: string
+                amount:
+                  type: integer
+                duration_days:
+                  type: integer
+      responses:
+        '200':
+          description: Расчет ROI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ROICalculation'
+
+  /gameplay/economy/investments/funds:
+    get:
+      summary: Получить инвестиционные фонды
+      operationId: getInvestmentFunds
+      tags: [Investments]
+      responses:
+        '200':
+          description: Доступные фонды
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  funds:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InvestmentFund'
+
+components:
+  schemas:
+    InvestmentOpportunity:
+      type: object
+      properties:
+        opportunity_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [CORPORATE, FACTION, REGIONAL, REAL_ESTATE, PRODUCTION_CHAINS]
+        description:
+          type: string
+        min_investment:
+          type: integer
+        max_investment:
+          type: integer
+          nullable: true
+        expected_roi:
+          type: number
+          format: float
+          description: Ожидаемый ROI (%)
+        risk_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
+        duration_days:
+          type: integer
+          description: Срок инвестиции
+        available_slots:
+          type: integer
+          description: Доступно мест для инвесторов
+
+    InvestRequest:
+      type: object
+      required:
+        - character_id
+        - opportunity_id
+        - amount
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        opportunity_id:
+          type: string
+        amount:
+          type: integer
+
+    Investment:
+      type: object
+      properties:
+        investment_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        opportunity_id:
+          type: string
+        type:
+          type: string
+        amount_invested:
+          type: integer
+        current_value:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, MATURED, WITHDRAWN, FAILED]
+        created_at:
+          type: string
+          format: date-time
+        maturity_date:
+          type: string
+          format: date-time
+
+    InvestmentDetailed:
+      allOf:
+        - $ref: '#/components/schemas/Investment'
+        - type: object
+          properties:
+            opportunity_details:
+              $ref: '#/components/schemas/InvestmentOpportunity'
+            profit_loss:
+              type: integer
+              description: Текущая прибыль/убыток
+            roi_current:
+              type: number
+              format: float
+            dividends_received:
+              type: integer
+            dividend_history:
+              type: array
+              items:
+                type: object
+                properties:
+                  amount:
+                    type: integer
+                  paid_at:
+                    type: string
+                    format: date-time
+
+    Portfolio:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        total_invested:
+          type: integer
+        total_current_value:
+          type: integer
+        total_profit_loss:
+          type: integer
+        overall_roi:
+          type: number
+          format: float
+        investments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Investment'
+        investments_by_type:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              count:
+                type: integer
+              total_value:
+                type: integer
+
+    PortfolioAnalysis:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        risk_score:
+          type: number
+          format: float
+          description: Общий риск портфеля (0-10)
+        diversification_score:
+          type: number
+          format: float
+          description: Диверсификация (0-100)
+        recommendations:
+          type: array
+          items:
+            type: string
+        risk_breakdown:
+          type: object
+          properties:
+            low_risk:
+              type: number
+            medium_risk:
+              type: number
+            high_risk:
+              type: number
+        performance_metrics:
+          type: object
+          properties:
+            best_performer:
+              type: object
+              properties:
+                investment_id:
+                  type: string
+                roi:
+                  type: number
+            worst_performer:
+              type: object
+              properties:
+                investment_id:
+                  type: string
+                roi:
+                  type: number
+
+    ROICalculation:
+      type: object
+      properties:
+        opportunity_id:
+          type: string
+        investment_amount:
+          type: integer
+        duration_days:
+          type: integer
+        expected_return:
+          type: integer
+        expected_roi:
+          type: number
+          format: float
+        risk_adjusted_roi:
+          type: number
+          format: float
+        confidence_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+
+    InvestmentFund:
+      type: object
+      properties:
+        fund_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        manager:
+          type: string
+          description: Кто управляет фондом
+        type:
+          type: string
+        total_value:
+          type: integer
+        investors_count:
+          type: integer
+        performance_ytd:
+          type: number
+          description: Year-to-date performance (%)
+        min_investment:
+          type: integer
+        management_fee:
+          type: number
+          format: float
+          description: Комиссия управления (%)
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

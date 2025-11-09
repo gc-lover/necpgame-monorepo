@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="053-create-random-events-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="random_events"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="random_events">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trigger_type" type="VARCHAR(50)"/>
+            <column name="min_level" type="INT" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_level" type="INT"/>
+            <column name="rarity" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="options" type="TEXT"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="random_events" indexName="idx_random_events_type">
+            <column name="event_type"/>
+        </createIndex>
+        <createIndex tableName="random_events" indexName="idx_random_events_trigger">
+            <column name="trigger_type"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="random_events"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

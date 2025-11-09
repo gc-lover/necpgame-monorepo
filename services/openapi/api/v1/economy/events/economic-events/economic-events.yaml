@@ -1,0 +1,349 @@
+openapi: 3.0.3
+info:
+  title: Economic Events API
+  version: 1.0.0
+  description: |
+    Economic event lifecycle management: planning, announcement, activation, rollback and analytics.
+    Source: .BRAIN/02-gameplay/economy/economy-events.md v1.1.0.
+    Integrations: pricing-engine, stock-exchange, currency-exchange, quest-service, notification-service,
+    analytics-service, telemetry pipeline.
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/events
+    directory: api/v1/economy/events/economic-events
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: EconomicEvents
+    description: CRUD and lifecycle management for economic events
+  - name: EconomicEventsOperations
+    description: Announcement, activation, cancellation and archival operations
+  - name: EconomicEventsAnalytics
+    description: Metrics, planner and feeds for event monitoring
+paths:
+  /economy/events:
+    get:
+      tags: [EconomicEvents]
+      summary: List economic events
+      description: Returns paginated events filtered by status, type, severity or region. Rate limit 60 req/min per analyst.
+      security:
+        - PlayerSession: []
+        - ServiceToken: []
+      parameters:
+        - $ref: './economic-events-models.yaml#/components/parameters/EventStatusQuery'
+        - $ref: './economic-events-models.yaml#/components/parameters/EventTypeQuery'
+        - $ref: './economic-events-models.yaml#/components/parameters/EventRegionQuery'
+        - $ref: './economic-events-models.yaml#/components/parameters/EventSeverityQuery'
+        - $ref: '../../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Event list payload
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventListResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    post:
+      tags: [EconomicEvents]
+      summary: Create economic event
+      description: Creates a planned economic event with schedule and effects. Restricted to economy administrators.
+      security:
+        - GMToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './economic-events-models-operations.yaml#/components/schemas/EventCreateRequest'
+      responses:
+        '201':
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventCreateResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/events/{eventId}:
+    parameters:
+      - $ref: './economic-events-models.yaml#/components/parameters/EventIdPath'
+    get:
+      tags: [EconomicEvents]
+      summary: Get event details
+      description: Returns detailed event information including schedule, effects, integrations and audit summary.
+      security:
+        - PlayerSession: []
+        - ServiceToken: []
+      responses:
+        '200':
+          description: Event detail payload
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventDetailResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    patch:
+      tags: [EconomicEvents]
+      summary: Update event definition
+      description: Updates schedule, effects or metadata. Dual-approval enforced via audit workflow.
+      security:
+        - GMToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './economic-events-models-operations.yaml#/components/schemas/EventUpdateRequest'
+      responses:
+        '200':
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventDetailResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/events/{eventId}/announce:
+    parameters:
+      - $ref: './economic-events-models.yaml#/components/parameters/EventIdPath'
+    post:
+      tags: [EconomicEventsOperations]
+      summary: Announce event
+      description: Publishes event announcement to players, schedules notifications and updates timeline.
+      security:
+        - GMToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './economic-events-models-operations.yaml#/components/schemas/EventAnnounceRequest'
+      responses:
+        '202':
+          description: Announcement queued
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventAnnounceResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/events/{eventId}/activate:
+    parameters:
+      - $ref: './economic-events-models.yaml#/components/parameters/EventIdPath'
+    post:
+      tags: [EconomicEventsOperations]
+      summary: Activate event immediately
+      description: Forces event activation bypassing scheduler (emergency use only, logged in audit trail).
+      security:
+        - GMToken: []
+      responses:
+        '200':
+          description: Event activated
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventLifecycleResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/events/{eventId}/cancel:
+    parameters:
+      - $ref: './economic-events-models.yaml#/components/parameters/EventIdPath'
+    post:
+      tags: [EconomicEventsOperations]
+      summary: Cancel active event
+      description: Initiates rollback workflows, compensation triggers and audit logging. Requires GM approval.
+      security:
+        - GMToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './economic-events-models-operations.yaml#/components/schemas/EventCancelRequest'
+      responses:
+        '200':
+          description: Event cancellation accepted
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventLifecycleResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/events/{eventId}/archive:
+    parameters:
+      - $ref: './economic-events-models.yaml#/components/parameters/EventIdPath'
+    post:
+      tags: [EconomicEventsOperations]
+      summary: Archive event
+      description: Finalises event lifecycle, generates analytics report and moves event to archive state.
+      security:
+        - GMToken: []
+        - ServiceToken: []
+      responses:
+        '200':
+          description: Event archived
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventLifecycleResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/events/{eventId}/timeline:
+    parameters:
+      - $ref: './economic-events-models.yaml#/components/parameters/EventIdPath'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/Page'
+      - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+    get:
+      tags: [EconomicEventsAnalytics]
+      summary: Get event timeline
+      description: Returns auditable timeline of lifecycle actions, notifications and scheduler operations.
+      security:
+        - PlayerSession: []
+        - GMToken: []
+      responses:
+        '200':
+          description: Timeline entries
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventTimelineResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/events/metrics/summary:
+    get:
+      tags: [EconomicEventsAnalytics]
+      summary: Get economic events summary metrics
+      description: Provides aggregate metrics such as active counts, price deviations, sentiment and rollback status.
+      security:
+        - ServiceToken: []
+        - GMToken: []
+      responses:
+        '200':
+          description: Metrics payload
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventMetricsResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/events/feed:
+    get:
+      tags: [EconomicEventsAnalytics]
+      summary: Subscribe to economic events feed
+      description: |
+        Provides streaming updates for event lifecycle changes. Supports WebSocket upgrade and long polling fallback.
+        Messages follow `EventFeedEnvelope`. Player sessions receive public data; GM tokens see administrative details.
+      security:
+        - PlayerSession: []
+        - GMToken: []
+      responses:
+        '200':
+          description: Long polling feed response
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventFeedEnvelope'
+        '101':
+          description: WebSocket upgrade
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventFeedEnvelope'
+      x-websocket: true
+  /economy/events/planner/schedule:
+    get:
+      tags: [EconomicEventsAnalytics]
+      summary: Get scheduler plan
+      description: Returns upcoming event slots, conflicts and cooldown windows enforced by the scheduler.
+      security:
+        - GMToken: []
+        - ServiceToken: []
+      responses:
+        '200':
+          description: Planner schedule payload
+          content:
+            application/json:
+              schema:
+                $ref: './economic-events-models-operations.yaml#/components/schemas/EventPlannerResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  responses:
+    BadRequest:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    TooManyRequests:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+    InternalServerError:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    PlayerSession:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/PlayerSession'
+    ServiceToken:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ServiceToken'
+    GMToken:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/GMToken'
+  schemas:
+    EconomicEventCreatedEvent:
+      $ref: './economic-events-models-operations.yaml#/components/schemas/EconomicEventCreatedEvent'
+    EconomicEventAnnouncedEvent:
+      $ref: './economic-events-models-operations.yaml#/components/schemas/EconomicEventAnnouncedEvent'
+    EconomicEventActivatedEvent:
+      $ref: './economic-events-models-operations.yaml#/components/schemas/EconomicEventActivatedEvent'
+    EconomicEventEffectAppliedEvent:
+      $ref: './economic-events-models-operations.yaml#/components/schemas/EconomicEventEffectAppliedEvent'
+    EconomicEventEffectRolledBackEvent:
+      $ref: './economic-events-models-operations.yaml#/components/schemas/EconomicEventEffectRolledBackEvent'
+    EconomicEventArchivedEvent:
+      $ref: './economic-events-models-operations.yaml#/components/schemas/EconomicEventArchivedEvent'
