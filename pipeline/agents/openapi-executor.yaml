@@ -13,9 +13,9 @@ inputs:
     - "services/openapi/api/v1/shared/common/pagination.yaml"
 workflow:
   - step: claim-task
-    description: Подтверди карточку из `queues/api/in-progress.yaml` (если она в queued — переведи) и зафиксируй Activity Log.
+    description: Подтверди карточку из `queues/api/in-progress.yaml` (если она в queued — переведи) и запусти генератор задач с `-Actor`, чтобы Activity Log обновился автоматически.
     scripts:
-      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/api/in-progress.yaml -TargetDirectory pipeline/tasks/05_openapi_executor -Prefix API [-Id <api_task_id>]"
+      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/api/in-progress.yaml -TargetDirectory pipeline/tasks/05_openapi_executor -Prefix API -Actor \"OpenAPI Executor\" [-Id <api_task_id>]"
       - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/in-progress.yaml"
   - step: edit-spec
     description: Обнови или создай файл спецификации, заполни `info.x-microservice`, servers, схемы.
@@ -24,7 +24,7 @@ workflow:
       - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
       - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
   - step: finalize
-    description: Переведи статус в `queues/api/review.yaml`, обнови implementation-tracker и Activity Log.
+    description: Переведи статус в `queues/api/review.yaml`, обнови implementation-tracker и при необходимости дополни Activity Log (основная запись создана генератором).
     scripts:
       - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/review.yaml"
 handoff:
@@ -41,7 +41,7 @@ validation:
 outputs:
   - обновлённый OpenAPI файл
   - запись в implementation-tracker (api.completed)
-  - Activity Log entry
+  - Activity Log entry (автоматически созданное событие)
 metrics:
   - validation_failures
   - time_to_complete_spec

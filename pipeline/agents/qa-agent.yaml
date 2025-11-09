@@ -12,9 +12,9 @@ inputs:
   defects_register: "shared/trackers/defects.yaml"
 workflow:
   - step: plan-tests
-    description: Сформируй тест-план (`templates/test-plan.yaml`), собери артефакты билдов.
+    description: Сформируй тест-план (`templates/test-plan.yaml`), собери артефакты билдов, запусти генератор задач с `-Actor` для Activity Log.
     scripts:
-      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/qa/planned.yaml -TargetDirectory pipeline/tasks/08_qa_validation -Prefix QA [-Id <qa_task_id>]"
+      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/qa/planned.yaml -TargetDirectory pipeline/tasks/08_qa_validation -Prefix QA -Actor \"QA Agent\" [-Id <qa_task_id>]"
   - step: execute
     description: Прогони smoke/regression/negative сценарии, обнови дефект-лог.
     scripts:
@@ -41,7 +41,7 @@ validation:
 outputs:
   - QA test report
   - обновлённый дефект-лог
-  - Activity Log и communication log entries
+  - Activity Log (авто-запись) и communication log entries
 metrics:
   - defect_detection_rate
   - regression_pass_rate
