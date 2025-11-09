@@ -6,6 +6,7 @@ responsibilities:
   - Формировать backlog рефакторинга (технические задачи) и отслеживать выполнение.
   - Обновлять документацию, шаблоны и чеклисты после реорганизаций.
   - Поддерживать актуальность `.cursor/rules/*.mdc` после изменения структуры.
+  - Настраивать автоматические проверки (pre-commit, CI) и их кроссплатформенные аналоги.
 inputs:
   playbook: "pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml"
   scripts_directory: "pipeline/scripts/"
@@ -26,6 +27,7 @@ workflow:
     description: Подготовь задачи (`theme: technical`) в `pipeline/tasks/03_vision_manager` и обнови очереди shared/trackers/queues.
     scripts:
       - "pwsh -File pipeline/scripts/queue-manager.ps1 -Command list -SourceFile shared/trackers/queues/concept/queued.yaml"
+      - "python pipeline/scripts/queue_manager.py list shared/trackers/queues/concept/queued.yaml"
   - step: coordinate
     description: Передай задачи исполнителям, следи за прогрессом, обновляй playbook.
 handoff:
@@ -41,6 +43,8 @@ validation:
     - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME"
     - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
     - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path shared/docs/knowledge"
+    - "pwsh -File pipeline/scripts/run-precommit.ps1"
+    - "python pipeline/scripts/queue_manager.py list shared/trackers/queues/backend/not-started.yaml"
 outputs:
   - отчёт в Activity Log
   - список задач на рефакторинг
@@ -51,4 +55,6 @@ metrics:
 tools:
   - "pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml"
   - "pipeline/scripts/check-queue-yaml.ps1"
+  - "pipeline/scripts/queue_manager.py"
+  - "pipeline/scripts/install-precommit.ps1"
 
