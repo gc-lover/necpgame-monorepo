@@ -1,0 +1,360 @@
+# Quest Blockers System
+# Version: 1.0.0
+# Date: 2025-11-06 23:26
+# Description: Квесты-блокираторы, которые закрывают доступ к другим квестам
+
+metadata:
+  version: "1.0.0"
+  created: "2025-11-06"
+  updated: "2025-11-06 23:26"
+  status: approved
+  description: "Система блокировки квестов - взаимоисключающие выборы"
+
+# Структура:
+# blocker_quest_id:
+#   blocks: [список квестов, которые блокирует]
+#   reason: причина блокировки
+#   permanent: навсегда или временно
+
+blockers:
+  # ====== FACTION CHOICE BLOCKERS ======
+  
+  MQ-2020-005_choice_netwatch:
+    name: "Чистый канал (выбор NetWatch)"
+    blocks:
+      permanent:
+        - SQ-2030-VB-001  # Voodoo Boys exclusive quests
+        - SQ-2045-VB-002
+        - SQ-2060-VB-003
+      temporary:
+        - SQ-2030-002  # Dome audit (доступен позже с penalty)
+    reason: "Выбор NetWatch делает Voodoo Boys врагами"
+    recovery:
+      possible: true
+      quests:
+        - "Redemption quest chain (3 квеста)"
+      reputation_cost: 100
+  
+  MQ-2020-005_choice_voodoo:
+    name: "Чистый канал (выбор Voodoo Boys)"
+    blocks:
+      permanent:
+        - SQ-2030-NW-001  # NetWatch exclusive quests
+        - SQ-2045-NW-002
+      temporary:
+        - SQ-2045-001  # Phantom hunt (доступен с difficulty++)
+    reason: "Выбор Voodoo Boys делает NetWatch врагами"
+    recovery:
+      possible: true
+      quests:
+        - "Infiltration quest (hacktивация NetWatch)"
+      difficulty: hard
+  
+  # ====== MORAL CHOICE BLOCKERS ======
+  
+  MQ-2030-006_choice_corpo:
+    name: "Приватные войны (поддержать корпорации)"
+    blocks:
+      permanent:
+        - SQ-2045-REV-001  # Revolutionary quests
+        - SQ-2060-REV-002
+        - SQ-2078-005  # Constitution draft (революция)
+        - ending_revolution
+      temporary: []
+    reason: "Выбор корпораций закрывает революционный путь"
+    recovery:
+      possible: false
+      note: "Permanent choice - определяет критический путь"
+  
+  MQ-2030-006_choice_people:
+    name: "Приватные войны (поддержать народ)"
+    blocks:
+      permanent:
+        - SQ-2045-CORPO-001  # Corporate exclusive quests
+        - SQ-2078-001  # License wars
+        - ending_corporatocracy
+      temporary:
+        - SQ-2060-CORPO-002  # Corporate diplomacy (harder)
+    reason: "Выбор народа закрывает корпоративный путь"
+    recovery:
+      possible: true
+      quests:
+        - "Corporate redemption arc (5 квестов)"
+      reputation_cost: 200
+  
+  # ====== AI STANCE BLOCKERS ======
+  
+  MQ-2045-006_ban_cults:
+    name: "Тёплые коридоры (запретить культы)"
+    blocks:
+      permanent:
+        - SQ-2045-003  # Choir conversion
+        - SQ-2060-AI-001  # AI cult quests
+        - SQ-2078-004  # Blackwall expedition
+        - ending_transcendence
+      temporary: []
+    reason: "Запрет культов закрывает путь к ИИ и Трансцендентности"
+    recovery:
+      possible: false
+      note: "КРИТИЧНО - определяет финал"
+  
+  MQ-2045-006_support_cults:
+    name: "Тёплые коридоры (поддержать культы)"
+    blocks:
+      permanent:
+        - SQ-2060-NW-004  # NetWatch hardliner quests
+        - SQ-2078-NW-005
+      temporary:
+        - SQ-2060-003  # Concordat appeal (AI-sympathizer penalty)
+    reason: "Поддержка культов портит отношения с NetWatch"
+    recovery:
+      possible: true
+      difficulty: extreme
+  
+  # ====== CLASS EXCLUSIVE BLOCKERS ======
+  
+  SQ-2045-003_choir:
+    name: "Обращение в хоре (стать членом)"
+    blocks:
+      permanent:
+        - SQ-2060-005  # Meta-court testimony (конфликт интересов)
+        - SQ-2060-TRAD-001  # Traditional religion quests
+      temporary:
+        - SQ-2060-003  # Concordat appeal (biased)
+    reason: "Членство в Choir создает конфликт интересов"
+    recovery:
+      possible: true
+      quests:
+        - "Leave the Choir (betray AI)"
+      consequences:
+        - "AI enemies forever"
+        - "Ending Transcendence blocked"
+  
+  SQ-2078-001_license_wars:
+    name: "Войны лицензий (корп-альянс)"
+    blocks:
+      permanent:
+        - SQ-2078-002  # Manipulation fair (конкурирующий метод)
+      temporary: []
+    reason: "Легальный путь блокирует теневой"
+    recovery:
+      possible: false
+      note: "Выбор стратегии в экономике"
+  
+  SQ-2078-002_manipulation:
+    name: "Манипуляция ярмаркой (теневой путь)"
+    blocks:
+      permanent:
+        - SQ-2078-001  # License wars (легальный путь)
+        - SQ-2078-CORPO-003  # Corporate legal quests
+      temporary:
+        - SQ-2078-003  # Craft fair (suspicious)
+    reason: "Теневой путь портит корп-репутацию"
+    recovery:
+      possible: true
+      quests:
+        - "Clean reputation (expensive)"
+      cost: 1000000_eddies
+  
+  # ====== FINALE BLOCKERS ======
+  
+  SQ-2078-004_blackwall:
+    name: "Экспедиция за Blackwall (контакт с ИИ)"
+    blocks:
+      permanent:
+        - ending_corporatocracy
+      temporary:
+        - ending_revolution  # Может быть доступна, но сложнее
+    reason: "Контакт с ИИ делает корпорации врагами"
+    recovery:
+      possible: false
+      note: "FINALE-determinant"
+  
+  SQ-2078-005_constitution:
+    name: "Проект конституции (революция)"
+    blocks:
+      permanent:
+        - ending_corporatocracy
+      temporary: []
+    reason: "Революционный манифест - враг корпораций"
+    recovery:
+      possible: false
+      note: "FINALE-determinant"
+  
+  # ====== REPUTATION BLOCKERS ======
+  
+  reputation_negative_threshold:
+    trigger: "reputation < -50 with faction"
+    blocks:
+      dynamic:
+        - "All faction-specific quests"
+        - "Faction territory access"
+        - "Faction services"
+    reason: "Слишком низкая репутация"
+    recovery:
+      possible: true
+      method: "Reputation restoration quests"
+      cost: varies
+  
+  # ====== CHAOS/CYBERPSYCHOSIS BLOCKERS ======
+  
+  cyberpsychosis_high:
+    trigger: "cyberpsychosis > 70"
+    blocks:
+      temporary:
+        - "All social quests"
+        - "Romance quests"
+        - "Diplomatic quests"
+      permanent_at_90:
+        - "Some finale paths"
+    reason: "Киберпсихоз мешает социальному взаимодействию"
+    recovery:
+      possible: true
+      method: "Treatment, remove implants"
+  
+  chaos_threshold:
+    trigger: "chaos_score > 80"
+    blocks:
+      temporary:
+        - ending_corporatocracy
+        - ending_transcendence
+        - ending_revolution
+      forces:
+        - ending_apocalypse
+    reason: "Слишком много хаотичных выборов"
+    recovery:
+      possible: false
+      note: "Path to Apocalypse ending"
+
+# ====== MUTUAL EXCLUSIONS ======
+
+mutual_exclusions:
+  netwatch_vs_voodoo:
+    quests:
+      - MQ-2020-005_choice_netwatch
+      - MQ-2020-005_choice_voodoo
+    rule: "exclusive_choice"
+    recovery: "possible_with_penalty"
+  
+  corpo_vs_people:
+    quests:
+      - MQ-2030-006_choice_corpo
+      - MQ-2030-006_choice_people
+    rule: "exclusive_choice"
+    recovery: "possible_but_expensive"
+  
+  ai_pro_vs_anti:
+    quests:
+      - MQ-2045-006_support_cults
+      - MQ-2045-006_ban_cults
+    rule: "exclusive_choice"
+    recovery: "impossible"
+    note: "FINALE-critical"
+  
+  economic_strategy:
+    quests:
+      - SQ-2078-001_license_wars
+      - SQ-2078-002_manipulation
+    rule: "exclusive_choice"
+    recovery: "expensive"
+  
+  finale_paths:
+    quests:
+      - ending_corporatocracy
+      - ending_transcendence
+      - ending_revolution
+      - ending_apocalypse
+    rule: "only_one"
+    note: "Only one finale accessible per playthrough"
+
+# ====== BLOCK CASCADES ======
+
+block_cascades:
+  anti_ai_cascade:
+    trigger: MQ-2045-006_ban_cults
+    cascade:
+      immediate:
+        - SQ-2045-003  # Choir (невозможен)
+      era_2060:
+        - SQ-2060-AI-001  # AI cult quests
+        - SQ-2060-003  # Concordat (биased)
+      era_2078:
+        - SQ-2078-004  # Blackwall expedition (невозможна)
+      finale:
+        - ending_transcendence  # Финал недоступен
+    note: "Один выбор блокирует целую ветку через эпохи"
+  
+  revolutionary_cascade:
+    trigger: SQ-2078-005_constitution
+    cascade:
+      immediate:
+        - ending_corporatocracy  # Немедленный блок
+      reputation:
+        - "All corporate factions: -100"
+      quests:
+        - SQ-2078-CORPO-all  # Все корп-квесты
+    note: "Революция = враг корпораций"
+  
+  chaos_cascade:
+    trigger: chaos_threshold_80
+    cascade:
+      immediate:
+        - "Most peaceful endings"
+      forced:
+        - ending_apocalypse
+      world_state:
+        - "Stability = 0"
+        - "Faction wars = maximum"
+    note: "Хаос ведет к апокалипсису"
+
+# ====== RECOVERY MECHANISMS ======
+
+recovery_options:
+  reputation_restoration:
+    method: "Complete faction redemption quests"
+    cost:
+      reputation_points: 100
+      eddies: 500000
+      time_quests: 5
+    success_rate: 80%
+  
+  faction_infiltration:
+    method: "Infiltrate enemy faction"
+    difficulty: extreme
+    requirements:
+      skills:
+        - stealth: 18
+        - hacking: 18
+        - persuasion: 15
+    success_rate: 50%
+  
+  expensive_buyout:
+    method: "Pay off faction leaders"
+    cost:
+      eddies: 1000000
+      items: legendary_gift
+    success_rate: 90%
+    note: "Works for most non-ideological conflicts"
+  
+  cyberpsychosis_treatment:
+    method: "Medical treatment + implant removal"
+    cost:
+      eddies: 200000
+      implants_lost: 2-5
+    time: 1_week_in_game
+    success_rate: 95%
+
+# ====== STATISTICS ======
+
+statistics:
+  total_blockers: 18
+  permanent_blocks: 12
+  temporary_blocks: 11
+  mutual_exclusions: 5
+  block_cascades: 3
+  recovery_mechanisms: 4
+  finale_determinants: 4
+
+# История изменений:
+# v1.0.0 (2025-11-06 23:26) - Создание системы блокировки квестов
+

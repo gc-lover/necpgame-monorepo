@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: Combat Roles API
+  version: 1.0.0
+  description: |
+    API для боевых ролей.
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-roles-detailed.md v1.0.0
+    
+    Роли: Tank, DPS (Burst/Sustained), Support, Healer, Hybrids
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Combat Roles
+    description: Боевые роли
+
+paths:
+  /gameplay/combat/roles:
+    get:
+      summary: Получить все боевые роли
+      operationId: getCombatRoles
+      tags:
+        - Combat Roles
+      responses:
+        '200':
+          description: Список ролей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CombatRole'
+
+  /gameplay/combat/roles/{role_id}:
+    get:
+      summary: Детали роли
+      operationId: getCombatRole
+      tags:
+        - Combat Roles
+      parameters:
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали роли
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatRole'
+
+  /gameplay/combat/roles/recommend:
+    post:
+      summary: Рекомендовать роль
+      description: Рекомендует роль на основе билда персонажа
+      operationId: recommendCombatRole
+      tags:
+        - Combat Roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                character_id:
+                  type: string
+      responses:
+        '200':
+          description: Рекомендация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommended_role:
+                    type: string
+                  match_percentage:
+                    type: number
+
+components:
+  schemas:
+    CombatRole:
+      type: object
+      properties:
+        role_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        primary_attributes:
+          type: object
+        required_implants:
+          type: array
+          items:
+            type: string
+        abilities_loadout:
+          type: object
+        tactics:
+          type: array
+          items:
+            type: string
+        synergies:
+          type: object
+        equipment_priority:
+          type: object
+

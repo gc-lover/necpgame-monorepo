@@ -1,0 +1,244 @@
+# Target Architecture:
+# - Microservice: economy-service (8085)
+# - Dependencies: world-service, social-service, gameplay-service, analytics-service, maintenance-service
+# - Frontend Module: modules/economy/districts
+# - State: useEconomyStore(infrastructure)
+# - UI: InfrastructureTable, CapacityGauge, SLAStatusCard, AlertFeed, DiffViewer
+# - Forms: InfrastructureRecalcForm, MaintenanceOverrideForm, FilterForm
+# - Hooks: useEconomyFilters, useRealtime, useCityContext
+# - Events: economy.infrastructure.updated, economy.infrastructure.job.*
+# - API Base: /api/v1/economy/districts/*
+openapi: 3.0.3
+info:
+  title: District Infrastructure Monitoring API
+  version: 1.0.0
+  description: |
+    Контракт economy-service для мониторинга инфраструктуры районов: состояние объектов,
+    пересчёты, диффы и SLA.
+
+    Источник: `.BRAIN/05-technical/content-generation/city-life-population-algorithm.md` v1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Infrastructure
+    description: Управление объектами и сводками инфраструктуры
+  - name: Infrastructure Jobs
+    description: Асинхронные задания пересчёта инфраструктуры
+paths:
+  /economy/districts/infrastructure:
+    get:
+      tags: [Infrastructure]
+      summary: Список инфраструктурных объектов
+      description: Возвращает инфраструктурные объекты с фильтрами по категориям и состояниям.
+      operationId: listInfrastructureInstances
+      parameters:
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/CityId'
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/CategoryFilter'
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/StatusFilter'
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/SeverityFilter'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Инфраструктура найдена
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureListResponse'
+              examples:
+                transit:
+                  $ref: './schemas/infrastructure-components.yaml#/components/examples/InfrastructureInstanceExample'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/districts/{districtId}/infrastructure:
+    parameters:
+      - $ref: './schemas/infrastructure-components.yaml#/components/parameters/DistrictId'
+    get:
+      tags: [Infrastructure]
+      summary: Инфраструктура района
+      description: Возвращает инфраструктуру конкретного района.
+      operationId: listDistrictInfrastructure
+      parameters:
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/CategoryFilter'
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/StatusFilter'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Объекты района получены
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureListResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /economy/districts/infrastructure/{instanceId}:
+    parameters:
+      - $ref: './schemas/infrastructure-components.yaml#/components/parameters/InstanceId'
+    get:
+      tags: [Infrastructure]
+      summary: Получить инфраструктурный объект
+      description: Возвращает детали инфраструктурного объекта, включая алерты и расписание обслуживания.
+      operationId: getInfrastructureInstance
+      responses:
+        '200':
+          description: Объект найден
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureInstance'
+              examples:
+                transit:
+                  $ref: './schemas/infrastructure-components.yaml#/components/examples/InfrastructureInstanceExample'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /economy/districts/infrastructure/summary:
+    get:
+      tags: [Infrastructure]
+      summary: Сводка по инфраструктуре города
+      description: Возвращает агрегированные метрики и загрузку по районам города.
+      operationId: getInfrastructureSummary
+      parameters:
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/CityId'
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/CategoryFilter'
+      responses:
+        '200':
+          description: Сводка сформирована
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureSummaryResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /economy/districts/{districtId}/infrastructure/diff:
+    parameters:
+      - $ref: './schemas/infrastructure-components.yaml#/components/parameters/DistrictId'
+    get:
+      tags: [Infrastructure]
+      summary: Получить дифф инфраструктуры района
+      description: Возвращает изменения инфраструктуры района по сравнению с baseline.
+      operationId: getDistrictInfrastructureDiff
+      responses:
+        '200':
+          description: Дифф сформирован
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureDiffResponse'
+              examples:
+                metroShutdown:
+                  $ref: './schemas/infrastructure-components.yaml#/components/examples/InfrastructureDiffExample'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /economy/districts/infrastructure/recalculate:
+    post:
+      tags: [Infrastructure Jobs]
+      summary: Запустить пересчёт инфраструктуры
+      description: Запускает задание пересчёта инфраструктуры для города или районов.
+      operationId: recalcInfrastructure
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureRecalcRequest'
+            examples:
+              populationSync:
+                $ref: './schemas/infrastructure-components.yaml#/components/examples/InfrastructureRecalcRequestExample'
+      responses:
+        '202':
+          description: Задание пересчёта создано
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureRecalcJob'
+              examples:
+                job:
+                  $ref: './schemas/infrastructure-components.yaml#/components/examples/InfrastructureRecalcJobExample'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '409': { $ref: '../../shared/common/responses.yaml#/components/responses/Conflict' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+  /economy/districts/infrastructure/jobs:
+    get:
+      tags: [Infrastructure Jobs]
+      summary: Получить задания пересчёта
+      description: Возвращает список заданий пересчёта инфраструктуры.
+      operationId: listInfrastructureJobs
+      parameters:
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/PriorityFilter'
+        - $ref: './schemas/infrastructure-components.yaml#/components/parameters/StatusFilter'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Задания найдены
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureJobListResponse'
+              examples:
+                job:
+                  $ref: './schemas/infrastructure-components.yaml#/components/examples/InfrastructureRecalcJobExample'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+  /economy/districts/infrastructure/jobs/{jobId}:
+    parameters:
+      - $ref: './schemas/infrastructure-components.yaml#/components/parameters/JobId'
+    get:
+      tags: [Infrastructure Jobs]
+      summary: Получить задание пересчёта инфраструктуры
+      description: Возвращает детали задания пересчёта, прогресс и логи.
+      operationId: getInfrastructureJob
+      responses:
+        '200':
+          description: Задание найдено
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureRecalcJob'
+              examples:
+                job:
+                  $ref: './schemas/infrastructure-components.yaml#/components/examples/InfrastructureRecalcJobExample'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+x-kafka-topics:
+  economy.infrastructure.updated:
+    summary: Обновление инфраструктуры района
+    payload:
+      $ref: './schemas/infrastructure-components.yaml#/components/schemas/DistrictInfrastructureSummary'
+  economy.infrastructure.job.started:
+    summary: Старт задания пересчёта инфраструктуры
+    payload:
+      $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureRecalcJob'
+  economy.infrastructure.job.completed:
+    summary: Завершение задания пересчёта инфраструктуры
+    payload:
+      $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureRecalcJob'
+  economy.infrastructure.job.failed:
+    summary: Ошибка задания пересчёта инфраструктуры
+    payload:
+      $ref: './schemas/infrastructure-components.yaml#/components/schemas/InfrastructureRecalcJob'
+
+

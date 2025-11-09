@@ -1,0 +1,503 @@
+openapi: 3.0.3
+info:
+  title: Currency Exchange API
+  version: 1.0.0
+  description: |
+    API для валютной биржи.
+    
+    Функционал:
+    - 12 региональных валют
+    - Currency pairs (major/minor/exotic)
+    - Real-time exchange rates
+    - Currency conversion
+    - Spread & commission
+    - Arbitrage opportunities
+    - Hedging (risk insurance)
+    - Carry trade
+    - Leverage trading (up to 10x)
+    - Historical rates
+    
+    Региональные валюты:
+    - NCRD (Night City Dollar) - основная
+    - EURO (Euro Zone)
+    - YUAN (Pacific Rim)
+    - EBUCK (Nomad territories)
+    - CORPO (Corporate scrip)
+    - + 7 others
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-currency-exchange.md v1.0.0
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Exchange Rates
+    description: Курсы валют
+  - name: Currency Operations
+    description: Операции с валютой
+  - name: Trading
+    description: Торговля валютой
+
+paths:
+  /gameplay/economy/currency-exchange/rates:
+    get:
+      summary: Получить текущие курсы валют
+      operationId: getExchangeRates
+      tags: [Exchange Rates]
+      responses:
+        '200':
+          description: Текущие курсы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRates'
+
+  /gameplay/economy/currency-exchange/rates/{pair}:
+    get:
+      summary: Получить курс для конкретной пары
+      operationId: getPairRate
+      tags: [Exchange Rates]
+      parameters:
+        - name: pair
+          in: path
+          required: true
+          description: Валютная пара (например NCRD/EURO)
+          schema:
+            type: string
+            example: "NCRD/EURO"
+      responses:
+        '200':
+          description: Курс пары
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyPairRate'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/economy/currency-exchange/rates/history:
+    get:
+      summary: Получить историю курсов
+      operationId: getRateHistory
+      tags: [Exchange Rates]
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          description: Период (1h, 24h, 7d, 30d, 1y)
+          schema:
+            type: string
+            default: "24h"
+        - name: interval
+          in: query
+          description: Интервал данных (1m, 5m, 1h, 1d)
+          schema:
+            type: string
+            default: "1h"
+      responses:
+        '200':
+          description: История курсов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateHistory'
+
+  /gameplay/economy/currency-exchange/convert:
+    post:
+      summary: Конвертировать валюту
+      operationId: convertCurrency
+      tags: [Currency Operations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConvertRequest'
+      responses:
+        '200':
+          description: Конвертация выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvertResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/economy/currency-exchange/pairs:
+    get:
+      summary: Получить доступные валютные пары
+      operationId: getAvailablePairs
+      tags: [Exchange Rates]
+      parameters:
+        - name: type
+          in: query
+          description: Тип пары
+          schema:
+            type: string
+            enum: [MAJOR, MINOR, EXOTIC]
+      responses:
+        '200':
+          description: Доступные пары
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pairs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CurrencyPair'
+
+  /gameplay/economy/currency-exchange/trading/orders:
+    post:
+      summary: Разместить торговый ордер
+      operationId: placeExchangeOrder
+      tags: [Trading]
+      description: Leverage trading до 10x
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangeOrderRequest'
+      responses:
+        '201':
+          description: Ордер размещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeOrder'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/economy/currency-exchange/trading/orders/{order_id}:
+    get:
+      summary: Получить статус ордера
+      operationId: getExchangeOrder
+      tags: [Trading]
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус ордера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeOrder'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+    delete:
+      summary: Отменить ордер
+      operationId: cancelExchangeOrder
+      tags: [Trading]
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ордер отменен
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/economy/currency-exchange/arbitrage:
+    get:
+      summary: Найти арбитражные возможности
+      operationId: findArbitrageOpportunities
+      tags: [Trading]
+      description: Региональный и triangular arbitrage
+      responses:
+        '200':
+          description: Арбитражные возможности
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  opportunities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ArbitrageOpportunity'
+
+components:
+  schemas:
+    ExchangeRates:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        base_currency:
+          type: string
+          default: "NCRD"
+        rates:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          example:
+            EURO: 0.85
+            YUAN: 6.5
+            EBUCK: 1.2
+
+    CurrencyPairRate:
+      type: object
+      properties:
+        pair:
+          type: string
+          example: "NCRD/EURO"
+        base:
+          type: string
+          example: "NCRD"
+        quote:
+          type: string
+          example: "EURO"
+        rate:
+          type: number
+          format: float
+          description: Курс покупки
+          example: 0.85
+        bid:
+          type: number
+          format: float
+          description: Курс продажи
+        ask:
+          type: number
+          format: float
+          description: Курс покупки
+        spread:
+          type: number
+          format: float
+          description: Spread (bid-ask)
+        timestamp:
+          type: string
+          format: date-time
+
+    RateHistory:
+      type: object
+      properties:
+        pair:
+          type: string
+        period:
+          type: string
+        interval:
+          type: string
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              open:
+                type: number
+                format: float
+              high:
+                type: number
+                format: float
+              low:
+                type: number
+                format: float
+              close:
+                type: number
+                format: float
+              volume:
+                type: integer
+
+    ConvertRequest:
+      type: object
+      required:
+        - character_id
+        - from_currency
+        - to_currency
+        - amount
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        from_currency:
+          type: string
+          example: "NCRD"
+        to_currency:
+          type: string
+          example: "EURO"
+        amount:
+          type: number
+          format: float
+          example: 1000.0
+
+    ConvertResult:
+      type: object
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount_from:
+          type: number
+          format: float
+        amount_to:
+          type: number
+          format: float
+        exchange_rate:
+          type: number
+          format: float
+        commission:
+          type: number
+          format: float
+        total_cost:
+          type: number
+          format: float
+        timestamp:
+          type: string
+          format: date-time
+
+    CurrencyPair:
+      type: object
+      properties:
+        pair:
+          type: string
+        base:
+          type: string
+        quote:
+          type: string
+        type:
+          type: string
+          enum: [MAJOR, MINOR, EXOTIC]
+        min_trade_amount:
+          type: number
+        max_leverage:
+          type: integer
+          example: 10
+        commission_rate:
+          type: number
+          format: float
+
+    ExchangeOrderRequest:
+      type: object
+      required:
+        - character_id
+        - pair
+        - side
+        - amount
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        pair:
+          type: string
+          example: "NCRD/EURO"
+        side:
+          type: string
+          enum: [BUY, SELL]
+        amount:
+          type: number
+          format: float
+        order_type:
+          type: string
+          enum: [MARKET, LIMIT]
+          default: MARKET
+        limit_price:
+          type: number
+          format: float
+          nullable: true
+        leverage:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+        stop_loss:
+          type: number
+          format: float
+          nullable: true
+        take_profit:
+          type: number
+          format: float
+          nullable: true
+
+    ExchangeOrder:
+      type: object
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        pair:
+          type: string
+        side:
+          type: string
+          enum: [BUY, SELL]
+        amount:
+          type: number
+        order_type:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, FILLED, PARTIALLY_FILLED, CANCELLED, EXPIRED]
+        filled_amount:
+          type: number
+        average_price:
+          type: number
+        leverage:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        filled_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ArbitrageOpportunity:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [REGIONAL, TRIANGULAR]
+        pairs:
+          type: array
+          items:
+            type: string
+        profit_potential:
+          type: number
+          format: float
+          description: Потенциальная прибыль (%)
+        description:
+          type: string
+        expires_in_seconds:
+          type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

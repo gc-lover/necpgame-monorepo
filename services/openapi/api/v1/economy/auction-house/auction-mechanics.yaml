@@ -1,0 +1,718 @@
+openapi: 3.0.3
+info:
+  title: Auction House Mechanics API
+  version: 1.0.0
+  description: |
+    Контракты economy-service для прикладных механик аукционного дома NECPGAME.
+    Покрывает создание лотов, ставки, buyout, автопродление, отмену, завершение,
+    комиссионные правила, уведомления и различия с Player Market.
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/auction-house
+    directory: api/v1/economy/auction-house
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production Gateway
+  - url: https://api.necp.game/v1/economy
+    description: Production Economy Segment
+  - url: http://localhost:8080/api/v1
+    description: Local Gateway
+  - url: http://localhost:8080/api/v1/economy
+    description: Local Economy Segment
+tags:
+  - name: AuctionRules
+    description: Проверка правил создания и ставок
+  - name: AuctionLifecycle
+    description: Операции над конкретными аукционами
+  - name: AuctionConfig
+    description: Конфигурация комиссий, таймеров и сравнений с Player Market
+security:
+  - BearerAuth: []
+x-websocket:
+  auctionStream:
+    url: wss://api.necp.game/v1/economy/auction-house/events
+    description: |
+      Поток событий `auction.house.outbid`, `auction.house.buyout`,
+      `auction.house.timer-extended`, `auction.house.completed`.
+    message:
+      $ref: '#/components/schemas/AuctionEvent'
+paths:
+  /auction-house/rules/validate-create:
+    post:
+      tags:
+        - AuctionRules
+      summary: Проверить параметры создания аукционного лота
+      description: |
+        Выполняет синхронную валидацию ограничений: минимальная ставка,
+        buyout > starting bid, допустимая продолжительность, лимиты по количеству активных лотов,
+        блокировка предмета и проверка антифрода.
+      operationId: validateAuctionCreation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuctionCreateRequest'
+      responses:
+        '200':
+          description: Результат проверки создания лота
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionValidationResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+        '422':
+          $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  /auction-house/auctions/{auctionId}/place-bid:
+    post:
+      tags:
+        - AuctionLifecycle
+      summary: Сделать ставку на аукцион
+      description: |
+        Проверяет минимальную надбавку (+5%), резервирует средства, возвращает предыдущему участнику,
+        выполняет интеграцию с payment/wallet, anti-fraud и генерирует уведомления.
+      operationId: placeAuctionBid
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: Идентификатор аукциона
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidRequest'
+      responses:
+        '200':
+          description: Ставка принята
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+        '422':
+          $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  /auction-house/auctions/{auctionId}/buyout:
+    post:
+      tags:
+        - AuctionLifecycle
+      summary: Совершить buyout по указанному аукциону
+      operationId: buyoutAuction
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyoutRequest'
+      responses:
+        '200':
+          description: Buyout выполнен успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyoutResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+        '422':
+          $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  /auction-house/auctions/{auctionId}/cancel:
+    post:
+      tags:
+        - AuctionLifecycle
+      summary: Отменить активный аукцион
+      operationId: cancelAuction
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+      responses:
+        '200':
+          description: Аукцион отменён, предмет возвращён продавцу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+        '422':
+          $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  /auction-house/auctions/{auctionId}/extend:
+    post:
+      tags:
+        - AuctionLifecycle
+      summary: Продлить время аукциона (ручное или автоматическое)
+      operationId: extendAuction
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtendRequest'
+      responses:
+        '200':
+          description: Аукцион продлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  /auction-house/scheduler/process-expired:
+    post:
+      tags:
+        - AuctionLifecycle
+      summary: Обработать истёкшие аукционы (cron hook)
+      description: |
+        Вызывается Планировщиком для завершения лотов, оформления продаж или возврата предметов.
+        Запрос может запускаться батчами и содержит id шардов/партиций.
+      operationId: processExpiredAuctions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessExpiredRequest'
+      responses:
+        '202':
+          description: Обработка запущена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessExpiredResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  /auction-house/config:
+    get:
+      tags:
+        - AuctionConfig
+      summary: Получить конфигурацию аукционного дома
+      operationId: getAuctionConfig
+      responses:
+        '200':
+          description: Конфигурация ставок, комиссий и лимитов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionConfig'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  /auction-house/notifications/sample:
+    get:
+      tags:
+        - AuctionConfig
+      summary: Получить примеры payload уведомлений аукциона
+      operationId: getAuctionNotificationSamples
+      responses:
+        '200':
+          description: Список шаблонов уведомлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NotificationPayload'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  /auction-house/compare:
+    post:
+      tags:
+        - AuctionConfig
+      summary: Сравнить Auction House и Player Market
+      description: Возвращает сводную таблицу различий по комиссиям, скоростям, ролям и ограничениям.
+      operationId: compareAuctionHouseAndPlayerMarket
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompareRequest'
+      responses:
+        '200':
+          description: Сводная таблица сравнений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comparison:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerMarketComparison'
+        '401':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+  schemas:
+    AuctionCreateRequest:
+      type: object
+      required:
+        - sellerId
+        - itemId
+        - quantity
+        - startingBid
+        - durationHours
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        startingBid:
+          type: integer
+          minimum: 0
+        buyoutPrice:
+          type: integer
+          nullable: true
+        durationHours:
+          type: integer
+          enum: [24, 48, 72]
+        autoBid:
+          $ref: '#/components/schemas/AutoBidSettings'
+        antiFraudToken:
+          type: string
+          description: Токен проверки anti-fraud сервиса
+    AuctionValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        rules:
+          $ref: '#/components/schemas/AuctionCreationRules'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationMessage'
+        reserved:
+          type: boolean
+          description: |
+            Флаг успешного резервирования предмета/слота (при true — предмет заблокирован).
+    BidRequest:
+      type: object
+      required:
+        - bidderId
+        - bidAmount
+      properties:
+        bidderId:
+          type: string
+          format: uuid
+        bidAmount:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          example: eurodollars
+        sessionId:
+          type: string
+          description: ID сессии игрока
+        antiFraudToken:
+          type: string
+        allowAutoExtend:
+          type: boolean
+          default: true
+    BidResult:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        currentBid:
+          type: integer
+        previousBidRefunded:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationPayload'
+    BuyoutRequest:
+      type: object
+      required:
+        - buyerId
+      properties:
+        buyerId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+        confirm:
+          type: boolean
+          default: true
+    BuyoutResult:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        price:
+          type: integer
+        method:
+          type: string
+          enum: [buyout]
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationPayload'
+    CancelRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+        confirmFee:
+          type: boolean
+          description: Подтверждение списания штрафа при отмене
+    CancelResult:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [cancelled]
+        refundAmount:
+          type: integer
+        itemUnlocked:
+          type: boolean
+    ExtendRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [manual, auto]
+        requestedMinutes:
+          type: integer
+          description: Используется для ручного продления
+        triggerSource:
+          type: string
+          enum: [bid, system, admin]
+    ExtendResult:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+        previousExpiresAt:
+          type: string
+          format: date-time
+        newExpiresAt:
+          type: string
+          format: date-time
+        autoExtended:
+          type: boolean
+    ProcessExpiredRequest:
+      type: object
+      properties:
+        shardIds:
+          type: array
+          items:
+            type: string
+        windowMinutes:
+          type: integer
+          default: 5
+        limit:
+          type: integer
+          default: 500
+    ProcessExpiredResult:
+      type: object
+      properties:
+        processed:
+          type: integer
+        sold:
+          type: integer
+        expired:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationMessage'
+    AuctionConfig:
+      type: object
+      properties:
+        creation:
+          $ref: '#/components/schemas/AuctionCreationRules'
+        bidding:
+          $ref: '#/components/schemas/BidRules'
+        buyout:
+          $ref: '#/components/schemas/BuyoutRules'
+        commission:
+          $ref: '#/components/schemas/CommissionConfig'
+        scheduler:
+          $ref: '#/components/schemas/SchedulerConfig'
+        comparison:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerMarketComparison'
+    AuctionCreationRules:
+      type: object
+      properties:
+        minStartingBid:
+          type: integer
+        maxDurationHours:
+          type: integer
+        allowedDurations:
+          type: array
+          items:
+            type: integer
+        buyoutMinRatio:
+          type: number
+          format: float
+          description: Минимальное отношение buyout к стартовой ставке
+        listingLimit:
+          type: integer
+          description: Количество активных лотов на игрока
+        autoBidEnabled:
+          type: boolean
+    BidRules:
+      type: object
+      properties:
+        minIncrementPercent:
+          type: number
+          format: float
+        autoExtendThresholdMinutes:
+          type: integer
+        autoExtendMinutes:
+          type: integer
+        maxActiveBids:
+          type: integer
+        currency:
+          type: string
+    BuyoutRules:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        minPrice:
+          type: integer
+        maxPrice:
+          type: integer
+        cooldownSeconds:
+          type: integer
+        requiresConfirmation:
+          type: boolean
+    AuctionStatusTransition:
+      type: object
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        trigger:
+          type: string
+        conditions:
+          type: array
+          items:
+            type: string
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationPayload'
+    CommissionConfig:
+      type: object
+      properties:
+        listingFee:
+          type: integer
+        saleCommissionPercent:
+          type: number
+          format: float
+        buyoutCommissionPercent:
+          type: number
+          format: float
+        refundPolicy:
+          type: string
+    NotificationPayload:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - auction.house.outbid
+            - auction.house.buyout
+            - auction.house.timer-extended
+            - auction.house.completed
+            - auction.house.expired
+        templateId:
+          type: string
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [push, mail, in_game, websocket]
+        data:
+          type: object
+          additionalProperties: true
+    SchedulerConfig:
+      type: object
+      properties:
+        frequencyMinutes:
+          type: integer
+        batchSize:
+          type: integer
+        gracePeriodMinutes:
+          type: integer
+        lockingStrategy:
+          type: string
+    PlayerMarketComparison:
+      type: object
+      properties:
+        feature:
+          type: string
+        auctionHouse:
+          type: string
+        playerMarket:
+          type: string
+    CompareRequest:
+      type: object
+      properties:
+        locale:
+          type: string
+          description: Локализация описаний (по умолчанию ru-RU)
+        includeExamples:
+          type: boolean
+    ValidationMessage:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+          nullable: true
+    AutoBidSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        maxAutoBid:
+          type: integer
+        incrementPercent:
+          type: number
+          format: float
+    AuctionEvent:
+      type: object
+      properties:
+        event:
+          type: string
+          description: Ключ события
+        payload:
+          type: object
+          additionalProperties: true
+        occurredAt:
+          type: string
+          format: date-time
+

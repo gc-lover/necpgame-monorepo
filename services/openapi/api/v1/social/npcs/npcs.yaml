@@ -1,0 +1,186 @@
+# NPCs API
+# Источник: .BRAIN/05-technical/ui-main-game.md (v1.1.0)
+# Task ID: API-TASK-031
+
+openapi: 3.0.3
+info:
+  title: NPCs API
+  version: 1.0.0
+  description: API для взаимодействия с NPC и диалогами в текстовой версии NECPGAME.
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/npcs
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+paths:
+  /npcs:
+    get:
+      summary: Список всех NPC
+      operationId: getNPCs
+      tags: [NPCs]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+        - {name: type, in: query, required: false, schema: {type: string, enum: [trader, quest_giver, citizen, enemy]}}
+      responses:
+        '200':
+          description: Список NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  npcs: {type: array, items: {$ref: '#/components/schemas/NPC'}}
+        '401': {$ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'}
+
+  /npcs/location/{locationId}:
+    get:
+      summary: NPC в локации
+      operationId: getNPCsByLocation
+      tags: [NPCs]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: locationId, in: path, required: true, schema: {type: string}}
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: NPC в локации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  npcs: {type: array, items: {$ref: '#/components/schemas/NPC'}}
+
+  /npcs/{npcId}:
+    get:
+      summary: Детали NPC
+      operationId: getNPCDetails
+      tags: [NPCs]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: npcId, in: path, required: true, schema: {type: string}}
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Детали NPC
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NPC'}
+        '404': {$ref: '../../shared/common/responses.yaml#/components/responses/NotFound'}
+
+  /npcs/{npcId}/dialogue:
+    get:
+      summary: Диалог с NPC
+      operationId: getNPCDialogue
+      tags: [NPCs, Dialogues]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: npcId, in: path, required: true, schema: {type: string}}
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Диалог с NPC
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NPCDialogue'}
+
+  /npcs/{npcId}/interact:
+    post:
+      summary: Взаимодействие с NPC
+      operationId: interactWithNPC
+      tags: [NPCs]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: npcId, in: path, required: true, schema: {type: string}}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId, action]
+              properties:
+                characterId: {type: string, format: uuid}
+                action: {type: string, enum: [talk, trade, quest, attack]}
+      responses:
+        '200':
+          description: Результат взаимодействия
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+                  result: {type: object}
+
+  /npcs/{npcId}/dialogue/respond:
+    post:
+      summary: Ответить в диалоге
+      operationId: respondToDialogue
+      tags: [NPCs, Dialogues]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: npcId, in: path, required: true, schema: {type: string}}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId, optionId]
+              properties:
+                characterId: {type: string, format: uuid}
+                optionId: {type: string}
+      responses:
+        '200':
+          description: Следующий диалог
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NPCDialogue'}
+
+components:
+  schemas:
+    NPC:
+      type: object
+      required: [id, name, type, locationId]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        type: {type: string, enum: [trader, quest_giver, citizen, enemy]}
+        locationId: {type: string}
+        faction: {type: string, nullable: true}
+        level: {type: integer}
+        description: {type: string}
+        isHostile: {type: boolean, default: false}
+
+    NPCDialogue:
+      type: object
+      required: [npcId, text, options]
+      properties:
+        npcId: {type: string}
+        text: {type: string}
+        options: {type: array, items: {$ref: '#/components/schemas/DialogueOption'}}
+        npcState: {type: string, nullable: true}
+
+    DialogueOption:
+      type: object
+      required: [id, text]
+      properties:
+        id: {type: string}
+        text: {type: string}
+        requiresSkill: {type: string, nullable: true}
+        requiresItem: {type: string, nullable: true}
+        available: {type: boolean, default: true}
+        consequence: {type: string, nullable: true}
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+

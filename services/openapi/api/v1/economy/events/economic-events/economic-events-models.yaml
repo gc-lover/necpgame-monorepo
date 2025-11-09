@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: Economic Events Core Models
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/events
+    directory: api/v1/economy/events/economic-events
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  parameters:
+    EventIdPath:
+      name: eventId
+      in: path
+      required: true
+      description: Economic event identifier
+      schema:
+        type: string
+        format: uuid
+    EventStatusQuery:
+      name: status
+      in: query
+      description: Filter by lifecycle status
+      schema:
+        type: string
+        enum: [PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED]
+    EventTypeQuery:
+      name: type
+      in: query
+      description: Filter by event type code
+      schema:
+        type: string
+        enum: [CRISIS, BOOM, INFLATION, DEFLATION, EMBARGO, SANCTIONS, TARIFF, SCARCITY, CUSTOM]
+    EventRegionQuery:
+      name: region
+      in: query
+      description: Region identifier (ISO code or in-game region id)
+      schema:
+        type: string
+        maxLength: 32
+    EventSeverityQuery:
+      name: severity
+      in: query
+      description: Filter by severity level
+      schema:
+        type: string
+        enum: [MINOR, MAJOR, SEVERE]
+  schemas:
+    EconomicEvent:
+      type: object
+      required: [eventId, type, name, status, severity, scope, schedule]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED]
+        severity:
+          type: string
+          enum: [MINOR, MAJOR, SEVERE]
+        scope:
+          type: string
+          enum: [GLOBAL, REGIONAL, SECTOR]
+        regions:
+          type: array
+          items:
+            type: string
+        sectors:
+          type: array
+          items:
+            type: string
+        stackable:
+          type: boolean
+          default: false
+        cooldownDays:
+          type: integer
+          minimum: 0
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventEffect'
+        schedule:
+          $ref: '#/components/schemas/EventSchedule'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventAlert'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    EventEffect:
+      type: object
+      required: [category, target, modifier]
+      properties:
+        category:
+          type: string
+          enum: [PRICE, TAX, TARIFF, CURRENCY, STOCK_INDEX, TRADE_LIMIT, QUEST_TRIGGER]
+        target:
+          type: string
+          description: Identifier of affected asset, sector or currency
+        modifier:
+          type: object
+          required: [type, value]
+          properties:
+            type:
+              type: string
+              enum: [PERCENT, ABSOLUTE, MULTIPLIER]
+            value:
+              type: number
+              format: double
+            cap:
+              type: number
+              format: double
+              nullable: true
+        durationOverrideMinutes:
+          type: integer
+          nullable: true
+        stackBehaviour:
+          type: string
+          enum: [ADD, MAX, MIN, MULTIPLY]
+          default: ADD
+    EventSchedule:
+      type: object
+      required: [startTime, warningTime]
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        warningTime:
+          type: string
+          format: date-time
+        cooldownEndTime:
+          type: string
+          format: date-time
+          nullable: true
+        schedulerJobId:
+          type: string
+          nullable: true
+    EventAnnouncement:
+      type: object
+      required: [title, message, channels]
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [IN_GAME_BANNER, PUSH, EMAIL, MARKET_FEED]
+        audience:
+          type: array
+          items:
+            type: string
+            enum: [ALL_PLAYERS, AFFECTED_HOLDERS, SUBSCRIBED_ANALYSTS]
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+    EventCancellation:
+      type: object
+      required: [reason, rollbackAction]
+      properties:
+        reason:
+          type: string
+        rollbackAction:
+          type: string
+          enum: [IMMEDIATE_ROLLBACK, GRADUAL_ROLLBACK, MANUAL]
+        compensationPlan:
+          type: string
+          nullable: true
+        approvedBy:
+          type: array
+          items:
+            type: string
+        executedAt:
+          type: string
+          format: date-time
+          nullable: true
+    EventTimelineEntry:
+      type: object
+      required: [entryId, occurredAt, actor, action]
+      properties:
+        entryId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        action:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+        signatureChain:
+          type: array
+          items:
+            type: string
+    EventMetrics:
+      type: object
+      required: [priceDeviation, transactionVolume, sentimentShift]
+      properties:
+        priceDeviation:
+          type: number
+          format: double
+        transactionVolume:
+          type: number
+          format: double
+        sentimentShift:
+          type: number
+          format: double
+        rollbackStatus:
+          type: string
+          enum: [NOT_REQUIRED, PENDING, IN_PROGRESS, COMPLETED, FAILED]
+        uptimeMinutes:
+          type: integer
+        alertsTriggered:
+          type: integer
+    EventAlert:
+      type: object
+      required: [policy, threshold]
+      properties:
+        policy:
+          type: string
+          enum: [PRICE_DEVIATION, ROLLBACK_FAILURE, SCHEDULER_FAILURE]
+        threshold:
+          type: number
+          format: double
+        pagerDutyService:
+          type: string
+          nullable: true
+        autoEscalate:
+          type: boolean
+    PlannerSlot:
+      type: object
+      required: [slotId, startTime, endTime, conflicts]
+      properties:
+        slotId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        reservedFor:
+          type: string
+          nullable: true
+        conflicts:
+          type: array
+          items:
+            type: string
+        cooldownReason:
+          type: string
+          nullable: true

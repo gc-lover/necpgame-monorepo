@@ -1,0 +1,303 @@
+openapi: 3.0.3
+info:
+  title: Loot Generation API
+  version: 1.1.0
+  description: |
+    REST API для генерации и регистрации дропа лута на основе весовых таблиц.
+    Охватывает генерацию предметов, получение конфигураций таблиц и создание
+    drop-событий. Основано на `.BRAIN/05-technical/backend/loot-system/`
+    (v1.0.2, Part 1 & Part 2).
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/loot
+    package: com.necpgame.gameplay.loot
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: LootGeneration
+    description: Генерация предметов из таблиц
+  - name: LootTables
+    description: Конфигурация и просмотр таблиц лута
+
+paths:
+  /loot/generate:
+    post:
+      tags: [LootGeneration]
+      summary: Сгенерировать лут из таблицы
+      description: Генерирует набор предметов на основе указанной таблицы и контекста (уровень игрока, зона, модификаторы удачи).
+      operationId: generateLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LootGenerateRequest'
+      responses:
+        '200':
+          description: Сгенерированные предметы и метаданные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootGenerateResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+  /loot/drops:
+    post:
+      tags: [LootGeneration]
+      summary: Зарегистрировать событие дропа
+      description: Создаёт drop-событие (NPC death, контейнер, квест) и привязывает сгенерированные предметы.
+      operationId: createLootDrop
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LootDropRequest'
+      responses:
+        '201':
+          description: Drop создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootDrop'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+  /loot/tables/{lootTableId}:
+    get:
+      tags: [LootTables]
+      summary: Получить конфигурацию таблицы лута
+      description: Возвращает весовые записи и параметры таблицы. Используется гейм-дизайнерами и системами симуляции.
+      operationId: getLootTable
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LootTableId'
+      responses:
+        '200':
+          description: Конфигурация таблицы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootTable'
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+
+  parameters:
+    LootTableId:
+      name: lootTableId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Идентификатор таблицы лута
+
+  schemas:
+    LootGenerateRequest:
+      type: object
+      required: [loot_table_id, player_level, zone_tier]
+      properties:
+        loot_table_id:
+          type: string
+        player_level:
+          type: integer
+          format: int32
+        zone_tier:
+          type: integer
+          format: int32
+        luck_modifier:
+          type: number
+          format: float
+          default: 0
+        quantity_modifier:
+          type: number
+          format: float
+          default: 1
+        modifiers:
+          type: array
+          items:
+            type: string
+          description: Дополнительные флаги (event_bonus, boss_kill и т.д.)
+    LootGenerateResponse:
+      type: object
+      required: [items, generation_seed, expires_at]
+      properties:
+        items:
+          type: array
+          description: Сгенерированные предметы (без фактического распределения)
+          items:
+            $ref: '#/components/schemas/GeneratedItem'
+        generation_seed:
+          type: string
+          description: Seed для воспроизведения генерации
+        expires_at:
+          type: string
+          format: date-time
+          description: Срок действия генерации до автоочистки (10 минут)
+    GeneratedItem:
+      type: object
+      required: [item_id, quantity, rarity]
+      properties:
+        item_id:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, mythic]
+        durability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+        stats:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+    LootDropRequest:
+      type: object
+      required: [source]
+      properties:
+        source:
+          $ref: '#/components/schemas/LootSource'
+        loot_table_id:
+          type: string
+          description: Таблица по умолчанию, если source не содержит override
+        generated_items:
+          type: array
+          description: Предметы для сохранения; если отсутствует — система проведёт генерацию.
+          items:
+            $ref: '#/components/schemas/GeneratedItem'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootParticipant'
+        distribution_mode:
+          $ref: '#/components/schemas/LootDistributionMode'
+        personal_loot:
+          type: boolean
+          description: Флаг персонального лута (true) либо общего пула
+    LootDrop:
+      type: object
+      required: [drop_id, items, created_at, expires_at]
+      properties:
+        drop_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneratedItem'
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        loot_mode:
+          $ref: '#/components/schemas/LootDistributionMode'
+        source:
+          $ref: '#/components/schemas/LootSource'
+    LootTable:
+      type: object
+      required: [id, name, entries]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        table_type:
+          type: string
+          enum: [npc_loot, container_loot, boss_loot, quest_reward]
+        min_items:
+          type: integer
+          format: int32
+        max_items:
+          type: integer
+          format: int32
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootTableEntry'
+    LootTableEntry:
+      type: object
+      required: [item_id, weight]
+      properties:
+        item_id:
+          type: string
+        weight:
+          type: number
+          format: float
+        min_qty:
+          type: integer
+          format: int32
+          default: 1
+        max_qty:
+          type: integer
+          format: int32
+          default: 1
+        guaranteed:
+          type: boolean
+          default: false
+        tags:
+          type: array
+          items:
+            type: string
+    LootSource:
+      type: object
+      required: [source_type, source_id]
+      properties:
+        source_type:
+          type: string
+          enum: [npc, container, quest, boss, event]
+        source_id:
+          type: string
+        encounter_level:
+          type: integer
+          format: int32
+          nullable: true
+        zone_id:
+          type: string
+          nullable: true
+    LootParticipant:
+      type: object
+      required: [character_id]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        contribution_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+        is_party_leader:
+          type: boolean
+          default: false
+    LootDistributionMode:
+      type: string
+      enum: [personal, shared, master_looter]
+

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="087-create-trading-guilds-tables" author="backend-agent">
+        <createTable tableName="trading_guilds">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="guild_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="level" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reputation_score" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="member_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="headquarters_location" type="VARCHAR(160)"/>
+            <column name="founder_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="leader_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="leader_name" type="VARCHAR(120)"/>
+            <column name="total_capital" type="NUMERIC(18,2)" defaultValueNumeric="0.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="specialization_json" type="JSONB"/>
+            <column name="trading_fee_reduction" type="NUMERIC(6,3)"/>
+            <column name="profit_margin_increase" type="NUMERIC(6,3)"/>
+            <column name="exclusive_routes_count" type="INT"/>
+            <column name="guild_hall_level" type="INT"/>
+            <column name="warehouse_capacity" type="INT"/>
+            <column name="trade_office_count" type="INT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="trading_guilds" columnNames="name" constraintName="uq_trading_guilds_name"/>
+        <createIndex tableName="trading_guilds" indexName="idx_trading_guilds_type">
+            <column name="guild_type"/>
+        </createIndex>
+        <createIndex tableName="trading_guilds" indexName="idx_trading_guilds_level">
+            <column name="level"/>
+        </createIndex>
+        <createIndex tableName="trading_guilds" indexName="idx_trading_guilds_region">
+            <column name="headquarters_location"/>
+        </createIndex>
+
+        <createTable tableName="trading_guild_treasuries">
+            <column name="guild_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="balance" type="NUMERIC(18,2)" defaultValueNumeric="0.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currencies_json" type="JSONB"/>
+            <column name="assets_json" type="JSONB"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="trading_guild_treasuries" baseColumnNames="guild_id"
+                                 constraintName="fk_treasuries_guild"
+                                 referencedTableName="trading_guilds" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <createTable tableName="trading_guild_members">
+            <column name="guild_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(32)"/>
+            <column name="character_name" type="VARCHAR(160)"/>
+            <column name="contribution_total" type="NUMERIC(18,2)" defaultValueNumeric="0.00"/>
+            <column name="voting_power" type="NUMERIC(6,2)" defaultValueNumeric="1.00"/>
+            <column name="trades_completed" type="INT" defaultValueNumeric="0"/>
+            <column name="joined_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addPrimaryKey tableName="trading_guild_members" columnNames="guild_id, character_id"
+                       constraintName="pk_trading_guild_members"/>
+        <addForeignKeyConstraint baseTableName="trading_guild_members" baseColumnNames="guild_id"
+                                 constraintName="fk_members_guild"
+                                 referencedTableName="trading_guilds" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="trading_guild_members" indexName="idx_trading_guild_members_role">
+            <column name="role"/>
+        </createIndex>
+
+        <createTable tableName="trading_guild_transactions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="guild_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="performed_by" type="UUID"/>
+            <column name="transaction_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="metadata_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="trading_guild_transactions" baseColumnNames="guild_id"
+                                 constraintName="fk_transactions_guild"
+                                 referencedTableName="trading_guilds" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="trading_guild_transactions" indexName="idx_trading_guild_transactions_guild">
+            <column name="guild_id"/>
+        </createIndex>
+        <createIndex tableName="trading_guild_transactions" indexName="idx_trading_guild_transactions_type">
+            <column name="transaction_type"/>
+        </createIndex>
+
+        <createTable tableName="trading_guild_routes">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="guild_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="route_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_level" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(180)"/>
+            <column name="origin" type="VARCHAR(160)"/>
+            <column name="destination" type="VARCHAR(160)"/>
+            <column name="goods_json" type="JSONB"/>
+            <column name="profit_margin" type="NUMERIC(6,3)"/>
+            <column name="exclusive" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="danger_level" type="VARCHAR(16)"/>
+            <column name="obtained_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="trading_guild_routes" baseColumnNames="guild_id"
+                                 constraintName="fk_routes_guild"
+                                 referencedTableName="trading_guilds" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="trading_guild_routes" indexName="idx_trading_guild_routes_guild">
+            <column name="guild_id"/>
+        </createIndex>
+        <createIndex tableName="trading_guild_routes" indexName="idx_trading_guild_routes_permission">
+            <column name="permission_level"/>
+        </createIndex>
+
+        <createTable tableName="trading_guild_quotas">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="guild_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_category" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_quantity_per_week" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_used" type="INT" defaultValueNumeric="0"/>
+            <column name="resets_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="trading_guild_quotas" baseColumnNames="guild_id"
+                                 constraintName="fk_quotas_guild"
+                                 referencedTableName="trading_guilds" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="trading_guild_quotas" indexName="idx_trading_guild_quotas_guild">
+            <column name="guild_id"/>
+        </createIndex>
+
+        <createTable tableName="trading_guild_distributions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="guild_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="distribution_type" type="VARCHAR(24)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_amount" type="NUMERIC(18,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="details_json" type="JSONB"/>
+            <column name="created_by" type="UUID"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="trading_guild_distributions" baseColumnNames="guild_id"
+                                 constraintName="fk_distributions_guild"
+                                 referencedTableName="trading_guilds" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="trading_guild_distributions" indexName="idx_trading_guild_distributions_guild">
+            <column name="guild_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

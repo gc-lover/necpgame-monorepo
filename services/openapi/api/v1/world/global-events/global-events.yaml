@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: Global Events API
+  version: 1.0.0
+  description: |
+    API для глобальных событий 2020-2093.
+    
+    Источник: .BRAIN/02-gameplay/world/events/global-events-2020-2093.md v1.0.0
+    
+    Типы: Political, Economic, Technological, Environmental, Social
+    Эпохи: 2020-2030, 2030-2045, 2045-2060, 2060-2077, 2077, 2078-2093
+    Влияние на регионы, фракции, экономику
+
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/gameplay/world
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Global Events
+    description: Глобальные события timeline
+
+paths:
+  /gameplay/world/global-events:
+    get:
+      summary: Получить все глобальные события
+      description: |
+        Возвращает список глобальных событий timeline 2020-2093.
+        Можно фильтровать по эпохе, типу, активности.
+      operationId: getGlobalEvents
+      tags:
+        - Global Events
+      parameters:
+        - name: era
+          in: query
+          required: false
+          description: Фильтр по эпохе
+          schema:
+            type: string
+            enum: ["2020-2030", "2030-2045", "2045-2060", "2060-2077", "2077", "2078-2093"]
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [political, economic, technological, environmental, social]
+        - name: include_inactive
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GlobalEvent'
+                  total:
+                    type: integer
+
+  /gameplay/world/global-events/active:
+    get:
+      summary: Получить активные события
+      description: |
+        Возвращает события, активные в текущий момент игрового времени.
+        Зависит от текущего игрового времени в лиге.
+      operationId: getActiveGlobalEvents
+      tags:
+        - Global Events
+      responses:
+        '200':
+          description: Активные события
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  game_time:
+                    type: string
+                    format: date-time
+                  active_events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GlobalEvent'
+
+  /gameplay/world/global-events/{event_id}:
+    get:
+      summary: Детали глобального события
+      description: |
+        Возвращает детальную информацию о событии:
+        - Описание и лор
+        - Влияние на регионы и фракции
+        - Связанные квесты
+        - Модификаторы геймплея
+      operationId: getGlobalEvent
+      tags:
+        - Global Events
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalEventDetails'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/world/global-events/by-era/{era}:
+    get:
+      summary: Получить события эпохи
+      description: Возвращает все события указанной эпохи
+      operationId: getEventsByEra
+      tags:
+        - Global Events
+      parameters:
+        - name: era
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: ["2020-2030", "2030-2045", "2045-2060", "2060-2077", "2077", "2078-2093"]
+      responses:
+        '200':
+          description: События эпохи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  era:
+                    type: string
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GlobalEvent'
+
+components:
+  schemas:
+    GlobalEvent:
+      type: object
+      required:
+        - event_id
+        - name
+        - type
+        - era
+      properties:
+        event_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [political, economic, technological, environmental, social]
+        era:
+          type: string
+          description: Эпоха события
+        year_start:
+          type: integer
+          description: Год начала события
+        year_end:
+          type: integer
+          description: Год окончания события (если длительное)
+        is_active:
+          type: boolean
+          description: Активно ли событие в текущий момент
+        short_description:
+          type: string
+
+    GlobalEventDetails:
+      type: object
+      properties:
+        event_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        era:
+          type: string
+        description:
+          type: string
+          description: Полное описание события
+        lore:
+          type: string
+          description: Лор из Cyberpunk
+        impact:
+          type: object
+          description: Влияние на игровой мир
+          properties:
+            global_modifiers:
+              type: array
+              description: Глобальные модификаторы
+              items:
+                type: object
+            regional_differences:
+              type: object
+              description: Региональные различия влияния
+            faction_reactions:
+              type: object
+              description: Реакции фракций на событие
+        related_quests:
+          type: array
+          description: Квесты, связанные с событием
+          items:
+            type: string
+        triggers:
+          type: object
+          description: Триггеры запуска события

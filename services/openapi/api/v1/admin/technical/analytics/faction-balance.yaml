@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: Faction Analytics Balance API
+  version: 1.0.0
+  description: Метрики фракций, авто-тюнинг баланса и управление алертами для analytics-service.
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/analytics
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+x-target-architecture:
+  backend:
+    - service: analytics-service
+      module: factions.balance
+    - service: world-service
+      module: gameplay.world.balance-sync
+    - service: economy-service
+      module: economy.trade-modifiers
+    - service: social-service
+      module: reputation.alerts
+  frontend:
+    module: modules/analytics/dashboard
+    store: useFactionAnalyticsStore
+security:
+  - BearerAuth: []
+tags:
+  - name: Metrics
+    description: Получение метрик и детализации по фракциям.
+  - name: Autotune
+    description: Применение балансировочных изменений.
+  - name: Alerts
+    description: Управление алертами и уведомлениями.
+paths:
+  /analytics/factions/metrics:
+    get:
+      tags: [Metrics]
+      summary: Получить агрегированные метрики фракций
+      operationId: listFactionMetrics
+      security: [ { BearerAuth: [analytics.read] } ]
+      parameters:
+        - $ref: './faction-balance-components.yaml#/components/parameters/FactionId'
+        - $ref: './faction-balance-components.yaml#/components/parameters/MetricKey'
+        - $ref: './faction-balance-components.yaml#/components/parameters/Period'
+        - $ref: './faction-balance-components.yaml#/components/parameters/SandboxQuery'
+        - $ref: './faction-balance-components.yaml#/components/parameters/SandboxHeader'
+      responses:
+        '200':
+          description: Список метрик с телеметрией.
+          content:
+            application/json:
+              schema: { $ref: './faction-balance-components.yaml#/components/schemas/MetricsResponse' }
+              examples: { default: { $ref: './faction-balance-examples.yaml#/components/examples/MetricsResponse' } }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '422': { $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+  /analytics/factions/metrics/{metricId}:
+    get:
+      tags: [Metrics]
+      summary: Получить детализацию метрики
+      operationId: getFactionMetricDetail
+      security: [ { BearerAuth: [analytics.read] } ]
+      parameters:
+        - $ref: './faction-balance-components.yaml#/components/parameters/MetricId'
+        - $ref: './faction-balance-components.yaml#/components/parameters/FactionId'
+        - $ref: './faction-balance-components.yaml#/components/parameters/Period'
+        - $ref: './faction-balance-components.yaml#/components/parameters/SandboxQuery'
+      responses:
+        '200':
+          description: Временные срезы метрики.
+          content:
+            application/json:
+              schema: { $ref: './faction-balance-components.yaml#/components/schemas/MetricDetail' }
+              examples: { default: { $ref: './faction-balance-examples.yaml#/components/examples/MetricDetailResponse' } }
+        '404':
+          description: Метрика не найдена.
+          content:
+            application/json:
+              schema: { $ref: './faction-balance-components.yaml#/components/schemas/AnalyticsError' }
+  /analytics/factions/autotune:
+    post:
+      tags: [Autotune]
+      summary: Применить авто-тюнинг параметров
+      operationId: applyFactionAutotune
+      security: [ { BearerAuth: [analytics.autotune] }, { ServiceToken: [] } ]
+      parameters:
+        - $ref: './faction-balance-components.yaml#/components/parameters/SandboxHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './faction-balance-components.yaml#/components/schemas/AutotuneRequest' }
+            examples: { default: { $ref: './faction-balance-examples.yaml#/components/examples/AutotuneRequest' } }
+      responses:
+        '202':
+          description: Пакет принят к исполнению.
+          content:
+            application/json:
+              schema: { $ref: './faction-balance-components.yaml#/components/schemas/AutotuneResult' }
+              examples: { default: { $ref: './faction-balance-examples.yaml#/components/examples/AutotuneResult' } }
+        '409':
+          description: Конфликт версий или пересечение действий.
+          content:
+            application/json:
+              schema: { $ref: './faction-balance-components.yaml#/components/schemas/AnalyticsError' }
+        '422': { $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+  /analytics/factions/alerts:
+    get:
+      tags: [Alerts]
+      summary: Получить активные алерты
+      operationId: listFactionAlerts
+      security: [ { BearerAuth: [analytics.alerts.read] } ]
+      parameters:
+        - $ref: './faction-balance-components.yaml#/components/parameters/AlertId'
+        - $ref: './faction-balance-components.yaml#/components/parameters/FactionId'
+        - $ref: './faction-balance-components.yaml#/components/parameters/SandboxQuery'
+      responses:
+        '200':
+          description: Текущие алерты и рекомендации.
+          content:
+            application/json:
+              schema: { $ref: './faction-balance-components.yaml#/components/schemas/AlertsResponse' }
+              examples: { default: { $ref: './faction-balance-examples.yaml#/components/examples/AlertsResponse' } }
+  /analytics/factions/alerts/ack:
+    post:
+      tags: [Alerts]
+      summary: Подтвердить или закрыть алерт
+      operationId: acknowledgeFactionAlert
+      security: [ { BearerAuth: [analytics.alerts.write] } ]
+      parameters:
+        - $ref: './faction-balance-components.yaml#/components/parameters/SandboxHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './faction-balance-components.yaml#/components/schemas/AlertAck' }
+            examples: { default: { $ref: './faction-balance-examples.yaml#/components/examples/AlertAckRequest' } }
+      responses:
+        '202': { description: Алерт обновлён. }
+        '404':
+          description: Алерт не найден.
+          content:
+            application/json:
+              schema: { $ref: './faction-balance-components.yaml#/components/schemas/AnalyticsError' }
+
+x-integrations:
+  world-service:
+    raids-balance: POST /api/v1/world/raids/{raidId}/balance
+  economy-service:
+    modifiers: POST /api/v1/economy/factions/trade-modifiers
+  social-service:
+    reputation: POST /api/v1/social/factions/reputation
+x-observability:
+  metrics:
+    - analytics_job_latency
+    - autotune_actions_total
+    - alerts_open_total
+  pagerduty: AnalyticsJobLag
+x-websocket:
+  url: wss://api.necp.game/v1/analytics/factions
+  description: Поток обновлений метрик, авто-тюнинга и алертов.
+  messages:
+    MetricUpdate:
+      summary: Обновлена метрика.
+      payload:
+        $ref: './faction-balance-examples.yaml#/components/examples/WebsocketMetricUpdate/value'
+    AutotuneApplied:
+      summary: Применён пакет авто-тюнинга.
+      payload:
+        $ref: './faction-balance-examples.yaml#/components/examples/WebsocketAutotuneApplied/value'
+    AlertRaised:
+      summary: Создан новый алерт.
+      payload:
+        type: object
+        properties:
+          alert: { $ref: './faction-balance-components.yaml#/components/schemas/Alert' }
+    AlertResolved:
+      summary: Алерт закрыт или подтверждён.
+      payload:
+        type: object
+        properties:
+          alertId: { type: string }
+          resolved: { type: boolean }
+          timestamp: { type: string, format: date-time }
+
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+
+

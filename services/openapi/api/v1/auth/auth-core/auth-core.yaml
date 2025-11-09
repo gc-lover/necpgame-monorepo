@@ -1,0 +1,481 @@
+openapi: 3.0.3
+info:
+  title: Auth Core API
+  version: 1.0.0
+  description: |
+    Core authentication and authorization contracts covering registration, login, JWT refresh, password flows,
+    email verification, two-factor authentication, OAuth providers and account/role management.
+    Source: .BRAIN/05-technical/backend/auth/README.md v1.0.1.
+    Related: auth-database-registration.md, auth-login-jwt.md, auth-authorization-security.md.
+  x-microservice:
+    name: auth-service
+    port: 8081
+    domain: auth
+    base-path: /api/v1/auth
+    directory: api/v1/auth/auth-core
+    package: com.necpgame.authservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: AuthPublic
+    description: Public endpoints for registration, login and password recovery
+  - name: AuthSession
+    description: Token issuance, refresh and logout
+  - name: AuthSecurity
+    description: Email verification, password management and 2FA
+  - name: AuthOAuth
+    description: OAuth provider redirects and callbacks
+  - name: AuthAccount
+    description: Account profile, roles and administrative operations
+paths:
+  /auth/register:
+    post:
+      tags: [AuthPublic]
+      summary: Register account
+      description: Registers a new account using email/password, triggers verification email and assigns default PLAYER role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/RegisterResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/login:
+    post:
+      tags: [AuthPublic]
+      summary: Login with credentials
+      description: Authenticates via email/password, performs lockout checks and optionally requires 2FA verification.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/LoginResponse'
+        '202':
+          description: Two-factor verification required
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/TwoFactorRequiredResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '423':
+          description: Account temporarily locked due to failed attempts
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/AccountLockedResponse'
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/logout:
+    post:
+      tags: [AuthSession]
+      summary: Logout and invalidate refresh token
+      description: Revokes refresh token, terminates active session and publishes logout event.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/LogoutRequest'
+      responses:
+        '204':
+          description: Logout successful (no content)
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/refresh:
+    post:
+      tags: [AuthSession]
+      summary: Refresh access token
+      description: Issues new access token using refresh token stored in Redis; invalidates on misuse.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Tokens refreshed
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/RefreshTokenResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/password/forgot:
+    post:
+      tags: [AuthSecurity]
+      summary: Request password reset
+      description: Generates password reset token and schedules verification email; idempotent within lock period.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '202':
+          description: Reset email dispatched or already requested
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/ForgotPasswordResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/password/reset:
+    post:
+      tags: [AuthSecurity]
+      summary: Reset password
+      description: Resets password using reset token, rotates refresh tokens and logs originating IP/device.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/ResetPasswordResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/password/change:
+    post:
+      tags: [AuthSecurity]
+      summary: Change password
+      description: Allows authenticated user to change password; requires current password confirmation.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/ChangePasswordResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/verify-email:
+    post:
+      tags: [AuthSecurity]
+      summary: Verify email token
+      description: Confirms email using verification token, activates account and publishes account created event if pending.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/EmailVerificationRequest'
+      responses:
+        '200':
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/EmailVerificationResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/verify-email/resend:
+    post:
+      tags: [AuthSecurity]
+      summary: Resend verification email
+      description: Re-sends email verification link respecting rate limits and lockouts for abuse prevention.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/EmailResendRequest'
+      responses:
+        '202':
+          description: Verification email re-sent
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/EmailResendResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/2fa/enable:
+    post:
+      tags: [AuthSecurity]
+      summary: Enable two-factor authentication
+      description: Initiates 2FA setup, returning QR code and backup codes for confirmation.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Two-factor setup initiated
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/TwoFactorSetupResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/2fa/verify:
+    post:
+      tags: [AuthSecurity]
+      summary: Confirm two-factor authentication
+      description: Verifies 2FA code obtained during setup, activates two-factor requirement for logins.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/TwoFactorVerifyRequest'
+      responses:
+        '200':
+          description: Two-factor enabled
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/TwoFactorVerifyResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/2fa/disable:
+    post:
+      tags: [AuthSecurity]
+      summary: Disable two-factor authentication
+      description: Disables 2FA after verifying password and one-time code or backup code.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/TwoFactorDisableRequest'
+      responses:
+        '200':
+          description: Two-factor disabled
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/TwoFactorDisableResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/oauth/{provider}/authorize:
+    parameters:
+      - $ref: './auth-core-models.yaml#/components/parameters/OAuthProviderPath'
+    get:
+      tags: [AuthOAuth]
+      summary: Start OAuth authorization flow
+      description: Initiates OAuth redirect for supported provider and returns authorization URL.
+      responses:
+        '200':
+          description: OAuth authorization URL
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/OAuthAuthorizeResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/oauth/{provider}/callback:
+    parameters:
+      - $ref: './auth-core-models.yaml#/components/parameters/OAuthProviderPath'
+      - $ref: './auth-core-models.yaml#/components/parameters/OAuthCodeQuery'
+      - $ref: './auth-core-models.yaml#/components/parameters/OAuthStateQuery'
+    get:
+      tags: [AuthOAuth]
+      summary: Handle OAuth callback
+      description: Completes OAuth login, creates or links account and returns issued tokens.
+      responses:
+        '200':
+          description: OAuth login completed
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/OAuthCallbackResponse'
+        '302':
+          description: Redirect to frontend callback URL
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/account:
+    get:
+      tags: [AuthAccount]
+      summary: Get account profile
+      description: Returns account profile, verified status, roles and security settings for authenticated user.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Account profile payload
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/AccountProfileResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    put:
+      tags: [AuthAccount]
+      summary: Update account profile
+      description: Updates mutable account profile fields and communication preferences.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/AccountProfileUpdateRequest'
+      responses:
+        '200':
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/AccountProfileResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    delete:
+      tags: [AuthAccount]
+      summary: Delete account
+      description: Soft deletes account, emits account deleted event and schedules cleanup.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/AccountDeleteRequest'
+      responses:
+        '202':
+          description: Account deletion scheduled
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/AccountDeleteResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/roles:
+    get:
+      tags: [AuthAccount]
+      summary: List roles and permissions
+      description: Returns available roles and their permissions for administrative tools.
+      security:
+        - ModeratorSession: []
+      responses:
+        '200':
+          description: Role catalogue
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/RoleListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/roles/{accountId}:
+    parameters:
+      - $ref: './auth-core-models.yaml#/components/parameters/AccountIdPath'
+    post:
+      tags: [AuthAccount]
+      summary: Assign roles to account
+      description: Grants or revokes roles for account; restricted to ADMIN and SUPER_ADMIN scopes.
+      security:
+        - AdminSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './auth-core-models-operations.yaml#/components/schemas/AssignRoleRequest'
+      responses:
+        '200':
+          description: Roles updated
+          content:
+            application/json:
+              schema:
+                $ref: './auth-core-models-operations.yaml#/components/schemas/AssignRoleResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  responses:
+    BadRequest:
+      $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+    TooManyRequests:
+      $ref: '../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+    InternalServerError:
+      $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    PlayerSession:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/PlayerSession'
+    ModeratorSession:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/ModeratorSession'
+    AdminSession:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/GMToken'
+  schemas:
+    AuthAccountCreatedEvent:
+      $ref: './auth-core-models-operations.yaml#/components/schemas/AuthAccountCreatedEvent'
+    AuthLoginSuccessEvent:
+      $ref: './auth-core-models-operations.yaml#/components/schemas/AuthLoginSuccessEvent'
+    AuthLogoutEvent:
+      $ref: './auth-core-models-operations.yaml#/components/schemas/AuthLogoutEvent'
+    AuthPasswordChangedEvent:
+      $ref: './auth-core-models-operations.yaml#/components/schemas/AuthPasswordChangedEvent'
+

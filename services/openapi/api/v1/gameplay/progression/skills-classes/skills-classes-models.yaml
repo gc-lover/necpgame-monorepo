@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: Skills Classes Core Models
+  version: 1.0.0
+components:
+  parameters:
+    ClassCode:
+      name: classCode
+      in: path
+      description: Class code in kebab-case (e.g. solo, netrunner)
+      required: true
+      schema:
+        type: string
+        pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+    SubclassCode:
+      name: subclassCode
+      in: path
+      description: Subclass code in kebab-case
+      required: true
+      schema:
+        type: string
+        pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+    ClassType:
+      name: classType
+      in: query
+      description: Filter by class archetype
+      schema:
+        type: string
+        enum: [combat, cyber, support, social, utility, hybrid]
+    HasExclusive:
+      name: hasExclusive
+      in: query
+      description: Filter classes that contain exclusive skills
+      schema:
+        type: boolean
+    SupportsCrossClass:
+      name: supportsCrossClass
+      in: query
+      description: Filter by cross-class support flag
+      schema:
+        type: boolean
+    Sort:
+      name: sort
+      in: query
+      description: Sort expression (e.g. updatedAt,DESC)
+      schema:
+        type: string
+        maxLength: 64
+    MetricPeriod:
+      name: period
+      in: query
+      description: Aggregation window for telemetry
+      schema:
+        type: string
+        enum: [daily, weekly, monthly]
+    MetricType:
+      name: metricType
+      in: query
+      description: Metric type filter
+      schema:
+        type: string
+        enum: [combat, support, social, cyber, economic]
+    SubclassFilter:
+      name: subclassCode
+      in: query
+      description: Filter telemetry for a specific subclass
+      schema:
+        type: string
+        pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+    IncludeOverrides:
+      name: includeOverrides
+      in: query
+      description: Include active balance overrides in metrics response
+      schema:
+        type: boolean
+    EventType:
+      name: eventType
+      in: query
+      description: Filter progression events by type
+      schema:
+        type: string
+        enum: [unlock_attempted, unlock_success, modifier_applied, balance_override_applied]
+    EventFrom:
+      name: from
+      in: query
+      description: Start timestamp (ISO 8601)
+      schema:
+        type: string
+        format: date-time
+    EventTo:
+      name: to
+      in: query
+      description: End timestamp (ISO 8601)
+      schema:
+        type: string
+        format: date-time
+    EventLimit:
+      name: limit
+      in: query
+      description: Maximum events to return (1-500)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+  schemas:
+    SkillModifier:
+      type: object
+      required: [skillCode, attributeCode, bonus]
+      properties:
+        skillCode:
+          type: string
+          maxLength: 64
+        attributeCode:
+          type: string
+          maxLength: 8
+        bonus:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        scalesWithRank:
+          type: boolean
+          default: false
+        maxBonus:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    SubclassAnchor:
+      type: object
+      required: [subclassCode, displayName]
+      properties:
+        subclassCode:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+        displayName:
+          type: string
+          maxLength: 80
+    ExclusiveSkill:
+      type: object
+      required: [skillCode, name, type, unlockTier]
+      properties:
+        skillCode:
+          type: string
+          maxLength: 64
+        name:
+          type: string
+          maxLength: 120
+        type:
+          type: string
+          enum: [active, support, aura]
+        unlockTier:
+          type: integer
+          minimum: 0
+          maximum: 4
+        resourceCost:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+          description: Resource cost fields (stamina, focus, cyberdeckLoad, etc.)
+        cooldownSeconds:
+          type: integer
+          minimum: 0
+          maximum: 600
+        description:
+          type: string
+        limitations:
+          type: array
+          items:
+            type: string
+    TierRequirement:
+      type: object
+      required: [tier, requiredLevel]
+      properties:
+        tier:
+          type: integer
+          minimum: 0
+          maximum: 4
+        requiredLevel:
+          type: integer
+          minimum: 1
+          maximum: 100
+        attributeThresholds:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        questCode:
+          type: string
+        reputation:
+          type: object
+          properties:
+            factionCode:
+              type: string
+            minimum:
+              type: integer
+              minimum: 0
+              maximum: 100
+        uniqueItemCode:
+          type: string
+        crossClassPenalty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    BalanceOverrideSnapshot:
+      type: object
+      required: [overrideId, effectiveFrom, author]
+      properties:
+        overrideId:
+          type: string
+          format: uuid
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveUntil:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        author:
+          type: string
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/OverrideModifier'
+        exclusiveAdjustments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExclusiveOverride'
+    OverrideModifier:
+      type: object
+      required: [skillCode, attributeCode, bonusDelta]
+      properties:
+        skillCode:
+          type: string
+          maxLength: 64
+        attributeCode:
+          type: string
+          maxLength: 8
+        bonusDelta:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+        duration:
+          type: string
+        notes:
+          type: string
+    ExclusiveOverride:
+      type: object
+      required: [skillCode]
+      properties:
+        skillCode:
+          type: string
+          maxLength: 64
+        cooldownDelta:
+          type: integer
+        resourceCostDelta:
+          type: object
+          additionalProperties:
+            type: number
+        activationLimit:
+          type: integer
+          minimum: 0
+    ClassSummary:
+      type: object
+      required: [classCode, displayName, classType, primarySkills, baselineModifiers, supportsCrossClass, updatedAt]
+      properties:
+        classCode:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+        displayName:
+          type: string
+          maxLength: 80
+        classType:
+          type: string
+          enum: [combat, cyber, support, social, utility, hybrid]
+        primarySkills:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        secondarySkills:
+          type: array
+          items:
+            type: string
+        lockedSkills:
+          type: array
+          items:
+            type: string
+        baselineModifiers:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SkillModifier'
+        availableSubclasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubclassAnchor'
+        exclusiveSkillCodes:
+          type: array
+          items:
+            type: string
+        supportsCrossClass:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+    SubclassDetail:
+      type: object
+      required: [subclassCode, displayName, modifiers]
+      properties:
+        subclassCode:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+        displayName:
+          type: string
+          maxLength: 80
+        modifiers:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SkillModifier'
+        exclusiveSkills:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExclusiveSkill'
+        crossClassCompatibility:
+          type: object
+          properties:
+            allowed:
+              type: array
+              items:
+                type: string
+            penaltyMultiplier:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+        notes:
+          type: string
+    ClassDetail:
+      allOf:
+        - $ref: '#/components/schemas/ClassSummary'
+        - type: object
+          required: [subclasses, unlockMatrix, exclusiveSkills, balanceOverrides]
+          properties:
+            subclasses:
+              type: array
+              items:
+                $ref: '#/components/schemas/SubclassDetail'
+            unlockMatrix:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/TierRequirement'
+            exclusiveSkills:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExclusiveSkill'
+            balanceOverrides:
+              type: array
+              items:
+                $ref: '#/components/schemas/BalanceOverrideSnapshot'
+

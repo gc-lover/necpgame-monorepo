@@ -1,0 +1,447 @@
+openapi: 3.0.3
+info:
+  title: Admin & Moderation Tools API
+  version: 1.0.0
+  description: |
+    API для администрирования и модерации.
+    
+    Функционал:
+    - Player management (просмотр, редактирование, бан)
+    - Content moderation (chat, names, descriptions)
+    - Analytics dashboard
+    - Server management
+    - Economy tools (add/remove currency, items)
+    - Quest management (force complete, reset)
+    - Event triggering
+    - Logs & audit trail
+    
+    Роли:
+    - SUPER_ADMIN: полный доступ
+    - ADMIN: большинство функций
+    - MODERATOR: content moderation, player support
+    
+    Источник: .BRAIN/05-technical/infrastructure/admin-moderation-tools.md v1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/admin
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Player Management
+    description: Управление игроками
+  - name: Content Moderation
+    description: Модерация контента
+  - name: Economy Tools
+    description: Экономические инструменты
+  - name: Analytics
+    description: Аналитика
+
+paths:
+  /admin/players:
+    get:
+      summary: Получить список игроков
+      operationId: adminGetPlayers
+      tags: [Player Management]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, BANNED, SUSPENDED]
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Список игроков
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AdminPlayerView'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /admin/players/{player_id}:
+    get:
+      summary: Получить детали игрока
+      operationId: adminGetPlayer
+      tags: [Player Management]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPlayerDetailed'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+    patch:
+      summary: Обновить данные игрока
+      operationId: adminUpdatePlayer
+      tags: [Player Management]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                status:
+                  type: string
+                premium_currency:
+                  type: integer
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Игрок обновлен
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /admin/moderation/chat:
+    get:
+      summary: Получить логи чата для модерации
+      operationId: getChatLogs
+      tags: [Content Moderation]
+      parameters:
+        - name: channel
+          in: query
+          schema:
+            type: string
+        - name: flagged_only
+          in: query
+          description: Только помеченные сообщения
+          schema:
+            type: boolean
+            default: false
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Логи чата
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+
+  /admin/moderation/chat/{message_id}/action:
+    post:
+      summary: Выполнить модерационное действие
+      operationId: moderateChatMessage
+      tags: [Content Moderation]
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [DELETE, WARN, MUTE_USER, BAN_USER]
+                duration_minutes:
+                  type: integer
+                  nullable: true
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Действие выполнено
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /admin/economy/grant:
+    post:
+      summary: Выдать валюту/предметы игроку
+      operationId: grantResources
+      tags: [Economy Tools]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantResourcesRequest'
+      responses:
+        '200':
+          description: Ресурсы выданы
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /admin/economy/revoke:
+    post:
+      summary: Забрать валюту/предметы у игрока
+      operationId: revokeResources
+      tags: [Economy Tools]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeResourcesRequest'
+      responses:
+        '200':
+          description: Ресурсы забраны
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /admin/analytics/dashboard:
+    get:
+      summary: Получить данные для admin dashboard
+      operationId: getAdminDashboard
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Dashboard данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /admin/analytics/metrics:
+    get:
+      summary: Получить детальные метрики
+      operationId: getMetrics
+      tags: [Analytics]
+      parameters:
+        - name: metric_type
+          in: query
+          schema:
+            type: string
+            enum: [PLAYERS, ECONOMY, COMBAT, QUESTS, SOCIAL]
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+      responses:
+        '200':
+          description: Метрики
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+components:
+  schemas:
+    AdminPlayerView:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+        level:
+          type: integer
+        last_login:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        violations_count:
+          type: integer
+
+    AdminPlayerDetailed:
+      allOf:
+        - $ref: '#/components/schemas/AdminPlayerView'
+        - type: object
+          properties:
+            characters:
+              type: array
+              items:
+                type: object
+            premium_currency:
+              type: integer
+            total_playtime_hours:
+              type: integer
+            ip_addresses:
+              type: array
+              items:
+                type: string
+            payment_history:
+              type: array
+              items:
+                type: object
+
+    ChatMessage:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        channel:
+          type: string
+        sender_id:
+          type: string
+          format: uuid
+        sender_name:
+          type: string
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        flagged:
+          type: boolean
+        flag_reason:
+          type: string
+          nullable: true
+
+    GrantResourcesRequest:
+      type: object
+      required:
+        - player_id
+        - reason
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        currency:
+          type: object
+          nullable: true
+          properties:
+            eddies:
+              type: integer
+            premium_currency:
+              type: integer
+        items:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        reason:
+          type: string
+
+    RevokeResourcesRequest:
+      type: object
+      required:
+        - player_id
+        - reason
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        currency:
+          type: object
+          nullable: true
+          properties:
+            eddies:
+              type: integer
+            premium_currency:
+              type: integer
+        items:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/InventoryAdjustmentItem'
+        reason:
+          type: string
+
+    InventoryAdjustmentItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+
+    AdminDashboard:
+      type: object
+      properties:
+        online_players:
+          type: integer
+        total_players:
+          type: integer
+        active_sessions:
+          type: integer
+        pending_reports:
+          type: integer
+        server_health:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [HEALTHY, DEGRADED, DOWN]
+            cpu_usage:
+              type: number
+            memory_usage:
+              type: number
+        recent_activity:
+          type: array
+          items:
+            type: object
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,288 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/gameplay/loot
+# - Purpose: модели администрирования таблиц, распределения и конфигураций
+
+openapi: 3.0.3
+info:
+  title: Loot Generation Management Components
+  version: 1.0.0
+  description: Компоненты для управления таблицами, распределением и конфигурациями лута.
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/loot
+    package: com.necpgame.gameplayservice
+paths: {}
+
+components:
+  schemas:
+    LootTableSummary:
+      type: object
+      required: [tableId, name, tableType]
+      properties:
+        tableId: { type: string }
+        name: { type: string }
+        tableType: { type: string, enum: [NPC_LOOT, CONTAINER_LOOT, BOSS_LOOT, QUEST_REWARD, EVENT_LOOT] }
+        sourceId: { type: string }
+        levelRange: { type: string }
+        rarityCurve: { type: string }
+        active: { type: boolean }
+        version: { type: string }
+
+    LootTableListResponse:
+      type: object
+      required: [tables]
+      properties:
+        tables:
+          type: array
+          items: { $ref: '#/components/schemas/LootTableSummary' }
+        page: { $ref: '../../../shared/common/pagination.yaml#/components/schemas/Page' }
+
+    LootTableUpsertRequest:
+      type: object
+      required: [tableId, name, tableType, entries]
+      properties:
+        tableId: { type: string }
+        name: { type: string }
+        tableType: { type: string, enum: [NPC_LOOT, CONTAINER_LOOT, BOSS_LOOT, QUEST_REWARD, EVENT_LOOT] }
+        sourceId: { type: string }
+        minItems: { type: integer }
+        maxItems: { type: integer }
+        currencyRange:
+          type: object
+          properties:
+            min: { type: integer }
+            max: { type: integer }
+        rarityCurve: { type: string }
+        modifiers:
+          type: array
+          items: { $ref: '#/components/schemas/LootModifier' }
+        pityConfig: { $ref: '#/components/schemas/PityTimerConfig' }
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/LootEntryDefinition' }
+
+    LootEntryDefinition:
+      type: object
+      required: [entryId, templateId, weight]
+      properties:
+        entryId: { type: string }
+        templateId: { type: string }
+        weight: { type: integer, minimum: 1 }
+        quantityRange:
+          type: object
+          properties:
+            min: { type: integer, default: 1 }
+            max: { type: integer, default: 1 }
+        rarityOverride: { type: string }
+        conditions:
+          type: array
+          items: { $ref: '#/components/schemas/LootCondition' }
+        tags:
+          type: array
+          items: { type: string }
+
+    LootCondition:
+      type: object
+      required: [type]
+      properties:
+        type: { type: string, enum: [FACTION, QUEST_STATE, EVENT_FLAG, PARTY_SIZE, ROLE, DIFFICULTY] }
+        value: { type: string }
+        operator: { type: string, enum: [EQUALS, NOT_EQUALS, GREATER, LESS, BETWEEN, IN] }
+
+    LootEntryBatchRequest:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/LootEntryDefinition' }
+        operation: { type: string, enum: [UPSERT, DELETE] }
+
+    LootModifier:
+      type: object
+      required: [type]
+      properties:
+        type: { type: string, enum: [EVENT, SEASON, GLOBAL_BONUS, PERSONAL_LUCK, PARTY_AVERAGE] }
+        value: { type: number, format: float }
+        expiresAt: { type: string, format: date-time }
+
+    PityTimerConfig:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        threshold: { type: integer }
+        rewardTemplateId: { type: string }
+        resetMode: { type: string, enum: [ON_DROP, ON_SEASON, MANUAL] }
+
+    PersonalDistributionRequest:
+      type: object
+      required: [resultId, playerId]
+      properties:
+        resultId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+        grantMode: { type: string, enum: [INVENTORY, MAIL, BANK] }
+
+    SharedDistributionRequest:
+      type: object
+      required: [resultId, partyId]
+      properties:
+        resultId: { type: string, format: uuid }
+        partyId: { type: string, format: uuid }
+        threshold: { type: string, enum: [FREE_FOR_ALL, ROUND_ROBIN, MASTER_LOOTER] }
+        autoAssignCommons: { type: boolean }
+        rollConfig: { $ref: '#/components/schemas/RollConfig' }
+
+    RaidDistributionRequest:
+      type: object
+      required: [resultId, raidId]
+      properties:
+        resultId: { type: string, format: uuid }
+        raidId: { type: string, format: uuid }
+        guaranteedTokens:
+          type: array
+          items: { $ref: './loot-generation-components.yaml#/components/schemas/GuaranteedReward' }
+        lootCouncil:
+          type: array
+          items: { type: string, format: uuid }
+
+    GuaranteedDistributionRequest:
+      type: object
+      required: [playerId, reward]
+      properties:
+        playerId: { type: string, format: uuid }
+        reward: { $ref: './loot-generation-components.yaml#/components/schemas/GuaranteedReward' }
+        trigger: { type: string, enum: [PITY_TIMER, MILESTONE, COMPENSATION] }
+
+    DistributionResult:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [QUEUED, COMPLETED, FAILED] }
+        grantedItems:
+          type: array
+          items: { $ref: './loot-advanced-components.yaml#/components/schemas/LootItem' }
+        grantReference: { type: string }
+        errors:
+          type: array
+          items: { $ref: './loot-generation-components.yaml#/components/schemas/LootGenerationError' }
+
+    RollConfig:
+      type: object
+      properties:
+        timeoutSeconds: { type: integer, default: 60 }
+        autoPassAfk: { type: boolean, default: true }
+        allowNeedRoles:
+          type: array
+          items: { type: string }
+
+    RollStartRequest:
+      type: object
+      required: [resultId, item]
+      properties:
+        resultId: { type: string, format: uuid }
+        item: { $ref: './loot-advanced-components.yaml#/components/schemas/LootItem' }
+        participants:
+          type: array
+          items: { $ref: './loot-advanced-components.yaml#/components/schemas/RollParticipant' }
+
+    RollOutcome:
+      type: object
+      properties:
+        winnerId: { type: string, format: uuid }
+        reason: { type: string }
+        rerollSuggested: { type: boolean }
+
+    LootStatsResponse:
+      type: object
+      properties:
+        dropRates:
+          type: array
+          items: { $ref: './loot-generation-components.yaml#/components/schemas/SimulationBucket' }
+        pityHeatmap:
+          type: array
+          items: { $ref: '#/components/schemas/PityTimerState' }
+        rareDropNotifications: { type: integer }
+        averageCompletionTime: { type: number, format: float }
+
+    LootReserveRequest:
+      type: object
+      required: [resultId, item]
+      properties:
+        resultId: { type: string, format: uuid }
+        item: { $ref: './loot-advanced-components.yaml#/components/schemas/LootItem' }
+        target: { type: string, enum: [INVENTORY, MAIL, TRADE, VENDOR] }
+        expiresAt: { type: string, format: date-time }
+
+    LootReservationResponse:
+      type: object
+      required: [reservationId, status]
+      properties:
+        reservationId: { type: string, format: uuid }
+        status: { type: string, enum: [ACTIVE, RELEASED, EXPIRED] }
+        reservedItem: { $ref: './loot-advanced-components.yaml#/components/schemas/LootItem' }
+
+    LootReleaseRequest:
+      type: object
+      required: [reservationId]
+      properties:
+        reservationId: { type: string, format: uuid }
+        reason: { type: string }
+
+    LootEventNotificationRequest:
+      type: object
+      required: [eventType, payload]
+      properties:
+        eventType: { type: string, enum: [RARE_DROP, WORLD_ANNOUNCEMENT, RAID_SUMMARY] }
+        payload: { type: object, additionalProperties: true }
+
+    PityTimerUpdateRequest:
+      type: object
+      required: [playerId, tableId]
+      properties:
+        playerId: { type: string, format: uuid }
+        tableId: { type: string }
+        action: { type: string, enum: [INCREMENT, RESET, FORCE_REWARD] }
+        amount: { type: integer, default: 1 }
+        rewardTemplateId: { type: string }
+
+    PityTimerState:
+      type: object
+      required: [playerId, tableId, counter]
+      properties:
+        playerId: { type: string, format: uuid }
+        tableId: { type: string }
+        counter: { type: integer }
+        threshold: { type: integer }
+        guaranteedReward: { type: string }
+
+    LootConfigResponse:
+      type: object
+      properties:
+        globalModifiers:
+          type: array
+          items: { $ref: '#/components/schemas/LootModifier' }
+        seasonalRules:
+          type: array
+          items:
+            type: object
+            properties:
+              seasonId: { type: string }
+              bonus: { type: number, format: float }
+        dropCaps:
+          type: array
+          items:
+            type: object
+            properties:
+              itemTemplateId: { type: string }
+              weeklyCap: { type: integer }
+
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

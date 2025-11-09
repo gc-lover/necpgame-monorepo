@@ -1,0 +1,455 @@
+openapi: 3.0.3
+info:
+  title: Cosmetic Components
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+
+components:
+  parameters:
+    ItemId:
+      name: itemId
+      in: path
+      required: true
+      description: Идентификатор косметического предмета
+      schema:
+        type: string
+  schemas:
+    AdminItemRequest:
+      type: object
+      description: "Запрос на создание или обновление косметического предмета администрацией"
+      required: [code, name, type, rarity]
+      properties:
+        itemId:
+          type: string
+          description: "Если указан — обновление существующего предмета"
+        code:
+          type: string
+          description: "Уникальный код предмета"
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [skin_character, skin_weapon, emote, title, nameplate, pose, effect]
+        category:
+          type: string
+          description: "Категория/подкатегория отображения"
+        rarity:
+          type: string
+          enum: [common, rare, epic, legendary, mythic]
+        price:
+          type: object
+          properties:
+            amount: { type: integer, minimum: 0 }
+            currency: { type: string, enum: [eddies, shards, premium_tokens] }
+            discountedAmount: { type: integer, minimum: 0 }
+        exclusivity:
+          type: object
+          properties:
+            type: { type: string, enum: [none, battle_pass, event_only, limited_time, founder] }
+            season: { type: string }
+            regions:
+              type: array
+              items: { type: string }
+        availability:
+          type: object
+          properties:
+            purchasable: { type: boolean }
+            rotationTags:
+              type: array
+              items: { type: string }
+            startAt: { type: string, format: date-time }
+            endAt: { type: string, format: date-time }
+        assets:
+          type: object
+          properties:
+            iconUrl: { type: string, format: uri }
+            previewUrl: { type: string, format: uri }
+            hologramUrl: { type: string, format: uri }
+        metadata:
+          type: object
+          properties:
+            collectionId: { type: string }
+            bundleIds:
+              type: array
+              items: { type: string }
+            tags:
+              type: array
+              items: { type: string }
+    CatalogResponse:
+      type: object
+      properties:
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CosmeticItem' }
+    CosmeticItem:
+      type: object
+      required: [itemId, code, name, type, rarity]
+      properties:
+        itemId: { type: string, description: UUID предмета }
+        code: { type: string, description: Уникальный код для интеграций }
+        name: { type: string }
+        description: { type: string }
+        type: { type: string, enum: [skin_character, skin_weapon, emote, title, nameplate, pose, effect] }
+        category:
+          type: string
+          description: "Подкатегория (например,枪/нож)"
+        rarity: { type: string, enum: [common, rare, epic, legendary, mythic] }
+        price:
+          type: object
+          properties:
+            amount: { type: integer, minimum: 0 }
+            currency: { type: string, enum: [eddies, shards, premium_tokens] }
+            discountedAmount: { type: integer, minimum: 0 }
+        exclusivity:
+          type: object
+          properties:
+            type: { type: string, enum: [none, battle_pass, event_only, limited_time, founder] }
+            season: { type: string }
+            regions:
+              type: array
+              items: { type: string }
+        availability:
+          type: object
+          properties:
+            purchasable: { type: boolean }
+            rotationTags:
+              type: array
+              items: { type: string }
+            startAt: { type: string, format: date-time }
+            endAt: { type: string, format: date-time }
+        assets:
+          type: object
+          properties:
+            iconUrl: { type: string, format: uri }
+            previewUrl: { type: string, format: uri }
+            hologramUrl: { type: string, format: uri }
+        metadata:
+          type: object
+          properties:
+            collectionId: { type: string }
+            bundleIds:
+              type: array
+              items: { type: string }
+            tags:
+              type: array
+              items: { type: string }
+    PurchaseRequest:
+      type: object
+      required: [playerId, itemId, paymentMethod]
+      properties:
+        playerId: { type: string }
+        itemId: { type: string }
+        paymentMethod: { type: string, enum: [wallet, premium_currency, coupon] }
+        expectedPrice:
+          type: object
+          properties:
+            amount: { type: integer }
+            currency: { type: string }
+        region: { type: string }
+        doubleSpendToken: { type: string, description: Idempotency token }
+    PurchaseResponse:
+      type: object
+      properties:
+        itemId: { type: string }
+        playerId: { type: string }
+        grantedAt: { type: string, format: date-time }
+        updatedBalance:
+          type: object
+          properties:
+            currency: { type: string }
+            amount: { type: integer }
+        rewardTokens:
+          type: array
+          items: { type: string }
+    RedeemRequest:
+      type: object
+      required: [playerId, source]
+      properties:
+        playerId: { type: string }
+        source: { type: string, enum: [achievement, event, battle_pass, promo_code] }
+        referenceId: { type: string }
+        promoCode: { type: string }
+    InventoryResponse:
+      type: object
+      properties:
+        playerId: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PlayerInventoryItem' }
+    PlayerInventoryItem:
+      type: object
+      required: [itemId, acquiredAt, source]
+      properties:
+        itemId: { type: string }
+        acquiredAt: { type: string, format: date-time }
+        source: { type: string }
+        duplicateCount: { type: integer, minimum: 0 }
+        favorite: { type: boolean }
+        usageStats:
+          type: object
+          properties:
+            equippedCount: { type: integer }
+            lastEquippedAt: { type: string, format: date-time }
+    EquipRequest:
+      type: object
+      required: [playerId, slotType, itemId]
+      properties:
+        playerId: { type: string }
+        slotType: { type: string, enum: [character_skin, weapon_skin, emote_slot, title, nameplate, pose] }
+        itemId: { type: string }
+        slotIndex: { type: integer, minimum: 0, description: Индекс для эмот-колеса }
+    UnequipRequest:
+      type: object
+      required: [playerId, slotType]
+      properties:
+        playerId: { type: string }
+        slotType: { type: string, enum: [character_skin, weapon_skin, emote_slot, title, nameplate, pose] }
+        slotIndex: { type: integer }
+    EquippedLoadoutResponse:
+      type: object
+      properties:
+        playerId: { type: string }
+        slots:
+          type: array
+          items: { $ref: '#/components/schemas/EquippedSlot' }
+    EquippedSlot:
+      type: object
+      properties:
+        slotType: { type: string }
+        slotIndex: { type: integer }
+        itemId: { type: string }
+        equippedAt: { type: string, format: date-time }
+    ShopRotationResponse:
+      type: object
+      properties:
+        region: { type: string }
+        rotations:
+          type: array
+          items: { $ref: '#/components/schemas/ShopRotation' }
+    ShopRotation:
+      type: object
+      required: [rotationId, type, startAt, endAt]
+      properties:
+        rotationId: { type: string }
+        type: { type: string, enum: [daily, weekly, featured, bundle] }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/RotationItem' }
+        bundlePrice:
+          type: object
+          properties:
+            amount: { type: integer }
+            currency: { type: string }
+        notes: { type: string }
+    RotationItem:
+      type: object
+      properties:
+        itemId: { type: string }
+        displayOrder: { type: integer }
+        discountPercent: { type: number }
+        limitedQuantity: { type: integer }
+        remainingQuantity: { type: integer }
+    RotationUpdateRequest:
+      type: object
+      required: [region, rotations]
+      properties:
+        region: { type: string }
+        rotations:
+          type: array
+          items: { $ref: '#/components/schemas/ShopRotation' }
+        publishOptions:
+          type: object
+          properties:
+            notifyPlayers: { type: boolean }
+            publishAt: { type: string, format: date-time }
+    BundlePurchaseRequest:
+      type: object
+      required: [playerId, bundleId]
+      properties:
+        playerId: { type: string }
+        bundleId: { type: string }
+        expectedPrice:
+          type: object
+          properties:
+            amount: { type: integer }
+            currency: { type: string }
+        duplicateHandling: { type: string, enum: [convert_to_currency, grant_charms, skip_item] }
+    BundlePurchaseResponse:
+      type: object
+      properties:
+        bundleId: { type: string }
+        grantedItems:
+          type: array
+          items: { type: string }
+        compensation:
+          type: object
+          properties:
+            currencyAmount: { type: integer }
+            charmsGranted: { type: integer }
+    GiftRequest:
+      type: object
+      required: [playerId, targetPlayerId, itemId]
+      properties:
+        playerId: { type: string, description: Отправитель }
+        targetPlayerId: { type: string }
+        itemId: { type: string }
+        message: { type: string, maxLength: 250 }
+        region: { type: string }
+    CollectionProgressResponse:
+      type: object
+      properties:
+        playerId: { type: string }
+        collections:
+          type: array
+          items: { $ref: '#/components/schemas/CollectionProgress' }
+    CollectionProgress:
+      type: object
+      required: [collectionId, totalItems, ownedItems]
+      properties:
+        collectionId: { type: string }
+        name: { type: string }
+        totalItems: { type: integer }
+        ownedItems: { type: integer }
+        rewardPreview: { type: string }
+        completionReward:
+          type: object
+          properties:
+            type: { type: string }
+            amount: { type: integer }
+        items:
+          type: array
+          items: { type: string }
+    AnalyticsResponse:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        range: { type: string }
+        region: { type: string }
+        topItems:
+          type: array
+          items: { $ref: '#/components/schemas/AnalyticsItemMetric' }
+        revenue:
+          type: object
+          properties:
+            total: { type: integer }
+            byCurrency:
+              type: array
+              items:
+                type: object
+                properties:
+                  currency: { type: string }
+                  amount: { type: integer }
+        usageRate:
+          type: number
+        conversionRate:
+          type: number
+        rarityDistribution:
+          type: array
+          items:
+            type: object
+            properties:
+              rarity: { type: string }
+              share: { type: number }
+        retention:
+          type: object
+          properties:
+            day7: { type: number }
+            day30: { type: number }
+    AnalyticsItemMetric:
+      type: object
+      properties:
+        itemId: { type: string }
+        name: { type: string }
+        purchases: { type: integer }
+        equipRate: { type: number }
+        averageRevenue: { type: number }
+    LeaderboardResponse:
+      type: object
+      properties:
+        metric: { type: string }
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/LeaderboardEntry' }
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    LeaderboardEntry:
+      type: object
+      required: [rank, playerId, score]
+      properties:
+        rank: { type: integer }
+        playerId: { type: string }
+        score: { type: integer }
+        companionId: { type: string }
+        ownedRareCount: { type: integer }
+        collectionsCompleted: { type: integer }
+    CosmeticIncidentReport:
+      type: object
+      required: [incidentId, severity, payload]
+      properties:
+        incidentId: { type: string }
+        severity: { type: string, enum: [low, medium, high, critical] }
+        reason: { type: string }
+        payload:
+          type: object
+          additionalProperties: true
+        detectedBy: { type: string }
+    CosmeticSettings:
+      type: object
+      properties:
+        giftingLimits:
+          type: object
+          properties:
+            perDay: { type: integer }
+            perWeek: { type: integer }
+        regionLocks:
+          type: array
+          items:
+            type: object
+            properties:
+              region: { type: string }
+              allowedCurrencies:
+                type: array
+                items: { type: string }
+        duplicatePolicy: { type: string, enum: [convert_currency, grant_tokens, block_purchase] }
+        rotationSchedule:
+          type: object
+          properties:
+            dailyUpdateAt: { type: string, pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$' }
+            weeklyUpdateDay: { type: string, enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday] }
+        promoSettings:
+          type: object
+          properties:
+            promoCodeLength: { type: integer }
+            promoTTLHours: { type: integer }
+    CosmeticError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [ITEM_NOT_FOUND, INSUFFICIENT_FUNDS, REGION_LOCKED, HOTFIX_LOCK, ALREADY_OWNED, LIMIT_REACHED]
+        message: { type: string }
+        retryAfterSeconds: { type: integer }
+    CompanionEvent:
+      type: object
+      properties:
+        eventType: { type: string }
+        emittedAt: { type: string, format: date-time }
+        payload: { type: object, additionalProperties: true }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

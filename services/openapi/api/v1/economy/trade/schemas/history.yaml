@@ -1,0 +1,70 @@
+components:
+  schemas:
+    TradeHistoryResponse:
+      type: object
+      required:
+        - history
+        - meta
+      properties:
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeHistoryEntry'
+        meta:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    TradeHistoryEntry:
+      type: object
+      required:
+        - trade_session_id
+        - completed_at
+        - result
+        - zone_id
+        - initiator
+        - counterparty
+        - initiator_gave
+        - counterparty_gave
+      properties:
+        trade_session_id:
+          type: string
+          format: uuid
+        completed_at:
+          type: string
+          format: date-time
+        result:
+          type: string
+          enum:
+            - success
+            - cancelled
+            - expired
+            - fraud_blocked
+        zone_id:
+          type: string
+        initiator:
+          $ref: './session.yaml#/components/schemas/TradeParticipant'
+        counterparty:
+          $ref: './session.yaml#/components/schemas/TradeParticipant'
+        initiator_gave:
+          $ref: '#/components/schemas/TradeTransferBundle'
+        counterparty_gave:
+          $ref: '#/components/schemas/TradeTransferBundle'
+        completion_reason:
+          type: string
+        analytics_tags:
+          type: array
+          items:
+            type: string
+    TradeTransferBundle:
+      type: object
+      required:
+        - items
+        - currencies
+      properties:
+        items:
+          type: array
+          items:
+            $ref: './session.yaml#/components/schemas/TradeItemOffer'
+        currencies:
+          type: array
+          items:
+            $ref: './session.yaml#/components/schemas/TradeCurrencyOffer'
+

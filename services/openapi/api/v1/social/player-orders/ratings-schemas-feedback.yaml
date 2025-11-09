@@ -1,0 +1,322 @@
+openapi: 3.0.3
+info:
+  title: Player Order Ratings Feedback Schemas
+  version: 1.0.0
+  description: Схемы отзывов, санкций и модерации в системе заказов игроков.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  schemas:
+    PlayerOrderReviewCreateRequest:
+      type: object
+      required:
+        - orderId
+        - reviewerId
+        - targetId
+        - role
+        - ratings
+        - text
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        reviewerId:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [executor, client]
+        ratings:
+          type: object
+          required:
+            - quality
+            - communication
+          properties:
+            quality:
+              type: integer
+              minimum: 1
+              maximum: 5
+            communication:
+              type: integer
+              minimum: 1
+              maximum: 5
+        text:
+          type: string
+          minLength: 16
+          maxLength: 2000
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 32
+        visibility:
+          type: string
+          enum: [public, private, trusted_only]
+          default: public
+        metadata:
+          type: object
+          additionalProperties: true
+        locale:
+          type: string
+          pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+        attachments:
+          type: array
+          items:
+            type: string
+            format: uri
+    PlayerOrderReview:
+      type: object
+      required:
+        - reviewId
+        - orderId
+        - reviewerId
+        - targetId
+        - role
+        - ratings
+        - text
+        - moderation
+        - createdAt
+      properties:
+        reviewId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        reviewerId:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [executor, client]
+        ratings:
+          $ref: '#/components/schemas/ReviewRatings'
+        text:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        flags:
+          type: array
+          items:
+            type: string
+            enum: [positive, neutral, negative, warning, dispute]
+        moderation:
+          $ref: '#/components/schemas/ReviewModeration'
+        sentimentScore:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+        locale:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+            format: uri
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ReviewRatings:
+      type: object
+      required:
+        - quality
+        - communication
+      properties:
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 5
+        communication:
+          type: integer
+          minimum: 1
+          maximum: 5
+        professionalism:
+          type: integer
+          minimum: 1
+          maximum: 5
+        fairness:
+          type: integer
+          minimum: 1
+          maximum: 5
+    ReviewModeration:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending, approved, rejected, needs_revision]
+        toxicityScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        rejectionReason:
+          type: string
+        reviewedBy:
+          type: string
+          format: uuid
+        reviewedAt:
+          type: string
+          format: date-time
+    PlayerOrderReviewListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrderReview'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    ReviewSubmissionResponse:
+      type: object
+      required:
+        - reviewId
+        - status
+      properties:
+        reviewId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [accepted, pending_moderation, rejected]
+        moderation:
+          $ref: '#/components/schemas/ReviewModeration'
+    PlayerOrderPenaltyRequest:
+      type: object
+      required:
+        - playerId
+        - role
+        - penaltyType
+        - delta
+        - reason
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [executor, client]
+        penaltyType:
+          type: string
+          enum:
+            - late_payment
+            - dispute_lost
+            - toxic_behavior
+            - breach_of_contract
+            - fraud_detected
+        delta:
+          type: number
+          format: float
+          minimum: -100
+          maximum: 0
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 1024
+        appliedBy:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+        linkedOrderId:
+          type: string
+          format: uuid
+        notifyPlayer:
+          type: boolean
+          default: true
+    PlayerOrderPenalty:
+      type: object
+      required:
+        - penaltyId
+        - playerId
+        - role
+        - penaltyType
+        - delta
+        - appliedBy
+        - appliedAt
+      properties:
+        penaltyId:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [executor, client]
+        penaltyType:
+          type: string
+        delta:
+          type: number
+          format: float
+        reason:
+          type: string
+        appliedBy:
+          type: string
+          format: uuid
+        appliedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, expired, reversed]
+        linkedOrderId:
+          type: string
+          format: uuid
+        kafkaEventId:
+          type: string
+          format: uuid
+    PlayerOrderPenaltyResponse:
+      type: object
+      required:
+        - penaltyId
+        - status
+      properties:
+        penaltyId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [applied, pending_review, rejected]
+        penalty:
+          $ref: '#/components/schemas/PlayerOrderPenalty'
+    PlayerOrderPenaltyListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrderPenalty'
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

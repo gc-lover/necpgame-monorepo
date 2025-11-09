@@ -1,0 +1,250 @@
+# Target Architecture:
+# - Microservice: auth-service (port 8081)
+# - API Base: /api/v1/auth/sessions
+# - Dependencies: auth-service, account-service, global-state-service, incident-service, anti-cheat-service
+# - Frontend Module: modules/player/session (useSessionStore)
+# - UI: SessionStatusBadge, HeartbeatIndicator, AFKWarningModal
+# - Forms: ForceLogoutDialog, SessionDiagnosticsPanel
+# - Layouts: GameLayout, AccountDashboard
+# - Hooks: useHeartbeat, useAfkDetector, useSessionEvents
+
+openapi: 3.0.3
+info:
+  title: Session Lifecycle API
+  description: Управление игровыми сессиями (создание, heartbeat, AFK, force logout) по документу `part1-lifecycle-heartbeat.md`.
+  version: 1.0.0
+  x-microservice:
+    name: auth-service
+    port: 8081
+    domain: auth
+    base-path: /api/v1/auth/sessions
+    package: com.necpgame.authservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - { name: Sessions, description: Жизненный цикл сессий }
+  - { name: Metrics, description: SLA heartbeat и policies }
+paths:
+  /auth/sessions:
+    post:
+      tags: [Sessions]
+      summary: Создать игровую сессию
+      description: Создаёт новую игровую сессию после успешного логина. Обеспечивает single-session-per-account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionCreateRequest' }
+            examples:
+              login:
+                value: { playerId: "player-73f1", accountId: "account-128", characterId: "char-901", authToken: "jwt-abc", clientInfo: { device: "windows", build: "1.2.0" }, ipAddress: "203.0.113.10" }
+      responses:
+        '201': { description: Сессия создана, content: { application/json: { schema: { $ref: '#/components/schemas/SessionCreateResponse' } } } }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '409': { description: Конкурентная сессия активна, content: { application/json: { schema: { $ref: '#/components/schemas/SessionError' } } } }
+  /auth/sessions/{sessionId}:
+    get:
+      tags: [Sessions]
+      summary: Получить состояние сессии
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200': { description: Текущий статус, content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+    delete:
+      tags: [Sessions]
+      summary: Завершить сессию (logout)
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '204': { description: Сессия завершена }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /auth/sessions/{sessionId}/heartbeat:
+    post:
+      tags: [Sessions]
+      summary: Отправить heartbeat
+      description: Клиент отправляет каждые 30 секунд ±10. Используется для детекции AFK и disconnect.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/HeartbeatRequest' } } } }
+      responses:
+        '202': { description: Heartbeat принят, content: { application/json: { schema: { $ref: '#/components/schemas/HeartbeatResponse' } } } }
+        '400': { description: Некорректный heartbeat (слишком ранний/поздний), content: { application/json: { schema: { $ref: '#/components/schemas/SessionError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '410': { description: Сессия протухла, content: { application/json: { schema: { $ref: '#/components/schemas/SessionError' } } } }
+  /auth/sessions/{sessionId}/status:
+    patch:
+      tags: [Sessions]
+      summary: Обновить статус сессии
+      description: Используется Ops/сервисами для перевода в `AFK`, `DISCONNECTED`, `TERMINATED`.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SessionStatusUpdateRequest' } } } }
+      responses:
+        '200': { description: Статус обновлён, content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } } }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /auth/sessions/{sessionId}/afk:
+    post:
+      tags: [Sessions]
+      summary: Сбросить AFK статус
+      description: Клиент сообщает о возвращении к активности после AFK warning.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '202': { description: AFK сброшен }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /auth/sessions/force:
+    post:
+      tags: [Sessions]
+      summary: Принудительно завершить сессии
+      description: Завершает активные сессии игрока/аккаунта для предотвращения concurrent login.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ForceLogoutRequest' } } } }
+      responses:
+        '202': { description: Завершение запланировано, content: { application/json: { schema: { $ref: '#/components/schemas/ForceLogoutResponse' } } } }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /auth/sessions/metrics/heartbeat:
+    get:
+      tags: [Metrics]
+      summary: Метрики heartbeat SLA
+      parameters:
+        - { in: query, name: range, schema: { type: string, enum: [5m, 1h, 24h, 7d], default: 1h } }
+      responses:
+        '200': { description: Метрики heartbeat, content: { application/json: { schema: { $ref: '#/components/schemas/HeartbeatMetrics' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /auth/sessions/policies:
+    get:
+      tags: [Metrics]
+      summary: Текущие политики сессий
+      description: Возвращает конфигурации heartbeat/AFK/concurrent policies.
+      responses:
+        '200': { description: Политики, content: { application/json: { schema: { $ref: '#/components/schemas/SessionPolicies' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+  parameters:
+    SessionId: { name: sessionId, in: path, required: true, schema: { type: string }, description: UUID сессии }
+  schemas:
+    Session:
+      type: object
+      required: [sessionId, playerId, status, createdAt]
+      properties:
+        sessionId: { type: string }
+        playerId: { type: string }
+        accountId: { type: string }
+        characterId: { type: string }
+        status: { type: string, enum: [ACTIVE, AFK, DISCONNECTED, TERMINATED] }
+        createdAt: { type: string, format: date-time }
+        lastHeartbeatAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        reconnectToken: { type: string }
+        afkSince: { type: string, format: date-time }
+    SessionCreateRequest:
+      type: object
+      required: [playerId, accountId, authToken]
+      properties:
+        playerId: { type: string }
+        accountId: { type: string }
+        characterId: { type: string }
+        authToken: { type: string }
+        clientInfo: { $ref: '#/components/schemas/ClientInfo' }
+        ipAddress: { type: string, format: ipv4 }
+    SessionCreateResponse:
+      type: object
+      required: [sessionId, status]
+      properties:
+        sessionId: { type: string }
+        status: { type: string }
+        reconnectToken: { type: string }
+        policies: { $ref: '#/components/schemas/SessionPolicies' }
+        concurrentAction: { type: string, enum: [none, terminated_previous, rejected] }
+    ClientInfo:
+      type: object
+      properties:
+        device: { type: string }
+        build: { type: string }
+        platform: { type: string }
+    HeartbeatRequest:
+      type: object
+      required: [clientTimestamp]
+      properties:
+        clientTimestamp: { type: string, format: date-time }
+        latencyMs: { type: integer }
+        activity: { type: string, enum: [active, idle, menu] }
+        gameVersion: { type: string }
+    HeartbeatResponse:
+      type: object
+      properties:
+        nextHeartbeatAt: { type: string, format: date-time }
+        warnings: { type: array, items: { type: string, enum: [LATE_HEARTBEAT, NEAR_TIMEOUT] } }
+    SessionStatusUpdateRequest:
+      type: object
+      required: [newStatus]
+      properties:
+        newStatus: { type: string, enum: [ACTIVE, AFK, DISCONNECTED, TERMINATED] }
+        reason: { type: string }
+        triggeredBy: { type: string, enum: [system, ops, player] }
+    ForceLogoutRequest:
+      type: object
+      required: [playerId]
+      properties:
+        playerId: { type: string }
+        accountId: { type: string }
+        notify: { type: boolean, default: true }
+        reason: { type: string }
+    ForceLogoutResponse:
+      type: object
+      properties:
+        affectedSessions: { type: array, items: { type: string } }
+        scheduledAt: { type: string, format: date-time }
+    HeartbeatMetrics:
+      type: object
+      properties:
+        totalHeartbeats: { type: integer }
+        missedHeartbeats: { type: integer }
+        averageLatencyMs: { type: number }
+        slaCompliancePercent: { type: number }
+    SessionPolicies:
+      type: object
+      properties:
+        heartbeatIntervalSeconds: { type: integer }
+        heartbeatGraceSeconds: { type: integer }
+        afkThresholdSeconds: { type: integer }
+        afkDisconnectSeconds: { type: integer }
+        concurrentPolicy: { $ref: '#/components/schemas/ConcurrentSessionPolicy' }
+    ConcurrentSessionPolicy:
+      type: object
+      properties:
+        allowMultiple: { type: boolean }
+        action: { type: string, enum: [terminate_previous, reject_new] }
+        notifyPlayer: { type: boolean }
+    SessionError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, enum: [SESSION_NOT_FOUND, HEARTBEAT_TOO_SOON, HEARTBEAT_TIMEOUT, CONCURRENT_SESSION_ACTIVE] }
+        message: { type: string }
+    SessionEvent:
+      type: object
+      properties:
+        eventType: { type: string, enum: [session.created, session.heartbeat.received, session.heartbeat.missed, session.afk, session.terminated] }
+        timestamp: { type: string, format: date-time }
+        sessionId: { type: string }
+        metadata: { type: object, additionalProperties: true }
+

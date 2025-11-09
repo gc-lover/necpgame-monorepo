@@ -1,0 +1,318 @@
+# Target Architecture:
+# - Microservice: economy-service (8085)
+# - API Base: /economy/player-orders/*
+# - Frontend Module: modules/economy/player-orders/risk
+# - State: useEconomyStore(playerOrders.risk)
+# - UI: RiskDashboard, InsurancePlanCard, RiskMatrix, EscrowStatus, AlertBanner
+# - Forms: RiskEvaluationForm, InsurancePlanForm, EscrowReleaseForm
+# - Hooks: useRiskEvaluation, useInsurancePlans, useEscrowStatus
+# - Events: economy.player-orders.risk.calculated, economy.player-orders.insurance.updated, economy.player-orders.reward.adjusted
+openapi: 3.0.3
+info:
+  title: Player Order Risk API
+  version: 1.0.0
+  description: |
+    Контракт economy-service для скоринга рисков заказов игроков, страховых планов и управления escrow.
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Risk Evaluation
+    description: Расчёт и получение риск-коэффициентов заказов и участников.
+  - name: Insurance
+    description: Управление страховыми планами и котировками.
+  - name: Escrow
+    description: Статус escrow и условия его освобождения.
+  - name: Alerts
+    description: Подписки и алерты по рискам заказов.
+paths:
+  /economy/player-orders/risk/evaluate:
+    post:
+      tags: [Risk Evaluation]
+      summary: Рассчитать риск заказа
+      description: Выполняет синхронный расчёт риск-профиля заказа и возвращает модификаторы.
+      operationId: evaluatePlayerOrderRisk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './risk-schemas-core.yaml#/components/schemas/RiskEvaluationRequest'
+            examples:
+              default:
+                $ref: './risk-examples.yaml#/components/examples/RiskEvaluationRequestExample'
+      responses:
+        '200':
+          description: Риск рассчитан
+          content:
+            application/json:
+              schema:
+                $ref: './risk-schemas-core.yaml#/components/schemas/RiskEvaluationResponse'
+              examples:
+                highRisk:
+                  $ref: './risk-examples.yaml#/components/examples/RiskEvaluationResponseExample'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '409': { $ref: '../../shared/common/responses.yaml#/components/responses/Conflict' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/jobs:
+    post:
+      tags: [Risk Evaluation]
+      summary: Запустить batch пересчёт
+      description: Ставит в очередь пересчёт риска для множества заказов, игроков или регионов.
+      operationId: enqueuePlayerOrderRiskJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './risk-schemas-alerts.yaml#/components/schemas/RiskEvaluationJobRequest'
+      responses:
+        '202':
+          description: Пересчёт запущен
+          content:
+            application/json:
+              schema:
+                $ref: './risk-schemas-core.yaml#/components/schemas/RiskEvaluationJobResponse'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/jobs/{jobId}:
+    get:
+      tags: [Risk Evaluation]
+      summary: Получить статус пересчёта
+      description: Возвращает состояние batch-задачи пересчёта риска.
+      operationId: getPlayerOrderRiskJob
+      parameters:
+        - $ref: './risk-parameters.yaml#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Статус задачи
+          content:
+            application/json:
+              schema:
+                $ref: './risk-schemas-core.yaml#/components/schemas/RiskEvaluationJobResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/{orderId}:
+    get:
+      tags: [Risk Evaluation]
+      summary: Получить риск заказа
+      description: Возвращает последний рассчитанный риск заказа и связанные рекомендации.
+      operationId: getPlayerOrderRisk
+      parameters:
+        - $ref: './risk-parameters.yaml#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Риск заказа
+          content:
+            application/json:
+              schema:
+                $ref: './risk-schemas-core.yaml#/components/schemas/RiskEvaluationResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/players/{playerId}:
+    get:
+      tags: [Risk Evaluation]
+      summary: Risk profile участника
+      description: Возвращает агрегированную информацию о риске для игрока.
+      operationId: getPlayerRiskProfile
+      parameters:
+        - $ref: './risk-parameters.yaml#/components/parameters/PlayerId'
+        - $ref: './risk-parameters.yaml#/components/parameters/Period'
+        - $ref: './risk-parameters.yaml#/components/parameters/OrderType'
+      responses:
+        '200':
+          description: Риск-профиль игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [playerId, averageScore, lastEvaluatedAt]
+                properties:
+                  playerId:
+                    type: string
+                    format: uuid
+                  averageScore:
+                    type: number
+                    format: float
+                  riskGrade:
+                    type: string
+                    enum: [low, moderate, elevated, high, severe]
+                  incidents:
+                    type: array
+                    items:
+                      $ref: './risk-schemas-core.yaml#/components/schemas/RiskIncident'
+                  lastEvaluatedAt:
+                    type: string
+                    format: date-time
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/insurance/quote:
+    post:
+      tags: [Insurance]
+      summary: Получить котировку страховки
+      description: Рассчитывает страховую премию и условия покрытия для заказа.
+      operationId: quotePlayerOrderInsurance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './risk-schemas-insurance.yaml#/components/schemas/InsuranceQuoteRequest'
+      responses:
+        '200':
+          description: Котировка сформирована
+          content:
+            application/json:
+              schema:
+                $ref: './risk-schemas-insurance.yaml#/components/schemas/InsuranceQuoteResponse'
+              examples:
+                quote:
+                  $ref: './risk-examples.yaml#/components/examples/InsuranceQuoteExample'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/insurance/plans:
+    post:
+      tags: [Insurance]
+      summary: Создать или обновить страховой план
+      description: Управляет страховыми продуктами для заказов.
+      operationId: upsertPlayerOrderInsurancePlan
+      security:
+        - BearerAuth: []
+      x-required-scopes:
+        - economy.risk.admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './risk-schemas-insurance.yaml#/components/schemas/InsurancePlan'
+      responses:
+        '200':
+          description: План сохранён
+          content:
+            application/json:
+              schema:
+                $ref: './risk-schemas-insurance.yaml#/components/schemas/InsurancePlan'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/escrow/{orderId}:
+    get:
+      tags: [Escrow]
+      summary: Статус escrow заказа
+      description: Возвращает статус escrow, суммы и условия освобождения.
+      operationId: getPlayerOrderEscrowStatus
+      parameters:
+        - $ref: './risk-parameters.yaml#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Escrow информация
+          content:
+            application/json:
+              schema:
+                $ref: './risk-schemas-insurance.yaml#/components/schemas/EscrowStatus'
+              examples:
+                escrow:
+                  $ref: './risk-examples.yaml#/components/examples/EscrowStatusExample'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/alerts:
+    post:
+      tags: [Alerts]
+      summary: Подписаться на алерты риска
+      description: Создаёт подписку на уведомления о достижении порогов риска.
+      operationId: subscribePlayerOrderRiskAlerts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './risk-schemas-alerts.yaml#/components/schemas/RiskAlertSubscription'
+            examples:
+              default:
+                $ref: './risk-examples.yaml#/components/examples/RiskAlertSubscriptionExample'
+      responses:
+        '201':
+          description: Подписка создана
+          content:
+            application/json:
+              schema:
+                $ref: './risk-schemas-alerts.yaml#/components/schemas/RiskAlertSubscription'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '422': { $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError' }
+  /economy/player-orders/risk/alerts/{subscriptionId}:
+    delete:
+      tags: [Alerts]
+      summary: Отменить подписку на алерты
+      description: Удаляет подписку на оповещения по рискам.
+      operationId: deletePlayerOrderRiskAlert
+      parameters:
+        - $ref: './risk-parameters.yaml#/components/parameters/SubscriptionId'
+      responses:
+        '204':
+          description: Подписка отменена
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+x-kafka-topics:
+  economy.player-orders.risk.calculated:
+    summary: Риск заказа рассчитан.
+    payload:
+      $ref: './risk-schemas-core.yaml#/components/schemas/RiskEvaluationResponse'
+  economy.player-orders.insurance.updated:
+    summary: Страховой план или котировка обновлены.
+    payload:
+      $ref: './risk-schemas-insurance.yaml#/components/schemas/InsurancePlan'
+  economy.player-orders.reward.adjusted:
+    summary: Скорректирована награда по результатам риска или escrow.
+    payload:
+      type: object
+      required: [orderId, delta, reason]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        delta:
+          type: number
+          format: float
+        reason:
+          type: string
+
+

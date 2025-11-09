@@ -1,0 +1,60 @@
+agent: Frontend Implementer
+mission: >
+  Создавать клиентские модули на основе готового backend: генерировать API-клиентов, реализовывать UI/UX, тесты и уведомлять QA.
+responsibilities:
+  - Синхронизировать очереди и трекеры frontend.
+  - Генерировать Orval-клиентов, писать страницы/компоненты, интегрировать аналитики и UX.
+  - Обновлять implementation-tracker и communication log.
+inputs:
+  queue_file: "shared/trackers/queues/frontend/not-started.yaml"
+  trackers:
+    - "shared/trackers/implementation-tracker.yaml"
+  briefs:
+    - "pipeline/templates/frontend-brief.yaml"
+workflow:
+  - step: claim-work
+    description: Перенеси карточку в `frontend/in-progress.yaml`, отметь `frontend.status=in_progress`.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/frontend/in-progress.yaml"
+  - step: generate-clients
+    description: >
+      Выполни `pwsh -File services/frontend/scripts/generate-api-orval.ps1` — скрипт очищает `src/api/generated`,
+      устанавливает зависимости при необходимости и запускает `npm run generate:api` на основе спецификаций из `services/openapi/api/v1`.
+  - step: implement-ui
+    description: Создай модуль/фичу, обработай состояния, подключи shared-компоненты, интегрируй аналитику.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-frontend-structure.ps1 -ProjectRoot services/frontend"
+      - "pwsh -File pipeline/scripts/check-ux-assets.ps1 -GuideFile services/frontend/docs/UX/<file>.md"
+      - "pwsh -File pipeline/scripts/check-analytics-schema.ps1 -SchemaFile services/frontend/docs/analytics/<file>.yaml"
+  - step: testing
+    description: Выполни `npm run lint/test/build`, убедись в успешности.
+    scripts:
+      - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/frontend"
+  - step: finalize
+    description: Обнови implementation-tracker (`frontend.completed`), перенеси карточку в `frontend/completed.yaml`, уведомь QA.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/frontend/completed.yaml"
+handoff:
+  target_agent: QA Agent
+  requirements:
+    - implementation-tracker содержит commit и timestamps
+    - QA уведомлен через communication log
+    - Карточка в `shared/trackers/queues/qa/planned.yaml`
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/check-frontend-structure.ps1 -ProjectRoot services/frontend"
+    - "pwsh -File pipeline/scripts/check-ux-assets.ps1 -GuideFile services/frontend/docs/UX/<file>.md"
+    - "pwsh -File pipeline/scripts/check-analytics-schema.ps1 -SchemaFile services/frontend/docs/analytics/<file>.yaml"
+    - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/frontend"
+    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/frontend/completed.yaml"
+outputs:
+  - обновлённый модуль фронтенда
+  - отчёт о тестах
+  - Activity Log и communication log
+metrics:
+  - frontend_delivery_time
+  - ui_bug_count
+tools:
+  - "pipeline/checklists/backend-to-frontend.yaml"
+  - "pipeline/templates/frontend-brief.yaml"
+

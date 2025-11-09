@@ -1,0 +1,398 @@
+openapi: 3.0.3
+info:
+  title: Personal NPC Tool API
+  version: 1.0.0
+  description: |
+    API для управления персональными NPC, их сценариями, контрактами и контролем безопасности.
+    Источник: .BRAIN/02-gameplay/social/personal-npc-tool.md v1.0.0
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+tags:
+  - name: PersonalNPCs
+    description: Управление персональными NPC и их состоянием
+  - name: NPCAudit
+    description: Мониторинг активности, журналов аудита и экономических операций NPC
+paths:
+  /gameplay/social/personal-npcs:
+    get:
+      tags:
+        - PersonalNPCs
+      summary: Получить персональных NPC владельца
+      operationId: listPersonalNpcs
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OwnerId'
+        - $ref: '#/components/parameters/NpcType'
+        - $ref: '#/components/parameters/NpcStatus'
+        - $ref: '#/components/parameters/RankMin'
+        - $ref: '#/components/parameters/RankMax'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Персональные NPC владельца
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalNPCListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - PersonalNPCs
+      summary: Создать персонального NPC
+      operationId: createPersonalNpc
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonalNPCCreateRequest'
+      responses:
+        '201':
+          description: Персональный NPC создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalNPCDetailResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/social/personal-npcs/{npc_id}:
+    parameters:
+      - $ref: '#/components/parameters/NpcId'
+    get:
+      tags:
+        - PersonalNPCs
+      summary: Получить персонального NPC
+      operationId: getPersonalNpc
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Детали персонального NPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalNPCDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+        - PersonalNPCs
+      summary: Обновить персонального NPC
+      operationId: updatePersonalNpc
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonalNPCUpdateRequest'
+      responses:
+        '200':
+          description: Персональный NPC обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalNPCDetailResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - PersonalNPCs
+      summary: Удалить персонального NPC
+      operationId: deletePersonalNpc
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Персональный NPC удален
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/social/personal-npcs/{npc_id}/assign-role:
+    post:
+      tags:
+        - PersonalNPCs
+      summary: Назначить роль персональному NPC
+      operationId: assignRoleToPersonalNpc
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/NpcId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRoleRequest'
+      responses:
+        '200':
+          description: Роль назначена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalNPCDetailResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/social/personal-npcs/{npc_id}/roles/{role_id}:
+    delete:
+      tags:
+        - PersonalNPCs
+      summary: Снять роль с персонального NPC
+      operationId: removeRoleFromPersonalNpc
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/NpcId'
+        - $ref: '#/components/parameters/RoleId'
+      responses:
+        '200':
+          description: Роль снята
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalNPCDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/social/personal-npcs/{npc_id}/ledger:
+    get:
+      tags:
+        - NPCAudit
+      summary: Получить финансовый журнал NPC
+      operationId: getPersonalNpcLedger
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/NpcId'
+        - $ref: '#/components/parameters/LedgerType'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Финансовый журнал NPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/social/personal-npcs/{npc_id}/audit-log:
+    get:
+      tags:
+        - NPCAudit
+      summary: Получить журнал аудита NPC
+      operationId: getPersonalNpcAuditLog
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/NpcId'
+        - $ref: '#/components/parameters/AuditEntityType'
+        - $ref: '#/components/parameters/AuditAction'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Журнал аудита NPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    OwnerId:
+      name: owner_id
+      in: query
+      description: Идентификатор владельца персональных NPC
+      required: true
+      schema:
+        type: string
+        format: uuid
+    NpcType:
+      name: type
+      in: query
+      description: Тип персонального NPC
+      required: false
+      schema:
+        type: string
+        enum: [human, robot, android]
+    NpcStatus:
+      name: status
+      in: query
+      description: Текущий статус персонального NPC
+      required: false
+      schema:
+        type: string
+        enum: [idle, working, resting, training, maintenance]
+    RankMin:
+      name: rank_min
+      in: query
+      description: Минимальный ранг персонального NPC
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 10
+    RankMax:
+      name: rank_max
+      in: query
+      description: Максимальный ранг персонального NPC
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 10
+    NpcId:
+      name: npc_id
+      in: path
+      description: Идентификатор персонального NPC
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RoleId:
+      name: role_id
+      in: path
+      description: Идентификатор роли персонального NPC
+      required: true
+      schema:
+        type: string
+    LedgerType:
+      name: ledger_type
+      in: query
+      description: Тип финансовой операции
+      required: false
+      schema:
+        type: string
+        enum: [cost, reward, payment, transfer, fee]
+    AuditEntityType:
+      name: entity_type
+      in: query
+      description: Тип сущности в журнале аудита
+      required: false
+      schema:
+        type: string
+        enum: [npc, scenario, contract, license, owner]
+    AuditAction:
+      name: action
+      in: query
+      description: Тип действия в журнале аудита
+      required: false
+      schema:
+        type: string
+        enum: [create, update, delete, start, stop, transfer, breach, fulfill]
+  schemas:
+    PersonalNPCListResponse:
+      $ref: './personal-npc-tool-models.yaml#/components/schemas/PersonalNPCListResponse'
+    PersonalNPCCreateRequest:
+      $ref: './personal-npc-tool-models.yaml#/components/schemas/PersonalNPCCreateRequest'
+    PersonalNPCDetailResponse:
+      $ref: './personal-npc-tool-models.yaml#/components/schemas/PersonalNPCDetailResponse'
+    PersonalNPCUpdateRequest:
+      $ref: './personal-npc-tool-models.yaml#/components/schemas/PersonalNPCUpdateRequest'
+    AssignRoleRequest:
+      $ref: './personal-npc-tool-models.yaml#/components/schemas/AssignRoleRequest'
+    LedgerListResponse:
+      $ref: './personal-npc-tool-models.yaml#/components/schemas/LedgerListResponse'
+    AuditLogListResponse:
+      $ref: './personal-npc-tool-models.yaml#/components/schemas/AuditLogListResponse'
+  responses:
+    BadRequest:
+      $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    InternalServerError:
+++      $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+
+

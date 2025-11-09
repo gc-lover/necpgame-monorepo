@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Player Order World Impact Parameters
+  version: 1.0.0
+  description: Общие параметры для API влияния заказов игроков на мир.
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+paths: {}
+components:
+  parameters:
+    EffectId:
+      name: effectId
+      in: path
+      required: true
+      description: Идентификатор эффекта влияния.
+      schema:
+        type: string
+        format: uuid
+    CityId:
+      name: cityId
+      in: query
+      description: Фильтр по городу или региону.
+      schema:
+        type: string
+        pattern: '^[A-Z0-9\\-]{3,24}$'
+    EffectType:
+      name: effectType
+      in: query
+      description: Тип эффекта влияния.
+      schema:
+        type: string
+        enum: [economic, social, political, security, environmental, cultural]
+    Severity:
+      name: severity
+      in: query
+      description: Уровень критичности эффекта.
+      schema:
+        type: string
+        enum: [low, medium, high, critical]
+    EffectStatus:
+      name: status
+      in: query
+      description: Текущее состояние эффекта.
+      schema:
+        type: string
+        enum: [active, pending, resolved, archived]
+    Period:
+      name: period
+      in: query
+      description: Временной диапазон для агрегации данных.
+      schema:
+        type: string
+        enum: [24h, 7d, 30d, season, year, lifetime]
+    IncludeHistory:
+      name: includeHistory
+      in: query
+      description: Включать ли историю изменений эффекта.
+      schema:
+        type: boolean
+        default: false
+    TriggerSource:
+      name: trigger
+      in: query
+      description: Фильтр по источнику триггера (социальный, экономический, миссионный).
+      schema:
+        type: string
+        enum: [orders_volume, ratings_shift, crisis_mitigation, faction_directive, manual]
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      description: Идентификатор batch-задачи пересчёта влияния.
+      schema:
+        type: string
+        format: uuid
+    Locale:
+      name: locale
+      in: query
+      description: Локализация текстов новостей и описаний.
+      schema:
+        type: string
+        pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

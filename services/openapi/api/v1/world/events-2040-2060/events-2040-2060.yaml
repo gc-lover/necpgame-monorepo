@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: World Events 2040-2060 API
+  version: 1.0.0
+  description: |
+    API для мировых событий эпохи 2040-2060 "Time of the Red".
+    
+    Источник: .BRAIN/02-gameplay/world/events/world-events-2040-2060.md v0.1.0
+    
+    Эпоха: Time of the Red (пост-война, восстановление, новые технологии)
+    
+    DC-скейлинг:
+    - Социальные: 15/19/22
+    - Тех/Хак: 18/22/24
+    - Боевые: 14/18/22
+    
+    AI-слайдеры фракций:
+    - Агрессия: 3
+    - Экспансия: 3
+    - Дипломатия: 3
+    - Шпионаж: 3
+    
+    Экономика: Ресурсы ×0.85, Волатильность средняя/высокая, Пошлины +1
+    Технологии: Импланты продвинутые (рост киберпсихоза), Сеть восстанавливается
+    
+    D&D генератор событий (d100):
+    - 01-15: Срыв психостабильности
+    - 16-30: Брейндэнс-утечки
+    - 31-45: Уличные бунты
+    - 46-60: Подпольные клиники
+    - 61-75: Сетевой прорыв
+    - 76-90: Реставрация районов
+    - 91-00: Новые субкультуры
+
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/gameplay/world
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: World Events
+    description: Мировые события
+  - name: Era 2040-2060
+    description: Time of the Red
+
+paths:
+  /gameplay/world/events/2040-2060/generate:
+    post:
+      summary: Сгенерировать событие эпохи
+      description: |
+        Генерирует случайное событие эпохи 2040-2060.
+        Использует d100 генератор с таблицей событий.
+      operationId: generateEvent2040_2060
+      tags:
+        - Era 2040-2060
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - location_id
+              properties:
+                character_id:
+                  type: string
+                location_id:
+                  type: string
+                roll_override:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Событие сгенерировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+              examples:
+                braindance_leak:
+                  summary: Брейндэнс-утечка
+                  value:
+                    event_id: "event_002"
+                    event_type: "braindance_leak"
+                    era: "2040-2060"
+                    location_id: "heywood"
+                    dc_scaling:
+                      social: 15
+                      tech_hack: 18
+                      combat: 14
+                    description: "Утечка запрещенного брейндэнс контента на улицы"
+                    consequences:
+                      - "Всплеск киберпсихоза"
+                      - "Полицейские рейды"
+                    quest_hooks:
+                      - "Расследование источника утечки"
+                      - "Спасение зависимых"
+
+  /gameplay/world/events/2040-2060/active:
+    get:
+      summary: Получить активные события эпохи
+      description: Возвращает список активных событий эпохи 2040-2060
+      operationId: getActiveEvents2040_2060
+      tags:
+        - Era 2040-2060
+      parameters:
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [psycho_break, braindance_leak, street_riots, underground_clinics, network_breach, district_restoration, new_subcultures]
+      responses:
+        '200':
+          description: Активные события
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldEvent'
+
+  /gameplay/world/events/2040-2060/era-settings:
+    get:
+      summary: Получить настройки эпохи
+      description: Возвращает параметры эпохи 2040-2060
+      operationId: getEraSettings2040_2060
+      tags:
+        - Era 2040-2060
+      responses:
+        '200':
+          description: Настройки эпохи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EraSettings'
+
+components:
+  schemas:
+    WorldEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+          enum: [psycho_break, braindance_leak, street_riots, underground_clinics, network_breach, district_restoration, new_subcultures]
+        era:
+          type: string
+        location_id:
+          type: string
+        dc_scaling:
+          type: object
+          properties:
+            social:
+              type: integer
+            tech_hack:
+              type: integer
+            combat:
+              type: integer
+        description:
+          type: string
+        consequences:
+          type: array
+          items:
+            type: string
+        quest_hooks:
+          type: array
+          items:
+            type: string
+        started_at:
+          type: string
+          format: date-time
+        duration:
+          type: number
+
+    EraSettings:
+      type: object
+      properties:
+        era:
+          type: string
+        dc_scaling:
+          type: object
+        faction_sliders:
+          type: object
+        economy:
+          type: object
+        technologies:
+          type: object
+
+

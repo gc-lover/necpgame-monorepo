@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="026-create-character-active-symptoms-table" author="system">
+        <createTable tableName="character_active_symptoms">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_character_active_symptoms_character" 
+                             references="characters(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="symptom_id" type="VARCHAR(100)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_character_active_symptoms_symptom" 
+                             references="cyberpsychosis_symptoms(id)"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="triggered_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="triggered_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="suppressed_until" type="TIMESTAMP"/>
+        </createTable>
+        
+        <createIndex tableName="character_active_symptoms" indexName="idx_character_active_symptoms_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_active_symptoms" indexName="idx_character_active_symptoms_symptom">
+            <column name="symptom_id"/>
+        </createIndex>
+        <createIndex tableName="character_active_symptoms" indexName="idx_character_active_symptoms_active">
+            <column name="is_active"/>
+        </createIndex>
+        
+        <addUniqueConstraint tableName="character_active_symptoms" 
+                             constraintName="uk_character_symptom" 
+                             columnNames="character_id, symptom_id"/>
+    </changeSet>
+
+</databaseChangeLog>

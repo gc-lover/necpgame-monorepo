@@ -1,0 +1,265 @@
+openapi: 3.0.3
+info:
+  title: Currencies API
+  version: 1.0.0
+  description: |
+    API для системы валют.
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-currencies-detailed.md v2.0.0
+    
+    12 валют:
+    - Eurodollar (ED) - основная валюта
+    - Региональные: Night City Scrip, SoCal Bucks, PacRim Yen
+    - Фракционные: Arasaka Credits, Militech Bonds
+    - Крипто: BitCoin, Eddies (crypto), Corpo Coin
+    - Premium: NECP Coins (NO P2W - только косметика)
+    
+    Биржа валют: курсы обмена, комиссии, лимиты
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Currencies
+    description: Система валют
+  - name: Exchange
+    description: Обмен валют
+
+paths:
+  /gameplay/economy/currencies:
+    get:
+      summary: Получить все валюты
+      description: |
+        Возвращает список всех доступных валют с текущими курсами обмена.
+      operationId: getCurrencies
+      tags:
+        - Currencies
+      responses:
+        '200':
+          description: Список валют
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currencies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Currency'
+              examples:
+                all_currencies:
+                  summary: Все валюты
+                  value:
+                    currencies:
+                      - currency_id: "eurodollar"
+                        name: "Eurodollar"
+                        symbol: "ED"
+                        type: "primary"
+                        exchange_rate_to_ed: 1.0
+                        is_tradeable: true
+                      - currency_id: "night_city_scrip"
+                        name: "Night City Scrip"
+                        symbol: "NCS"
+                        type: "regional"
+                        exchange_rate_to_ed: 0.95
+                        is_tradeable: true
+
+  /gameplay/economy/currencies/{currency_id}:
+    get:
+      summary: Получить детали валюты
+      description: Возвращает детальную информацию о валюте
+      operationId: getCurrency
+      tags:
+        - Currencies
+      parameters:
+        - name: currency_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали валюты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyDetails'
+
+  /gameplay/economy/currencies/balance/{character_id}:
+    get:
+      summary: Получить баланс валют персонажа
+      description: Возвращает баланс всех валют персонажа
+      operationId: getCurrencyBalance
+      tags:
+        - Currencies
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Баланс валют
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  character_id:
+                    type: string
+                  balances:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        currency_id:
+                          type: string
+                        amount:
+                          type: number
+
+  /gameplay/economy/currencies/exchange:
+    post:
+      summary: Обменять валюту
+      description: |
+        Обменивает одну валюту на другую через биржу.
+        Применяет курс обмена и комиссию.
+      operationId: exchangeCurrency
+      tags:
+        - Exchange
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - from_currency
+                - to_currency
+                - amount
+              properties:
+                character_id:
+                  type: string
+                from_currency:
+                  type: string
+                to_currency:
+                  type: string
+                amount:
+                  type: number
+                  minimum: 0.01
+      responses:
+        '200':
+          description: Обмен выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  amount_sent:
+                    type: number
+                  amount_received:
+                    type: number
+                  exchange_rate:
+                    type: number
+                  fee:
+                    type: number
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /gameplay/economy/currencies/exchange-rates:
+    get:
+      summary: Получить курсы обмена
+      description: |
+        Возвращает текущие курсы обмена всех валют относительно Eurodollar.
+        Курсы динамические (зависят от экономики мира).
+      operationId: getExchangeRates
+      tags:
+        - Exchange
+      responses:
+        '200':
+          description: Курсы обмена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  base_currency:
+                    type: string
+                    example: "eurodollar"
+                  rates:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        currency_id:
+                          type: string
+                        rate:
+                          type: number
+                        last_updated:
+                          type: string
+                          format: date-time
+
+components:
+  schemas:
+    Currency:
+      type: object
+      properties:
+        currency_id:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+          example: "ED"
+        type:
+          type: string
+          enum: [primary, regional, faction, crypto, premium]
+        exchange_rate_to_ed:
+          type: number
+          description: Курс к Eurodollar
+        is_tradeable:
+          type: boolean
+
+    CurrencyDetails:
+      type: object
+      properties:
+        currency_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        symbol:
+          type: string
+        type:
+          type: string
+        lore:
+          type: string
+          description: Лор валюты из Cyberpunk
+        exchange_rate_to_ed:
+          type: number
+        exchange_fee:
+          type: number
+          description: Комиссия при обмене (%)
+        daily_exchange_cap:
+          type: number
+          description: Дневной лимит обмена (если есть)
+        usage_regions:
+          type: array
+          description: Регионы, где валюта активно используется
+          items:
+            type: string

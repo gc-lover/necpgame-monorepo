@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: Player Orders Brief Components
+  version: 1.0.0
+  description: Схемы и примеры для брифа заказов игроков.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  schemas:
+    PlayerOrderTemplate:
+      type: object
+      required:
+        - templateId
+        - template
+        - title
+        - description
+        - defaultBrief
+      properties:
+        templateId:
+          type: string
+          description: Идентификатор шаблона, синхронизированный с content-service.
+        template:
+          type: string
+          description: Тип шаблона заказа.
+          enum: [combat, hacker, economy, social, exploration]
+        title:
+          type: string
+          description: Название шаблона для UI.
+        description:
+          type: string
+          description: Краткое описание задач и рекомендуемых гарантий.
+        defaultBrief:
+          type: string
+          description: Предзаполненный текст брифа.
+        recommendedGuarantees:
+          type: array
+          description: Рекомендуемые гарантии для заказа этого типа.
+          items:
+            type: string
+    PlayerOrderTemplateList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrderTemplate'
+    PlayerOrderObjective:
+      type: object
+      required: [title, priority]
+      properties:
+        title:
+          type: string
+          description: Цель или задача в рамках заказа.
+        description:
+          type: string
+          description: Детали по выполнению задачи.
+        priority:
+          type: string
+          enum: [primary, secondary, optional]
+        successCriteria:
+          type: string
+          description: Условие завершения задачи.
+    PlayerOrderCheckpoint:
+      type: object
+      required: [name, dueAt]
+      properties:
+        name:
+          type: string
+          description: Название контрольной точки.
+        dueAt:
+          type: string
+          format: date-time
+          description: Дедлайн контрольной точки.
+        deliverables:
+          type: array
+          description: Ожидаемые артефакты или отчёты.
+          items:
+            type: string
+    PlayerOrderRiskProfile:
+      type: object
+      required: [riskLevel, legalStatus]
+      properties:
+        riskLevel:
+          type: string
+          enum: [low, medium, high, extreme]
+          description: Уровень риска заказа.
+        legalStatus:
+          type: string
+          enum: [legal, grey, illegal]
+          description: Правовой статус операции в зоне выполнения.
+        hostileFactions:
+          type: array
+          description: Перечень враждебных фракций.
+          items:
+            type: string
+        zoneIds:
+          type: array
+          description: Зоны выполнения заказа (идентификаторы world-service).
+          items:
+            type: string
+        notes:
+          type: string
+          description: Дополнительные пояснения по рискам.
+    PlayerOrderTeamRequirement:
+      type: object
+      required: [slots]
+      properties:
+        slots:
+          type: integer
+          minimum: 1
+          description: Количество требуемых исполнителей.
+        requiredSkills:
+          type: array
+          description: Навыки или специализации исполнителей.
+          items:
+            type: string
+        minimumRating:
+          type: string
+          enum: [bronze, silver, gold, platinum, legendary]
+        allowNpcBrokers:
+          type: boolean
+          description: Разрешено ли использовать NPC брокеров.
+    PlayerOrderPrivacy:
+      type: object
+      required: [mode]
+      properties:
+        mode:
+          type: string
+          enum: [public, invite_only, private]
+        invitedPlayerIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        invitedNpcIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        corporateOnly:
+          type: boolean
+          description: Доступ только для корпоративных исполнителей.
+    PlayerOrderBrief:
+      type: object
+      required:
+        - template
+        - goal
+        - objectives
+        - riskProfile
+        - team
+        - privacy
+      properties:
+        template:
+          type: string
+          enum: [combat, hacker, economy, social, exploration]
+        goal:
+          type: string
+          description: Главная цель заказа.
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrderObjective'
+        checkpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrderCheckpoint'
+        attachments:
+          type: array
+          description: Вложения, сохранённые в content-service.
+          items:
+            $ref: './player-orders-publication-components.yaml#/components/schemas/PlayerOrderAttachment'
+        riskProfile:
+          $ref: '#/components/schemas/PlayerOrderRiskProfile'
+        team:
+          $ref: '#/components/schemas/PlayerOrderTeamRequirement'
+        privacy:
+          $ref: '#/components/schemas/PlayerOrderPrivacy'
+        notes:
+          type: string
+    PlayerOrderDraftStatus:
+      type: string
+      enum: [draft, pending_estimate, pending_validation, ready_to_publish, published, cancelled]
+    PlayerOrderDraft:
+      type: object
+      required:
+        - orderId
+        - ownerId
+        - status
+        - brief
+        - createdAt
+        - updatedAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+          description: Идентификатор владельца заказа.
+        status:
+          $ref: '#/components/schemas/PlayerOrderDraftStatus'
+        brief:
+          $ref: '#/components/schemas/PlayerOrderBrief'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastValidatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        validationSummary:
+          $ref: './player-orders-validation-components.yaml#/components/schemas/PlayerOrderValidationSummary'
+        budget:
+          $ref: './player-orders-budget-components.yaml#/components/schemas/PlayerOrderBudgetEstimate'
+    PlayerOrderSummary:
+      type: object
+      required:
+        - orderId
+        - status
+        - brief
+        - budget
+        - guarantees
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/PlayerOrderDraftStatus'
+        brief:
+          $ref: '#/components/schemas/PlayerOrderBrief'
+        budget:
+          $ref: './player-orders-budget-components.yaml#/components/schemas/PlayerOrderBudgetEstimate'
+        guarantees:
+          $ref: './player-orders-publication-components.yaml#/components/schemas/PlayerOrderGuaranteeSelection'
+        publication:
+          $ref: './player-orders-publication-components.yaml#/components/schemas/PlayerOrderPublicationInfo'
+  requestBodies:
+    PlayerOrderCreateRequest:
+      required: true
+      description: Создание нового заказа (черновика) на основе брифа.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerOrderBrief'
+          examples:
+            combatDraft:
+              $ref: '#/components/examples/CombatDraftExample'
+    PlayerOrderUpdateRequest:
+      required: true
+      description: Обновление брифа заказа.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerOrderBrief'
+  examples:
+    CombatDraftExample:
+      summary: Черновик боевого заказа
+      value:
+        template: combat
+        goal: "Захватить серверный кластер корпорации Arasaka в Найт-Сити."
+        objectives:
+          - title: "Взлом внешнего периметра"
+            description: "Взломать охранную сеть и подменить патрульные маршруты."
+            priority: primary
+            successCriteria: "Патрули перенаправлены, сигнал тревоги не поднят."
+          - title: "Экстракция сервера"
+            description: "Перевезти ядро сервера в убежище заказчика."
+            priority: primary
+            successCriteria: "Сервер доставлен без критических повреждений."
+        checkpoints:
+          - name: "Инфильтрация"
+            dueAt: "2077-07-18T23:00:00Z"
+            deliverables: ["Логи взлома", "Статус патрулей"]
+        attachments:
+          - attachmentId: "c3ab8ff1-9d9f-4f97-8e43-ab2fd76a8294"
+            name: "Схема складского комплекса"
+            url: "https://content.necpgame.com/orders/blueprints/sklad-a77.pdf"
+            mimeType: "application/pdf"
+        riskProfile:
+          riskLevel: high
+          legalStatus: grey
+          hostileFactions: ["Arasaka Security Division"]
+          zoneIds: ["night-city-district-07"]
+          notes: "Высокий уровень вооружённой охраны, рекомендуется усиленная страховка."
+        team:
+          slots: 4
+          requiredSkills: ["netrunner", "tech", "solo"]
+          minimumRating: gold
+          allowNpcBrokers: true
+        privacy:
+          mode: invite_only
+          invitedPlayerIds:
+            - "9f865262-b867-4d9b-9d2d-3f6f1d6d97d2"
+            - "b9b1a9c4-7d43-4e68-88de-4d4310e49590"
+          invitedNpcIds:
+            - "npc-broker-774"
+          corporateOnly: false
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

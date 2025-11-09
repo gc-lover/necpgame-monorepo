@@ -1,0 +1,430 @@
+openapi: 3.0.3
+info:
+  title: Leaderboard System API
+  version: 1.0.0
+  description: |
+    API для системы глобальных рейтингов.
+    
+    Функционал:
+    - Global leaderboards (глобальные рейтинги по категориям)
+    - Seasonal leaderboards (сезонные рейтинги с сбросом)
+    - Friend leaderboards (рейтинги среди друзей)
+    - Guild leaderboards (рейтинги гильдий)
+    - Multiple categories (Level, Wealth, PvP Rating, Achievements, Combat Stats)
+    - Real-time updates (Redis Sorted Sets)
+    - Pagination & ranking
+    - Player position lookup
+    
+    Источник: .BRAIN/05-technical/backend/leaderboard-system.md v1.0.0
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/progression
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Global Leaderboards
+    description: Глобальные рейтинги
+  - name: Seasonal Leaderboards
+    description: Сезонные рейтинги
+  - name: Friend Leaderboards
+    description: Рейтинги среди друзей
+  - name: Guild Leaderboards
+    description: Рейтинги гильдий
+
+paths:
+  /progression/leaderboards/global/{category}:
+    get:
+      summary: Получить глобальный рейтинг
+      operationId: getGlobalLeaderboard
+      tags: [Global Leaderboards]
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [LEVEL, WEALTH, PVP_RATING, ACHIEVEMENTS, COMBAT_KILLS, RAID_CLEARS]
+        - name: top
+          in: query
+          description: Количество топ записей
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Рейтинг
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+
+  /progression/leaderboards/global/{category}/player/{player_id}:
+    get:
+      summary: Получить позицию игрока в глобальном рейтинге
+      operationId: getPlayerGlobalRank
+      tags: [Global Leaderboards]
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [LEVEL, WEALTH, PVP_RATING, ACHIEVEMENTS, COMBAT_KILLS, RAID_CLEARS]
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Позиция игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRankResponse'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /progression/leaderboards/seasonal/{season_id}/{category}:
+    get:
+      summary: Получить сезонный рейтинг
+      operationId: getSeasonalLeaderboard
+      tags: [Seasonal Leaderboards]
+      parameters:
+        - name: season_id
+          in: path
+          required: true
+          description: ID сезона (или "current" для текущего)
+          schema:
+            type: string
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [LEVEL, PVP_RATING, RAID_PROGRESS, ACHIEVEMENTS]
+        - name: top
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Сезонный рейтинг
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/LeaderboardResponse'
+                  - type: object
+                    properties:
+                      season:
+                        $ref: '#/components/schemas/Season'
+
+  /progression/leaderboards/friends/{player_id}/{category}:
+    get:
+      summary: Получить рейтинг среди друзей
+      operationId: getFriendLeaderboard
+      tags: [Friend Leaderboards]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [LEVEL, WEALTH, PVP_RATING, ACHIEVEMENTS]
+      responses:
+        '200':
+          description: Рейтинг среди друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+
+  /progression/leaderboards/guilds/{category}:
+    get:
+      summary: Получить рейтинг гильдий
+      operationId: getGuildLeaderboard
+      tags: [Guild Leaderboards]
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [LEVEL, WEALTH, MEMBERS, PVP_RATING, RAID_CLEARS, TERRITORY]
+        - name: top
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Рейтинг гильдий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildLeaderboardResponse'
+
+  /progression/leaderboards/guilds/{category}/guild/{guild_id}:
+    get:
+      summary: Получить позицию гильдии в рейтинге
+      operationId: getGuildRank
+      tags: [Guild Leaderboards]
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [LEVEL, WEALTH, MEMBERS, PVP_RATING, RAID_CLEARS, TERRITORY]
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Позиция гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRankResponse'
+
+  /progression/leaderboards/update:
+    post:
+      summary: Обновить значение в рейтинге
+      operationId: updateLeaderboardScore
+      tags: [Global Leaderboards]
+      description: Используется backend системами для обновления рейтингов
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScoreRequest'
+      responses:
+        '200':
+          description: Рейтинг обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  new_rank:
+                    type: integer
+                  previous_rank:
+                    type: integer
+                  rank_change:
+                    type: integer
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+components:
+  schemas:
+    LeaderboardResponse:
+      type: object
+      properties:
+        category:
+          type: string
+        leaderboard_type:
+          type: string
+          enum: [GLOBAL, SEASONAL, FRIENDS]
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+        total_entries:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          example: 1
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        score:
+          type: number
+          description: Значение (level, wealth, rating, etc.)
+          example: 50
+        score_display:
+          type: string
+          example: Level 50 (10,523,456 eddies)
+        active_title:
+          type: string
+          nullable: true
+        guild:
+          type: object
+          nullable: true
+          properties:
+            guild_id:
+              type: string
+              format: uuid
+            guild_name:
+              type: string
+            guild_tag:
+              type: string
+        updated_at:
+          type: string
+          format: date-time
+
+    PlayerRankResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        category:
+          type: string
+        rank:
+          type: integer
+          example: 523
+        score:
+          type: number
+        total_players:
+          type: integer
+          description: Всего игроков в рейтинге
+        percentile:
+          type: number
+          format: float
+          example: 95.5
+          description: Процентиль (топ X%)
+        nearby_entries:
+          type: array
+          description: Игроки рядом в рейтинге
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+
+    GuildLeaderboardResponse:
+      type: object
+      properties:
+        category:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildLeaderboardEntry'
+        total_guilds:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+
+    GuildLeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        guild_id:
+          type: string
+          format: uuid
+        guild_name:
+          type: string
+        guild_tag:
+          type: string
+        score:
+          type: number
+        score_display:
+          type: string
+        member_count:
+          type: integer
+        leader_name:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+
+    GuildRankResponse:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        category:
+          type: string
+        rank:
+          type: integer
+        score:
+          type: number
+        total_guilds:
+          type: integer
+        nearby_guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildLeaderboardEntry'
+
+    Season:
+      type: object
+      properties:
+        season_id:
+          type: string
+        name:
+          type: string
+          example: "Season 1: Rise of Night City"
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        is_current:
+          type: boolean
+
+    UpdateScoreRequest:
+      type: object
+      required:
+        - player_id
+        - category
+        - score
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum: [LEVEL, WEALTH, PVP_RATING, ACHIEVEMENTS, COMBAT_KILLS, RAID_CLEARS]
+        score:
+          type: number
+        season_id:
+          type: string
+          nullable: true
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

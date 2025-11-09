@@ -1,0 +1,277 @@
+# Target Architecture:
+# - Microservice: social-service (port 8084)
+# - API Base: /api/v1/chat/channels
+# - Dependencies: guild-service, party-service, notification-service
+# - Frontend Module: modules/social/chat (useChatStore)
+
+openapi: 3.0.3
+info:
+  title: Chat Channels Components
+  version: 1.0.0
+  description: Общие параметры, заголовки и схемы для Chat Channels API.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  parameters:
+    ChannelId:
+      name: channelId
+      in: path
+      required: true
+      description: Уникальный идентификатор канала (UUID или системное имя).
+      schema: { type: string }
+    ChannelScope:
+      name: scope
+      in: query
+      required: false
+      description: Фильтр по охвату канала.
+      schema: { $ref: '#/components/schemas/ChannelScope' }
+    IncludeSystem:
+      name: includeSystem
+      in: query
+      required: false
+      description: Возвращать ли системные каналы.
+      schema: { type: boolean, default: false }
+    ZoneId:
+      name: X-Zone-Id
+      in: header
+      required: false
+      description: Идентификатор зоны для локальных каналов.
+      schema: { type: string }
+    OnlineOnly:
+      name: onlineOnly
+      in: query
+      required: false
+      description: Возвращать только онлайн участников.
+      schema: { type: boolean, default: true }
+    MembersLimit:
+      name: limit
+      in: query
+      required: false
+      description: Максимальное число участников (<=500).
+      schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+  headers:
+    ChannelScopeHeader:
+      description: Scope канала в ответах (SERVER, ZONE, PARTY, PRIVATE, GROUP).
+      schema: { $ref: '#/components/schemas/ChannelScope' }
+    ChannelCooldownHeader:
+      description: Текущий cooldown в секундах для отправки сообщений в канале.
+      schema: { type: integer, minimum: 0 }
+    ChannelMaxLengthHeader:
+      description: Максимальная длина сообщения в канале.
+      schema: { type: integer, minimum: 1 }
+
+  schemas:
+    ChannelType:
+      type: string
+      enum: [GLOBAL, LOCAL, ZONE, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, TRADE, SYSTEM, CUSTOM, EVENT]
+    ChannelScope:
+      type: string
+      enum: [SERVER, ZONE, PARTY, PRIVATE, GROUP]
+    MembershipRole:
+      type: string
+      enum: [MEMBER, MODERATOR, OWNER]
+    PermissionTargetType:
+      type: string
+      enum: [ROLE, PLAYER]
+
+    ChannelDefinition:
+      type: object
+      required: [channelId, channelType, channelName, scope, settings]
+      properties:
+        channelId: { type: string }
+        channelType: { $ref: '#/components/schemas/ChannelType' }
+        channelName: { type: string }
+        scope: { $ref: '#/components/schemas/ChannelScope' }
+        ownerId: { type: string, format: uuid }
+        settings: { $ref: '#/components/schemas/ChannelSettings' }
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        isActive: { type: boolean }
+
+    ChannelSettings:
+      type: object
+      required: [messageCooldownSeconds, maxMessageLength]
+      properties:
+        messageCooldownSeconds: { type: integer, minimum: 0 }
+        maxMessageLength: { type: integer, minimum: 1, maximum: 2048 }
+        maxMembers: { type: integer, minimum: 1 }
+        isPublic: { type: boolean, default: false }
+        isModerated: { type: boolean, default: false }
+        allowMentions: { type: boolean, default: true }
+        permissions: { $ref: '#/components/schemas/ChannelPermissions' }
+
+    ChannelPermissions:
+      type: object
+      properties:
+        canRead:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermission' }
+        canWrite:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermission' }
+        canModerate:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermission' }
+
+    RolePermission:
+      type: object
+      required: [type, value]
+      properties:
+        type: { $ref: '#/components/schemas/PermissionTargetType' }
+        value: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    ChannelMembership:
+      type: object
+      required: [channelId, playerId, joinedAt]
+      properties:
+        channelId: { type: string }
+        playerId: { type: string, format: uuid }
+        joinedAt: { type: string, format: date-time }
+        role: { $ref: '#/components/schemas/MembershipRole' }
+        muted: { type: boolean, default: false }
+        notificationsMuted: { type: boolean, default: false }
+
+    ChannelMember:
+      type: object
+      required: [playerId, role]
+      properties:
+        playerId: { type: string, format: uuid }
+        nickname: { type: string }
+        role: { $ref: '#/components/schemas/MembershipRole' }
+        online: { type: boolean }
+        joinedAt: { type: string, format: date-time }
+
+    ChannelMembersPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ChannelMember' }
+        nextCursor: { type: string }
+        total: { type: integer }
+
+    ChannelTypeInfo:
+      type: object
+      required: [channelType, scope, cooldownSeconds, maxMessageLength]
+      properties:
+        channelType: { $ref: '#/components/schemas/ChannelType' }
+        scope: { $ref: '#/components/schemas/ChannelScope' }
+        cooldownSeconds: { type: integer, minimum: 0 }
+        maxMessageLength: { type: integer, minimum: 1 }
+        maxMembers: { type: integer }
+        description: { type: string }
+        defaultPermissions: { $ref: '#/components/schemas/ChannelPermissions' }
+
+    ChannelCatalog:
+      type: object
+      required: [channels]
+      properties:
+        channels:
+          type: array
+          items: { $ref: '#/components/schemas/ChannelTypeInfo' }
+        combatChannels:
+          type: array
+          items: { $ref: '#/components/schemas/ChannelTypeInfo' }
+
+    ChannelList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ChannelDefinition' }
+        total: { type: integer }
+
+    JoinChannelRequest:
+      type: object
+      required: [channelType]
+      properties:
+        channelId: { type: string }
+        channelType: { $ref: '#/components/schemas/ChannelType' }
+        inviteCode: { type: string }
+        partyId: { type: string, format: uuid }
+        guildId: { type: string, format: uuid }
+        metadata:
+          type: object
+          additionalProperties: { type: string }
+
+    LeaveChannelRequest:
+      type: object
+      required: [channelId]
+      properties:
+        channelId: { type: string }
+        channelType: { $ref: '#/components/schemas/ChannelType' }
+
+    CreateChannelRequest:
+      type: object
+      required: [channelName, channelType]
+      properties:
+        channelName: { type: string, minLength: 3, maxLength: 50 }
+        channelType: { type: string, enum: [CUSTOM, EVENT] }
+        settings: { $ref: '#/components/schemas/ChannelSettings' }
+        inviteOnly: { type: boolean, default: false }
+        expiresAt: { type: string, format: date-time }
+
+    UpdateChannelSettingsRequest:
+      type: object
+      properties:
+        messageCooldownSeconds: { type: integer, minimum: 0 }
+        maxMessageLength: { type: integer, minimum: 1, maximum: 2048 }
+        maxMembers: { type: integer, minimum: 1 }
+        permissions: { $ref: '#/components/schemas/ChannelPermissions' }
+        moderators:
+          type: array
+          items: { type: string, format: uuid }
+
+    ChannelModeratorsRequest:
+      type: object
+      properties:
+        add:
+          type: array
+          items: { type: string, format: uuid }
+        remove:
+          type: array
+          items: { type: string, format: uuid }
+
+    ChannelSuspendRequest:
+      type: object
+      required: [reason, durationMinutes]
+      properties:
+        reason: { type: string, maxLength: 200 }
+        durationMinutes: { type: integer, minimum: 1, maximum: 1440 }
+        notifyMembers: { type: boolean, default: true }
+
+    ChannelError:
+      allOf:
+        - $ref: '../../shared/common/responses.yaml#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  enum:
+                    - BIZ_CHAT_CHANNEL_NOT_FOUND
+                    - BIZ_CHAT_CHANNEL_ACCESS_DENIED
+                    - BIZ_CHAT_CHANNEL_LIMIT_REACHED
+                    - BIZ_CHAT_CHANNEL_COOLDOWN_ACTIVE
+                    - VAL_CHAT_CHANNEL_INVALID_SCOPE
+                    - VAL_CHAT_CHANNEL_INVALID_INVITE
+                    - VAL_CHAT_CHANNEL_DUPLICATE_NAME
+                    - INT_CHAT_CHANNEL_STORAGE_FAILURE
+                    - INT_CHAT_CHANNEL_EVENT_FAILURE
+              required: [code, message]
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

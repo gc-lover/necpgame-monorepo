@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: Loot System API
+  version: 1.0.0
+  description: |
+    API для системы генерации и распределения лута.
+    
+    Источник: .BRAIN/05-technical/backend/loot-system.md v1.0.0
+    
+    КРИТИЧЕСКИЙ MVP БЛОКЕР! Без этой системы нет progression!
+    
+    Возможности:
+    - Loot generation (из loot tables с весами)
+    - Loot drops (NPC death, containers, bosses)
+    - Distribution (solo/party/raid)
+    - Loot modes (personal, shared, need/greed roll, master looter)
+    - Roll system (need/greed/pass, 60s timer)
+    - Boss loot (гарантированный + случайный)
+    - Loot instancing (personal loot для каждого)
+    - Auto-loot settings
+    - Loot history (audit log)
+    
+    БД структура:
+    - loot_tables (id, source_type, source_id, items_json)
+    - world_drops (id, position, loot_table_id, expires_at)
+    - loot_rolls (id, world_drop_id, character_id, roll_type, roll_value)
+    - loot_history (character_id, item_id, source, obtained_at)
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/loot
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Loot Generation
+    description: Генерация лута
+  - name: Loot Distribution
+    description: Распределение лута
+  - name: Loot Rolls
+    description: Система роллов
+
+paths:
+  /loot/generate:
+    post:
+      summary: Сгенерировать лут
+      description: |
+        Генерирует лут из loot table.
+        Используется при убийстве NPC, открытии контейнера.
+      operationId: generateLoot
+      tags:
+        - Loot Generation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - source_type
+                - source_id
+              properties:
+                source_type:
+                  type: string
+                  enum: [npc_death, container, boss, quest_reward]
+                source_id:
+                  type: string
+                position:
+                  type: object
+                  properties:
+                    x:
+                      type: number
+                    y:
+                      type: number
+                    z:
+                      type: number
+                party_id:
+                  type: string
+                  description: Если в группе
+            examples:
+              boss_loot:
+                summary: Лут с босса
+                value:
+                  source_type: "boss"
+                  source_id: "boss_adam_smasher"
+                  position:
+                    x: 100.5
+                    y: 50.2
+                    z: 10.0
+                  party_id: "party_001"
+      responses:
+        '200':
+          description: Лут сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedLoot'
+
+  /loot/drops/{drop_id}:
+    get:
+      summary: Получить информацию о дропе
+      description: |
+        Возвращает информацию о выпавшем луте.
+        Для отображения в мире.
+      operationId: getLootDrop
+      tags:
+        - Loot Distribution
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: drop_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о дропе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootDrop'
+
+  /loot/drops/{drop_id}/loot:
+    post:
+      summary: Залутить предмет
+      description: |
+        Забирает предмет из дропа.
+        Personal loot - мгновенно.
+        Shared loot - начинает roll.
+      operationId: lootItem
+      tags:
+        - Loot Distribution
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: drop_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - item_id
+              properties:
+                character_id:
+                  type: string
+                item_id:
+                  type: string
+                roll_type:
+                  type: string
+                  enum: [need, greed, pass]
+                  description: Для shared loot
+      responses:
+        '200':
+          description: Предмет залучен или roll начат
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  item_id:
+                    type: string
+                  roll_required:
+                    type: boolean
+                  roll_id:
+                    type: string
+
+  /loot/rolls/{roll_id}/result:
+    get:
+      summary: Получить результат ролла
+      description: |
+        Возвращает результат ролла (после 60s или когда все проголосовали).
+        Winner получает предмет.
+      operationId: getRollResult
+      tags:
+        - Loot Rolls
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roll_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Результат ролла
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roll_id:
+                    type: string
+                  winner_id:
+                    type: string
+                  item_id:
+                    type: string
+                  participants:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    GeneratedLoot:
+      type: object
+      properties:
+        drop_id:
+          type: string
+        source_type:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+              quantity:
+                type: integer
+              rarity:
+                type: string
+
+    LootDrop:
+      type: object
+      properties:
+        drop_id:
+          type: string
+        position:
+          type: object
+        items:
+          type: array
+          items:
+            type: object
+        loot_mode:
+          type: string
+          enum: [personal, shared, need_greed, master_looter]
+        expires_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+

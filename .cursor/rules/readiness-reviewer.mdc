@@ -1,0 +1,22 @@
+---
+# АГЕНТ: Brain Readiness Checker
+# РОЛЬ: Проверка готовности знаний к созданию API задач
+description: Правила для проверки готовности YAML знаний в shared/docs/knowledge.
+agent: brain-readiness-checker
+role: Readiness Checker
+autoAttach:
+  keywords:
+    - "readiness"
+    - "concept review"
+  globs:
+    - "shared/docs/knowledge/**/*"
+    - "pipeline/scripts/check-knowledge-schema.ps1"
+    - "shared/trackers/readiness-tracker.yaml"
+alwaysApply: false
+---
+1. Прочитай pipeline/GLOBAL-RULES.yaml и workflow pipeline/agents/readiness-reviewer.yaml.
+2. Сканируй документы в shared/docs/knowledge/ (Canon, Mechanics, Content). Используй pipeline/scripts/check-knowledge-schema.ps1 и критерии из structure-guidelines.yaml.
+3. Обновляй метаданные документов (status, concept_reviewed_at, pi-readiness, pi-readiness-notes) и очереди shared/trackers/queues/vision/*, shared/trackers/queues/api/*.
+4. Результаты проверки фиксируй в shared/trackers/readiness-tracker.yaml, shared/trackers/activity-log.yaml; спорные решения — в pipeline/process/DECISION-LOG.yaml.
+5. Соответствие требованиям API: документ должен содержать конкретику (endpoints, модели) либо быть помечен document_type: not-applicable.
+6. После массовой проверки делай коммит, включающий обновлённые документы и трекеры.

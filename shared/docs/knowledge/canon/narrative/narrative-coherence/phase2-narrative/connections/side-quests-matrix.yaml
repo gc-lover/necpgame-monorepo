@@ -1,0 +1,750 @@
+# Side Quests Connections Matrix
+# Version: 1.0.0
+# Date: 2025-11-06 23:24
+# Description: Полная матрица связей побочных квестов с главной сюжетной линией
+
+metadata:
+  version: "1.0.0"
+  created: "2025-11-06"
+  updated: "2025-11-06 23:24"
+  status: approved
+  total_quests: 450
+  connections_mapped: 120
+  description: "Матрица связей побочных квестов"
+
+# Структура:
+# quest_id:
+#   name: Название квеста
+#   era: Эпоха
+#   type: Тип (side, faction, class, romantic)
+#   main_quest_connections: Связи с главными квестами
+#   influences: На что влияет
+#   influenced_by: От чего зависит
+
+quests:
+  # ====== ЭПОХА 2020-2030 ======
+  
+  SQ-2020-001:
+    name: "Контракт Войтека"
+    era: "2020-2030"
+    type: side
+    class_focus: Solo
+    main_quest_connections:
+      - MQ-2020-001  # Первые шаги (вводит в мир)
+      - MQ-2020-003  # Слепые зоны МАКСТАК (связан с зонами)
+    influences:
+      reputation:
+        Solo_Guild: +15
+        Trauma_Team: +10
+      unlocks:
+        - SQ-2020-002  # Контракт Trauma Team (если репутация высокая)
+      world_state:
+        - key: "watson_security_improved"
+          value: true
+          condition: "quest_success"
+    influenced_by:
+      - quest: MQ-2020-001
+        condition: completed
+    consequences:
+      next_era:
+        - "Solo гильдия помнит услугу (2030-2045)"
+        - "Доступ к контрактам Trauma Team"
+  
+  SQ-2020-002:
+    name: "Контракт Trauma Team"
+    era: "2020-2030"
+    type: side
+    class_focus: Solo
+    main_quest_connections:
+      - MQ-2020-004  # Сертификат человечности (связан с медициной)
+    influences:
+      reputation:
+        Trauma_Team: +20
+        Medtech_Guild: +15
+      unlocks:
+        - SQ-2030-001  # Медиа кампания (в следующей эпохе)
+    influenced_by:
+      - quest: SQ-2020-001
+        condition: completed
+        reputation_required:
+          Trauma_Team: 10
+    consequences:
+      next_era:
+        - "Trauma Team контракты доступны в 2030-2045"
+  
+  SQ-2020-003:
+    name: "Защита чистого канала"
+    era: "2020-2030"
+    type: side
+    class_focus: Netrunner
+    main_quest_connections:
+      - MQ-2020-002  # Узел Триака (прямая связь)
+      - MQ-2020-005  # Чистый канал (влияет на финал эпохи)
+    influences:
+      reputation:
+        NetWatch: +25
+        Voodoo_Boys: -20
+      flags:
+        - netwatch_ally: true
+        - voodoo_enemy: true
+      unlocks:
+        - SQ-2020-004  # Трассировка фантомов (только если NetWatch союзник)
+    influenced_by:
+      - quest: MQ-2020-002
+        condition: choice_netwatch
+    consequences:
+      critical_path:
+        - "Определяет доступ к NetWatch квестам в 2030-2045"
+        - "Закрывает Voodoo Boys квесты"
+      main_story:
+        - "Влияет на MQ-2030-002 (Картография Низа)"
+  
+  SQ-2020-004:
+    name: "Улич образование"
+    era: "2020-2030"
+    type: side
+    class_focus: Rockerboy
+    main_quest_connections:
+      - MQ-2020-001  # Первые шаги (вводный)
+    influences:
+      reputation:
+        Valentinos: +15
+        6th_Street: +10
+      unlocks:
+        - SQ-2020-006  # Долг Padre (если репутация с бандами)
+    influenced_by:
+      - quest: MQ-2020-001
+        condition: completed
+    consequences:
+      next_era:
+        - "Банды помнят услугу"
+  
+  SQ-2020-005:
+    name: "Конвой Aldecaldos"
+    era: "2020-2030"
+    type: side
+    class_focus: Nomad
+    main_quest_connections:
+      - MQ-2020-003  # Слепые зоны (маршруты связаны)
+    influences:
+      reputation:
+        Nomads: +25
+        Aldecaldo_Clan: +30
+      flags:
+        - nomad_friend: true
+      unlocks:
+        - SQ-2030-003  # Underground maps (в следующей эпохе)
+    influenced_by:
+      - quest: MQ-2020-001
+        condition: completed
+      - origin: Nomad  # Легче для Nomad
+    consequences:
+      critical_path:
+        - "Открывает Nomad путь в 2030-2045"
+        - "Доступ к пустошам"
+      main_story:
+        - "Влияет на MQ-2030-006 (Приватные войны)"
+  
+  SQ-2020-006:
+    name: "Долг Padre"
+    era: "2020-2030"
+    type: faction
+    faction_focus: Valentinos
+    main_quest_connections:
+      - MQ-2020-005  # Чистый канал (косвенно)
+    influences:
+      reputation:
+        Valentinos: +30
+        Padre: +50
+      unlocks:
+        - SQ-2030-004  # Neuroethics lawsuit (связь через Padre)
+      flags:
+        - padre_owes_favor: true
+    influenced_by:
+      - quest: SQ-2020-004
+        condition: completed
+        reputation_required:
+          Valentinos: 15
+    consequences:
+      next_era:
+        - "Padre может помочь в 2030-2045"
+        - "Доступ к эксклюзивным Valentinos контрактам"
+      main_story:
+        - "Может помочь в MQ-2030-006 (выбор Valentinos стороны)"
+  
+  # ====== ЭПОХА 2030-2045 ======
+  
+  SQ-2030-001:
+    name: "Медиа кампания"
+    era: "2030-2045"
+    type: side
+    class_focus: Media
+    main_quest_connections:
+      - MQ-2030-001  # Устав Световых Куполов (информационная война)
+    influences:
+      reputation:
+        Media_Guild: +25
+        Public_Opinion: +20
+      world_state:
+        - key: "public_awareness_domes"
+          value: high
+          condition: "quest_success"
+      unlocks:
+        - SQ-2030-002  # Dome audit
+    influenced_by:
+      - quest: SQ-2020-002
+        condition: completed  # Связь с Trauma Team контрактом
+      - quest: MQ-2030-001
+        condition: in_progress
+    consequences:
+      main_story:
+        - "Влияет на исход MQ-2030-001 (общественное мнение)"
+      next_era:
+        - "Медиа кампании доступны в 2045-2060"
+  
+  SQ-2030-002:
+    name: "Аудит купола"
+    era: "2030-2045"
+    type: side
+    class_focus: Netrunner
+    main_quest_connections:
+      - MQ-2030-001  # Устав Световых Куполов (прямая связь)
+      - MQ-2030-005  # Кризис доступа (связан с куполами)
+    influences:
+      reputation:
+        Dome_Residents: +15
+        Corpo_Security: -10
+      flags:
+        - dome_secrets_known: true
+      unlocks:
+        - SQ-2045-001  # Phantom hunt (в следующей эпохе, связь через данные)
+    influenced_by:
+      - quest: SQ-2030-001
+        condition: completed
+      - class: Netrunner  # Легче для Netrunner
+    consequences:
+      critical_path:
+        - "Открывает информацию о куполах"
+        - "Может изменить исход MQ-2030-001"
+      main_story:
+        - "Данные важны для MQ-2045-002 (Глушь-пакеты)"
+  
+  SQ-2030-003:
+    name: "Подземные карты"
+    era: "2030-2045"
+    type: side
+    class_focus: Nomad
+    main_quest_connections:
+      - MQ-2030-002  # Картография Низа (прямая связь)
+    influences:
+      reputation:
+        Nomads: +20
+        Underground_Networks: +25
+      world_state:
+        - key: "underground_routes_mapped"
+          value: true
+      unlocks:
+        - SQ-2045-003  # Chorus conversion (связь через подземелье)
+    influenced_by:
+      - quest: SQ-2020-005
+        condition: completed  # Конвой Aldecaldos
+      - quest: MQ-2030-002
+        condition: in_progress
+    consequences:
+      critical_path:
+        - "Карты доступны всем союзникам"
+        - "Открывает скрытые локации в 2045-2060"
+  
+  SQ-2030-004:
+    name: "Нейроэтический иск"
+    era: "2030-2045"
+    type: side
+    class_focus: Lawman
+    main_quest_connections:
+      - MQ-2030-003  # Соглашение о нейроэтике (прямая связь)
+    influences:
+      reputation:
+        Lawman_Guild: +25
+        Corpo_Legal: +15
+        Cyberware_Manufacturers: -20
+      world_state:
+        - key: "neuroethics_lawsuit_won"
+          value: true
+          condition: "quest_success"
+      unlocks:
+        - SQ-2045-002  # Emitter cartel (в следующей эпохе)
+    influenced_by:
+      - quest: SQ-2020-006
+        condition: completed  # Padre может помочь юридически
+      - quest: MQ-2030-003
+        condition: in_progress
+    consequences:
+      main_story:
+        - "Может изменить MQ-2030-003 (ограничения имплантов)"
+      next_era:
+        - "Нейроэтика становится важной в 2045-2060"
+  
+  # ====== ЭПОХА 2045-2060 ======
+  
+  SQ-2045-001:
+    name: "Охота на фантомов"
+    era: "2045-2060"
+    type: side
+    class_focus: Netrunner
+    main_quest_connections:
+      - MQ-2045-002  # Глушь-пакеты (прямая связь с фантомами)
+      - MQ-2045-005  # Часовые Blackwall (связано с ИИ)
+    influences:
+      reputation:
+        NetWatch: +30
+        AI_Cults: -25
+      flags:
+        - phantom_hunter: true
+      unlocks:
+        - SQ-2060-001  # Gray theater (в следующей эпохе)
+    influenced_by:
+      - quest: SQ-2030-002
+        condition: completed  # Аудит купола дал информацию
+      - quest: MQ-2045-002
+        condition: in_progress
+      - class: Netrunner
+    consequences:
+      critical_path:
+        - "Влияет на Blackwall Incident Alpha"
+        - "Может предотвратить часть потерь"
+      main_story:
+        - "Критично для MQ-2045-005 (Часовые Blackwall)"
+  
+  SQ-2045-002:
+    name: "Картель эмиттеров"
+    era: "2045-2060"
+    type: side
+    class_focus: Fixer
+    main_quest_connections:
+      - MQ-2045-004  # Картели прошивок (прямая связь)
+    influences:
+      reputation:
+        Fixers_Guild: +30
+        Black_Market: +25
+        NetWatch: -15
+      world_state:
+        - key: "emitter_cartel_controlled"
+          value: true
+          condition: "quest_success"
+      unlocks:
+        - SQ-2060-002  # Border accord (торговые пути)
+    influenced_by:
+      - quest: SQ-2030-004
+        condition: completed  # Нейроэтический иск открыл рынок
+      - quest: MQ-2045-004
+        condition: in_progress
+    consequences:
+      main_story:
+        - "Влияет на исход MQ-2045-004 (контроль картелей)"
+      next_era:
+        - "Черный рынок прошивок в 2060-2077"
+  
+  SQ-2045-003:
+    name: "Обращение в хоре"
+    era: "2045-2060"
+    type: side
+    class_focus: Media
+    main_quest_connections:
+      - MQ-2045-003  # Синтетические культы (прямая связь)
+      - MQ-2045-006  # Тёплые коридоры (влияние на культы)
+    influences:
+      reputation:
+        AI_Cults: +40
+        Church_of_Digital_God: +50
+        Traditional_Religions: -30
+      flags:
+        - choir_member: true
+        - ai_sympathizer: true
+      unlocks:
+        - SQ-2060-003  # Concordat appeal (культовая дипломатия)
+      blocks:
+        - SQ-2060-005  # Meta-court testimony (конфликт интересов)
+    influenced_by:
+      - quest: SQ-2030-003
+        condition: completed  # Подземные связи с культами
+      - quest: MQ-2045-003
+        condition: in_progress
+    consequences:
+      critical_path:
+        - "ВАЖНО: Определяет путь к Трансцендентности"
+        - "Открывает ИИ-культовые квесты"
+      main_story:
+        - "Критично для MQ-2045-006 (Тёплые коридоры)"
+        - "Влияет на финал 2093 (Трансцендентность доступна)"
+  
+  # ====== ЭПОХА 2060-2077 ======
+  
+  SQ-2060-001:
+    name: "Серые театры"
+    era: "2060-2077"
+    type: side
+    class_focus: Solo
+    main_quest_connections:
+      - MQ-2060-003  # Серые театры (одноименный)
+    influences:
+      reputation:
+        Mercenary_Guild: +25
+        Shadow_Ops: +30
+      unlocks:
+        - SQ-2077-001  # Barghest liaison (военные связи)
+    influenced_by:
+      - quest: SQ-2045-001
+        condition: completed  # Охота на фантомов дала опыт
+      - quest: MQ-2060-003
+        condition: in_progress
+    consequences:
+      next_era:
+        - "Shadow ops контракты в 2077"
+  
+  SQ-2060-002:
+    name: "Пограничное соглашение"
+    era: "2060-2077"
+    type: side
+    class_focus: Nomad
+    main_quest_connections:
+      - MQ-2060-001  # Купольные конкордаты (связано с границами)
+      - MQ-2060-005  # Мета-суд (дипломатия)
+    influences:
+      reputation:
+        Nomads: +30
+        NUSA: +15
+        Free_States: +15
+      world_state:
+        - key: "border_trade_routes_open"
+          value: true
+      unlocks:
+        - SQ-2077-002  # Dogtown supply line (торговые пути)
+    influenced_by:
+      - quest: SQ-2045-002
+        condition: completed  # Картель эмиттеров дал связи
+      - quest: MQ-2060-001
+        condition: in_progress
+    consequences:
+      critical_path:
+        - "Открывает торговые маршруты"
+        - "Важно для Унификационной войны"
+      main_story:
+        - "Влияет на MQ-2060-005 (Мета-суд)"
+  
+  # ====== ЭПОХА 2077 ======
+  
+  SQ-2077-001:
+    name: "Связной Barghest"
+    era: "2077"
+    type: faction
+    faction_focus: Barghest
+    main_quest_connections:
+      - MQ-2077-001  # Dogtown Checkpoint (прямая связь)
+    influences:
+      reputation:
+        Barghest: +40
+        Kurt_Hansen: +50
+        NUSA: -20
+      flags:
+        - barghest_ally: true
+      unlocks:
+        - SQ-2077-002  # Dogtown supply line
+        - SQ-2077-003  # Barghest civils
+    influenced_by:
+      - quest: SQ-2060-001
+        condition: completed  # Shadow ops опыт
+      - quest: MQ-2077-001
+        condition: in_progress
+    consequences:
+      critical_path:
+        - "Определяет доступ к Dogtown в 2078-2093"
+        - "Влияет на Dogtown Crisis 2080"
+      main_story:
+        - "Связано с событиями CP2077 Phantom Liberty"
+  
+  SQ-2077-002:
+    name: "Линия снабжения Dogtown"
+    era: "2077"
+    type: side
+    class_focus: Fixer
+    main_quest_connections:
+      - MQ-2077-001  # Dogtown Checkpoint
+    influences:
+      reputation:
+        Barghest: +25
+        Black_Market: +30
+      world_state:
+        - key: "dogtown_supply_secured"
+          value: true
+      unlocks:
+        - SQ-2078-001  # License wars (в следующей эпохе)
+    influenced_by:
+      - quest: SQ-2060-002
+        condition: completed  # Border accord открыл пути
+      - quest: SQ-2077-001
+        condition: completed
+    consequences:
+      next_era:
+        - "Логистика Dogtown в 2078-2093"
+  
+  # ====== ЭПОХА 2078-2093 ======
+  
+  SQ-2078-001:
+    name: "Войны лицензий"
+    era: "2078-2093"
+    type: side
+    class_focus: Corpo
+    main_quest_connections:
+      - MQ-2078-001  # Параметрические ярмарки (экономическая война)
+    influences:
+      reputation:
+        Arasaka: +20
+        Militech: -20
+        License_Market: +30
+      world_state:
+        - key: "license_wars_won"
+          value: true
+          condition: "quest_success"
+      unlocks:
+        - SQ-2078-003  # Craft fair (лицензии открывают крафт)
+    influenced_by:
+      - quest: SQ-2077-002
+        condition: completed  # Supply line дала базу
+      - quest: MQ-2078-001
+        condition: in_progress
+    consequences:
+      main_story:
+        - "Влияет на MQ-2078-001 (Параметрические ярмарки)"
+      critical_path:
+        - "Определяет корпоративные союзы в финале 2093"
+  
+  SQ-2078-002:
+    name: "Манипуляция ярмаркой"
+    era: "2078-2093"
+    type: side
+    class_focus: Fixer
+    main_quest_connections:
+      - MQ-2078-001  # Параметрические ярмарки (манипуляция)
+    influences:
+      reputation:
+        Fixers_Guild: +35
+        Black_Market: +40
+        Fair_Security: -25
+      flags:
+        - market_manipulator: true
+      unlocks:
+        - SQ-2078-003  # Craft fair
+      blocks:
+        - SQ-2078-001  # License wars (конкурирующий подход)
+    influenced_by:
+      - quest: MQ-2078-001
+        condition: in_progress
+      - class: Fixer
+    consequences:
+      main_story:
+        - "Альтернативный путь в MQ-2078-001"
+  
+  SQ-2078-003:
+    name: "Ярмарка крафта"
+    era: "2078-2093"
+    type: side
+    class_focus: Techie
+    main_quest_connections:
+      - MQ-2078-001  # Параметрические ярмарки (крафт часть экономики)
+    influences:
+      reputation:
+        Techie_Guild: +30
+        Crafters_Market: +40
+      world_state:
+        - key: "craft_fair_established"
+          value: true
+      unlocks:
+        - "Эксклюзивные рецепты крафта"
+        - "Доступ к редким материалам"
+    influenced_by:
+      - quest: SQ-2078-001
+        condition: completed
+        alternative: SQ-2078-002
+    consequences:
+      gameplay:
+        - "Открывает уникальный крафт для финала"
+  
+  SQ-2078-004:
+    name: "Экспедиция за Blackwall"
+    era: "2078-2093"
+    type: side
+    class_focus: Netrunner
+    main_quest_connections:
+      - MQ-2078-002  # Архивы за заслоном (ПРЯМАЯ СВЯЗЬ)
+      - MQ-2078-004  # Выбор перезапуска (КРИТИЧНО ДЛЯ ФИНАЛА)
+    influences:
+      reputation:
+        AI_Cults: +50
+        NetWatch: -40
+        Blackwall_Divers: +60
+      flags:
+        - beyond_blackwall: true
+        - ai_contact_established: true
+      unlocks:
+        - "Путь Трансцендентности в финале 2093"
+      blocks:
+        - "Путь Корпоратократии (конфликт)"
+    influenced_by:
+      - quest: SQ-2045-003
+        condition: completed  # Choir membership помогает
+      - quest: MQ-2078-002
+        condition: in_progress
+      - class: Netrunner
+      - flags:
+          - ai_sympathizer: true
+    consequences:
+      critical_path:
+        - "КРИТИЧНО: Открывает финал Трансцендентности"
+        - "Контакт с ИИ за Blackwall"
+        - "Может предотвратить Blackwall Incident Beta"
+      main_story:
+        - "Один из 4 путей финала 2093"
+        - "Альтернатива корпоративному пути"
+      finale:
+        - ending: "Transcendence"
+          requirement: true
+  
+  SQ-2078-005:
+    name: "Проект конституции"
+    era: "2078-2093"
+    type: side
+    class_focus: Politician
+    main_quest_connections:
+      - MQ-2078-003  # Конституции лиг (ПРЯМАЯ СВЯЗЬ)
+      - MQ-2078-004  # Выбор перезапуска (ФИНАЛ)
+    influences:
+      reputation:
+        Political_Movements: +40
+        People_Unions: +35
+        Corporations: -30
+      flags:
+        - constitutional_author: true
+        - revolutionary: true
+      unlocks:
+        - "Путь Революции в финале 2093"
+      blocks:
+        - "Путь Корпоратократии (конфликт)"
+    influenced_by:
+      - quest: MQ-2078-003
+        condition: in_progress
+      - class: Politician
+      - reputation_required:
+          People_Unions: 30
+    consequences:
+      critical_path:
+        - "КРИТИЧНО: Открывает финал Революции"
+        - "Мобилизует народные движения"
+      main_story:
+        - "Один из 4 путей финала 2093"
+      finale:
+        - ending: "Revolution"
+          requirement: true
+
+# ====== СВЯЗИ С ГЛАВНОЙ СЮЖЕТНОЙ ЛИНИЕЙ ======
+
+main_quest_influences:
+  MQ-2020-005:  # Чистый канал
+    influenced_by_side_quests:
+      - SQ-2020-003  # Защита чистого канала (усиливает NetWatch)
+    influences_side_quests:
+      - SQ-2030-002  # Аудит купола (последствия выбора)
+  
+  MQ-2030-001:  # Устав Световых Куполов
+    influenced_by_side_quests:
+      - SQ-2030-001  # Медиа кампания (общественное мнение)
+      - SQ-2030-002  # Аудит купола (секреты куполов)
+    influences_side_quests:
+      - SQ-2045-001  # Phantom hunt (купольная технология)
+  
+  MQ-2045-005:  # Часовые Blackwall
+    influenced_by_side_quests:
+      - SQ-2045-001  # Охота на фантомов (знание ИИ)
+      - SQ-2045-003  # Choir conversion (отношение к ИИ)
+    influences_side_quests:
+      - SQ-2078-004  # Blackwall expedition (долгосрочное влияние)
+  
+  MQ-2078-004:  # Выбор перезапуска (ФИНАЛ)
+    influenced_by_side_quests:
+      - SQ-2078-004  # Blackwall expedition (открывает Трансцендентность)
+      - SQ-2078-005  # Constitution draft (открывает Революцию)
+    determines_ending: true
+
+# ====== КРИТИЧЕСКИЕ ЦЕПОЧКИ (CROSS-ERA) ======
+
+critical_chains:
+  netwatch_vs_voodoo:
+    description: "Выбор между NetWatch и Voodoo Boys"
+    quests:
+      - SQ-2020-003  # Защита чистого канала (2020-2030)
+      - MQ-2020-005  # Чистый канал (выбор)
+      - SQ-2030-002  # Аудит купола (2030-2045)
+      - SQ-2045-001  # Phantom hunt (2045-2060)
+      - SQ-2078-004  # Blackwall expedition (2078-2093)
+    outcome:
+      netwatch_path:
+        - "Корпоративный контроль NET"
+        - "Безопасность, но цензура"
+        - "Путь к Корпоратократии"
+      voodoo_path:
+        - "Свободный NET"
+        - "Риск, но свобода"
+        - "Путь к Трансцендентности"
+  
+  ai_sympathy_chain:
+    description: "Отношение к ИИ и трансгуманизму"
+    quests:
+      - SQ-2045-003  # Choir conversion (2045-2060) - начало
+      - MQ-2045-005  # Часовые Blackwall (выбор доверия ИИ)
+      - MQ-2045-006  # Тёплые коридоры (поддержать культы)
+      - SQ-2078-004  # Blackwall expedition (2078-2093) - кульминация
+      - MQ-2078-004  # Выбор перезапуска (финал Трансцендентности)
+    outcome:
+      pro_ai:
+        - "Доступ к ИИ-технологиям"
+        - "Контакт с ИИ за Blackwall"
+        - "Финал: Трансцендентность"
+      anti_ai:
+        - "Союз с NetWatch"
+        - "Безопасность от ИИ"
+        - "Финал: Корпоратократия или Революция"
+  
+  revolutionary_chain:
+    description: "Народное сопротивление корпорациям"
+    quests:
+      - SQ-2030-001  # Медиа кампания (2030-2045) - информирование
+      - MQ-2030-006  # Приватные войны (выбор народа)
+      - SQ-2045-002  # Emitter cartel (2045-2060) - экономическое сопротивление
+      - MQ-2060-005  # Мета-суд (2060-2077) - политическое сопротивление
+      - SQ-2078-005  # Constitution draft (2078-2093) - революционный манифест
+      - MQ-2078-004  # Выбор перезапуска (финал Революции)
+    outcome:
+      revolution:
+        - "Свержение корпораций"
+        - "Народная власть"
+        - "Финал: Революция"
+      submission:
+        - "Принятие корп-порядка"
+        - "Стабильность без свободы"
+        - "Финал: Корпоратократия"
+
+# ====== СТАТИСТИКА ======
+
+statistics:
+  total_side_quests_mapped: 25
+  cross_era_connections: 15
+  critical_chains: 3
+  finale_determinant_quests: 2
+  main_quest_influenced: 10
+  reputation_factions: 30
+  world_state_keys: 18
+  unlocks_count: 30
+  blocks_count: 5
+
+# История изменений:
+# v1.0.0 (2025-11-06 23:24) - Создание матрицы связей побочных квестов
+

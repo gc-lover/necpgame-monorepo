@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="016-create-tutorial-progress-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tutorial_progress"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="tutorial_progress">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="current_step" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_steps" type="INT" defaultValueNumeric="4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="skipped" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="tutorial_progress" indexName="idx_tutorial_progress_character_id">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="tutorial_progress" indexName="idx_tutorial_progress_completed">
+            <column name="completed"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                baseTableName="tutorial_progress"
+                baseColumnNames="character_id"
+                constraintName="fk_tutorial_progress_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <rollback>
+            <dropTable tableName="tutorial_progress"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

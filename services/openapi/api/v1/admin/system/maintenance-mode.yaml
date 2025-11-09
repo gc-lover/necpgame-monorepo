@@ -1,0 +1,335 @@
+# Target Architecture:
+# - Microservice: admin-service (port 8088)
+# - API Base: /api/v1/admin/system/maintenance
+# - Dependencies: notification, session, realtime, auth, analytics, incident, deployment/status-page
+# - Frontend Module: modules/system/maintenance (useMaintenanceStore)
+# - UI: MaintenanceDashboard, MaintenanceScheduleTable, MaintenanceCountdown, PlayerNotificationBanner, MaintenanceStatusCard, MaintenanceAuditLog
+# - Forms: ScheduleMaintenanceForm, EmergencyMaintenanceForm, MaintenanceNotificationForm, MaintenanceRollbackForm
+# - Hooks: useMaintenance, useMaintenanceStatus, useMaintenanceNotifications, useMaintenanceAudit
+
+openapi: 3.0.3
+info:
+  title: Maintenance Mode API
+  version: 1.0.0
+  description: "Управление окнами обслуживания NECPGAME: планирование, уведомления, graceful shutdown и интеграции."
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/admin/system/maintenance
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - ServiceToken: []
+tags:
+  - name: Windows
+  - name: Execution
+  - name: Notifications
+  - name: Status
+  - name: Hooks
+  - name: Audit
+paths:
+  /admin/system/maintenance/windows:
+    get:
+      tags: [Windows]
+      summary: Получить список окон обслуживания
+      security: [ { GMToken: [] } ]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [PLANNED, APPROVED, IN_PROGRESS, PAUSED, COMPLETED, CANCELLED, ROLLED_BACK] }
+        - in: query
+          name: type
+          schema: { type: string, enum: [SCHEDULED, EMERGENCY] }
+        - in: query
+          name: environment
+          schema: { type: string, enum: [PRODUCTION, STAGING, TEST] }
+        - in: query
+          name: service
+          schema: { type: string }
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200': { description: "Список окон обслуживания", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceWindowList' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    post:
+      tags: [Windows]
+      summary: Создать новое окно обслуживания
+      security: [ { GMToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceWindowCreateRequest' }
+            examples: { scheduled: { $ref: './maintenance-examples.yaml#/components/examples/ScheduledWindowCreate' } }
+      responses:
+        '201': { description: "Окно создано", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceWindow' } } } }
+        '400': { description: "Ошибка создания", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/system/maintenance/windows/{windowId}:
+    parameters:
+      - $ref: './maintenance-components.yaml#/components/parameters/WindowId'
+    get:
+      tags: [Windows]
+      summary: Получить детали окна обслуживания
+      security: [ { GMToken: [] } ]
+      responses:
+        '200': { description: "Детали окна", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceWindow' } } } }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    patch:
+      tags: [Windows]
+      summary: Обновить информацию об окне
+      security: [ { GMToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceWindowUpdateRequest' }
+      responses:
+        '200': { description: "Окно обновлено", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceWindow' } } } }
+        '400': { description: "Ошибка обновления", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/system/maintenance/windows/{windowId}/activate:
+    parameters:
+      - $ref: './maintenance-components.yaml#/components/parameters/WindowId'
+    post:
+      tags: [Execution]
+      summary: Запустить обслуживание
+      security: [ { GMToken: [] } ]
+      responses:
+        '202': { description: "Обслуживание запущено", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } } } }
+        '409': { description: "Невозможно запустить", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/system/maintenance/windows/{windowId}/complete:
+    parameters:
+      - $ref: './maintenance-components.yaml#/components/parameters/WindowId'
+    post:
+      tags: [Execution]
+      summary: Завершить обслуживание и опубликовать отчёт
+      security: [ { GMToken: [] } ]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                postmortemUrl: { type: string, format: uri }
+                summary: { type: string }
+                attachAudit: { type: boolean }
+      responses:
+        '200': { description: "Обслуживание завершено", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } } } }
+        '400': { description: "Ошибка завершения", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/windows/{windowId}/cancel:
+    parameters:
+      - $ref: './maintenance-components.yaml#/components/parameters/WindowId'
+    post:
+      tags: [Execution]
+      summary: Отменить запланированное обслуживание
+      security: [ { GMToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+                notifyPlayers: { type: boolean, default: true }
+      responses:
+        '200': { description: "Обслуживание отменено", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } } } }
+        '400': { description: "Ошибка отмены", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/windows/{windowId}/rollback:
+    parameters:
+      - $ref: './maintenance-components.yaml#/components/parameters/WindowId'
+    post:
+      tags: [Execution]
+      summary: Выполнить откат обслуживания
+      security: [ { GMToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+                actions: { type: array, items: { type: string } }
+                notify:
+                  type: object
+                  properties:
+                    channels: { type: array, items: { type: string } }
+                    message: { type: string }
+      responses:
+        '202': { description: "Откат инициирован", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } } } }
+        '400': { description: "Ошибка отката", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/windows/{windowId}/notifications:
+    parameters:
+      - $ref: './maintenance-components.yaml#/components/parameters/WindowId'
+    post:
+      tags: [Notifications]
+      summary: Запустить уведомления по окну обслуживания вручную
+      security: [ { GMToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [channels]
+              properties:
+                channels: { type: array, items: { type: string, enum: [IN_GAME, EMAIL, PUSH, STATUS_PAGE, DISCORD] } }
+                templateOverride: { type: string }
+                message: { type: string }
+      responses:
+        '202': { description: "Уведомления поставлены в очередь" }
+        '400': { description: "Ошибка уведомления", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/active:
+    get:
+      tags: [Status]
+      summary: Получить текущее активное обслуживание
+      responses:
+        '200': { description: "Статус обслуживания", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceStatus' } } } }
+  /admin/system/maintenance/active/pause:
+    post:
+      tags: [Execution]
+      summary: Приостановить активное обслуживание
+      security: [ { GMToken: [] } ]
+      responses:
+        '200': { description: "Обслуживание приостановлено", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } } } }
+        '409': { description: "Обслуживание не может быть приостановлено", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/active/resume:
+    post:
+      tags: [Execution]
+      summary: Возобновить обслуживание
+      security: [ { GMToken: [] } ]
+      responses:
+        '200': { description: "Обслуживание возобновлено", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } } } }
+  /admin/system/maintenance/active/escalate:
+    post:
+      tags: [Execution]
+      summary: Перевести обслуживание в emergency режим
+      security: [ { GMToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+                escalationLevel: { type: string }
+                actions: { type: array, items: { type: string } }
+                notify:
+                  type: object
+                  properties:
+                    channels: { type: array, items: { type: string } }
+                    message: { type: string }
+            examples: { emergency: { $ref: './maintenance-examples.yaml#/components/examples/EmergencyEscalation' } }
+      responses:
+        '200': { description: "Эскалация выполнена", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } } } }
+        '400': { description: "Эскалация невозможна", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/audit:
+    get:
+      tags: [Audit]
+      summary: Получить аудит операций
+      security: [ { GMToken: [] } ]
+      parameters:
+        - in: query
+          name: windowId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: actor
+          schema: { type: string }
+        - in: query
+          name: action
+          schema: { type: string }
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200': { description: "Записи аудита", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceAuditResponse' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    post:
+      tags: [Audit]
+      summary: Добавить запись аудита / пост-мортем
+      security: [ { GMToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceAuditEntry' }
+            examples: { auditEntry: { $ref: './maintenance-examples.yaml#/components/examples/MaintenanceAuditEntry' } }
+      responses:
+        '201': { description: "Запись добавлена", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceAuditEntry' } } } }
+        '400': { description: "Ошибка аудита", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/status:
+    get:
+      tags: [Status]
+      summary: Публичный статус для status-page
+      responses:
+        '200': { description: "Публичный статус", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceStatusPayload' } } } }
+    post:
+      tags: [Status]
+      summary: Обновить статус вручную
+      security: [ { ServiceToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceStatusUpdateRequest' }
+      responses:
+        '200': { description: "Статус обновлён" }
+        '400': { description: "Ошибка обновления", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/hooks/deployment:
+    post:
+      tags: [Hooks]
+      summary: Триггер интеграции с деплойментом
+      security: [ { ServiceToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceHookTriggerRequest' }
+      responses:
+        '202': { description: "Deployment hook вызван" }
+        '400': { description: "Ошибка вызова хука", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+  /admin/system/maintenance/hooks/incident:
+    post:
+      tags: [Hooks]
+      summary: Сообщить об инциденте
+      security: [ { ServiceToken: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceHookTriggerRequest' }
+      responses:
+        '202': { description: "Incident hook вызван" }
+        '400': { description: "Ошибка инцидент-хука", content: { application/json: { schema: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceError' } } } }
+
+x-websocket:
+  url: wss://api.necp.game/v1/admin/system/maintenance/stream
+  description: Реалтайм события maintenance режима
+  messages:
+    maintenanceScheduled: { summary: Окно создано, payload: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceWindow' } }
+    maintenanceStarted: { summary: Обслуживание запущено, payload: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceStatus' } }
+    maintenanceProgress: { summary: Обновление прогресса, payload: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceStatus' } }
+    maintenanceCompleted: { summary: Обслуживание завершено, payload: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } }
+    maintenanceCancelled: { summary: Обслуживание отменено, payload: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } }
+    maintenanceEscalated: { summary: Эскалация, payload: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceActionResponse' } }
+    maintenanceNotification: { summary: Уведомление отправлено, payload: { $ref: './maintenance-components.yaml#/components/schemas/MaintenanceStatusPayload' } }
+
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+    GMToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/GMToken' }
+

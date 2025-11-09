@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: Player Order Ratings Core Schemas
+  version: 1.0.0
+  description: Базовые структуры рейтингов и метрик для системы заказов игроков.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  schemas:
+    PlayerOrderRating:
+      type: object
+      required:
+        - playerId
+        - role
+        - score
+        - category
+        - decayApplied
+        - updatedAt
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [executor, client]
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 78.4
+        category:
+          type: string
+          enum: [bronze, silver, gold, platinum]
+          example: gold
+        decayApplied:
+          type: number
+          format: float
+          description: Процентное снижение рейтинга из-за неактивности.
+          minimum: 0
+          maximum: 100
+          example: 6.2
+        trend:
+          $ref: '#/components/schemas/RatingTrend'
+        metrics:
+          $ref: '#/components/schemas/RatingMetrics'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/RatingWarning'
+        seasonStats:
+          $ref: '#/components/schemas/RatingSeasonStats'
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-11-08T15:45:21Z"
+    RatingMetrics:
+      type: object
+      description: Нормализованные показатели, участвующие в расчёте рейтинга.
+      properties:
+        executor:
+          $ref: '#/components/schemas/RatingMetricSet'
+        client:
+          $ref: '#/components/schemas/RatingMetricSet'
+    RatingMetricSet:
+      type: object
+      description: Набор метрик и весов для конкретной роли.
+      required:
+        - weights
+        - values
+      properties:
+        weights:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/RatingMetricValue'
+    RatingMetricValue:
+      type: object
+      required:
+        - code
+        - normalizedValue
+      properties:
+        code:
+          type: string
+          example: completion_rate
+        label:
+          type: string
+          example: "Completion Rate"
+        normalizedValue:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 84.2
+        weightedContribution:
+          type: number
+          format: float
+          example: 0.24
+        sampleSize:
+          type: integer
+          minimum: 0
+          example: 120
+    RatingTrend:
+      type: object
+      properties:
+        window:
+          type: string
+          enum: [7d, 14d, 30d, 90d, season]
+          example: 30d
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/RatingTrendPoint'
+    RatingTrendPoint:
+      type: object
+      required:
+        - timestamp
+        - score
+        - delta
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        score:
+          type: number
+          format: float
+        delta:
+          type: number
+          format: float
+        category:
+          type: string
+          enum: [bronze, silver, gold, platinum]
+    RatingWarning:
+      type: object
+      required:
+        - code
+        - severity
+        - messageKey
+      properties:
+        code:
+          type: string
+          enum:
+            - decay_high
+            - dispute_spike
+            - late_payments
+            - communication_low
+            - reward_unfair
+            - sanction_active
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        messageKey:
+          type: string
+          example: ratings.warning.decay_high
+        defaultMessage:
+          type: string
+          example: "Рейтинг снизился из-за продолжительной неактивности."
+        suggestedAction:
+          type: string
+          example: "Выполните 3 заказа с высоким рейтингом в течение недели."
+    RatingSeasonStats:
+      type: object
+      properties:
+        seasonId:
+          type: string
+          example: "2077-Q4"
+        matchesCompleted:
+          type: integer
+          minimum: 0
+        disputesOpened:
+          type: integer
+          minimum: 0
+        disputesLost:
+          type: integer
+          minimum: 0
+        perfectOrders:
+          type: integer
+          minimum: 0
+        awards:
+          type: array
+          items:
+            type: string
+    RatingSummaryResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/PlayerOrderRating'
+    RatingListItem:
+      type: object
+      required:
+        - playerId
+        - role
+        - score
+        - category
+        - updatedAt
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [executor, client]
+        score:
+          type: number
+          format: float
+        category:
+          type: string
+          enum: [bronze, silver, gold, platinum]
+        trendDelta:
+          type: number
+          format: float
+          description: Изменение рейтинга за выбранный период.
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/RatingWarning'
+        updatedAt:
+          type: string
+          format: date-time
+    RatingListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RatingListItem'
+        pagination:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

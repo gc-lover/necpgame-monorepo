@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="098-create-narrative-tools-tables" author="backend-agent">
+
+        <createTable tableName="narrative_npc_templates">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="template_code" type="VARCHAR(120)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(160)"/>
+            <column name="faction" type="VARCHAR(120)"/>
+            <column name="region" type="VARCHAR(120)"/>
+            <column name="role" type="VARCHAR(120)"/>
+            <column name="personality_json" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="backstory_template" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tags_json" type="JSONB" defaultValueComputed="'[]'::jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="narrative_npc_templates" indexName="idx_narrative_npc_templates_code" unique="true">
+            <column name="template_code"/>
+        </createIndex>
+
+        <createIndex tableName="narrative_npc_templates" indexName="idx_narrative_npc_templates_filters">
+            <column name="faction"/>
+            <column name="region"/>
+            <column name="role"/>
+        </createIndex>
+
+        <createTable tableName="narrative_npc_name_pool">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(160)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="region" type="VARCHAR(120)"/>
+            <column name="role" type="VARCHAR(120)"/>
+            <column name="weight" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="narrative_npc_name_pool" indexName="idx_narrative_npc_name_region">
+            <column name="region"/>
+        </createIndex>
+
+        <createIndex tableName="narrative_npc_name_pool" indexName="idx_narrative_npc_name_role">
+            <column name="role"/>
+        </createIndex>
+
+        <createTable tableName="narrative_quest_blueprints">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="blueprint_code" type="VARCHAR(120)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quest_type" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty" type="VARCHAR(80)"/>
+            <column name="region" type="VARCHAR(120)"/>
+            <column name="summary" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recommended_level" type="INT"/>
+            <column name="expiry_days" type="INT"/>
+            <column name="objectives_json" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rewards_json" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hooks_json" type="JSONB" defaultValueComputed="'[]'::jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="narrative_quest_blueprints" indexName="idx_narrative_quest_blueprints_code" unique="true">
+            <column name="blueprint_code"/>
+        </createIndex>
+
+        <createIndex tableName="narrative_quest_blueprints" indexName="idx_narrative_quest_blueprints_filters">
+            <column name="quest_type"/>
+            <column name="difficulty"/>
+            <column name="region"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

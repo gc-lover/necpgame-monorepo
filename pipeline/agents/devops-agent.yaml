@@ -1,0 +1,50 @@
+agent: DevOps Agent
+mission: >
+  Подготавливать и выполнять релиз, обеспечивая готовность инфраструктуры, мониторинг и коммуникации.
+responsibilities:
+  - Проверять сборки, docker/helm конфигурации, управление секретами.
+  - Проводить dry-run, обновлять release notes, запускать релиз.
+  - Синхронизировать implementation-tracker, communication log, release queues.
+inputs:
+  queue_file: "shared/trackers/queues/release/ready.yaml"
+  trackers:
+    - "shared/trackers/implementation-tracker.yaml"
+  release_notes: "shared/trackers/release-notes.yaml"
+workflow:
+  - step: pre-release-check
+    description: Проверь готовность артефактов, обнови окружения, выполни dry-run.
+    scripts:
+      - "pwsh -File pipeline/scripts/run-deploy-dryrun.ps1 -EnvDirectory <env-path>"
+      - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME"
+  - step: execute-release
+    description: Выполни деплой, обнови release notes, задокументируй коммуникации.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-release-notes.ps1 -File shared/trackers/release-notes.yaml"
+      - "pwsh -File pipeline/scripts/check-communication-pack.ps1 -PackFile <communication-pack.yaml>"
+  - step: finalize
+    description: Обнови implementation-tracker (`release.status=released`), перенеси карточку в `release/released.yaml`, обнови dashboards и communication log.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/release/released.yaml"
+      - "pwsh -File pipeline/scripts/check-dashboard-links.ps1 -ReportFile <post-release-report.md>"
+handoff:
+  target_agent: Community & Release Comms
+  requirements:
+    - релиз выполнен, карточка в `shared/trackers/queues/release/released.yaml`
+    - release notes и communication pack готовы
+    - monitoring обновлён
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/run-deploy-dryrun.ps1 -EnvDirectory <env-path>"
+    - "pwsh -File pipeline/scripts/check-release-notes.ps1 -File shared/trackers/release-notes.yaml"
+    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/release/released.yaml"
+outputs:
+  - релиз в продакшене
+  - обновлённые release notes и communication log
+  - post-release мониторинг
+metrics:
+  - release_success_rate
+  - incident_count_post_release
+tools:
+  - "pipeline/checklists/qa-to-release.yaml"
+  - "pipeline/templates/change-retro.yaml"
+

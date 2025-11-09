@@ -1,0 +1,199 @@
+# Combat API
+# Источник: .BRAIN/05-technical/ui-main-game.md (v1.1.0)
+# Task ID: API-TASK-032
+
+openapi: 3.0.3
+info:
+  title: Combat API
+  version: 1.0.0
+  description: API для текстовой боевой системы в NECPGAME.
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+paths:
+  /combat/initiate:
+    post:
+      summary: Начать бой
+      operationId: initiateCombat
+      tags: [Combat]
+      security: [{BearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId, targetId]
+              properties:
+                characterId: {type: string, format: uuid}
+                targetId: {type: string, description: "ID врага/NPC"}
+                locationId: {type: string}
+      responses:
+        '200':
+          description: Бой начат
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CombatState'}
+
+  /combat/{combatId}:
+    get:
+      summary: Состояние боя
+      operationId: getCombatState
+      tags: [Combat]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: combatId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Состояние боя
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CombatState'}
+
+  /combat/{combatId}/action:
+    post:
+      summary: Выполнить действие в бою
+      operationId: performCombatAction
+      tags: [Combat]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: combatId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId, actionType]
+              properties:
+                characterId: {type: string, format: uuid}
+                actionType: {type: string, enum: [attack, defend, use_item, ability]}
+                targetId: {type: string, nullable: true}
+                itemId: {type: string, nullable: true}
+                abilityId: {type: string, nullable: true}
+      responses:
+        '200':
+          description: Действие выполнено
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CombatState'}
+
+  /combat/{combatId}/available-actions:
+    get:
+      summary: Доступные действия
+      operationId: getAvailableActions
+      tags: [Combat]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: combatId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Доступные действия
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  actions: {type: array, items: {$ref: '#/components/schemas/CombatAction'}}
+
+  /combat/{combatId}/flee:
+    post:
+      summary: Сбежать из боя
+      operationId: fleeCombat
+      tags: [Combat]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: combatId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId]
+              properties:
+                characterId: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Результат побега
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+                  message: {type: string}
+
+  /combat/{combatId}/result:
+    get:
+      summary: Результат боя
+      operationId: getCombatResult
+      tags: [Combat]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: combatId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Результат боя
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CombatResult'}
+
+components:
+  schemas:
+    CombatState:
+      type: object
+      required: [id, status, participants, currentTurn]
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [active, ended, fled]}
+        participants: {type: array, items: {$ref: '#/components/schemas/CombatParticipant'}}
+        currentTurn: {type: string}
+        round: {type: integer}
+        log: {type: array, items: {type: string}}
+
+    CombatParticipant:
+      type: object
+      required: [id, name, health, maxHealth, type]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        type: {type: string, enum: [player, enemy, npc]}
+        health: {type: integer}
+        maxHealth: {type: integer}
+        energy: {type: integer, nullable: true}
+        armor: {type: integer}
+        isAlive: {type: boolean}
+
+    CombatAction:
+      type: object
+      required: [id, name, type]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        type: {type: string, enum: [attack, defend, use_item, ability, flee]}
+        description: {type: string}
+        cost: {type: integer, nullable: true}
+        damage: {type: integer, nullable: true}
+        available: {type: boolean}
+
+    CombatResult:
+      type: object
+      required: [victory, rewards]
+      properties:
+        victory: {type: boolean}
+        rewards: {type: object, properties: {experience: {type: integer}, currency: {type: integer}, items: {type: array, items: {type: string}}}}
+        penalties: {type: object, nullable: true}
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+

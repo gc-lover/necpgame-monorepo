@@ -1,0 +1,172 @@
+# Trading API
+# Источник: .BRAIN/05-technical/ui-main-game.md (v1.1.0)
+# Task ID: API-TASK-033
+
+openapi: 3.0.3
+info:
+  title: Trading API
+  version: 1.0.0
+  description: API для торговли с NPC-торговцами в NECPGAME.
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/trading
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+paths:
+  /trading/vendors:
+    get:
+      summary: Список торговцев
+      operationId: getVendors
+      tags: [Trading]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+        - {name: locationId, in: query, required: false, schema: {type: string}}
+      responses:
+        '200':
+          description: Список торговцев
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vendors: {type: array, items: {$ref: '#/components/schemas/Vendor'}}
+
+  /trading/vendors/{vendorId}/inventory:
+    get:
+      summary: Ассортимент торговца
+      operationId: getVendorInventory
+      tags: [Trading]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: vendorId, in: path, required: true, schema: {type: string}}
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Ассортимент торговца
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/VendorInventory'}
+
+  /trading/buy:
+    post:
+      summary: Купить предмет
+      operationId: buyItem
+      tags: [Trading]
+      security: [{BearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId, vendorId, itemId, quantity]
+              properties:
+                characterId: {type: string, format: uuid}
+                vendorId: {type: string}
+                itemId: {type: string}
+                quantity: {type: integer, minimum: 1}
+      responses:
+        '200':
+          description: Покупка завершена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+                  totalCost: {type: integer}
+                  remainingCurrency: {type: integer}
+
+  /trading/sell:
+    post:
+      summary: Продать предмет
+      operationId: sellItem
+      tags: [Trading]
+      security: [{BearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId, vendorId, itemId, quantity]
+              properties:
+                characterId: {type: string, format: uuid}
+                vendorId: {type: string}
+                itemId: {type: string}
+                quantity: {type: integer, minimum: 1}
+      responses:
+        '200':
+          description: Продажа завершена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+                  totalEarned: {type: integer}
+                  remainingCurrency: {type: integer}
+
+  /trading/prices/{itemId}:
+    get:
+      summary: Цена предмета у торговца
+      operationId: getItemPrice
+      tags: [Trading]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: itemId, in: path, required: true, schema: {type: string}}
+        - {name: vendorId, in: query, required: true, schema: {type: string}}
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Цены предмета
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  itemId: {type: string}
+                  buyPrice: {type: integer}
+                  sellPrice: {type: integer}
+
+components:
+  schemas:
+    Vendor:
+      type: object
+      required: [id, name, locationId]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        locationId: {type: string}
+        specialization: {type: string, enum: [weapons, armor, general, medical, tech]}
+
+    VendorInventory:
+      type: object
+      required: [vendorId, items]
+      properties:
+        vendorId: {type: string}
+        items: {type: array, items: {$ref: '#/components/schemas/TradeItem'}}
+        nextRefresh: {type: string, format: date-time, nullable: true}
+
+    TradeItem:
+      type: object
+      required: [itemId, name, buyPrice, sellPrice, quantity]
+      properties:
+        itemId: {type: string}
+        name: {type: string}
+        buyPrice: {type: integer}
+        sellPrice: {type: integer}
+        quantity: {type: integer}
+        category: {type: string}
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+

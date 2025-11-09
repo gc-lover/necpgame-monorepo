@@ -1,0 +1,295 @@
+openapi: 3.0.3
+info:
+  title: Economy Contracts Core Models
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/contracts
+    directory: api/v1/economy/contracts
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  parameters:
+    ContractIdPath:
+      name: contractId
+      in: path
+      required: true
+      description: Contract identifier
+      schema:
+        type: string
+        format: uuid
+    AccountIdPath:
+      name: accountId
+      in: path
+      required: true
+      description: Account identifier
+      schema:
+        type: string
+        format: uuid
+    ContractStatusFilter:
+      name: status
+      in: query
+      description: Contract status filter
+      schema:
+        type: string
+        enum: [DRAFT, NEGOTIATION, ESCROW_PENDING, ACTIVE, COMPLETED, CANCELLED, DISPUTED]
+    ContractTypeFilter:
+      name: type
+      in: query
+      description: Contract type filter
+      schema:
+        type: string
+        enum: [ITEM_EXCHANGE, DELIVERY, CRAFTING, SERVICE, AUCTION]
+  schemas:
+    ContractParticipant:
+      type: object
+      required: [accountId, role]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [CREATOR, CONTRACTOR, MODERATOR]
+        reputationScore:
+          type: number
+          format: float
+        eligibilityFlags:
+          type: array
+          items:
+            type: string
+    ContractTerms:
+      type: object
+      required: [contractType]
+      properties:
+        contractType:
+          type: string
+          enum: [ITEM_EXCHANGE, DELIVERY, CRAFTING, SERVICE, AUCTION]
+        itemExchange:
+          type: object
+          properties:
+            offeredItems:
+              type: array
+              items:
+                type: object
+                properties:
+                  inventoryItemId:
+                    type: string
+                    format: uuid
+                  quantity:
+                    type: integer
+            requestedItems:
+              type: array
+              items:
+                type: object
+                properties:
+                  itemTemplateId:
+                    type: string
+                  quantity:
+                    type: integer
+        delivery:
+          type: object
+          properties:
+            originZone:
+              type: string
+            destinationZone:
+              type: string
+            deadline:
+              type: string
+              format: date-time
+            penaltyPercent:
+              type: number
+              format: float
+        crafting:
+          type: object
+          properties:
+            recipeId:
+              type: string
+            providedMaterials:
+              type: array
+              items:
+                type: string
+            qualityGuarantee:
+              type: boolean
+        service:
+          type: object
+          properties:
+            description:
+              type: string
+            durationHours:
+              type: number
+              format: float
+        auction:
+          type: object
+          properties:
+            startingBid:
+              type: integer
+            buyoutPrice:
+              type: integer
+            autoCloseAt:
+              type: string
+              format: date-time
+    EscrowDeposit:
+      type: object
+      required: [party, status]
+      properties:
+        party:
+          $ref: '#/components/schemas/ContractParticipant'
+        currencyAmount:
+          type: integer
+        currencyId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              inventoryItemId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        status:
+          type: string
+          enum: [PENDING, LOCKED, RELEASED, FORFEITED]
+        lockedAt:
+          type: string
+          format: date-time
+    CollateralRules:
+      type: object
+      properties:
+        required:
+          type: boolean
+        amount:
+          type: integer
+        maxPercent:
+          type: number
+          format: float
+        valuationReference:
+          type: string
+    TimelineEvent:
+      type: object
+      required: [eventId, occurredAt, actor, action]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        actor:
+          $ref: '#/components/schemas/ContractParticipant'
+        action:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+    DisputeCase:
+      type: object
+      required: [status, openedAt]
+      properties:
+        status:
+          type: string
+          enum: [OPEN, IN_REVIEW, RESOLVED]
+        openedAt:
+          type: string
+          format: date-time
+        resolution:
+          type: object
+          properties:
+            decidedAt:
+              type: string
+              format: date-time
+            decision:
+              type: string
+            payout:
+              type: object
+              additionalProperties: true
+        evidence:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              description:
+                type: string
+              uploadedAt:
+                type: string
+                format: date-time
+    ContractSummary:
+      type: object
+      required: [contractId, contractType, status, createdAt]
+      properties:
+        contractId:
+          type: string
+          format: uuid
+        contractType:
+          type: string
+        status:
+          type: string
+        creator:
+          $ref: '#/components/schemas/ContractParticipant'
+        contractor:
+          $ref: '#/components/schemas/ContractParticipant'
+        createdAt:
+          type: string
+          format: date-time
+        lastUpdatedAt:
+          type: string
+          format: date-time
+        escrowSummary:
+          type: object
+          properties:
+            totalCurrencyLocked:
+              type: integer
+            totalItemsLocked:
+              type: integer
+            expirationAt:
+              type: string
+              format: date-time
+    Contract:
+      type: object
+      required: [contractId, status, terms, participants, createdAt]
+      properties:
+        contractId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [DRAFT, NEGOTIATION, ESCROW_PENDING, ACTIVE, COMPLETED, CANCELLED, DISPUTED]
+        terms:
+          $ref: '#/components/schemas/ContractTerms'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractParticipant'
+        escrow:
+          type: array
+          items:
+            $ref: '#/components/schemas/EscrowDeposit'
+        collateral:
+          $ref: '#/components/schemas/CollateralRules'
+        dispute:
+          $ref: '#/components/schemas/DisputeCase'
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineEvent'
+        expirationAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

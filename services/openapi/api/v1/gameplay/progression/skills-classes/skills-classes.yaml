@@ -1,0 +1,381 @@
+openapi: 3.0.3
+info:
+  title: Skills Classes Progression API
+  version: 1.0.0
+  description: |
+    REST API for class and subclass skill modifiers, unlock progression, balance overrides and telemetry.
+    Source: .BRAIN/02-gameplay/progression/progression-skills-classes.md v1.1.0.
+    Integrations: character-service (progression snapshot), analytics pipeline (usage metrics, balance alerts),
+    Kafka topics `progression.classes.*` for unlock and balance events.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/progression/skills-classes
+    directory: api/v1/gameplay/progression/skills-classes
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: ClassCatalog
+    description: Class and subclass catalog data
+  - name: ClassUnlocks
+    description: Unlock validation and balance overrides
+  - name: ClassMetrics
+    description: Usage telemetry and analytics dashboards
+  - name: ClassEvents
+    description: Event feed for progression.classes.* topics
+paths:
+  /gameplay/progression/skills-classes:
+    get:
+      tags: [ClassCatalog]
+      summary: List playable classes
+      description: Returns paginated class summaries with baseline modifiers, available subclasses and exclusive flags.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '../../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+        - $ref: './skills-classes-models.yaml#/components/parameters/ClassType'
+        - $ref: './skills-classes-models.yaml#/components/parameters/HasExclusive'
+        - $ref: './skills-classes-models.yaml#/components/parameters/SupportsCrossClass'
+        - $ref: './skills-classes-models.yaml#/components/parameters/Sort'
+      responses:
+        '200':
+          description: Paginated list of class summaries
+          content:
+            application/json:
+              schema:
+                $ref: './skills-classes-models-operations.yaml#/components/schemas/ClassSummaryListResponse'
+              examples:
+                default:
+                  summary: Solo and Netrunner overview
+                  value:
+                    data:
+                      - classCode: "solo"
+                        displayName: "Solo"
+                        classType: "combat"
+                        primarySkills: ["gunplay", "melee", "endurance"]
+                        secondarySkills: ["stealth", "survival"]
+                        lockedSkills: ["advanced_hacking"]
+                        baselineModifiers:
+                          - skillCode: "gunplay"
+                            attributeCode: "REF"
+                            bonus: 0.005
+                            scalesWithRank: true
+                            maxBonus: 0.02
+                        availableSubclasses:
+                          - subclassCode: "assault"
+                            displayName: "Assault Specialist"
+                        exclusiveSkillCodes: ["adrenaline_storm"]
+                        supportsCrossClass: true
+                        updatedAt: "2025-11-05T16:00:00Z"
+                      - classCode: "netrunner"
+                        displayName: "Netrunner"
+                        classType: "cyber"
+                        primarySkills: ["hacking", "cyberspace", "analysis"]
+                        secondarySkills: ["stealth", "engineering"]
+                        lockedSkills: ["heavy_weapons"]
+                        baselineModifiers:
+                          - skillCode: "hacking"
+                            attributeCode: "INT"
+                            bonus: 0.01
+                            scalesWithRank: true
+                            maxBonus: 0.03
+                        availableSubclasses:
+                          - subclassCode: "architect"
+                            displayName: "Network Architect"
+                        exclusiveSkillCodes: ["multi_hack"]
+                        supportsCrossClass: false
+                        updatedAt: "2025-11-05T16:00:00Z"
+                    meta:
+                      page: 1
+                      page_size: 20
+                      total: 13
+                      total_pages: 1
+                      has_next: false
+                      has_prev: false
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/skills-classes/{classCode}:
+    parameters:
+      - $ref: './skills-classes-models.yaml#/components/parameters/ClassCode'
+    get:
+      tags: [ClassCatalog]
+      summary: Get class detail
+      description: Returns class matrices, unlock tiers, subclasses and exclusive skills.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Class detail payload
+          content:
+            application/json:
+              schema:
+                $ref: './skills-classes-models-operations.yaml#/components/schemas/ClassDetailResponse'
+              examples:
+                detail:
+                  summary: Solo class detail
+                  value:
+                    data:
+                      classCode: "solo"
+                      displayName: "Solo"
+                      classType: "combat"
+                      primarySkills: ["gunplay", "melee", "endurance"]
+                      baselineModifiers:
+                        - skillCode: "gunplay"
+                          attributeCode: "REF"
+                          bonus: 0.005
+                          scalesWithRank: true
+                          maxBonus: 0.02
+                      availableSubclasses:
+                        - subclassCode: "assault"
+                          displayName: "Assault Specialist"
+                      exclusiveSkillCodes: ["adrenaline_storm"]
+                      supportsCrossClass: true
+                      subclasses:
+                        - subclassCode: "assault"
+                          displayName: "Assault Specialist"
+                          modifiers:
+                            - skillCode: "assault_rifles"
+                              attributeCode: "REF"
+                              bonus: 0.005
+                              scalesWithRank: true
+                              maxBonus: 0.02
+                          exclusiveSkills:
+                            - skillCode: "adrenaline_storm"
+                              name: "Adrenaline Storm"
+                              type: "active"
+                              unlockTier: 2
+                              resourceCost:
+                                stamina: 40
+                              cooldownSeconds: 120
+                              description: "Short burst of damage and resilience."
+                              limitations: ["immunity_phaseCannotStack"]
+                          crossClassCompatibility:
+                            allowed: ["netrunner", "techie"]
+                            penaltyMultiplier: 0.75
+                      unlockMatrix:
+                        - tier: 1
+                          requiredLevel: 10
+                          attributeThresholds:
+                            REF: 10
+                          reputation:
+                            factionCode: "merc_guild"
+                            minimum: 20
+                        - tier: 2
+                          requiredLevel: 20
+                          attributeThresholds:
+                            REF: 14
+                            STR: 12
+                          questCode: "solo_act1_final"
+                          crossClassPenalty: 0.25
+                      exclusiveSkills:
+                        - skillCode: "adrenaline_storm"
+                          name: "Adrenaline Storm"
+                          type: "active"
+                          unlockTier: 2
+                          resourceCost:
+                            stamina: 40
+                            focus: 15
+                          cooldownSeconds: 120
+                          description: "Burst damage and resilience, builds heat."
+                          limitations: ["stamina_threshold"]
+                      balanceOverrides: []
+                      updatedAt: "2025-11-05T16:00:00Z"
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/skills-classes/{classCode}/subclasses/{subclassCode}:
+    parameters:
+      - $ref: './skills-classes-models.yaml#/components/parameters/ClassCode'
+      - $ref: './skills-classes-models.yaml#/components/parameters/SubclassCode'
+    get:
+      tags: [ClassCatalog]
+      summary: Get subclass detail
+      description: Returns subclass modifiers, exclusive skills and cross-class compatibility.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Subclass detail payload
+          content:
+            application/json:
+              schema:
+                $ref: './skills-classes-models-operations.yaml#/components/schemas/SubclassDetailResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/skills-classes/{classCode}/unlock:
+    post:
+      tags: [ClassUnlocks]
+      summary: Submit unlock attempt
+      description: Validates tier requirements using character-service snapshot and publishes progression events.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: './skills-classes-models.yaml#/components/parameters/ClassCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './skills-classes-models-operations.yaml#/components/schemas/UnlockAttemptRequest'
+            examples:
+              tier2:
+                summary: Tier 2 unlock attempt
+                value:
+                  characterId: "8f2d7f7f-4a32-45a7-9070-1b1f2bcfb535"
+                  classCode: "solo"
+                  tier: 2
+                  attributeSnapshot:
+                    REF: 15
+                    STR: 13
+                    COOL: 9
+                  completedQuests: ["solo_act1_final"]
+                  reputation:
+                    factionCode: "merc_guild"
+                    value: 35
+                  inventoryItems: ["solo_blades_mastery"]
+                  perks: ["cross_class"]
+                  crossClassEnabled: false
+      responses:
+        '202':
+          description: Unlock attempt accepted
+          content:
+            application/json:
+              schema:
+                $ref: './skills-classes-models-operations.yaml#/components/schemas/UnlockAttemptResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/skills-classes/{classCode}/metrics:
+    get:
+      tags: [ClassMetrics]
+      summary: Get class telemetry dashboard
+      description: Aggregated usage, win rate and overuse flags calculated by analytics pipeline.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: './skills-classes-models.yaml#/components/parameters/ClassCode'
+        - $ref: './skills-classes-models.yaml#/components/parameters/MetricPeriod'
+        - $ref: './skills-classes-models.yaml#/components/parameters/MetricType'
+        - $ref: './skills-classes-models.yaml#/components/parameters/SubclassFilter'
+        - $ref: './skills-classes-models.yaml#/components/parameters/IncludeOverrides'
+      responses:
+        '200':
+          description: Metrics dashboard
+          content:
+            application/json:
+              schema:
+                $ref: './skills-classes-models-operations.yaml#/components/schemas/ClassMetricsDashboard'
+              examples:
+                default:
+                  summary: Solo weekly dashboard
+                  value:
+                    classCode: "solo"
+                    period: "weekly"
+                    metricType: "combat"
+                    usageShare: 47.5
+                    winRateDelta: 6.2
+                    overuseFlags:
+                      - code: "usage_share_threshold"
+                        description: "Usage share exceeded 45% for three consecutive days."
+                    exclusiveSkillUsage:
+                      adrenaline_storm:
+                        activationRate: 32.1
+                        winContribution: 4.5
+                    telemetryVersion: "2025.11.07"
+                    overridesApplied: true
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/skills-classes/{classCode}/balance-overrides:
+    post:
+      tags: [ClassUnlocks]
+      summary: Apply balance overrides
+      description: Designers/Admins can apply time-bounded modifier and exclusive adjustments; events published to analytics and gameplay shards.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: './skills-classes-models.yaml#/components/parameters/ClassCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './skills-classes-models-operations.yaml#/components/schemas/BalanceOverrideRequest'
+      responses:
+        '200':
+          description: Updated class detail after override
+          content:
+            application/json:
+              schema:
+                $ref: './skills-classes-models-operations.yaml#/components/schemas/ClassDetailResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /gameplay/progression/skills-classes/{classCode}/events:
+    get:
+      tags: [ClassEvents]
+      summary: Get progression events
+      description: Returns event feed for `progression.classes.*` topics with cursor pagination for analytics review.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: './skills-classes-models.yaml#/components/parameters/ClassCode'
+        - $ref: './skills-classes-models.yaml#/components/parameters/EventType'
+        - $ref: './skills-classes-models.yaml#/components/parameters/EventFrom'
+        - $ref: './skills-classes-models.yaml#/components/parameters/EventTo'
+        - $ref: './skills-classes-models.yaml#/components/parameters/EventLimit'
+      responses:
+        '200':
+          description: Event feed
+          content:
+            application/json:
+              schema:
+                $ref: './skills-classes-models-operations.yaml#/components/schemas/ClassEventFeed'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  responses:
+    BadRequest:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    InternalServerError:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+

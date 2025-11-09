@@ -1,0 +1,499 @@
+openapi: 3.0.3
+info:
+  title: Regional Quests API
+  version: 1.0.0
+  description: |
+    API для региональных и повторяющихся квестов.
+    
+    Функционал:
+    - Daily/Weekly quests (по регионам)
+    - Regional quest pools (Africa, America, Asia, CIS, Europe, Middle East, Oceania)
+    - Location-specific quests
+    - Faction world quests
+    - Reputation rewards
+    - Repeatable content
+    
+    Регионы:
+    - Africa: West Africa
+    - America: South America
+    - Asia: East Asia
+    - CIS: Russia
+    - Europe: Western Europe
+    - Middle East: Gulf states
+    - Oceania
+    - Night City (special)
+    
+    Источники: .BRAIN/04-narrative/quests/world-regions/ (9 documents)
+
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative
+    package: com.necpgame.narrativeservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Daily Weekly
+    description: Ежедневные и еженедельные квесты
+  - name: Regional Quests
+    description: Региональные квесты
+  - name: World Quests
+    description: Мировые квесты
+
+paths:
+  /narrative/regional-quests/daily:
+    get:
+      summary: Получить доступные daily квесты
+      operationId: getDailyQuests
+      tags: [Daily Weekly]
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daily квесты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailyQuest'
+                  slots_available:
+                    type: integer
+                    example: 5
+                  slots_used:
+                    type: integer
+                  resets_at:
+                    type: string
+                    format: date-time
+
+  /narrative/regional-quests/weekly:
+    get:
+      summary: Получить доступные weekly квесты
+      operationId: getWeeklyQuests
+      tags: [Daily Weekly]
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Weekly квесты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeeklyQuest'
+                  slots_available:
+                    type: integer
+                    example: 3
+                  slots_used:
+                    type: integer
+                  resets_at:
+                    type: string
+                    format: date-time
+
+  /narrative/regional-quests/regional:
+    get:
+      summary: Получить региональные квесты
+      operationId: getRegionalQuests
+      tags: [Regional Quests]
+      parameters:
+        - name: region
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [AFRICA, AMERICA, ASIA, CIS, EUROPE, MIDDLE_EAST, OCEANIA, NIGHT_CITY]
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Региональные квесты
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RegionalQuest'
+
+  /narrative/regional-quests/world-quests:
+    get:
+      summary: Получить мировые квесты
+      operationId: getWorldQuests
+      tags: [World Quests]
+      description: Квесты, доступные во всем мире
+      parameters:
+        - name: faction
+          in: query
+          schema:
+            type: string
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Мировые квесты
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WorldQuest'
+
+  /narrative/regional-quests/character/{character_id}/available:
+    get:
+      summary: Получить доступные региональные квесты для персонажа
+      operationId: getAvailableRegionalQuests
+      tags: [Regional Quests]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Доступные квесты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  daily_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailyQuest'
+                  weekly_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeeklyQuest'
+                  regional_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RegionalQuest'
+
+  /narrative/regional-quests/{quest_id}/accept:
+    post:
+      summary: Принять региональный квест
+      operationId: acceptRegionalQuest
+      tags: [Regional Quests]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Квест принят
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+components:
+  schemas:
+    DailyQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        region:
+          type: string
+        type:
+          type: string
+          enum: [COMBAT, GATHER, CRAFT, SOCIAL, EXPLORATION]
+        objectives:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+              target:
+                type: integer
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: integer
+            reputation:
+              type: object
+            bonus_rewards:
+              type: array
+              description: Дополнительные награды при первом выполнении
+              items:
+                type: object
+        time_limit_hours:
+          type: integer
+          default: 24
+        repeatable:
+          type: boolean
+          default: true
+        completions_today:
+          type: integer
+          description: Сколько раз уже выполнено сегодня
+
+    WeeklyQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        region:
+          type: string
+        difficulty:
+          type: string
+          enum: [MEDIUM, HARD, VERY_HARD]
+        objectives:
+          type: array
+          items:
+            type: object
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: integer
+            rare_items:
+              type: array
+              items:
+                type: object
+            reputation:
+              type: object
+        time_limit_hours:
+          type: integer
+          default: 168
+        progress_percentage:
+          type: number
+          format: float
+
+    RegionalQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        title:
+          type: string
+        region:
+          type: string
+          enum: [AFRICA, AMERICA, ASIA, CIS, EUROPE, MIDDLE_EAST, OCEANIA, NIGHT_CITY]
+        location:
+          type: string
+          description: Конкретная локация в регионе
+        description:
+          type: string
+        level_requirement:
+          type: integer
+        cultural_context:
+          type: string
+          description: Культурный контекст квеста
+        local_flavor:
+          type: boolean
+          description: Содержит локальные особенности
+        rewards:
+          type: object
+        repeatable:
+          type: boolean
+
+    WorldQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        faction:
+          type: string
+          nullable: true
+        available_in_regions:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+          enum: [FACTION, EVENT, SEASONAL, SPECIAL]
+        required_reputation:
+          type: object
+          nullable: true
+        rewards:
+          type: object
+        duration_days:
+          type: integer
+          nullable: true
+          description: Для временных квестов
+
+    OriginStory:
+      type: object
+      description: Базовая информация об origin story
+      properties:
+        origin_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        starting_location:
+          type: string
+        bonuses:
+          type: object
+          properties:
+            attributes:
+              type: object
+              additionalProperties:
+                type: integer
+            skills:
+              type: object
+              additionalProperties:
+                type: integer
+            starting_items:
+              type: array
+              items:
+                type: string
+        recommended_classes:
+          type: array
+          items:
+            type: string
+
+    OriginStoryDetailed:
+      allOf:
+        - $ref: '#/components/schemas/OriginStory'
+        - type: object
+          properties:
+            full_backstory:
+              type: string
+            key_events:
+              type: array
+              description: Ключевые события из прошлого
+              items:
+                type: string
+            starting_quest:
+              $ref: '#/components/schemas/StarterQuest'
+            unique_abilities:
+              type: array
+              description: Уникальные способности из origin
+              items:
+                type: object
+
+    StarterQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [ORIGIN, CLASS, FACTION, TUTORIAL]
+        difficulty:
+          type: string
+          enum: [TUTORIAL, EASY, MEDIUM]
+        objectives:
+          type: array
+          items:
+            type: object
+        rewards:
+          type: object
+        teaches_mechanic:
+          type: string
+          nullable: true
+          description: Какую механику обучает
+
+    MainStoryQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        chapter:
+          type: integer
+        title:
+          type: string
+        year:
+          type: integer
+        description:
+          type: string
+        required_level:
+          type: integer
+        is_critical_path:
+          type: boolean
+        branches:
+          type: array
+          items:
+            type: object
+        major_impact:
+          type: boolean
+          description: Влияет на мир значительно
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="063-create-trade-sessions-table" author="backend-agent">
+        <createTable tableName="trade_sessions">
+            <column name="session_id" type="VARCHAR(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="initiator_character_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="receiver_character_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="initiator_offer_items_json" type="TEXT"/>
+            <column name="initiator_offer_gold" type="BIGINT"/>
+            <column name="receiver_offer_items_json" type="TEXT"/>
+            <column name="receiver_offer_gold" type="BIGINT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <createIndex tableName="trade_sessions" indexName="idx_trade_sessions_initiator">
+            <column name="initiator_character_id"/>
+        </createIndex>
+
+        <createIndex tableName="trade_sessions" indexName="idx_trade_sessions_receiver">
+            <column name="receiver_character_id"/>
+        </createIndex>
+
+        <createIndex tableName="trade_sessions" indexName="idx_trade_sessions_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

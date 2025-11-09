@@ -1,0 +1,221 @@
+package com.necpgame.economyservice.model;
+
+import java.net.URI;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import java.math.BigDecimal;
+import org.springframework.lang.Nullable;
+import org.openapitools.jackson.nullable.JsonNullable;
+import java.time.OffsetDateTime;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+
+import java.util.*;
+import jakarta.annotation.Generated;
+
+/**
+ * CreateOrder200Response
+ */
+
+@JsonTypeName("createOrder_200_response")
+
+public class CreateOrder200Response {
+
+  private @Nullable String orderId;
+
+  /**
+   * Gets or Sets status
+   */
+  public enum StatusEnum {
+    FILLED("filled"),
+    
+    PARTIALLY_FILLED("partially_filled"),
+    
+    PENDING("pending");
+
+    private final String value;
+
+    StatusEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static StatusEnum fromValue(String value) {
+      for (StatusEnum b : StatusEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+  }
+
+  private @Nullable StatusEnum status;
+
+  private @Nullable Integer filledQuantity;
+
+  private @Nullable Integer remainingQuantity;
+
+  private @Nullable BigDecimal averagePrice;
+
+  public CreateOrder200Response orderId(@Nullable String orderId) {
+    this.orderId = orderId;
+    return this;
+  }
+
+  /**
+   * Get orderId
+   * @return orderId
+   */
+  
+  @Schema(name = "order_id", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("order_id")
+  public @Nullable String getOrderId() {
+    return orderId;
+  }
+
+  public void setOrderId(@Nullable String orderId) {
+    this.orderId = orderId;
+  }
+
+  public CreateOrder200Response status(@Nullable StatusEnum status) {
+    this.status = status;
+    return this;
+  }
+
+  /**
+   * Get status
+   * @return status
+   */
+  
+  @Schema(name = "status", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("status")
+  public @Nullable StatusEnum getStatus() {
+    return status;
+  }
+
+  public void setStatus(@Nullable StatusEnum status) {
+    this.status = status;
+  }
+
+  public CreateOrder200Response filledQuantity(@Nullable Integer filledQuantity) {
+    this.filledQuantity = filledQuantity;
+    return this;
+  }
+
+  /**
+   * Get filledQuantity
+   * @return filledQuantity
+   */
+  
+  @Schema(name = "filled_quantity", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("filled_quantity")
+  public @Nullable Integer getFilledQuantity() {
+    return filledQuantity;
+  }
+
+  public void setFilledQuantity(@Nullable Integer filledQuantity) {
+    this.filledQuantity = filledQuantity;
+  }
+
+  public CreateOrder200Response remainingQuantity(@Nullable Integer remainingQuantity) {
+    this.remainingQuantity = remainingQuantity;
+    return this;
+  }
+
+  /**
+   * Get remainingQuantity
+   * @return remainingQuantity
+   */
+  
+  @Schema(name = "remaining_quantity", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("remaining_quantity")
+  public @Nullable Integer getRemainingQuantity() {
+    return remainingQuantity;
+  }
+
+  public void setRemainingQuantity(@Nullable Integer remainingQuantity) {
+    this.remainingQuantity = remainingQuantity;
+  }
+
+  public CreateOrder200Response averagePrice(@Nullable BigDecimal averagePrice) {
+    this.averagePrice = averagePrice;
+    return this;
+  }
+
+  /**
+   * Get averagePrice
+   * @return averagePrice
+   */
+  @Valid 
+  @Schema(name = "average_price", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("average_price")
+  public @Nullable BigDecimal getAveragePrice() {
+    return averagePrice;
+  }
+
+  public void setAveragePrice(@Nullable BigDecimal averagePrice) {
+    this.averagePrice = averagePrice;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CreateOrder200Response createOrder200Response = (CreateOrder200Response) o;
+    return Objects.equals(this.orderId, createOrder200Response.orderId) &&
+        Objects.equals(this.status, createOrder200Response.status) &&
+        Objects.equals(this.filledQuantity, createOrder200Response.filledQuantity) &&
+        Objects.equals(this.remainingQuantity, createOrder200Response.remainingQuantity) &&
+        Objects.equals(this.averagePrice, createOrder200Response.averagePrice);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(orderId, status, filledQuantity, remainingQuantity, averagePrice);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class CreateOrder200Response {\n");
+    sb.append("    orderId: ").append(toIndentedString(orderId)).append("\n");
+    sb.append("    status: ").append(toIndentedString(status)).append("\n");
+    sb.append("    filledQuantity: ").append(toIndentedString(filledQuantity)).append("\n");
+    sb.append("    remainingQuantity: ").append(toIndentedString(remainingQuantity)).append("\n");
+    sb.append("    averagePrice: ").append(toIndentedString(averagePrice)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+}
+

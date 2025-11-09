@@ -1,0 +1,258 @@
+# Модели данных для Combat Abilities API
+# Источник: .BRAIN/02-gameplay/combat/combat-abilities.md v1.2.0
+
+openapi: 3.0.3
+info:
+  title: Combat Abilities Models
+  version: 1.0.0
+  description: Модели данных для API способностей
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+
+components:
+  schemas:
+    Ability:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - slot
+        - source
+        - cost
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [tactical, signature, ultimate, passive, cyberdeck]
+          description: |
+            - tactical: Q способность (1-2 на перезарядке)
+            - signature: E способность (бесплатная, но кулдаун)
+            - ultimate: R способность (требует зарядки)
+            - passive: постоянно активна
+            - cyberdeck: хакерская способность
+        slot:
+          type: string
+          enum: [Q, E, R, passive, cyberdeck]
+          description: Слот для способности
+        source:
+          $ref: '#/components/schemas/AbilitySource'
+        cost:
+          $ref: '#/components/schemas/AbilityCost'
+        cooldown:
+          type: number
+          description: Кулдаун в секундах
+        effects:
+          type: array
+          description: Эффекты способности
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: number
+              duration:
+                type: number
+        range:
+          type: number
+          description: Дальность действия
+        aoe:
+          type: number
+          description: Радиус действия (площадь)
+        class_affinity:
+          type: array
+          description: Классы, для которых способность оптимальна
+          items:
+            type: string
+
+    AbilitySource:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [equipment, implants, skills, cyberdeck]
+          description: |
+            - equipment: способность от экипировки
+            - implants: способность от имплантов
+            - skills: способность из дерева прокачки
+            - cyberdeck: хакерская способность от кибердеки
+        item_id:
+          type: string
+          description: ID источника (экипировка/имплант/навык)
+        brand:
+          type: string
+          description: Бренд источника (для сетовых синергий)
+
+    AbilityCost:
+      type: object
+      properties:
+        energy:
+          type: number
+          description: Энергия (от имплантов/кибердеки)
+        health:
+          type: number
+          description: Здоровье (риск киберпсихоза)
+        ammo:
+          type: integer
+          description: Боеприпасы способности
+        charge:
+          type: number
+          description: Заряд (для ультимативных способностей)
+        heat:
+          type: number
+          description: Перегрев системы (влияет на киберпсихоз)
+
+    AbilityLoadout:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+        q_slot:
+          type: string
+          description: ID способности в Q слоте
+        e_slot:
+          type: string
+          description: ID способности в E слоте
+        r_slot:
+          type: string
+          description: ID способности в R слоте
+        passive_slots:
+          type: array
+          description: Пассивные способности
+          items:
+            type: string
+        cyberdeck_slots:
+          type: array
+          description: Хакерские способности от кибердеки
+          items:
+            type: string
+        energy_budget_used:
+          type: number
+          description: Использованный энергобюджет
+        energy_budget_max:
+          type: number
+          description: Максимальный энергобюджет
+        heat_level:
+          type: number
+          description: Текущий уровень перегрева системы
+
+    AbilityUseRequest:
+      type: object
+      required:
+        - character_id
+        - ability_id
+      properties:
+        character_id:
+          type: string
+        ability_id:
+          type: string
+        target_id:
+          type: string
+          description: ID цели (если применимо)
+        target_position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+          description: Позиция цели (если применимо)
+
+    AbilityUseResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        effects_applied:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              target_id:
+                type: string
+              value:
+                type: number
+              duration:
+                type: number
+        cooldown_started:
+          type: number
+          description: Длительность кулдауна
+        energy_consumed:
+          type: number
+        heat_generated:
+          type: number
+          description: Перегрев системы
+        cyberpsychosis_risk_increase:
+          type: number
+          description: Увеличение риска киберпсихоза
+
+    AbilitySynergy:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [set_bonus, brand_bonus, class_bonus, combo_bonus]
+          description: |
+            - set_bonus: бонус за сет способностей
+            - brand_bonus: бонус за бренд (Arasaka, Militech)
+            - class_bonus: бонус за класс (Solo, Netrunner)
+            - combo_bonus: бонус за комбо способностей
+        required_abilities:
+          type: array
+          description: Способности, необходимые для синергии
+          items:
+            type: string
+        bonus_effects:
+          type: array
+          description: Эффекты синергии
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              value:
+                type: number
+
+    AbilityCooldown:
+      type: object
+      properties:
+        ability_id:
+          type: string
+        remaining_time:
+          type: number
+          description: Оставшееся время кулдауна (секунды)
+        total_time:
+          type: number
+          description: Полное время кулдауна
+        is_ready:
+          type: boolean
+          description: Готова ли способность к использованию
+
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

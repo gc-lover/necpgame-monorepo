@@ -1,0 +1,95 @@
+openapi: 3.0.3
+info:
+  title: Romance Events API
+  version: 1.0.0
+  description: |
+    API для романтических событий.
+    
+    Источник: .BRAIN/02-gameplay/social/relationships-system.md v1.2.0
+    
+    Романтические отношения: от знакомства до глубоких отношений
+    События: свидания, подарки, квесты, диалоги
+    Влияние: репутация, выборы, квесты
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/gameplay/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Romance
+    description: Романтические события
+
+paths:
+  /gameplay/social/romance/available-events:
+    get:
+      summary: Получить доступные романтические события
+      description: Возвращает события, доступные для персонажа
+      operationId: getAvailableRomanceEvents
+      tags:
+        - Romance
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: npc_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Доступные события
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+
+  /gameplay/social/romance/trigger-event:
+    post:
+      summary: Запустить романтическое событие
+      description: Инициирует романтическое событие с NPC
+      operationId: triggerRomanceEvent
+      tags:
+        - Romance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - npc_id
+                - event_id
+              properties:
+                character_id:
+                  type: string
+                npc_id:
+                  type: string
+                event_id:
+                  type: string
+      responses:
+        '200':
+          description: Событие запущено
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas: {}

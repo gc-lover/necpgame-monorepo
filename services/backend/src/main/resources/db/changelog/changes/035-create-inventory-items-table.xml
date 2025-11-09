@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="035-create-inventory-items-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="inventory_items"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="inventory_items">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight" type="DECIMAL(8,2)" defaultValue="0.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stackable" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rarity" type="VARCHAR(20)" defaultValue="COMMON">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="equippable" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="usable" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quest_item" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_level" type="INT"/>
+            <column name="min_strength" type="INT"/>
+            <column name="min_dexterity" type="INT"/>
+            <column name="min_intelligence" type="INT"/>
+            <column name="slot_type" type="VARCHAR(50)"/>
+            <column name="use_effects" type="VARCHAR(1000)"/>
+            <column name="equip_bonuses" type="VARCHAR(1000)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="inventory_items" indexName="idx_inventory_items_category">
+            <column name="category"/>
+        </createIndex>
+        <createIndex tableName="inventory_items" indexName="idx_inventory_items_rarity">
+            <column name="rarity"/>
+        </createIndex>
+        <createIndex tableName="inventory_items" indexName="idx_inventory_items_equippable">
+            <column name="equippable"/>
+        </createIndex>
+        <createIndex tableName="inventory_items" indexName="idx_inventory_items_usable">
+            <column name="usable"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="inventory_items"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

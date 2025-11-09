@@ -1,0 +1,184 @@
+{
+  "category": "meeting",
+  "eventRange": "RE-001 to RE-020",
+  "totalEvents": 20,
+  "version": "1.0.0",
+  "lastUpdated": "2025-11-06",
+  "events": [
+    {
+      "eventId": "RE-001",
+      "name": {
+        "en": "Chance Meeting at a Bar",
+        "ru": "Случайная встреча в баре",
+        "ja": "バーでの偶然の出会い",
+        "ko": "바에서의 우연한 만남",
+        "zh": "酒吧偶遇",
+        "es": "Encuentro casual en un bar",
+        "pt": "Encontro casual em um bar",
+        "fr": "Rencontre fortuite dans un bar",
+        "de": "Zufälliges Treffen in einer Bar",
+        "it": "Incontro casuale in un bar",
+        "ar": "لقاء عرضي في حانة",
+        "he": "מפגש מקרי בבר"
+      },
+      "description": "Classic bar meeting. Eyes meet across the room. Chemistry check.",
+      "relationshipRange": [0, 10],
+      "triggers": {
+        "locations": ["bar", "club", "pub", "lounge", "tavern"],
+        "time": ["evening", "night"],
+        "npcPresent": true,
+        "randomChance": 0.15
+      },
+      "skillCheck": {
+        "type": "Charisma",
+        "dc": 14,
+        "skill": "Persuasion",
+        "attribute": "COOL"
+      },
+      "dialogue": {
+        "setup": {
+          "en": "The bar is dimly lit, smooth jazz playing softly. You notice {npc_name} sitting alone at the counter, swirling their drink. Your eyes meet for a moment.",
+          "ru": "Бар слабо освещён, тихо играет мягкий джаз. Вы замечаете {npc_name}, сидящего в одиночестве у барной стойки, помешивающего свой напиток. На мгновение ваши взгляды встречаются.",
+          "ja": "バーは薄暗く、スムーズなジャズが静かに流れています。カウンターで一人座っている{npc_name}に気づきます。グラスを回しながら。一瞬、目が合います。"
+        },
+        "choices": [
+          {
+            "choiceId": "A1",
+            "text": {
+              "en": "Approach and introduce yourself",
+              "ru": "Подойти и представиться",
+              "ja": "近づいて自己紹介する"
+            },
+            "skillCheck": "main",
+            "outcomes": {
+              "criticalSuccess": {
+                "npcReaction": {
+                  "en": "{npc_name} lights up with a genuine smile.\n\n\"Well hello there! I was hoping someone interesting would talk to me tonight. Please, sit down. I'm {npc_name}, and you are...?\"",
+                  "ru": "{npc_name} озаряется искренней улыбкой.\n\n\"О, привет! Я надеялась, что кто-то интересный заговорит со мной сегодня. Пожалуйста, садись. Я {npc_name}, а ты...?\"",
+                  "personalityVariations": {
+                    "extraversion_high": "\"Oh thank GOD someone interesting! I was dying of boredom here! Sit, sit! Tell me everything!\"",
+                    "romanticism_high": "\"*blushes* Oh... I was hoping you'd come over. I noticed you when you walked in...\"",
+                    "extraversion_low": "\"*shy smile* Oh, um... yes, please sit. I'm {npc_name}. Nice to meet you.\""
+                  }
+                },
+                "relationship": 15,
+                "chemistry": 10,
+                "flags": ["smooth_talker", "great_impression"],
+                "nextNode": 10
+              },
+              "success": {
+                "npcReaction": {
+                  "en": "{npc_name} smiles politely.\n\n\"Hi! Nice to meet you. I'm {npc_name}. First time here?\"",
+                  "ru": "{npc_name} вежливо улыбается.\n\n\"Привет! Приятно познакомиться. Я {npc_name}. Первый раз здесь?\"",
+                  "personalityVariations": {
+                    "agreeableness_high": "\"*warm smile* Hello! It's nice to meet someone new. What's your name?\"",
+                    "agreeableness_low": "\"*nods* Hi. {npc_name}. You are?\"",
+                    "neuroticism_high": "\"*nervous smile* Oh, hi! Um, I'm {npc_name}. Sorry, I'm not great at this...\""
+                  }
+                },
+                "relationship": 10,
+                "chemistry": 5,
+                "flags": ["contacted", "conversation_started"],
+                "nextNode": 5
+              },
+              "failure": {
+                "npcReaction": {
+                  "en": "{npc_name} looks up briefly, then back at their drink.\n\n\"...Hi. Look, I'm not really in the mood for company right now. Maybe another time?\"",
+                  "ru": "{npc_name} ненадолго поднимает взгляд, затем возвращается к своему напитку.\n\n\"...Привет. Слушай, я не очень в настроении для компании сейчас. Может, в другой раз?\"",
+                  "bodyLanguage": "closed_off, looking_away"
+                },
+                "relationship": 2,
+                "chemistry": -2,
+                "flags": ["awkward_first_try"],
+                "nextNode": 99
+              },
+              "criticalFailure": {
+                "npcReaction": {
+                  "en": "{npc_name} recoils slightly.\n\n\"Ugh, no offense but you seem really drunk. I'm going to pass. Goodnight.\" *gets up to leave*",
+                  "ru": "{npc_name} слегка отшатывается.\n\n\"Эм, не хочу обидеть, но ты кажешься сильно пьяным. Я пас. Спокойной ночи.\" *встаёт уходить*",
+                  "action": "leaves_bar"
+                },
+                "relationship": -5,
+                "chemistry": -10,
+                "flags": ["terrible_impression", "npc_left"],
+                "blockedFor": "7_days",
+                "nextNode": 98
+              }
+            }
+          },
+          {
+            "choiceId": "A2",
+            "text": {
+              "en": "Send them a drink with a note",
+              "ru": "Отправить им напиток с запиской",
+              "ja": "メモ付きの飲み物を送る"
+            },
+            "cost": 20,
+            "skillCheck": {
+              "type": "Romantic",
+              "dc": 12
+            },
+            "note_options": [
+              {
+                "noteId": "N1",
+                "text": "From across the room - you caught my eye",
+                "romantic": true,
+                "dc_modifier": -2
+              },
+              {
+                "noteId": "N2",
+                "text": "You look like you could use another. Cheers!",
+                "friendly": true,
+                "safe": true
+              }
+            ]
+          },
+          {
+            "choiceId": "A3",
+            "text": {
+              "en": "Just smile and look away (play it cool)",
+              "ru": "Просто улыбнуться и отвернуться",
+              "ja": "ただ微笑んで目をそらす"
+            },
+            "skillCheck": null,
+            "outcome": {
+              "relationship": 0,
+              "narration": {
+                "en": "You smile politely and look away. The moment passes... but you catch them glancing at you a few times. Maybe next time.",
+                "ru": "Вы вежливо улыбаетесь и отворачиваетесь. Момент прошёл... но вы замечаете, что они несколько раз посматривают на вас. Может быть, в следующий раз."
+              },
+              "nextEvents": ["RE-012"],
+              "canRetry": true
+            }
+          }
+        ]
+      },
+      "tags": ["first_meeting", "bar", "classic", "universal"],
+      "difficulty": "easy",
+      "estimatedDuration": "5-10 min",
+      "culturalAdaptations": {
+        "japanese": {
+          "approach": "more_reserved",
+          "dcModifier": 2,
+          "note": "Direct approach less common, more subtle initial contact preferred"
+        },
+        "brazilian": {
+          "approach": "direct_okay",
+          "dcModifier": -2,
+          "note": "Brazilians appreciate directness and friendliness"
+        },
+        "russian": {
+          "approach": "direct_but_serious",
+          "note": "Direct is okay but be genuine, Russians detect BS"
+        },
+        "emirati": {
+          "approach": "very_careful",
+          "dcModifier": 5,
+          "warnings": ["Gender segregated bars common", "Mixed bars rare", "Be very respectful"],
+          "note": "In conservative contexts, this meeting may not be possible"
+        }
+      }
+    }
+  ]
+}
+

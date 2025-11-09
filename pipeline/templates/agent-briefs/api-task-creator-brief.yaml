@@ -1,0 +1,17 @@
+agent: API Task Architect
+tasks_source:
+  description: Очередь готовых документов для постановки API задач
+  location: "shared/trackers/queues/vision/completed.yaml"
+supporting_files:
+  - "services/openapi/tasks/templates/api-generation-task-template.md"
+  - "pipeline/checklists/api-to-openapi.yaml"
+work_instructions:
+  - "Создай задание с полными метаданными, указав микросервис, base-path, directory, endpoints и acceptance."
+  - "Заполни FAQ и связанные интеграции, зафиксируй зависимые сервисы."
+validation_scripts:
+  - "pwsh -File pipeline/scripts/validate-api-task.ps1 -File <task-file>"
+  - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <task-file>"
+completion_actions:
+  - "Обнови `services/openapi/tasks/config/brain-mapping.yaml` и перенеси карточку в `shared/trackers/queues/api/queued.yaml` (с проверкой `check-queue-yaml.ps1`)."
+  - "Оставь запись в Activity Log и приложи чеклист."
+

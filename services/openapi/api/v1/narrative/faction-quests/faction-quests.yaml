@@ -1,0 +1,489 @@
+openapi: 3.0.3
+info:
+  title: Faction Quests API
+  version: 1.0.0
+  description: |
+    API для фракционных квестов.
+    
+    Функционал:
+    - Faction quest catalog (квесты по фракциям)
+    - Deep branching (глубокие ветвления с 12+ концовками)
+    - Faction reputation integration
+    - Quest chains (цепочки связанных квестов)
+    - Multiple endings tracking
+    - Faction-specific rewards
+    
+    Охватывает 9 фракционных категорий:
+    - NCPD & MaxTac
+    - Arasaka
+    - Gangs (6th Street, Voodoo Boys)
+    - Nomads
+    - Corpo (Militech, Biotechnica)
+    - Cultural (Valentinos, Maelstrom)
+    - Specialists (Fixers, Rippers)
+    - Tech (Trauma Team, Netrunners)
+    - Politics & Media
+    
+    Источники: 9 faction quest JSON файлов v3.0.0
+
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative
+    package: com.necpgame.narrativeservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Faction Quests
+    description: Фракционные квесты
+  - name: Quest Branches
+    description: Ветвления квестов
+  - name: Quest Endings
+    description: Концовки квестов
+
+paths:
+  /narrative/faction-quests:
+    get:
+      summary: Получить список фракционных квестов
+      operationId: listFactionQuests
+      tags: [Faction Quests]
+      parameters:
+        - name: faction
+          in: query
+          schema:
+            type: string
+            enum: [NCPD, MAXTAC, ARASAKA, SIXTH_STREET, VOODOO_BOYS, ALDECALDOS, 
+                   MILITECH, BIOTECHNICA, VALENTINOS, MAELSTROM, FIXERS, RIPPERS,
+                   TRAUMA_TEAM, NETRUNNERS, MEDIA, POLITICS]
+        - name: min_reputation
+          in: query
+          description: Минимальная репутация для доступа
+          schema:
+            type: integer
+        - name: player_level_min
+          in: query
+          schema:
+            type: integer
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Список фракционных квестов
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FactionQuest'
+
+  /narrative/faction-quests/{quest_id}:
+    get:
+      summary: Получить детали фракционного квеста
+      operationId: getFactionQuest
+      tags: [Faction Quests]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionQuestDetailed'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /narrative/faction-quests/{quest_id}/branches:
+    get:
+      summary: Получить ветвления квеста
+      operationId: getQuestBranches
+      tags: [Quest Branches]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Доступные ветвления
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  branches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestBranch'
+                  current_branch:
+                    type: string
+                    description: Текущая ветка игрока
+
+  /narrative/faction-quests/{quest_id}/endings:
+    get:
+      summary: Получить возможные концовки квеста
+      operationId: getQuestEndings
+      tags: [Quest Endings]
+      description: Может быть 12+ концовок в зависимости от выборов
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Возможные концовки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  endings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestEnding'
+                  achieved_endings:
+                    type: array
+                    description: Концовки, которые игрок уже видел
+                    items:
+                      type: string
+
+  /narrative/faction-quests/character/{character_id}/available:
+    get:
+      summary: Получить доступные фракционные квесты для персонажа
+      operationId: getAvailableFactionQuests
+      tags: [Faction Quests]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Доступные квесты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FactionQuest'
+                  locked_quests:
+                    type: array
+                    description: Квесты с требованиями
+                    items:
+                      type: object
+                      properties:
+                        quest:
+                          $ref: '#/components/schemas/FactionQuest'
+                        requirements:
+                          $ref: '#/components/schemas/QuestRequirements'
+
+  /narrative/faction-quests/character/{character_id}/progress:
+    get:
+      summary: Получить прогресс по фракционным квестам
+      operationId: getFactionQuestProgress
+      tags: [Faction Quests]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Прогресс по квестам
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveQuestProgress'
+                  completed_quests:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        quest_id:
+                          type: string
+                        ending_achieved:
+                          type: string
+                        completion_date:
+                          type: string
+                          format: date-time
+
+components:
+  schemas:
+    FactionQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          example: "faction_ncpd_serial_killer"
+        title:
+          type: string
+          example: "Night City's Most Wanted"
+        description:
+          type: string
+        faction:
+          type: string
+          enum: [NCPD, MAXTAC, ARASAKA, SIXTH_STREET, VOODOO_BOYS, ALDECALDOS,
+                 MILITECH, BIOTECHNICA, VALENTINOS, MAELSTROM, FIXERS, RIPPERS,
+                 TRAUMA_TEAM, NETRUNNERS, MEDIA, POLITICS]
+        category:
+          type: string
+          example: "Investigation"
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD, VERY_HARD, EXTREME]
+        requirements:
+          $ref: '#/components/schemas/QuestRequirements'
+        rewards:
+          $ref: '#/components/schemas/QuestRewards'
+        branches_count:
+          type: integer
+          description: Количество веток
+          example: 5
+        endings_count:
+          type: integer
+          description: Количество концовок
+          example: 12
+        estimated_time_minutes:
+          type: integer
+          example: 45
+
+    FactionQuestDetailed:
+      allOf:
+        - $ref: '#/components/schemas/FactionQuest'
+        - type: object
+          properties:
+            storyline:
+              type: string
+              description: Полное описание сюжета
+            key_npcs:
+              type: array
+              items:
+                type: object
+                properties:
+                  npc_id:
+                    type: string
+                  name:
+                    type: string
+                  role:
+                    type: string
+            locations:
+              type: array
+              items:
+                type: string
+              description: Локации, где происходит квест
+            branches:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuestBranch'
+
+    QuestBranch:
+      type: object
+      properties:
+        branch_id:
+          type: string
+        name:
+          type: string
+          example: "Peaceful Resolution"
+        description:
+          type: string
+        requirements:
+          type: object
+          properties:
+            choices:
+              type: array
+              description: Выборы, которые ведут к этой ветке
+              items:
+                type: string
+            skill_checks:
+              type: array
+              items:
+                type: object
+                properties:
+                  skill:
+                    type: string
+                  difficulty:
+                    type: integer
+        consequences:
+          type: object
+          properties:
+            reputation_changes:
+              type: object
+              additionalProperties:
+                type: integer
+            faction_relations:
+              type: object
+              additionalProperties:
+                type: integer
+            unlocks:
+              type: array
+              items:
+                type: string
+        leads_to_endings:
+          type: array
+          description: Какие концовки доступны из этой ветки
+          items:
+            type: string
+
+    QuestEnding:
+      type: object
+      properties:
+        ending_id:
+          type: string
+        name:
+          type: string
+          example: "Justice Served"
+        description:
+          type: string
+        type:
+          type: string
+          enum: [GOOD, NEUTRAL, BAD, SECRET, TRAGIC, TRIUMPHANT]
+        requirements:
+          type: object
+          properties:
+            branch:
+              type: string
+            choices:
+              type: array
+              items:
+                type: string
+            reputation_min:
+              type: object
+              additionalProperties:
+                type: integer
+        consequences:
+          type: object
+          properties:
+            reputation_impact:
+              type: object
+              additionalProperties:
+                type: integer
+            faction_relations:
+              type: object
+              additionalProperties:
+                type: integer
+            unlocked_content:
+              type: array
+              items:
+                type: string
+            rewards:
+              $ref: '#/components/schemas/QuestRewards'
+
+    QuestRequirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+        min_reputation:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            NCPD: 50
+        required_quests:
+          type: array
+          description: Квесты, которые должны быть завершены
+          items:
+            type: string
+        required_items:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+        street_cred:
+          type: integer
+        currency:
+          type: object
+          properties:
+            eddies:
+              type: integer
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        reputation:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            NCPD: 100
+            ARASAKA: -50
+
+    ActiveQuestProgress:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        current_branch:
+          type: string
+        choices_made:
+          type: array
+          items:
+            type: object
+            properties:
+              choice_id:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+        objectives:
+          type: array
+          items:
+            type: object
+            properties:
+              objective_id:
+                type: string
+              description:
+                type: string
+              completed:
+                type: boolean
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

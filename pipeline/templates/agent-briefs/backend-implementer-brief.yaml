@@ -1,0 +1,18 @@
+agent: Backend Implementer
+tasks_source:
+  description: Очередь backend задач
+  location: "shared/trackers/queues/backend/not-started.yaml"
+supporting_files:
+  - "pipeline/checklists/openapi-to-backend.yaml"
+  - "shared/docs/knowledge/implementation-guides/backend/README.md"
+work_instructions:
+  - "Сгенерируй контракты из выбранной спецификации (`generate-openapi-layers.ps1`)."
+  - "Реализуй сущности, репозитории, сервисы, контроллеры, мапперы, миграции и тесты."
+validation_scripts:
+  - "pwsh -File pipeline/scripts/check-backend-structure.ps1 -ProjectRoot services/backend"
+  - "pwsh -File pipeline/scripts/check-seed-integrity.ps1 -SeedDirectory services/backend/src/main/resources/db/changelog"
+  - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+completion_actions:
+  - "Обнови `implementation-tracker.yaml` (`backend.completed`), сформируй frontend brief."
+  - "Перенеси карточку в `shared/trackers/queues/backend/completed.yaml` с проверкой `check-queue-yaml.ps1`."
+

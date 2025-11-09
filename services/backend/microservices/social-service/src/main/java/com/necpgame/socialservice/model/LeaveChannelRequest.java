@@ -1,0 +1,121 @@
+package com.necpgame.socialservice.model;
+
+import java.net.URI;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.necpgame.socialservice.model.ChannelType;
+import org.springframework.lang.Nullable;
+import org.openapitools.jackson.nullable.JsonNullable;
+import java.time.OffsetDateTime;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+
+import java.util.*;
+import jakarta.annotation.Generated;
+
+/**
+ * LeaveChannelRequest
+ */
+
+
+public class LeaveChannelRequest {
+
+  private String channelId;
+
+  private @Nullable ChannelType channelType;
+
+  public LeaveChannelRequest() {
+    super();
+  }
+
+  /**
+   * Constructor with only required parameters
+   */
+  public LeaveChannelRequest(String channelId) {
+    this.channelId = channelId;
+  }
+
+  public LeaveChannelRequest channelId(String channelId) {
+    this.channelId = channelId;
+    return this;
+  }
+
+  /**
+   * Get channelId
+   * @return channelId
+   */
+  @NotNull 
+  @Schema(name = "channelId", requiredMode = Schema.RequiredMode.REQUIRED)
+  @JsonProperty("channelId")
+  public String getChannelId() {
+    return channelId;
+  }
+
+  public void setChannelId(String channelId) {
+    this.channelId = channelId;
+  }
+
+  public LeaveChannelRequest channelType(@Nullable ChannelType channelType) {
+    this.channelType = channelType;
+    return this;
+  }
+
+  /**
+   * Get channelType
+   * @return channelType
+   */
+  @Valid 
+  @Schema(name = "channelType", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("channelType")
+  public @Nullable ChannelType getChannelType() {
+    return channelType;
+  }
+
+  public void setChannelType(@Nullable ChannelType channelType) {
+    this.channelType = channelType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    LeaveChannelRequest leaveChannelRequest = (LeaveChannelRequest) o;
+    return Objects.equals(this.channelId, leaveChannelRequest.channelId) &&
+        Objects.equals(this.channelType, leaveChannelRequest.channelType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(channelId, channelType);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class LeaveChannelRequest {\n");
+    sb.append("    channelId: ").append(toIndentedString(channelId)).append("\n");
+    sb.append("    channelType: ").append(toIndentedString(channelType)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+}
+

@@ -1,0 +1,439 @@
+openapi: 3.0.3
+info:
+  title: Economy Contracts API
+  version: 1.0.0
+  description: |
+    Player-to-player contract lifecycle covering negotiation, escrow, collateral, deliverables, disputes and analytics.
+    Source: .BRAIN/02-gameplay/economy/economy-contracts.md v1.1.0.
+    Integrations: inventory-service, wallet-service, logistics-service, reputation-service, notification-service,
+    anti-fraud-service, analytics-service.
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/contracts
+    directory: api/v1/economy/contracts
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: ContractsLifecycle
+    description: Creation, negotiation and lifecycle management of contracts
+  - name: ContractsEscrow
+    description: Escrow and collateral operations
+  - name: ContractsDeliverables
+    description: Deliverable submissions and completion flows
+  - name: ContractsDisputes
+    description: Dispute management and resolution
+  - name: ContractsAnalytics
+    description: Listings and analytics endpoints
+paths:
+  /economy/contracts:
+    post:
+      tags: [ContractsLifecycle]
+      summary: Create contract
+      description: Creates a new contract draft with initial terms, invited contractor and collateral rules.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/ContractCreateRequest'
+      responses:
+        '201':
+          description: Contract created
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractCreateResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    get:
+      tags: [ContractsLifecycle]
+      summary: Get contract details
+      description: Returns contract information including terms, state machine snapshot, escrow balances and timeline summary.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Contract details
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractDetailResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/proposals:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsLifecycle]
+      summary: Submit negotiation proposal
+      description: Submits contract proposal delta during negotiation phase, triggering notifications and anti-fraud checks.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/ContractProposalRequest'
+      responses:
+        '202':
+          description: Proposal accepted for review
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractProposalResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/accept:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsLifecycle]
+      summary: Accept contract terms
+      description: Accepts current contract terms, finalizing negotiation and requesting escrow deposits.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Contract accepted
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractAcceptResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/escrow/deposit:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsEscrow]
+      summary: Deposit escrow or collateral
+      description: Locks currency and/or items into escrow using wallet and inventory services.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/EscrowDepositRequest'
+      responses:
+        '202':
+          description: Escrow deposit registered
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/EscrowDepositResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/escrow/release:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsEscrow]
+      summary: Release escrow
+      description: Releases escrow funds and items when contract is completed or dispute resolved.
+      security:
+        - ServiceToken: []
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/EscrowReleaseRequest'
+      responses:
+        '200':
+          description: Escrow released
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/EscrowReleaseResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/deliverables:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsDeliverables]
+      summary: Submit deliverable proof
+      description: Submits deliverable data such as inventory references, logistics manifests or evidence links.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/DeliverableSubmitRequest'
+      responses:
+        '202':
+          description: Deliverable recorded
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/DeliverableSubmitResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/complete:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsDeliverables]
+      summary: Complete contract
+      description: Confirms contract completion, releases escrow and captures ratings and feedback.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/ContractCompleteRequest'
+      responses:
+        '200':
+          description: Contract completed
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractCompleteResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/cancel:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsLifecycle]
+      summary: Cancel contract
+      description: Cancels contract by mutual consent prior to activation, releasing escrow accordingly.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/ContractCancelRequest'
+      responses:
+        '200':
+          description: Contract cancelled
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractCancelResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/dispute:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsDisputes]
+      summary: Open dispute
+      description: Opens dispute case with evidence attachments, triggering moderator review.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/DisputeOpenRequest'
+      responses:
+        '202':
+          description: Dispute opened
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/DisputeOpenResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/dispute/resolve:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+    post:
+      tags: [ContractsDisputes]
+      summary: Resolve dispute
+      description: Records dispute resolution decision by moderator, distributing escrow and applying penalties.
+      security:
+        - ModeratorSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './contracts-models-operations.yaml#/components/schemas/DisputeResolveRequest'
+      responses:
+        '200':
+          description: Dispute resolved
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/DisputeResolveResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/{contractId}/timeline:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/ContractIdPath'
+      - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+      - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+    get:
+      tags: [ContractsAnalytics]
+      summary: Get contract timeline
+      description: Returns paginated timeline events for the contract including proposals, deposits, deliverables and resolving actions.
+      security:
+        - PlayerSession: []
+        - ModeratorSession: []
+      responses:
+        '200':
+          description: Contract timeline
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractTimelineResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/accounts/{accountId}/contracts:
+    parameters:
+      - $ref: './contracts-models.yaml#/components/parameters/AccountIdPath'
+      - $ref: './contracts-models.yaml#/components/parameters/ContractStatusFilter'
+      - $ref: './contracts-models.yaml#/components/parameters/ContractTypeFilter'
+      - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+      - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+    get:
+      tags: [ContractsAnalytics]
+      summary: List contracts for account
+      description: Returns contracts where the account participates either as creator or contractor with filtering support.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Contract list
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/contracts/analytics/summary:
+    get:
+      tags: [ContractsAnalytics]
+      summary: Get contracts analytics summary
+      description: Provides aggregate metrics for contracts including completion rate, dispute rates and total escrow value.
+      security:
+        - ModeratorSession: []
+      responses:
+        '200':
+          description: Analytics summary payload
+          content:
+            application/json:
+              schema:
+                $ref: './contracts-models-operations.yaml#/components/schemas/ContractAnalyticsResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+components:
+  responses:
+    BadRequest:
+      $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    TooManyRequests:
+      $ref: '../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+    InternalServerError:
+      $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    PlayerSession:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/PlayerSession'
+    ModeratorSession:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/ModeratorSession'
+    ServiceToken:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken'
+  schemas:
+    ContractCreatedEvent:
+      $ref: './contracts-models-operations.yaml#/components/schemas/ContractCreatedEvent'
+    ContractProposalEvent:
+      $ref: './contracts-models-operations.yaml#/components/schemas/ContractProposalEvent'
+    ContractEscrowLockedEvent:
+      $ref: './contracts-models-operations.yaml#/components/schemas/ContractEscrowLockedEvent'
+    ContractDeliverableEvent:
+      $ref: './contracts-models-operations.yaml#/components/schemas/ContractDeliverableEvent'
+    ContractCompletedEvent:
+      $ref: './contracts-models-operations.yaml#/components/schemas/ContractCompletedEvent'
+    ContractCancelledEvent:
+      $ref: './contracts-models-operations.yaml#/components/schemas/ContractCancelledEvent'
+    ContractDisputeOpenedEvent:
+      $ref: './contracts-models-operations.yaml#/components/schemas/ContractDisputeOpenedEvent'
+    ContractDisputeResolvedEvent:
+      $ref: './contracts-models-operations.yaml#/components/schemas/ContractDisputeResolvedEvent'
+

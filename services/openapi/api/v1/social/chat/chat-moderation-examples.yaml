@@ -1,0 +1,95 @@
+# Target Architecture:
+# - Примеры: report, ban, check, rules
+
+openapi: 3.0.3
+info:
+  title: Chat Moderation Examples
+  version: 1.0.0
+  description: Примеры запросов и ответов для Chat Moderation API.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  examples:
+    ChatReportRequest:
+      summary: Жалоба на сообщение
+      value:
+        reporterId: "2d6f8331-20bf-4d45-bad8-19f8613bc1c5"
+        messageId: "5f6e7d81-92ab-3cd4-5e6f-708192ab3cd4"
+        channelId: "global-general"
+        accusedPlayerId: "3c9614d5-1869-4c84-8c3b-4e5817d4d8fb"
+        reason: "ABUSE"
+        evidenceUrls:
+          - "https://cdn.necpgame.com/moderation/screenshots/report-123.png"
+        comment: "Токсичные высказывания"
+    ChatReportTicket:
+      summary: Принятая жалоба
+      value:
+        reportId: "a1b2c3d4-e5f6-47a8-9b0c-d1e2f3a4b5c6"
+        status: "OPEN"
+        createdAt: "2025-11-08T22:58:00Z"
+        priority: "HIGH"
+        assignedModeratorId: null
+    ChatBanRequest:
+      summary: Выдача временного бана
+      value:
+        playerId: "3c9614d5-1869-4c84-8c3b-4e5817d4d8fb"
+        channelType: "GLOBAL"
+        reason: "Распространение рекламы и спам"
+        durationMinutes: 1440
+        severity: "MEDIUM"
+        evidence:
+          - "https://cdn.necpgame.com/moderation/logs/spam-log-778.json"
+    ChatBanResponse:
+      summary: Информация о бане
+      value:
+        banId: "f4e5d6c7-b8a9-4d0c-9e1f-234567890abc"
+        playerId: "3c9614d5-1869-4c84-8c3b-4e5817d4d8fb"
+        channelType: "GLOBAL"
+        reason: "Распространение рекламы и спам"
+        issuedBy: "d0c9b8a7-6e5f-4d3c-2b1a-9f8e7d6c5b4a"
+        issuedAt: "2025-11-08T23:00:00Z"
+        expiresAt: "2025-11-09T23:00:00Z"
+        severity: "MEDIUM"
+        isActive: true
+    ModerationCheckResponse:
+      summary: Проверка сообщения на нарушения
+      value:
+        filteredText: "Привет всем, заходите на [link removed]!"
+        violations:
+          - type: "URL"
+            severity: "MEDIUM"
+            context: "spam link"
+          - type: "CAPS"
+            severity: "LOW"
+            context: "ALL CAPS"
+        spamScore: 0.82
+        autoBanTriggered: false
+    ModerationRuleSet:
+      summary: Текущий набор правил
+      value:
+        bannedWords: ["forbidden1", "forbidden2"]
+        severeViolations: ["hate speech", "terrorist propaganda"]
+        urlWhitelist: ["https://play.necpgame.com"]
+        capsThreshold: 0.7
+        repeatCharLimit: 5
+        updatedAt: "2025-11-08T21:45:00Z"
+    AutoBanTrigger:
+      summary: Автоматический бан по событию анти-чита
+      value:
+        playerId: "7f4f0b2c-e41e-4a37-b4a9-4f90d3cc85ba"
+        source: "CHEAT_ALERT"
+        confidence: 0.95
+        metadata:
+          matchId: "aa77bb88-99cc-44dd-8011-223344556677"
+          detectedBy: "anti-cheat-service"
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

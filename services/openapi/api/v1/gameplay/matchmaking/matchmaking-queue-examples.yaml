@@ -1,0 +1,121 @@
+# Target Architecture:
+# - Примеры покрывают вход в очередь, статус, аналитику и SSE события
+
+openapi: 3.0.3
+info:
+  title: Matchmaking Queue Examples
+  version: 1.0.0
+  description: Примеры полезной нагрузки для Matchmaking Queue API.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+components:
+  examples:
+    QueueRequestSolo:
+      summary: Вход соло-игрока в рейтинговую арену
+      value:
+        activityType: "ARENA"
+        mode: "RANKED"
+        partySize: 1
+        preferredRole: "DPS"
+        canFill: true
+        minLevel: 30
+        maxLevel: 35
+        estimatedSkill: 1850
+        ratingRange: 200
+        allowCrossRegion: false
+        expiresAt: "2025-11-08T22:05:00Z"
+        metadata:
+          clientVersion: "1.12.5"
+          platform: "pc"
+    QueueTicketResponse:
+      summary: Ответ о созданном тикете
+      value:
+        ticketId: "2c8ec4fd-65f6-46b9-ac63-4f6f0d0f9a6e"
+        playerId: "5d1f1f8c-948d-4e85-9b5a-8d5d83d51177"
+        activityType: "ARENA"
+        mode: "RANKED"
+        queuedAt: "2025-11-08T21:55:00Z"
+        expiresAt: "2025-11-08T22:05:00Z"
+        priority: 1
+        status: "QUEUED"
+        currentRatingRange: 200
+        waitTimeEstimateSeconds: 120
+        traceId: "mq-req-arena-9921"
+    QueueStatusList:
+      summary: Статусы активных очередей игрока
+      value:
+        items:
+          - ticketId: "2c8ec4fd-65f6-46b9-ac63-4f6f0d0f9a6e"
+            etaSeconds: 95
+            waitedSeconds: 150
+            priorityBoost: 2
+            currentRatingRange: 300
+            expansions:
+              - timestamp: "2025-11-08T21:57:00Z"
+                newRange: 250
+                reason: "TIMEOUT"
+                latencyCapMs: 100
+              - timestamp: "2025-11-08T21:59:30Z"
+                newRange: 300
+                reason: "AUTO"
+                latencyCapMs: 110
+            notifications:
+              - type: "RANGE_EXPANDED"
+                sentAt: "2025-11-08T21:57:01Z"
+                channel: "IN_GAME"
+                payload:
+                  message: "Диапазон поиска расширен до 250"
+            heartbeatDueAt: "2025-11-08T21:56:30Z"
+        totalActive: 1
+    PriorityAdjustmentRequest:
+      summary: Повышение приоритета администратором
+      value:
+        priorityDelta: 3
+        reason: "Tournament fast lane"
+        expiresInSeconds: 600
+        actorId: "8c0d2a7b-9341-4bcf-a9f8-1a43d2ab7d11"
+    WaitTimeAnalytics:
+      summary: Метрики ожидания для рейдов
+      value:
+        window: "LAST_15M"
+        activityType: "RAID"
+        mode: "EVENT"
+        region: "eu-central"
+        averageWaitSeconds: 420
+        percentile50: 360
+        percentile90: 540
+        activeTickets: 248
+        rangeExpansionsPerTicket: 1.8
+        priorityDistribution:
+          "0": 120
+          "1": 80
+          "2": 35
+          "5": 13
+        samples:
+          - timestamp: "2025-11-08T21:40:00Z"
+            waitSeconds: 410
+            priority: 1
+          - timestamp: "2025-11-08T21:45:00Z"
+            waitSeconds: 455
+            priority: 2
+    QueueEventMatchReady:
+      summary: SSE событие о найденном матче
+      value:
+        type: "queue.matchReady"
+        ticketId: "2c8ec4fd-65f6-46b9-ac63-4f6f0d0f9a6e"
+        matchId: "c7a54d91-3d6d-4d8f-9a7e-1f0d3e8f2aa5"
+        emittedAt: "2025-11-08T21:58:12Z"
+        payload:
+          lobbyUrl: "wss://api.necp.game/v1/match/c7a54d91"
+          expiresAt: "2025-11-08T21:58:42Z"
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

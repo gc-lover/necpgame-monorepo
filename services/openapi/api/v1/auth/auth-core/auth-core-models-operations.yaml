@@ -1,0 +1,461 @@
+openapi: 3.0.3
+info:
+  title: Auth Core Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: auth-service
+    port: 8081
+    domain: auth
+    base-path: /api/v1/auth
+    directory: api/v1/auth/auth-core
+    package: com.necpgame.authservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 12
+        displayName:
+          type: string
+          maxLength: 64
+        locale:
+          type: string
+          default: "ru-RU"
+        clientVersion:
+          type: string
+    RegisterResponse:
+      type: object
+      required: [accountId, email, verificationSent]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        verificationSent:
+          type: boolean
+        rateLimit:
+          $ref: './auth-core-models.yaml#/components/schemas/RateLimitInfo'
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        twoFactorCode:
+          type: string
+        clientVersion:
+          type: string
+        rememberMe:
+          type: boolean
+          default: false
+    LoginResponse:
+      type: object
+      required: [tokens, session, profile]
+      properties:
+        tokens:
+          $ref: './auth-core-models.yaml#/components/schemas/TokenPair'
+        session:
+          $ref: './auth-core-models.yaml#/components/schemas/SessionInfo'
+        profile:
+          $ref: './auth-core-models.yaml#/components/schemas/AccountProfile'
+        jwt:
+          $ref: './auth-core-models.yaml#/components/schemas/JwtDescriptor'
+    TwoFactorRequiredResponse:
+      type: object
+      required: [requiresTwoFactor, context]
+      properties:
+        requiresTwoFactor:
+          type: boolean
+          default: true
+        context:
+          $ref: './auth-core-models.yaml#/components/schemas/LoginContext'
+    AccountLockedResponse:
+      type: object
+      required: [lockedUntil]
+      properties:
+        lockedUntil:
+          type: string
+          format: date-time
+        attemptsRemaining:
+          type: integer
+          minimum: 0
+    LogoutRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+        sessionId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+        sessionId:
+          type: string
+          format: uuid
+    RefreshTokenResponse:
+      type: object
+      required: [tokens, jwt]
+      properties:
+        tokens:
+          $ref: './auth-core-models.yaml#/components/schemas/TokenPair'
+        jwt:
+          $ref: './auth-core-models.yaml#/components/schemas/JwtDescriptor'
+        session:
+          $ref: './auth-core-models.yaml#/components/schemas/SessionInfo'
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        clientVersion:
+          type: string
+    ForgotPasswordResponse:
+      type: object
+      properties:
+        requested:
+          type: boolean
+        rateLimit:
+          $ref: './auth-core-models.yaml#/components/schemas/RateLimitInfo'
+    ResetPasswordRequest:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          format: password
+          minLength: 12
+        clientIp:
+          type: string
+    ResetPasswordResponse:
+      type: object
+      properties:
+        passwordChanged:
+          type: boolean
+        sessionTerminated:
+          type: boolean
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 12
+          format: password
+    ChangePasswordResponse:
+      type: object
+      properties:
+        passwordChanged:
+          type: boolean
+        securityUpdatedAt:
+          type: string
+          format: date-time
+    EmailVerificationRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+    EmailVerificationResponse:
+      type: object
+      properties:
+        verified:
+          type: boolean
+        status:
+          $ref: './auth-core-models.yaml#/components/schemas/EmailStatus'
+    EmailResendRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    EmailResendResponse:
+      type: object
+      properties:
+        status:
+          $ref: './auth-core-models.yaml#/components/schemas/EmailStatus'
+        rateLimit:
+          $ref: './auth-core-models.yaml#/components/schemas/RateLimitInfo'
+    TwoFactorSetupResponse:
+      type: object
+      required: [setup]
+      properties:
+        setup:
+          $ref: './auth-core-models.yaml#/components/schemas/TwoFactorSetup'
+        expiresAt:
+          type: string
+          format: date-time
+    TwoFactorVerifyRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+        backupCode:
+          type: string
+    TwoFactorVerifyResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        backupCodes:
+          type: array
+          items:
+            type: string
+    TwoFactorDisableRequest:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+        code:
+          type: string
+        backupCode:
+          type: string
+    TwoFactorDisableResponse:
+      type: object
+      properties:
+        disabled:
+          type: boolean
+    OAuthAuthorizeResponse:
+      type: object
+      required: [authorizationUrl, state]
+      properties:
+        authorizationUrl:
+          type: string
+          format: uri
+        state:
+          type: string
+    OAuthCallbackResponse:
+      type: object
+      required: [tokens, profile]
+      properties:
+        tokens:
+          $ref: './auth-core-models.yaml#/components/schemas/TokenPair'
+        profile:
+          $ref: './auth-core-models.yaml#/components/schemas/AccountProfile'
+        jwt:
+          $ref: './auth-core-models.yaml#/components/schemas/JwtDescriptor'
+    AccountProfileResponse:
+      type: object
+      required: [profile]
+      properties:
+        profile:
+          $ref: './auth-core-models.yaml#/components/schemas/AccountProfile'
+        lockout:
+          $ref: './auth-core-models.yaml#/components/schemas/LockoutStatus'
+        email:
+          $ref: './auth-core-models.yaml#/components/schemas/EmailStatus'
+    AccountProfileUpdateRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          maxLength: 64
+        username:
+          type: string
+          maxLength: 32
+        locale:
+          type: string
+        communicationPreferences:
+          type: object
+          additionalProperties:
+            type: boolean
+    AccountDeleteRequest:
+      type: object
+      properties:
+        password:
+          type: string
+        reason:
+          type: string
+        feedback:
+          type: string
+    AccountDeleteResponse:
+      type: object
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+        purgeAt:
+          type: string
+          format: date-time
+    RoleListResponse:
+      type: object
+      required: [roles]
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: './auth-core-models.yaml#/components/schemas/PermissionMatrix'
+    AssignRoleRequest:
+      type: object
+      required: [roles]
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [PLAYER, MODERATOR, ADMIN, SUPER_ADMIN]
+        reason:
+          type: string
+    AssignRoleResponse:
+      type: object
+      required: [accountId, roles]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        roles:
+          type: array
+          items:
+            type: string
+        updatedAt:
+          type: string
+          format: date-time
+    AuthAccountCreatedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: auth.account.created
+        producer:
+          type: string
+          example: auth-service
+        payload:
+          type: object
+          required: [accountId, email, createdAt]
+          properties:
+            accountId:
+              type: string
+              format: uuid
+            email:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+        key:
+          type: string
+          example: accountId
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [character-service, economy-service, notification-service]
+    AuthLoginSuccessEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: auth.login.success
+        producer:
+          type: string
+          example: auth-service
+        payload:
+          type: object
+          required: [accountId, sessionId, loginAt, ip]
+          properties:
+            accountId:
+              type: string
+              format: uuid
+            sessionId:
+              type: string
+              format: uuid
+            loginAt:
+              type: string
+              format: date-time
+            ip:
+              type: string
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [session-service, telemetry]
+    AuthLogoutEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: auth.logout
+        producer:
+          type: string
+          example: auth-service
+        payload:
+          type: object
+          required: [accountId, sessionId, logoutAt]
+          properties:
+            accountId:
+              type: string
+              format: uuid
+            sessionId:
+              type: string
+              format: uuid
+            logoutAt:
+              type: string
+              format: date-time
+            reason:
+              type: string
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [session-service, telemetry]
+    AuthPasswordChangedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: auth.password.changed
+        producer:
+          type: string
+          example: auth-service
+        payload:
+          type: object
+          required: [accountId, changedAt]
+          properties:
+            accountId:
+              type: string
+              format: uuid
+            changedAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [notification-service, telemetry]
+

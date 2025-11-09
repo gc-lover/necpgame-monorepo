@@ -1,0 +1,46 @@
+classification_questions:
+  - question: 'Документ описывает факты/смысл мира или описывает поведение системы?'
+    canon_if: 'Да, это про мир, сюжет, стиль или фракции.'
+    mechanics_if: 'Да, это про механики, правила, состояния или формулы.'
+  - question: 'Содержатся ли формулы, таблицы БД, API или чеклисты для разработки?'
+    target: 'implementation-guides или mechanics'
+  - question: 'Документ перечисляет конкретные сущности, которые нужно загрузить в игру/БД?'
+    target: 'content'
+  - question: 'Это инструкции для разработчиков (setup, pipeline, команды)?'
+    target: 'implementation-guides'
+  - question: 'Материал представляет исследования, анализ, идеи или сравнительные обзоры?'
+    target: 'analysis'
+  - question: 'Информация устарела и не должна использоваться напрямую?'
+    target: 'archives'
+  - question: 'Кто основной потребитель документа?'
+    mapping:
+      concept_director: 'canon'
+      vision_manager: 'canon или mechanics (если речь о системах)'
+      api_backend_frontend_agents: 'mechanics, content или implementation-guides'
+      narrative_content_teams: 'canon и content'
+      research_teams: 'analysis'
+  - question: 'Нужна ли задача/очередь после чтения документа?'
+    hint: 'Если да, то документ должен лежать в mechanics, content или implementation-guides и ссылаться на соответствующую очередь.'
+revision_policy:
+  - step: 'При переносе документа обновляйте поле document_type в метаданных: canon | mechanic | content | implementation | analysis | archive.'
+  - step: 'Обновите index.yaml и knowledge-glossary.yaml, если документ является ключевым.'
+  - step: 'Зафиксируйте изменение в changelog.yaml с описанием перемещения.'
+template_usage:
+  template_path: 'templates/knowledge-entry-template.yaml'
+  schema_path: 'templates/knowledge-schema.yaml'
+  instruction: 'Создавайте или обновляйте знания только через копирование шаблона и заполнение обязательных полей.'
+validation_expectations:
+  schema_version: '1.0'
+  required_keys:
+    - 'metadata.id'
+    - 'metadata.title'
+    - 'metadata.document_type'
+    - 'metadata.status'
+    - 'metadata.version'
+    - 'metadata.last_updated'
+    - 'metadata.tags'
+    - 'content.sections'
+    - 'history'
+  enumerations:
+    document_type: ['canon','mechanics','content','implementation','analysis','archive']
+    status: ['draft','in-review','approved','reference','deprecated']

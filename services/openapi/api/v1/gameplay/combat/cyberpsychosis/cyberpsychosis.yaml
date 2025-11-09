@@ -1,0 +1,218 @@
+# Combat Cyberpsychosis API - Главный файл
+# Источник: .BRAIN/02-gameplay/combat/combat-cyberpsychosis.md (v1.1.0)
+# Задание: API-SWAGGER/tasks/active/queue/task-004-combat-cyberpsychosis-api.md
+# Task ID: API-TASK-004
+
+openapi: 3.0.3
+info:
+  title: Combat Cyberpsychosis API
+  version: 1.0.0
+  description: |
+    # API для системы киберпсихоза
+    
+    ## Описание
+    
+    Система киберпсихоза определяет влияние имплантов на человечность персонажа и последствия потери человечности.
+    API предоставляет функционал для управления системой человечности, отслеживания симптомов, прогрессии,
+    последствий и управления (профилактика, лечение, управление симптомами).
+    
+    ## Источники
+    
+    - Оригинальный документ: `.BRAIN/02-gameplay/combat/combat-cyberpsychosis.md`
+    - Версия документа: v1.1.0
+    - Задание: `API-SWAGGER/tasks/active/queue/task-004-combat-cyberpsychosis-api.md`
+    - Task ID: API-TASK-004
+    
+    ## Структура API
+    
+    API разбито на несколько файлов для удобства поддержки:
+    - Endpoints: `cyberpsychosis-endpoints.yaml`
+    - Модели: `cyberpsychosis-models.yaml`
+    - Request/Response: `cyberpsychosis-requests.yaml`
+    
+    ## Комментарии для исполнителя
+    
+    - Все данные хранятся в БД PostgreSQL
+    - Валидация выполняется на бекенде
+    - Все операции проверяют стадию киберпсихоза и влияние на характеристики
+    - Все операции проверяют стоимость лечения и профилактики
+    - Все операции учитывают влияние на социальные взаимодействия и репутацию
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+paths:
+  # Все endpoints определены в отдельных файлах через $ref
+  # См. cyberpsychosis-endpoints.yaml
+  /gameplay/combat/cyberpsychosis/{player_id}/humanity:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1humanity'
+  /gameplay/combat/cyberpsychosis/{player_id}/humanity/calculate-loss:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1humanity~1calculate-loss'
+  /gameplay/combat/cyberpsychosis/{player_id}/humanity/apply-loss:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1humanity~1apply-loss'
+  /gameplay/combat/cyberpsychosis/{player_id}/stage:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1stage'
+  /gameplay/combat/cyberpsychosis/{player_id}/symptoms:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1symptoms'
+  /gameplay/combat/cyberpsychosis/stages/{stage_name}:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1stages~1{stage_name}'
+  /gameplay/combat/cyberpsychosis/{player_id}/progression:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1progression'
+  /gameplay/combat/cyberpsychosis/{player_id}/progression/calculate:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1progression~1calculate'
+  /gameplay/combat/cyberpsychosis/{player_id}/progression/trigger:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1progression~1trigger'
+  /gameplay/combat/cyberpsychosis/{player_id}/consequences:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1consequences'
+  /gameplay/combat/cyberpsychosis/{player_id}/stat-penalties:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1stat-penalties'
+  /gameplay/combat/cyberpsychosis/{player_id}/social-effects:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1social-effects'
+  /gameplay/combat/cyberpsychosis/{player_id}/prevention/apply:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1prevention~1apply'
+  /gameplay/combat/cyberpsychosis/{player_id}/treatment/apply:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1treatment~1apply'
+  /gameplay/combat/cyberpsychosis/treatments:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1treatments'
+  /gameplay/combat/cyberpsychosis/{player_id}/symptom-management/apply:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1symptom-management~1apply'
+  /gameplay/combat/cyberpsychosis/{player_id}/adaptation:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1adaptation'
+  /gameplay/combat/cyberpsychosis/{player_id}/implant-removal:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1implant-removal'
+  /gameplay/combat/cyberpsychosis/{player_id}/detoxification:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1detoxification'
+  /gameplay/combat/cyberpsychosis/{player_id}/treatment-costs:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1treatment-costs'
+  /gameplay/combat/cyberpsychosis/{player_id}/social-support/apply:
+    $ref: './cyberpsychosis-endpoints.yaml#/paths/~1gameplay~1combat~1cyberpsychosis~1{player_id}~1social-support~1apply'
+
+components:
+  # Импорт схем из отдельных файлов
+  schemas:
+    # Человечность
+    HumanityInfo:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/HumanityInfo'
+    HumanityLossCalculation:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/HumanityLossCalculation'
+    HumanityUpdateResult:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/HumanityUpdateResult'
+    
+    # Стадии и симптомы
+    CyberpsychosisStage:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/CyberpsychosisStage'
+    Symptom:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/Symptom'
+    StageInfo:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/StageInfo'
+    
+    # Прогрессия
+    ProgressionInfo:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/ProgressionInfo'
+    ProgressionCalculation:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/ProgressionCalculation'
+    ProgressionTriggerResult:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/ProgressionTriggerResult'
+    
+    # Последствия
+    ConsequencesInfo:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/ConsequencesInfo'
+    StatPenalties:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/StatPenalties'
+    SocialEffects:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/SocialEffects'
+    
+    # Управление
+    PreventionResult:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/PreventionResult'
+    TreatmentResult:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/TreatmentResult'
+    TreatmentOption:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/TreatmentOption'
+    SymptomManagementResult:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/SymptomManagementResult'
+    AdaptationInfo:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/AdaptationInfo'
+    ImplantRemovalResult:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/ImplantRemovalResult'
+    DetoxificationResult:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/DetoxificationResult'
+    TreatmentCosts:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/TreatmentCosts'
+    SocialSupportResult:
+      $ref: './cyberpsychosis-models.yaml#/components/schemas/SocialSupportResult'
+    
+    # Request/Response модели
+    CalculateLossRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/CalculateLossRequest'
+    ApplyLossRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/ApplyLossRequest'
+    CalculateProgressionRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/CalculateProgressionRequest'
+    TriggerProgressionRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/TriggerProgressionRequest'
+    ApplyPreventionRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/ApplyPreventionRequest'
+    ApplyTreatmentRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/ApplyTreatmentRequest'
+    ApplySymptomManagementRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/ApplySymptomManagementRequest'
+    RemoveImplantRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/RemoveImplantRequest'
+    DetoxificationRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/DetoxificationRequest'
+    ApplySocialSupportRequest:
+      $ref: './cyberpsychosis-requests.yaml#/components/schemas/ApplySocialSupportRequest'
+  
+  # Импорт стандартных ответов
+  responses:
+    BadRequest:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    InternalServerError:
+      $ref: '../../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  
+  # Импорт схем безопасности
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,197 @@
+refactor_playbook:
+  purpose: "Стандарт монорепозитория NECPGAME: директории, обязательные файлы и контроль для всех агентов."
+  monorepo_layout:
+    - path: "shared/docs/knowledge"
+      purpose: "Канон, механики, контент, исследования."
+      key_items:
+        - "index.yaml"
+        - "knowledge-glossary.yaml"
+        - "structure-guidelines.yaml"
+        - "templates/knowledge-entry-template.yaml"
+        - "canon/, mechanics/, content/, implementation-guides/, analysis/, archives/"
+    - path: "shared/trackers"
+      purpose: "Глобальные очереди и трекеры статусов."
+      key_items:
+        - "queues/{concept,vision,api,backend,frontend,qa,release}/"
+        - "activity-log.yaml"
+        - "implementation-tracker.yaml"
+        - "readiness-tracker.yaml"
+        - "release-notes.yaml"
+    - path: "pipeline/"
+      purpose: "Агентские инструкции, чеклисты, скрипты, задачи."
+      key_items:
+        - "agents/*.yaml"
+        - "checklists/*.yaml"
+        - "templates/"
+        - "scripts/*.ps1"
+        - "tasks/<stage>/"
+        - "process/*.yaml"
+    - path: "services/openapi"
+      purpose: "OpenAPI спецификации и общие компоненты."
+      key_items:
+        - "api/v1/<domain>/*.yaml"
+        - "api/v1/shared/common/*.yaml"
+        - "pipeline/tasks/04_api_task_architect/brain-mapping.yaml"
+    - path: "services/backend"
+      purpose: "Java 21 backend."
+      key_items:
+        - "pom.xml"
+        - "scripts/generate-openapi-layers.ps1"
+        - "src/main/java/com/necpgame/<microservice>/"
+        - "src/main/resources/db/changelog/"
+    - path: "services/frontend"
+      purpose: "React + TS фронтенд."
+      key_items:
+        - "package.json"
+        - "scripts/generate-api-orval.ps1"
+        - "src/app/, src/features/, src/api/"
+        - "docs/UX/, docs/analytics/"
+  knowledge_migration:
+    tree: |
+      shared/docs/knowledge/
+        index.yaml
+        knowledge-glossary.yaml
+        structure-guidelines.yaml
+        changelog.yaml
+        canon/
+          vision/
+          lore/
+          narrative/
+        mechanics/
+          combat/
+          progression/
+          economy/
+          quests/
+        content/
+          quests/
+        implementation-guides/
+        analysis/
+        archives/
+        templates/knowledge-entry-template.yaml
+    audit:
+      - "Все знания в YAML и соответствуют шаблону."
+      - "metadata.document_type согласован с директориями."
+      - "alidation.schema_version=1.0."
+      - "structure-guidelines.yaml отражает актуальные правила."
+  services_layout:
+    openapi:
+      tree: |
+        services/openapi/
+          api/v1/
+            <domain>/
+              <feature>.yaml
+            shared/common/
+              responses.yaml
+              pagination.yaml
+          README.yaml
+      audit:
+        - "pipeline/scripts/validate-swagger.ps1 -ApiSpec <spec> без ошибок."
+        - "pipeline/scripts/check-spec-structure.ps1 -Spec <spec>."
+        - "info.x-microservice и servers заполнены."
+    backend:
+      tree: |
+        services/backend/
+          pom.xml
+          scripts/generate-openapi-layers.ps1
+          src/main/java/com/necpgame/<service>/
+          src/main/resources/db/changelog/
+            db.changelog-master.xml
+            changes/*.xml
+          docs/
+            backend-briefs/
+      audit:
+        - "pipeline/scripts/check-backend-structure.ps1 -ProjectRoot services/backend."
+        - "pipeline/scripts/check-seed-integrity.ps1 -SeedDirectory services/backend/src/main/resources/db/changelog."
+        - "pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend."
+        - "Очередь backend синхронизирована с implementation-tracker."
+    frontend:
+      tree: |
+        services/frontend/
+          package.json
+          scripts/generate-api-orval.ps1
+          src/
+            app/
+            features/
+            api/generated/
+            shared/
+          docs/
+            UX/
+            analytics/
+      audit:
+        - "pipeline/scripts/check-frontend-structure.ps1 -ProjectRoot services/frontend."
+        - "pipeline/scripts/check-ux-assets.ps1 -GuideFile services/frontend/docs/UX/<guide>.md."
+        - "pipeline/scripts/check-analytics-schema.ps1 -SchemaFile services/frontend/docs/analytics/<schema>.yaml."
+        - "pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/frontend."
+  pipeline_assets:
+    tree: |
+      pipeline/
+        agents/*.yaml
+        checklists/*.yaml
+        templates/
+          agent-briefs/*.yaml
+          api-task-template.yaml
+          frontend-brief.yaml
+          test-plan.yaml
+          test-report.yaml
+          change-retro.yaml
+        tasks/
+          03_vision_manager/
+          04_api_task_architect/
+          05_openapi_executor/
+          06_backend_implementer/
+          07_frontend_implementer/
+          08_qa_validation/
+          09_devops_release/
+          archive/
+        scripts/*.ps1
+        process/*.yaml
+    audit:
+      - "Инструкции и брифы указывают на shared/docs/knowledge и shared/trackers."
+      - "scripts/VALIDATION-SUMMARY.yaml актуализирован."
+      - "Checklists отражают новые пути."
+  automation:
+    scripts:
+      - name: "pipeline/scripts/check-file-limits.ps1"
+        description: "Контроль размеров YAML и исходников."
+      - name: "pipeline/scripts/check-directory-structure.ps1"
+        description: "Проверка дерева OpenAPI."
+      - name: "pipeline/scripts/check-queue-yaml.ps1"
+        description: "Валидация очередей."
+      - name: "pipeline/scripts/check-backend-structure.ps1"
+        description: "Аудит backend."
+      - name: "pipeline/scripts/check-frontend-structure.ps1"
+        description: "Аудит frontend."
+      - name: "pipeline/scripts/check-architecture-health.ps1"
+        description: "Контроль корневой структуры."
+      - name: "pipeline/scripts/run-security-scan.ps1"
+        description: "Security скан."
+      - name: "pipeline/scripts/run-qa-suite.ps1"
+        description: "Запуск тестов."
+      - name: "pipeline/scripts/check-release-notes.ps1"
+        description: "Проверка release notes."
+  workflow:
+    steps:
+      - id: inventory
+        description: "Собери текущее состояние монорепозитория."
+        commands:
+          - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME"
+          - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
+          - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path shared/docs/knowledge"
+      - id: migrate_docs
+        description: "Перенеси устаревшие .md в shared/docs/knowledge по шаблону, обнови changelog."
+      - id: align_queues
+        description: "Синхронизируй shared/trackers с pipeline/tasks и зафиксируй Activity Log."
+      - id: verify_services
+        description: "Убедись, что backend и frontend проходят проверки из pipeline/scripts."
+      - id: handoff
+        description: "Подготовь change-pack и передай статус владельцам очередей."
+  reporting:
+    - "Обновляй shared/trackers/activity-log.yaml и pipeline/process/DECISION-LOG.yaml."
+    - "Используй pipeline/templates/change-retro.yaml после завершения блока."
+    - "Фиксируй изменения скриптов в pipeline/scripts/VALIDATION-SUMMARY.yaml."
+  notes:
+    - "Лимит 400 строк на знания и спецификации."
+    - "Все новые документы должны иметь validation.schema_version=1.0."
+    - "Tasks хранятся в pipeline/tasks/<stage>/, очереди — в shared/trackers/queues."
+    - "Для будущей интеграции UE5 резервируй services/game."
+    - "После переноса кода в services/* обнови CI и удали каталоги TO_REFACTOR/*."

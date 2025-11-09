@@ -1,0 +1,298 @@
+openapi: 3.0.3
+info:
+  title: Implants Visuals API
+  version: 1.0.0
+  description: |
+    API для визуального проявления имплантов.
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-implants-visuals.md v1.1.0
+    
+    Видимость: Выбор игрока (полная/частичная/скрыть), тип импланта (внешний всегда виден)
+    
+    Кастомизация:
+    - Цвет кибервара (хром, золото, черный, цветные)
+    - Стиль (минимализм, грубость, эстетика, технологичный)
+    - Световые эффекты (свечение, мерцание, подсветка)
+    
+    Стили по брендам:
+    - Arasaka = минимализм, элегантность
+    - Militech = грубость, военный стиль
+    - Zetatech = эстетика, технологичность
+    - Biotechnica = органичность, естественность
+    
+    Видимость у других: Внешние всегда видны, внутренние требуют сканирование
+    Визуальные эффекты: При использовании всегда видны
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Implants Visuals
+    description: Визуальная кастомизация имплантов
+
+paths:
+  /gameplay/combat/implants/{implant_id}/customize:
+    post:
+      summary: Кастомизировать визуал импланта
+      description: |
+        Настраивает визуальное проявление импланта.
+        Цвет, стиль, световые эффекты.
+      operationId: customizeImplantVisuals
+      tags:
+        - Implants Visuals
+      parameters:
+        - name: implant_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+                color:
+                  type: string
+                  enum: [chrome, gold, black, red, blue, green, custom]
+                  description: Цвет кибервара
+                custom_color_hex:
+                  type: string
+                  description: Кастомный цвет (hex) если color=custom
+                style:
+                  type: string
+                  enum: [minimalism, roughness, aesthetic, technological, organic]
+                  description: Стиль импланта
+                light_effects:
+                  type: object
+                  properties:
+                    glow:
+                      type: boolean
+                      description: Свечение
+                    flicker:
+                      type: boolean
+                      description: Мерцание
+                    highlight:
+                      type: boolean
+                      description: Подсветка
+                visibility:
+                  type: string
+                  enum: [full, partial, hidden]
+                  description: Видимость импланта
+            examples:
+              arasaka_style:
+                summary: Стиль Arasaka
+                value:
+                  character_id: "char_123"
+                  color: "chrome"
+                  style: "minimalism"
+                  light_effects:
+                    glow: true
+                    flicker: false
+                    highlight: true
+                  visibility: "full"
+      responses:
+        '200':
+          description: Визуал кастомизирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  implant_id:
+                    type: string
+                  visual_config:
+                    type: object
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/combat/implants/{implant_id}/visual-options:
+    get:
+      summary: Получить опции визуала
+      description: |
+        Возвращает доступные опции кастомизации для импланта.
+        Зависит от типа импланта и бренда.
+      operationId: getImplantVisualOptions
+      tags:
+        - Implants Visuals
+      parameters:
+        - name: implant_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Опции визуала
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualOptions'
+              examples:
+                arasaka_implant:
+                  summary: Опции для Arasaka импланта
+                  value:
+                    implant_id: "implant_arasaka_001"
+                    brand: "Arasaka"
+                    available_colors:
+                      - chrome
+                      - black
+                      - gold
+                    available_styles:
+                      - minimalism
+                      - aesthetic
+                    brand_style: "minimalism"
+                    light_effects_available: true
+
+  /gameplay/combat/implants/visibility-settings:
+    post:
+      summary: Настроить видимость имплантов
+      description: |
+        Настраивает глобальные настройки видимости имплантов.
+        Применяется ко всем имплантам персонажа.
+      operationId: setImplantVisibilitySettings
+      tags:
+        - Implants Visuals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - visibility_mode
+              properties:
+                character_id:
+                  type: string
+                visibility_mode:
+                  type: string
+                  enum: [show_all, hide_internal, hide_all, custom]
+                  description: Режим видимости
+                custom_settings:
+                  type: object
+                  description: Кастомные настройки для каждого импланта
+                  properties:
+                    implant_id:
+                      type: string
+                    visibility:
+                      type: string
+            examples:
+              hide_internal:
+                summary: Скрыть внутренние импланты
+                value:
+                  character_id: "char_123"
+                  visibility_mode: "hide_internal"
+      responses:
+        '200':
+          description: Настройки применены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  character_id:
+                    type: string
+                  visibility_mode:
+                    type: string
+
+  /gameplay/combat/implants/{character_id}/visual-preview:
+    get:
+      summary: Получить визуальный превью
+      description: |
+        Возвращает визуальное представление всех имплантов персонажа.
+        Используется для отображения в UI.
+      operationId: getImplantVisualPreview
+      tags:
+        - Implants Visuals
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: viewer_id
+          in: query
+          schema:
+            type: string
+          description: ID смотрящего (для учета видимости)
+      responses:
+        '200':
+          description: Визуальный превью
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  character_id:
+                    type: string
+                  visible_implants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VisibleImplant'
+                  hidden_implants_count:
+                    type: integer
+                    description: Количество скрытых имплантов
+
+components:
+  schemas:
+    VisualOptions:
+      type: object
+      properties:
+        implant_id:
+          type: string
+        brand:
+          type: string
+        available_colors:
+          type: array
+          items:
+            type: string
+        available_styles:
+          type: array
+          items:
+            type: string
+        brand_style:
+          type: string
+          description: Рекомендуемый стиль бренда
+        light_effects_available:
+          type: boolean
+
+    VisibleImplant:
+      type: object
+      properties:
+        implant_id:
+          type: string
+        implant_name:
+          type: string
+        implant_type:
+          type: string
+          enum: [external, internal]
+        color:
+          type: string
+        style:
+          type: string
+        light_effects:
+          type: object
+        location:
+          type: string
+          description: Расположение на теле

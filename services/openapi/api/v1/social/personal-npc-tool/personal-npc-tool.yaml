@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: Personal NPC Tool API
+  version: 1.0.0
+  description: |
+    API для инструмента персональных NPC.
+    
+    Источник: .BRAIN/02-gameplay/social/personal-npc-tool.md v1.0.0
+    
+    Модели данных: PersonalNPC, ScenarioBlueprint, ScenarioInstance, Contract, License
+    Принадлежность: личные, клановые/организационные NPC
+    Роли: guard, courier, merchant, informant, engineer, medic, diplomat, fixer, quest_giver
+    Автоматизация: ручные поручения, шаблоны, правила/триггеры
+    Экономика: затраты по типу (human vs robot/android)
+    Качество/ранг: рост от опыта/репутации
+    
+    Вдохновение: EVE Online, KENSHI
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/gameplay/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Personal NPC
+    description: Персональные NPC
+
+paths:
+  /gameplay/social/personal-npc:
+    get:
+      summary: Получить список персональных NPC
+      description: |
+        Возвращает список персональных NPC персонажа или организации.
+      operationId: getPersonalNPCs
+      tags:
+        - Personal NPC
+      parameters:
+        - name: owner_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: owner_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [character, guild, organization]
+      responses:
+        '200':
+          description: Список персональных NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  npcs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PersonalNPC'
+
+    post:
+      summary: Создать персонального NPC
+      description: |
+        Создает нового персонального NPC для персонажа или организации.
+      operationId: createPersonalNPC
+      tags:
+        - Personal NPC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - owner_id
+                - owner_type
+                - name
+                - npc_type
+                - role
+              properties:
+                owner_id:
+                  type: string
+                owner_type:
+                  type: string
+                  enum: [character, guild, organization]
+                name:
+                  type: string
+                npc_type:
+                  type: string
+                  enum: [human, robot, android]
+                role:
+                  type: string
+                  enum: [guard, courier, merchant, informant, engineer, medic, diplomat, fixer, quest_giver]
+      responses:
+        '200':
+          description: NPC создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  npc_id:
+                    type: string
+                  cost_daily:
+                    type: number
+
+  /gameplay/social/personal-npc/{npc_id}/assign-task:
+    post:
+      summary: Назначить задачу NPC
+      description: |
+        Назначает задачу персональному NPC.
+        Типы: ручные, по шаблону, автоматические (правила/триггеры).
+      operationId: assignTask
+      tags:
+        - Personal NPC
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - task_type
+              properties:
+                task_type:
+                  type: string
+                  enum: [manual, template, automated]
+                scenario_id:
+                  type: string
+                parameters:
+                  type: object
+      responses:
+        '200':
+          description: Задача назначена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                  estimated_completion:
+                    type: string
+                    format: date-time
+
+components:
+  schemas:
+    PersonalNPC:
+      type: object
+      properties:
+        npc_id:
+          type: string
+        owner_id:
+          type: string
+        owner_type:
+          type: string
+        name:
+          type: string
+        npc_type:
+          type: string
+          enum: [human, robot, android]
+        role:
+          type: string
+        rank:
+          type: integer
+        experience:
+          type: number
+        cost_daily:
+          type: number
+        current_task:
+          type: string

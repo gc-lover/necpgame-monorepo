@@ -1,0 +1,19 @@
+agent: DevOps Agent
+tasks_source:
+  description: Очередь релизных задач
+  location: "shared/trackers/queues/release/ready.yaml"
+supporting_files:
+  - "pipeline/checklists/qa-to-release.yaml"
+  - "shared/trackers/release-notes.yaml"
+work_instructions:
+  - "Проверь артефакты, docker/helm, переменные окружения и секреты."
+  - "Выполни dry-run, подготовь мониторинг и обнови release notes."
+validation_scripts:
+  - "pwsh -File pipeline/scripts/run-deploy-dryrun.ps1 -EnvDirectory <env-path>"
+  - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME"
+  - "pwsh -File pipeline/scripts/check-release-notes.ps1 -File shared/trackers/release-notes.yaml"
+  - "pwsh -File pipeline/scripts/check-communication-pack.ps1 -PackFile shared/docs/communications/<pack>.yaml"
+completion_actions:
+  - "Обнови `shared/trackers/implementation-tracker.yaml` (`release.released`), добавь сообщение в communication log."
+  - "Перенеси карточку в `shared/trackers/queues/release/released.yaml` (валидация `check-queue-yaml.ps1`) и задокументируй пост-релизный мониторинг."
+

@@ -1,0 +1,372 @@
+openapi: 3.0.3
+info:
+  title: Classes API
+  version: 1.0.0
+  description: |
+    API для системы классов персонажей.
+    
+    Источник: .BRAIN/02-gameplay/progression/classes-overview.md v2.0.0
+    
+    13 классов: 10 из Cyberpunk (Solo, Netrunner, Fixer, Rockerboy, Media, Nomad, Corpo, Lawman, Medtech, Techie) + 3 авторских (Politician, Trader, Teacher)
+    Подклассы (2-3 на класс), "Свой путь", связь с прокачкой
+    
+    Связанные документы:
+    - classes-canon.md - 10 основных классов
+    - classes-authored.md - 3 авторских класса
+    - classes-abilities.md - классовые способности
+
+  x-microservice:
+    name: gameplay-service
+    port: 10
+    domain: gameplay
+    base-path: /api/v1/gameplay/progression
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Classes
+    description: Система классов
+
+paths:
+  /gameplay/progression/classes:
+    get:
+      summary: Получить все доступные классы
+      description: |
+        Возвращает список всех доступных классов для выбора.
+        Включает канонические (10), авторские (3) и опцию "Свой путь".
+      operationId: getClasses
+      tags:
+        - Classes
+      parameters:
+        - name: include_custom_path
+          in: query
+          description: Включить опцию "Свой путь"
+          schema:
+            type: boolean
+            default: true
+        - name: source_filter
+          in: query
+          description: Фильтр по источнику класса
+          schema:
+            type: string
+            enum: [cyberpunk_canon, authored, all]
+            default: all
+      responses:
+        '200':
+          description: Список классов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  classes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GameClass'
+                  total:
+                    type: integer
+              examples:
+                all_classes:
+                  summary: Все классы
+                  value:
+                    classes:
+                      - class_id: "solo"
+                        name: "Solo"
+                        description: "Наемник, боец, солдат"
+                        source: "cyberpunk_canon"
+                        role: "Combat"
+                        starting_bonuses:
+                          REF: 2
+                          BODY: 1
+                        subclasses_count: 3
+                      - class_id: "netrunner"
+                        name: "Netrunner"
+                        description: "Хакер, киберпространство"
+                        source: "cyberpunk_canon"
+                        role: "Hacking"
+                        starting_bonuses:
+                          INT: 2
+                          TECH: 1
+                        subclasses_count: 3
+                    total: 13
+
+  /gameplay/progression/classes/{class_id}:
+    get:
+      summary: Получить детали класса
+      description: |
+        Возвращает полную информацию о классе:
+        - Описание и роль
+        - Стартовые бонусы
+        - Доступ к деревьям навыков
+        - Уникальные способности
+        - Подклассы
+      operationId: getClass
+      tags:
+        - Classes
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          description: ID класса
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали класса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameClassDetails'
+              examples:
+                solo_class:
+                  summary: Класс Solo
+                  value:
+                    class_id: "solo"
+                    name: "Solo"
+                    description: "Профессиональные наемники, телохранители и солдаты с исключительными боевыми навыками"
+                    source: "cyberpunk_canon"
+                    role: "Combat"
+                    lore: "Из Cyberpunk 2020/Red. Мастера боя и оружия."
+                    starting_bonuses:
+                      attributes:
+                        REF: 2
+                        BODY: 1
+                      skills:
+                        gunplay: 1
+                        athletics: 1
+                    skill_tree_access:
+                      - "combat_tree"
+                      - "general_tree"
+                    unique_abilities:
+                      - "combat_awareness"
+                      - "weapon_mastery"
+                    subclasses:
+                      - subclass_id: "mercenary"
+                        name: "Наемник"
+                        focus: "Универсальный боец"
+                      - subclass_id: "bodyguard"
+                        name: "Телохранитель"
+                        focus: "Защита и поддержка"
+                      - subclass_id: "soldier"
+                        name: "Солдат"
+                        focus: "Военная тактика"
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/progression/classes/{class_id}/subclasses:
+    get:
+      summary: Получить подклассы
+      description: |
+        Возвращает список подклассов для указанного класса.
+        Каждый класс имеет 2-3 подкласса с разными фокусами.
+      operationId: getSubclasses
+      tags:
+        - Classes
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Подклассы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  class_id:
+                    type: string
+                  subclasses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subclass'
+
+  /gameplay/progression/classes/select:
+    post:
+      summary: Выбрать класс для персонажа
+      description: |
+        Выбирает класс и подкласс для персонажа при создании.
+        Применяет стартовые бонусы и открывает доступ к деревьям навыков.
+      operationId: selectClass
+      tags:
+        - Classes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - class_id
+              properties:
+                character_id:
+                  type: string
+                class_id:
+                  type: string
+                subclass_id:
+                  type: string
+                  description: Подкласс (опционально, можно выбрать позже)
+            examples:
+              select_solo:
+                summary: Выбор класса Solo
+                value:
+                  character_id: "char_123"
+                  class_id: "solo"
+                  subclass_id: "mercenary"
+      responses:
+        '200':
+          description: Класс выбран
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  applied_bonuses:
+                    type: object
+                  unlocked_skill_trees:
+                    type: array
+                    items:
+                      type: string
+                  unlocked_abilities:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /gameplay/progression/classes/own-path:
+    get:
+      summary: Получить информацию о "Своем пути"
+      description: |
+        Возвращает информацию о свободном пути без выбора класса.
+        "Свой путь" позволяет собрать билд свободно, но без уникальных классовых способностей.
+      operationId: getOwnPathInfo
+      tags:
+        - Classes
+      responses:
+        '200':
+          description: Информация о своем пути
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  description:
+                    type: string
+                  advantages:
+                    type: array
+                    items:
+                      type: string
+                  disadvantages:
+                    type: array
+                    items:
+                      type: string
+                  skill_tree_access:
+                    type: array
+                    items:
+                      type: string
+
+components:
+  schemas:
+    GameClass:
+      type: object
+      required:
+        - class_id
+        - name
+        - source
+      properties:
+        class_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        source:
+          type: string
+          enum: [cyberpunk_canon, authored, custom_path]
+          description: Источник класса
+        role:
+          type: string
+          description: Основная роль (Combat, Hacking, Social, etc.)
+        starting_bonuses:
+          type: object
+          description: Стартовые бонусы к атрибутам и навыкам
+        subclasses_count:
+          type: integer
+          description: Количество доступных подклассов
+
+    GameClassDetails:
+      type: object
+      properties:
+        class_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        source:
+          type: string
+        role:
+          type: string
+        lore:
+          type: string
+          description: Лор класса из Cyberpunk
+        starting_bonuses:
+          type: object
+          properties:
+            attributes:
+              type: object
+              description: Бонусы к атрибутам (REF, BODY, INT, etc.)
+            skills:
+              type: object
+              description: Начальные уровни навыков
+        skill_tree_access:
+          type: array
+          description: Доступные деревья навыков
+          items:
+            type: string
+        unique_abilities:
+          type: array
+          description: Уникальные классовые способности
+          items:
+            type: string
+        subclasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subclass'
+
+    Subclass:
+      type: object
+      required:
+        - subclass_id
+        - name
+        - focus
+      properties:
+        subclass_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        focus:
+          type: string
+          description: Фокус подкласса
+        bonus_abilities:
+          type: array
+          description: Дополнительные способности подкласса
+          items:
+            type: string
+        stat_modifiers:
+          type: object
+          description: Модификаторы характеристик подкласса

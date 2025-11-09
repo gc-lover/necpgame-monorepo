@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: Character Onboarding Schemas
+  version: 1.0.0
+  description: Модели и справочники для Character Onboarding API.
+  x-microservice:
+    name: character-service
+    port: 8082
+    domain: characters
+    base-path: /api/v1/characters
+    directory: api/v1/characters/onboarding
+    package: com.necpgame.characterservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+paths: {}
+components:
+  schemas:
+    CharacterRosterResponse:
+      type: object
+      required:
+        - characters
+        - limits
+      properties:
+        characters:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSummary'
+        limits:
+          $ref: '#/components/schemas/CharacterLimits'
+    CharacterDetailResponse:
+      type: object
+      required:
+        - character
+      properties:
+        character:
+          $ref: '#/components/schemas/CharacterDetail'
+    CharacterDetail:
+      type: object
+      required:
+        - id
+        - accountId
+        - name
+        - classId
+        - origin
+        - city
+        - appearance
+        - level
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        classId:
+          type: string
+        className:
+          type: string
+        subclassId:
+          type: string
+          nullable: true
+        subclassName:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          enum:
+            - male
+            - female
+            - other
+        origin:
+          type: string
+          enum:
+            - street_kid
+            - corpo
+            - nomad
+        faction:
+          $ref: '#/components/schemas/FactionSummary'
+        city:
+          $ref: '#/components/schemas/CitySummary'
+        appearance:
+          $ref: '#/components/schemas/Appearance'
+        level:
+          type: integer
+          minimum: 1
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+    CharacterSummary:
+      type: object
+      required:
+        - id
+        - name
+        - className
+        - level
+        - cityName
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        className:
+          type: string
+        level:
+          type: integer
+        factionName:
+          type: string
+          nullable: true
+        cityName:
+          type: string
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+    CharacterLimits:
+      type: object
+      required:
+        - maxCharacters
+        - currentCount
+        - slotsAvailable
+      properties:
+        maxCharacters:
+          type: integer
+          description: Максимум слотов персонажей для аккаунта.
+        currentCount:
+          type: integer
+          description: Занятые слоты.
+        slotsAvailable:
+          type: integer
+          description: Свободные слоты.
+    CharacterClassList:
+      type: object
+      required:
+        - classes
+      properties:
+        classes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterClass'
+    CharacterClass:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - subclasses
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        subclasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSubclass'
+    CharacterSubclass:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+    CharacterOriginList:
+      type: object
+      required:
+        - origins
+      properties:
+        origins:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterOrigin'
+    CharacterOrigin:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - availableFactions
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        availableFactions:
+          type: array
+          items:
+            type: string
+    FactionList:
+      type: object
+      required:
+        - factions
+      properties:
+        factions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionDetail'
+    FactionDetail:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - corporation
+            - gang
+            - organization
+        description:
+          type: string
+        availableOrigins:
+          type: array
+          items:
+            type: string
+    FactionSummary:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    CityList:
+      type: object
+      required:
+        - cities
+      properties:
+        cities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityDetail'
+    CityDetail:
+      type: object
+      required:
+        - id
+        - name
+        - region
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        region:
+          type: string
+        description:
+          type: string
+        factionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+    CitySummary:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    Appearance:
+      type: object
+      required:
+        - heightCm
+        - bodyType
+        - eyeColor
+        - hairColor
+      properties:
+        heightCm:
+          type: integer
+          minimum: 150
+          maximum: 220
+        bodyType:
+          type: string
+          enum:
+            - thin
+            - normal
+            - muscular
+            - large
+        eyeColor:
+          type: string
+        hairColor:
+          type: string
+        skinTone:
+          type: string
+        distinctiveFeatures:
+          type: string
+          maxLength: 500
+          nullable: true
+    CreateCharacterRequest:
+      type: object
+      required:
+        - name
+        - classId
+        - gender
+        - origin
+        - cityId
+        - appearance
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 20
+          pattern: '^[a-zA-Zа-яА-Я0-9\s\-]+$'
+        classId:
+          type: string
+        subclassId:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          enum:
+            - male
+            - female
+            - other
+        origin:
+          type: string
+          enum:
+            - street_kid
+            - corpo
+            - nomad
+        factionId:
+          type: string
+          format: uuid
+          nullable: true
+        cityId:
+          type: string
+          format: uuid
+        appearance:
+          $ref: '#/components/schemas/Appearance'
+    UpdateAppearanceRequest:
+      type: object
+      required:
+        - appearance
+      properties:
+        appearance:
+          $ref: '#/components/schemas/Appearance'

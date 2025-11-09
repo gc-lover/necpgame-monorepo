@@ -1,0 +1,284 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/factions/arasaka
+
+---
+
+
+{
+  "version": "3.0.0",
+  "faction": "Arasaka",
+  "description": "Корпоративные квесты Arasaka с интригами и предательством",
+  "questsFaction": [
+    {
+      "questId": "ARASAKA-001-INSIDER",
+      "name": "Инсайдер: Игра Престолов",
+      "faction": "Arasaka",
+      "region": "Corpo_Plaza",
+      "characters": {
+        "main": {
+          "id": "npc-hanako-successor",
+          "name": "Ханако Араса (наследница)",
+          "role": "Кандидат на пост CEO",
+          "age": 42,
+          "reputation": "холодная, расчётливая, но честная по меркам корпо",
+          "goal": "Стать CEO Arasaka, реформировать компанию",
+          "opposition": "Конкурент — её брат Юриноб",
+          "secret": "Влюблена в простого сотрудника безопасности"
+        },
+        "rival": {
+          "id": "npc-yorinobu-aggressive",
+          "name": "Юриноб Араска (конкурент)",
+          "role": "Кандидат на пост CEO",
+          "style": "агрессивный, экспансионистский",
+          "support": "военный департамент",
+          "plan": "захват через силу и шантаж"
+        },
+        "player": {
+          "role": "Агент безопасности Arasaka",
+          "choice": "Кому помочь? Можно предать обоих.",
+          "initial_loyalty": "Hanako"
+        },
+        "others": [
+          {
+            "id": "npc-security-chief",
+            "name": "Начальник безопасности Такемура",
+            "loyalty": "tradition",
+            "trust_player": "high"
+          },
+          {
+            "id": "npc-corporate-spy",
+            "name": "Эвелин Карсон (шпион Militech)",
+            "cover": "HR директор",
+            "goal": "саботировать обоих кандидатов"
+          },
+          {
+            "id": "npc-board-member",
+            "name": "Член совета Сато",
+            "position": "neutral",
+            "bribable": true
+          }
+        ]
+      },
+      "synopsis": "Игрок — агент безопасности Arasaka. Ханако нанимает его для расследования утечки данных перед решающим голосованием совета директоров. За спиной — игры престолов корпорации.",
+      "branches": {
+        "main_paths": [
+          "path_serve_hanako",
+          "path_serve_yorinobu",
+          "path_triple_agent_militech",
+          "path_destroy_both",
+          "path_own_power"
+        ],
+        "act_structure": {
+          "act1_investigation": {
+            "goal": "Найти источник утечки",
+            "branches": [
+              {
+                "id": "investigate_hr",
+                "discover": "Эвелин — шпион Militech",
+                "choices": ["expose","blackmail","work_with"]
+              },
+              {
+                "id": "investigate_security",
+                "discover": "Такемура лоялен традициям, не Ханако",
+                "choices": ["trust","doubt","replace"]
+              },
+              {
+                "id": "investigate_yorinobu",
+                "discover": "Юриноб планирует переворот",
+                "choices": ["warn_hanako","join_yorinobu","leverage"]
+              }
+            ]
+          },
+          "act2_choice": {
+            "trigger": "Найдены улики на обоих кандидатов",
+            "reveal": "Оба используют незаконные методы",
+            "player_choice": "Кого поддержать?"
+          },
+          "act3_endgame": {
+            "event": "Голосование совета директоров",
+            "manipulation": "Игрок может изменить исход",
+            "violence": "Или устроить резню"
+          }
+        },
+        "key_decisions": [
+          {
+            "id": "decision_spy_exposed",
+            "moment": "Эвелин раскрыта как шпион Militech",
+            "choices": [
+              {
+                "id": "expose_to_hanako",
+                "text": "Доложить Ханако",
+                "outcome": "Эвелин арестована. Ханако благодарна. +Loyalty."
+              },
+              {
+                "id": "blackmail_evelyn",
+                "text": "Шантажировать Эвелин",
+                "skillCheck": {"attr":"COOL","skill":"Intimidation","threshold":11},
+                "outcome": "Эвелин работает на игрока. +Leverage. +Militech_debt."
+              },
+              {
+                "id": "work_with_militech",
+                "text": "Стать тройным агентом",
+                "consequence": "Сложная игра",
+                "outcome": "Работа на три стороны. Риск раскрытия."
+              },
+              {
+                "id": "kill_evelyn",
+                "text": "Устранить тихо",
+                "consequence": "Убийство",
+                "outcome": "Проблема решена. Militech ищут своего агента."
+              }
+            ]
+          },
+          {
+            "id": "decision_yorinobu_coup",
+            "moment": "Юриноб предлагает союз: устранить Ханако вместе",
+            "offer": "Должность главы безопасности при новом CEO",
+            "choices": [
+              {
+                "id": "accept_coup",
+                "text": "Присоединиться к перевороту",
+                "consequence": "Предательство Ханако",
+                "outcome": "План убийства Ханако. Path: Yorinobu."
+              },
+              {
+                "id": "refuse_warn_hanako",
+                "text": "Отказать и предупредить Ханако",
+                "consequence": "Лояльность",
+                "outcome": "Ханако готовится к контратаке."
+              },
+              {
+                "id": "double_cross",
+                "text": "Согласиться, но предать в последний момент",
+                "skillCheck": {"attr":"INT","skill":"Deception","threshold":13},
+                "risk": "extreme",
+                "outcome": "Юриноб в ловушке в момент удара."
+              },
+              {
+                "id": "use_for_advantage",
+                "text": "Использовать обоих против друг друга",
+                "consequence": "Макиавелли",
+                "outcome": "Война наследников. Игрок усиливает позиции."
+              }
+            ]
+          },
+          {
+            "id": "decision_board_vote",
+            "moment": "День голосования совета директоров",
+            "situation": "3 члена совета нейтральны. Можно повлиять.",
+            "choices": [
+              {
+                "id": "bribe_board",
+                "text": "Подкупить нейтральных",
+                "cost": 50000,
+                "outcome": "Голоса куплены. Победа твоего кандидата."
+              },
+              {
+                "id": "blackmail_board",
+                "text": "Шантажировать компроматом",
+                "skillCheck": {"attr":"INT","skill":"Investigation","threshold":12},
+                "outcome": "Совет под контролем. Но враги на всю жизнь."
+              },
+              {
+                "id": "present_evidence",
+                "text": "Представить улики против обоих",
+                "consequence": "Хаос",
+                "outcome": "Оба кандидата дисквалифицированы. Вакуум власти."
+              },
+              {
+                "id": "kill_board",
+                "text": "Устранить совет директоров (крайность)",
+                "consequence": "Терроризм",
+                "outcome": "Резня в Corpo Plaza. Arasaka в хаосе."
+              },
+              {
+                "id": "declare_self",
+                "text": "Заявить свою кандидатуру",
+                "skillCheck": {"attr":"COOL","threshold":15},
+                "requirement": "накоплено достаточно компромата и союзников",
+                "outcome": "Игрок становится CEO Arasaka. Невероятный исход."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_hanako_ceo",
+          "name": "Эра Ханако",
+          "conditions": ["supported_hanako","exposed_yorinobu"],
+          "outcome": "Ханако — CEO. Реформы в Arasaka. Игрок — глава безопасности.",
+          "rewards": {"credits":100000,"arasaka_rank":"executive","reforms":true},
+          "world": "Arasaka становится менее агрессивной"
+        },
+        {
+          "id": "ending_yorinobu_ceo",
+          "name": "Империя Силы",
+          "conditions": ["supported_yorinobu","betrayed_hanako"],
+          "outcome": "Юриноб — CEO. Военная экспансия. Игрок — правая рука.",
+          "rewards": {"credits":120000,"arasaka_rank":"warlord","power":"absolute"},
+          "world": "Arasaka начинает корпо-войны"
+        },
+        {
+          "id": "ending_player_ceo",
+          "name": "Новый Император",
+          "conditions": ["accumulated_leverage","declared_candidacy","won_vote"],
+          "outcome": "Игрок — CEO Arasaka. Невероятная победа стороннего.",
+          "rewards": {"credits":500000,"arasaka_rank":"CEO","legendary":true},
+          "world": "Новая эра Arasaka под управлением игрока"
+        },
+        {
+          "id": "ending_militech_victory",
+          "name": "Агент Militech",
+          "conditions": ["worked_with_evelyn","sabotaged_both"],
+          "outcome": "Оба кандидата скомпрометированы. Militech выигрывает войну.",
+          "rewards": {"credits":80000,"militech_rank":"operative","arasaka_enemy":true},
+          "world": "Militech доминирует, Arasaka ослаблена"
+        },
+        {
+          "id": "ending_chaos",
+          "name": "Анархия в Corpo Plaza",
+          "conditions": ["killed_board","destroyed_both"],
+          "outcome": "Arasaka в хаосе. Игрок бежит из города.",
+          "rewards": {"credits":50000,"arasaka_rep":"-100","wanted":"globally"},
+          "world": "Корпо-война за контроль Arasaka"
+        },
+        {
+          "id": "ending_traditional",
+          "name": "Традиции Сохранены",
+          "conditions": ["sided_with_takemura","restored_order"],
+          "outcome": "Такемура временно управляет. Традиционные ценности. Стагнация.",
+          "rewards": {"credits":60000,"arasaka_stability":true,"change":"none"},
+          "world": "Arasaka остаётся прежней"
+        }
+      ],
+      "consequences": {
+        "character_fates": [
+          "Ханако убита (если coup_succeeded)",
+          "Юриноб арестован (если exposed)",
+          "Эвелин бежит (если не exposed)",
+          "Такемура почётно уходит (если reforms)",
+          "Такемура восстаёт (если betrayed_tradition)"
+        ],
+        "corpo_wars": [
+          "Arasaka vs Militech (если militech_victory)",
+          "Arasaka гражданская война (если chaos)",
+          "Холодная война корпораций (если любой CEO назначен)"
+        ],
+        "unlock_quests": [
+          "Corporate Empress (если hanako_ceo)",
+          "Warlord Campaign (если yorinobu_ceo)",
+          "Emperor's Court (если player_ceo)",
+          "Militech War (если militech_victory)"
+        ]
+      },
+      "difficulty": "legendary",
+      "tier": 5,
+      "moral_complexity": "extreme",
+      "political_weight": "world_changing"
+    }
+  ]
+}
+

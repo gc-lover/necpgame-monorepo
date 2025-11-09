@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="015-create-game-sessions-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="game_sessions"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="game_sessions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tutorial_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_start" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_end" type="TIMESTAMP"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="game_sessions" indexName="idx_game_sessions_character_id">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="game_sessions" indexName="idx_game_sessions_account_id">
+            <column name="account_id"/>
+        </createIndex>
+        <createIndex tableName="game_sessions" indexName="idx_game_sessions_created_at">
+            <column name="created_at"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                baseTableName="game_sessions"
+                baseColumnNames="account_id"
+                constraintName="fk_game_sessions_account"
+                referencedTableName="accounts"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="game_sessions"
+                baseColumnNames="character_id"
+                constraintName="fk_game_sessions_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <rollback>
+            <dropTable tableName="game_sessions"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

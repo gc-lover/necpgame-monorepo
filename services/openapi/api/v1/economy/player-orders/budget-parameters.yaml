@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: Player Order Budget Parameters
+  version: 1.0.0
+  description: Переиспользуемые параметры и заголовки для API расчёта бюджета заказов игроков.
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+paths: {}
+components:
+  parameters:
+    TraceId:
+      name: X-Trace-Id
+      in: header
+      required: true
+      description: Идентификатор трассировки запроса для аудита и телеметрии.
+      schema:
+        type: string
+        format: uuid
+        example: 7f8b8c74-1f9a-4a53-90ce-83c8b2c1e3ab
+    BudgetContextId:
+      name: X-Budget-Calculation-Id
+      in: header
+      required: false
+      description: Идентификатор идемпотентности расчёта бюджета.
+      schema:
+        type: string
+        format: uuid
+        example: 1b4c81d4-7c15-4df2-a20f-c2ab1b1c0e2f
+    Locale:
+      name: locale
+      in: query
+      required: false
+      description: Локаль для сообщений и рекомендаций.
+      schema:
+        type: string
+        pattern: '^[a-z]{2}-[A-Z]{2}$'
+        example: ru-RU
+    JobStatus:
+      name: status
+      in: query
+      required: false
+      description: Фильтр по статусу задания расчёта бюджета.
+      schema:
+        type: string
+        enum: [queued, running, completed, failed, cancelled]
+    TemplateCode:
+      name: templateCode
+      in: query
+      required: false
+      description: Код шаблона заказа.
+      schema:
+        type: string
+        minLength: 3
+        example: combat
+    DistrictCode:
+      name: districtCode
+      in: query
+      required: false
+      description: Идентификатор района или сегмента города.
+      schema:
+        type: string
+        minLength: 3
+        example: NC-WAT-01
+    FactionCode:
+      name: factionCode
+      in: query
+      required: false
+      description: Фракция или корпорация для корпоративных заказов.
+      schema:
+        type: string
+        minLength: 2
+        example: ARASAKA
+    Interval:
+      name: interval
+      in: query
+      required: false
+      description: Диапазон данных индекса.
+      schema:
+        type: string
+        enum: [day, week, month]
+        default: day
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: Идентификатор заказа игрока.
+      schema:
+        type: string
+        format: uuid
+        example: 3d7d6b62-4118-4a1f-8a62-4129fbb468d0
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      description: Идентификатор асинхронного расчёта бюджета.
+      schema:
+        type: string
+        format: uuid
+        example: 0f4be52e-1a5d-4d25-8e0b-65b5b3e7fd12
+    ReleaseReason:
+      name: reason
+      in: query
+      required: false
+      description: Причина отмены блокировки escrow для журналирования.
+      schema:
+        type: string
+        maxLength: 140
+        example: manual_adjustment_required

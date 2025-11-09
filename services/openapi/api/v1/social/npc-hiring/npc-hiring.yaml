@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: NPC Hiring API
+  version: 1.0.0
+  description: |
+    API для системы найма NPC.
+    
+    Источник: .BRAIN/02-gameplay/social/npc-hiring-system.md v1.1.0
+    
+    Типы NPC: боевые (bodyguards, mercs), торговцы (vendors), специалисты (ripperdocs, fixers, netrunners)
+    Процесс: поиск → переговоры → контракт → управление
+    Ограничения: слоты, зарплата, лояльность
+    Интеграция с репутацией и экономикой
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/gameplay/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: NPC Hiring
+    description: Найм NPC
+
+paths:
+  /gameplay/social/npc-hiring/available:
+    get:
+      summary: Получить доступных NPC для найма
+      description: |
+        Возвращает список NPC, доступных для найма.
+        Зависит от репутации, региона, уровня персонажа.
+      operationId: getAvailableNPCs
+      tags:
+        - NPC Hiring
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: npc_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [combat, vendor, specialist]
+        - name: region_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Доступные NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available_npcs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HireableNPC'
+              examples:
+                night_city_npcs:
+                  summary: NPC в Night City
+                  value:
+                    available_npcs:
+                      - npc_id: "bodyguard_001"
+                        name: 'Viktor "Vik" Kozlov'
+                        type: "combat"
+                        role: "bodyguard"
+                        tier: 3
+                        cost_daily: 500
+                        reputation_required: 1000
+                        skills:
+                          gunplay: 8
+                          melee: 7
+
+  /gameplay/social/npc-hiring/hire:
+    post:
+      summary: Нанять NPC
+      description: |
+        Нанимает NPC для выполнения роли.
+        Проверяет репутацию, доступные слоты, финансы.
+      operationId: hireNPC
+      tags:
+        - NPC Hiring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - npc_id
+                - contract_duration
+              properties:
+                character_id:
+                  type: string
+                npc_id:
+                  type: string
+                contract_duration:
+                  type: integer
+                  description: Длительность контракта (дни)
+                  minimum: 1
+                contract_type:
+                  type: string
+                  enum: [temporary, permanent]
+                  default: temporary
+      responses:
+        '200':
+          description: NPC нанят
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  contract_id:
+                    type: string
+                  npc_id:
+                    type: string
+                  cost_total:
+                    type: number
+                  start_date:
+                    type: string
+                    format: date-time
+                  end_date:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /gameplay/social/npc-hiring/contracts:
+    get:
+      summary: Получить активные контракты
+      description: Возвращает список активных контрактов с NPC
+      operationId: getActiveContracts
+      tags:
+        - NPC Hiring
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Активные контракты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contracts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NPCContract'
+
+  /gameplay/social/npc-hiring/dismiss:
+    post:
+      summary: Уволить NPC
+      description: |
+        Расторгает контракт с NPC.
+        Может иметь штрафы при досрочном расторжении.
+      operationId: dismissNPC
+      tags:
+        - NPC Hiring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - contract_id
+              properties:
+                character_id:
+                  type: string
+                contract_id:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: NPC уволен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  penalty:
+                    type: number
+                    description: Штраф за досрочное расторжение
+                  reputation_change:
+                    type: number
+
+components:
+  schemas:
+    HireableNPC:
+      type: object
+      properties:
+        npc_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [combat, vendor, specialist]
+        role:
+          type: string
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+        cost_daily:
+          type: number
+        reputation_required:
+          type: number
+        skills:
+          type: object
+          description: Навыки NPC
+        abilities:
+          type: array
+          items:
+            type: string
+
+    NPCContract:
+      type: object
+      properties:
+        contract_id:
+          type: string
+        character_id:
+          type: string
+        npc_id:
+          type: string
+        npc_name:
+          type: string
+        role:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        cost_daily:
+          type: number
+        loyalty_level:
+          type: number
+          description: Уровень лояльности (0-100)
+        performance:
+          type: number
+          description: Эффективность работы

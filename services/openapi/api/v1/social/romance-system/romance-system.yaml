@@ -1,0 +1,543 @@
+openapi: 3.0.3
+info:
+  title: Romance System API
+  version: 1.0.0
+  description: |
+    API для полной системы романтических отношений.
+    
+    Функционал:
+    - MEGA-ROMANCE-SYSTEM с 1000 NPC
+    - 9 стадий отношений (Meeting → Commitment/Breakup)
+    - Региональные NPC (750 по регионам мира)
+    - Романтические события (100+ уникальных)
+    - Конфликты и примирения
+    - Длительные отношения
+    - Множественные романы
+    - Jealousy & breakup mechanics
+    
+    Регионы:
+    - Africa: 100 NPC
+    - America: 150 NPC
+    - Asia: 150 NPC
+    - CIS: 100 NPC
+    - Europe: 150 NPC
+    - Middle East: 100 NPC
+    - Oceania: 50 NPC
+    - Night City: 200 NPC
+    
+    Источники: 23 romance документа v1.0.0
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/gameplay/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Romance
+    description: Романтические отношения
+  - name: Romance Events
+    description: Романтические события
+  - name: NPC Romance
+    description: NPC для романов
+
+paths:
+  /gameplay/social/romance/available-npcs:
+    get:
+      summary: Получить доступных NPC для романов
+      operationId: getAvailableRomanceNPCs
+      tags: [NPC Romance]
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: min_compatibility
+          in: query
+          description: Минимальная совместимость (%)
+          schema:
+            type: integer
+            default: 50
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Доступные NPC
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RomanceNPC'
+
+  /gameplay/social/romance/character/{character_id}/relationships:
+    get:
+      summary: Получить активные романтические отношения
+      operationId: getRomanceRelationships
+      tags: [Romance]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Активные отношения
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_romances:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RomanceRelationship'
+                  max_concurrent_romances:
+                    type: integer
+                    example: 3
+                    description: Можно одновременно несколько романов
+
+  /gameplay/social/romance/relationship/{relationship_id}:
+    get:
+      summary: Получить детали романтических отношений
+      operationId: getRomanceRelationship
+      tags: [Romance]
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали отношений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RomanceRelationshipDetailed'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/social/romance/events:
+    get:
+      summary: Получить доступные романтические события
+      operationId: getAvailableRomanceEvents
+      tags: [Romance Events]
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: relationship_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Доступные события
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RomanceEvent'
+
+  /gameplay/social/romance/events/{event_id}/trigger:
+    post:
+      summary: Запустить романтическое событие
+      operationId: triggerRomanceEvent
+      tags: [Romance Events]
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                relationship_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Событие запущено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RomanceEventInstance'
+
+  /gameplay/social/romance/events/{instance_id}/choice:
+    post:
+      summary: Сделать выбор в романтическом событии
+      operationId: makeRomanceChoice
+      tags: [Romance Events]
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                choice_id:
+                  type: string
+      responses:
+        '200':
+          description: Результат выбора
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RomanceChoiceResult'
+
+  /gameplay/social/romance/compatibility:
+    post:
+      summary: Рассчитать совместимость с NPC
+      operationId: calculateCompatibility
+      tags: [NPC Romance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+                npc_id:
+                  type: string
+      responses:
+        '200':
+          description: Совместимость
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityResult'
+
+  /gameplay/social/romance/relationship/{relationship_id}/progress:
+    post:
+      summary: Развить отношения
+      operationId: progressRelationship
+      tags: [Romance]
+      description: Переход на следующую стадию
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Отношения развились
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  previous_stage:
+                    type: string
+                  new_stage:
+                    type: string
+                  unlocked_events:
+                    type: array
+                    items:
+                      type: string
+
+  /gameplay/social/romance/relationship/{relationship_id}/breakup:
+    post:
+      summary: Расстаться с NPC
+      operationId: breakupRelationship
+      tags: [Romance]
+      parameters:
+        - name: relationship_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Расставание произошло
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reputation_impact:
+                    type: integer
+                  possible_reconciliation:
+                    type: boolean
+
+components:
+  schemas:
+    RomanceNPC:
+      type: object
+      properties:
+        npc_id:
+          type: string
+        name:
+          type: string
+        region:
+          type: string
+        age:
+          type: integer
+        gender:
+          type: string
+        orientation:
+          type: string
+          enum: [HETERO, HOMO, BI, PAN]
+        personality_traits:
+          type: array
+          items:
+            type: string
+        interests:
+          type: array
+          items:
+            type: string
+        romance_difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD, VERY_HARD]
+        compatibility_score:
+          type: integer
+          description: С вашим персонажем (0-100)
+        current_relationship_status:
+          type: string
+          nullable: true
+          enum: [STRANGER, ACQUAINTANCE, FRIEND, DATING, COMMITTED]
+
+    RomanceRelationship:
+      type: object
+      properties:
+        relationship_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+        npc_name:
+          type: string
+        stage:
+          type: string
+          enum: [MEETING, FRIENDSHIP, FLIRTING, DATING, INTIMACY, CONFLICT, RECONCILIATION, COMMITMENT, BREAKUP]
+        affection_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+        trust_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+        jealousy_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+        events_completed:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+
+    RomanceRelationshipDetailed:
+      allOf:
+        - $ref: '#/components/schemas/RomanceRelationship'
+        - type: object
+          properties:
+            npc_details:
+              $ref: '#/components/schemas/RomanceNPC'
+            relationship_history:
+              type: array
+              items:
+                type: object
+                properties:
+                  event_id:
+                    type: string
+                  event_name:
+                    type: string
+                  choice_made:
+                    type: string
+                  outcome:
+                    type: string
+                  affection_change:
+                    type: integer
+                  date:
+                    type: string
+                    format: date-time
+            available_events:
+              type: array
+              items:
+                $ref: '#/components/schemas/RomanceEvent'
+            conflicts:
+              type: array
+              description: Активные конфликты
+              items:
+                type: object
+
+    RomanceEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+        name:
+          type: string
+          example: "Dinner Date at Tom's Diner"
+        stage:
+          type: string
+          description: На какой стадии доступно
+        description:
+          type: string
+        location:
+          type: string
+        duration_minutes:
+          type: integer
+        affection_impact:
+          type: object
+          properties:
+            min:
+              type: integer
+            max:
+              type: integer
+        required_affection:
+          type: integer
+          description: Минимальный уровень для доступа
+
+    RomanceEventInstance:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        event:
+          $ref: '#/components/schemas/RomanceEvent'
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              choice_id:
+                type: string
+              text:
+                type: string
+              affection_change:
+                type: integer
+                description: Спойлер - можно не показывать
+              skill_check:
+                type: object
+                nullable: true
+
+    RomanceChoiceResult:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        choice_made:
+          type: string
+        affection_change:
+          type: integer
+        trust_change:
+          type: integer
+        outcome:
+          type: string
+        stage_progressed:
+          type: boolean
+        new_stage:
+          type: string
+          nullable: true
+        unlocked_events:
+          type: array
+          items:
+            type: string
+
+    CompatibilityResult:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+        compatibility_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        factors:
+          type: object
+          properties:
+            personality_match:
+              type: integer
+            interest_overlap:
+              type: integer
+            attribute_attraction:
+              type: integer
+            faction_compatibility:
+              type: integer
+        recommendation:
+          type: string
+          enum: [HIGHLY_COMPATIBLE, COMPATIBLE, NEUTRAL, INCOMPATIBLE]
+        advice:
+          type: array
+          items:
+            type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

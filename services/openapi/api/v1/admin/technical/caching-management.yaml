@@ -1,0 +1,200 @@
+openapi: 3.0.3
+info:
+  title: Caching Management API
+  description: |
+    API для управления многоуровневым кэшированием NECPGAME.
+    
+    **Уровни кэширования:**
+    - L1: CDN Cache (static assets)
+    - L2: Redis Cache (application data)
+    - L3: Application Cache (in-memory)
+    
+    **Функции:**
+    - Cache status monitoring
+    - Cache invalidation
+    - Cache metrics (hit/miss rates)
+    - Cache warming
+  version: 1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Cache Status
+  - name: Cache Management
+  - name: Cache Metrics
+
+paths:
+  /technical/cache/status:
+    get:
+      tags:
+        - Cache Status
+      summary: Статус всех cache layers
+      description: Возвращает статус L1 (CDN), L2 (Redis), L3 (App cache)
+      operationId: getCacheStatus
+      responses:
+        '200':
+          description: Cache status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  l1_cdn:
+                    $ref: '#/components/schemas/CacheLayerStatus'
+                  l2_redis:
+                    $ref: '#/components/schemas/CacheLayerStatus'
+                  l3_application:
+                    $ref: '#/components/schemas/CacheLayerStatus'
+
+  /technical/cache/invalidate:
+    post:
+      tags:
+        - Cache Management
+      summary: Инвалидация cache
+      description: Очистка cache для определенных ключей или паттернов
+      operationId: invalidateCache
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                layer:
+                  type: string
+                  enum: ["l1_cdn", "l2_redis", "l3_app", "all"]
+                keys:
+                  type: array
+                  items:
+                    type: string
+                pattern:
+                  type: string
+                  description: Pattern для инвалидации (regex)
+      responses:
+        '200':
+          description: Cache invalidated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invalidated_keys:
+                    type: integer
+                  layers_affected:
+                    type: array
+                    items:
+                      type: string
+
+  /technical/cache/metrics:
+    get:
+      tags:
+        - Cache Metrics
+      summary: Cache metrics
+      description: Hit/miss rates, memory usage, performance
+      operationId: getCacheMetrics
+      parameters:
+        - name: layer
+          in: query
+          schema:
+            type: string
+            enum: ["l1_cdn", "l2_redis", "l3_app", "all"]
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: ["1h", "24h", "7d"]
+            default: "1h"
+      responses:
+        '200':
+          description: Cache metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheMetrics'
+
+  /technical/cache/warm:
+    post:
+      tags:
+        - Cache Management
+      summary: Cache warming
+      description: Предзагрузка cache часто используемыми данными
+      operationId: warmCache
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["player_profiles", "quests", "items", "npcs"]
+      responses:
+        '202':
+          description: Warming started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  estimated_time:
+                    type: integer
+
+components:
+  schemas:
+    CacheLayerStatus:
+      type: object
+      properties:
+        layer_name:
+          type: string
+        status:
+          type: string
+          enum: ["operational", "degraded", "down"]
+        memory_used:
+          type: integer
+          description: Memory in MB
+        memory_total:
+          type: integer
+        keys_count:
+          type: integer
+        hit_rate:
+          type: number
+          description: Cache hit rate (0-1)
+
+    CacheMetrics:
+      type: object
+      properties:
+        time_range:
+          type: string
+        total_requests:
+          type: integer
+        cache_hits:
+          type: integer
+        cache_misses:
+          type: integer
+        hit_rate:
+          type: number
+        average_latency_ms:
+          type: integer
+        by_layer:
+          type: object
+          additionalProperties:
+            type: object
+
+security:
+  - BearerAuth: []
+
+

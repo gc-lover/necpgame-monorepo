@@ -1,0 +1,540 @@
+openapi: 3.0.3
+info:
+  title: Production Chains API
+  version: 1.0.0
+  description: |
+    API для производственных цепочек.
+    
+    Функционал:
+    - Production chains (от руды до legendary)
+    - 3 полные цепочки (weapons, armor, implants)
+    - Multi-stage production
+    - Resource optimization
+    - Bulk production
+    - Profitability analysis
+    - Production facilities
+    - Supply chain management
+    
+    Цепочки:
+    - Weapons: Ore → Ingots → Components → Weapon Parts → Weapons → Legendary Weapons
+    - Armor: Fabrics → Plates → Armor Pieces → Full Armor → Enhanced Armor
+    - Implants: Bioware → Chips → Base Implants → Combat Implants → Legendary Implants
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-production-chains.md v2.0.0
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Production Chains
+    description: Производственные цепочки
+  - name: Production
+    description: Производство
+  - name: Analysis
+    description: Анализ прибыльности
+
+paths:
+  /gameplay/economy/production/chains:
+    get:
+      summary: Получить доступные производственные цепочки
+      operationId: getProductionChains
+      tags: [Production Chains]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [WEAPONS, ARMOR, IMPLANTS, CONSUMABLES]
+      responses:
+        '200':
+          description: Производственные цепочки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chains:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductionChain'
+
+  /gameplay/economy/production/chains/{chain_id}:
+    get:
+      summary: Получить детали производственной цепочки
+      operationId: getProductionChain
+      tags: [Production Chains]
+      parameters:
+        - name: chain_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали цепочки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionChainDetailed'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/economy/production/start:
+    post:
+      summary: Начать производство
+      operationId: startProduction
+      tags: [Production]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartProductionRequest'
+      responses:
+        '201':
+          description: Производство начато
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionJob'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /gameplay/economy/production/jobs/{job_id}:
+    get:
+      summary: Получить статус производственной задачи
+      operationId: getProductionJob
+      tags: [Production]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус задачи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionJobDetailed'
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /gameplay/economy/production/jobs/{job_id}/complete:
+    post:
+      summary: Завершить производство
+      operationId: completeProduction
+      tags: [Production]
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Производство завершено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionResult'
+
+  /gameplay/economy/production/character/{character_id}/active:
+    get:
+      summary: Получить активные производства персонажа
+      operationId: getActiveProductions
+      tags: [Production]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Активные производства
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductionJob'
+                  max_concurrent_jobs:
+                    type: integer
+
+  /gameplay/economy/production/profitability:
+    post:
+      summary: Рассчитать прибыльность производственной цепочки
+      operationId: calculateProfitability
+      tags: [Analysis]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfitabilityRequest'
+      responses:
+        '200':
+          description: Анализ прибыльности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfitabilityAnalysis'
+
+  /gameplay/economy/production/optimize:
+    post:
+      summary: Оптимизировать производственную цепочку
+      operationId: optimizeChain
+      tags: [Analysis]
+      description: AI оптимизация для максимальной прибыли
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chain_id:
+                  type: string
+                goal:
+                  type: string
+                  enum: [MAX_PROFIT, MIN_TIME, MIN_COST, MAX_QUALITY]
+                available_resources:
+                  type: object
+      responses:
+        '200':
+          description: Рекомендации по оптимизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationResult'
+
+  /gameplay/economy/production/facilities:
+    get:
+      summary: Получить производственные мощности
+      operationId: getProductionFacilities
+      tags: [Production]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Производственные мощности
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  facilities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductionFacility'
+
+components:
+  schemas:
+    ProductionChain:
+      type: object
+      properties:
+        chain_id:
+          type: string
+        name:
+          type: string
+          example: "Legendary Weapons Chain"
+        category:
+          type: string
+          enum: [WEAPONS, ARMOR, IMPLANTS, CONSUMABLES]
+        stages_count:
+          type: integer
+          example: 5
+        total_time_hours:
+          type: number
+        estimated_profit_margin:
+          type: number
+          format: float
+
+    ProductionChainDetailed:
+      allOf:
+        - $ref: '#/components/schemas/ProductionChain'
+        - type: object
+          properties:
+            stages:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductionStage'
+            final_product:
+              type: object
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                market_price:
+                  type: integer
+
+    ProductionStage:
+      type: object
+      properties:
+        stage_number:
+          type: integer
+        name:
+          type: string
+          example: "Smelt Ore to Ingots"
+        inputs:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        outputs:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        time_hours:
+          type: number
+        facility_required:
+          type: string
+          nullable: true
+        skill_required:
+          type: string
+          nullable: true
+        min_skill_level:
+          type: integer
+
+    StartProductionRequest:
+      type: object
+      required:
+        - character_id
+        - chain_id
+        - stage_number
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        chain_id:
+          type: string
+        stage_number:
+          type: integer
+        quantity:
+          type: integer
+          default: 1
+        facility_id:
+          type: string
+          nullable: true
+        use_bonuses:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ProductionJob:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        chain_id:
+          type: string
+        stage_number:
+          type: integer
+        quantity:
+          type: integer
+        status:
+          type: string
+          enum: [IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+        started_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: number
+
+    ProductionJobDetailed:
+      allOf:
+        - $ref: '#/components/schemas/ProductionJob'
+        - type: object
+          properties:
+            stage:
+              $ref: '#/components/schemas/ProductionStage'
+            inputs_consumed:
+              type: array
+              items:
+                type: object
+            facility:
+              $ref: '#/components/schemas/ProductionFacility'
+              nullable: true
+
+    ProductionResult:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        outputs:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+              quality:
+                type: string
+        experience_gained:
+          type: integer
+        byproducts:
+          type: array
+          description: Побочные продукты
+          items:
+            type: object
+
+    ProfitabilityRequest:
+      type: object
+      required:
+        - chain_id
+      properties:
+        chain_id:
+          type: string
+        quantity:
+          type: integer
+          default: 1
+        input_prices:
+          type: object
+          nullable: true
+          description: Текущие цены входов (если не указаны - берутся market)
+        selling_price:
+          type: integer
+          nullable: true
+
+    ProfitabilityAnalysis:
+      type: object
+      properties:
+        chain_id:
+          type: string
+        total_input_cost:
+          type: integer
+        total_production_cost:
+          type: integer
+        estimated_selling_price:
+          type: integer
+        estimated_profit:
+          type: integer
+        profit_margin:
+          type: number
+          format: float
+          description: Маржа в %
+        roi:
+          type: number
+          format: float
+        time_to_complete_hours:
+          type: number
+        profit_per_hour:
+          type: number
+        bottlenecks:
+          type: array
+          description: Узкие места в цепочке
+          items:
+            type: string
+
+    OptimizationResult:
+      type: object
+      properties:
+        chain_id:
+          type: string
+        goal:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        optimized_schedule:
+          type: array
+          items:
+            type: object
+            properties:
+              stage_number:
+                type: integer
+              quantity:
+                type: integer
+              start_time:
+                type: string
+        expected_improvement:
+          type: object
+          properties:
+            profit_increase:
+              type: number
+            time_reduction:
+              type: number
+
+    ProductionFacility:
+      type: object
+      properties:
+        facility_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        location:
+          type: string
+        capacity:
+          type: integer
+        bonuses:
+          type: object
+          properties:
+            time_reduction:
+              type: number
+            quality_bonus:
+              type: number
+            cost_reduction:
+              type: number
+        available:
+          type: boolean
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

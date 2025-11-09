@@ -1,0 +1,330 @@
+# Target Architecture:
+# - Microservice: social-service (port 8084)
+# - API Base: /api/v1/chat
+# - Dependencies: voice-lobby-service, translation-service, moderation-service
+# - Frontend Module: modules/social/chat (useChatStore)
+
+openapi: 3.0.3
+info:
+  title: Chat Features Components
+  version: 1.0.0
+  description: Переиспользуемые параметры и схемы для Chat Features API.
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  parameters:
+    VoiceSessionId:
+      name: voiceSessionId
+      in: query
+      required: true
+      description: Идентификатор голосовой сессии.
+      schema: { type: string, format: uuid }
+    ChannelId:
+      name: channelId
+      in: query
+      required: true
+      description: Идентификатор текстового канала.
+      schema: { type: string }
+    HistoryLimit:
+      name: limit
+      in: query
+      required: false
+      description: Количество сообщений (≤100).
+      schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+    BeforeMessage:
+      name: beforeMessageId
+      in: query
+      required: false
+      description: Возвращать сообщения до указанного ID.
+      schema: { type: string, format: uuid }
+    AfterMessage:
+      name: afterMessageId
+      in: query
+      required: false
+      description: Возвращать сообщения после указанного ID.
+      schema: { type: string, format: uuid }
+    CommandScope:
+      name: scope
+      in: query
+      required: false
+      description: Область применения команд.
+      schema: { type: string, enum: [GENERAL, PARTY, RAID, GUILD, ADMIN] }
+    VoiceSessionHeader:
+      name: X-Voice-Session-Id
+      in: header
+      required: false
+      description: Текущий голосовой session id клиента.
+      schema: { type: string, format: uuid }
+    VoiceClientHeader:
+      name: X-Voice-Client-Version
+      in: header
+      required: false
+      description: Версия голосового клиента.
+      schema: { type: string }
+
+  schemas:
+    CommandStatus:
+      type: string
+      enum: [SUCCESS, INFO, ERROR]
+    VoiceChannelType:
+      type: string
+      enum: [PARTY, RAID, GUILD, CUSTOM]
+    TranslationLanguage:
+      type: string
+      description: ISO 639-1 код языка
+      example: "en"
+
+    ChatCommandRequest:
+      type: object
+      required: [command]
+      properties:
+        command: { type: string, pattern: '^/[a-zA-Z]+' }
+        arguments:
+          type: array
+          items: { type: string }
+        channelId: { type: string }
+        targetPlayerId: { type: string, format: uuid }
+        context:
+          type: object
+          properties:
+            channelType: { type: string }
+            zoneId: { type: string }
+            isVoice: { type: boolean }
+
+    ChatCommandResult:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: '#/components/schemas/CommandStatus' }
+        message: { type: string }
+        payload: { type: object, additionalProperties: true }
+        cooldownSeconds: { type: integer, minimum: 0 }
+
+    CommandCatalogEntry:
+      type: object
+      required: [command, description]
+      properties:
+        command: { type: string }
+        description: { type: string }
+        scope: { type: string }
+        arguments:
+          type: array
+          items: { type: string }
+        examples:
+          type: array
+          items: { type: string }
+
+    CommandCatalog:
+      type: object
+      required: [commands]
+      properties:
+        commands:
+          type: array
+          items: { $ref: '#/components/schemas/CommandCatalogEntry' }
+        helpUrl: { type: string, format: uri }
+
+    FormatPreviewRequest:
+      type: object
+      required: [rawText]
+      properties:
+        rawText: { type: string, maxLength: 2000 }
+        channelType: { type: string }
+        allowLinks: { type: boolean, default: false }
+
+    PlayerMention:
+      type: object
+      required: [playerId]
+      properties:
+        playerId: { type: string, format: uuid }
+        displayName: { type: string }
+
+    FormatPreviewResponse:
+      type: object
+      required: [html]
+      properties:
+        html: { type: string }
+        mentions:
+          type: array
+          items: { $ref: '#/components/schemas/PlayerMention' }
+        emotes:
+          type: array
+          items: { type: string }
+        sanitized: { type: boolean }
+
+    VoiceJoinRequest:
+      type: object
+      required: [channelType, channelId, sdpOffer]
+      properties:
+        channelType: { $ref: '#/components/schemas/VoiceChannelType' }
+        channelId: { type: string }
+        sdpOffer: { type: string }
+        deviceCapabilities:
+          type: array
+          items: { type: string }
+        resumeToken: { type: string }
+
+    IceServer:
+      type: object
+      properties:
+        urls:
+          type: array
+          items: { type: string, format: uri }
+        username: { type: string }
+        credential: { type: string }
+
+    VoiceJoinResponse:
+      type: object
+      required: [voiceSessionId, sdpAnswer]
+      properties:
+        voiceSessionId: { type: string, format: uuid }
+        sdpAnswer: { type: string }
+        iceServers:
+          type: array
+          items: { $ref: '#/components/schemas/IceServer' }
+        expiresAt: { type: string, format: date-time }
+
+    VoiceParticipantsResponse:
+      type: object
+      required: [participants]
+      properties:
+        participants:
+          type: array
+          items:
+            type: object
+            required: [playerId]
+            properties:
+              playerId: { type: string, format: uuid }
+              displayName: { type: string }
+              muted: { type: boolean }
+              speaking: { type: boolean }
+              joinedAt: { type: string, format: date-time }
+
+    VoiceMuteRequest:
+      type: object
+      required: [voiceSessionId, mode]
+      properties:
+        voiceSessionId: { type: string, format: uuid }
+        targetPlayerId: { type: string, format: uuid }
+        mode: { type: string, enum: [SELF, FORCE] }
+        durationSeconds: { type: integer, minimum: 1 }
+
+    TranslationSettingsRequest:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+        preferredLanguages:
+          type: array
+          maxItems: 5
+          items: { $ref: '#/components/schemas/TranslationLanguage' }
+        autoDetect: { type: boolean, default: true }
+
+    TranslationSettings:
+      allOf:
+        - $ref: '#/components/schemas/TranslationSettingsRequest'
+        - type: object
+          properties:
+            lastUpdatedAt: { type: string, format: date-time }
+
+    TranslateMessageRequest:
+      type: object
+      required: [text, targetLanguages]
+      properties:
+        text: { type: string, maxLength: 1000 }
+        sourceLanguage: { $ref: '#/components/schemas/TranslationLanguage' }
+        targetLanguages:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: { $ref: '#/components/schemas/TranslationLanguage' }
+
+    TranslationEntry:
+      type: object
+      required: [language, text]
+      properties:
+        language: { $ref: '#/components/schemas/TranslationLanguage' }
+        text: { type: string }
+        confidence: { type: number, format: float }
+
+    TranslateMessageResponse:
+      type: object
+      required: [translations]
+      properties:
+        translations:
+          type: array
+          items: { $ref: '#/components/schemas/TranslationEntry' }
+
+    MessageMetadata:
+      type: object
+      properties:
+        messageType: { type: string, enum: [TEXT, SYSTEM, EMOTE] }
+        edited: { type: boolean }
+        pinned: { type: boolean }
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              attachmentId: { type: string, format: uuid }
+              url: { type: string, format: uri }
+              type: { type: string }
+
+    ChatMessage:
+      type: object
+      required: [messageId, senderId, content, sentAt]
+      properties:
+        messageId: { type: string, format: uuid }
+        senderId: { type: string, format: uuid }
+        displayName: { type: string }
+        content: { type: string }
+        rawContent: { type: string }
+        translatedContent:
+          type: object
+          additionalProperties: { type: string }
+        sentAt: { type: string, format: date-time }
+        metadata: { $ref: '#/components/schemas/MessageMetadata' }
+
+    ChatHistoryResponse:
+      type: object
+      required: [channelId, channelType, messages]
+      properties:
+        channelId: { type: string }
+        channelType: { type: string }
+        messages:
+          type: array
+          items: { $ref: '#/components/schemas/ChatMessage' }
+        hasMoreBefore: { type: boolean }
+        hasMoreAfter: { type: boolean }
+        nextCursor: { type: string }
+
+    ApiError:
+      allOf:
+        - $ref: '../../shared/common/responses.yaml#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  enum:
+                    - BIZ_CHAT_FEATURE_COMMAND_BLOCKED
+                    - BIZ_CHAT_FEATURE_VOICE_UNAVAILABLE
+                    - BIZ_CHAT_FEATURE_TRANSLATION_DISABLED
+                    - VAL_CHAT_FEATURE_UNKNOWN_COMMAND
+                    - VAL_CHAT_FEATURE_UNSUPPORTED_LANGUAGE
+                    - VAL_CHAT_FEATURE_INVALID_FORMAT
+                    - INT_CHAT_FEATURE_STORAGE_FAILURE
+                    - INT_CHAT_FEATURE_SERVICE_UNAVAILABLE
+              required: [code, message]
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

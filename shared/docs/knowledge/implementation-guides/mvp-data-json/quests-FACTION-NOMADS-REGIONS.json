@@ -1,0 +1,376 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/factions/nomads-regions
+
+---
+
+
+{
+  "version": "3.0.0",
+  "factions": ["Aldecaldos","Wraiths","Snake_Nation"],
+  "regions": ["Badlands","Border","Oil_Fields"],
+  "description": "Квесты номадов и пустоши с выживанием и племенными конфликтами",
+  "questsFaction": [
+    {
+      "questId": "NOMAD-001-FAMILY-CHOICE",
+      "name": "Aldecaldos: Семья или Свобода",
+      "faction": "Aldecaldos",
+      "region": "Badlands",
+      "characters": {
+        "leader": {
+          "id": "npc-saul-bright",
+          "name": "Саул Брайт",
+          "role": "Лидер Aldecaldos",
+          "age": 55,
+          "personality": "Отеческий, но авторитарный",
+          "goal": "Сохранить клан вместе любой ценой",
+          "conflict": "Старые методы vs новый мир"
+        },
+        "rebel": {
+          "id": "npc-panam-palmer",
+          "name": "Панам Палмер",
+          "role": "Дочь Саула (неродная), бунтарь",
+          "age": 28,
+          "desire": "Свобода выбора, не слепое подчинение",
+          "plan": "Увести часть клана на новые земли"
+        },
+        "player": {
+          "role": "Новый член Aldecaldos или аутсайдер",
+          "choice": "Традиции клана или индивидуальная свобода?",
+          "influence": "Может разделить клан или укрепить"
+        },
+        "threat": {
+          "id": "npc-wraith-boss",
+          "name": "Босс Wraiths «Коготь»",
+          "danger": "Нападает на караваны Aldecaldos",
+          "territory": "Спорная земля в Badlands"
+        },
+        "corporate": {
+          "id": "npc-biotechnica-agent",
+          "name": "Агент Biotechnica Джулиан Кросс",
+          "offer": "Работа для клана. Стабильность. Но потеря свободы."
+        }
+      },
+      "synopsis": "Клан Aldecaldos на распутье. Саул хочет заключить сделку с Biotechnica — безопасность в обмен на работу (фактически рабство). Панам бунтует. Wraiths атакуют караваны. Игрок должен выбрать: единство клана, свобода или выживание.",
+      "branches": {
+        "main_paths": [
+          "path_support_saul_order",
+          "path_support_panam_freedom",
+          "path_unite_compromise",
+          "path_leave_clan",
+          "path_destroy_wraiths_unite"
+        ],
+        "act_structure": {
+          "act1_conflict": {
+            "trigger": "Панам и Саул публично ссорятся",
+            "issue": "Сделка с Biotechnica",
+            "clan_opinion": "Разделены 50/50"
+          },
+          "act2_crisis": {
+            "event": "Wraiths убивают семью из клана",
+            "pressure": "Нужно решение СЕЙЧАС",
+            "options": ["revenge","deal","run"]
+          },
+          "act3_decision": {
+            "moment": "Голосование клана",
+            "player_speech": "Может убедить клан",
+            "outcome": "Будущее Aldecaldos"
+          }
+        },
+        "key_decisions": [
+          {
+            "id": "decision_biotechnica_deal",
+            "moment": "Агент Biotechnica предлагает контракт",
+            "terms": "Клан работает на агро-корпорацию. Защита, жильё, стабильность. Но нет свободы покинуть.",
+            "choices": [
+              {
+                "id": "accept_deal_support_saul",
+                "text": "Поддержать сделку (безопасность важнее)",
+                "outcome": "Саул благодарен. Панам яростна. Клан разделён."
+              },
+              {
+                "id": "reject_deal_support_panam",
+                "text": "Отвергнуть сделку (свобода важнее)",
+                "outcome": "Панам благодарна. Саул разочарован. Риск атак Wraiths."
+              },
+              {
+                "id": "negotiate_better_terms",
+                "text": "Выторговать лучшие условия",
+                "skillCheck": {"attr":"COOL","skill":"Negotiation","threshold":12},
+                "outcome": "Компромисс: работа, но сохранение автономии."
+              },
+              {
+                "id": "sabotage_deal",
+                "text": "Саботировать переговоры тайно",
+                "consequence": "Обман",
+                "outcome": "Сделка срывается. Biotechnica враждебны."
+              }
+            ]
+          },
+          {
+            "id": "decision_wraith_attack",
+            "moment": "Wraiths убили семью Миллера из клана",
+            "emotion": "Ярость и горе",
+            "choices": [
+              {
+                "id": "revenge_raid",
+                "text": "Месть: рейд на лагерь Wraiths",
+                "outcome": "Кровавая битва. Потери с обеих сторон."
+              },
+              {
+                "id": "defensive_only",
+                "text": "Усилить оборону, не атаковать",
+                "outcome": "Wraiths продолжают нападать. Клан фрустрирован."
+              },
+              {
+                "id": "negotiate_wraiths",
+                "text": "Переговоры с Wraiths (необычно)",
+                "skillCheck": {"attr":"COOL","skill":"Intimidation","threshold":13},
+                "outcome": "Перемирие или провал. Wraiths могут обмануть."
+              },
+              {
+                "id": "tactical_strike",
+                "text": "Точечный удар: убить босса Wraiths",
+                "skillCheck": {"attr":"REF","skill":"Combat","threshold":12},
+                "outcome": "«Коготь» мёртв. Wraiths рассеяны."
+              }
+            ]
+          },
+          {
+            "id": "decision_clan_split",
+            "moment": "Голосование клана: остаться вместе или разделиться",
+            "panam_plan": "Увести молодых в новые земли на севере",
+            "saul_plan": "Сохранить единство, принять сделку",
+            "choices": [
+              {
+                "id": "vote_unity_saul",
+                "text": "Единство под Саулом",
+                "outcome": "Клан вместе. Панам уходит одна или подчиняется."
+              },
+              {
+                "id": "vote_split_panam",
+                "text": "Разрешить разделение",
+                "outcome": "Клан делится. Aldecaldos ослаблены, но свободны."
+              },
+              {
+                "id": "challenge_saul_leadership",
+                "text": "Вызвать Саула на испытание за лидерство",
+                "nomad_tradition": true,
+                "outcome": "Поединок или состязание. Победитель ведёт клан."
+              },
+              {
+                "id": "propose_dual_leadership",
+                "text": "Предложить совместное лидерство",
+                "skillCheck": {"attr":"INT","skill":"Diplomacy","threshold":14},
+                "outcome": "Саул и Панам вместе. Компромисс. Сложная модель."
+              },
+              {
+                "id": "leave_clan_solo",
+                "text": "Покинуть клан самостоятельно",
+                "consequence": "Одиночество",
+                "outcome": "Игрок уходит. Aldecaldos решают без него."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_corporate_security",
+          "name": "Безопасность Корпораций",
+          "conditions": ["accepted_biotechnica","unity_maintained"],
+          "outcome": "Aldecaldos работают на Biotechnica. Стабильность, но потеря идентичности.",
+          "rewards": {"credits":35000,"aldecaldos_rep":"+40","biotechnica_rep":"+50"},
+          "world": "Aldecaldos становятся корпо-работниками"
+        },
+        {
+          "id": "ending_free_nomads",
+          "name": "Свободные Номады",
+          "conditions": ["rejected_deal","defeated_wraiths"],
+          "outcome": "Aldecaldos свободны. Уничтожили Wraiths. Опасная, но свободная жизнь.",
+          "rewards": {"credits":25000,"aldecaldos_rep":"+60","badlands_control":true},
+          "world": "Aldecaldos — легенда пустоши"
+        },
+        {
+          "id": "ending_split_clans",
+          "name": "Два Клана",
+          "conditions": ["split_occurred"],
+          "outcome": "Aldecaldos разделились. Саул ведёт старых. Панам — молодых.",
+          "rewards": {"credits":20000,"two_clans":true},
+          "world": "Два независимых клана Aldecaldos"
+        },
+        {
+          "id": "ending_player_leader",
+          "name": "Новый Вождь",
+          "conditions": ["won_challenge"],
+          "outcome": "Игрок — лидер Aldecaldos. Собственный путь.",
+          "rewards": {"credits":40000,"clan_control":"aldecaldos","legendary":true},
+          "world": "Aldecaldos под управлением игрока"
+        },
+        {
+          "id": "ending_compromise",
+          "name": "Компромисс",
+          "conditions": ["dual_leadership","negotiated_terms"],
+          "outcome": "Саул и Панам вместе. Клан силён, автономен и работает с корпо.",
+          "rewards": {"credits":45000,"aldecaldos_unity":true,"best_outcome":true},
+          "world": "Aldecaldos — образец для других кланов"
+        },
+        {
+          "id": "ending_destroyed",
+          "name": "Конец Aldecaldos",
+          "conditions": ["wraiths_won","clan_scattered"],
+          "outcome": "Wraiths уничтожили клан. Выжившие рассеяны.",
+          "rewards": {"credits":5000,"aldecaldos":"destroyed"},
+          "world": "Aldecaldos больше нет"
+        }
+      ],
+      "consequences": {
+        "character_arcs": [
+          "Саул уходит на покой (если player_leader)",
+          "Панам становится легендой (если free_nomads)",
+          "Саул и Панам мирятся (если compromise)",
+          "Семья Миллера отомщена (если revenge_successful)"
+        ],
+        "regional_impact": [
+          "Badlands безопаснее (если wraiths_defeated)",
+          "Biotechnica расширяется (если corporate_deal)",
+          "Новые земли освоены (если panam_migration)"
+        ]
+      },
+      "difficulty": "hard",
+      "tier": 4,
+      "cultural_depth": "extreme",
+      "themes": ["family","freedom","survival","tradition_vs_change"]
+    },
+    {
+      "questId": "REGIONAL-001-PACIFICA-WAR",
+      "name": "Война за Pacifica",
+      "factions": ["Voodoo_Boys","Haitian_Locals","NCPD","Corpo_Developers"],
+      "region": "Pacifica",
+      "characters": {
+        "voodoo": {
+          "id": "npc-maman-brigitte",
+          "name": "Маман Бриджит",
+          "role": "Лидер Voodoo Boys",
+          "goal": "Защитить Pacifica от корпораций"
+        },
+        "locals": {
+          "id": "npc-padre-ibarra",
+          "name": "Падре Ибарра",
+          "role": "Лидер местной общины",
+          "need": "Инфраструктура, но сохранение культуры"
+        },
+        "ncpd": {
+          "id": "npc-captain-jenkins",
+          "name": "Капитан Дженкинс",
+          "role": "Командир зоны Pacifica",
+          "goal": "Установить закон и порядок"
+        },
+        "corpo": {
+          "id": "npc-exec-watanabe",
+          "name": "Исполнительный директор Ватанабе",
+          "corporation": "Petrochem",
+          "plan": "Джентрификация Pacifica, выселение бедных"
+        },
+        "player": {
+          "role": "Фиксер или активист",
+          "power": "Может изменить судьбу целого района"
+        }
+      },
+      "synopsis": "Pacifica — заброшенный район. Четыре силы борются за контроль: Voodoo Boys (защита автономии), местные жители (улучшение жизни), NCPD (закон), корпорации (прибыль). Игрок может решить, кто победит.",
+      "branches": {
+        "main_paths": [
+          "path_support_voodoo_autonomy",
+          "path_support_locals_reform",
+          "path_support_ncpd_law",
+          "path_support_corpo_development",
+          "path_create_coalition"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_ncpd_raid",
+            "moment": "NCPD планирует рейд на церковь Voodoo Boys",
+            "choices": [
+              {
+                "id": "warn_voodoo",
+                "text": "Предупредить Voodoo Boys",
+                "outcome": "Засада на NCPD. Война эскалирует."
+              },
+              {
+                "id": "support_ncpd",
+                "text": "Помочь NCPD в рейде",
+                "outcome": "Voodoo Boys ослаблены. Locals недовольны."
+              },
+              {
+                "id": "negotiate_standoff",
+                "text": "Организовать переговоры",
+                "skillCheck": {"attr":"COOL","skill":"Mediation","threshold":13},
+                "outcome": "Временное перемирие."
+              }
+            ]
+          },
+          {
+            "id": "decision_corpo_offer",
+            "moment": "Petrochem предлагает $50M на развитие Pacifica",
+            "catch": "Местные должны выселиться",
+            "choices": [
+              {
+                "id": "accept_development",
+                "text": "Принять деньги корпорации",
+                "outcome": "Генрификация. Старые жители выселены."
+              },
+              {
+                "id": "reject_preserve",
+                "text": "Отвергнуть, сохранить общину",
+                "outcome": "Pacifica остаётся бедной, но аутентичной."
+              },
+              {
+                "id": "negotiate_inclusive",
+                "text": "Выторговать включающее развитие",
+                "skillCheck": {"attr":"INT","skill":"Economics","threshold":14},
+                "outcome": "Развитие + сохранение жителей. Лучший исход."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_voodoo_republic",
+          "name": "Республика Voodoo",
+          "conditions": ["voodoo_victory","ncpd_expelled"],
+          "outcome": "Pacifica — автономная зона под контролем Voodoo Boys.",
+          "world": "Анклав хакеров. NCPD не заходит."
+        },
+        {
+          "id": "ending_inclusive_development",
+          "name": "Развитие для Всех",
+          "conditions": ["negotiated_inclusive","coalition_formed"],
+          "outcome": "Pacifica развивается. Жители остались. Культура сохранена.",
+          "world": "Модель для других районов",
+          "best_ending": true
+        },
+        {
+          "id": "ending_gentrification",
+          "name": "Джентрификация",
+          "conditions": ["accepted_corpo","locals_evicted"],
+          "outcome": "Pacifica — элитный район. Старые жители бездомны.",
+          "world": "Прогресс ценой людей"
+        },
+        {
+          "id": "ending_police_state",
+          "name": "Полицейское Государство",
+          "conditions": ["ncpd_victory","voodoo_destroyed"],
+          "outcome": "Pacifica под жёстким контролем NCPD.",
+          "world": "Безопасно, но репрессивно"
+        }
+      ],
+      "difficulty": "extreme",
+      "tier": 5,
+      "political_complexity": "extreme",
+      "affects_thousands": true
+    }
+  ]
+}
+

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="046-create-combat-log-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="combat_log"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="combat_log">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="combat_session_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="round" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action_order" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_id" type="VARCHAR(100)"/>
+            <column name="action_type" type="VARCHAR(50)"/>
+            <column name="target_id" type="VARCHAR(100)"/>
+            <column name="message" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="damage_dealt" type="INT"/>
+            <column name="healing_done" type="INT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="combat_log"
+                baseColumnNames="combat_session_id"
+                constraintName="fk_combat_log_session"
+                referencedTableName="combat_sessions"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="combat_log" indexName="idx_combat_log_session">
+            <column name="combat_session_id"/>
+        </createIndex>
+        <createIndex tableName="combat_log" indexName="idx_combat_log_round">
+            <column name="round"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="combat_log"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

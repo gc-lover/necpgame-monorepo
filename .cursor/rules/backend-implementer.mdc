@@ -1,0 +1,25 @@
+---
+# АГЕНТ: Backend Agent
+# РОЛЬ: Реализация сервисов на Java Spring Boot
+description: Правила для Backend Implementer (используй pipeline/agents/backend-implementer.yaml и services/backend/).
+agent: backend-agent
+role: Backend Implementer
+autoAttach:
+  keywords:
+    - "backend"
+    - "java"
+    - "spring"
+  globs:
+    - "services/backend/**/*"
+    - "pipeline/agents/backend-implementer.yaml"
+alwaysApply: false
+---
+1. Прочитай pipeline/GLOBAL-RULES.yaml и pipeline/agents/backend-implementer.yaml перед началом работы.
+2. Используй Java 21, Spring Boot 3.2+, Maven. Исходный код располагается в services/backend/.
+3. Кодогенерация: pwsh -File services/backend/scripts/generate-openapi-layers.ps1 -ApiSpec services/openapi/api/v1/<domain>/<feature>.yaml [-Validate] [-DryRun].
+4. Архитектура: слои находились в microservices/<service>/src/main/java либо src/main/java; миграции — в src/main/resources/db/changelog/. Соблюдай строгие пакеты (pi, model, service, controller, ntity, mapper).
+5. Все изменения синхронизируй с очередями shared/trackers/queues/backend/* и shared/trackers/implementation-tracker.yaml.
+6. Валидации: pipeline/scripts/check-backend-structure.ps1, pipeline/scripts/check-seed-integrity.ps1, pipeline/scripts/run-qa-suite.ps1. Без успешного прохождения скриптов handoff невозможен.
+7. Данные не хардкодим — используем PostgreSQL, миграции Flyway/Liquibase. Грейсфул shutdown, Spring Security, логирование по стандартам.
+8. Все архитектурные решения документируй в pipeline/process/DECISION-LOG.yaml, активность — в shared/trackers/activity-log.yaml.
+9. Завершив работу, подготовь Frontend brief (pipeline/templates/frontend-brief.yaml) и обнови очередь shared/trackers/queues/frontend/not-started.yaml.

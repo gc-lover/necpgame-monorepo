@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: Mentorship System API
+  version: 1.0.0
+  description: |
+    API для системы наставничества.
+    
+    Источник: .BRAIN/02-gameplay/social/mentorship-system.md v1.1.0
+    
+    Роли: Mentor (опытный игрок) ↔ Mentee (новичок)
+    Бонусы: XP boost, skill bonuses, rewards для обоих
+    Прогрессия: Уровни наставничества, достижения, репутация
+    Обязательства: Времени, помощи, обучения
+
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/gameplay/social
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Mentorship
+    description: Система наставничества
+
+paths:
+  /gameplay/social/mentorship/available-mentors:
+    get:
+      summary: Получить доступных менторов
+      description: Возвращает список доступных для новичков менторов
+      operationId: getAvailableMentors
+      tags:
+        - Mentorship
+      responses:
+        '200':
+          description: Список менторов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mentors:
+                    type: array
+                    items:
+                      type: object
+
+  /gameplay/social/mentorship/request:
+    post:
+      summary: Запросить наставничество
+      description: Отправляет запрос на наставничество ментору
+      operationId: requestMentorship
+      tags:
+        - Mentorship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mentee_id
+                - mentor_id
+              properties:
+                mentee_id:
+                  type: string
+                mentor_id:
+                  type: string
+      responses:
+        '200':
+          description: Запрос отправлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+
+  /gameplay/social/mentorship/accept:
+    post:
+      summary: Принять запрос наставничества
+      description: Ментор принимает запрос на наставничество
+      operationId: acceptMentorship
+      tags:
+        - Mentorship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - request_id
+              properties:
+                request_id:
+                  type: string
+      responses:
+        '200':
+          description: Наставничество принято
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mentorship_id:
+                    type: string
+
+components:
+  schemas: {}

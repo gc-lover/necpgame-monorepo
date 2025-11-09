@@ -1,0 +1,538 @@
+openapi: 3.0.3
+info:
+  title: Lore Database API
+  version: 1.0.0
+  description: |
+    API для детальной базы данных лора.
+    
+    Функционал:
+    - Cities detailed (Night City districts, World cities)
+    - Factions detailed (30 gangs, corporations, unique factions)
+    - Technology detailed (Net architecture, Blackwall)
+    - Timeline detailed (events 2020-2093)
+    - Events detailed (Fifth Corporate War)
+    - Culture detailed (Cyberpunk culture)
+    - Combat abilities (active, passive)
+    - Enemy AI (basic, advanced)
+    
+    Охватывает 51+ lore документ:
+    - 6 cities
+    - 30 factions
+    - 3 technology
+    - 6 timeline
+    - 3 events
+    - 1 culture
+    - 4 combat
+    
+    Источники: .BRAIN/03-lore/ (51 detailed documents)
+
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/lore
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Cities
+    description: Детальная информация о городах
+  - name: Factions
+    description: Детальная информация о фракциях
+  - name: Technology
+    description: Технологии мира
+  - name: Timeline
+    description: Детальная timeline
+  - name: Events
+    description: Исторические события
+
+paths:
+  /lore/database/cities:
+    get:
+      summary: Получить список городов
+      operationId: getCitiesDatabase
+      tags: [Cities]
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: База городов
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CityEntry'
+
+  /lore/database/cities/night-city/districts:
+    get:
+      summary: Получить районы Night City
+      operationId: getNightCityDistricts
+      tags: [Cities]
+      responses:
+        '200':
+          description: Районы Night City
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  districts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DistrictDetailed'
+
+  /lore/database/cities/{city_id}/timeline:
+    get:
+      summary: Получить timeline города
+      operationId: getCityTimeline
+      tags: [Cities]
+      parameters:
+        - name: city_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Timeline города
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  city_id:
+                    type: string
+                  timeline:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CityTimelineEntry'
+
+  /lore/database/factions/detailed:
+    get:
+      summary: Получить детальную базу фракций
+      operationId: getFactionsDatabase
+      tags: [Factions]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [GANG, CORPORATION, GOVERNMENT, UNIQUE]
+        - name: region
+          in: query
+          schema:
+            type: string
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: База фракций
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FactionDetailed'
+
+  /lore/database/factions/{faction_id}/history:
+    get:
+      summary: Получить историю фракции
+      operationId: getFactionHistory
+      tags: [Factions]
+      parameters:
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: История фракции
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  faction_id:
+                    type: string
+                  founded_year:
+                    type: integer
+                  key_events:
+                    type: array
+                    items:
+                      type: string
+                  leaders_history:
+                    type: array
+                    items:
+                      type: string
+                  wars_participated:
+                    type: array
+                    items:
+                      type: string
+
+  /lore/database/technology/net:
+    get:
+      summary: Получить информацию о Net
+      operationId: getNetArchitecture
+      tags: [Technology]
+      responses:
+        '200':
+          description: Net architecture
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  architecture_layers:
+                    type: array
+                    items:
+                      type: string
+                  protocols:
+                    type: array
+                    items:
+                      type: string
+                  security_levels:
+                    type: array
+                    items:
+                      type: string
+                  blackwall:
+                    $ref: '#/components/schemas/BlackwallInfo'
+
+  /lore/database/technology/blackwall:
+    get:
+      summary: Получить информацию о Blackwall
+      operationId: getBlackwallInfo
+      tags: [Technology]
+      responses:
+        '200':
+          description: Blackwall information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlackwallInfo'
+
+  /lore/database/timeline/detailed:
+    get:
+      summary: Получить детальную timeline
+      operationId: getDetailedTimeline
+      tags: [Timeline]
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [2020-2030, 2030-2040, 2040-2060, 2060-2077, 2077-2093]
+      responses:
+        '200':
+          description: Детальная timeline
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: string
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimelineEventDetailed'
+
+  /lore/database/events/fifth-corporate-war:
+    get:
+      summary: Получить информацию о Пятой Корпоративной Войне
+      operationId: getFifthCorporateWar
+      tags: [Events]
+      responses:
+        '200':
+          description: Fifth Corporate War
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  war_period:
+                    type: string
+                  participants:
+                    type: array
+                    items:
+                      type: string
+                  battles:
+                    type: array
+                    items:
+                      type: string
+                  heroes:
+                    type: array
+                    items:
+                      type: string
+                  victims:
+                    type: array
+                    items:
+                      type: string
+                  outcome:
+                    type: string
+
+  /lore/database/combat/abilities:
+    get:
+      summary: Получить каталог боевых способностей
+      operationId: getCombatAbilitiesCatalog
+      tags: [Technology]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, PASSIVE]
+      responses:
+        '200':
+          description: Каталог способностей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  abilities:
+                    type: array
+                    items:
+                      type: object
+
+  /lore/database/search:
+    get:
+      summary: Поиск по всей lore database
+      operationId: searchLoreDatabase
+      tags: [Cities]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [CITIES, FACTIONS, TECHNOLOGY, TIMELINE, EVENTS, CULTURE]
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    CityEntry:
+      type: object
+      properties:
+        city_id:
+          type: string
+        name:
+          type: string
+        region:
+          type: string
+        population_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationRecord'
+        key_districts:
+          type: array
+          items:
+            type: string
+        controlling_factions_history:
+          type: array
+          items:
+            type: string
+        major_events:
+          type: array
+          items:
+            type: string
+
+    DistrictDetailed:
+      type: object
+      properties:
+        district_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        danger_level:
+          type: string
+        controlling_faction:
+          type: string
+        population:
+          type: integer
+        key_locations:
+          type: array
+          items:
+            type: string
+        timeline_changes:
+          type: array
+          items:
+            type: string
+
+    FactionDetailed:
+      type: object
+      properties:
+        faction_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        founded:
+          type: integer
+        ideology:
+          type: string
+        resources:
+          type: array
+          items:
+            type: string
+        territories:
+          type: array
+          items:
+            type: string
+        leadership:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeadershipRecord'
+        allies:
+          type: array
+          items:
+            type: string
+        enemies:
+          type: array
+          items:
+            type: string
+        notable_operations:
+          type: array
+          items:
+            type: string
+
+    BlackwallInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        created_year:
+          type: integer
+        purpose:
+          type: string
+        structure:
+          type: array
+          items:
+            type: string
+        known_breaches:
+          type: array
+          items:
+            type: string
+        guardians:
+          type: array
+          items:
+            type: string
+
+    TimelineEventDetailed:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+          nullable: true
+        event_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        participants:
+          type: array
+          items:
+            type: string
+        locations:
+          type: array
+          items:
+            type: string
+        consequences:
+          type: array
+          items:
+            type: string
+        related_quests:
+          type: array
+          items:
+            type: string
+
+    PopulationRecord:
+      type: object
+      properties:
+        year:
+          type: integer
+        population:
+          type: integer
+
+    LeadershipRecord:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        start_year:
+          type: integer
+          nullable: true
+        end_year:
+          type: integer
+          nullable: true
+
+    CityTimelineEntry:
+      type: object
+      properties:
+        year:
+          type: integer
+        events:
+          type: array
+          items:
+            type: string
+        population:
+          type: integer
+          nullable: true
+        controlling_faction:
+          type: string
+          nullable: true
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+

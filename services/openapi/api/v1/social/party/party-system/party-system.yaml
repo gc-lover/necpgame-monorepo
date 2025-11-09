@@ -1,0 +1,491 @@
+# Target Architecture:
+# - Microservice: social-service (port 8084)
+# - API Base: /api/v1/social/party
+# - Dependencies: auth-service, friend-service, matchmaking-service, combat-service, loot-service, quest-service, notification-service, realtime-service, chat-service
+# - Frontend Module: modules/social/party (usePartyStore)
+# - UI: PartyPanel, InviteDialog, LootSettingsModal, ReadyCheckBanner, PartyMemberCard, PartyQuestProgress
+# - Forms: PartyCreateForm, PartyInviteForm, LootSettingsForm, VoteKickForm
+# - Hooks: useParty, usePartyInvites, useLootSettings, useReadyCheck, usePartyQueue
+
+openapi: 3.0.3
+info:
+  title: Party System API
+  description: "Управление игровыми группами: создание, приглашения, роли, лут, очереди и синхронизация квестов."
+  version: 1.0.0
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social/party
+    package: com.necpgame.socialservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Party
+    description: Жизненный цикл и настройки группы
+  - name: Members
+    description: Управление участниками и приглашениями
+  - name: Loot
+    description: Настройки и распределение лута
+  - name: Coordination
+    description: Ready-check, голосования и очереди
+  - name: Quests
+    description: Совместный прогресс квестов
+paths:
+  /social/party:
+    post:
+      tags: [Party]
+      summary: Создать новую party
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/PartyCreateRequest' }
+            examples:
+              createParty:
+                $ref: './party-examples.yaml#/components/examples/CreateParty'
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartySummary' }
+        '400':
+          description: Некорректные параметры или лимит групп
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    get:
+      tags: [Party]
+      summary: Получить состояние party
+      responses:
+        '200':
+          description: Детали группы
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyDetail' }
+              examples:
+                partyDetail:
+                  $ref: './party-examples.yaml#/components/examples/PartyDetail'
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../../shared/common/responses.yaml#/components/responses/NotFound' }
+    patch:
+      tags: [Party]
+      summary: Обновить настройки party
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/PartyUpdateRequest' }
+      responses:
+        '200':
+          description: "Настройки обновлены"
+        '400':
+          description: "Недопустимое изменение"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    delete:
+      tags: [Party]
+      summary: Распустить группу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/PartyDisbandRequest' }
+      responses:
+        '202':
+          description: "Распуск инициирован"
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '403': { $ref: '../../../shared/common/responses.yaml#/components/responses/Forbidden' }
+  /social/party/{partyId}/members:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    get:
+      tags: [Members]
+      summary: Список участников party
+      responses:
+        '200':
+          description: Участники и их роли
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyMembersResponse' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    post:
+      tags: [Members]
+      summary: Добавить участника (по коду или автоматический join)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/PartyMemberAddRequest' }
+      responses:
+        '202':
+          description: "Добавление инициировано"
+        '400':
+          description: "Группа заполнена"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/members/{memberId}:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+      - $ref: './party-components.yaml#/components/parameters/MemberId'
+    patch:
+      tags: [Members]
+      summary: Обновить роль или лидера участника
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/PartyMemberUpdateRequest' }
+      responses:
+        '200':
+          description: "Параметры участника обновлены"
+        '400':
+          description: "Недопустимое изменение роли"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    delete:
+      tags: [Members]
+      summary: Исключить участника или выйти
+      responses:
+        '204':
+          description: "Участник удалён"
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/invites:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    get:
+      tags: [Members]
+      summary: Получить активные приглашения
+      responses:
+        '200':
+          description: Приглашения группы
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyInvitesResponse' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    post:
+      tags: [Members]
+      summary: Отправить приглашение
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/PartyInviteRequest' }
+            examples:
+              inviteFriend:
+                $ref: './party-examples.yaml#/components/examples/PartyInviteRequest'
+      responses:
+        '201':
+          description: "Приглашение создано"
+        '400':
+          description: "Лимит приглашений"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/invites/{inviteId}/accept:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/InviteId'
+    post:
+      tags: [Members]
+      summary: Принять приглашение
+      responses:
+        '200':
+          description: "Игрок присоединился"
+        '400':
+          description: "Приглашение недействительно"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/invites/{inviteId}/decline:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/InviteId'
+    post:
+      tags: [Members]
+      summary: Отклонить приглашение
+      responses:
+        '200':
+          description: "Приглашение отклонено"
+        '400':
+          description: "Приглашение недействительно"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/loot:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    get:
+      tags: [Loot]
+      summary: Получить текущие настройки лута
+      responses:
+        '200':
+          description: Настройки распределения
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/LootSettings' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    post:
+      tags: [Loot]
+      summary: Обновить настройки лута
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/LootSettingsUpdateRequest' }
+      responses:
+        '200':
+          description: "Настройки обновлены"
+        '400':
+          description: "Недопустимые параметры"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/loot/distribute:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    post:
+      tags: [Loot]
+      summary: Распределить предмет лута
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/LootDistributeRequest' }
+            examples:
+              epicLoot:
+                $ref: './party-examples.yaml#/components/examples/LootDistributeRequest'
+      responses:
+        '200':
+          description: "Предмет распределён"
+        '400':
+          description: "Голосование не завершено"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/ready-check:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    post:
+      tags: [Coordination]
+      summary: Запустить ready-check
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/ReadyCheckRequest' }
+      responses:
+        '200':
+          description: Ready-check запущен
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/ReadyCheck' }
+        '400':
+          description: "Ready-check уже активен"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/ready-check/respond:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    post:
+      tags: [Coordination]
+      summary: Ответить на ready-check
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/ReadyCheckResponseRequest' }
+      responses:
+        '200':
+          description: "Ответ зафиксирован"
+        '400':
+          description: "Ready-check не активен"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/vote-kick:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    post:
+      tags: [Coordination]
+      summary: Инициировать vote-kick
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/VoteKickRequest' }
+      responses:
+        '200':
+          description: "Голосование запущено"
+        '400':
+          description: "Нельзя кикнуть цель"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/queue:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    post:
+      tags: [Coordination]
+      summary: Поставить party в очередь матчмейкинга
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/PartyQueueRequest' }
+      responses:
+        '202':
+          description: "Очередь начата"
+        '400':
+          description: "Конфликт состояния группы"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    delete:
+      tags: [Coordination]
+      summary: Отменить очередь
+      responses:
+        '204':
+          description: "Очередь отменена"
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/quests:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    get:
+      tags: [Quests]
+      summary: Совместный прогресс квестов
+      responses:
+        '200':
+          description: Статус квестов и общие задачи
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyQuestsResponse' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/quests/{questId}/sync:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+      - $ref: './party-components.yaml#/components/parameters/QuestId'
+    post:
+      tags: [Quests]
+      summary: Синхронизировать шаг квеста
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './party-components.yaml#/components/schemas/QuestSyncRequest' }
+      responses:
+        '200':
+          description: "Прогресс синхронизирован"
+        '400':
+          description: "Квест отсутствует в party"
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/{partyId}/status:
+    parameters:
+      - $ref: './party-components.yaml#/components/parameters/PartyId'
+    get:
+      tags: [Party]
+      summary: Получить статус party
+      responses:
+        '200':
+          description: Состояние группы и очереди
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartyStatus' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /social/party/search:
+    get:
+      tags: [Party]
+      summary: Поиск открытых групп
+      parameters:
+        - in: query
+          name: visibility
+          schema: { type: string, enum: [PUBLIC, FRIENDS] }
+        - in: query
+          name: contentType
+          schema: { type: string }
+        - in: query
+          name: requiredRole
+          schema: { type: string }
+        - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Найденные группы
+          content:
+            application/json:
+              schema: { $ref: './party-components.yaml#/components/schemas/PartySearchResponse' }
+        '401': { $ref: '../../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+
+x-websocket:
+  url: wss://api.necp.game/v1/party/{partyId}/stream
+  description: Realtime события party
+  parameters:
+    - name: partyId
+      in: path
+      required: true
+      schema: { type: string }
+  messages:
+    memberJoined:
+      summary: Участник присоединился
+      payload: { $ref: './party-components.yaml#/components/schemas/PartyMemberEvent' }
+    memberLeft:
+      summary: Участник покинул группу
+      payload: { $ref: './party-components.yaml#/components/schemas/PartyMemberEvent' }
+    lootUpdated:
+      summary: Настройки или события лута
+      payload: { $ref: './party-components.yaml#/components/schemas/LootEvent' }
+    readyCheck:
+      summary: Обновление ready-check
+      payload: { $ref: './party-components.yaml#/components/schemas/ReadyCheck' }
+    queueStatus:
+      summary: Обновление очереди
+      payload: { $ref: './party-components.yaml#/components/schemas/PartyQueueStatus' }
+    questSync:
+      summary: Синхронизация квеста
+      payload: { $ref: './party-components.yaml#/components/schemas/QuestSyncEvent' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+    LeaderScope: { $ref: '../../../shared/common/security.yaml#/components/securitySchemes/LeaderScope' }
+  parameters:
+    PartyId: { $ref: './party-components.yaml#/components/parameters/PartyId' }
+    MemberId: { $ref: './party-components.yaml#/components/parameters/MemberId' }
+    InviteId: { $ref: './party-components.yaml#/components/parameters/InviteId' }
+  schemas:
+    PartyDetail: { $ref: './party-components.yaml#/components/schemas/PartyDetail' }
+    PartyError: { $ref: './party-components.yaml#/components/schemas/PartyError' }
+    PartyStatus: { $ref: './party-components.yaml#/components/schemas/PartyStatus' }
+  examples:
+    CreateParty: { $ref: './party-examples.yaml#/components/examples/CreateParty' }
+    PartyDetail: { $ref: './party-examples.yaml#/components/examples/PartyDetail' }
+    LootDistributeRequest: { $ref: './party-examples.yaml#/components/examples/LootDistributeRequest' }
+    PartyInviteRequest: { $ref: './party-examples.yaml#/components/examples/PartyInviteRequest' }
+

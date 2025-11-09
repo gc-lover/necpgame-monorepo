@@ -1,0 +1,143 @@
+status_lifecycle:
+  overview: "Допустимые переходы статусов для документации, API, backend, frontend, QA и DevOps."
+  trackers:
+    - name: concept_review
+      flow:
+        - from: queued
+          to: in_progress
+        - from: in_progress
+          to: review
+        - from: review
+          to: completed
+        - from: in_progress
+          to: blocked
+        - from: blocked
+          to: in_progress
+      notes:
+        - "concept-approved фиксируется при переходе в completed."
+    - name: documentation
+      flow:
+        - from: draft
+          to: review
+        - from: review
+          to: approved
+        - from: approved
+          to: archived
+        - from: review
+          to: needs-work
+        - from: needs-work
+          to: review
+      notes:
+        - "Из needs-work документ возвращается в review после доработки."
+        - "archived доступен только из approved."
+    - name: api_readiness
+      flow:
+        - from: needs-work
+          to: in-review
+        - from: in-review
+          to: needs-work
+        - from: in-review
+          to: ready
+        - from: ready
+          to: archived
+        - from: blocked
+          to: in-review
+        - from: in-review
+          to: blocked
+      notes:
+        - "blocked снимается при закрытии внешней зависимости."
+        - "ready автоматически инициирует создание API задачи."
+    - name: api_implementation
+      flow:
+        - from: not_started
+          to: in_progress
+        - from: in_progress
+          to: needs_review
+        - from: needs_review
+          to: completed
+        - from: completed
+          to: archived
+        - from: in_progress
+          to: blocked
+        - from: blocked
+          to: in_progress
+      notes:
+        - "needs_review — обязательный этап internal review перед сдачей backend агенту."
+    - name: backend_implementation
+      flow:
+        - from: not_started
+          to: in_progress
+        - from: in_progress
+          to: needs_review
+        - from: needs_review
+          to: completed
+        - from: completed
+          to: archived
+        - from: in_progress
+          to: blocked
+        - from: blocked
+          to: in_progress
+      notes:
+        - "needs_review сопровождается чеклистом backend-to-frontend."
+    - name: frontend_implementation
+      flow:
+        - from: not_started
+          to: in_progress
+        - from: in_progress
+          to: needs_review
+        - from: needs_review
+          to: completed
+        - from: completed
+          to: archived
+        - from: in_progress
+          to: blocked
+        - from: blocked
+          to: in_progress
+      notes:
+        - "Переход в in_progress разрешён только при backend.completed."
+    - name: qa
+      flow:
+        - from: not_started
+          to: planned
+        - from: planned
+          to: executing
+        - from: executing
+          to: completed
+        - from: completed
+          to: archived
+        - from: planned
+          to: blocked
+        - from: executing
+          to: blocked
+        - from: blocked
+          to: planned
+        - from: blocked
+          to: executing
+      notes:
+        - "planned фиксирует подготовку тест-планов и окружений."
+        - "executing подразумевает фактический прогон тестов."
+    - name: devops_release
+      flow:
+        - from: not_started
+          to: in_progress
+        - from: in_progress
+          to: ready_to_release
+        - from: ready_to_release
+          to: released
+        - from: released
+          to: archived
+        - from: in_progress
+          to: blocked
+        - from: ready_to_release
+          to: blocked
+        - from: blocked
+          to: in_progress
+        - from: blocked
+          to: ready_to_release
+      notes:
+        - "ready_to_release означает, что все артефакты подготовлены и проверены QA."
+        - "released фиксирует дату и версию релиза."
+  validation:
+    - "Недопустимые переходы фиксируются в process/DECISION-LOG.yaml."
+    - "Используй scripts/status-validator.ps1 для проверки соответствия трекеров."
+

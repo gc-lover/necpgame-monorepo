@@ -1,0 +1,86 @@
+package com.necpgame.adminservice.model;
+
+import java.net.URI;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.springframework.lang.Nullable;
+import org.openapitools.jackson.nullable.JsonNullable;
+import java.time.OffsetDateTime;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+
+import java.util.*;
+import jakarta.annotation.Generated;
+
+/**
+ * AddRouteRequestRateLimit
+ */
+
+@JsonTypeName("addRoute_request_rate_limit")
+
+public class AddRouteRequestRateLimit {
+
+  private @Nullable Integer requestsPerMinute;
+
+  public AddRouteRequestRateLimit requestsPerMinute(@Nullable Integer requestsPerMinute) {
+    this.requestsPerMinute = requestsPerMinute;
+    return this;
+  }
+
+  /**
+   * Get requestsPerMinute
+   * @return requestsPerMinute
+   */
+  
+  @Schema(name = "requests_per_minute", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("requests_per_minute")
+  public @Nullable Integer getRequestsPerMinute() {
+    return requestsPerMinute;
+  }
+
+  public void setRequestsPerMinute(@Nullable Integer requestsPerMinute) {
+    this.requestsPerMinute = requestsPerMinute;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AddRouteRequestRateLimit addRouteRequestRateLimit = (AddRouteRequestRateLimit) o;
+    return Objects.equals(this.requestsPerMinute, addRouteRequestRateLimit.requestsPerMinute);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(requestsPerMinute);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class AddRouteRequestRateLimit {\n");
+    sb.append("    requestsPerMinute: ").append(toIndentedString(requestsPerMinute)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+}
+

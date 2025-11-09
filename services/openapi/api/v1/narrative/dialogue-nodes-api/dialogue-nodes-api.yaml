@@ -1,0 +1,478 @@
+openapi: 3.0.3
+info:
+  title: Dialogue Nodes API
+  description: |
+    API для работы с диалоговыми узлами квестов (main и side quests).
+    Поддерживает dialogue trees, skill checks, branches, consequences.
+    
+    **Основано на:**
+    - Main quest D&D nodes (9 документов)
+    - Side quests expanded (6 периодов)
+    - Specific quests (SQ/MQ)
+    
+    **Используется Quest Engine для:**
+    - State management
+    - Dialogue execution
+    - Branch resolution
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+
+  x-microservice:
+    name: narrative-service
+    port: 8087
+    domain: narrative
+    base-path: /api/v1/narrative
+    package: com.necpgame.narrativeservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Main Quest Nodes
+    description: Dialogue nodes для основных квестов
+  - name: Side Quest Nodes
+    description: Dialogue nodes для побочных квестов
+  - name: Dialogue Execution
+    description: Выполнение dialogue choices
+
+paths:
+  /narrative/main-quests/{quest_id}/nodes:
+    get:
+      tags:
+        - Main Quest Nodes
+      summary: Получить все dialogue nodes квеста
+      description: |
+        Возвращает все диалоговые узлы (nodes) для указанного main quest.
+        Включает dialogue options, skill checks, branches.
+      operationId: getMainQuestNodes
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "001-first-steps"
+        - name: player_state
+          in: query
+          description: Current player state (для фильтрации доступных nodes)
+          schema:
+            type: string
+            example: "intro_complete"
+      responses:
+        '200':
+          description: Dialogue nodes загружены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quest_id:
+                    type: string
+                    example: "001-first-steps"
+                  nodes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DialogueNode'
+                  current_node:
+                    type: string
+                    description: ID текущего active node
+                    example: "node_001"
+        '404':
+          $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+
+  /narrative/main-quests/{quest_id}/node/{node_id}/execute:
+    post:
+      tags:
+        - Dialogue Execution
+      summary: Выполнить dialogue choice
+      description: |
+        Выполняет выбор игрока в dialogue node.
+        Обрабатывает skill checks, обновляет state, возвращает consequences.
+      operationId: executeDialogueNode
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - choice_id
+                - character_id
+              properties:
+                choice_id:
+                  type: string
+                  description: ID выбранного dialogue choice
+                  example: "choice_persuade"
+                character_id:
+                  type: string
+                  description: ID персонажа игрока
+                  example: "char_123"
+                skill_modifier:
+                  type: integer
+                  description: Модификатор навыка (если применим)
+                  example: 5
+      responses:
+        '200':
+          description: Choice выполнен успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DialogueExecutionResult'
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+
+  /narrative/main-quests/{quest_id}/branches:
+    get:
+      tags:
+        - Main Quest Nodes
+      summary: Получить доступные ветки квеста
+      description: |
+        Возвращает все доступные branches на основе player choices и state.
+      operationId: getQuestBranches
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Branches загружены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quest_id:
+                    type: string
+                  branches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestBranch'
+
+  /narrative/side-quests/period/{period}/nodes:
+    get:
+      tags:
+        - Side Quest Nodes
+      summary: Получить side quests по периоду
+      description: |
+        Возвращает dialogue nodes для side quests определенного временного периода.
+        
+        **Периоды:**
+        - 2020-2030: Collapse era
+        - 2030-2040: Rebuilding
+        - 2040-2060: Time of the Red
+        - 2060-2077: Corporate control
+        - 2077-2088: Fifth War
+        - 2088-2093: Present day
+      operationId: getSideQuestsByPeriod
+      parameters:
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: ["2020-2030", "2030-2040", "2040-2060", "2060-2077", "2077-2088", "2088-2093"]
+      responses:
+        '200':
+          description: Side quests загружены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: string
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SideQuestInfo'
+
+  /narrative/quests/{quest_id}/dialogue-tree:
+    get:
+      tags:
+        - Dialogue Execution
+      summary: Получить полное dialogue tree
+      description: |
+        Возвращает полное дерево диалогов для квеста (main или side).
+        Включает все nodes, choices, branches, skill checks.
+      operationId: getDialogueTree
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dialogue tree загружен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DialogueTree'
+
+components:
+  schemas:
+    DialogueNode:
+      type: object
+      required:
+        - node_id
+        - node_type
+        - content
+      properties:
+        node_id:
+          type: string
+          description: Уникальный ID node
+          example: "node_001"
+        node_type:
+          type: string
+          enum: ["dialogue", "skill_check", "branch", "consequence"]
+          description: Тип node
+        content:
+          type: string
+          description: Текст dialogue или описание
+          example: "The fixer looks at you suspiciously..."
+        speaker:
+          type: string
+          description: NPC или персонаж
+          example: "Dex DeShawn"
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueChoice'
+        skill_check:
+          $ref: '#/components/schemas/SkillCheck'
+        consequences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consequence'
+        conditions:
+          type: array
+          description: Условия для показа node
+          items:
+            $ref: '#/components/schemas/NodeCondition'
+
+    DialogueChoice:
+      type: object
+      required:
+        - choice_id
+        - text
+      properties:
+        choice_id:
+          type: string
+          example: "choice_persuade"
+        text:
+          type: string
+          example: "[Persuasion] Trust me, I know what I'm doing."
+        required_skill:
+          type: string
+          description: Навык для skill check
+          example: "persuasion"
+        difficulty_class:
+          type: integer
+          description: DC для D&D check
+          example: 15
+          minimum: 1
+          maximum: 30
+        next_node_id:
+          type: string
+          description: ID следующего node
+          example: "node_002"
+        consequences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consequence'
+
+    SkillCheck:
+      type: object
+      required:
+        - skill
+        - dc
+      properties:
+        skill:
+          type: string
+          description: Название навыка
+          example: "hacking"
+        dc:
+          type: integer
+          description: Difficulty Class
+          example: 18
+          minimum: 1
+          maximum: 30
+        success_node:
+          type: string
+          description: Node при успехе
+          example: "node_success"
+        failure_node:
+          type: string
+          description: Node при провале
+          example: "node_failure"
+        critical_success_node:
+          type: string
+          description: Node при крит. успехе (nat 20)
+          example: "node_crit_success"
+        critical_failure_node:
+          type: string
+          description: Node при крит. провале (nat 1)
+          example: "node_crit_fail"
+
+    Consequence:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: ["reputation", "item", "quest_flag", "relationship", "world_state"]
+          description: Тип последствия
+        value:
+          type: object
+          description: Данные последствия
+          additionalProperties: true
+        description:
+          type: string
+          example: "Dex trusts you more"
+
+    NodeCondition:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum: ["quest_flag", "reputation", "item_owned", "skill_level", "relationship"]
+        value:
+          type: object
+          additionalProperties: true
+
+    QuestBranch:
+      type: object
+      properties:
+        branch_id:
+          type: string
+          example: "corporate_path"
+        branch_name:
+          type: string
+          example: "Corporate Path"
+        description:
+          type: string
+          example: "Side with corporations in the conflict"
+        required_choices:
+          type: array
+          description: Choices которые привели к этой ветке
+          items:
+            type: string
+        consequences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consequence'
+
+    DialogueExecutionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Успешно ли выполнен choice
+        skill_check_result:
+          type: object
+          properties:
+            roll:
+              type: integer
+              description: Результат броска (1-20)
+              example: 17
+            modifier:
+              type: integer
+              description: Модификатор навыка
+              example: 5
+            total:
+              type: integer
+              description: roll + modifier
+              example: 22
+            dc:
+              type: integer
+              description: Difficulty Class
+              example: 15
+            success:
+              type: boolean
+              example: true
+            critical:
+              type: boolean
+              description: Был ли крит (nat 1 или nat 20)
+              example: false
+        next_node_id:
+          type: string
+          description: ID следующего node
+          example: "node_003"
+        consequences:
+          type: array
+          description: Примененные consequences
+          items:
+            $ref: '#/components/schemas/Consequence'
+        dialogue_text:
+          type: string
+          description: Текст ответа NPC
+          example: "Alright, I believe you. Let's do this."
+
+    DialogueTree:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        quest_name:
+          type: string
+        quest_type:
+          type: string
+          enum: ["main", "side", "faction", "random"]
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueNode'
+        starting_node:
+          type: string
+          description: ID стартового node
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestBranch'
+
+    SideQuestInfo:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        quest_name:
+          type: string
+        period:
+          type: string
+        description:
+          type: string
+        difficulty:
+          type: string
+          enum: ["easy", "medium", "hard", "very_hard"]
+        rewards:
+          type: array
+          items:
+            type: string
+        starting_node:
+          type: string
+
+security:
+  - BearerAuth: []
+
+

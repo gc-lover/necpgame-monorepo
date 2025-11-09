@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="096-inventory-management-updates" author="backend-agent">
+
+        <dropUniqueConstraint tableName="character_inventory" constraintName="uk_character_item"/>
+
+        <addColumn tableName="character_inventory">
+            <column name="storage_type" type="VARCHAR(16)" defaultValue="BACKPACK">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="character_inventory">
+            <column name="current_durability" type="INT"/>
+        </addColumn>
+
+        <addColumn tableName="character_inventory">
+            <column name="max_durability" type="INT"/>
+        </addColumn>
+
+        <addColumn tableName="character_inventory">
+            <column name="is_bound" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="character_inventory">
+            <column name="bind_type" type="VARCHAR(20)" defaultValue="NONE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="character_inventory">
+            <column name="bound_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
+
+        <addUniqueConstraint tableName="character_inventory"
+                              columnNames="character_id, slot_position"
+                              constraintName="uk_character_inventory_slot"/>
+
+        <update tableName="character_inventory">
+            <column name="storage_type" value="BACKPACK"/>
+            <where>storage_type IS NULL</where>
+        </update>
+
+        <addColumn tableName="inventory_items">
+            <column name="max_stack_size" type="INT" defaultValue="1"/>
+        </addColumn>
+
+        <addColumn tableName="inventory_items">
+            <column name="bind_on_pickup" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="inventory_items">
+            <column name="bind_on_equip" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="inventory_items">
+            <column name="has_durability" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="inventory_items">
+            <column name="base_durability" type="INT"/>
+        </addColumn>
+
+        <addColumn tableName="character_equipment">
+            <column name="inventory_item_id" type="UUID"/>
+        </addColumn>
+
+        <addForeignKeyConstraint baseTableName="character_equipment"
+                                 baseColumnNames="inventory_item_id"
+                                 referencedTableName="character_inventory"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_character_equipment_inventory"
+                                 onDelete="SET NULL"/>
+
+        <createTable tableName="player_bank_slots">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="player_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slot_index" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_id" type="VARCHAR(100)"/>
+            <column name="quantity" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_durability" type="INT"/>
+            <column name="max_durability" type="INT"/>
+            <column name="is_bound" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bind_type" type="VARCHAR(20)" defaultValue="NONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="player_bank_slots"
+                                 baseColumnNames="player_id"
+                                 referencedTableName="players"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_bank_slots_player"
+                                 onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint baseTableName="player_bank_slots"
+                                 baseColumnNames="item_id"
+                                 referencedTableName="inventory_items"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_bank_slots_item"
+                                 onDelete="SET NULL"/>
+
+        <createIndex tableName="player_bank_slots" indexName="idx_bank_slots_player">
+            <column name="player_id"/>
+        </createIndex>
+
+        <createIndex tableName="player_bank_slots" indexName="idx_bank_slots_player_slot" unique="true">
+            <column name="player_id"/>
+            <column name="slot_index"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+
+

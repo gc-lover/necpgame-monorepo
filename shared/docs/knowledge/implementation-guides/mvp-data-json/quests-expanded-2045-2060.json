@@ -1,0 +1,111 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/side
+---
+
+
+{
+  "period": "2045-2060",
+  "version": "2.1.0",
+  "generated": "2025-11-06T03:40:00Z",
+  "events": [
+    {"id":"ev-2045-01","name":"Обвал рёбер","triggers":["enter_city_core"],"conditions":["time.emergency"],"outcomes":["repair_quest","temporary_shortcut"]},
+    {"id":"ev-2045-02","name":"Сигнал Блэкволла","triggers":["net_deep_dive"],"conditions":["skills.Hacking>=11"],"outcomes":["blackwall_encounter","rare_data"]},
+    {"id":"ev-2045-03","name":"Пакеты номадов","triggers":["wasteland"],"conditions":["time.day"],"outcomes":["raider_ambush","trade_opportunity"]},
+    {"id":"ev-2045-04","name":"Торговец пустоши","triggers":["market_red"],"conditions":["rep.Smugglers>=6"],"outcomes":["black_market_access","discount"]},
+    {"id":"ev-2045-05","name":"Тепловая аномалия","triggers":["corridor_warm"],"conditions":["skills.Tech>=9"],"outcomes":["thermal_leak","repair_bonus"]},
+    {"id":"ev-2045-06","name":"Вирус фермы","triggers":["agri_zone"],"conditions":["rep.Agricorp>=4"],"outcomes":["detox_contract","crop_loss"]},
+    {"id":"ev-2045-07","name":"Штурмовая группа","triggers":["tower_zone"],"conditions":["heat>=50"],"outcomes":["merc_assault","bounty_flag"]},
+    {"id":"ev-2045-08","name":"Термитная атака","triggers":["net_hub"],"conditions":["skills.Hacking>=9"],"outcomes":["counter_hack","trace_risk"]},
+    {"id":"ev-2045-09","name":"Помехи в сети","triggers":["comm_array"],"conditions":["skills.Tech>=8"],"outcomes":["calibration_task","signal_boost"]},
+    {"id":"ev-2045-10","name":"Конвой карго","triggers":["highway"],"conditions":["rep.Logistics>=5"],"outcomes":["escort_contract","ambush_risk"]},
+    {"id":"ev-2045-11","name":"Серый контейнер","triggers":["port_zone"],"conditions":["skills.Stealth>=8"],"outcomes":["smuggler_cache","customs_flag"]},
+    {"id":"ev-2045-12","name":"Буря данных","triggers":["storm_zone"],"conditions":["time.storm"],"outcomes":["data_harvest","equipment_risk"]}
+  ],
+  "lootTablesDetailed": {
+    "Engineer_T3": [
+      {"item":"tech_tool_advanced","chance":0.32,"qty":"1"},
+      {"item":"repair_kit_t3","chance":0.28,"qty":"1-2"},
+      {"item":"blueprint_rare","chance":0.15,"qty":"1"},
+      {"item":"component_core_t3","chance":0.22,"qty":"1"}
+    ],
+    "Gang_T3": [
+      {"item":"rifle_t3","chance":0.18,"qty":"1"},
+      {"item":"combat_stim","chance":0.38,"qty":"1-3"},
+      {"item":"armor_vest_t3","chance":0.24,"qty":"1"},
+      {"item":"keycard_gang","chance":0.12,"qty":"1"}
+    ],
+    "Netwatch_T3": [
+      {"item":"deck_advanced_t3","chance":0.25,"qty":"1"},
+      {"item":"ice_breaker_rare","chance":0.18,"qty":"1"},
+      {"item":"trace_blocker","chance":0.22,"qty":"1"},
+      {"item":"netwatch_badge","chance":0.08,"qty":"1"}
+    ],
+    "Raider_T2": [
+      {"item":"scrap_metal","chance":0.48,"qty":"3-8"},
+      {"item":"smg_t2","chance":0.16,"qty":"1"},
+      {"item":"survival_gear","chance":0.28,"qty":"1-2"}
+    ],
+    "Trader_T2": [
+      {"item":"credits","chance":0.55,"qty":"100-350"},
+      {"item":"trade_goods","chance":0.38,"qty":"2-5"},
+      {"item":"contract_ticket","chance":0.12,"qty":"1"}
+    ],
+    "Mil_T3": [
+      {"item":"assault_rifle_t3","chance":0.22,"qty":"1"},
+      {"item":"heavy_armor_t3","chance":0.28,"qty":"1"},
+      {"item":"mil_tech_rare","chance":0.18,"qty":"1"},
+      {"item":"grenade_pack","chance":0.32,"qty":"2-4"}
+    ],
+    "Lab_T2": [
+      {"item":"chemical_compound","chance":0.42,"qty":"2-4"},
+      {"item":"biodata_chip","chance":0.24,"qty":"1"},
+      {"item":"lab_keycard","chance":0.15,"qty":"1"}
+    ]
+  },
+  "quests": [
+    {
+      "id": "dq-2045-001",
+      "title": "Ребра Города",
+      "tier": 3,
+      "difficulty": "hard",
+      "dialogue": {
+        "start": "r1",
+        "nodes": [
+          {"id":"r1","speaker":"Engineer","text":"Ребро С-14 трещит. Обвал неминуем.","choices":[{"text":"Что нужно?","next":"r2"},{"text":"Сколько времени?","next":"r3"}]},
+          {"id":"r2","speaker":"Engineer","text":"Стабилизатор, инструмент, защита от банд.","choices":[{"text":"Берусь","next":"r4"},{"text":"Опасно","next":"end_fail"}]},
+          {"id":"r3","speaker":"Engineer","text":"Часов шесть. Максимум.","choices":[{"text":"Берусь","next":"r4"}]},
+          {"id":"r4","speaker":"System","text":"Доступ к ребру. Банды в зоне.","choices":[{"text":"Стабилизировать","next":"r5","skillCheck":{"attr":"INT","skill":"Tech","threshold":10}},{"text":"Нанять охрану","next":"r6"},{"text":"Тихо пройти","next":"r7"}]},
+          {"id":"r5","speaker":"System","text":"Крепление усилено. Обвал отменён.","choices":[{"text":"Отчёт","next":"r12"}]},
+          {"id":"r6","speaker":"Merc","text":"Прикроем. Оплата вперёд.","choices":[{"text":"Оплатить","next":"r8"},{"text":"Отмена","next":"r7"}]},
+          {"id":"r7","speaker":"System","text":"Тихий подход. Риск встречи с бандами.","choices":[{"text":"Продолжить","next":"r9"}]},
+          {"id":"r8","speaker":"System","text":"Мерки патрулируют. Безопасно работать.","choices":[{"text":"К ребру","next":"r10"}]},
+          {"id":"r9","speaker":"Gang","text":"Эй, кто тут?","choices":[{"text":"Договориться","next":"r9a","skillCheck":{"attr":"COOL","skill":"Social","threshold":9}},{"text":"В бой","next":"r9b"}]},
+          {"id":"r9a","speaker":"Gang","text":"Работай. Но быстро.","choices":[{"text":"Спасибо","next":"r10"}]},
+          {"id":"r9b","speaker":"System","text":"Стычка с бандой.","choices":[{"text":"Собрать лут","next":"r10"}]},
+          {"id":"r10","speaker":"System","text":"Доступ к ребру открыт.","choices":[{"text":"Монтаж","next":"r11"}]},
+          {"id":"r11","speaker":"System","text":"Стабилизатор установлен.","choices":[{"text":"Вернуться","next":"r12"}]},
+          {"id":"r12","speaker":"Engineer","text":"Ребро держит. Город цел.","choices":[{"text":"Оплата","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [{"attr":"INT","skill":"Tech","threshold":10,"effect":"stabilize_rib"}],
+      "alternatives": ["engineer_fix","merc_protect"],
+      "lootTables": ["Engineer_T3","Gang_T3"],
+      "reputation": {"factions": {"CityServices": "+12..+20"}}
+    },
+    { "id": "dq-2045-002", "title": "Стражи Блэкволла", "tier": 3, "difficulty": "hard", "dialogue": {"nodes": 28}, "skillChecks": [{"attr":"INT","skill":"Hacking","threshold":12,"effect":"bypass_guard"}], "alternatives": ["ai_treaty","brute_force"], "lootTables": ["Netwatch_T3"], "reputation": {"factions": {"Netwatch": "+8..+16", "Netrunners": "-6..-2"}} },
+    { "id": "dq-2045-003", "title": "Пакеты Пустоши", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 22}, "skillChecks": [{"attr":"AGI","skill":"Mobility","threshold":9,"effect":"kite_pack"}], "alternatives": ["lure","trap"], "lootTables": ["Raider_T2"], "reputation": {"factions": {"Nomads": "+8..+14"}} },
+    { "id": "dq-2045-004", "title": "Красные Рынки", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 21}, "skillChecks": [{"attr":"COOL","skill":"Social","threshold":9,"effect":"best_rates"}], "alternatives": ["auction","muscle"], "lootTables": ["Trader_T2"], "reputation": {"factions": {"Smugglers": "+8..+14", "Police": "-4..-1"}} },
+    { "id": "dq-2045-005", "title": "Теплый Коридор", "tier": 2, "difficulty": "hard", "dialogue": {"nodes": 24}, "skillChecks": [{"attr":"INT","skill":"Tech","threshold":10,"effect":"optimize_flow"}], "alternatives": ["grid_upgrade","covert_bypass"], "lootTables": ["Engineer_T2"], "reputation": {"factions": {"CityServices": "+10..+16"}} },
+    { "id": "dq-2045-006", "title": "Гниль Фермы", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 20}, "skillChecks": [{"attr":"INT","skill":"Tech","threshold":8,"effect":"detox_unit"}], "alternatives": ["farmers_union","night_clean"], "lootTables": ["Farm_T2"], "reputation": {"factions": {"Agricorp": "+6..+12"}} },
+    { "id": "dq-2045-007", "title": "Штормовая Башня", "tier": 3, "difficulty": "hard", "dialogue": {"nodes": 25}, "skillChecks": [{"attr":"REF","skill":"Gunplay","threshold":10,"effect":"snipe_core"}], "alternatives": ["assault","stealth"] , "lootTables": ["Mil_T3"], "reputation": {"factions": {"Mercs": "+8..+16"}} },
+    { "id": "dq-2045-008", "title": "Термитный Узел", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 21}, "skillChecks": [{"attr":"INT","skill":"Hacking","threshold":9,"effect":"melt_counter"}], "alternatives": ["inside_job","remote_hack"], "lootTables": ["Net_T2"], "reputation": {"factions": {"Fixers": "+6..+12"}} },
+    { "id": "dq-2045-009", "title": "Помехоустойчивость", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 22}, "skillChecks": [{"attr":"INT","skill":"Tech","threshold":9,"effect":"calibrate_array"}], "alternatives": ["field_test","lab_sim"], "lootTables": ["Lab_T2"], "reputation": {"factions": {"Scientists": "+8..+14"}} },
+    { "id": "dq-2045-010", "title": "Контракт Карго", "tier": 2, "difficulty": "easy", "dialogue": {"nodes": 20}, "skillChecks": [{"attr":"COOL","skill":"Social","threshold":7,"effect":"cheap_insurance"}], "alternatives": ["escort","decoy"], "lootTables": ["Trader_T2"], "reputation": {"factions": {"Logistics": "+6..+10"}} },
+    { "id": "dq-2045-011", "title": "Серые Контейнеры", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 21}, "skillChecks": [{"attr":"AGI","skill":"Stealth","threshold":9,"effect":"scan_unseen"}], "alternatives": ["ghost","bribe"], "lootTables": ["Port_T2"], "reputation": {"factions": {"Customs": "+6..+12", "Smugglers": "-4..-1"}} },
+    { "id": "dq-2045-012", "title": "Сбор Данных Бури", "tier": 3, "difficulty": "hard", "dialogue": {"nodes": 26}, "skillChecks": [{"attr":"INT","skill":"Tech","threshold":11,"effect":"storm_harvest"}], "alternatives": ["drone","balloon"], "lootTables": ["Engineer_T3"], "reputation": {"factions": {"Academia": "+10..+18"}} }
+  ]
+}
+
+

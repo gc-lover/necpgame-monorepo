@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: Resources Catalog API
+  version: 1.0.0
+  description: |
+    API для каталога ресурсов и материалов.
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-resources-catalog.md v2.0.0
+    
+    Категории:
+    - Raw Materials (сырьё)
+    - Processed (обработанные)
+    - Components (компоненты)
+    - Data (данные)
+    - Special (специальные)
+    
+    Параметры: Tier (1-5), Rarity, Sources, Uses, Value, Stack size, Weight
+    Интеграция: Крафт, торговля, квесты
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Resources Catalog
+    description: Каталог ресурсов
+
+paths:
+  /gameplay/economy/resources:
+    get:
+      summary: Получить список ресурсов
+      description: |
+        Возвращает список всех ресурсов в игре.
+        Поддерживает фильтрацию по категории, tier, rarity.
+      operationId: getResources
+      tags:
+        - Resources Catalog
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [raw, processed, components, data, special]
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum: [common, uncommon, rare, epic, legendary]
+      responses:
+        '200':
+          description: Список ресурсов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+
+  /gameplay/economy/resources/{resource_id}:
+    get:
+      summary: Получить детали ресурса
+      description: |
+        Возвращает детальную информацию о ресурсе:
+        источники, использование, рецепты.
+      operationId: getResourceDetails
+      tags:
+        - Resources Catalog
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали ресурса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceDetails'
+
+  /gameplay/economy/resources/by-category/{category}:
+    get:
+      summary: Получить ресурсы по категории
+      description: Возвращает ресурсы указанной категории
+      operationId: getResourcesByCategory
+      tags:
+        - Resources Catalog
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [raw, processed, components, data, special]
+      responses:
+        '200':
+          description: Ресурсы категории
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category:
+                    type: string
+                  resources:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+
+components:
+  schemas:
+    Resource:
+      type: object
+      properties:
+        resource_id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          enum: [raw, processed, components, data, special]
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+        icon:
+          type: string
+        stack_size:
+          type: integer
+        weight:
+          type: number
+
+    ResourceDetails:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          properties:
+            description:
+              type: string
+            sources:
+              type: array
+              items:
+                type: string
+              description: Источники получения
+            uses:
+              type: array
+              items:
+                type: string
+              description: Где используется
+            vendor_price:
+              type: number
+            market_average_price:
+              type: number
+            crafting_recipes:
+              type: array
+              description: Рецепты, где используется
+              items:
+                type: string
+
+

@@ -1,0 +1,375 @@
+openapi: 3.0.3
+info:
+  title: Inventory Core Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/inventory/inventory-core
+    directory: api/v1/economy/inventory/inventory-core
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    InventorySnapshotResponse:
+      type: object
+      required: [characterId, backpack, equipment, stash, weight]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        backpack:
+          type: array
+          items:
+            $ref: './inventory-core-models.yaml#/components/schemas/InventorySlot'
+        equipment:
+          $ref: './inventory-core-models.yaml#/components/schemas/EquipmentLayout'
+        stash:
+          $ref: './inventory-core-models.yaml#/components/schemas/StashSummary'
+        weight:
+          $ref: './inventory-core-models.yaml#/components/schemas/WeightSummary'
+        lastUpdatedAt:
+          type: string
+          format: date-time
+    ItemPickupRequest:
+      type: object
+      required: [itemTemplateId, quantity, source]
+      properties:
+        itemTemplateId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum: [LOOT, CRAFT, QUEST, PURCHASE, ADMIN, IMPORT]
+        metadata:
+          type: object
+          additionalProperties: true
+    ItemPickupResponse:
+      type: object
+      properties:
+        item:
+          $ref: './inventory-core-models.yaml#/components/schemas/ItemStack'
+        weight:
+          $ref: './inventory-core-models.yaml#/components/schemas/WeightSummary'
+    ItemDropRequest:
+      type: object
+      required: [itemId, quantity]
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        createWorldLoot:
+          type: boolean
+          default: true
+        location:
+          type: object
+          properties:
+            zone:
+              type: string
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                  format: float
+                y:
+                  type: number
+                  format: float
+                z:
+                  type: number
+                  format: float
+    ItemDropResponse:
+      type: object
+      properties:
+        removed:
+          type: boolean
+        weight:
+          $ref: './inventory-core-models.yaml#/components/schemas/WeightSummary'
+        lootToken:
+          type: string
+          nullable: true
+    ItemMoveRequest:
+      type: object
+      required: [itemId, targetStorage]
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        sourceStorage:
+          type: string
+          enum: [BACKPACK, BANK, STASH, EQUIPPED]
+        targetStorage:
+          type: string
+          enum: [BACKPACK, BANK, STASH, EQUIPPED]
+        targetSlotIndex:
+          type: integer
+        equipmentSlot:
+          type: string
+        swapItemId:
+          type: string
+          format: uuid
+    ItemMoveResponse:
+      type: object
+      properties:
+        item:
+          $ref: './inventory-core-models.yaml#/components/schemas/ItemStack'
+        weight:
+          $ref: './inventory-core-models.yaml#/components/schemas/WeightSummary'
+    ItemSplitRequest:
+      type: object
+      required: [itemId, quantity]
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+    ItemSplitResponse:
+      type: object
+      properties:
+        originalItem:
+          $ref: './inventory-core-models.yaml#/components/schemas/ItemStack'
+        newItem:
+          $ref: './inventory-core-models.yaml#/components/schemas/ItemStack'
+    EquipItemRequest:
+      type: object
+      required: [itemId, equipmentSlot]
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        equipmentSlot:
+          type: string
+        overrideBind:
+          type: boolean
+          default: false
+    EquipItemResponse:
+      type: object
+      properties:
+        equipment:
+          $ref: './inventory-core-models.yaml#/components/schemas/EquipmentLayout'
+        backpack:
+          type: array
+          items:
+            $ref: './inventory-core-models.yaml#/components/schemas/InventorySlot'
+    UnequipItemRequest:
+      type: object
+      required: [equipmentSlot]
+      properties:
+        equipmentSlot:
+          type: string
+        targetStorage:
+          type: string
+          enum: [BACKPACK, STASH]
+    UnequipItemResponse:
+      type: object
+      properties:
+        equipment:
+          $ref: './inventory-core-models.yaml#/components/schemas/EquipmentLayout'
+        backpack:
+          type: array
+          items:
+            $ref: './inventory-core-models.yaml#/components/schemas/InventorySlot'
+    BankTransferRequest:
+      type: object
+      required: [operations]
+      properties:
+        operations:
+          type: array
+          items:
+            type: object
+            required: [itemId, quantity, direction]
+            properties:
+              itemId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+              direction:
+                type: string
+                enum: [TO_BANK, TO_BACKPACK, TO_STASH]
+              targetSlotIndex:
+                type: integer
+    BankTransferResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        processedOperations:
+          type: integer
+        weight:
+          $ref: './inventory-core-models.yaml#/components/schemas/WeightSummary'
+    WeightSummaryResponse:
+      type: object
+      properties:
+        weight:
+          $ref: './inventory-core-models.yaml#/components/schemas/WeightSummary'
+        attributeModifiers:
+          type: object
+          additionalProperties: true
+    ItemTemplateResponse:
+      type: object
+      properties:
+        template:
+          $ref: './inventory-core-models.yaml#/components/schemas/ItemTemplate'
+    InventoryAuditResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './inventory-core-models.yaml#/components/schemas/AuditEntry'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    InventoryItemAddedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: economy.inventory.events
+        producer:
+          type: string
+          example: economy-service
+        payload:
+          type: object
+          required: [eventType, itemId, itemTemplateId, characterId, quantity, occurredAt]
+          properties:
+            eventType:
+              type: string
+              enum: [inventory.item.added]
+            itemId:
+              type: string
+              format: uuid
+            itemTemplateId:
+              type: string
+            characterId:
+              type: string
+              format: uuid
+            quantity:
+              type: integer
+            storageType:
+              type: string
+            occurredAt:
+              type: string
+              format: date-time
+        key:
+          type: string
+          example: characterId
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [telemetry, notification-service, analytics-service]
+    InventoryItemRemovedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: economy.inventory.events
+        producer:
+          type: string
+        payload:
+          type: object
+          required: [eventType, itemId, characterId, quantity, reason, occurredAt]
+          properties:
+            eventType:
+              type: string
+              enum: [inventory.item.removed]
+            itemId:
+              type: string
+              format: uuid
+            characterId:
+              type: string
+              format: uuid
+            quantity:
+              type: integer
+            reason:
+              type: string
+            occurredAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [telemetry, analytics-service]
+    InventoryItemMovedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+        producer:
+          type: string
+        payload:
+          type: object
+          required: [eventType, itemId, characterId, fromStorage, toStorage, occurredAt]
+          properties:
+            eventType:
+              type: string
+              enum: [inventory.item.moved]
+            itemId:
+              type: string
+              format: uuid
+            characterId:
+              type: string
+              format: uuid
+            fromStorage:
+              type: string
+            toStorage:
+              type: string
+            occurredAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [telemetry]
+    InventoryWeightUpdatedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: economy.inventory.metrics
+        producer:
+          type: string
+        payload:
+          type: object
+          required: [characterId, currentWeight, maxWeight, occurredAt]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            currentWeight:
+              type: number
+              format: float
+            maxWeight:
+              type: number
+              format: float
+            occurredAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [telemetry, gameplay-service]
+

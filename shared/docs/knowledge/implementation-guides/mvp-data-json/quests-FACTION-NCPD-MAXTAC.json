@@ -1,0 +1,475 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/factions/ncpd-maxtac
+
+---
+
+
+{
+  "version": "3.0.0",
+  "faction": "NCPD-MaxTac",
+  "description": "Квесты NCPD и MaxTac с глубокими ветвлениями",
+  "questsFaction": [
+    {
+      "questId": "NCPD-001-CAPTAIN-MORGANA",
+      "name": "Капитан Моргана: Грань",
+      "faction": "NCPD",
+      "region": "Watson",
+      "characters": {
+        "main": {
+          "id": "npc-morgana-steele",
+          "name": "Капитан Моргана Стил",
+          "role": "Детектив NCPD",
+          "period": "2065-2085",
+          "personality": "Жёсткая, но справедливая. На грани выгорания. Видела слишком много.",
+          "motivation": "Найти убийцу партнёра, скрыть собственные грехи, сохранить веру в закон",
+          "secret": "Убила подозреваемого в порыве ярости 5 лет назад. Дело замяли."
+        },
+        "secondary": [
+          {
+            "id": "npc-derek-vance",
+            "name": "Детектив Дерек Вэнс",
+            "role": "Напарник Морганы (убит)",
+            "status": "deceased",
+            "importance": "trigger"
+          },
+          {
+            "id": "npc-chief-henderson",
+            "name": "Начальник Хендерсон",
+            "role": "Глава участка",
+            "attitude": "pragmatic",
+            "secret": "На зарплате у Arasaka"
+          },
+          {
+            "id": "npc-witness-maria",
+            "name": "Мария Санчес",
+            "role": "Свидетельница",
+            "reliability": "low",
+            "addiction": "glitter"
+          },
+          {
+            "id": "npc-suspect-tyrone",
+            "name": "Тайрон «Грейс» Джексон",
+            "role": "Подозреваемый #1",
+            "affiliation": "6th Street",
+            "alibi": "weak"
+          },
+          {
+            "id": "npc-suspect-corpo",
+            "name": "Кеннет Ямада",
+            "role": "Подозреваемый #2",
+            "affiliation": "Arasaka Security",
+            "alibi": "corpo_protection"
+          }
+        ]
+      },
+      "synopsis": "Напарник капитана Морганы убит в переулке Watson. Улики указывают на месть, но Моргана чувствует нечто большее. Расследование раскрывает её собственное прошлое.",
+      "branches": {
+        "main_paths": [
+          "path_justice",
+          "path_revenge",
+          "path_cover_up",
+          "path_expose_corruption",
+          "path_sacrifice"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_investigate_partner",
+            "moment": "Осмотр квартиры Дерека",
+            "question": "Найдены улики связи Дерека с Internal Affairs",
+            "choices": [
+              {
+                "id": "choice_hide_evidence",
+                "text": "Спрятать улики о расследовании",
+                "consequence": "Путь Сокрытия",
+                "skillCheck": {"attr":"COOL","threshold":9},
+                "outcome": "Моргана скрывает, что Дерек расследовал её. Guilt++."
+              },
+              {
+                "id": "choice_report_evidence",
+                "text": "Сообщить о расследовании IA",
+                "consequence": "Путь Правды",
+                "outcome": "IA начинает копать в дела Морганы. Investigation++."
+              },
+              {
+                "id": "choice_investigate_solo",
+                "text": "Расследовать самостоятельно",
+                "consequence": "Путь Одиночки",
+                "skillCheck": {"attr":"INT","skill":"Investigation","threshold":10},
+                "outcome": "Моргана ведёт параллельное расследование. Risk++."
+              }
+            ]
+          },
+          {
+            "id": "decision_suspect_choice",
+            "moment": "Два подозреваемых: гангстер и корпорат",
+            "question": "Улики против обоих неполные",
+            "choices": [
+              {
+                "id": "choice_arrest_tyrone",
+                "text": "Арестовать Тайрона (легче)",
+                "consequence": "Несправедливость",
+                "outcome": "Тайрон сядет. Реальный убийца на свободе. 6th Street враждебны."
+              },
+              {
+                "id": "choice_pressure_corpo",
+                "text": "Давить на корпората",
+                "consequence": "Война с Arasaka",
+                "skillCheck": {"attr":"COOL","skill":"Intimidation","threshold":11},
+                "outcome": "Arasaka защищает своего. Моргана под угрозой увольнения."
+              },
+              {
+                "id": "choice_find_real_killer",
+                "text": "Искать реального убийцу",
+                "consequence": "Глубокое расследование",
+                "timeLimit": "48 hours",
+                "outcome": "Раскрывается заговор Internal Affairs."
+              },
+              {
+                "id": "choice_frame_both",
+                "text": "Подставить обоих (тёмный путь)",
+                "consequence": "Коррупция",
+                "skillCheck": {"attr":"INT","skill":"Deception","threshold":12},
+                "outcome": "Дело закрыто. Моргана становится тем, кого ненавидела."
+              }
+            ]
+          },
+          {
+            "id": "decision_truth_revealed",
+            "moment": "Обнаружено: Дерека убил начальник Хендерсон по заказу Arasaka",
+            "question": "Дерек расследовал коррупцию в участке",
+            "choices": [
+              {
+                "id": "choice_arrest_chief",
+                "text": "Арестовать начальника",
+                "consequence": "Героизм",
+                "outcome": "Хендерсон арестован. Моргана — герой. Arasaka мстят позже."
+              },
+              {
+                "id": "choice_kill_chief",
+                "text": "Убить начальника (месть)",
+                "consequence": "Vigilante Justice",
+                "skillCheck": {"attr":"COOL","threshold":12},
+                "outcome": "Хендерсон мёртв. Моргана — убийца. MaxTac интересуются."
+              },
+              {
+                "id": "choice_deal_with_arasaka",
+                "text": "Сделка с Arasaka",
+                "consequence": "Продажность",
+                "outcome": "Моргана получает деньги и повышение. Душа мертва."
+              },
+              {
+                "id": "choice_expose_all",
+                "text": "Раскрыть всё публично + своё прошлое",
+                "consequence": "Самопожертвование",
+                "skillCheck": {"attr":"EMP","threshold":13},
+                "outcome": "Моргана идёт в тюрьму, но разрушает сеть коррупции."
+              },
+              {
+                "id": "choice_fake_suicide",
+                "text": "Инсценировать самоубийство начальника",
+                "consequence": "Грязные методы",
+                "skillCheck": {"attr":"INT","skill":"Tech","threshold":11},
+                "outcome": "Дело закрыто. Моргана живёт с ложью."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_hero",
+          "name": "Герой NCPD",
+          "conditions": ["arrested_chief","exposed_corruption"],
+          "outcome": "Моргана — легенда. Но Arasaka не забывают. Unlock: Quest 'Arasaka Revenge'",
+          "rewards": {"credits":25000,"ncpd_rep":"+50","hero_medal":true}
+        },
+        {
+          "id": "ending_vigilante",
+          "name": "Мститель",
+          "conditions": ["killed_chief"],
+          "outcome": "Хендерсон мёртв. Моргана уходит из NCPD. Unlock: Quest 'MaxTac Investigation'",
+          "rewards": {"credits":15000,"ncpd_rep":"-30","street_rep":"+40"}
+        },
+        {
+          "id": "ending_corrupt",
+          "name": "Продажный Коп",
+          "conditions": ["deal_with_arasaka"],
+          "outcome": "Моргана на зарплате Arasaka. Unlock: Quest 'Corpo Lackey'",
+          "rewards": {"credits":50000,"arasaka_rep":"+60","soul":"lost"}
+        },
+        {
+          "id": "ending_martyr",
+          "name": "Мученик",
+          "conditions": ["exposed_self","arrested_chief"],
+          "outcome": "Моргана в тюрьме. NCPD реформирован. Unlock: Quest 'Prison Break' (2 years later)",
+          "rewards": {"credits":0,"legacy":"eternal","ncpd_reformed":true}
+        },
+        {
+          "id": "ending_dark",
+          "name": "Тёмная Душа",
+          "conditions": ["framed_innocents","cover_up"],
+          "outcome": "Невиновные в тюрьме. Моргана живёт во лжи. Unlock: Quest 'Karma Returns'",
+          "rewards": {"credits":20000,"guilt":"permanent","nightmares":true}
+        },
+        {
+          "id": "ending_failure",
+          "name": "Провал",
+          "conditions": ["time_expired"],
+          "outcome": "Дело закрыто. Убийца на свободе. Моргана уволена.",
+          "rewards": {"credits":5000,"ncpd_rep":"-50"}
+        }
+      ],
+      "consequences": {
+        "world_changes": [
+          "NCPD участок Watson реформирован (если exposed_corruption)",
+          "6th Street враждебны (если framed_tyrone)",
+          "Arasaka Security активны в Watson (если arrested_chief)",
+          "MaxTac следят за Морганой (если vigilante_path)"
+        ],
+        "character_changes": [
+          "Моргана получает киберпсихоз +10 (если kill_path)",
+          "Моргана теряет веру в систему (если corrupt_path)",
+          "Моргана обретает покой (если martyr_path)"
+        ],
+        "unlock_quests": [
+          "Arasaka Revenge (если ending_hero)",
+          "MaxTac Investigation (если ending_vigilante)",
+          "Prison Break (если ending_martyr)",
+          "Karma Returns (если ending_dark)"
+        ]
+      },
+      "regions_affected": ["Watson","Downtown","Corpo_Plaza"],
+      "factions_affected": ["NCPD","Arasaka","6th_Street","MaxTac","Internal_Affairs"],
+      "difficulty": "extreme",
+      "tier": 4,
+      "estimated_time": "90-120min",
+      "replay_value": "very_high",
+      "moral_complexity": "extreme"
+    },
+    {
+      "questId": "MAXTAC-001-CYBERPSYCHO",
+      "name": "MaxTac: Охота на Зверя",
+      "faction": "MaxTac",
+      "region": "Pacifica",
+      "characters": {
+        "main": {
+          "id": "npc-lt-kira-chrome",
+          "name": "Лейтенант Кира «Хром» Танака",
+          "role": "Командир отделения MaxTac",
+          "cyberware": "95% тела",
+          "humanity": "18/100",
+          "backstory": "Бывший киберпсихопат. Реабилитирован. Служит MaxTac 8 лет.",
+          "fear": "Снова сорваться. Стать тем, кого охотится.",
+          "secret": "Слышит голоса имплантов. Скрывает от психиатра MaxTac."
+        },
+        "target": {
+          "id": "npc-beast-marcus",
+          "name": "Маркус «Зверь» Коул",
+          "status": "cyberpsycho",
+          "cyberware": "military_grade",
+          "kills": 47,
+          "location": "Pacifica_Combat_Zone",
+          "trigger": "Потерял семью в корпо-рейде",
+          "humanity": "0/100"
+        },
+        "team": [
+          {
+            "id": "npc-maxtac-rookie",
+            "name": "Офицер Джейк Риос",
+            "role": "Новобранец MaxTac",
+            "experience": "first_mission",
+            "fate": "player_choice"
+          },
+          {
+            "id": "npc-maxtac-medic",
+            "name": "Док Элиза Вонг",
+            "role": "Полевой медик",
+            "specialty": "cyberpsychosis_treatment",
+            "attitude": "humane"
+          }
+        ]
+      },
+      "synopsis": "MaxTac вызван в Pacifica. Киберпсихопат «Зверь» удерживает заложников в заброшенном отеле. Лейтенант Кира должна остановить его, но чувствует, как собственные импланты начинают шептать.",
+      "branches": {
+        "main_paths": [
+          "path_neutralize",
+          "path_cure",
+          "path_negotiate",
+          "path_psychosis",
+          "path_empathy"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_approach",
+            "moment": "План штурма отеля",
+            "choices": [
+              {
+                "id": "choice_frontal_assault",
+                "text": "Лобовой штурм (стандарт MaxTac)",
+                "consequence": "Высокая смертность",
+                "outcome": "Заложники погибнут. Зверь нейтрализован быстро."
+              },
+              {
+                "id": "choice_stealth_infiltration",
+                "text": "Скрытное проникновение",
+                "skillCheck": {"attr":"AGI","skill":"Stealth","threshold":11},
+                "outcome": "Шанс спасти заложников. Риск провала."
+              },
+              {
+                "id": "choice_negotiate",
+                "text": "Попытка переговоров",
+                "skillCheck": {"attr":"EMP","skill":"Social","threshold":12},
+                "unusual": true,
+                "outcome": "Контакт с Маркусом. Узнать его историю."
+              },
+              {
+                "id": "choice_send_rookie",
+                "text": "Отправить новобранца на разведку",
+                "consequence": "Риск жизни Джейка",
+                "outcome": "Rookie может погибнуть. Кира избегает риска."
+              }
+            ]
+          },
+          {
+            "id": "decision_kira_psychosis",
+            "moment": "Импланты Киры начинают глючить под стрессом",
+            "question": "Голоса усиливаются. Humanity падает.",
+            "choices": [
+              {
+                "id": "choice_suppress",
+                "text": "Подавить симптомы (стимуляторы)",
+                "skillCheck": {"attr":"BODY","threshold":10},
+                "outcome": "Временный контроль. Humanity -5. Риск срыва позже."
+              },
+              {
+                "id": "choice_tell_medic",
+                "text": "Рассказать Элизе о симптомах",
+                "consequence": "Честность vs Карьера",
+                "outcome": "Элиза помогает. Но команда узнаёт о проблеме."
+              },
+              {
+                "id": "choice_embrace",
+                "text": "Принять голоса (тёмный путь)",
+                "consequence": "Начало падения",
+                "outcome": "Кира становится сильнее, но ближе к психозу."
+              },
+              {
+                "id": "choice_retreat",
+                "text": "Отступить из миссии",
+                "consequence": "Трусость",
+                "outcome": "Команда без лидера. Rookie погибает."
+              }
+            ]
+          },
+          {
+            "id": "decision_beast_encounter",
+            "moment": "Лицом к лицу с Маркусом",
+            "question": "Маркус: «Ты такая же, как я. Слышишь их?»",
+            "choices": [
+              {
+                "id": "choice_kill_beast",
+                "text": "Нейтрализовать (стандарт)",
+                "outcome": "Маркус мёртв. Миссия успешна. Но Кира знает правду."
+              },
+              {
+                "id": "choice_try_cure",
+                "text": "Попытаться вылечить",
+                "skillCheck": {"attr":"TECH","skill":"Biotech","threshold":13},
+                "risk": "extreme",
+                "outcome": "Элиза пробует экспериментальное лечение. 50% шанс."
+              },
+              {
+                "id": "choice_let_escape",
+                "text": "Позволить Маркусу сбежать",
+                "consequence": "Предательство MaxTac",
+                "outcome": "Маркус уходит. Кира понимает, что спасла себя."
+              },
+              {
+                "id": "choice_join_beast",
+                "text": "Присоединиться к Маркусу (психоз)",
+                "consequence": "Полное падение",
+                "outcome": "Кира срывается. Становится киберпсихопатом. BAD END."
+              },
+              {
+                "id": "choice_sacrifice",
+                "text": "Обменять себя на заложников",
+                "skillCheck": {"attr":"EMP","threshold":14},
+                "outcome": "Кира сдаётся Маркусу. Переломный момент."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_maxtac_hero",
+          "name": "Герой MaxTac",
+          "conditions": ["killed_beast","saved_hostages","suppressed_psychosis"],
+          "outcome": "Миссия успешна. Кира — легенда. Но голоса не уходят.",
+          "rewards": {"credits":30000,"maxtac_rep":"+60","promotion":true},
+          "future": "Кира продолжает служить. Проблема растёт."
+        },
+        {
+          "id": "ending_cure_found",
+          "name": "Прорыв в Лечении",
+          "conditions": ["cured_beast","told_medic"],
+          "outcome": "Маркус вылечен. Элиза делает открытие. Надежда для киберпсихов.",
+          "rewards": {"credits":40000,"scientific_breakthrough":true,"kira_humanity":"+20"},
+          "unlock": "Quest 'Cure for Psychosis'"
+        },
+        {
+          "id": "ending_escape_together",
+          "name": "Бегство",
+          "conditions": ["let_escape","joined_beast"],
+          "outcome": "Кира и Маркус бегут из города. Оба — изгои.",
+          "rewards": {"credits":10000,"maxtac_rep":"-100","new_life":"badlands"},
+          "unlock": "Quest 'Nomad Life'"
+        },
+        {
+          "id": "ending_sacrifice",
+          "name": "Жертва",
+          "conditions": ["exchanged_self"],
+          "outcome": "Кира умирает. Заложники спасены. Маркус сдаётся после.",
+          "rewards": {"credits":0,"legacy":"eternal","kira_statue":"Pacifica"},
+          "ending_type": "death"
+        },
+        {
+          "id": "ending_cyberpsycho_kira",
+          "name": "Новый Зверь",
+          "conditions": ["embraced_voices","joined_psychosis"],
+          "outcome": "Кира срывается. MaxTac охотится на неё. Unlock: Quest 'Hunt Yourself'",
+          "rewards": {"credits":0,"humanity":0,"enemy":"maxtac"},
+          "ending_type": "bad"
+        },
+        {
+          "id": "ending_massacre",
+          "name": "Резня",
+          "conditions": ["frontal_assault","rookie_died"],
+          "outcome": "Все мертвы: заложники, Маркус, Джейк. Кира получает выговор.",
+          "rewards": {"credits":15000,"maxtac_rep":"-30","guilt":"permanent"}
+        }
+      ],
+      "consequences": {
+        "character_arcs": [
+          "Кира признаёт проблему → путь к исцелению (если told_medic)",
+          "Кира подавляет → будущий срыв (если suppressed)",
+          "Кира срывается → становится врагом (если joined_psychosis)",
+          "Rookie выживает → благодарен (если saved)",
+          "Rookie погибает → вина Киры (если sent_to_die)"
+        ],
+        "world_changes": [
+          "MaxTac получает протокол лечения (если cure_found)",
+          "Pacifica объявлена зоной бедствия (если massacre)",
+          "Киберпсихопаты получают надежду (если cure_found)"
+        ]
+      },
+      "difficulty": "extreme",
+      "tier": 5,
+      "moral_weight": "crushing",
+      "replay_value": "extreme"
+    }
+  ]
+}
+

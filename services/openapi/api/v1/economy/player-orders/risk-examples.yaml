@@ -1,0 +1,110 @@
+openapi: 3.0.3
+info:
+  title: Player Order Risk Examples
+  version: 1.0.0
+  description: Примеры запросов и ответов для Risk API.
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+paths: {}
+components:
+  examples:
+    RiskEvaluationRequestExample:
+      summary: Расчёт риска боевого заказа
+      value:
+        orderId: "8d261d29-0948-4c77-9c5d-9c2b6c77d9ab"
+        requesterId: "7fb0f6c8-93a0-4e9b-94dc-6a3fa0b2c1c2"
+        role: operator
+        context:
+          orderType: combat
+          complexityScore: 3.4
+          regionId: "NC-52"
+          deadlineHours: 48
+          requiredSkills: ["heavy-weapons", "netrunner-support"]
+          factionTags: ["arasaka"]
+          playerRatings:
+            executor: 72.4
+            client: 65.1
+          lastIncidents:
+            - incidentId: "762a3c7b-84c4-4304-bf93-1ed4f0ae2af8"
+              type: dispute_loss
+              severity: medium
+              occurredAt: "2025-10-28T11:20:00Z"
+    RiskEvaluationResponseExample:
+      summary: Ответ расчёта риска
+      value:
+        data:
+          score: 78.6
+          grade: high
+          riskModifier: 1.34
+          recommendedEscrowRate: 0.28
+          recommendedCommissionRate: 0.105
+          insuranceTier: premium
+          factors:
+            - factor: regionThreat
+              weight: 0.25
+              contribution: 0.32
+            - factor: orderComplexity
+              weight: 0.2
+              contribution: 0.27
+            - factor: disputeHistory
+              weight: 0.15
+              contribution: 0.21
+          alerts:
+            - code: manual_review
+              severity: warning
+              description: "Предыдущая миссия в регионе завершилась спором."
+              recommendedAction: "Требуется ручное одобрение экономиста."
+          evaluatedAt: "2025-11-08T18:45:00Z"
+    InsuranceQuoteExample:
+      summary: Котировка страховки
+      value:
+        quoteId: "6a5e04a1-43ef-4c6e-9e50-d6bc9750d1f2"
+        plan:
+          planId: "d012b33a-f5c7-4c56-a7a0-f6211bcf0b7d"
+          name: "Platinum Response"
+          tier: premium
+          coverage: 0.85
+          premiumRate: 0.18
+          escrowMultiplier: 0.25
+          benefits: ["priority-payout", "dispute-insurance", "equipment-coverage"]
+        premium: 14500
+        escrowRequired: 36250
+        validUntil: "2025-11-08T20:00:00Z"
+        discounts: ["long-term-client", "faction-partner"]
+    EscrowStatusExample:
+      summary: Статус escrow
+      value:
+        orderId: "8d261d29-0948-4c77-9c5d-9c2b6c77d9ab"
+        amount: 36250
+        currency: "NCU"
+        status: locked
+        lockedAt: "2025-11-08T18:45:00Z"
+        releaseAt: "2025-11-09T18:45:00Z"
+        releaseConditions:
+          - "Order completed and accepted"
+          - "No disputes within 24h"
+    RiskAlertSubscriptionExample:
+      summary: Подписка на алерты
+      value:
+        subscriptionId: "a8f0ac49-42f9-4c35-9a72-2b4c02d53f6d"
+        subscriberId: "f6b42c11-8a8d-4c11-9a67-287db9bd0f1a"
+        channels: ["email", "webhook"]
+        thresholds:
+          - metric: riskScore
+            operator: gte
+            value: 75
+            coolDownMinutes: 30
+          - metric: disputeRate
+            operator: gte
+            value: 0.2
+        createdAt: "2025-11-08T18:50:00Z"
+

@@ -1,0 +1,225 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/additional
+
+---
+
+
+{
+  "version": "2.2.0",
+  "period": "2020-2030",
+  "description": "Дополнительный пакет квестов #2 для раннего периода",
+  "questsAdditional2": [
+    {
+      "questId": "SQ-2026-RACE-UNDERGROUND",
+      "name": "Подпольные Гонки",
+      "type": "race",
+      "tags": ["driving", "betting", "social"],
+      "tier": 2,
+      "difficulty": "medium",
+      "synopsis": "Подпольный гоночный клуб в Industrial District приглашает на нелегальные гонки с крупными ставками.",
+      "dialogue": {
+        "start": "rc1",
+        "nodes": [
+          {"id":"rc1","speaker":"Organizer","text":"Хочешь гонять? Ставка 2000 эдди.","choices":[{"text":"Какая трасса?","next":"rc2"},{"text":"Какой приз?","next":"rc3"}]},
+          {"id":"rc2","speaker":"Organizer","text":"Круг по промзоне. 3 круга. Без правил.","choices":[{"text":"Участвую","next":"rc4"}]},
+          {"id":"rc3","speaker":"Organizer","text":"15000 эдди победителю. Славы — больше.","choices":[{"text":"Беру","next":"rc4"}]},
+          {"id":"rc4","speaker":"System","text":"Старт! 5 гонщиков.","choices":[{"text":"Агрессивная езда","next":"rc5","skillCheck":{"attr":"REF","skill":"Driving","threshold":10}},{"text":"Тактика","next":"rc6"}]},
+          {"id":"rc5","speaker":"System","text":"Первое место! Соперники отстают.","choices":[{"text":"Держать лидерство","next":"rc7"}]},
+          {"id":"rc6","speaker":"System","text":"Третье место. Жду момента.","choices":[{"text":"Обгон на повороте","next":"rc8","skillCheck":{"attr":"REF","skill":"Driving","threshold":9}},{"text":"Таран","next":"rc9"}]},
+          {"id":"rc7","speaker":"System","text":"Финишная прямая! Лидирую!","choices":[{"text":"Форсаж","next":"rc10"}]},
+          {"id":"rc8","speaker":"System","text":"Чистый обгон! Второе место.","choices":[{"text":"К финишу","next":"rc10"}]},
+          {"id":"rc9","speaker":"System","text":"Таран! Соперник вылетел. Второе место.","choices":[{"text":"Давить газ","next":"rc10"}]},
+          {"id":"rc10","speaker":"Organizer","text":"Победа! Вот приз. Ты — легенда трека.","choices":[{"text":"Забрать деньги","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"REF","skill":"Driving","threshold":10,"effect":"aggressive_lead"},
+        {"attr":"REF","skill":"Driving","threshold":9,"effect":"clean_overtake"}
+      ],
+      "alternatives": ["aggressive_racing","tactical_racing","dirty_tactics"],
+      "lootTables": ["RacePrize"],
+      "reputation": {"factions":{"Racers":"+10..+18","Street":"+5..+10"}},
+      "rewards": {"credits":15000,"fameBonus":500,"exp":700}
+    },
+    {
+      "questId": "SQ-2027-INVESTIGATE-MURDER",
+      "name": "Расследование: Убийство Риппера",
+      "type": "investigation",
+      "tags": ["detective", "social", "combat"],
+      "tier": 3,
+      "difficulty": "hard",
+      "synopsis": "Известный риппердок найден мёртвым. Его помощница нанимает детектива для расследования.",
+      "dialogue": {
+        "start": "inv1",
+        "nodes": [
+          {"id":"inv1","speaker":"Assistant","text":"Доктор убит. Полиция не расследует.","choices":[{"text":"Что случилось?","next":"inv2"},{"text":"Подозреваемые?","next":"inv3"}]},
+          {"id":"inv2","speaker":"Assistant","text":"Вчера вечером. Клиника закрыта. Нет следов взлома.","choices":[{"text":"Осмотрю место","next":"inv4"}]},
+          {"id":"inv3","speaker":"Assistant","text":"Три клиента в тот день. Все сомнительные.","choices":[{"text":"Дай их контакты","next":"inv4"}]},
+          {"id":"inv4","speaker":"System","text":"Клиника. Следы борьбы. Имплант пропал.","choices":[{"text":"Осмотр записей","next":"inv5","skillCheck":{"attr":"INT","skill":"Investigation","threshold":10}},{"text":"Опросить соседей","next":"inv6"}]},
+          {"id":"inv5","speaker":"System","text":"Запись камеры. Клиент №2 — подозрителен.","choices":[{"text":"Найти его","next":"inv7"}]},
+          {"id":"inv6","speaker":"Neighbor","text":"Видел парня в кожанке. Ушёл поздно.","choices":[{"text":"Описание?","next":"inv7"}]},
+          {"id":"inv7","speaker":"System","text":"След ведёт в бар Afterlife.","choices":[{"text":"Найти в баре","next":"inv8","skillCheck":{"attr":"COOL","skill":"Social","threshold":9}},{"text":"Засада снаружи","next":"inv9"}]},
+          {"id":"inv8","speaker":"Suspect","text":"Риппер? Не знаю никакого риппера.","choices":[{"text":"Давление","next":"inv10","skillCheck":{"attr":"COOL","skill":"Intimidation","threshold":10}},{"text":"Предложить сделку","next":"inv11"}]},
+          {"id":"inv9","speaker":"System","text":"Подозреваемый выходит. Вооружён.","choices":[{"text":"Задержать","next":"inv12"},{"text":"Преследовать","next":"inv13"}]},
+          {"id":"inv10","speaker":"Suspect","text":"Ладно! Я забрал имплант! Доктор сопротивлялся!","choices":[{"text":"Сдавайся","next":"inv14"}]},
+          {"id":"inv11","speaker":"Suspect","text":"Имплант у меня. Отдам за свободу.","choices":[{"text":"Согласен","next":"inv15"},{"text":"Отказ","next":"inv12"}]},
+          {"id":"inv12","speaker":"System","text":"Бой! Подозреваемый сопротивляется.","choices":[{"text":"Обезвредить","next":"inv14"}]},
+          {"id":"inv13","speaker":"System","text":"Погоня по Night City.","choices":[{"text":"Перехватить","next":"inv14"}]},
+          {"id":"inv14","speaker":"Assistant","text":"Убийца пойман. Спасибо.","choices":[{"text":"Завершить","next":"end_success"}]},
+          {"id":"inv15","speaker":"System","text":"Имплант возвращён. Убийца на свободе.","choices":[{"text":"Завершить","next":"end_partial"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"INT","skill":"Investigation","threshold":10,"effect":"find_evidence"},
+        {"attr":"COOL","skill":"Social","threshold":9,"effect":"bar_intel"},
+        {"attr":"COOL","skill":"Intimidation","threshold":10,"effect":"confession"}
+      ],
+      "alternatives": ["evidence_path","interrogation_path","deal_with_killer"],
+      "lootTables": ["Killer_T2","Ripper_Implant"],
+      "reputation": {"factions":{"Rippers":"+12..+20","NCPD":"+5..+10"}},
+      "rewards": {"credits":7000,"justiceBonus":2000,"exp":900}
+    },
+    {
+      "questId": "SQ-2028-DEFEND-SHOP",
+      "name": "Оборона Магазина",
+      "type": "defense",
+      "tags": ["combat", "strategy", "time_limit"],
+      "tier": 2,
+      "difficulty": "hard",
+      "synopsis": "Банда 6th Street планирует ограбить оружейный магазин. Владелец нанимает защитника.",
+      "dialogue": {
+        "start": "def1",
+        "nodes": [
+          {"id":"def1","speaker":"Owner","text":"6th Street идут сегодня ночью. Защити магазин.","choices":[{"text":"Сколько их?","next":"def2"},{"text":"Оплата?","next":"def3"}]},
+          {"id":"def2","speaker":"Owner","text":"Человек 8-10. Вооружены хорошо.","choices":[{"text":"Подготовлюсь","next":"def4"}]},
+          {"id":"def3","speaker":"Owner","text":"5000 эдди. Плюс оружие из магазина.","choices":[{"text":"Согласен","next":"def4"}]},
+          {"id":"def4","speaker":"System","text":"Магазин. Подготовка к обороне.","choices":[{"text":"Укрепить вход","next":"def5","skillCheck":{"attr":"TECH","skill":"Tech","threshold":9}},{"text":"Ловушки","next":"def6"},{"text":"Засада снаружи","next":"def7"}]},
+          {"id":"def5","speaker":"System","text":"Вход заблокирован. Враги будут долго ломиться.","choices":[{"text":"Ждать","next":"def8"}]},
+          {"id":"def6","speaker":"System","text":"Мины и растяжки установлены.","choices":[{"text":"Ждать атаки","next":"def8"}]},
+          {"id":"def7","speaker":"System","text":"Засада на улице. Первая волна врагов.","choices":[{"text":"Открыть огонь","next":"def9"}]},
+          {"id":"def8","speaker":"System","text":"Атака начинается! 6th Street штурмует.","choices":[{"text":"Оборона","next":"def10"}]},
+          {"id":"def9","speaker":"System","text":"Враги отступают. Вторая волна идёт.","choices":[{"text":"Отступить в магазин","next":"def10"}]},
+          {"id":"def10","speaker":"System","text":"Штурм! Стреляют со всех сторон.","choices":[{"text":"Удержать позиции","next":"def11","skillCheck":{"attr":"REF","skill":"Gunplay","threshold":10}},{"text":"Контратака","next":"def12"}]},
+          {"id":"def11","speaker":"System","text":"Волна отбита. Враги отступают.","choices":[{"text":"Преследовать","next":"def13"},{"text":"Остаться","next":"def14"}]},
+          {"id":"def12","speaker":"System","text":"Контратака! Враги в панике.","choices":[{"text":"Добить","next":"def13"}]},
+          {"id":"def13","speaker":"System","text":"6th Street разгромлены.","choices":[{"text":"Вернуться","next":"def14"}]},
+          {"id":"def14","speaker":"Owner","text":"Спас магазин! Вот награда.","choices":[{"text":"Забрать","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"TECH","skill":"Tech","threshold":9,"effect":"fortify_entrance"},
+        {"attr":"REF","skill":"Gunplay","threshold":10,"effect":"hold_defense"}
+      ],
+      "alternatives": ["fortify_defense","trap_setup","ambush_outside","counterattack"],
+      "lootTables": ["SixthStreet_T2","WeaponShop"],
+      "reputation": {"factions":{"Shopkeepers":"+10..+16","SixthStreet":"-8..-4"}},
+      "rewards": {"credits":5000,"weaponBonus":"free_weapon_t2","exp":850}
+    },
+    {
+      "questId": "SQ-2029-HACK-CORPO",
+      "name": "Взлом Корпоративной Сети",
+      "type": "hacking",
+      "tags": ["netrunning", "stealth", "time_pressure"],
+      "tier": 3,
+      "difficulty": "hard",
+      "synopsis": "Конкурирующая корпорация заказывает взлом защищённой сети Militech для кражи военных чертежей.",
+      "dialogue": {
+        "start": "hk1",
+        "nodes": [
+          {"id":"hk1","speaker":"Corp_Agent","text":"Militech. Сеть уровня 5. Чертежи нового дрона.","choices":[{"text":"Защита?","next":"hk2"},{"text":"Время?","next":"hk3"}]},
+          {"id":"hk2","speaker":"Corp_Agent","text":"ICE военного уровня. NetWatch мониторит.","choices":[{"text":"Справлюсь","next":"hk4"}]},
+          {"id":"hk3","speaker":"Corp_Agent","text":"Окно — 2 часа. Смена дежурных сетевиков.","choices":[{"text":"Начинаю","next":"hk4"}]},
+          {"id":"hk4","speaker":"System","text":"Вход в сеть Militech. Первый узел.","choices":[{"text":"Обойти ICE","next":"hk5","skillCheck":{"attr":"INT","skill":"Hacking","threshold":12}},{"text":"Взломать","next":"hk6"},{"text":"Прокси-маршрут","next":"hk7"}]},
+          {"id":"hk5","speaker":"System","text":"ICE обойдён. Доступ к серверу.","choices":[{"text":"Копировать данные","next":"hk8"}]},
+          {"id":"hk6","speaker":"System","text":"Взлом ICE. Тревога!","choices":[{"text":"Быстрое копирование","next":"hk9"},{"text":"Отключиться","next":"end_fail"}]},
+          {"id":"hk7","speaker":"System","text":"Прокси активен. Трассировка замедлена.","choices":[{"text":"К данным","next":"hk8"}]},
+          {"id":"hk8","speaker":"System","text":"Чертежи найдены. Копирование.","choices":[{"text":"Стереть следы","next":"hk10","skillCheck":{"attr":"INT","skill":"Hacking","threshold":11}},{"text":"Быстрый выход","next":"hk11"}]},
+          {"id":"hk9","speaker":"System","text":"NetWatch на подходе! 30 секунд!","choices":[{"text":"Схватить данные","next":"hk11"}]},
+          {"id":"hk10","speaker":"System","text":"Следы стёрты. Чистый выход.","choices":[{"text":"Отключиться","next":"hk12"}]},
+          {"id":"hk11","speaker":"System","text":"Трассировка активна! Отключение!","choices":[{"text":"Сбросить трейс","next":"hk12","skillCheck":{"attr":"INT","skill":"Hacking","threshold":10}}]},
+          {"id":"hk12","speaker":"Corp_Agent","text":"Данные получены. Отличная работа.","choices":[{"text":"Оплата","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"INT","skill":"Hacking","threshold":12,"effect":"bypass_ice"},
+        {"attr":"INT","skill":"Hacking","threshold":11,"effect":"erase_traces"},
+        {"attr":"INT","skill":"Hacking","threshold":10,"effect":"escape_trace"}
+      ],
+      "alternatives": ["bypass_route","brute_force","proxy_path","clean_escape"],
+      "lootTables": ["Militech_Data","NetWatch_T3"],
+      "reputation": {"factions":{"Corpo_Client":"+15..+22","Militech":"-10..-5","NetWatch":"-5..-2"},"classMods":{"Netrunner":"+25%"}},
+      "rewards": {"credits":12000,"cleanBonus":4000,"exp":1500}
+    },
+    {
+      "questId": "SQ-2029-ARENA-FIGHT",
+      "name": "Арена Подземки",
+      "type": "arena",
+      "tags": ["combat", "spectacle", "betting"],
+      "tier": 2,
+      "difficulty": "medium",
+      "synopsis": "Подпольная боевая арена в Pacifica приглашает бойцов на турнир с крупными призами.",
+      "dialogue": {
+        "start": "ar1",
+        "nodes": [
+          {"id":"ar1","speaker":"Promoter","text":"Три боя. Без правил. 10000 эдди победителю.","choices":[{"text":"Какие противники?","next":"ar2"},{"text":"Оружие?","next":"ar3"}]},
+          {"id":"ar2","speaker":"Promoter","text":"Соло, киборг и чемпион арены.","choices":[{"text":"Участвую","next":"ar4"}]},
+          {"id":"ar3","speaker":"Promoter","text":"Холодное или кулаки. Огнестрел запрещён.","choices":[{"text":"Понял","next":"ar4"}]},
+          {"id":"ar4","speaker":"System","text":"Бой 1: Соло «Бритва».","choices":[{"text":"Агрессия","next":"ar5"},{"text":"Защита","next":"ar6"}]},
+          {"id":"ar5","speaker":"System","text":"Натиск! Соло отступает.","choices":[{"text":"Добить","next":"ar7"}]},
+          {"id":"ar6","speaker":"System","text":"Контратаки. Соло устал.","choices":[{"text":"Финальный удар","next":"ar7"}]},
+          {"id":"ar7","speaker":"Promoter","text":"Победа! Бой 2: Киборг «Железо».","choices":[{"text":"В бой","next":"ar8"}]},
+          {"id":"ar8","speaker":"System","text":"Киборг. Усиленная броня.","choices":[{"text":"Удары в суставы","next":"ar9","skillCheck":{"attr":"REF","skill":"Melee","threshold":9}},{"text":"Силовые удары","next":"ar10"}]},
+          {"id":"ar9","speaker":"System","text":"Киборг повреждён. Движения замедлены.","choices":[{"text":"Нокаут","next":"ar11"}]},
+          {"id":"ar10","speaker":"System","text":"Долгий бой. Оба устали.","choices":[{"text":"Финальный раунд","next":"ar11"}]},
+          {"id":"ar11","speaker":"Promoter","text":"Две победы! Финал: Чемпион «Молот».","choices":[{"text":"К финалу","next":"ar12"}]},
+          {"id":"ar12","speaker":"Champion","text":"Ты хорош. Но я лучше.","choices":[{"text":"Сразиться","next":"ar13"}]},
+          {"id":"ar13","speaker":"System","text":"Жестокий бой. Толпа в экстазе.","choices":[{"text":"Всё или ничего","next":"ar14"}]},
+          {"id":"ar14","speaker":"Promoter","text":"Новый чемпион! Приз твой!","choices":[{"text":"Забрать деньги","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"REF","skill":"Melee","threshold":9,"effect":"weak_point_strike"}
+      ],
+      "alternatives": ["aggressive_style","defensive_style","tactical_combat"],
+      "lootTables": ["Arena_T2","Champion_Trophy"],
+      "reputation": {"factions":{"Arena":"+15..+25","Street":"+8..+15"}},
+      "rewards": {"credits":10000,"championBonus":3000,"exp":1100}
+    },
+    {
+      "questId": "SQ-2029-BLACKMAIL",
+      "name": "Шантаж Корпората",
+      "type": "social",
+      "tags": ["investigation", "negotiation", "stealth"],
+      "tier": 3,
+      "difficulty": "medium",
+      "synopsis": "Фиксер заказывает компромат на влиятельного корпората для шантажа и получения выгодного контракта.",
+      "dialogue": {
+        "start": "bl1",
+        "nodes": [
+          {"id":"bl1","speaker":"Fixer","text":"Корпорат Джонс. Нужен компромат.","choices":[{"text":"Какой?","next":"bl2"},{"text":"Зачем?","next":"bl3"}]},
+          {"id":"bl2","speaker":"Fixer","text":"Всё, что скомпрометирует. Связи, сделки, грязь.","choices":[{"text":"Найду","next":"bl4"}]},
+          {"id":"bl3","speaker":"Fixer","text":"Шантаж. Контракт на 50 миллионов.","choices":[{"text":"Понял","next":"bl4"}]},
+          {"id":"bl4","speaker":"System","text":"Джонс живёт в Corpo Plaza. Охрана.","choices":[{"text":"Взлом дома","next":"bl5","skillCheck":{"attr":"INT","skill":"Hacking","threshold":10}},{"text":"Подкуп слуги","next":"bl6"},{"text":"Слежка","next":"bl7"}]},
+          {"id":"bl5","speaker":"System","text":"Взлом системы. Доступ к файлам.","choices":[{"text":"Копировать данные","next":"bl8"}]},
+          {"id":"bl6","speaker":"Servant","text":"Деньги вперёд. Я дам доступ.","choices":[{"text":"Вот 2000","next":"bl9"}]},
+          {"id":"bl7","speaker":"System","text":"Слежка. Джонс встречается с бандой.","choices":[{"text":"Записать","next":"bl10"}]},
+          {"id":"bl8","speaker":"System","text":"Файлы скопированы. Нелегальные сделки.","choices":[{"text":"Уйти","next":"bl11"}]},
+          {"id":"bl9","speaker":"System","text":"Доступ в кабинет. Сейф.","choices":[{"text":"Взломать","next":"bl8"}]},
+          {"id":"bl10","speaker":"System","text":"Запись готова. Доказательства есть.","choices":[{"text":"К фиксеру","next":"bl11"}]},
+          {"id":"bl11","speaker":"Fixer","text":"Отлично. Джонс прогнётся.","choices":[{"text":"Оплата?","next":"bl12"}]},
+          {"id":"bl12","speaker":"Fixer","text":"Держи. Плюс бонус за чистоту.","choices":[{"text":"Завершить","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"INT","skill":"Hacking","threshold":10,"effect":"home_breach"}
+      ],
+      "alternatives": ["hack_files","bribe_servant","surveillance"],
+      "lootTables": ["Corpo_Safe"],
+      "reputation": {"factions":{"Fixers":"+12..+20","Corpos":"-8..-4"}},
+      "rewards": {"credits":8000,"cleanBonus":2000,"exp":950}
+    }
+  ]
+}
+

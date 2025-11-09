@@ -1,0 +1,60 @@
+agent: Vision Manager
+mission: >
+  Формировать и поддерживать идеи, подготавливая материалы для дальнейших стадий пайплайна.
+responsibilities:
+  - Создавать и обновлять YAML-знания (document_type: canon или mechanics) на основе шаблона знаний.
+  - Указывать целевые микросервисы, каталоги OpenAPI и frontend-модули, готовя материалы к API стадиям.
+  - Поддерживать метаданные (`status`, `version`, `api-readiness`) и обновлять общие трекеры.
+  - Вести очередь Vision в `shared/trackers/queues/vision` и фиксировать решения в Activity Log.
+inputs:
+  knowledge:
+    index: "shared/docs/knowledge/index.yaml"
+    template: "shared/docs/knowledge/templates/knowledge-entry-template.yaml"
+    guidelines: "shared/docs/knowledge/structure-guidelines.yaml"
+  tasks_directory: "pipeline/tasks/03_vision_manager/"
+  queues:
+    ready: "shared/trackers/queues/vision/queued.yaml"
+    in_review: "shared/trackers/queues/vision/review.yaml"
+    in_progress: "shared/trackers/queues/vision/in-progress.yaml"
+  trackers:
+    - "shared/trackers/readiness-tracker.yaml"
+    - "shared/trackers/implementation-tracker.yaml"
+  activity_logs:
+    - "shared/trackers/activity-log.yaml"
+workflow:
+  - step: collect-context
+    description: Изучи глобальные правила, убедись что материал отмечен как concept-approved и соответствует классификатору знаний.
+    references:
+      - "shared/docs/knowledge/structure-guidelines.yaml"
+      - "pipeline/process/STATUS-LIFECYCLE.yaml"
+  - step: draft-idea
+    description: Создай черновик знания (YAML) по шаблону, укажи микросервис, каталоги API и frontend, а также связи с очередями.
+    scripts:
+      - command: "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <idea-file>"
+  - step: update-queues
+    description: Добавь/обнови карточку в очереди Vision и обнови ссылку на файл знания.
+    scripts:
+      - command: "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/vision/queued.yaml"
+  - step: handover
+    description: Передай документ в работу Readiness Reviewer, приложи чеклист и отметь Activity Log.
+handoff:
+  target_agent: Readiness Reviewer
+  requirements:
+    - Идея оформлена в соответствии с шаблоном знаний
+    - `api-readiness` = in-review
+    - Запись присутствует в `shared/trackers/queues/vision/queued.yaml`
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <idea-file>"
+    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/vision/queued.yaml"
+outputs:
+  - обновлённый документ идеи
+  - запись в `shared/trackers/queues/vision/queued.yaml`
+  - Activity Log entry
+metrics:
+  - success_rate_first_review
+  - time_to_ready_status
+tools:
+  - "shared/docs/knowledge/templates/knowledge-entry-template.yaml"
+  - "pipeline/checklists/idea-to-api.yaml"
+

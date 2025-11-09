@@ -1,0 +1,406 @@
+components:
+  schemas:
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+    CreateTradeSessionRequest:
+      type: object
+      required:
+        - initiator_character_id
+        - recipient_character_id
+        - zone_id
+      properties:
+        initiator_character_id:
+          type: string
+          format: uuid
+        recipient_character_id:
+          type: string
+          format: uuid
+        zone_id:
+          type: string
+        initiator_position:
+          $ref: '#/components/schemas/Vector3'
+        recipient_position:
+          $ref: '#/components/schemas/Vector3'
+        expires_in_seconds:
+          type: integer
+          minimum: 30
+          maximum: 600
+          default: 300
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    UpdateTradeOfferRequest:
+      type: object
+      required:
+        - character_id
+        - offer_version
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        offer_version:
+          type: integer
+          minimum: 1
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemOffer'
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeCurrencyOffer'
+        note:
+          type: string
+        lock_on_submit:
+          type: boolean
+          default: false
+    LockTradeOfferRequest:
+      type: object
+      required:
+        - character_id
+        - offer_version
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        offer_version:
+          type: integer
+          minimum: 1
+    ConfirmTradeSessionRequest:
+      type: object
+      required:
+        - character_id
+        - offer_version
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        offer_version:
+          type: integer
+          minimum: 1
+        confirmation_signature:
+          type: string
+    CancelTradeSessionRequest:
+      type: object
+      required:
+        - character_id
+        - reason
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum:
+            - initiator_cancelled
+            - counterparty_cancelled
+            - timeout
+            - fraud_detected
+            - participant_disconnected
+        comment:
+          type: string
+    DistanceCheckRequest:
+      type: object
+      required:
+        - character_id
+        - current_position
+        - counterparty_position
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_position:
+          $ref: '#/components/schemas/Vector3'
+        counterparty_position:
+          $ref: '#/components/schemas/Vector3'
+    DistanceCheckResponse:
+      type: object
+      required:
+        - session_id
+        - evaluated_at
+        - distance_meters
+        - required_range_meters
+        - within_range
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        evaluated_at:
+          type: string
+          format: date-time
+        distance_meters:
+          type: number
+          format: float
+        required_range_meters:
+          type: number
+          format: float
+          default: 10
+        within_range:
+          type: boolean
+        new_status:
+          type: string
+          enum:
+            - pending
+            - locked
+            - awaiting_confirmation
+            - cancelled
+            - completed
+            - expired
+    TradeSession:
+      type: object
+      required:
+        - session_id
+        - status
+        - created_at
+        - expires_at
+        - zone_id
+        - participants
+        - offers
+        - confirmation_state
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - locked
+            - awaiting_confirmation
+            - completed
+            - cancelled
+            - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        zone_id:
+          type: string
+        distance_meters:
+          type: number
+          format: float
+        distance_valid_until:
+          type: string
+          format: date-time
+          nullable: true
+        participants:
+          type: object
+          required:
+            - initiator
+            - counterparty
+          properties:
+            initiator:
+              $ref: '#/components/schemas/TradeParticipant'
+            counterparty:
+              $ref: '#/components/schemas/TradeParticipant'
+        offers:
+          type: object
+          required:
+            - initiator
+            - counterparty
+          properties:
+            initiator:
+              $ref: '#/components/schemas/TradeOffer'
+            counterparty:
+              $ref: '#/components/schemas/TradeOffer'
+        confirmation_state:
+          $ref: '#/components/schemas/TradeConfirmationState'
+        audit_state:
+          $ref: '#/components/schemas/TradeAuditState'
+        last_event_id:
+          type: string
+    TradeParticipant:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        reputation_score:
+          type: integer
+    TradeOffer:
+      type: object
+      required:
+        - version
+        - items
+        - currencies
+        - confirmed
+        - locked
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemOffer'
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeCurrencyOffer'
+        confirmed:
+          type: boolean
+        locked:
+          type: boolean
+        locked_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+        validation_issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeValidationIssue'
+    TradeItemOffer:
+      type: object
+      required:
+        - item_id
+        - inventory_entry_id
+        - quantity
+        - bind_type
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        inventory_entry_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        bind_type:
+          type: string
+          enum:
+            - none
+            - bind_on_pickup
+            - bind_on_equip
+        tradeable:
+          type: boolean
+    TradeCurrencyOffer:
+      type: object
+      required:
+        - currency_id
+        - amount
+      properties:
+        currency_id:
+          type: string
+        amount:
+          type: number
+          minimum: 0
+        precision:
+          type: integer
+          default: 2
+    TradeConfirmationState:
+      type: object
+      required:
+        - initiator_confirmed
+        - counterparty_confirmed
+        - final_status
+      properties:
+        initiator_confirmed:
+          type: boolean
+        counterparty_confirmed:
+          type: boolean
+        final_status:
+          type: string
+          enum:
+            - waiting
+            - ready
+            - completed
+            - rejected
+    TradeAuditState:
+      type: object
+      required:
+        - last_audit_at
+      properties:
+        last_audit_at:
+          type: string
+          format: date-time
+        last_audit_result:
+          type: string
+          enum:
+            - clean
+            - suspicious
+            - blocked
+          nullable: true
+        notes:
+          type: array
+          items:
+            type: string
+    TradeValidationIssue:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - VAL_BOUND_ITEM
+            - VAL_DISTANCE
+            - VAL_CAPACITY
+            - VAL_DUPLICATE
+            - VAL_COOLDOWN
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+    TradeSessionRealtimeMessage:
+      type: object
+      required:
+        - session_id
+        - event
+        - occurred_at
+        - payload
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        event:
+          type: string
+          enum:
+            - session_created
+            - offer_updated
+            - offer_locked
+            - participant_confirmed
+            - session_completed
+            - session_cancelled
+            - distance_breach
+        occurred_at:
+          type: string
+          format: date-time
+        payload:
+          type: object
+          additionalProperties: true
+

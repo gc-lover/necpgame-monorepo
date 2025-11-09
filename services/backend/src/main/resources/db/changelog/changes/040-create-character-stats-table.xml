@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="040-create-character-stats-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_stats"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_stats">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="strength" type="INT" defaultValue="3">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reflexes" type="INT" defaultValue="3">
+                <constraints nullable="false"/>
+            </column>
+            <column name="intelligence" type="INT" defaultValue="3">
+                <constraints nullable="false"/>
+            </column>
+            <column name="technical" type="INT" defaultValue="3">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cool" type="INT" defaultValue="3">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_stats"
+                baseColumnNames="character_id"
+                constraintName="fk_character_stats_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="character_stats" indexName="idx_character_stats_character" unique="true">
+            <column name="character_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="character_stats"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

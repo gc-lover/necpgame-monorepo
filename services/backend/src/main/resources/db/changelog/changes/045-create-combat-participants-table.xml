@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="045-create-combat-participants-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="combat_participants"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="combat_participants">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="combat_session_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participant_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participant_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="health" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_health" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="energy" type="INT"/>
+            <column name="armor" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_alive" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="initiative" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="combat_participants"
+                baseColumnNames="combat_session_id"
+                constraintName="fk_combat_participants_session"
+                referencedTableName="combat_sessions"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="combat_participants" indexName="idx_combat_participants_session">
+            <column name="combat_session_id"/>
+        </createIndex>
+        <createIndex tableName="combat_participants" indexName="idx_combat_participants_type">
+            <column name="participant_type"/>
+        </createIndex>
+        <createIndex tableName="combat_participants" indexName="idx_combat_participants_alive">
+            <column name="is_alive"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="combat_participants"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

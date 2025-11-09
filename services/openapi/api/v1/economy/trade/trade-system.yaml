@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+  title: Trade System API
+  version: 1.2.0
+  description: |
+    Контракты P2P торговли между игроками мегаполиса NECP. Реализует приглашение
+    второго игрока, обмен предметами и валютой, двойное подтверждение, блокировку
+    предложений и историю сделок. Источник: .BRAIN/05-technical/backend/trade-system.md
+    v1.0.0. Архитектура:
+    - Микросервис economy-service (порт 8085).
+    - Базовый путь шлюза /api/v1/economy/trade.
+    - Зависимости inventory-service, analytics-service, security-service.
+    - Фронтенд модуль modules/economy/trade (TradeWindow, ItemCard, CurrencyTag,
+      DualConfirmBadge, PriceDisplay, TradeForm, ConfirmExchangeForm, useEconomyStore,
+      useRealtime).
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/trade
+    directory: api/v1/economy/trade
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1/economy
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1/economy
+    description: Local API Gateway
+tags:
+  - name: TradeSessions
+    description: Управление жизненным циклом торговых сессий
+  - name: TradeHistory
+    description: История и аудит P2P сделок
+security:
+  - BearerAuth: []
+x-websocket:
+  sessionStream:
+    url: wss://api.necp.game/v1/economy/trade/sessions/{sessionId}/stream
+    description: Поток событий о ходе торговли для участников и подписчиков
+    message:
+      $ref: '#/components/schemas/TradeSessionRealtimeMessage'
+paths:
+  /trade/sessions:
+    $ref: './paths/sessions.yaml#/tradeSessionsRoot'
+  /trade/sessions/{sessionId}:
+    $ref: './paths/sessions.yaml#/tradeSessionById'
+  /trade/sessions/{sessionId}/offer:
+    $ref: './paths/sessions.yaml#/tradeSessionOffer'
+  /trade/sessions/{sessionId}/lock:
+    $ref: './paths/sessions.yaml#/tradeSessionLock'
+  /trade/sessions/{sessionId}/accept:
+    $ref: './paths/sessions.yaml#/tradeSessionAccept'
+  /trade/sessions/{sessionId}/cancel:
+    $ref: './paths/sessions.yaml#/tradeSessionCancel'
+  /trade/sessions/{sessionId}/distance-check:
+    $ref: './paths/sessions.yaml#/tradeSessionDistanceCheck'
+  /trade/history:
+    $ref: './paths/history.yaml#/tradeHistory'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+    ServiceToken:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken'
+  parameters:
+    SessionId:
+      $ref: './schemas/index.yaml#/components/parameters/SessionId'
+  schemas:
+    CreateTradeSessionRequest:
+      $ref: './schemas/index.yaml#/components/schemas/CreateTradeSessionRequest'
+    UpdateTradeOfferRequest:
+      $ref: './schemas/index.yaml#/components/schemas/UpdateTradeOfferRequest'
+    LockTradeOfferRequest:
+      $ref: './schemas/index.yaml#/components/schemas/LockTradeOfferRequest'
+    ConfirmTradeSessionRequest:
+      $ref: './schemas/index.yaml#/components/schemas/ConfirmTradeSessionRequest'
+    CancelTradeSessionRequest:
+      $ref: './schemas/index.yaml#/components/schemas/CancelTradeSessionRequest'
+    DistanceCheckRequest:
+      $ref: './schemas/index.yaml#/components/schemas/DistanceCheckRequest'
+    DistanceCheckResponse:
+      $ref: './schemas/index.yaml#/components/schemas/DistanceCheckResponse'
+    TradeSession:
+      $ref: './schemas/index.yaml#/components/schemas/TradeSession'
+    TradeParticipant:
+      $ref: './schemas/index.yaml#/components/schemas/TradeParticipant'
+    TradeOffer:
+      $ref: './schemas/index.yaml#/components/schemas/TradeOffer'
+    TradeItemOffer:
+      $ref: './schemas/index.yaml#/components/schemas/TradeItemOffer'
+    TradeCurrencyOffer:
+      $ref: './schemas/index.yaml#/components/schemas/TradeCurrencyOffer'
+    TradeConfirmationState:
+      $ref: './schemas/index.yaml#/components/schemas/TradeConfirmationState'
+    TradeAuditState:
+      $ref: './schemas/index.yaml#/components/schemas/TradeAuditState'
+    TradeValidationIssue:
+      $ref: './schemas/index.yaml#/components/schemas/TradeValidationIssue'
+    TradeHistoryResponse:
+      $ref: './schemas/index.yaml#/components/schemas/TradeHistoryResponse'
+    TradeHistoryEntry:
+      $ref: './schemas/index.yaml#/components/schemas/TradeHistoryEntry'
+    TradeTransferBundle:
+      $ref: './schemas/index.yaml#/components/schemas/TradeTransferBundle'
+    TradeSessionRealtimeMessage:
+      $ref: './schemas/index.yaml#/components/schemas/TradeSessionRealtimeMessage'
+    Vector3:
+      $ref: './schemas/index.yaml#/components/schemas/Vector3'
+

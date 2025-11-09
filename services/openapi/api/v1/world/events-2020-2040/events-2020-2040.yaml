@@ -1,0 +1,253 @@
+openapi: 3.0.3
+info:
+  title: World Events 2020-2040 API
+  version: 1.0.0
+  description: |
+    API для мировых событий эпохи 2020-2040 "Разрушение и восстановление".
+    
+    Источник: .BRAIN/02-gameplay/world/events/world-events-2020-2040.md v0.1.0
+    
+    Эпоха: Разрушение и восстановление (война Arasaka vs Militech)
+    
+    DC-скейлинг:
+    - Социальные: 14/18/22
+    - Тех/Хак: 18/22/25
+    - Боевые: 16/20/24
+    
+    AI-слайдеры фракций:
+    - Агрессия: 4
+    - Экспансия: 3
+    - Дипломатия: 2
+    - Шпионаж: 4
+    
+    Экономика: Ресурсы ×0.7, Волатильность высокая, Пошлины +1..+2
+    Технологии: Импланты развивающиеся, Сеть фрагментированная
+    
+    D&D генератор событий (d100):
+    - 01-15: Рад-зоны
+    - 16-30: Спасработы
+    - 31-45: Разбор руин
+    - 46-60: Очаги боёв
+    - 61-75: Сетевые "дыры"
+    - 76-90: Переговоры
+    - 91-00: Чёрный заслон
+
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/gameplay/world
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: World Events
+    description: Мировые события
+  - name: Era 2020-2040
+    description: Эпоха разрушения и восстановления
+
+paths:
+  /gameplay/world/events/2020-2040/generate:
+    post:
+      summary: Сгенерировать событие эпохи
+      description: |
+        Генерирует случайное событие эпохи 2020-2040.
+        Использует d100 генератор с таблицей событий.
+      operationId: generateEvent2020_2040
+      tags:
+        - Era 2020-2040
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - location_id
+              properties:
+                character_id:
+                  type: string
+                location_id:
+                  type: string
+                roll_override:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  description: Переопределить бросок d100 (для тестирования)
+            examples:
+              rad_zone:
+                summary: Событие - Рад-зона
+                value:
+                  character_id: "char_123"
+                  location_id: "watson_ruins"
+                  roll_override: 10
+      responses:
+        '200':
+          description: Событие сгенерировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+              examples:
+                rad_zone_event:
+                  summary: Рад-зона
+                  value:
+                    event_id: "event_001"
+                    event_type: "rad_zone"
+                    era: "2020-2040"
+                    location_id: "watson_ruins"
+                    dc_scaling:
+                      social: 14
+                      tech_hack: 18
+                      combat: 16
+                    description: "Обнаружена радиационная зона от ядерных ударов"
+                    consequences:
+                      - "Радиационное отравление при входе"
+                      - "Редкие ресурсы внутри"
+                    quest_hooks:
+                      - "Эвакуация выживших"
+                      - "Сбор редких материалов"
+
+  /gameplay/world/events/2020-2040/active:
+    get:
+      summary: Получить активные события эпохи
+      description: |
+        Возвращает список активных событий эпохи 2020-2040.
+        Фильтруется по типу, локации, статусу.
+      operationId: getActiveEvents2020_2040
+      tags:
+        - Era 2020-2040
+      parameters:
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [rad_zone, rescue_ops, ruins_scavenging, combat_zones, network_holes, negotiations, blackwall]
+        - name: location_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Активные события
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldEvent'
+
+  /gameplay/world/events/2020-2040/era-settings:
+    get:
+      summary: Получить настройки эпохи
+      description: |
+        Возвращает параметры эпохи 2020-2040.
+        DC-скейлинг, AI-слайдеры, экономика, технологии.
+      operationId: getEraSettings2020_2040
+      tags:
+        - Era 2020-2040
+      responses:
+        '200':
+          description: Настройки эпохи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EraSettings'
+
+components:
+  schemas:
+    WorldEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+          enum: [rad_zone, rescue_ops, ruins_scavenging, combat_zones, network_holes, negotiations, blackwall]
+        era:
+          type: string
+        location_id:
+          type: string
+        dc_scaling:
+          type: object
+          properties:
+            social:
+              type: integer
+            tech_hack:
+              type: integer
+            combat:
+              type: integer
+        description:
+          type: string
+        consequences:
+          type: array
+          items:
+            type: string
+        quest_hooks:
+          type: array
+          items:
+            type: string
+        started_at:
+          type: string
+          format: date-time
+        duration:
+          type: number
+          description: Длительность события (часы)
+
+    EraSettings:
+      type: object
+      properties:
+        era:
+          type: string
+        dc_scaling:
+          type: object
+          properties:
+            social:
+              type: array
+              items:
+                type: integer
+            tech_hack:
+              type: array
+              items:
+                type: integer
+            combat:
+              type: array
+              items:
+                type: integer
+        faction_sliders:
+          type: object
+          properties:
+            aggression:
+              type: integer
+            expansion:
+              type: integer
+            diplomacy:
+              type: integer
+            espionage:
+              type: integer
+        economy:
+          type: object
+          properties:
+            resource_multiplier:
+              type: number
+            volatility:
+              type: string
+            tariffs_modifier:
+              type: number
+        technologies:
+          type: object
+          properties:
+            implants_level:
+              type: string
+            network_status:
+              type: string
+
+

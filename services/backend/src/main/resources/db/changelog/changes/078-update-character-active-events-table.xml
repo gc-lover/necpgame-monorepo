@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="078-update-character-active-events-table" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="character_active_events"/>
+        </preConditions>
+
+        <addColumn tableName="character_active_events">
+            <column name="triggered_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="character_active_events">
+            <column name="location_id" type="VARCHAR(120)"/>
+        </addColumn>
+        <addColumn tableName="character_active_events">
+            <column name="location_type" type="VARCHAR(40)"/>
+        </addColumn>
+        <addColumn tableName="character_active_events">
+            <column name="time_of_day" type="VARCHAR(20)"/>
+        </addColumn>
+        <addColumn tableName="character_active_events">
+            <column name="generation_chance" type="NUMERIC(6,4)"/>
+        </addColumn>
+        <addColumn tableName="character_active_events">
+            <column name="event_snapshot" type="jsonb"/>
+        </addColumn>
+        <addColumn tableName="character_active_events">
+            <column name="choice_id" type="VARCHAR(100)"/>
+        </addColumn>
+        <addColumn tableName="character_active_events">
+            <column name="outcome_id" type="VARCHAR(100)"/>
+        </addColumn>
+        <addColumn tableName="character_active_events">
+            <column name="consequences_snapshot" type="jsonb"/>
+        </addColumn>
+
+        <update tableName="character_active_events">
+            <column name="triggered_at" valueComputed="created_at"/>
+        </update>
+
+        <rollback>
+            <dropColumn tableName="character_active_events" columnName="triggered_at"/>
+            <dropColumn tableName="character_active_events" columnName="location_id"/>
+            <dropColumn tableName="character_active_events" columnName="location_type"/>
+            <dropColumn tableName="character_active_events" columnName="time_of_day"/>
+            <dropColumn tableName="character_active_events" columnName="generation_chance"/>
+            <dropColumn tableName="character_active_events" columnName="event_snapshot"/>
+            <dropColumn tableName="character_active_events" columnName="choice_id"/>
+            <dropColumn tableName="character_active_events" columnName="outcome_id"/>
+            <dropColumn tableName="character_active_events" columnName="consequences_snapshot"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

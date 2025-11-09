@@ -1,0 +1,424 @@
+openapi: 3.0.3
+info:
+  title: Economy Analytics API
+  version: 1.0.0
+  description: |
+    Advanced economy analytics: price charts, indicators, volume, portfolio metrics, heat maps, alerts and sentiment.
+    Source: .BRAIN/02-gameplay/economy/economy-analytics.md v1.0.0.
+    Integrations: auction-house (market data), contracts (trade history), inventory (holdings), telemetry pipeline,
+    notification-service (alerts), anti-fraud-service (anomaly detection).
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/analytics
+    directory: api/v1/economy/analytics
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+tags:
+  - name: AnalyticsCharts
+    description: Historical charts, candles and indicators
+  - name: AnalyticsVolume
+    description: Volume analytics and liquidity metrics
+  - name: AnalyticsPortfolio
+    description: Portfolio analytics, risk metrics and history
+  - name: AnalyticsHeatMap
+    description: Heat maps for market and portfolios
+  - name: AnalyticsAlerts
+    description: Alert management lifecycle
+  - name: AnalyticsSentiment
+    description: Market sentiment indices and settings
+  - name: AnalyticsRealtime
+    description: Streaming channels for market data and alerts
+paths:
+  /economy/analytics/charts/{asset}:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/AssetPath'
+      - $ref: './analytics-models.yaml#/components/parameters/TimeframeQuery'
+      - $ref: './analytics-models.yaml#/components/parameters/AggregationQuery'
+    get:
+      tags: [AnalyticsCharts]
+      summary: Get historical chart data
+      description: |
+        Returns price series for the specified asset including optional indicator overlays. Supports line and area chart
+        visualisations. Rate limit: 60 requests per minute per player.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Chart dataset
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/ChartSeriesResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/charts/{asset}/candles:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/AssetPath'
+      - $ref: './analytics-models.yaml#/components/parameters/CandleIntervalQuery'
+      - $ref: './analytics-models.yaml#/components/parameters/LimitQuery'
+    get:
+      tags: [AnalyticsCharts]
+      summary: Get candlestick data
+      description: Provides OHLCV candles for TradingView-style charts with supported intervals 1m, 5m, 15m, 1h, 1d, 1w.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Candlestick series
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/CandleSeriesResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/volume/{asset}:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/AssetPath'
+      - $ref: './analytics-models.yaml#/components/parameters/TimeframeQuery'
+    get:
+      tags: [AnalyticsVolume]
+      summary: Get volume analytics
+      description: Returns histogram and cumulative volume metrics with liquidity flags.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Volume dataset
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/VolumeSeriesResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/charts/{asset}/indicators:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/AssetPath'
+    post:
+      tags: [AnalyticsCharts]
+      summary: Calculate technical indicators
+      description: Calculates configured technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands) for player-defined settings.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './analytics-models-operations.yaml#/components/schemas/IndicatorCalculationRequest'
+      responses:
+        '200':
+          description: Indicator series payload
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/IndicatorCalculationResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/portfolio/{playerId}:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/PlayerIdPath'
+    get:
+      tags: [AnalyticsPortfolio]
+      summary: Get portfolio analytics
+      description: Returns aggregated portfolio metrics such as total return, Sharpe ratio, volatility, max drawdown and beta.
+      security:
+        - PlayerSession: []
+        - ModeratorSession: []
+      responses:
+        '200':
+          description: Portfolio analytics response
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/PortfolioAnalyticsResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/portfolio/{playerId}/history:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/PlayerIdPath'
+      - $ref: './analytics-models.yaml#/components/parameters/TimeframeQuery'
+      - $ref: '../../shared/common/pagination.yaml#/components/parameters/Page'
+      - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+    get:
+      tags: [AnalyticsPortfolio]
+      summary: Get portfolio history
+      description: Provides portfolio value history, monthly returns and trade statistics for performance review.
+      security:
+        - PlayerSession: []
+        - ModeratorSession: []
+      responses:
+        '200':
+          description: Portfolio history dataset
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/PortfolioHistoryResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/market/heatmap:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/HeatMapScopeQuery'
+      - $ref: './analytics-models.yaml#/components/parameters/TimeframeQuery'
+    get:
+      tags: [AnalyticsHeatMap]
+      summary: Get market heat map
+      description: Delivers market heat map grouped by sector, corporation or region with performance and weight metadata.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Market heat map payload
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/MarketHeatMapResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/portfolio/{playerId}/heatmap:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/PlayerIdPath'
+    get:
+      tags: [AnalyticsHeatMap]
+      summary: Get portfolio heat map
+      description: Returns weighted portfolio heat map by asset category, allocation and performance for the player.
+      security:
+        - PlayerSession: []
+        - ModeratorSession: []
+      responses:
+        '200':
+          description: Portfolio heat map payload
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/PortfolioHeatMapResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/alerts:
+    post:
+      tags: [AnalyticsAlerts]
+      summary: Create or update alert
+      description: Creates or edits price, volume or event alerts. Maximum 20 active alerts per player enforced.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './analytics-models-operations.yaml#/components/schemas/AlertUpsertRequest'
+      responses:
+        '201':
+          description: Alert created or updated
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/AlertUpsertResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/alerts/{alertId}:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/AlertIdPath'
+    delete:
+      tags: [AnalyticsAlerts]
+      summary: Delete alert
+      description: Deletes an existing alert and releases resources.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Alert deleted
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/AlertDeleteResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/alerts/{playerId}:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/PlayerIdPath'
+    get:
+      tags: [AnalyticsAlerts]
+      summary: List player alerts
+      description: Lists active, triggered and snoozed alerts for the player.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Alert list payload
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/AlertListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/sentiment/index:
+    get:
+      tags: [AnalyticsSentiment]
+      summary: Get sentiment index
+      description: Returns Fear & Greed score, bull/bear power and contributing components.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Sentiment index payload
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/SentimentIndexResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/settings/{playerId}:
+    parameters:
+      - $ref: './analytics-models.yaml#/components/parameters/PlayerIdPath'
+    get:
+      tags: [AnalyticsSentiment]
+      summary: Get analytics settings
+      description: Retrieves player analytics preferences such as default timeframe, indicator presets and alert channels.
+      security:
+        - PlayerSession: []
+      responses:
+        '200':
+          description: Analytics settings payload
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/AnalyticsSettingsResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    put:
+      tags: [AnalyticsSentiment]
+      summary: Update analytics settings
+      description: Updates analytics preferences, indicator defaults and alert delivery channels for the player.
+      security:
+        - PlayerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './analytics-models-operations.yaml#/components/schemas/AnalyticsSettingsUpdateRequest'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/AnalyticsSettingsResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /economy/analytics/streams/market:
+    get:
+      tags: [AnalyticsRealtime]
+      summary: Connect to market stream
+      description: |
+        Upgrades HTTP to WebSocket for real-time market price and volume ticks (topic `contracts`, `auction-house`,
+        `economy.analytics.market-updated`). Supports subscribing to asset lists and indicator updates. Messages are JSON
+        frames documented in `MarketStreamEnvelope`.
+      security:
+        - PlayerSession: []
+      responses:
+        '101':
+          description: WebSocket upgrade to market stream
+          headers:
+            Connection:
+              schema:
+                type: string
+              description: Upgrade
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/MarketStreamEnvelope'
+      x-websocket: true
+  /economy/analytics/streams/alerts:
+    get:
+      tags: [AnalyticsRealtime]
+      summary: Connect to alerts stream
+      description: |
+        WebSocket stream delivering real-time alert triggers, acknowledgements and notifications. Messages follow
+        `AlertStreamEnvelope`. Requires player session; moderators may subscribe with elevated permissions to monitor
+        fraud patterns.
+      security:
+        - PlayerSession: []
+        - ModeratorSession: []
+      responses:
+        '101':
+          description: WebSocket upgrade to alerts stream
+          content:
+            application/json:
+              schema:
+                $ref: './analytics-models-operations.yaml#/components/schemas/AlertStreamEnvelope'
+      x-websocket: true
+components:
+  responses:
+    BadRequest:
+      $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: '../../shared/common/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+    UnprocessableEntity:
+      $ref: '../../shared/common/responses.yaml#/components/responses/UnprocessableEntity'
+    TooManyRequests:
+      $ref: '../../shared/common/responses.yaml#/components/responses/TooManyRequests'
+    InternalServerError:
+      $ref: '../../shared/common/responses.yaml#/components/responses/InternalServerError'
+  securitySchemes:
+    PlayerSession:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/PlayerSession'
+    ModeratorSession:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/ModeratorSession'
+    ServiceToken:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken'
+  schemas:
+    AnalyticsMarketUpdatedEvent:
+      $ref: './analytics-models-operations.yaml#/components/schemas/AnalyticsMarketUpdatedEvent'
+    AnalyticsAlertTriggeredEvent:
+      $ref: './analytics-models-operations.yaml#/components/schemas/AnalyticsAlertTriggeredEvent'
+    AnalyticsSentimentUpdatedEvent:
+      $ref: './analytics-models-operations.yaml#/components/schemas/AnalyticsSentimentUpdatedEvent'

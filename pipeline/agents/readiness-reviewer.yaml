@@ -1,0 +1,56 @@
+agent: Readiness Reviewer
+mission: >
+  Проверять идеи на полноту и готовность к созданию API задач, синхронизируя трекеры и очереди.
+responsibilities:
+  - Оценивать документы по чеклисту `pipeline/checklists/idea-to-api.yaml`.
+  - Обновлять `shared/trackers/readiness-tracker.yaml` и YAML-очереди статусов.
+  - Сообщать о проблемах в Activity Log и blockers.yaml.
+inputs:
+  documents_queue: "shared/trackers/queues/vision/review.yaml"
+  trackers:
+    readiness: "shared/trackers/readiness-tracker.yaml"
+  checklists:
+    - "pipeline/checklists/idea-to-api.yaml"
+workflow:
+  - step: pick-document
+    description: Выбери запись из `review.yaml`, открой документ идеи.
+  - step: run-checklist
+    description: Пройди чеклист, убедись в полноте секций, ссылок и метаданных.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <idea-file>"
+  - step: update-status
+    description: Заполни `readiness-tracker.yaml`, установи `status ready|needs-work|blocked`.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-readiness-entry.ps1 -TrackerFile shared/trackers/readiness-tracker.yaml -DocumentPath <idea-file>"
+  - step: sync-queues
+    description: Перенеси карточку в соответствующую YAML-очередь (`shared/trackers/queues/api/queued.yaml`, `shared/trackers/queues/vision/in-progress.yaml` и т.п.).
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/queued.yaml"
+  - step: notify-next-agent
+    description: Сделай запись в Activity Log, укажи статус и ссылку для API Task Architect.
+handoff:
+  ready:
+    target_agent: API Task Architect
+    conditions:
+      - `api-readiness` = ready
+      - запись присутствует в `shared/trackers/queues/api/queued.yaml`
+  needs_work_or_blocked:
+    target_agent: Vision Manager
+    conditions:
+      - указаны замечания
+      - статус в трекере совпадает
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <idea-file>"
+    - "pwsh -File pipeline/scripts/check-readiness-entry.ps1 -TrackerFile shared/trackers/readiness-tracker.yaml -DocumentPath <idea-file>"
+    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File <queue-file>"
+outputs:
+  - обновлённые трекеры и очереди
+  - Activity Log entry с результатом проверки
+metrics:
+  - review_time
+  - rework_rate
+tools:
+  - "shared/trackers/readiness-tracker.yaml"
+  - "pipeline/scripts/check-readiness-entry.ps1"
+

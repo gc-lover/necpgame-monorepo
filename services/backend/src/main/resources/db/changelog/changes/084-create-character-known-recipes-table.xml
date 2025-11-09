@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="084-create-character-known-recipes-table" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_known_recipes"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_known_recipes">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recipe_id" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="learned_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="character_known_recipes"
+                                 baseColumnNames="character_id"
+                                 referencedTableName="characters"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_character_known_recipes_character"
+                                 onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint baseTableName="character_known_recipes"
+                                 baseColumnNames="recipe_id"
+                                 referencedTableName="crafting_recipes"
+                                 referencedColumnNames="recipe_id"
+                                 constraintName="fk_character_known_recipes_recipe"
+                                 onDelete="CASCADE"/>
+
+        <createIndex tableName="character_known_recipes" indexName="idx_character_known_recipes_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_known_recipes" indexName="idx_character_known_recipes_recipe">
+            <column name="recipe_id"/>
+        </createIndex>
+        <createIndex tableName="character_known_recipes" indexName="idx_character_known_recipes_unique" unique="true">
+            <column name="character_id"/>
+            <column name="recipe_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="character_known_recipes"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

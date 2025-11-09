@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="055-create-weapons-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="weapons"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="weapons">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(2000)"/>
+            <column name="weapon_class" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="brand" type="VARCHAR(100)"/>
+            <column name="rarity" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="damage" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fire_rate" type="INT"/>
+            <column name="reload_time" type="INT"/>
+            <column name="magazine_size" type="INT"/>
+            <column name="range" type="INT"/>
+            <column name="accuracy" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="crit_chance" type="INT"/>
+            <column name="crit_damage" type="INT"/>
+            <column name="mod_slots" type="INT" defaultValue="0"/>
+            <column name="price" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_level" type="INT" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="required_stats" type="VARCHAR(500)"/>
+            <column name="special_abilities" type="TEXT"/>
+            <column name="image_url" type="VARCHAR(500)"/>
+            <column name="is_cyberware" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="weapons" indexName="idx_weapons_class">
+            <column name="weapon_class"/>
+        </createIndex>
+        <createIndex tableName="weapons" indexName="idx_weapons_brand">
+            <column name="brand"/>
+        </createIndex>
+        <createIndex tableName="weapons" indexName="idx_weapons_rarity">
+            <column name="rarity"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="weapons"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,278 @@
+openapi: 3.0.3
+info:
+  title: Equipment API
+  version: 1.1.0
+  description: |
+    REST API для управления экипировкой персонажа: получение активных слотов,
+    экипировка, снятие и обмен предметов. Основано на
+    `.BRAIN/05-technical/backend/inventory-system/` (v1.0.2, Part1/Part2).
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/inventory
+    package: com.necpgame.economy.inventory
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Equipment
+    description: Управление экипировкой персонажа
+
+paths:
+  /inventory/characters/{characterId}/equipment:
+    get:
+      tags: [Equipment]
+      summary: Получить экипировку персонажа
+      description: Возвращает текущее состояние всех слотов экипировки.
+      operationId: getCharacterEquipment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Состояние экипировки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentState'
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+
+  /inventory/characters/{characterId}/equipment/equip:
+    post:
+      tags: [Equipment]
+      summary: Экипировать предмет
+      description: Проверяет требования класса/уровня, учитывает bind правила и перемещает предмет из инвентаря.
+      operationId: equipItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipRequest'
+      responses:
+        '200':
+          description: Экипировка обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '403': { "$ref": "../../shared/common/responses.yaml#/components/responses/Forbidden" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+        '409': { "$ref": "../../shared/common/responses.yaml#/components/responses/Conflict" }
+
+  /inventory/characters/{characterId}/equipment/unequip:
+    post:
+      tags: [Equipment]
+      summary: Снять предмет
+      description: Перемещает предмет из слота экипировки в инвентарь, проверяя наличие свободных слотов.
+      operationId: unequipItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnequipRequest'
+      responses:
+        '200':
+          description: Предмет снят и перемещён в инвентарь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnequipResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+        '409': { "$ref": "../../shared/common/responses.yaml#/components/responses/Conflict" }
+
+  /inventory/characters/{characterId}/equipment/swap:
+    post:
+      tags: [Equipment]
+      summary: Поменять экипированные предметы местами
+      description: Обменивает предметы между двумя слотами, поддерживает двухслотовое оружие.
+      operationId: swapEquipmentItems
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwapRequest'
+      responses:
+        '200':
+          description: Слоты обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentState'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '404': { "$ref": "../../shared/common/responses.yaml#/components/responses/NotFound" }
+        '409': { "$ref": "../../shared/common/responses.yaml#/components/responses/Conflict" }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+
+  parameters:
+    CharacterId:
+      name: characterId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    EquipmentState:
+      type: object
+      required: [character_id, slots]
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentSlot'
+        set_bonuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SetBonus'
+    EquipmentSlot:
+      type: object
+      required: [slot_type, is_occupied]
+      properties:
+        slot_type:
+          $ref: '#/components/schemas/EquipmentSlotType'
+        is_occupied:
+          type: boolean
+        item:
+          $ref: '#/components/schemas/EquippedItem'
+          nullable: true
+    EquippedItem:
+      type: object
+      required: [item_instance_id, item_id, slot_type, durability]
+      properties:
+        item_instance_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+        slot_type:
+          $ref: '#/components/schemas/EquipmentSlotType'
+        durability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        item_level:
+          type: integer
+          format: int32
+        stat_bonuses:
+          type: object
+          additionalProperties:
+            type: number
+        bind_type:
+          $ref: './inventory.yaml#/components/schemas/ItemBindType'
+    EquipRequest:
+      type: object
+      required: [item_instance_id, target_slot]
+      properties:
+        item_instance_id:
+          type: string
+          format: uuid
+        target_slot:
+          $ref: '#/components/schemas/EquipmentSlotType'
+        enforce_binding:
+          type: boolean
+          default: true
+        override_item:
+          type: boolean
+          default: false
+      description: Проверка класса, уровня, требований силы/ловкости выполняется сервисом.
+    EquipResponse:
+      type: object
+      required: [equipment_state]
+      properties:
+        equipment_state:
+          $ref: '#/components/schemas/EquipmentState'
+        unequipped_item:
+          $ref: '#/components/schemas/EquippedItem'
+          nullable: true
+    UnequipRequest:
+      type: object
+      required: [slot_type]
+      properties:
+        slot_type:
+          $ref: '#/components/schemas/EquipmentSlotType'
+        destination_slot:
+          type: integer
+          format: int32
+          nullable: true
+          description: Индекс слота инвентаря для перемещения (если требуется конкретное место)
+    UnequipResponse:
+      type: object
+      required: [equipment_state, moved_item]
+      properties:
+        equipment_state:
+          $ref: '#/components/schemas/EquipmentState'
+        moved_item:
+          $ref: './inventory.yaml#/components/schemas/InventoryItem'
+    SwapRequest:
+      type: object
+      required: [first_slot, second_slot]
+      properties:
+        first_slot:
+          $ref: '#/components/schemas/EquipmentSlotType'
+        second_slot:
+          $ref: '#/components/schemas/EquipmentSlotType'
+        allow_two_handed_split:
+          type: boolean
+          default: false
+    SetBonus:
+      type: object
+      required: [set_id, bonus_id]
+      properties:
+        set_id:
+          type: string
+        bonus_id:
+          type: string
+        description:
+          type: string
+        stacks:
+          type: integer
+          format: int32
+    EquipmentSlotType:
+      type: string
+      enum:
+        - weapon_main
+        - weapon_off
+        - armor_head
+        - armor_chest
+        - armor_legs
+        - armor_feet
+        - implant_neural
+        - implant_ocular
+        - implant_cardio
+        - cyberware_arms
+        - cyberware_legs

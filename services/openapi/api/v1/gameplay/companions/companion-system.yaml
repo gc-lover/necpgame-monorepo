@@ -1,0 +1,402 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/gameplay/companions
+# - Dependencies: auth-service, combat-service, progression-service, inventory-service, notification-service, analytics-service
+# - Frontend Module: modules/gameplay/companions (useCompanionStore)
+# - UI: CompanionRoster, CompanionDetailCard, AbilityLoadoutGrid, BondingProgressBar, CompanionMissionBoard
+# - Forms: CreateCompanionForm, AssignLoadoutForm, MissionDeploymentForm, AbilityUpgradeForm
+# - Layouts: GameLayout, CompanionHubLayout
+# - Hooks: useCompanionRoster, useCompanionMissions, useCompanionAbilities
+
+openapi: 3.0.3
+info:
+  title: Companion System API
+  description: "Компаньоны игроков NECPGAME: создание, прогрессия, миссии, способности, аналитика, анти-абуз."
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/companions
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Companions
+    description: Создание, обновление и жизненный цикл компаньонов
+  - name: Loadout
+    description: Способности, моды и кулдауны компаньонов
+  - name: Missions
+    description: Поручения, аналитика успехов и награды
+  - name: Bonding
+    description: Лояльность, эмоции и социальные активности
+  - name: Analytics
+    description: Метрики, лидерборды и отчёты
+  - name: Governance
+    description: Администрирование, анти-абуз и сервисные операции
+paths:
+  /gameplay/companions:
+    post:
+      tags: [Companions]
+      summary: Создать компаньона
+      description: Создаёт нового компаньона указанного архетипа, проверяя лимиты активных сущностей и анти-абуз правила.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/CreateCompanionRequest' }
+            examples:
+              combatDrone:
+                summary: Боевой дрон
+                value:
+                  playerId: player-901
+                  type: combat
+                  subType: assault_drone
+                  rarity: rare
+                  nickname: Bolt
+                  startingAbilities:
+                    - slot: active_1
+                      abilityId: ability-emp
+      responses:
+        '201':
+          description: Компаньон создан
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionDetail' }
+              examples:
+                createdCompanion:
+                  $ref: './examples.yaml#/components/examples/CreatedCompanion'
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '409':
+          description: Превышен лимит активных компаньонов
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+    get:
+      tags: [Companions]
+      summary: Получить список компаньонов игрока
+      parameters:
+        - in: query
+          name: playerId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: type
+          schema: { type: string, enum: [combat, utility, social] }
+        - in: query
+          name: status
+          schema: { type: string, enum: [ACTIVE, IN_MISSION, SUSPENDED, ARCHIVED] }
+      responses:
+        '200':
+          description: Ростер компаньонов
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionRosterResponse' }
+              examples:
+                roster:
+                  $ref: './examples.yaml#/components/examples/CompanionRoster'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/companions/{companionId}:
+    parameters:
+      - $ref: '#/components/parameters/CompanionId'
+    get:
+      tags: [Companions]
+      summary: Получить детали компаньона
+      responses:
+        '200':
+          description: Полная карточка компаньона
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionDetail' }
+              examples:
+                detail:
+                  $ref: './examples.yaml#/components/examples/CompanionDetail'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+    patch:
+      tags: [Companions]
+      summary: Обновить визуал и поведение компаньона
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/UpdateCompanionRequest' }
+      responses:
+        '200':
+          description: Компаньон обновлён
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionDetail' }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    delete:
+      tags: [Companions]
+      summary: Архивировать компаньона
+      responses:
+        '204': { description: Компаньон отправлен в архив }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /gameplay/companions/{companionId}/loadout:
+    parameters:
+      - $ref: '#/components/parameters/CompanionId'
+    post:
+      tags: [Loadout]
+      summary: Настроить loadout компаньона
+      description: Заменяет активные/пассивные способности, моды и проверяет ограничения редкости/режимов.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/LoadoutUpdateRequest' }
+            examples:
+              tacticalSetup:
+                $ref: './examples.yaml#/components/examples/LoadoutUpdate'
+      responses:
+        '200':
+          description: Актуальный loadout
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionLoadout' }
+        '400':
+          description: Ограничение нарушено
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/companions/{companionId}/abilities/{abilityId}/activate:
+    parameters:
+      - $ref: '#/components/parameters/CompanionId'
+      - $ref: '#/components/parameters/AbilityId'
+    post:
+      tags: [Loadout]
+      summary: Активировать способность компаньона
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/AbilityActivationRequest' }
+      responses:
+        '202':
+          description: Способность активирована
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/AbilityActivationResponse' }
+        '400':
+          description: Способность недоступна (кулдаун, энергия, режим)
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '429': { $ref: '../../shared/common/responses.yaml#/components/responses/TooManyRequests' }
+  /gameplay/companions/{companionId}/missions:
+    parameters:
+      - $ref: '#/components/parameters/CompanionId'
+    post:
+      tags: [Missions]
+      summary: Назначить миссию компаньону
+      description: Планирует миссию, резервирует слот и публикует событие в notification-service.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/MissionAssignmentRequest' }
+            examples:
+              escort:
+                $ref: './examples.yaml#/components/examples/MissionAssignment'
+      responses:
+        '202':
+          description: Миссия запущена
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/MissionTicket' }
+        '400':
+          description: Слот миссий недоступен или превышен лимит
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '409':
+          description: Компаньон недоступен (миссия/кулдаун)
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+  /gameplay/companions/missions:
+    get:
+      tags: [Missions]
+      summary: Получить миссии компаньонов игрока
+      parameters:
+        - in: query
+          name: playerId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string, enum: [IN_PROGRESS, COMPLETED, FAILED] }
+      responses:
+        '200':
+          description: Миссии и их статус
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/MissionBoardResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/companions/{companionId}/bonding:
+    parameters:
+      - $ref: '#/components/parameters/CompanionId'
+    post:
+      tags: [Bonding]
+      summary: Зарегистрировать bonding activity
+      description: Фиксирует активность (подарок, тренировка) и обновляет эмоциональное состояние.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/BondingActivityRequest' }
+      responses:
+        '200':
+          description: Лояльность обновлена
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/BondingActivityResponse' }
+        '400':
+          description: Достигнут дневной лимит bonding
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/companions/{companionId}/xp:
+    parameters:
+      - $ref: '#/components/parameters/CompanionId'
+    post:
+      tags: [Governance]
+      summary: Корректировка XP компаньона
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/XpAdjustmentRequest' }
+      responses:
+        '202': { description: XP корректируется асинхронно }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/companions/{companionId}/promote:
+    parameters:
+      - $ref: '#/components/parameters/CompanionId'
+    post:
+      tags: [Companions]
+      summary: Повысить ранг компаньона
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/PromotionRequest' }
+      responses:
+        '200':
+          description: Ранг повышен, обновлено качество и лояльность
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionDetail' }
+        '400':
+          description: Не выполнены требования
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+        '409':
+          description: Достигнута максимальная редкость
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+  /gameplay/companions/leaderboard:
+    get:
+      tags: [Analytics]
+      summary: Лидерборд компаньонов
+      parameters:
+        - in: query
+          name: metric
+          schema: { type: string, enum: [missions_completed, arena_wins, bonding_score], default: missions_completed }
+        - in: query
+          name: range
+          schema: { type: string, enum: [7d, 30d, season], default: 30d }
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Рейтинг игроков и их компаньонов
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionLeaderboardResponse' }
+              examples:
+                leaderboard:
+                  $ref: './examples.yaml#/components/examples/CompanionLeaderboard'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/companions/analytics:
+    get:
+      tags: [Analytics]
+      summary: Получить аналитику по компаньонам
+      parameters:
+        - in: query
+          name: playerId
+          schema: { type: string }
+        - in: query
+          name: type
+          schema: { type: string, enum: [combat, utility, social] }
+        - in: query
+          name: range
+          schema: { type: string, enum: [7d, 30d, 90d], default: 30d }
+      responses:
+        '200':
+          description: Метрики активности компаньонов
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionAnalyticsResponse' }
+              examples:
+                analytics:
+                  $ref: './examples.yaml#/components/examples/CompanionAnalytics'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/companions/{companionId}/suspend:
+    parameters:
+      - $ref: '#/components/parameters/CompanionId'
+    post:
+      tags: [Governance]
+      summary: Временно отключить компаньона
+      description: Помечает компаньона как SUSPENDED, фиксирует причину и запускает уведомление игроку.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './companion-components.yaml#/components/schemas/SuspendRequest' }
+      responses:
+        '202': { description: Компаньон переведён в статус SUSPENDED }
+        '400':
+          description: Компаньон уже заморожен или функция недоступна
+          content:
+            application/json:
+              schema: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+  parameters:
+    CompanionId: { $ref: './companion-components.yaml#/components/parameters/CompanionId' }
+    AbilityId: { $ref: './companion-components.yaml#/components/parameters/AbilityId' }
+  schemas:
+    CompanionError: { $ref: './companion-components.yaml#/components/schemas/CompanionError' }
+    CompanionDetail: { $ref: './companion-components.yaml#/components/schemas/CompanionDetail' }
+    MissionTicket: { $ref: './companion-components.yaml#/components/schemas/MissionTicket' }
+    CompanionLeaderboardResponse: { $ref: './companion-components.yaml#/components/schemas/CompanionLeaderboardResponse' }
+    CompanionAnalyticsResponse: { $ref: './companion-components.yaml#/components/schemas/CompanionAnalyticsResponse' }
+  examples:
+    CreatedCompanion: { $ref: './examples.yaml#/components/examples/CreatedCompanion' }
+    MissionAssignment: { $ref: './examples.yaml#/components/examples/MissionAssignment' }
+    CompanionRoster: { $ref: './examples.yaml#/components/examples/CompanionRoster' }
+    CompanionLeaderboard: { $ref: './examples.yaml#/components/examples/CompanionLeaderboard' }
+    CompanionAnalytics: { $ref: './examples.yaml#/components/examples/CompanionAnalytics' }
+

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="049-seed-game-locations-data" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="game_locations"/>
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM game_locations</sqlCheck>
+        </preConditions>
+
+        <!-- Watson District -->
+        <insert tableName="game_locations">
+            <column name="id" value="loc_watson_center"/>
+            <column name="name" value="Центр Уотсона"/>
+            <column name="description" value="Центральная площадь района Уотсон. Оживленное место с торговцами и информаторами."/>
+            <column name="location_type" value="district"/>
+            <column name="danger_level" value="2"/>
+            <column name="accessible" valueBoolean="true"/>
+            <column name="connected_locations" value='["loc_watson_market", "loc_watson_underground"]'/>
+            <column name="available_actions" value='["explore", "rest", "trade"]'/>
+        </insert>
+
+        <insert tableName="game_locations">
+            <column name="id" value="loc_watson_market"/>
+            <column name="name" value="Рынок Уотсона"/>
+            <column name="description" value="Черный рынок. Здесь можно найти все: оружие, импланты, информацию."/>
+            <column name="location_type" value="building"/>
+            <column name="danger_level" value="3"/>
+            <column name="accessible" valueBoolean="true"/>
+            <column name="connected_locations" value='["loc_watson_center"]'/>
+            <column name="available_actions" value='["trade", "talk_to_npcs"]'/>
+        </insert>
+
+        <insert tableName="game_locations">
+            <column name="id" value="loc_watson_underground"/>
+            <column name="name" value="Подземелья Уотсона"/>
+            <column name="description" value="Опасная зона. Здесь обитают банды и киберпсихи."/>
+            <column name="location_type" value="underground"/>
+            <column name="danger_level" value="5"/>
+            <column name="accessible" valueBoolean="true"/>
+            <column name="requirements" value='{"level": 3}'/>
+            <column name="connected_locations" value='["loc_watson_center"]'/>
+            <column name="available_actions" value='["explore", "combat"]'/>
+        </insert>
+
+        <!-- Westbrook District -->
+        <insert tableName="game_locations">
+            <column name="id" value="loc_westbrook_plaza"/>
+            <column name="name" value="Вестбрук Плаза"/>
+            <column name="description" value="Элитный район. Роскошные магазины и корпоративные офисы."/>
+            <column name="location_type" value="district"/>
+            <column name="danger_level" value="1"/>
+            <column name="accessible" valueBoolean="true"/>
+            <column name="connected_locations" value='["loc_westbrook_tower"]'/>
+            <column name="available_actions" value='["explore", "rest", "trade"]'/>
+        </insert>
+
+        <insert tableName="game_locations">
+            <column name="id" value="loc_westbrook_tower"/>
+            <column name="name" value="Корпоративная Башня"/>
+            <column name="description" value="Высотное здание корпорации. Требуется высокий уровень для доступа."/>
+            <column name="location_type" value="building"/>
+            <column name="danger_level" value="7"/>
+            <column name="accessible" valueBoolean="false"/>
+            <column name="requirements" value='{"level": 10, "quest": "main_05"}'/>
+            <column name="connected_locations" value='["loc_westbrook_plaza"]'/>
+            <column name="available_actions" value='["explore", "hack"]'/>
+        </insert>
+
+        <rollback>
+            <delete tableName="game_locations"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

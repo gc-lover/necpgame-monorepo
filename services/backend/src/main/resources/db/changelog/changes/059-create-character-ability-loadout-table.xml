@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+    <changeSet id="059-create-character-ability-loadout-table" author="system">
+        <preConditions onFail="MARK_RAN"><not><tableExists tableName="character_ability_loadout"/></not></preConditions>
+        <createTable tableName="character_ability_loadout">
+            <column name="id" type="UUID"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="character_id" type="UUID"><constraints nullable="false"/></column>
+            <column name="slot_type" type="VARCHAR(10)"><constraints nullable="false"/></column>
+            <column name="ability_id" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="character_ability_loadout" baseColumnNames="character_id" constraintName="fk_character_ability_loadout_character" referencedTableName="characters" referencedColumnNames="id" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="character_ability_loadout" baseColumnNames="ability_id" constraintName="fk_character_ability_loadout_ability" referencedTableName="abilities" referencedColumnNames="id"/>
+        <createIndex tableName="character_ability_loadout" indexName="idx_character_ability_loadout_character"><column name="character_id"/></createIndex>
+        <addUniqueConstraint tableName="character_ability_loadout" columnNames="character_id, slot_type" constraintName="uk_character_slot"/>
+        <rollback><dropTable tableName="character_ability_loadout"/></rollback>
+    </changeSet>
+</databaseChangeLog>

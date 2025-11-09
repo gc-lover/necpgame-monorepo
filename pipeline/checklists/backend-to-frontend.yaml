@@ -1,0 +1,39 @@
+checklist:
+  id: backend-to-frontend
+  title: "Backend → Frontend"
+  sections:
+    - title: "Перед стартом Frontend Implementer"
+      items:
+        - text: "В implementation-tracker.yaml отмечено `backend.status: completed`."
+        - text: "Указан commit backend и ссылка на тестовые данные."
+        - text: "В очереди фронтенда запись перенесена в `shared/trackers/queues/frontend/not-started.yaml` и проверена."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/frontend/not-started.yaml"
+        - text: "Файл `pipeline/templates/frontend-brief.yaml` заполнен бекендом (доступные endpoints, модели)."
+        - text: "Подтверждено наличие swagger.json/yaml для генерации клиентов."
+        - text: "Выполнена проверка актуальности спецификации."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec services/openapi/api/v1/.../feature.yaml"
+    - title: "Реализация фронтенда"
+      items:
+        - text: "Сгенерированы API клиенты через Orval."
+        - text: "Создан модуль в `src/features/`, описан в README модуля."
+        - text: "Реализованы страницы/компоненты с использованием темing и shared компонентов."
+        - text: "Обработаны состояния загрузки/ошибок, реализована валидация форм."
+        - text: "Написаны юнит-тесты и e2e тесты по необходимости."
+        - text: "Выполнены проверки структуры и аналитики."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-frontend-structure.ps1 -ProjectRoot services/frontend"
+            - "pwsh -File pipeline/scripts/check-ux-assets.ps1 -GuideFile services/frontend/docs/UX/<file>.md"
+            - "pwsh -File pipeline/scripts/check-analytics-schema.ps1 -SchemaFile services/frontend/docs/analytics/<file>.yaml"
+            - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/frontend"
+    - title: "Передача в QA"
+      items:
+        - text: "`npm run lint` и `npm run test` проходят без ошибок."
+        - text: "Обновлён `implementation-tracker.yaml` (`frontend.status: completed`, заполнено `commit`, `completed`)."
+        - text: "Чеклист прикреплён к Activity Log и очереди фронтенда."
+        - text: "QA агент уведомлён через `trackers/communication-log.yaml`."
+        - text: "Запись перенесена в `queues/frontend/completed.yaml` и проверена."
+          scripts:
+            - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/frontend/completed.yaml"
+

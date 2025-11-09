@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="042-create-character-skills-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_skills"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="character_skills">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="skill_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="level" type="INT" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="character_skills"
+                baseColumnNames="character_id"
+                constraintName="fk_character_skills_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="character_skills"
+                baseColumnNames="skill_id"
+                constraintName="fk_character_skills_skill"
+                referencedTableName="skills"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="character_skills" indexName="idx_character_skills_character">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="character_skills" indexName="idx_character_skills_skill">
+            <column name="skill_id"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                tableName="character_skills"
+                columnNames="character_id, skill_id"
+                constraintName="uk_character_skill"/>
+
+        <rollback>
+            <dropTable tableName="character_skills"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

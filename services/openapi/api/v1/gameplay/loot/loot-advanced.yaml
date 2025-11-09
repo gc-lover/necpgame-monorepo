@@ -1,0 +1,343 @@
+# Target Architecture:
+# - Microservice: gameplay-service (loot module, port 8083)
+# - API Base: /api/v1/loot
+# - Dependencies: auth-service, party-service, inventory-service, economy-service, achievement-service, notification-service
+# - Frontend Module: modules/gameplay/loot (useLootStore)
+# - UI: LootDropList, NeedGreedPanel, SmartLootSettings, BossLootSummary, LootHistory, BadLuckIndicator
+# - Forms: RollSubmissionForm, AutoLootSettingsForm, LootFilterForm
+# - Hooks: useLootRolls, useSmartLoot, useLootHistory, useBadLuckProtection
+
+openapi: 3.0.3
+info:
+  title: Advanced Loot System API
+  description: >
+    Продвинутые механики распределения добычи NECPGAME: Need/Greed роллы, smart loot,
+    boss loot, bad luck protection и анти-дубликаты.
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/loot
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Drops
+    description: Управление дропами и активными роллами
+  - name: Settings
+    description: Smart loot и auto loot настройки
+  - name: Boss Loot
+    description: Боссовая добыча и гарантии
+  - name: History
+    description: Журналы и защита от невезения
+paths:
+  /loot/drops/nearby:
+    get:
+      tags: [Drops]
+      summary: Получить доступные поблизости дропы
+      parameters:
+        - in: query
+          name: partyId
+          schema: { type: string }
+        - in: query
+          name: radius
+          schema: { type: number, default: 30 }
+      responses:
+        '200':
+          description: Список дропов поблизости
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/LootDropsResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/drops/{dropId}/claim:
+    parameters:
+      - $ref: './loot-advanced-components.yaml#/components/parameters/DropId'
+    post:
+      tags: [Drops]
+      summary: Инициировать распределение дропа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './loot-advanced-components.yaml#/components/schemas/LootClaimRequest' }
+            examples:
+              startRoll:
+                $ref: './loot-advanced-examples.yaml#/components/examples/LootClaimRequest'
+      responses:
+        '202':
+          description: Ролл запущен или дроп назначен
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/LootRoll' }
+        '400':
+          description: Ошибка распределения
+          content:
+            application/json:
+              schema:
+                $ref: './loot-advanced-components.yaml#/components/schemas/LootAdvancedError'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/rolls/{rollId}:
+    parameters:
+      - $ref: './loot-advanced-components.yaml#/components/parameters/RollId'
+    get:
+      tags: [Drops]
+      summary: Получить состояние ролла
+      responses:
+        '200':
+          description: Состояние ролла
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/LootRoll' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /loot/rolls/{rollId}/submit:
+    parameters:
+      - $ref: './loot-advanced-components.yaml#/components/parameters/RollId'
+    post:
+      tags: [Drops]
+      summary: Отправить ставку Need/Greed/Pass
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './loot-advanced-components.yaml#/components/schemas/RollSubmissionRequest' }
+            examples:
+              submitRoll:
+                $ref: './loot-advanced-examples.yaml#/components/examples/RollSubmissionRequest'
+      responses:
+        '200':
+          description: Ставка зарегистрирована
+        '400':
+          description: Ставка недопустима
+          content:
+            application/json:
+              schema:
+                $ref: './loot-advanced-components.yaml#/components/schemas/LootAdvancedError'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '409':
+          description: Ролл завершён
+          content:
+            application/json:
+              schema:
+                $ref: './loot-advanced-components.yaml#/components/schemas/LootAdvancedError'
+  /loot/rolls/{rollId}/resolve:
+    parameters:
+      - $ref: './loot-advanced-components.yaml#/components/parameters/RollId'
+    post:
+      tags: [Drops]
+      summary: Завершить ролл принудительно
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: './loot-advanced-components.yaml#/components/schemas/RollResolveRequest' }
+      responses:
+        '200':
+          description: Ролл завершён
+        '400':
+          description: Завершение недоступно
+          content:
+            application/json:
+              schema:
+                $ref: './loot-advanced-components.yaml#/components/schemas/LootAdvancedError'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/rolls/active:
+    get:
+      tags: [Drops]
+      summary: Список активных роллов игрока
+      responses:
+        '200':
+          description: Текущие роллы
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/ActiveRollsResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/settings:
+    get:
+      tags: [Settings]
+      summary: Получить настройки smart loot и autoloot
+      responses:
+        '200':
+          description: Настройки игрока
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/LootSettingsResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    put:
+      tags: [Settings]
+      summary: Обновить настройки smart loot и autoloot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './loot-advanced-components.yaml#/components/schemas/LootSettingsUpdateRequest' }
+            examples:
+              updateSettings:
+                $ref: './loot-advanced-examples.yaml#/components/examples/LootSettingsUpdateRequest'
+      responses:
+        '200':
+          description: Настройки обновлены
+        '400':
+          description: Ошибка в настройках
+          content:
+            application/json:
+              schema:
+                $ref: './loot-advanced-components.yaml#/components/schemas/LootAdvancedError'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/boss/{bossId}:
+    parameters:
+      - $ref: './loot-advanced-components.yaml#/components/parameters/BossId'
+    get:
+      tags: [Boss Loot]
+      summary: Получить информацию о босcовом луте
+      responses:
+        '200':
+          description: Настройки босcового лута
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/BossLootInfo' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /loot/boss/{bossId}/distribute:
+    parameters:
+      - $ref: './loot-advanced-components.yaml#/components/parameters/BossId'
+    post:
+      tags: [Boss Loot]
+      summary: Распределить босcовый лут
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './loot-advanced-components.yaml#/components/schemas/BossLootDistributeRequest' }
+            examples:
+              distributeBoss:
+                $ref: './loot-advanced-examples.yaml#/components/examples/BossLootDistributeRequest'
+      responses:
+        '200':
+          description: Босcовый лут распределён
+          content:
+            application/json:
+              schema:
+                $ref: './loot-advanced-components.yaml#/components/schemas/BossLootDistributeResponse'
+        '400':
+          description: Ошибка распределения
+          content:
+            application/json:
+              schema:
+                $ref: './loot-advanced-components.yaml#/components/schemas/LootAdvancedError'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/history:
+    get:
+      tags: [History]
+      summary: История полученного лута и роллов
+      parameters:
+        - in: query
+          name: source
+          schema: { type: string }
+        - in: query
+          name: rarity
+          schema: { type: string }
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Журнал лута
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/LootHistoryResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/bad-luck:
+    get:
+      tags: [History]
+      summary: Статус bad luck protection
+      responses:
+        '200':
+          description: Текущее состояние bad luck
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/BadLuckProtection' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/duplicate-check:
+    post:
+      tags: [History]
+      summary: Проверка дубликатов перед выдачей
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './loot-advanced-components.yaml#/components/schemas/DuplicateCheckRequest' }
+      responses:
+        '200':
+          description: Результат проверки дубликатов
+          content:
+            application/json:
+              schema: { $ref: './loot-advanced-components.yaml#/components/schemas/DuplicateCheckResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /loot/admin/reroll:
+    post:
+      tags: [Boss Loot]
+      summary: Административное перераспределение лута
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './loot-advanced-components.yaml#/components/schemas/AdminRerollRequest' }
+      responses:
+        '202':
+          description: Перераспределение запланировано
+        '400':
+          description: Перераспределение отклонено
+          content:
+            application/json:
+              schema:
+                $ref: './loot-advanced-components.yaml#/components/schemas/LootAdvancedError'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+
+x-websocket:
+  url: wss://api.necp.game/v1/loot/stream
+  description: Realtime события распределения лута
+  messages:
+    rollStarted:
+      summary: Запущен новый ролл
+      payload: { $ref: './loot-advanced-components.yaml#/components/schemas/RollEvent' }
+    rollUpdated:
+      summary: Обновлён статус ролла
+      payload: { $ref: './loot-advanced-components.yaml#/components/schemas/RollEvent' }
+    rollCompleted:
+      summary: Ролл завершён и выбран победитель
+      payload: { $ref: './loot-advanced-components.yaml#/components/schemas/RollCompletedEvent' }
+    lootAssigned:
+      summary: Предмет назначен конкретному игроку
+      payload: { $ref: './loot-advanced-components.yaml#/components/schemas/LootAssignedEvent' }
+    badLuckTriggered:
+      summary: Активирована защита от невезения
+      payload: { $ref: './loot-advanced-components.yaml#/components/schemas/BadLuckEvent' }
+    duplicateBlocked:
+      summary: Выдача дубликата заблокирована
+      payload: { $ref: './loot-advanced-components.yaml#/components/schemas/DuplicateEvent' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+  parameters:
+    DropId: { $ref: './loot-advanced-components.yaml#/components/parameters/DropId' }
+    RollId: { $ref: './loot-advanced-components.yaml#/components/parameters/RollId' }
+    BossId: { $ref: './loot-advanced-components.yaml#/components/parameters/BossId' }
+  schemas:
+    LootRoll: { $ref: './loot-advanced-components.yaml#/components/schemas/LootRoll' }
+    LootAdvancedError: { $ref: './loot-advanced-components.yaml#/components/schemas/LootAdvancedError' }
+    BadLuckProtection: { $ref: './loot-advanced-components.yaml#/components/schemas/BadLuckProtection' }
+  examples:
+    LootClaimRequest: { $ref: './loot-advanced-examples.yaml#/components/examples/LootClaimRequest' }
+    RollSubmissionRequest: { $ref: './loot-advanced-examples.yaml#/components/examples/RollSubmissionRequest' }
+    BossLootDistributeRequest: { $ref: './loot-advanced-examples.yaml#/components/examples/BossLootDistributeRequest' }
+    LootSettingsUpdateRequest: { $ref: './loot-advanced-examples.yaml#/components/examples/LootSettingsUpdateRequest' }
+

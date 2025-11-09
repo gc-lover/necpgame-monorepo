@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="012-create-locations-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="locations"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="locations">
+            <column name="id" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(100)"/>
+            <column name="district" type="VARCHAR(100)"/>
+            <column name="danger_level" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_level" type="INT"/>
+            <column name="type" type="VARCHAR(20)"/>
+            <column name="connected_locations" type="VARCHAR(1000)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="locations" indexName="idx_locations_city">
+            <column name="city"/>
+        </createIndex>
+        <createIndex tableName="locations" indexName="idx_locations_district">
+            <column name="district"/>
+        </createIndex>
+        <createIndex tableName="locations" indexName="idx_locations_danger_level">
+            <column name="danger_level"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="locations"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

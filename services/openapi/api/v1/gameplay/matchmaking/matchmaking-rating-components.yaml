@@ -1,0 +1,349 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/matchmaking/ratings
+# - Dependencies: leaderboard-service, analytics-service, anti-cheat-service
+# - Frontend Module: modules/gameplay/matchmaking
+# - SLA: Rating read <= 50ms, leaderboard cached 60s
+
+openapi: 3.0.3
+info:
+  title: Matchmaking Rating Components
+  version: 1.0.0
+  description: Переиспользуемые параметры, заголовки и схемы Matchmaking Rating API.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+components:
+  parameters:
+    ActivityType:
+      name: activityType
+      in: path
+      required: true
+      description: Тип активности (PvP/PvE режим).
+      schema: { $ref: '#/components/schemas/ActivityType' }
+    LeagueId:
+      name: leagueId
+      in: query
+      required: false
+      description: Идентификатор сезона/лиги. По умолчанию текущий активный сезон.
+      schema: { type: string }
+    Region:
+      name: region
+      in: query
+      required: false
+      description: Регион лидерборда/аналитики.
+      schema: { type: string }
+    Threshold:
+      name: threshold
+      in: query
+      required: false
+      description: Минимальный smurf score (0-1) для фильтрации.
+      schema: { type: number, format: float, minimum: 0, maximum: 1, default: 0.75 }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Количество записей (максимум 200).
+      schema: { type: integer, minimum: 1, maximum: 200, default: 100 }
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Курсор пагинации истории рейтинга.
+      schema: { type: string }
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Номер страницы (начиная с 1).
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      description: Размер страницы лидерборда (максимум 100).
+      schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+
+  headers:
+    RatingTierHeader:
+      description: Итоговый рейтинг-уровень игрока.
+      schema: { type: string }
+    RatingDivisionHeader:
+      description: Текущая дивизия игрока (1-5).
+      schema: { type: integer, minimum: 1, maximum: 5 }
+
+  schemas:
+    ActivityType:
+      type: string
+      enum: [ARENA, RAID, DUNGEON, LOOT_HUNT, CLAN_WAR, EVENT]
+    Tier:
+      type: string
+      enum: [BRONZE, SILVER, GOLD, PLATINUM, DIAMOND, MASTER, GRANDMASTER]
+    MatchResult:
+      type: string
+      enum: [WIN, LOSS, DRAW]
+    SeasonStatus:
+      type: string
+      enum: [PRESEASON, ACTIVE, ARCHIVED]
+
+    RatingProfile:
+      type: object
+      required: [playerId, activityType, leagueId, rating]
+      properties:
+        playerId: { type: string, format: uuid }
+        activityType: { $ref: '#/components/schemas/ActivityType' }
+        leagueId: { type: string }
+        rating: { type: integer }
+        peakRating: { type: integer }
+        tier: { $ref: '#/components/schemas/Tier' }
+        division: { type: integer, minimum: 1, maximum: 5 }
+        gamesPlayed: { type: integer, minimum: 0 }
+        wins: { type: integer, minimum: 0 }
+        losses: { type: integer, minimum: 0 }
+        draws: { type: integer, minimum: 0 }
+        winRate: { type: number, format: float, minimum: 0, maximum: 100 }
+        streak: { type: integer }
+        placementMatchesRemaining: { type: integer, minimum: 0 }
+        lastGameAt: { type: string, format: date-time }
+        smurfScore: { type: number, format: float, minimum: 0, maximum: 1 }
+
+    RatingBonus:
+      type: object
+      required: [type, value]
+      properties:
+        type: { type: string, enum: [STREAK, TEAM_BALANCE, EVENT, MANUAL] }
+        value: { type: integer }
+        description: { type: string }
+
+    RatingDeltaRequest:
+      type: object
+      required: [matchId, playerId, result]
+      properties:
+        matchId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+        opponentRating: { type: integer }
+        result: { $ref: '#/components/schemas/MatchResult' }
+        bonusAdjustments:
+          type: array
+          items: { $ref: '#/components/schemas/RatingBonus' }
+        placementFlag: { type: boolean, default: false }
+        queueTicketId: { type: string, format: uuid }
+        processedAt: { type: string, format: date-time }
+
+    TierChange:
+      type: object
+      properties:
+        previousTier: { $ref: '#/components/schemas/Tier' }
+        previousDivision: { type: integer, minimum: 1, maximum: 5 }
+        newTier: { $ref: '#/components/schemas/Tier' }
+        newDivision: { type: integer, minimum: 1, maximum: 5 }
+        type: { type: string, enum: [PROMOTION, DEMOTION, STAY] }
+
+    RatingDeltaResult:
+      type: object
+      required: [oldRating, newRating, delta]
+      properties:
+        oldRating: { type: integer }
+        newRating: { type: integer }
+        delta: { type: integer }
+        tierChange: { $ref: '#/components/schemas/TierChange' }
+        smurfTriggered: { type: boolean, default: false }
+        analyticsEventId: { type: string, format: uuid }
+
+    RatingHistoryEntry:
+      type: object
+      required: [timestamp, rating, delta]
+      properties:
+        timestamp: { type: string, format: date-time }
+        matchId: { type: string, format: uuid }
+        rating: { type: integer }
+        delta: { type: integer }
+        opponentRating: { type: integer }
+        result: { $ref: '#/components/schemas/MatchResult' }
+        bonusesApplied:
+          type: array
+          items: { $ref: '#/components/schemas/RatingBonus' }
+
+    RatingHistoryPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/RatingHistoryEntry' }
+        nextCursor: { type: string }
+
+    LeaderboardEntry:
+      type: object
+      required: [playerId, rating, rank]
+      properties:
+        rank: { type: integer, minimum: 1 }
+        playerId: { type: string, format: uuid }
+        nickname: { type: string }
+        rating: { type: integer }
+        tier: { $ref: '#/components/schemas/Tier' }
+        division: { type: integer }
+        region: { type: string }
+        streak: { type: integer }
+        matchesPlayed: { type: integer }
+
+    LeaderboardPage:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/LeaderboardEntry' }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+        etag: { type: string }
+
+    PlacementRequest:
+      type: object
+      required: [playerId, totalGames]
+      properties:
+        playerId: { type: string, format: uuid }
+        totalGames: { type: integer, minimum: 0 }
+        wins: { type: integer, minimum: 0 }
+        losses: { type: integer, minimum: 0 }
+        draws: { type: integer, minimum: 0 }
+
+    PlacementStatus:
+      type: object
+      required: [playerId, placementCompleted]
+      properties:
+        playerId: { type: string, format: uuid }
+        placementCompleted: { type: boolean }
+        gamesRequired: { type: integer }
+        gamesPlayed: { type: integer }
+        provisionalRating: { type: integer }
+        recommendedTier: { $ref: '#/components/schemas/Tier' }
+
+    SeasonResetRequest:
+      type: object
+      required: [leagueId, carryOverPercent]
+      properties:
+        leagueId: { type: string }
+        carryOverPercent: { type: number, format: float, minimum: 0, maximum: 1 }
+        softCapRating: { type: integer }
+        tiersMapping:
+          type: array
+          items:
+            type: object
+            required: [fromTier, toTier]
+            properties:
+              fromTier: { $ref: '#/components/schemas/Tier' }
+              toTier: { $ref: '#/components/schemas/Tier' }
+        archiveSnapshot: { type: boolean, default: true }
+        notifyPlayers: { type: boolean, default: true }
+
+    SmurfFlag:
+      type: object
+      required: [playerId, score, flaggedAt]
+      properties:
+        playerId: { type: string, format: uuid }
+        score: { type: number, format: float, minimum: 0, maximum: 1 }
+        reasons:
+          type: array
+          items: { type: string, enum: [HIGH_WINRATE, FAST_RATING_GROWTH, NEW_ACCOUNT, MATCH_BEHAVIOUR, REPORTS] }
+        gamesPlayed: { type: integer }
+        flaggedAt: { type: string, format: date-time }
+        placementCompleted: { type: boolean }
+
+    SmurfFlagList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SmurfFlag' }
+        threshold: { type: number, format: float }
+
+    SmurfReviewRequest:
+      type: object
+      required: [playerId, verdict]
+      properties:
+        playerId: { type: string, format: uuid }
+        verdict: { type: string, enum: [CLEAN, WARN, BAN_RECOMMENDED] }
+        notes: { type: string, maxLength: 500 }
+        reviewerId: { type: string, format: uuid }
+
+    SeasonSummary:
+      type: object
+      required: [leagueId, seasonStatus]
+      properties:
+        leagueId: { type: string }
+        seasonName: { type: string }
+        seasonStatus: { $ref: '#/components/schemas/SeasonStatus' }
+        startedAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        averageRating: { type: integer }
+        medianRating: { type: integer }
+        distribution:
+          type: object
+          additionalProperties: { type: number, format: float }
+        topPlayers:
+          type: array
+          items: { $ref: '#/components/schemas/LeaderboardEntry' }
+
+    TierDecayRule:
+      type: object
+      required: [tier, inactivityDays]
+      properties:
+        tier: { $ref: '#/components/schemas/Tier' }
+        inactivityDays: { type: integer }
+        penaltyPerDay: { type: integer }
+
+    TierDefinition:
+      type: object
+      required: [name, minRating]
+      properties:
+        name: { $ref: '#/components/schemas/Tier' }
+        minRating: { type: integer }
+        divisions: { type: integer, minimum: 1, maximum: 5 }
+        promotionThreshold: { type: integer }
+        demotionThreshold: { type: integer }
+
+    TierConfig:
+      type: object
+      required: [tiers]
+      properties:
+        tiers:
+          type: array
+          items: { $ref: '#/components/schemas/TierDefinition' }
+        placementGames: { type: integer }
+        decayRules:
+          type: array
+          items: { $ref: '#/components/schemas/TierDecayRule' }
+
+    RatingError:
+      allOf:
+        - $ref: '../../shared/common/responses.yaml#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  enum:
+                    - BIZ_RATING_NOT_FOUND
+                    - BIZ_RATING_DUPLICATE_DELTA
+                    - BIZ_RATING_SEASON_RUNNING
+                    - VAL_RATING_INVALID_RESULT
+                    - VAL_RATING_LIMIT_EXCEEDED
+                    - VAL_RATING_INVALID_PLACEMENT
+                    - INT_RATING_STORAGE_FAILURE
+                    - INT_RATING_ANALYTICS_FAILURE
+              required: [code, message]
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Faction Analytics Balance Examples
+  version: 1.0.0
+  description: Примеры запросов и ответов для Faction Analytics Balance API.
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/admin
+    package: com.necpgame.adminservice
+paths: {}
+components:
+  examples:
+    MetricsResponse:
+      summary: Агрегированные метрики фракции
+      value:
+        metrics:
+          - metricId: "contractSuccessRate"
+            factionId: "aeon-dynasty"
+            value: 0.82
+            unit: "percentage"
+            period: "24h"
+            source: "analytics-job"
+            updatedAt: "2025-11-08T20:15:00Z"
+            trend: -0.03
+            threshold:
+              lower: 0.75
+              upper: 0.9
+          - metricId: "raidClearTime"
+            factionId: "ember-saints"
+            value: 980.5
+            unit: "seconds"
+            period: "7d"
+            source: "raid-telemetry"
+            updatedAt: "2025-11-08T19:55:00Z"
+    MetricDetailResponse:
+      summary: Детализация метрики raidClearTime
+      value:
+        metricId: "raidClearTime"
+        factionId: "ember-saints"
+        buckets:
+          - timestamp: "2025-11-08T12:00:00Z"
+            value: 1023.4
+            unit: "seconds"
+            sampleSize: 42
+          - timestamp: "2025-11-08T18:00:00Z"
+            value: 980.5
+            unit: "seconds"
+            sampleSize: 38
+        metadata:
+          calculationMethod: "p95"
+          dataSources: ["raid-service", "world-service"]
+          lastJobLatencyMs: 4200
+    AutotuneRequest:
+      summary: Пакет авто-тюнинга Specter Surge
+      value:
+        initiator:
+          type: "analytics_job"
+          actorId: "job-faction-balance"
+        adjustments:
+          - actionId: "adj-raid-hp"
+            target: "raid:specter-surge"
+            field: "hpMultiplier"
+            delta: -0.08
+            reason: "Raid clear time above SLO"
+            expectedImpact:
+              metricId: "raidClearTime"
+              direction: "decrease"
+              magnitude: 0.05
+          - actionId: "adj-quest-requirement"
+            target: "quest:aeon-echo"
+            field: "requiredReputation"
+            delta: -15
+            reason: "Contract success dropping"
+            expectedImpact:
+              metricId: "contractSuccessRate"
+              direction: "increase"
+              magnitude: 0.04
+        sandbox: false
+        version: 12
+        notes: "Batch-117 seasonal balance"
+    AutotuneResult:
+      summary: Результат применения
+      value:
+        actionBatchId: "batch-117"
+        status: "partially_applied"
+        appliedActions:
+          - actionId: "adj-raid-hp"
+            target: "raid:specter-surge"
+            field: "hpMultiplier"
+            delta: -0.08
+        rejectedActions:
+          - action:
+              actionId: "adj-quest-requirement"
+              target: "quest:aeon-echo"
+              field: "requiredReputation"
+              delta: -15
+            reason: "Version mismatch"
+        scheduledRollbacks:
+          - actionId: "adj-raid-hp"
+            rollbackAt: "2025-11-15T00:00:00Z"
+    AlertsResponse:
+      summary: Активные алерты
+      value:
+        alerts:
+          - alertId: "alert-raid-long"
+            severity: "high"
+            message: "Specter Surge clear time exceeded target by 18%"
+            metricId: "raidClearTime"
+            factionId: "ember-saints"
+            recommendedAction: "Reduce raid elite HP by 5%"
+            impactedSystems: ["world-service", "analytics-service"]
+            detectedAt: "2025-11-08T19:50:00Z"
+            acknowledged: false
+          - alertId: "alert-eco-velocity"
+            severity: "medium"
+            message: "Helios asset velocity fell below baseline"
+            metricId: "ecoAssetVelocity"
+            factionId: "helios-coalition"
+            recommendedAction: "Lower interstellar tax by 2%"
+            impactedSystems: ["economy-service"]
+            detectedAt: "2025-11-08T18:20:00Z"
+            acknowledged: true
+    AlertAckRequest:
+      summary: Подтверждение алерта
+      value:
+        alertId: "alert-raid-long"
+        ackBy: "f48b7a26-2d51-4101-8e5d-3785f0be133e"
+        reason: "Manual tuning applied"
+        resolved: true
+    WebsocketMetricUpdate:
+      summary: Сообщение MetricUpdate
+      value:
+        event: "MetricUpdate"
+        metricId: "contractSuccessRate"
+        factionId: "aeon-dynasty"
+        newValue: 0.86
+        unit: "percentage"
+        period: "24h"
+        timestamp: "2025-11-08T21:00:00Z"
+    WebsocketAutotuneApplied:
+      summary: Сообщение AutotuneApplied
+      value:
+        event: "AutotuneApplied"
+        actionBatchId: "batch-117"
+        actionIds: ["adj-raid-hp"]
+        initiatedBy: "analytics_job"
+        timestamp: "2025-11-08T19:58:00Z"
+    ErrorVersionMismatch:
+      summary: Ошибка несоответствия версии
+      value:
+        error:
+          code: "VAL_ANALYTICS_VERSION_MISMATCH"
+          message: "Supplied version 12 does not match latest version 13"
+          details:
+            - "actionId=adj-quest-requirement"
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

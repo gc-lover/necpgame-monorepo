@@ -1,0 +1,264 @@
+# Target Architecture:
+# - Microservice: auth-service (port 8081)
+# - API Base: /api/v1/auth/sessions
+# - Dependencies: lifecycle API, realtime-service, voice-service, incident-service, telemetry-service
+# - Frontend Module: modules/ops/session-monitoring (useOpsSessionStore)
+# - UI: ReconnectTimeline, DisconnectRateChart, PlayerStabilityTable
+# - Forms: ReconnectDiagnosticsForm, MassDisconnectInvestigationForm
+# - Layouts: OpsConsoleLayout, IncidentDashboard
+# - Hooks: useReconnectStream, useSessionAnalytics, useIncidentAlerts
+
+openapi: 3.0.3
+info:
+  title: Session Reconnection & Monitoring API
+  description: Восстановление игровых сессий после обрыва и аналитика стабильности соединений.
+  version: 1.0.0
+  x-microservice:
+    name: auth-service
+    port: 8081
+    domain: auth
+    base-path: /api/v1/auth/sessions
+    package: com.necpgame.authservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - { name: Reconnect, description: Быстрый переподключение игроков }
+  - { name: Monitoring, description: Метрики disconnect и уведомления }
+paths:
+  /auth/sessions/reconnect/token:
+    post:
+      tags: [Reconnect]
+      summary: Выдать reconnect-токен
+      description: Формирует токен для быстрого переподключения (окно 5 минут, максимум 3 попытки).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReconnectTokenRequest' }
+            examples:
+              issueToken:
+                value: { sessionId: "sess-4421", disconnectReason: network, clientInfo: { device: "windows", build: "1.2.0" } }
+      responses:
+        '201': { description: Токен выдан, content: { application/json: { schema: { $ref: '#/components/schemas/ReconnectTokenResponse' } } } }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /auth/sessions/reconnect:
+    post:
+      tags: [Reconnect]
+      summary: Выполнить reconnect
+      description: Восстанавливает состояние сессии при reconnect-токене (включая party/realtime binding).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReconnectRequest' }
+            examples:
+              reconnect:
+                value: { reconnectToken: "reconn-abc", clientInfo: { device: "windows", build: "1.2.0" }, restoreState: { location: "night-city/watson", inventoryChecksum: "1f3a" } }
+      responses:
+        '200': { description: Сессия восстановлена, content: { application/json: { schema: { $ref: '#/components/schemas/ReconnectResponse' } } } }
+        '400': { description: Некорректный запрос, content: { application/json: { schema: { $ref: '#/components/schemas/ReconnectError' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+        '410': { description: Токен истёк, content: { application/json: { schema: { $ref: '#/components/schemas/ReconnectError' } } } }
+        '409': { description: Сессия уже активна, content: { application/json: { schema: { $ref: '#/components/schemas/ReconnectError' } } } }
+  /auth/sessions/{sessionId}/disconnects:
+    get:
+      tags: [Monitoring]
+      summary: История disconnect событий
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200': { description: История событий, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/DisconnectEvent' } } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /auth/sessions/monitoring/unstable:
+    get:
+      tags: [Monitoring]
+      summary: Нестабильные игроки/сессии
+      parameters:
+        - { in: query, name: range, schema: { type: string, enum: [1h, 24h, 7d], default: 24h } }
+        - { in: query, name: minDisconnects, schema: { type: integer, default: 3 } }
+      responses:
+        '200': { description: Нестабильные записи, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/SessionInstabilityRecord' } } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /auth/sessions/metrics/disconnect-rate:
+    get:
+      tags: [Monitoring]
+      summary: Метрики disconnect rate
+      parameters:
+        - { in: query, name: range, schema: { type: string, enum: [5m, 1h, 24h, 7d], default: 1h } }
+        - { in: query, name: region, schema: { type: string } }
+        - { in: query, name: isp, schema: { type: string } }
+      responses:
+        '200': { description: Метрики, content: { application/json: { schema: { $ref: '#/components/schemas/DisconnectRateMetrics' } } } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /auth/sessions/alerts/instability:
+    post:
+      tags: [Monitoring]
+      summary: Зарегистрировать массовый disconnect
+      description: Формирует alert для incident-service и realtime/voice сервисов.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/IncidentAlertRequest' } } } }
+      responses:
+        '202': { description: Alert зарегистрирован }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /auth/sessions/{sessionId}/diagnostics:
+    post:
+      tags: [Monitoring]
+      summary: Запрос диагностики сессии
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DiagnosticsRequest' } } } }
+      responses:
+        '202': { description: Диагностика запущена, content: { application/json: { schema: { $ref: '#/components/schemas/DiagnosticsResponse' } } } }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /auth/sessions/{sessionId}/force-reconnect:
+    post:
+      tags: [Monitoring]
+      summary: Принудительное переподключение игрока
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ForceReconnectRequest' } } } }
+      responses:
+        '202': { description: Переподключение инициировано }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /auth/sessions/events/realtime:
+    get:
+      tags: [Monitoring]
+      summary: SSE поток событий стабильности
+      description: Поставляет live события (`session.disconnect`, `session.reconnect`, `session.instability`).
+      responses:
+        '200':
+          description: Server Sent Events поток
+          content:
+            text/event-stream:
+              schema: { type: string }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+  parameters:
+    SessionId: { name: sessionId, in: path, required: true, schema: { type: string }, description: UUID сессии }
+  schemas:
+    ReconnectTokenRequest:
+      type: object
+      required: [sessionId]
+      properties:
+        sessionId: { type: string }
+        disconnectReason: { type: string, enum: [network, server_shutdown, client_exit, unknown] }
+        clientInfo: { $ref: '#/components/schemas/ClientInfo' }
+    ReconnectTokenResponse:
+      type: object
+      required: [reconnectToken, expiresAt]
+      properties:
+        reconnectToken: { type: string }
+        expiresAt: { type: string, format: date-time }
+        attemptsRemaining: { type: integer, minimum: 0, maximum: 3 }
+    ReconnectRequest:
+      type: object
+      required: [reconnectToken]
+      properties:
+        reconnectToken: { type: string }
+        clientInfo: { $ref: '#/components/schemas/ClientInfo' }
+        restoreState: { $ref: '#/components/schemas/RestoreState' }
+    ReconnectResponse:
+      type: object
+      properties:
+        sessionId: { type: string }
+        status: { type: string }
+        reconnectToken: { type: string }
+        warnings: { type: array, items: { type: string, enum: [ATTEMPTS_LIMIT_NEAR, TOKEN_EXPIRING] } }
+    RestoreState:
+      type: object
+      properties:
+        location: { type: string }
+        inventoryChecksum: { type: string }
+        partyId: { type: string }
+    ClientInfo:
+      type: object
+      properties:
+        device: { type: string }
+        build: { type: string }
+        platform: { type: string }
+    DisconnectEvent:
+      type: object
+      required: [eventId, sessionId, timestamp]
+      properties:
+        eventId: { type: string }
+        sessionId: { type: string }
+        playerId: { type: string }
+        timestamp: { type: string, format: date-time }
+        reason: { type: string, enum: [network, server, client, anti_cheat, unknown] }
+        durationSeconds: { type: integer, minimum: 0 }
+        reconnectTokenIssued: { type: boolean }
+    SessionInstabilityRecord:
+      type: object
+      required: [playerId, disconnectCount24h]
+      properties:
+        playerId: { type: string }
+        disconnectCount24h: { type: integer }
+        averageDowntimeSeconds: { type: number }
+        lastIncidentId: { type: string }
+        lastDisconnectAt: { type: string, format: date-time }
+    DisconnectRateMetrics:
+      type: object
+      properties:
+        range: { type: string }
+        totalDisconnects: { type: integer }
+        disconnectPerMinute: { type: number }
+        byRegion: { type: array, items: { type: object, properties: { region: { type: string }, rate: { type: number } } } }
+        byIsp: { type: array, items: { type: object, properties: { isp: { type: string }, rate: { type: number } } } }
+        thresholdBreaches: { type: array, items: { type: string } }
+    IncidentAlertRequest:
+      type: object
+      required: [severity, affectedPlayers]
+      properties:
+        severity: { type: string, enum: [info, warning, critical] }
+        affectedPlayers: { type: integer }
+        suspectedCause: { type: string }
+        linkedServices: { type: array, items: { type: string } }
+        notes: { type: string }
+    DiagnosticsRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, enum: [player_report, ops_manual, auto_monitoring] }
+        includeLatencyHistory: { type: boolean, default: true }
+        includeEvents: { type: boolean, default: true }
+    DiagnosticsResponse:
+      type: object
+      properties:
+        diagnosticsId: { type: string }
+        status: { type: string, enum: [scheduled, running, completed] }
+        estimatedReadyAt: { type: string, format: date-time }
+    ForceReconnectRequest:
+      type: object
+      required: [targetRegion]
+      properties:
+        targetRegion: { type: string }
+        reason: { type: string }
+        notifyPlayer: { type: boolean, default: true }
+    ReconnectError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, enum: [TOKEN_EXPIRED, TOKEN_NOT_FOUND, SESSION_NOT_FOUND, ALREADY_ACTIVE, ATTEMPTS_EXCEEDED] }
+        message: { type: string }
+    SessionEvent:
+      type: object
+      properties:
+        eventType: { type: string, enum: [session.disconnect, session.reconnect, session.instability] }
+        publishedAt: { type: string, format: date-time }
+        payload: { type: object, additionalProperties: true }
+

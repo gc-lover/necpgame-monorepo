@@ -1,0 +1,345 @@
+openapi: 3.0.3
+info:
+  title: Freerun (Parkour) API
+  version: 1.0.0
+  description: |
+    API для системы паркура (FREERUN).
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-freerun.md v1.1.0
+    
+    Тип: смешанный (автоматический + ручной контроль)
+    Элементы: прыжки между крышами, лазание, скольжение, зацепление крюками, гравиботы, импланты для ног
+    Ограничения: выносливость (STA)
+    Интеграция с боем: атаки с воздуха, стрельба в движении, мобильные способности, комбо
+    
+    Вдохновение: Assassin's Creed, Mirror's Edge, Dying Light
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Freerun
+    description: Система паркура
+
+paths:
+  /gameplay/combat/freerun/jump:
+    post:
+      summary: Выполнить прыжок
+      description: |
+        Выполняет прыжок персонажа.
+        Учитывает выносливость, импланты, расстояние, высоту.
+      operationId: performJump
+      tags:
+        - Freerun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - jump_type
+                - target_position
+              properties:
+                character_id:
+                  type: string
+                jump_type:
+                  type: string
+                  enum: [normal, double, roof_to_roof, ledge_grab]
+                target_position:
+                  type: object
+                  required: [x, y, z]
+                  properties:
+                    x: { type: number }
+                    y: { type: number }
+                    z: { type: number }
+                current_momentum:
+                  type: number
+                  description: Текущий импульс персонажа
+            examples:
+              roof_jump:
+                summary: Прыжок между крышами
+                value:
+                  character_id: "char_123"
+                  jump_type: "roof_to_roof"
+                  target_position:
+                    x: 100.5
+                    y: 200.3
+                    z: 50.0
+                  current_momentum: 15.2
+      responses:
+        '200':
+          description: Прыжок выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  character_id:
+                    type: string
+                  stamina_cost:
+                    type: number
+                  distance:
+                    type: number
+                  air_time:
+                    type: number
+                    description: Время в воздухе (секунды)
+                  landing_quality:
+                    type: string
+                    enum: [perfect, good, rough, failed]
+                  damage_taken:
+                    type: number
+                    description: Урон от падения (если есть)
+        '400':
+          $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest'
+        '409':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Conflict'
+
+  /gameplay/combat/freerun/climb:
+    post:
+      summary: Лазание
+      description: |
+        Выполняет лазание по поверхности.
+        Учитывает высоту, тип поверхности, выносливость.
+      operationId: performClimb
+      tags:
+        - Freerun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - surface_type
+                - height
+              properties:
+                character_id:
+                  type: string
+                surface_type:
+                  type: string
+                  enum: [wall, ledge, pipe, ladder]
+                height:
+                  type: number
+                  description: Высота лазания (метры)
+                has_implants:
+                  type: boolean
+                  description: Есть ли импланты для лазания
+      responses:
+        '200':
+          description: Лазание выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stamina_cost:
+                    type: number
+                  climb_time:
+                    type: number
+                    description: Время лазания (секунды)
+
+  /gameplay/combat/freerun/slide:
+    post:
+      summary: Скольжение
+      description: |
+        Выполняет скольжение персонажа.
+        Может быть использовано в бою для уклонения.
+      operationId: performSlide
+      tags:
+        - Freerun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - direction
+              properties:
+                character_id:
+                  type: string
+                direction:
+                  type: object
+                  required: [x, y, z]
+                  properties:
+                    x: { type: number }
+                    y: { type: number }
+                    z: { type: number }
+                duration:
+                  type: number
+                  description: Длительность скольжения (секунды)
+      responses:
+        '200':
+          description: Скольжение выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  distance:
+                    type: number
+                  stamina_cost:
+                    type: number
+                  evasion_bonus:
+                    type: number
+                    description: Бонус к уклонению во время скольжения
+
+  /gameplay/combat/freerun/grapple:
+    post:
+      summary: Зацепление крюком
+      description: |
+        Использует крюк-кошку или гравиботы для зацепления.
+        Позволяет быстро перемещаться между точками.
+      operationId: performGrapple
+      tags:
+        - Freerun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - grapple_type
+                - target_point
+              properties:
+                character_id:
+                  type: string
+                grapple_type:
+                  type: string
+                  enum: [hook, gravibot, mantis_blades]
+                target_point:
+                  type: object
+                  required: [x, y, z]
+                  properties:
+                    x: { type: number }
+                    y: { type: number }
+                    z: { type: number }
+      responses:
+        '200':
+          description: Зацепление выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  travel_time:
+                    type: number
+                  stamina_cost:
+                    type: number
+
+  /gameplay/combat/freerun/stamina:
+    get:
+      summary: Проверить выносливость для паркура
+      description: Возвращает текущую выносливость и доступные действия
+      operationId: checkStamina
+      tags:
+        - Freerun
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Состояние выносливости
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  character_id:
+                    type: string
+                  current_stamina:
+                    type: number
+                  max_stamina:
+                    type: number
+                  stamina_regen_rate:
+                    type: number
+                  available_actions:
+                    type: object
+                    properties:
+                      jump:
+                        type: boolean
+                      climb:
+                        type: boolean
+                      slide:
+                        type: boolean
+                      grapple:
+                        type: boolean
+
+  /gameplay/combat/freerun/aerial-attack:
+    post:
+      summary: Атака с воздуха
+      description: |
+        Выполняет атаку во время паркура (прыжок, падение).
+        Интеграция паркура с боевой системой.
+      operationId: performAerialAttack
+      tags:
+        - Freerun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - target_id
+                - attack_type
+              properties:
+                character_id:
+                  type: string
+                target_id:
+                  type: string
+                attack_type:
+                  type: string
+                  enum: [dive_attack, aerial_shoot, mantis_strike]
+                height_advantage:
+                  type: number
+                  description: Преимущество высоты (метры)
+      responses:
+        '200':
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  damage:
+                    type: number
+                  bonus_damage:
+                    type: number
+                    description: Бонусный урон от высоты
+                  stun_applied:
+                    type: boolean
+
+components:
+  schemas: {}
+
+

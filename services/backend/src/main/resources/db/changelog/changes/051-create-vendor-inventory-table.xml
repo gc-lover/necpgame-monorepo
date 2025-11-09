@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="051-create-vendor-inventory-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="vendor_inventory"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="vendor_inventory">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="vendor_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="item_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stock_quantity" type="INT"/>
+            <column name="price" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="vendor_inventory"
+                baseColumnNames="vendor_id"
+                constraintName="fk_vendor_inventory_vendor"
+                referencedTableName="vendors"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="vendor_inventory"
+                baseColumnNames="item_id"
+                constraintName="fk_vendor_inventory_item"
+                referencedTableName="inventory_items"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="vendor_inventory" indexName="idx_vendor_inventory_vendor">
+            <column name="vendor_id"/>
+        </createIndex>
+        <createIndex tableName="vendor_inventory" indexName="idx_vendor_inventory_item">
+            <column name="item_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="vendor_inventory"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

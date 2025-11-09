@@ -1,0 +1,289 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/matchmaking/queue
+# - Dependencies: rating-service, party-service, session-service, algorithm module
+# - SLA: Heartbeat TTL 10 min, max 10 active queues per игрок
+
+openapi: 3.0.3
+info:
+  title: Matchmaking Queue Components
+  version: 1.0.0
+  description: Переиспользуемые параметры и схемы для Matchmaking Queue API.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+components:
+  parameters:
+    TicketId:
+      name: ticketId
+      in: path
+      required: true
+      description: Идентификатор тикета очереди.
+      schema: { type: string, format: uuid }
+    ActivityType:
+      name: activityType
+      in: query
+      required: false
+      description: Тип активности для фильтрации.
+      schema: { $ref: '#/components/schemas/ActivityType' }
+    Mode:
+      name: mode
+      in: query
+      required: false
+      description: Режим матча.
+      schema: { $ref: '#/components/schemas/QueueMode' }
+    Window:
+      name: window
+      in: query
+      required: true
+      description: Окно агрегации ожидания.
+      schema: { type: string, enum: [LAST_5M, LAST_15M, HOURLY, DAILY] }
+    ClientLatencyHeader:
+      name: X-Client-Latency
+      in: header
+      required: false
+      description: Последнее измерение латентности клиента в миллисекундах.
+      schema: { type: integer, minimum: 0 }
+    TraceIdHeader:
+      name: X-Matchmaking-Request-Id
+      in: header
+      required: false
+      description: Идентификатор запроса для корреляции с алгоритмом подбора.
+      schema: { type: string, minLength: 8, maxLength: 64 }
+
+  schemas:
+    ActivityType:
+      type: string
+      enum: [ARENA, RAID, DUNGEON, LOOT_HUNT, CLAN_WAR, EVENT]
+    QueueMode:
+      type: string
+      enum: [CASUAL, RANKED, EVENT]
+    QueueRole:
+      type: string
+      enum: [TANK, HEALER, DPS, SUPPORT, FLEX]
+    QueueStatusCode:
+      type: string
+      enum: [QUEUED, MATCHING, MATCH_FOUND, CANCELLED, TIMEOUT]
+
+    QueueRequest:
+      type: object
+      required: [activityType, mode, partySize, minLevel, maxLevel]
+      properties:
+        activityType: { $ref: '#/components/schemas/ActivityType' }
+        mode: { $ref: '#/components/schemas/QueueMode' }
+        partyId: { type: string, format: uuid }
+        partySize: { type: integer, minimum: 1, maximum: 15 }
+        preferredRole: { $ref: '#/components/schemas/QueueRole' }
+        canFill: { type: boolean, default: false }
+        minLevel: { type: integer, minimum: 1, maximum: 200 }
+        maxLevel: { type: integer, minimum: 1, maximum: 200 }
+        estimatedSkill: { type: integer, minimum: 0 }
+        ratingRange: { type: integer, minimum: 50, maximum: 1000, default: 200 }
+        allowCrossRegion: { type: boolean, default: false }
+        expiresAt: { type: string, format: date-time }
+        metadata:
+          type: object
+          description: Дополнительные атрибуты (client build, platform).
+          additionalProperties: { type: string }
+
+    QueueTicket:
+      type: object
+      required: [ticketId, playerId, queuedAt, status]
+      properties:
+        ticketId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+        partyId: { type: string, format: uuid }
+        partySize: { type: integer }
+        activityType: { $ref: '#/components/schemas/ActivityType' }
+        mode: { $ref: '#/components/schemas/QueueMode' }
+        queuedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        priority: { type: integer }
+        status: { $ref: '#/components/schemas/QueueStatusCode' }
+        currentRatingRange: { type: integer }
+        waitTimeEstimateSeconds: { type: integer }
+        traceId: { type: string }
+
+    RangeExpansion:
+      type: object
+      required: [timestamp, newRange, reason]
+      properties:
+        timestamp: { type: string, format: date-time }
+        newRange: { type: integer, minimum: 0 }
+        reason: { type: string, enum: [TIMEOUT, EVENT, ADMIN, AUTO] }
+        latencyCapMs: { type: integer, minimum: 0 }
+
+    QueueNotification:
+      type: object
+      required: [type, sentAt]
+      properties:
+        type: { type: string, enum: [MATCH_READY, RANGE_EXPANDED, PRIORITY_BOOST] }
+        sentAt: { type: string, format: date-time }
+        channel: { type: string, enum: [IN_GAME, PUSH, EMAIL, VOICE] }
+        payload: { type: object, additionalProperties: true }
+
+    QueueStatus:
+      type: object
+      required: [ticketId, etaSeconds, waitedSeconds]
+      properties:
+        ticketId: { type: string, format: uuid }
+        etaSeconds: { type: integer, minimum: 0 }
+        waitedSeconds: { type: integer, minimum: 0 }
+        priorityBoost: { type: integer }
+        currentRatingRange: { type: integer }
+        expansions:
+          type: array
+          items: { $ref: '#/components/schemas/RangeExpansion' }
+        notifications:
+          type: array
+          items: { $ref: '#/components/schemas/QueueNotification' }
+        heartbeatDueAt: { type: string, format: date-time }
+
+    QueueStatusList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/QueueStatus' }
+        totalActive: { type: integer, minimum: 0 }
+
+    PriorityAdjustmentRequest:
+      type: object
+      required: [priorityDelta, reason]
+      properties:
+        priorityDelta: { type: integer, minimum: -5, maximum: 10 }
+        reason: { type: string }
+        expiresInSeconds: { type: integer, minimum: 30 }
+        actorId: { type: string, format: uuid }
+
+    QueuePriorityState:
+      type: object
+      required: [ticketId, priority]
+      properties:
+        ticketId: { type: string, format: uuid }
+        priority: { type: integer }
+        boostedUntil: { type: string, format: date-time }
+        boostSources:
+          type: array
+          items:
+            type: object
+            required: [source, amount]
+            properties:
+              source: { type: string, enum: [SYSTEM, ADMIN, EVENT, PARTY] }
+              amount: { type: integer }
+              expiresAt: { type: string, format: date-time }
+
+    RangeExpansionCommand:
+      type: object
+      required: [newRatingRange]
+      properties:
+        newRatingRange: { type: integer, minimum: 100, maximum: 1200 }
+        expandLatency: { type: boolean, default: false }
+        notifyPlayer: { type: boolean, default: true }
+        comment: { type: string, maxLength: 200 }
+
+    QueueEntryDetail:
+      allOf:
+        - $ref: '#/components/schemas/QueueTicket'
+        - type: object
+          properties:
+            etaSeconds: { type: integer }
+            waitedSeconds: { type: integer }
+            expansions:
+              type: array
+              items: { $ref: '#/components/schemas/RangeExpansion' }
+            priorityState: { $ref: '#/components/schemas/QueuePriorityState' }
+            history:
+              type: array
+              items:
+                type: object
+                properties:
+                  timestamp: { type: string, format: date-time }
+                  event: { type: string }
+                  data: { type: object, additionalProperties: true }
+
+    QueueSnapshotRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, maxLength: 200 }
+        includeHistory: { type: boolean, default: false }
+
+    QueueSnapshot:
+      type: object
+      required: [ticketId, snapshotTakenAt]
+      properties:
+        ticketId: { type: string, format: uuid }
+        snapshotTakenAt: { type: string, format: date-time }
+        queueState: { $ref: '#/components/schemas/QueueEntryDetail' }
+        rawPayload: { type: object, additionalProperties: true }
+
+    WaitTimeAnalytics:
+      type: object
+      required: [window, averageWaitSeconds, activeTickets]
+      properties:
+        window: { type: string, enum: [LAST_5M, LAST_15M, HOURLY, DAILY] }
+        activityType: { $ref: '#/components/schemas/ActivityType' }
+        mode: { $ref: '#/components/schemas/QueueMode' }
+        region: { type: string }
+        averageWaitSeconds: { type: integer }
+        percentile50: { type: integer }
+        percentile90: { type: integer }
+        activeTickets: { type: integer }
+        rangeExpansionsPerTicket: { type: number, format: float }
+        priorityDistribution:
+          type: object
+          additionalProperties: { type: integer }
+        samples:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required: [timestamp, waitSeconds]
+            properties:
+              timestamp: { type: string, format: date-time }
+              waitSeconds: { type: integer }
+              priority: { type: integer }
+
+    QueueEvent:
+      type: object
+      required: [type, ticketId, emittedAt]
+      properties:
+        type: { type: string, enum: [queue.rangeExpanded, queue.priorityBoost, queue.matchReady] }
+        ticketId: { type: string, format: uuid }
+        matchId: { type: string, format: uuid }
+        emittedAt: { type: string, format: date-time }
+        payload: { type: object, additionalProperties: true }
+
+    QueueError:
+      allOf:
+        - $ref: '../../shared/common/responses.yaml#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  enum:
+                    - BIZ_QUEUE_ALREADY_ACTIVE
+                    - BIZ_QUEUE_NOT_FOUND
+                    - BIZ_QUEUE_MATCH_LOCKED
+                    - BIZ_QUEUE_PRIORITY_LIMIT
+                    - VAL_QUEUE_INVALID_LEVEL_RANGE
+                    - VAL_QUEUE_PARTY_OFFLINE
+                    - VAL_QUEUE_RATE_LIMIT
+                    - INT_QUEUE_STORAGE_FAILURE
+                    - INT_QUEUE_EVENT_BUS_FAILURE
+              required: [code, message]
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

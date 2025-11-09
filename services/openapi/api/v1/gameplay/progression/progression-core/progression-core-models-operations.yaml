@@ -1,0 +1,351 @@
+openapi: 3.0.3
+info:
+  title: Progression Core Operation Models
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/progression
+    directory: api/v1/gameplay/progression/progression-core
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  schemas:
+    ProgressionStateResponse:
+      type: object
+      required: [characterId, state]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        state:
+          $ref: './progression-core-models.yaml#/components/schemas/ProgressionState'
+    ExperienceAwardRequest:
+      type: object
+      required: [amount, source]
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum: [COMBAT, QUEST, EXPLORATION, CRAFTING, PVP, ACHIEVEMENT, EVENT]
+        multiplier:
+          type: number
+          format: float
+          default: 1.0
+        reason:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    ExperienceAwardResponse:
+      type: object
+      properties:
+        levelInfo:
+          $ref: './progression-core-models.yaml#/components/schemas/LevelInfo'
+        attributePoints:
+          $ref: './progression-core-models.yaml#/components/schemas/PointPool'
+        skillPoints:
+          $ref: './progression-core-models.yaml#/components/schemas/PointPool'
+    ExperienceBatchRequest:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperienceAwardRequest'
+        partyDistribution:
+          type: object
+          properties:
+            partyId:
+              type: string
+            shareMode:
+              type: string
+              enum: [EQUAL, CONTRIBUTION, LEADER_BONUS]
+    ExperienceBatchResponse:
+      type: object
+      properties:
+        processedEvents:
+          type: integer
+        awardedTotal:
+          type: integer
+    AttributeSpendRequest:
+      type: object
+      required: [allocations]
+      properties:
+        allocations:
+          type: array
+          items:
+            type: object
+            required: [attributeName, points]
+            properties:
+              attributeName:
+                type: string
+              points:
+                type: integer
+                minimum: 1
+        clientVersion:
+          type: string
+    AttributeSpendResponse:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: './progression-core-models.yaml#/components/schemas/AttributeState'
+        attributePoints:
+          $ref: './progression-core-models.yaml#/components/schemas/PointPool'
+    SkillPointSpendRequest:
+      type: object
+      required: [nodes]
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            required: [nodeId, points]
+            properties:
+              nodeId:
+                type: string
+              points:
+                type: integer
+                minimum: 1
+        treeId:
+          type: string
+        clientVersion:
+          type: string
+    SkillPointSpendResponse:
+      type: object
+      properties:
+        remainingSkillPoints:
+          $ref: './progression-core-models.yaml#/components/schemas/PointPool'
+        updatedNodes:
+          type: array
+          items:
+            type: object
+            properties:
+              nodeId:
+                type: string
+              currentPoints:
+                type: integer
+    SkillExperienceAwardRequest:
+      type: object
+      required: [skillName, amount, source]
+      properties:
+        skillName:
+          type: string
+        amount:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum: [COMBAT, TRAINING, CRAFTING, QUEST, EVENT]
+        criticalSuccess:
+          type: boolean
+          default: false
+        metadata:
+          type: object
+          additionalProperties: true
+    SkillExperienceAwardResponse:
+      type: object
+      properties:
+        skillProgress:
+          $ref: './progression-core-models.yaml#/components/schemas/SkillProgress'
+    SkillProgressListResponse:
+      type: object
+      properties:
+        skills:
+          type: array
+          items:
+            $ref: './progression-core-models.yaml#/components/schemas/SkillProgress'
+    ProgressionHistoryResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './progression-core-models.yaml#/components/schemas/HistoryEntry'
+        pagination:
+          $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    RespecRequest:
+      type: object
+      required: [respecType]
+      properties:
+        respecType:
+          type: string
+          enum: [ATTRIBUTE_ONLY, SKILL_ONLY, FULL]
+        paymentReference:
+          type: string
+        confirmCost:
+          type: boolean
+          default: false
+    RespecResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, FAILED]
+        scheduledAt:
+          type: string
+          format: date-time
+        cost:
+          type: object
+          properties:
+            currencyId:
+              type: string
+            amount:
+              type: integer
+    ProgressionSyncRequest:
+      type: object
+      properties:
+        levelInfo:
+          $ref: './progression-core-models.yaml#/components/schemas/LevelInfo'
+        attributes:
+          type: array
+          items:
+            $ref: './progression-core-models.yaml#/components/schemas/AttributeState'
+        skills:
+          type: array
+          items:
+            $ref: './progression-core-models.yaml#/components/schemas/SkillProgress'
+        reason:
+          type: string
+    ProgressionSyncResponse:
+      type: object
+      properties:
+        synced:
+          type: boolean
+        lastSyncAt:
+          type: string
+          format: date-time
+    ProgressionLevelUpEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.progression.level-up
+        producer:
+          type: string
+          example: gameplay-service
+        payload:
+          type: object
+          required: [characterId, newLevel, awardedAttributePoints, awardedSkillPoints, occurredAt]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            newLevel:
+              type: integer
+            awardedAttributePoints:
+              type: integer
+            awardedSkillPoints:
+              type: integer
+            occurredAt:
+              type: string
+              format: date-time
+            metadata:
+              type: object
+              additionalProperties: true
+        key:
+          type: string
+          example: characterId
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [character-service, achievement-service, notification-service, telemetry]
+    ProgressionSkillLeveledEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.progression.skill-leveled
+        producer:
+          type: string
+        payload:
+          type: object
+          required: [characterId, skillName, skillLevel, occurredAt]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            skillName:
+              type: string
+            skillLevel:
+              type: integer
+            occurredAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [achievement-service, notification-service, telemetry]
+    ProgressionAttributeIncreasedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.progression.attribute-increased
+        producer:
+          type: string
+        payload:
+          type: object
+          required: [characterId, attributeName, newValue, occurredAt]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            attributeName:
+              type: string
+            newValue:
+              type: integer
+            occurredAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [character-service, telemetry]
+    ProgressionExperienceAwardedEvent:
+      type: object
+      required: [topic, producer, payload, consumers]
+      properties:
+        topic:
+          type: string
+          example: gameplay.progression.experience-awarded
+        producer:
+          type: string
+        payload:
+          type: object
+          required: [characterId, amount, source, occurredAt]
+          properties:
+            characterId:
+              type: string
+              format: uuid
+            amount:
+              type: integer
+            source:
+              type: string
+            occurredAt:
+              type: string
+              format: date-time
+        consumers:
+          type: array
+          items:
+            type: string
+            enum: [telemetry, analytics-service]
+

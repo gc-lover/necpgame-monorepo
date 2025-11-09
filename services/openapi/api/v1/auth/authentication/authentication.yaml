@@ -1,0 +1,483 @@
+openapi: 3.0.3
+info:
+  title: Auth Service Authentication API
+  version: 1.1.0
+  description: |
+    REST API для базовых процессов аутентификации: регистрация, вход, выход,
+    восстановление доступа, подтверждение email и управление двухфакторной
+    аутентификацией. Основано на документе
+    `.BRAIN/05-technical/backend/authentication-authorization-system.md`
+    (v1.0.0). Результаты успешной аутентификации передаются в Session
+    Management System для создания игровых сессий.
+
+    Основные возможности:
+    - Регистрация учетной записи (email + пароль, с optional username)
+    - Login/Logout с JWT (access 15 минут, refresh 7 дней)
+    - Reset/forgot password и email verification
+    - Включение/подтверждение/отключение TOTP 2FA
+    - Rate limiting и защита от brute force
+  x-microservice:
+    name: auth-service
+    port: 8081
+    domain: auth
+    base-path: /api/v1/auth
+    package: com.necpgame.authservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+  - url: wss://api.necp.game/v1
+    description: Production WebSocket Gateway
+  - url: ws://localhost:8080/api/v1
+    description: Local WebSocket Gateway
+x-tags:
+  - Authentication
+  - Password
+  - TwoFactor
+  - EmailVerification
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Зарегистрировать новый аккаунт
+      description: |
+        Создает нового пользователя. Возвращает JWT токены и флаги верификации.
+        Лимит: 3 запроса за 15 минут с одного IP.
+      operationId: registerAccount
+      x-rateLimit:
+        rules:
+          - key: register-ip
+            limit: 3
+            interval: 15m
+            scope: ip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              email_password:
+                summary: Регистрация по email/паролю
+                value:
+                  email: player@example.com
+                  password: SecurePass123!
+                  username: CyberRunner
+                  agree_to_terms: true
+      responses:
+        '201':
+          description: Аккаунт создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '409': { "$ref": "../../shared/common/responses.yaml#/components/responses/Conflict" }
+        '429': { "$ref": "../../shared/common/responses.yaml#/components/responses/TooManyRequests" }
+        '500': { "$ref": "../../shared/common/responses.yaml#/components/responses/InternalServerError" }
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Выполнить вход
+      description: |
+        Аутентифицирует пользователя и возвращает access/refresh токены. При
+        включенной двухфакторной защите возвращает признак `two_factor_required`.
+        Лимит: 5 запросов за 5 минут на IP.
+      operationId: loginAccount
+      x-rateLimit:
+        rules:
+          - key: login-ip
+            limit: 5
+            interval: 5m
+            scope: ip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Авторизация успешна
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+        '403': { "$ref": "../../shared/common/responses.yaml#/components/responses/Forbidden" }
+        '429': { "$ref": "../../shared/common/responses.yaml#/components/responses/TooManyRequests" }
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Выйти из аккаунта
+      description: Инвалидирует refresh token и закрывает активные сессии.
+      operationId: logoutAccount
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../tokens/tokens.yaml#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Выход выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+  /auth/password/forgot:
+    post:
+      tags: [Password]
+      summary: Запросить восстановление пароля
+      description: |
+        Отправляет письмо с одноразовым токеном восстановления. Ответ всегда
+        успешен для скрытия существования учетной записи. Лимит: 3 запроса
+        за 15 минут на email.
+      operationId: requestPasswordReset
+      x-rateLimit:
+        rules:
+          - key: forgot-email
+            limit: 3
+            interval: 15m
+            scope: email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordForgotRequest'
+      responses:
+        '200':
+          description: Письмо отправлено (или будет отправлено после rate-limit)
+        '429': { "$ref": "../../shared/common/responses.yaml#/components/responses/TooManyRequests" }
+
+  /auth/password/reset:
+    post:
+      tags: [Password]
+      summary: Сбросить пароль по токену
+      description: Меняет пароль после подтверждения токена сброса (TTL 1 час).
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '200':
+          description: Пароль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '410': { "$ref": "../../shared/common/responses.yaml#/components/responses/ResourceGone" }
+
+  /auth/email/verify:
+    post:
+      tags: [EmailVerification]
+      summary: Подтвердить email адрес
+      description: Подтверждает email с помощью одноразового токена из письма.
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailVerifyRequest'
+      responses:
+        '200':
+          description: Email подтвержден
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '410': { "$ref": "../../shared/common/responses.yaml#/components/responses/ResourceGone" }
+
+  /auth/email/resend:
+    post:
+      tags: [EmailVerification]
+      summary: Повторно отправить письмо для подтверждения
+      description: Лимит 3 запроса за 15 минут на email.
+      operationId: resendVerificationEmail
+      x-rateLimit:
+        rules:
+          - key: resend-email
+            limit: 3
+            interval: 15m
+            scope: email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailResendRequest'
+      responses:
+        '200':
+          description: Письмо будет отправлено, если аккаунт не подтвержден
+        '429': { "$ref": "../../shared/common/responses.yaml#/components/responses/TooManyRequests" }
+
+  /auth/two-factor/setup:
+    post:
+      tags: [TwoFactor]
+      summary: Сгенерировать секрет и резервные коды
+      description: Возвращает TOTP секрет и временные recovery codes.
+      operationId: requestTwoFactorSetup
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Секрет сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorSetupResponse'
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+  /auth/two-factor/verify:
+    post:
+      tags: [TwoFactor]
+      summary: Подтвердить и включить двухфакторную защиту
+      description: Проверяет TOTP код и активирует 2FA.
+      operationId: enableTwoFactor
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorVerifyRequest'
+      responses:
+        '200':
+          description: Двухфакторная аутентификация активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorStatusResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+  /auth/two-factor/disable:
+    post:
+      tags: [TwoFactor]
+      summary: Отключить двухфакторную защиту
+      description: Требует подтверждение TOTP или резервным кодом.
+      operationId: disableTwoFactor
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorDisableRequest'
+      responses:
+        '200':
+          description: Двухфакторная защита отключена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorStatusResponse'
+        '400': { "$ref": "../../shared/common/responses.yaml#/components/responses/BadRequest" }
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+  /auth/two-factor/status:
+    get:
+      tags: [TwoFactor]
+      summary: Получить статус двухфакторной аутентификации
+      description: Позволяет клиенту отобразить текущие настройки 2FA.
+      operationId: getTwoFactorStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Текущий статус 2FA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorStatusResponse'
+        '401': { "$ref": "../../shared/common/responses.yaml#/components/responses/Unauthorized" }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+        agree_to_terms:
+          type: boolean
+          description: Подтверждение пользовательского соглашения
+    RegisterResponse:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        access_token:
+          type: string
+          description: JWT access token (15 минут)
+        refresh_token:
+          type: string
+          description: Refresh token (7 дней)
+        verification_required:
+          type: boolean
+          description: Нужно ли подтвердить email перед входом в игру
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        remember_me:
+          type: boolean
+          default: false
+        totp_code:
+          type: string
+          description: 6-значный TOTP код (если 2FA включена)
+        device_fingerprint:
+          type: string
+          description: Хеш устройства для анти-фрод анализа
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          format: int32
+          description: Время жизни access token в секундах
+        account_id:
+          type: string
+          format: uuid
+        roles:
+          type: array
+          items:
+            type: string
+        two_factor_required:
+          type: boolean
+          description: true, если требуется подтверждение 2FA перед выдачей токенов
+    LogoutResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Logged out successfully
+    PasswordForgotRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    PasswordResetRequest:
+      type: object
+      required: [token, new_password]
+      properties:
+        token:
+          type: string
+        new_password:
+          type: string
+          minLength: 8
+          maxLength: 128
+    PasswordResetResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Password updated
+    EmailVerifyRequest:
+      type: object
+      required: [verification_token]
+      properties:
+        verification_token:
+          type: string
+    EmailResendRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    TwoFactorSetupResponse:
+      type: object
+      properties:
+        secret:
+          type: string
+          description: Base32 секрет для генерации TOTP
+        otpauth_url:
+          type: string
+          format: uri
+        recovery_codes:
+          type: array
+          items:
+            type: string
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения окна активации (обычно 10 минут)
+    TwoFactorVerifyRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: 6-значный TOTP код
+        recovery_code:
+          type: string
+          description: Можно использовать вместо кода для разовой активации
+    TwoFactorDisableRequest:
+      type: object
+      required: [confirmation]
+      properties:
+        confirmation:
+          type: string
+          description: TOTP или recovery code для подтверждения отключения
+    TwoFactorStatusResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        backup_codes_remaining:
+          type: integer
+          format: int32
+        last_confirmed_at:
+          type: string
+          format: date-time
+        enforcement_policy:
+          type: string
+          description: "optional | recommended | required"
+
+

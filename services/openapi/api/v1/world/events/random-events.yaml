@@ -1,0 +1,117 @@
+# Random Events API
+# Источник: .BRAIN/05-technical/mvp-content/events.json
+# Task ID: API-TASK-036
+
+openapi: 3.0.3
+info:
+  title: Random Events API
+  version: 1.0.0
+  description: API для системы случайных событий в NECPGAME.
+
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/events
+    package: com.necpgame.worldservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+paths:
+  /events/random:
+    get:
+      summary: Получить случайное событие
+      operationId: getRandomEvent
+      tags: [Events]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+        - {name: locationId, in: query, required: false, schema: {type: string}}
+        - {name: context, in: query, required: false, schema: {type: string, enum: [travel, exploration, rest]}}
+      responses:
+        '200':
+          description: Случайное событие
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RandomEvent'}
+
+  /events/{eventId}/respond:
+    post:
+      summary: Ответить на событие
+      operationId: respondToEvent
+      tags: [Events]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: eventId, in: path, required: true, schema: {type: string}}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId, optionId]
+              properties:
+                characterId: {type: string, format: uuid}
+                optionId: {type: string}
+      responses:
+        '200':
+          description: Результат выбора
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EventResult'}
+
+  /events/active:
+    get:
+      summary: Активные события
+      operationId: getActiveEvents
+      tags: [Events]
+      security: [{BearerAuth: []}]
+      parameters:
+        - {name: characterId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Список активных событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events: {type: array, items: {$ref: '#/components/schemas/RandomEvent'}}
+
+components:
+  schemas:
+    RandomEvent:
+      type: object
+      required: [id, name, description, options]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        description: {type: string}
+        options: {type: array, items: {$ref: '#/components/schemas/EventOption'}}
+        timeLimit: {type: integer, nullable: true}
+        dangerLevel: {type: string, enum: [low, medium, high]}
+
+    EventOption:
+      type: object
+      required: [id, text]
+      properties:
+        id: {type: string}
+        text: {type: string}
+        requirements: {type: object, nullable: true}
+        available: {type: boolean, default: true}
+
+    EventResult:
+      type: object
+      required: [success, outcome]
+      properties:
+        success: {type: boolean}
+        outcome: {type: string}
+        rewards: {type: object, nullable: true, properties: {experience: {type: integer}, currency: {type: integer}, items: {type: array, items: {type: string}}, reputation: {type: object, additionalProperties: {type: integer}}}}
+        penalties: {type: object, nullable: true}
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth'
+

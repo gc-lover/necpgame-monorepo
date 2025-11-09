@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="064-create-parties-table" author="backend-agent">
+        <createTable tableName="parties">
+            <column name="party_id" type="VARCHAR(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="leader_character_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="members_json" type="TEXT"/>
+            <column name="max_members" type="INTEGER" defaultValueNumeric="5"/>
+            <column name="loot_mode" type="VARCHAR(50)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="parties" indexName="idx_parties_leader">
+            <column name="leader_character_id"/>
+        </createIndex>
+
+        <createIndex tableName="parties" indexName="idx_parties_created_at">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

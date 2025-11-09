@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="070-create-leaderboard-tables" author="backend-agent">
+        <createTable tableName="leaderboard_entries">
+            <column name="category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="player_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="player_name" type="VARCHAR(120)"/>
+            <column name="score" type="DECIMAL(20,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score_display" type="VARCHAR(160)"/>
+            <column name="active_title" type="VARCHAR(120)"/>
+            <column name="guild_id" type="UUID"/>
+            <column name="guild_name" type="VARCHAR(120)"/>
+            <column name="guild_tag" type="VARCHAR(16)"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="leaderboard_entries" constraintName="pk_leaderboard_entries" columnNames="category, player_id"/>
+
+        <createIndex tableName="leaderboard_entries" indexName="idx_leaderboard_entries_category_score">
+            <column name="category"/>
+            <column name="score" descending="true"/>
+        </createIndex>
+
+        <createTable tableName="leaderboard_seasons">
+            <column name="season_id" type="VARCHAR(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(160)"/>
+            <column name="start_date" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="end_date" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="is_current" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="seasonal_leaderboard_entries">
+            <column name="season_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="player_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score" type="DECIMAL(20,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score_display" type="VARCHAR(160)"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="seasonal_leaderboard_entries" constraintName="pk_seasonal_leaderboard_entries" columnNames="season_id, category, player_id"/>
+
+        <addForeignKeyConstraint baseTableName="seasonal_leaderboard_entries"
+                                 baseColumnNames="season_id"
+                                 referencedTableName="leaderboard_seasons"
+                                 referencedColumnNames="season_id"
+                                 constraintName="fk_seasonal_leaderboard_season"/>
+
+        <createIndex tableName="seasonal_leaderboard_entries" indexName="idx_seasonal_leaderboard_category_score">
+            <column name="season_id"/>
+            <column name="category"/>
+            <column name="score" descending="true"/>
+        </createIndex>
+
+        <createTable tableName="guild_leaderboard_entries">
+            <column name="category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="guild_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="guild_name" type="VARCHAR(160)"/>
+            <column name="guild_tag" type="VARCHAR(16)"/>
+            <column name="score" type="DECIMAL(20,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score_display" type="VARCHAR(160)"/>
+            <column name="member_count" type="INT"/>
+            <column name="leader_name" type="VARCHAR(120)"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="guild_leaderboard_entries" constraintName="pk_guild_leaderboard_entries" columnNames="category, guild_id"/>
+
+        <createIndex tableName="guild_leaderboard_entries" indexName="idx_guild_leaderboard_category_score">
+            <column name="category"/>
+            <column name="score" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

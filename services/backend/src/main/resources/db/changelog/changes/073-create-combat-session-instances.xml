@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="073-create-combat-session-instances" author="backend-agent">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="combat_session_instances"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="combat_session_instances">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="combat_type" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="turn_based" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_limit_seconds" type="INT"/>
+            <column name="location_id" type="VARCHAR(100)"/>
+            <column name="instance_id" type="VARCHAR(100)"/>
+            <column name="turn_order" type="TEXT"/>
+            <column name="current_turn_index" type="INT"/>
+            <column name="active_participant_id" type="VARCHAR(100)"/>
+            <column name="winner_team" type="VARCHAR(20)"/>
+            <column name="settings_json" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ended_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="combat_session_instances" indexName="idx_combat_session_instances_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="combat_session_instances" indexName="idx_combat_session_instances_started_at">
+            <column name="started_at"/>
+        </createIndex>
+
+        <createTable tableName="combat_session_participants">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="session_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_combat_session_participants_session"
+                            references="combat_session_instances(id)"/>
+            </column>
+            <column name="participant_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="team" type="VARCHAR(20)"/>
+            <column name="character_name" type="VARCHAR(150)"/>
+            <column name="hp" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_hp" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status_effects" type="JSONB"/>
+            <column name="position" type="JSONB"/>
+            <column name="damage_dealt" type="INT" defaultValueNumeric="0"/>
+            <column name="damage_taken" type="INT" defaultValueNumeric="0"/>
+            <column name="kills" type="INT" defaultValueNumeric="0"/>
+            <column name="deaths" type="INT" defaultValueNumeric="0"/>
+            <column name="headshots" type="INT" defaultValueNumeric="0"/>
+            <column name="abilities_used" type="INT" defaultValueNumeric="0"/>
+            <column name="order_index" type="INT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="combat_session_participants"
+                             columnNames="session_id, reference_id"
+                             constraintName="uk_combat_session_participant_reference"/>
+
+        <createIndex tableName="combat_session_participants" indexName="idx_combat_session_participants_session">
+            <column name="session_id"/>
+        </createIndex>
+        <createIndex tableName="combat_session_participants" indexName="idx_combat_session_participants_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createTable tableName="combat_session_events">
+            <column name="event_id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="session_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_combat_session_events_session"
+                            references="combat_session_instances(id)"/>
+            </column>
+            <column name="event_type" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_id" type="VARCHAR(100)"/>
+            <column name="target_id" type="VARCHAR(100)"/>
+            <column name="payload" type="JSONB"/>
+            <column name="occurred_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="combat_session_events" indexName="idx_combat_session_events_session">
+            <column name="session_id"/>
+        </createIndex>
+        <createIndex tableName="combat_session_events" indexName="idx_combat_session_events_type">
+            <column name="event_type"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="combat_session_events"/>
+            <dropTable tableName="combat_session_participants"/>
+            <dropTable tableName="combat_session_instances"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,159 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/side
+---
+
+
+{
+  "period": "2030-2045",
+  "version": "2.1.0",
+  "generated": "2025-11-06T03:35:00Z",
+  "events": [
+    {"id":"ev-2030-01","name":"DAO-голосование в куполе","triggers":["enter_dome"],"conditions":["rep.DomeDAO>=10"],"outcomes":["offer_sidequest","discount_fees"]},
+    {"id":"ev-2030-02","name":"Подземный обвал","triggers":["enter_tunnel"],"conditions":["time.night"],"outcomes":["random_encounter_scavs","shortcut_open"]},
+    {"id":"ev-2030-03","name":"Набег на склад данных","triggers":["industrial_zone"],"conditions":["heat<30"],"outcomes":["spawn_gang_patrol","rare_loot_chance"]},
+    {"id":"ev-2030-04","name":"Полевой медосмотр","triggers":["clinic_district"],"conditions":["rep.Clinics>=6"],"outcomes":["temporary_buff_emp","offer_implant_contract"]},
+    {"id":"ev-2030-05","name":"Тихий канал связи","triggers":["near_tower"],"conditions":["skills.Hacking>=8"],"outcomes":["intel_packet","reduce_detect_risk"]},
+    {"id":"ev-2030-06","name":"Переговоры курьеров","triggers":["market"],"conditions":["skills.Social>=7"],"outcomes":["trade_prices_down","smuggler_contact"]},
+    {"id":"ev-2030-07","name":"Патруль Сети","triggers":["net_point"],"conditions":["heat>=40"],"outcomes":["netwatch_probe","trace_warning"]},
+    {"id":"ev-2030-08","name":"Метка утечки","triggers":["media_zone"],"conditions":["rep.Media>=8"],"outcomes":["press_contract","publicity_boost"]},
+    {"id":"ev-2030-09","name":"Мост через подмир","triggers":["tunnel_gate"],"conditions":["skills.Mobility>=8"],"outcomes":["parkour_shortcut","ambush_risk"]},
+    {"id":"ev-2030-10","name":"Лицензия на оборудование","triggers":["bureau"],"conditions":["rep.CityServices>=6"],"outcomes":["permit_discount","fast_track"]},
+    {"id":"ev-2030-11","name":"Хищники сетей","triggers":["net_hub"],"conditions":["time.rain"],"outcomes":["spawn_rogue_ai","rare_net_loot"]},
+    {"id":"ev-2030-12","name":"Сговор на складе","triggers":["warehouse"],"conditions":["rep.Gangs<=-2"],"outcomes":["ambush","bounty_flag"]}
+  ],
+  "lootTablesDetailed": {
+    "CorpoGuard_T2": [
+      {"item":"ammo_box_t2","chance":0.55,"qty":"1-2"},
+      {"item":"pistol_t2","chance":0.18,"qty":"1"},
+      {"item":"armor_plate_t2","chance":0.22,"qty":"1"},
+      {"item":"keycard_corp","chance":0.12,"qty":"1"}
+    ],
+    "Gang_T2": [
+      {"item":"shotgun_t2","chance":0.16,"qty":"1"},
+      {"item":"stim_pack","chance":0.35,"qty":"1-3"},
+      {"item":"scrap_electronics","chance":0.42,"qty":"2-5"}
+    ],
+    "Scav_T2": [
+      {"item":"junk_mix","chance":0.6,"qty":"3-7"},
+      {"item":"knife_t2","chance":0.2,"qty":"1"},
+      {"item":"patch_cable","chance":0.25,"qty":"1-2"}
+    ],
+    "HeavyScav_T2": [
+      {"item":"lmgun_t2","chance":0.12,"qty":"1"},
+      {"item":"armor_core_t2","chance":0.28,"qty":"1"},
+      {"item":"battery_pack","chance":0.34,"qty":"1-2"}
+    ],
+    "Netwatch_T3": [
+      {"item":"deck_module_t3","chance":0.22,"qty":"1"},
+      {"item":"trace_spoofer","chance":0.18,"qty":"1"},
+      {"item":"encrypted_datacube","chance":0.3,"qty":"1"}
+    ]
+  },
+  "quests": [
+    {
+      "id": "dq-2030-001",
+      "title": "Голос Купола",
+      "tier": 2,
+      "difficulty": "medium",
+      "objectives": ["meet_custodian", "install_sensors", "report_back"],
+      "dialogue": {
+        "start": "n1",
+        "nodes": [
+          {"id":"n1","speaker":"Custodian","text":"Купол глохнет. Нужны сенсоры на ребрах.","choices":[{"text":"Где ставить?","next":"n2"},{"text":"Сколько платите?","next":"n3"}]},
+          {"id":"n2","speaker":"Custodian","text":"Три точки: север, запад, подмир.","choices":[{"text":"Берусь","next":"n4"},{"text":"Позже","next":"end_fail"}]},
+          {"id":"n3","speaker":"Custodian","text":"Оплата DAO. Можно снизить сбор.","skillCheck":{"attr":"COOL","skill":"Social","threshold":7,"success":"n3a","fail":"n3b"}},
+          {"id":"n3a","speaker":"Custodian","text":"Сбор снижен. Договорились.","choices":[{"text":"К делу","next":"n4"}]},
+          {"id":"n3b","speaker":"Custodian","text":"Правила есть правила.","choices":[{"text":"Ладно","next":"n4"}]},
+          {"id":"n4","speaker":"Player","text":"Ставлю сенсоры.","choices":[{"text":"К северной грани","next":"n5"},{"text":"К западной грани","next":"n7"},{"text":"В подмир","next":"n9"}]},
+          {"id":"n5","speaker":"System","text":"Северная грань: охрана корпорации.","choices":[{"text":"Взлом сети","next":"n6","skillCheck":{"attr":"INT","skill":"Hacking","threshold":9}},{"text":"Тихо пройти","next":"n5a"},{"text":"В бой","next":"n5b"}]},
+          {"id":"n6","speaker":"System","text":"Открыл обход. Сенсор установлен.","choices":[{"text":"Дальше","next":"n7"}]},
+          {"id":"n5a","speaker":"System","text":"Патруль рядом. Риск роста тепла.","choices":[{"text":"Ждать","next":"n7"}]},
+          {"id":"n5b","speaker":"System","text":"Стычка с охраной.","choices":[{"text":"Забрать трофеи","next":"n7"}]},
+          {"id":"n7","speaker":"System","text":"Западная грань: банда в переулке.","choices":[{"text":"Обойти","next":"n8"},{"text":"Уговорить","next":"n7a","skillCheck":{"attr":"COOL","skill":"Social","threshold":8}},{"text":"Силой","next":"n7b"}]},
+          {"id":"n7a","speaker":"Gang","text":"Проходи. Нам не по пути.","choices":[{"text":"Спасибо","next":"n9"}]},
+          {"id":"n7b","speaker":"System","text":"Бой в переулке.","choices":[{"text":"Сенсор установлен","next":"n9"}]},
+          {"id":"n8","speaker":"System","text":"Переход через крыши.","choices":[{"text":"Спрыгнуть","next":"n9"}]},
+          {"id":"n9","speaker":"System","text":"Подмир: вибрации нестабильны.","choices":[{"text":"Стабилизировать крепление","next":"n10"},{"text":"Усилить корпус","next":"n11"}]},
+          {"id":"n10","speaker":"System","text":"Крепление в норме.","choices":[{"text":"Вернуться","next":"n12"}]},
+          {"id":"n11","speaker":"System","text":"Корпус усилен. Снижен шум.","choices":[{"text":"Вернуться","next":"n12"}]},
+          {"id":"n12","speaker":"Custodian","text":"Сенсоры работают. Сигнал чистый.","choices":[{"text":"Отчет","next":"n13"}]},
+          {"id":"n13","speaker":"System","text":"DAO начислило оплату.","choices":[{"text":"Завершить","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr": "INT", "skill": "Hacking", "threshold": 9, "effect": "shortcut_network"},
+        {"attr": "COOL", "skill": "Social", "threshold": 7, "effect": "skip_fee"}
+      ],
+      "alternatives": ["stealth_route", "combat_route", "dao_vote_route"],
+      "lootTables": ["CorpoGuard_T2", "Gang_T2"],
+      "reputation": {"factions": {"DomeDAO": "+8..+15", "Underworld": "-3..0"}, "classMods": {"Netrunner": "+10%", "Fixer": "+5%"}}
+    },
+    {
+      "id": "dq-2030-002",
+      "title": "Картография Подмира",
+      "tier": 2,
+      "difficulty": "hard",
+      "objectives": ["scan_tunnels", "mark_gateways", "deliver_map"],
+      "dialogue": {
+        "start": "m1",
+        "nodes": [
+          {"id":"m1","speaker":"Cartographer","text":"Подмир меняется. Нужна свежая карта.","choices":[{"text":"Сканирую","next":"m2"},{"text":"Где входы?","next":"m3"}]},
+          {"id":"m2","speaker":"Cartographer","text":"Метки на маяках. Береги их.","choices":[{"text":"В путь","next":"m4"}]},
+          {"id":"m3","speaker":"Cartographer","text":"Три ворота. Южные охраняют scav'ы.","choices":[{"text":"Приму к сведению","next":"m4"}]},
+          {"id":"m4","speaker":"System","text":"Вход в тоннель.","choices":[{"text":"Ловушки","next":"m5","skillCheck":{"attr":"AGI","skill":"Mobility","threshold":8}},{"text":"Снять ловушку","next":"m6","skillCheck":{"attr":"INT","skill":"Tech","threshold":8}}]},
+          {"id":"m5","speaker":"System","text":"Проскочил без урона.","choices":[{"text":"Дальше","next":"m7"}]},
+          {"id":"m6","speaker":"System","text":"Ловушка разобрана. Получены детали.","choices":[{"text":"Дальше","next":"m7"}]},
+          {"id":"m7","speaker":"System","text":"Помехи сигнала.","choices":[{"text":"Усилить антенну","next":"m8"},{"text":"Поменять частоту","next":"m9"}]},
+          {"id":"m8","speaker":"System","text":"Сигнал стабилен.","choices":[{"text":"Сканировать","next":"m10"}]},
+          {"id":"m9","speaker":"System","text":"Снижен шум.","choices":[{"text":"Сканировать","next":"m10"}]},
+          {"id":"m10","speaker":"System","text":"Обнаружен скрытый проход.","choices":[{"text":"Отметить","next":"m11"},{"text":"Игнорировать","next":"m12"}]},
+          {"id":"m11","speaker":"System","text":"Метка добавлена.","choices":[{"text":"К выходу","next":"m13"}]},
+          {"id":"m12","speaker":"System","text":"Продолжил маршрут.","choices":[{"text":"К выходу","next":"m13"}]},
+          {"id":"m13","speaker":"Cartographer","text":"Передай карту. Отличная работа.","choices":[{"text":"Отдать","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr": "AGI", "skill": "Mobility", "threshold": 8, "effect": "skip_traps"},
+        {"attr": "INT", "skill": "Tech", "threshold": 8, "effect": "craft_beacons"}
+      ],
+      "alternatives": ["ally_scavs", "bribe_gang", "silent_run"],
+      "lootTables": ["Scav_T2", "HeavyScav_T2"],
+      "reputation": {"factions": {"TunnelRunners": "+10..+18", "CityServices": "+4..+8"}}
+    },
+    {
+      "id": "dq-2030-003",
+      "title": "Нейроэтика 1.0",
+      "tier": 2,
+      "difficulty": "medium",
+      "dialogue": {
+        "start":"e1",
+        "nodes":[
+          {"id":"e1","speaker":"Doctor","text":"Пациент на грани. Нужен такт и контроль.","choices":[{"text":"Постараюсь","next":"e2"}]},
+          {"id":"e2","speaker":"Patient","text":"Голоса... они шепчут.","choices":[{"text":"Успокоиться","next":"e3","skillCheck":{"attr":"EMP","skill":"Social","threshold":8}},{"text":"Микродоза седативов","next":"e4"}]},
+          {"id":"e3","speaker":"Patient","text":"Становится тише.","choices":[{"text":"Диагностика","next":"e5"}]},
+          {"id":"e4","speaker":"System","text":"Стабильность восстановлена.","choices":[{"text":"Диагностика","next":"e5"}]},
+          {"id":"e5","speaker":"System","text":"Аномалия импланта памяти.","choices":[{"text":"Отключить модуль","next":"e6"},{"text":"Перекалибровать","next":"e7"}]},
+          {"id":"e6","speaker":"Doctor","text":"Симптомы ушли. Риск отката.","choices":[{"text":"Наблюдать","next":"end_success"}]},
+          {"id":"e7","speaker":"Doctor","text":"Стабильно. Пациент благодарен.","choices":[{"text":"Завершить","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [{"attr":"EMP","skill":"Social","threshold":8,"effect":"calm_patient"}],
+      "alternatives": ["legal_route","black_clinic"],
+      "lootTables": ["Ripper_T2"],
+      "reputation": {"factions": {"Clinics": "+6..+12", "Corpos": "-2..0"}}
+    },
+    { "id": "dq-2030-004", "title": "Слой памяти", "tier": 3, "difficulty": "hard", "dialogue": {"nodes": 26}, "skillChecks": [{"attr":"INT","skill":"Hacking","threshold":10,"effect":"deep_extract"}], "alternatives": ["stealth_lab","raid_lab"], "lootTables": ["Netwatch_T3"], "reputation": {"factions": {"Archivists": "+12..+20"}} },
+    { "id": "dq-2030-005", "title": "Рейд Ковчега", "tier": 3, "difficulty": "hard", "dialogue": {"nodes": 28}, "skillChecks": [{"attr":"REF","skill":"Gunplay","threshold":9,"effect":"boss_weakspot"}], "alternatives": ["team_assault","hacker_bypass"], "lootTables": ["RaidBoss_T3","Gang_T3"], "reputation": {"factions": {"Raiders": "+10..+18", "City": "-4..-1"}} },
+    { "id": "dq-2030-006", "title": "DAO Печать", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 21}, "skillChecks": [{"attr":"COOL","skill":"Social","threshold":9,"effect":"win_vote"}], "alternatives": ["legal","fraud"], "lootTables": ["Clerk_T1"], "reputation": {"factions": {"DomeDAO": "+10..+16"}} },
+    { "id": "dq-2030-007", "title": "Тихий Контур", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 20}, "skillChecks": [{"attr":"AGI","skill":"Stealth","threshold":8,"effect":"ghost_tag"}], "alternatives": ["stealth","decoy"], "lootTables": ["Security_T2"], "reputation": {"factions": {"Netwatch": "-4..-1", "Fixers": "+4..+8"}} },
+    { "id": "dq-2030-008", "title": "Гильдии Рипперов", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 22}, "skillChecks": [{"attr":"INT","skill":"Tech","threshold":9,"effect":"certify_kit"}], "alternatives": ["audit","smuggle"], "lootTables": ["Ripper_T2"], "reputation": {"factions": {"Clinics": "+8..+14", "Gangs": "-2..0"}} },
+    { "id": "dq-2030-009", "title": "Параллельные Сети", "tier": 3, "difficulty": "hard", "dialogue": {"nodes": 25}, "skillChecks": [{"attr":"INT","skill":"Hacking","threshold":11,"effect":"merge_routes"}], "alternatives": ["proxy_route","hardware_patch"], "lootTables": ["Netwatch_T3"], "reputation": {"factions": {"Netrunners": "+12..+20"}} },
+    { "id": "dq-2030-010", "title": "Сезонный Контракт: Утечка", "tier": 2, "difficulty": "medium", "dialogue": {"nodes": 20}, "skillChecks": [{"attr":"COOL","skill":"Social","threshold":7,"effect":"press_access"}], "alternatives": ["whistleblow","sell_data"], "lootTables": ["CorpoGuard_T2"], "reputation": {"factions": {"Media": "+8..+14", "Corpos": "-6..-2"}} },
+    { "id": "dq-2030-011", "title": "Подкуп Курьеров", "tier": 2, "difficulty": "easy", "dialogue": {"nodes": 20}, "skillChecks": [{"attr":"COOL","skill":"Social","threshold":6,"effect":"cheap_bribe"}], "alternatives": ["steal","trade_up"], "lootTables": ["Smuggler_T2"], "reputation": {"factions": {"Fixers": "+6..+10"}} },
+    { "id": "dq-2030-012", "title": "Геномные Метки", "tier": 3, "difficulty": "hard", "dialogue": {"nodes": 27}, "skillChecks": [{"attr":"INT","skill":"Tech","threshold":10,"effect":"clean_trace"}], "alternatives": ["clinic","black_market"], "lootTables": ["Lab_T3"], "reputation": {"factions": {"Biolabs": "+10..+18", "Police": "-4..-1"}} }
+  ]
+}
+
+

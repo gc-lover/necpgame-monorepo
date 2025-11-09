@@ -1,0 +1,308 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/matchmaking/ratings
+# - Dependencies: leaderboard, analytics, anti-cheat services; Kafka events
+# - Frontend Module: modules/gameplay/matchmaking
+# - UI: RatingBadge, TierProgressBar, PlacementProgress
+
+openapi: 3.0.3
+info:
+  title: Matchmaking Rating API
+  version: 1.0.0
+  description: Управление рейтингами матчмейкинга, сезонной статистикой и smurf-контролем.
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/matchmaking
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: PlayerRatings
+    description: Профили рейтингов игроков и история.
+  - name: RatingDelta
+    description: Применение изменений рейтинга и размещение.
+  - name: Leaderboard
+    description: Лидерборды и статистика сезонов.
+  - name: Seasons
+    description: Сезонные операции и конфигурация рангов.
+  - name: SmurfDetection
+    description: Управление smurf-флагами и проверками.
+paths:
+  /matchmaking/ratings/{activityType}:
+    get:
+      tags: [PlayerRatings]
+      summary: Получить профиль рейтинга игрока для активности
+      description: Возвращает актуальный рейтинг игрока в выбранном режиме. Требует scope `matchmaking.ratings.read`.
+      operationId: getRatingProfile
+      security: [ { BearerAuth: [matchmaking.ratings.read] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/LeagueId'
+      responses:
+        '200':
+          description: Профиль рейтинга игрока.
+          headers:
+            X-Rating-Tier: { $ref: './matchmaking-rating-components.yaml#/components/headers/RatingTierHeader' }
+            X-Rating-Division: { $ref: './matchmaking-rating-components.yaml#/components/headers/RatingDivisionHeader' }
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingProfile' }
+              examples: { arena: { $ref: './matchmaking-rating-examples.yaml#/components/examples/RatingProfileArena' } }
+        '404':
+          description: Рейтинг не найден.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /matchmaking/ratings/{activityType}/history:
+    get:
+      tags: [PlayerRatings]
+      summary: Получить историю изменений рейтинга
+      description: Возвращает историю рейтинга с пагинацией по курсору.
+      operationId: getRatingHistory
+      security: [ { BearerAuth: [matchmaking.ratings.read] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/LeagueId'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/Cursor'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: История рейтинга.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingHistoryPage' }
+              examples: { history: { $ref: './matchmaking-rating-examples.yaml#/components/examples/RatingHistoryPage' } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /matchmaking/ratings/{activityType}/delta:
+    post:
+      tags: [RatingDelta]
+      summary: Применить изменение рейтинга после матча
+      description: "Обработчик от матчинга. Идемпотентен по `matchId` + `playerId`. Ограничение: максимум 5 запросов на матч."
+      operationId: applyRatingDelta
+      security: [ { ServiceToken: [] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingDeltaRequest' }
+            examples: { win: { $ref: './matchmaking-rating-examples.yaml#/components/examples/RatingDeltaRequestWin' } }
+      responses:
+        '202':
+          description: Изменение принято, перерасчёт выполнен.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingDeltaResult' }
+              examples: { result: { $ref: './matchmaking-rating-examples.yaml#/components/examples/RatingDeltaResultWin' } }
+        '409':
+          description: Дубликат delta или нарушение идемпотентности.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingError' }
+        '422':
+          description: Некорректные данные delta/placement.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingError' }
+  /matchmaking/ratings/{activityType}/placement:
+    post:
+      tags: [RatingDelta]
+      summary: Обновить статус placement-серии
+      operationId: updatePlacementStatus
+      security: [ { ServiceToken: [] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/PlacementRequest' }
+      responses:
+        '200':
+          description: Статус placement обновлён.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/PlacementStatus' }
+        '409':
+          description: Placement уже завершён.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingError' }
+  /matchmaking/leaderboard/{activityType}:
+    get:
+      tags: [Leaderboard]
+      summary: Получить лидерборд активности
+      description: Возвращает страницу лидерборда. Кэшируется 60 секунд, поддерживает ETag.
+      operationId: getLeaderboard
+      security: [ { BearerAuth: [matchmaking.ratings.read] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/LeagueId'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/Region'
+        - name: tier
+          in: query
+          required: false
+          schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/Tier' }
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/Page'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Лидерборд активности.
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/LeaderboardPage' }
+              examples: { board: { $ref: './matchmaking-rating-examples.yaml#/components/examples/LeaderboardResponse' } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /matchmaking/ratings/{activityType}/tiers:
+    get:
+      tags: [Seasons]
+      summary: Получить конфигурацию рангов
+      operationId: getTierConfig
+      security: [ { BearerAuth: [matchmaking.ratings.read] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/LeagueId'
+      responses:
+        '200':
+          description: Конфигурация рангов и decay правил.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/TierConfig' }
+              examples: { config: { $ref: './matchmaking-rating-examples.yaml#/components/examples/TierConfig' } }
+        '503':
+          description: Конфигурация недоступна.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingError' }
+  /matchmaking/ratings/{activityType}/summary:
+    get:
+      tags: [Seasons]
+      summary: Получить агрегированную сезонную статистику
+      operationId: getSeasonSummary
+      security: [ { BearerAuth: [matchmaking.ratings.read] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/LeagueId'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/Region'
+      responses:
+        '200':
+          description: Сводная статистика сезона.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/SeasonSummary' }
+              examples: { summary: { $ref: './matchmaking-rating-examples.yaml#/components/examples/SeasonSummary' } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /matchmaking/ratings/{activityType}/seasons/reset:
+    post:
+      tags: [Seasons]
+      summary: Инициировать сезонный сброс рейтингов
+      description: Админ операция со scope `matchmaking.ratings.manage`. Запускает асинхронный процесс сброса.
+      operationId: resetSeasonRatings
+      security: [ { ServiceToken: [] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/SeasonResetRequest' }
+      responses:
+        '202': { description: Сброс принят к выполнению. }
+        '403':
+          description: Нет прав на операцию.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingError' }
+        '409':
+          description: Сезонный сброс уже выполняется.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingError' }
+  /matchmaking/ratings/{activityType}/smurf-flags:
+    get:
+      tags: [SmurfDetection]
+      summary: Получить список подозрительных аккаунтов (smurf)
+      operationId: listSmurfFlags
+      security: [ { BearerAuth: [matchmaking.ratings.read] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/Threshold'
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Список smurf-флагов.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/SmurfFlagList' }
+              examples: { flags: { $ref: './matchmaking-rating-examples.yaml#/components/examples/SmurfFlagList' } }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /matchmaking/ratings/{activityType}/smurf-review:
+    post:
+      tags: [SmurfDetection]
+      summary: Подтвердить или отклонить smurf-флаг
+      operationId: reviewSmurfFlag
+      security: [ { ServiceToken: [] } ]
+      parameters:
+        - $ref: './matchmaking-rating-components.yaml#/components/parameters/ActivityType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/SmurfReviewRequest' }
+      responses:
+        '200': { description: Решение сохранено. }
+        '404':
+          description: Флаг не найден.
+          content:
+            application/json:
+              schema: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingError' }
+
+x-kafka:
+  publishes:
+    - topic: matchmaking.rating.updated
+      payload: { $ref: './matchmaking-rating-components.yaml#/components/schemas/RatingDeltaResult' }
+    - topic: matchmaking.rating.smurf.flagged
+      payload: { $ref: './matchmaking-rating-components.yaml#/components/schemas/SmurfFlag' }
+    - topic: matchmaking.rating.season.reset
+      payload: { $ref: './matchmaking-rating-components.yaml#/components/schemas/SeasonSummary' }
+  subscribes:
+    - topic: matchmaking.match.finalized
+      payload:
+        type: object
+        properties:
+          matchId: { type: string, format: uuid }
+          results:
+            type: array
+            items:
+              type: object
+              properties:
+                playerId: { type: string, format: uuid }
+                result: { $ref: './matchmaking-rating-components.yaml#/components/schemas/MatchResult' }
+                opponentRating: { type: integer }
+    - topic: clan-war.match.completed
+      payload:
+        type: object
+        properties:
+          clanMatchId: { type: string, format: uuid }
+          participants:
+            type: array
+            items: { type: string, format: uuid }
+
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+
+

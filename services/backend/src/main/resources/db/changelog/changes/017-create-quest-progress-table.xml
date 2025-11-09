@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="017-create-quest-progress-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="quest_progress"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="quest_progress">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quest_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="progress" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="quest_progress" indexName="idx_quest_progress_character_id">
+            <column name="character_id"/>
+        </createIndex>
+        <createIndex tableName="quest_progress" indexName="idx_quest_progress_quest_id">
+            <column name="quest_id"/>
+        </createIndex>
+        <createIndex tableName="quest_progress" indexName="idx_quest_progress_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="quest_progress" indexName="idx_quest_progress_character_quest" unique="true">
+            <column name="character_id"/>
+            <column name="quest_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                baseTableName="quest_progress"
+                baseColumnNames="character_id"
+                constraintName="fk_quest_progress_character"
+                referencedTableName="characters"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <rollback>
+            <dropTable tableName="quest_progress"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

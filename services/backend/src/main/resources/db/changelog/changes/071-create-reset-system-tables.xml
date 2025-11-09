@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.17.xsd">
+
+    <changeSet id="071-create-reset-system-tables" author="backend-agent">
+        <createTable tableName="reset_type_status">
+            <column name="reset_type" type="varchar(20)">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="last_reset_at" type="timestamp with time zone" />
+            <column name="next_reset_at" type="timestamp with time zone" />
+            <column name="reset_items" type="jsonb" />
+        </createTable>
+
+        <createTable tableName="reset_schedule">
+            <column name="reset_type" type="varchar(20)">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="cron_expression" type="varchar(120)" />
+            <column name="timezone" type="varchar(50)" />
+            <column name="enabled" type="boolean" defaultValueBoolean="true" />
+            <column name="items_to_reset" type="jsonb" />
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP" />
+        </createTable>
+
+        <createTable tableName="reset_history">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="reset_type" type="varchar(20)" />
+            <column name="execution_time" type="timestamp with time zone" />
+            <column name="triggered_by" type="varchar(20)" />
+            <column name="affected_players" type="integer" />
+            <column name="success" type="boolean" />
+            <column name="execution_duration_ms" type="integer" />
+            <column name="items_reset" type="jsonb" />
+            <column name="errors" type="jsonb" />
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP" />
+        </createTable>
+
+        <createIndex indexName="idx_reset_history_type_time" tableName="reset_history">
+            <column name="reset_type" />
+            <column name="execution_time" />
+        </createIndex>
+
+        <createTable tableName="player_reset_status">
+            <column name="player_id" type="uuid">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="last_daily_reset" type="timestamp with time zone" />
+            <column name="last_weekly_reset" type="timestamp with time zone" />
+            <column name="daily_details" type="jsonb" />
+            <column name="weekly_details" type="jsonb" />
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP" />
+        </createTable>
+
+        <insert tableName="reset_schedule">
+            <column name="reset_type" value="DAILY" />
+            <column name="cron_expression" value="0 0 * * *" />
+            <column name="timezone" value="UTC" />
+            <column name="enabled" valueBoolean="true" />
+            <column name="items_to_reset" valueComputed="'[""daily_quests"",""daily_limits"",""vendor_inventory"",""login_rewards""]'::jsonb" />
+        </insert>
+
+        <insert tableName="reset_schedule">
+            <column name="reset_type" value="WEEKLY" />
+            <column name="cron_expression" value="0 0 * * MON" />
+            <column name="timezone" value="UTC" />
+            <column name="enabled" valueBoolean="true" />
+            <column name="items_to_reset" valueComputed="'[""weekly_quests"",""raid_lockouts"",""guild_progress""]'::jsonb" />
+        </insert>
+
+        <insert tableName="reset_schedule">
+            <column name="reset_type" value="MONTHLY" />
+            <column name="cron_expression" value="0 0 1 * *" />
+            <column name="timezone" value="UTC" />
+            <column name="enabled" valueBoolean="true" />
+            <column name="items_to_reset" valueComputed="'[""monthly_rewards"",""season_points""]'::jsonb" />
+        </insert>
+
+        <insert tableName="reset_type_status">
+            <column name="reset_type" value="DAILY" />
+            <column name="last_reset_at" valueComputed="CURRENT_TIMESTAMP - interval '12 hours'" />
+            <column name="next_reset_at" valueComputed="CURRENT_TIMESTAMP + interval '12 hours'" />
+            <column name="reset_items" valueComputed="'[""daily_quests"",""daily_limits"",""vendor_inventory"",""login_rewards""]'::jsonb" />
+        </insert>
+
+        <insert tableName="reset_type_status">
+            <column name="reset_type" value="WEEKLY" />
+            <column name="last_reset_at" valueComputed="CURRENT_TIMESTAMP - interval '3 days'" />
+            <column name="next_reset_at" valueComputed="CURRENT_TIMESTAMP + interval '4 days'" />
+            <column name="reset_items" valueComputed="'[""weekly_quests"",""raid_lockouts"",""guild_progress""]'::jsonb" />
+        </insert>
+
+        <insert tableName="reset_type_status">
+            <column name="reset_type" value="MONTHLY" />
+            <column name="last_reset_at" valueComputed="CURRENT_TIMESTAMP - interval '10 days'" />
+            <column name="next_reset_at" valueComputed="CURRENT_TIMESTAMP + interval '20 days'" />
+            <column name="reset_items" valueComputed="'[""monthly_rewards"",""season_points""]'::jsonb" />
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
+

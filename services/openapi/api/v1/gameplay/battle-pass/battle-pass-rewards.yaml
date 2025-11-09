@@ -1,0 +1,326 @@
+# Target Architecture:
+# - Microservice: gameplay-service (port 8083)
+# - API Base: /api/v1/gameplay/battle-pass
+# - Dependencies: auth-service, economy-service, inventory-service, cosmetic-service, buff-service, notification-service, analytics-service, progression-service, incident-service
+# - Frontend Module: modules/progression/battle-pass (useBattlePassStore)
+# - UI: RewardTrack, ChallengeList, RewardPreviewModal, BoostTimer, BattlePassLeaderboard
+# - Forms: ClaimRewardForm, ActivateBoostForm, ChallengeRerollForm
+# - Layout: ProgressionHubLayout
+# - Hooks: useRewards, useChallenges, useBoosts, useBattlePassSocket
+
+openapi: 3.0.3
+info:
+  title: Battle Pass Rewards & Challenges API
+  description: "Battle Pass награды, челленджи и бусты: выдача, реролл, realtime прогресс и аналитика."
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/battle-pass
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Rewards
+    description: Управление наградами уровней Battle Pass
+  - name: Challenges
+    description: Челленджи (daily/weekly/seasonal) и прогресс
+  - name: Boosts
+    description: XP Boost и сезонные бонусы
+  - name: Analytics
+    description: Отчёты по наградам, челленджам и бустам
+paths:
+  /gameplay/battle-pass/rewards:
+    get:
+      tags: [Rewards]
+      summary: Список наград сезона
+      parameters:
+        - in: query
+          name: track
+          schema: { type: string, enum: [FREE, PREMIUM] }
+        - in: query
+          name: rarity
+          schema: { type: string }
+      responses:
+        '200':
+          description: Награды по уровням
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardDefinitionList' }
+              examples:
+                rewards:
+                  $ref: './examples.yaml#/components/examples/RewardsList'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/rewards/claim:
+    post:
+      tags: [Rewards]
+      summary: Получить награду уровня
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardClaimRequest' }
+            examples:
+              claim:
+                $ref: './examples.yaml#/components/examples/RewardClaimRequest'
+      responses:
+        '200':
+          description: Награда выдана
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardClaimResponse' }
+        '400':
+          description: Уровень недоступен или уже получен
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BattlePassRewardError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '409': { $ref: '../../shared/common/responses.yaml#/components/responses/Conflict' }
+  /gameplay/battle-pass/rewards/history:
+    get:
+      tags: [Rewards]
+      summary: История полученных наград
+      parameters:
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: История наград
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardHistoryResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/rewards/reroll:
+    post:
+      tags: [Rewards]
+      summary: Реролл награды уровня
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardRerollRequest' }
+      responses:
+        '200':
+          description: Награда сменена
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardDefinition' }
+        '400':
+          description: Нет токена реролла или превышен лимит
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BattlePassRewardError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/challenges/daily:
+    get:
+      tags: [Challenges]
+      summary: Активные дневные челленджи игрока
+      responses:
+        '200':
+          description: Список челленджей и прогресс
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/ChallengeListResponse' }
+              examples:
+                daily:
+                  $ref: './examples.yaml#/components/examples/DailyChallenges'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/challenges/weekly:
+    get:
+      tags: [Challenges]
+      summary: Активные недельные челленджи
+      responses:
+        '200':
+          description: Список и таймеры неделяных челленджей
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/ChallengeListResponse' }
+              examples:
+                weekly:
+                  $ref: './examples.yaml#/components/examples/WeeklyChallenges'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/challenges/{challengeId}/progress:
+    parameters:
+      - $ref: './battle-pass-rewards-components.yaml#/components/parameters/ChallengeId'
+    post:
+      tags: [Challenges]
+      summary: Обновить прогресс челленджа (service token)
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/ChallengeProgressUpdateRequest' }
+      responses:
+        '200':
+          description: "Прогресс обновлён"
+        '400':
+          description: Челлендж не активен или лимит
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BattlePassRewardError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/challenges/{challengeId}/complete:
+    parameters:
+      - $ref: './battle-pass-rewards-components.yaml#/components/parameters/ChallengeId'
+    post:
+      tags: [Challenges]
+      summary: Завершить челлендж и выдать награду
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/ChallengeCompleteRequest' }
+      responses:
+        '200':
+          description: Челлендж завершён, награды выданы
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardClaimResponse' }
+        '400':
+          description: Челлендж ещё не выполнен
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BattlePassRewardError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/challenges/{challengeId}/reroll:
+    parameters:
+      - $ref: './battle-pass-rewards-components.yaml#/components/parameters/ChallengeId'
+    post:
+      tags: [Challenges]
+      summary: Реролл челленджа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/ChallengeRerollRequest' }
+      responses:
+        '200':
+          description: Новый челлендж назначен
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/Challenge' }
+        '400':
+          description: Превышен лимит или нет валюты
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BattlePassRewardError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/boosts:
+    get:
+      tags: [Boosts]
+      summary: Активные и доступные бусты XP
+      responses:
+        '200':
+          description: Статус бустов
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BoostStatusResponse' }
+              examples:
+                boosts:
+                  $ref: './examples.yaml#/components/examples/BoostStatusResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/boosts/activate:
+    post:
+      tags: [Boosts]
+      summary: Активировать XP boost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BoostActivationRequest' }
+      responses:
+        '200':
+          description: Буст активирован
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BoostActivationResponse' }
+        '400':
+          description: Буст уже активен или cooldown
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BattlePassRewardError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/leaderboard:
+    get:
+      tags: [Analytics]
+      summary: Лидерборд по челленджам/наградам
+      parameters:
+        - in: query
+          name: metric
+          schema: { type: string, enum: [challenge_points, rewards_claimed, boosts_used], default: challenge_points }
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Список лидеров
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/LeaderboardResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /gameplay/battle-pass/analytics/rewards:
+    get:
+      tags: [Analytics]
+      summary: Аналитика наград и челленджей
+      parameters:
+        - in: query
+          name: seasonId
+          schema: { type: string }
+        - in: query
+          name: range
+          schema: { type: string, enum: [7d, 30d, season], default: 7d }
+      responses:
+        '200':
+          description: Сводка по наградам и челленджам
+          content:
+            application/json:
+              schema: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardAnalyticsResponse' }
+              examples:
+                analytics:
+                  $ref: './examples.yaml#/components/examples/RewardAnalyticsResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+
+x-websocket:
+  url: wss://api.necp.game/v1/gameplay/battle-pass/stream
+  description: Realtime события Battle Pass (прогресс челленджей, завершения, бусты, новые награды)
+  protocols: [graphql-ws]
+  messages:
+    challengeProgress:
+      summary: Обновление прогресса челленджа
+      payload:
+        $ref: './battle-pass-rewards-components.yaml#/components/schemas/ChallengeProgress'
+    rewardUnlocked:
+      summary: Новая награда доступна
+      payload:
+        $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardDefinition'
+    boostActivated:
+      summary: Активирован буст
+      payload:
+        $ref: './battle-pass-rewards-components.yaml#/components/schemas/BoostStatus'
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+  parameters:
+    ChallengeId: { $ref: './battle-pass-rewards-components.yaml#/components/parameters/ChallengeId' }
+  schemas:
+    RewardDefinition: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardDefinition' }
+    Challenge: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/Challenge' }
+    BoostStatusResponse: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BoostStatusResponse' }
+    RewardAnalyticsResponse: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/RewardAnalyticsResponse' }
+    BattlePassRewardError: { $ref: './battle-pass-rewards-components.yaml#/components/schemas/BattlePassRewardError' }
+  examples:
+    RewardsList: { $ref: './examples.yaml#/components/examples/RewardsList' }
+    RewardClaimRequest: { $ref: './examples.yaml#/components/examples/RewardClaimRequest' }
+    DailyChallenges: { $ref: './examples.yaml#/components/examples/DailyChallenges' }
+    WeeklyChallenges: { $ref: './examples.yaml#/components/examples/WeeklyChallenges' }
+    BoostStatusResponse: { $ref: './examples.yaml#/components/examples/BoostStatusResponse' }
+    RewardAnalyticsResponse: { $ref: './examples.yaml#/components/examples/RewardAnalyticsResponse' }
+

@@ -1,0 +1,164 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/additional
+
+---
+
+
+{
+  "version": "2.2.0",
+  "period": "2020-2030",
+  "description": "Дополнительные квесты для раннего периода лиги",
+  "questsAdditional": [
+    {
+      "questId": "SQ-2022-BOUNTY-SCAV",
+      "name": "Охота: Лидер Скавов",
+      "type": "bounty",
+      "tags": ["combat", "tracking", "investigation"],
+      "tier": 2,
+      "difficulty": "hard",
+      "synopsis": "NCPD выдала контракт на устранение лидера банды скавов «Железный Коготь», терроризирующих Watson District.",
+      "dialogue": {
+        "start": "b1",
+        "nodes": [
+          {"id":"b1","speaker":"NCPD_Officer","text":"Скавы режут народ на запчасти. Найди их главаря.","choices":[{"text":"Где искать?","next":"b2"},{"text":"Сколько платите?","next":"b3"}]},
+          {"id":"b2","speaker":"NCPD_Officer","text":"Последний след — склад в промзоне Watson.","choices":[{"text":"Берусь","next":"b4"}]},
+          {"id":"b3","speaker":"NCPD_Officer","text":"5000 эдди. Живым или мёртвым.","choices":[{"text":"Беру заказ","next":"b4"}]},
+          {"id":"b4","speaker":"System","text":"Промзона Watson. Следы скавов.","choices":[{"text":"Отследить","next":"b5","skillCheck":{"attr":"INT","skill":"Investigation","threshold":7}},{"text":"Спросить у местных","next":"b6"},{"text":"Прямо на склад","next":"b7"}]},
+          {"id":"b5","speaker":"System","text":"След ведёт к старой фабрике.","choices":[{"text":"Скрытно проникнуть","next":"b8"},{"text":"Штурмовать","next":"b9"}]},
+          {"id":"b6","speaker":"Local","text":"Скавы на старой фабрике. Там их главарь.","choices":[{"text":"Спасибо","next":"b8"}]},
+          {"id":"b7","speaker":"System","text":"Склад. Патруль скавов.","choices":[{"text":"Тихо обойти","next":"b10","skillCheck":{"attr":"AGI","skill":"Stealth","threshold":9}},{"text":"В лобовую","next":"b9"}]},
+          {"id":"b8","speaker":"System","text":"Внутри фабрики. Главарь в глубине.","choices":[{"text":"Снайперский выстрел","next":"b11","skillCheck":{"attr":"REF","skill":"Gunplay","threshold":10}},{"text":"Ближний бой","next":"b12"}]},
+          {"id":"b9","speaker":"System","text":"Тревога! Бой со скавами.","choices":[{"text":"Пробиваться к главарю","next":"b11"}]},
+          {"id":"b10","speaker":"System","text":"Обошёл патруль. Главарь впереди.","choices":[{"text":"Выстрел в голову","next":"b11"},{"text":"Захват живым","next":"b13","skillCheck":{"attr":"BODY","skill":"Athletics","threshold":11}}]},
+          {"id":"b11","speaker":"System","text":"Главарь нейтрализован.","choices":[{"text":"Забрать трофеи","next":"b14"}]},
+          {"id":"b12","speaker":"IronClaw","text":"Ещё один мертвец!","choices":[{"text":"Сразиться","next":"b11"}]},
+          {"id":"b13","speaker":"System","text":"Главарь схвачен. NCPD благодарит.","choices":[{"text":"Бонусная оплата","next":"end_success"}]},
+          {"id":"b14","speaker":"NCPD_Officer","text":"Работа выполнена. Деньги переведены.","choices":[{"text":"Завершить","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"INT","skill":"Investigation","threshold":7,"effect":"track_location"},
+        {"attr":"AGI","skill":"Stealth","threshold":9,"effect":"avoid_patrol"},
+        {"attr":"REF","skill":"Gunplay","threshold":10,"effect":"headshot_bonus"},
+        {"attr":"BODY","skill":"Athletics","threshold":11,"effect":"capture_alive_bonus"}
+      ],
+      "alternatives": ["stealth_elimination","frontal_assault","capture_alive"],
+      "lootTables": ["IronClaw_Boss","Scav_T2"],
+      "reputation": {"factions":{"NCPD":"+12..+18","Scavs":"-10..-5"},"classMods":{"Solo":"+15%","Netrunner":"+5%"}},
+      "rewards": {"credits":5000,"bonusAlive":2000,"exp":800}
+    },
+    {
+      "questId": "SQ-2023-DELIVERY-DANGER",
+      "name": "Опасная Доставка",
+      "type": "delivery",
+      "tags": ["transport", "combat", "time_limit"],
+      "tier": 2,
+      "difficulty": "medium",
+      "synopsis": "Фиксер нанимает курьера для доставки секретного груза через зону контроля банды Tyger Claws.",
+      "dialogue": {
+        "start": "d1",
+        "nodes": [
+          {"id":"d1","speaker":"Fixer","text":"Груз. Адрес. Без вопросов.","choices":[{"text":"Что везём?","next":"d2"},{"text":"Оплата?","next":"d3"}]},
+          {"id":"d2","speaker":"Fixer","text":"Не твоё дело. Доставь — получишь.","choices":[{"text":"Беру","next":"d4"}]},
+          {"id":"d3","speaker":"Fixer","text":"3000 эдди. Плюс бонус за скорость.","choices":[{"text":"Согласен","next":"d4"}]},
+          {"id":"d4","speaker":"System","text":"Забрал груз. Маршрут через Tyger Claws.","choices":[{"text":"Быстрая дорога","next":"d5"},{"text":"Объезд","next":"d6"}]},
+          {"id":"d5","speaker":"System","text":"Блокпост Tyger Claws.","choices":[{"text":"Взятка","next":"d7","skillCheck":{"attr":"COOL","skill":"Social","threshold":8}},{"text":"Прорыв","next":"d8"}]},
+          {"id":"d6","speaker":"System","text":"Объездной путь. Больше времени.","choices":[{"text":"Продолжить","next":"d9"}]},
+          {"id":"d7","speaker":"TygerClaw","text":"Проезжай. Но быстро.","choices":[{"text":"Поехали","next":"d9"}]},
+          {"id":"d8","speaker":"System","text":"Погоня! Tyger Claws на байках.","choices":[{"text":"Отрыв","next":"d10","skillCheck":{"attr":"REF","skill":"Driving","threshold":9}},{"text":"Перестрелка","next":"d11"}]},
+          {"id":"d9","speaker":"System","text":"Точка доставки. Груз цел.","choices":[{"text":"Передать груз","next":"d12"}]},
+          {"id":"d10","speaker":"System","text":"Оторвался от погони.","choices":[{"text":"К точке доставки","next":"d9"}]},
+          {"id":"d11","speaker":"System","text":"Перестрелка на ходу.","choices":[{"text":"Сбить преследователей","next":"d9"}]},
+          {"id":"d12","speaker":"Client","text":"Груз получен. Вот оплата.","choices":[{"text":"Бонус за скорость?","next":"d13","skillCheck":{"attr":"COOL","skill":"Social","threshold":7}}]},
+          {"id":"d13","speaker":"Client","text":"Быстро сработал. Держи бонус.","choices":[{"text":"Завершить","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"COOL","skill":"Social","threshold":8,"effect":"bribe_success"},
+        {"attr":"REF","skill":"Driving","threshold":9,"effect":"escape_chase"},
+        {"attr":"COOL","skill":"Social","threshold":7,"effect":"speed_bonus"}
+      ],
+      "alternatives": ["fast_route_bribe","detour_safe","combat_chase"],
+      "lootTables": ["TygerClaw_Biker"],
+      "reputation": {"factions":{"Fixers":"+8..+14","TygerClaws":"-4..-1"}},
+      "rewards": {"credits":3000,"speedBonus":1000,"exp":600}
+    },
+    {
+      "questId": "SQ-2024-SABOTAGE-FACTORY",
+      "name": "Саботаж Фабрики",
+      "type": "sabotage",
+      "tags": ["stealth", "hacking", "tech"],
+      "tier": 3,
+      "difficulty": "hard",
+      "synopsis": "Корпорация Biotechnica нанимает агента для саботажа конкурирующего производства имплантов Zetatech.",
+      "dialogue": {
+        "start": "s1",
+        "nodes": [
+          {"id":"s1","speaker":"Corpo_Agent","text":"Фабрика Zetatech. Линия 3. Саботаж.","choices":[{"text":"Цель?","next":"s2"},{"text":"Оплата?","next":"s3"}]},
+          {"id":"s2","speaker":"Corpo_Agent","text":"Отключить производство на месяц. Любыми способами.","choices":[{"text":"Понял","next":"s4"}]},
+          {"id":"s3","speaker":"Corpo_Agent","text":"10000 эдди. Чисто и тихо.","choices":[{"text":"Беру заказ","next":"s4"}]},
+          {"id":"s4","speaker":"System","text":"Фабрика Zetatech. Промзона Westbrook.","choices":[{"text":"Взлом сети","next":"s5","skillCheck":{"attr":"INT","skill":"Hacking","threshold":11}},{"text":"Проникновение","next":"s6"},{"text":"Подкуп сотрудника","next":"s7"}]},
+          {"id":"s5","speaker":"System","text":"Удалённый доступ получен. Управление линией.","choices":[{"text":"Перегрузка системы","next":"s8"},{"text":"Вирус в ПО","next":"s9"}]},
+          {"id":"s6","speaker":"System","text":"Вентиляция. Вход на фабрику.","choices":[{"text":"К серверной","next":"s10","skillCheck":{"attr":"AGI","skill":"Stealth","threshold":10}},{"text":"К производству","next":"s11"}]},
+          {"id":"s7","speaker":"Worker","text":"Рискованно... Но плачу втрое.","choices":[{"text":"Согласен. Доступ?","next":"s10"}]},
+          {"id":"s8","speaker":"System","text":"Перегрузка. Система отключена.","choices":[{"text":"Стереть следы","next":"s12"}]},
+          {"id":"s9","speaker":"System","text":"Вирус внедрён. Линия выйдет из строя через час.","choices":[{"text":"Отключиться","next":"s12"}]},
+          {"id":"s10","speaker":"System","text":"Серверная. Доступ к управлению.","choices":[{"text":"Физический саботаж","next":"s13","skillCheck":{"attr":"TECH","skill":"Tech","threshold":10}},{"text":"Программный сбой","next":"s9"}]},
+          {"id":"s11","speaker":"System","text":"Производственная линия. Охрана рядом.","choices":[{"text":"Взрывчатка","next":"s14"},{"text":"Отступить","next":"s10"}]},
+          {"id":"s12","speaker":"Corpo_Agent","text":"Работа выполнена. Оплата переведена.","choices":[{"text":"Завершить","next":"end_success"}]},
+          {"id":"s13","speaker":"System","text":"Повреждены ключевые узлы. Ремонт — месяцы.","choices":[{"text":"Уходить","next":"s12"}]},
+          {"id":"s14","speaker":"System","text":"Взрыв! Тревога!","choices":[{"text":"Бежать","next":"s15"}]},
+          {"id":"s15","speaker":"System","text":"Сбежал. Саботаж выполнен.","choices":[{"text":"Отчёт","next":"s12"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"INT","skill":"Hacking","threshold":11,"effect":"remote_access"},
+        {"attr":"AGI","skill":"Stealth","threshold":10,"effect":"silent_infiltration"},
+        {"attr":"TECH","skill":"Tech","threshold":10,"effect":"physical_sabotage"}
+      ],
+      "alternatives": ["remote_hack","stealth_infiltration","bribe_insider","explosive_sabotage"],
+      "lootTables": ["ZetatechGuard_T2","Server_T2"],
+      "reputation": {"factions":{"Biotechnica":"+15..+22","Zetatech":"-12..-6"},"classMods":{"Netrunner":"+20%","Techie":"+15%"}},
+      "rewards": {"credits":10000,"stealthBonus":3000,"exp":1200}
+    },
+    {
+      "questId": "SQ-2025-RESCUE-HOSTAGE",
+      "name": "Спасение Заложника",
+      "type": "rescue",
+      "tags": ["combat", "negotiation", "time_pressure"],
+      "tier": 2,
+      "difficulty": "medium",
+      "synopsis": "Банда Maelstrom захватила сына корпората. Семья нанимает спасателя для операции освобождения.",
+      "dialogue": {
+        "start": "r1",
+        "nodes": [
+          {"id":"r1","speaker":"Mother","text":"Мой сын... Maelstrom требуют выкуп.","choices":[{"text":"Где его держат?","next":"r2"},{"text":"Сколько времени?","next":"r3"}]},
+          {"id":"r2","speaker":"Mother","text":"Заброшенная АЗС в Northside.","choices":[{"text":"Спасу его","next":"r4"}]},
+          {"id":"r3","speaker":"Mother","text":"У них дедлайн — сутки. Прошло 18 часов.","choices":[{"text":"Ещё время есть","next":"r4"}]},
+          {"id":"r4","speaker":"System","text":"АЗС Northside. Патруль Maelstrom.","choices":[{"text":"Переговоры","next":"r5","skillCheck":{"attr":"COOL","skill":"Social","threshold":10}},{"text":"Скрытное спасение","next":"r6"},{"text":"Штурм","next":"r7"}]},
+          {"id":"r5","speaker":"Maelstrom_Leader","text":"Деньги есть? Показывай.","choices":[{"text":"Вот выкуп","next":"r8"},{"text":"Обман","next":"r9","skillCheck":{"attr":"COOL","skill":"Deception","threshold":11}}]},
+          {"id":"r6","speaker":"System","text":"Обошёл охрану. Заложник в подвале.","choices":[{"text":"Освободить","next":"r10","skillCheck":{"attr":"TECH","skill":"Tech","threshold":8}},{"text":"Вынести силой","next":"r11"}]},
+          {"id":"r7","speaker":"System","text":"Тревога! Бой с Maelstrom.","choices":[{"text":"К заложнику","next":"r12"}]},
+          {"id":"r8","speaker":"Maelstrom_Leader","text":"Деньги приняты. Забирай сопляка.","choices":[{"text":"Уходим","next":"r13"}]},
+          {"id":"r9","speaker":"System","text":"Обман раскрыт! Бой!","choices":[{"text":"Прорываться","next":"r12"}]},
+          {"id":"r10","speaker":"Hostage","text":"Спасибо... Пошли отсюда.","choices":[{"text":"Тихо уходим","next":"r13"}]},
+          {"id":"r11","speaker":"System","text":"Тревога! Охрана идёт.","choices":[{"text":"Пробиваться","next":"r12"}]},
+          {"id":"r12","speaker":"System","text":"Бой. Заложник в опасности.","choices":[{"text":"Прикрыть и вывести","next":"r13"}]},
+          {"id":"r13","speaker":"Mother","text":"Сын цел! Вот ваша награда.","choices":[{"text":"Завершить","next":"end_success"}]}
+        ]
+      },
+      "skillChecks": [
+        {"attr":"COOL","skill":"Social","threshold":10,"effect":"peaceful_resolution"},
+        {"attr":"COOL","skill":"Deception","threshold":11,"effect":"fake_ransom"},
+        {"attr":"TECH","skill":"Tech","threshold":8,"effect":"silent_rescue"}
+      ],
+      "alternatives": ["pay_ransom","stealth_rescue","assault_rescue","deceive_gang"],
+      "lootTables": ["Maelstrom_T2"],
+      "reputation": {"factions":{"Corpos":"+10..+16","Maelstrom":"-8..-3"}},
+      "rewards": {"credits":6000,"peacefulBonus":2000,"exp":750}
+    }
+  ]
+}
+

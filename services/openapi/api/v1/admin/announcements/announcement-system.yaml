@@ -1,0 +1,366 @@
+# Target Architecture:
+# - Microservice: admin-service (port 8088)
+# - API Base: /api/v1/admin/announcements
+# - Dependencies: notification-service, mail-service, push-service, analytics-service, auth-service, translation-service, incident-service
+# - Frontend Module: modules/admin/announcements (useAnnouncementsStore)
+# - UI: AnnouncementComposer, ScheduleCalendar, AudienceSelector, ChannelTogglePanel, AnnouncementPreview, AnalyticsDashboard
+# - Forms: CreateAnnouncementForm, ScheduleAnnouncementForm, TranslationForm, EmergencyAlertForm
+# - Layouts: AdminConsoleLayout, LiveOpsDashboard
+# - Hooks: useAnnouncementDrafts, useAnnouncementAnalytics, useChannelAvailability
+
+openapi: 3.0.3
+info:
+  title: Announcement System API
+  description: "Управление объявлениями NECPGAME: черновики, расписание, каналы доставки, локализации, аналитика и экстренные уведомления."
+  version: 1.0.0
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/admin
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+security:
+  - BearerAuth: []
+tags:
+  - name: Announcements
+    description: CRUD объявлений, аудитории и каналов
+  - name: Scheduling
+    description: Планирование публикаций, отмена и emergency override
+  - name: Preview
+    description: Превью контента для различных каналов
+  - name: Analytics
+    description: Метрики охвата, обратная связь и история
+  - name: Localization
+    description: Переводы и мультиязычный контент
+paths:
+  /admin/announcements:
+    post:
+      tags: [Announcements]
+      summary: Создать черновик объявления
+      description: Создаёт черновик LiveOps/Community менеджером с указанием контента, тегов и каналов по умолчанию.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementDraftRequest' }
+            examples:
+              draft:
+                $ref: './examples.yaml#/components/examples/DraftRequest'
+      responses:
+        '201':
+          description: Черновик создан
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/Announcement' }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    get:
+      tags: [Announcements]
+      summary: Получить список объявлений
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [draft, scheduled, active, archived] }
+        - in: query
+          name: channel
+          schema: { type: string, enum: [in_game_banner, modal, chat, email, push, web_portal] }
+        - in: query
+          name: authorId
+          schema: { type: string }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../../shared/common/pagination.yaml#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Список объявлений с пагинацией
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementsListResponse' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    get:
+      tags: [Announcements]
+      summary: Получить детали объявления
+      responses:
+        '200':
+          description: Полная информация со статусом, версиями и локализациями
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementDetail' }
+              examples:
+                detail:
+                  $ref: './examples.yaml#/components/examples/AnnouncementDetail'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+    patch:
+      tags: [Announcements]
+      summary: Обновить объявление
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementUpdateRequest' }
+      responses:
+        '200':
+          description: Объявление обновлено, версия инкрементирована
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementDetail' }
+        '400': { $ref: '../../shared/common/responses.yaml#/components/responses/BadRequest' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+    delete:
+      tags: [Announcements]
+      summary: Удалить черновик объявления
+      responses:
+        '204': { description: Черновик удалён }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+        '404': { $ref: '../../shared/common/responses.yaml#/components/responses/NotFound' }
+  /admin/announcements/{announcementId}/schedule:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    post:
+      tags: [Scheduling]
+      summary: Запланировать публикацию
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/ScheduleRequest' }
+            examples:
+              schedule:
+                $ref: './examples.yaml#/components/examples/ScheduleRequest'
+      responses:
+        '202': { description: Расписание установлено }
+        '400':
+          description: Конфликт расписаний или неверная зона
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}/publish:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    post:
+      tags: [Scheduling]
+      summary: Немедленно опубликовать объявление
+      responses:
+        '202': { description: Публикация запущена во все активные каналы }
+        '400':
+          description: Объявление уже опубликовано или отсутствуют каналы
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}/cancel:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    post:
+      tags: [Scheduling]
+      summary: Отозвать или отменить объявление
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/CancellationRequest' }
+      responses:
+        '200': { description: Объявление отменено }
+        '400':
+          description: Задано прошлое время или объявление уже архивировано
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}/channels:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    post:
+      tags: [Announcements]
+      summary: Настроить каналы доставки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/ChannelConfig' }
+            examples:
+              channels:
+                $ref: './examples.yaml#/components/examples/ChannelConfig'
+      responses:
+        '200': { description: Каналы обновлены }
+        '400':
+          description: Канал недоступен или лимит превышен
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}/audience:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    post:
+      tags: [Announcements]
+      summary: Настроить аудиторию
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/AudienceRules' }
+      responses:
+        '200': { description: Аудитория применена }
+        '400':
+          description: Таргетинг конфликтует с каналами или подписками
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}/preview:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    post:
+      tags: [Preview]
+      summary: Сгенерировать превью объявления
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/PreviewRequest' }
+      responses:
+        '200':
+          description: Материалы для тестового просмотра
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/PreviewResponse' }
+              examples:
+                preview:
+                  $ref: './examples.yaml#/components/examples/PreviewResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}/analytics:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    get:
+      tags: [Analytics]
+      summary: Получить метрики объявления
+      parameters:
+        - in: query
+          name: range
+          schema: { type: string, enum: [24h, 7d, 30d, lifetime], default: 7d }
+      responses:
+        '200':
+          description: Статистика просмотров и взаимодействий
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnalyticsResponse' }
+              examples:
+                analytics:
+                  $ref: './examples.yaml#/components/examples/AnalyticsResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}/feedback:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    post:
+      tags: [Analytics]
+      summary: Сохранить обратную связь игроков
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/FeedbackRequest' }
+      responses:
+        '202': { description: Обратная связь принята }
+        '400':
+          description: Неизвестный тип рейтинга или комментарий слишком длинный
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/{announcementId}/translation:
+    parameters:
+      - $ref: './announcement-components.yaml#/components/parameters/AnnouncementId'
+    post:
+      tags: [Localization]
+      summary: Добавить или обновить локализацию
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/TranslationPayload' }
+      responses:
+        '200': { description: Перевод сохранён }
+        '400':
+          description: Локализация неполная или конфликт версий
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/emergency:
+    post:
+      tags: [Scheduling]
+      summary: Отправить экстренное объявление
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './announcement-components.yaml#/components/schemas/EmergencyRequest' }
+            examples:
+              emergency:
+                $ref: './examples.yaml#/components/examples/EmergencyRequest'
+      responses:
+        '202': { description: Emergency объявление отправлено }
+        '400':
+          description: Ограничение на количество активных emergency
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+  /admin/announcements/history:
+    get:
+      tags: [Analytics]
+      summary: История публикаций и изменений
+      parameters:
+        - in: query
+          name: announcementId
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: История версий, авторов и комментариев
+          content:
+            application/json:
+              schema: { $ref: './announcement-components.yaml#/components/schemas/HistoryResponse' }
+              examples:
+                history:
+                  $ref: './examples.yaml#/components/examples/HistoryResponse'
+        '401': { $ref: '../../shared/common/responses.yaml#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    BearerAuth: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/BearerAuth' }
+    ServiceToken: { $ref: '../../shared/common/security.yaml#/components/securitySchemes/ServiceToken' }
+  parameters:
+    AnnouncementId: { $ref: './announcement-components.yaml#/components/parameters/AnnouncementId' }
+  schemas:
+    Announcement: { $ref: './announcement-components.yaml#/components/schemas/Announcement' }
+    AnnouncementDetail: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementDetail' }
+    AnnouncementError: { $ref: './announcement-components.yaml#/components/schemas/AnnouncementError' }
+    AnalyticsResponse: { $ref: './announcement-components.yaml#/components/schemas/AnalyticsResponse' }
+    HistoryResponse: { $ref: './announcement-components.yaml#/components/schemas/HistoryResponse' }
+  examples:
+    DraftRequest: { $ref: './examples.yaml#/components/examples/DraftRequest' }
+    AnnouncementDetail: { $ref: './examples.yaml#/components/examples/AnnouncementDetail' }
+    ScheduleRequest: { $ref: './examples.yaml#/components/examples/ScheduleRequest' }
+    ChannelConfig: { $ref: './examples.yaml#/components/examples/ChannelConfig' }
+    PreviewResponse: { $ref: './examples.yaml#/components/examples/PreviewResponse' }
+    AnalyticsResponse: { $ref: './examples.yaml#/components/examples/AnalyticsResponse' }
+    EmergencyRequest: { $ref: './examples.yaml#/components/examples/EmergencyRequest' }
+    HistoryResponse: { $ref: './examples.yaml#/components/examples/HistoryResponse' }

@@ -1,0 +1,326 @@
+openapi: 3.0.3
+info:
+  title: Inventory Components
+  version: 1.0.0
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/economy/inventory
+    package: com.necpgame.economyservice
+paths: {}
+components:
+  parameters:
+    PlayerId:
+      name: playerId
+      in: path
+      required: true
+      description: Идентификатор игрока/персонажа
+      schema: { type: string }
+    ContainerId:
+      name: containerId
+      in: path
+      required: true
+      description: Идентификатор контейнера инвентаря
+      schema: { type: string }
+    ItemId:
+      name: itemId
+      in: path
+      required: true
+      description: Идентификатор шаблона предмета
+      schema: { type: string }
+  schemas:
+    Inventory:
+      type: object
+      properties:
+        playerId: { type: string }
+        containers:
+          type: array
+          items: { $ref: '#/components/schemas/Container' }
+        weight: { $ref: '#/components/schemas/WeightInfo' }
+        capacityModifiers:
+          type: array
+          items: { type: string }
+        overloaded: { type: boolean }
+    Container:
+      type: object
+      properties:
+        containerId: { type: string }
+        type: { type: string, enum: [BACKPACK, EQUIPMENT, STASH, COSMETIC, TEMPORARY] }
+        name: { type: string }
+        capacitySlots: { type: integer }
+        capacityWeight: { type: number }
+        filters:
+          type: array
+          items: { type: string }
+        slots:
+          type: array
+          items: { $ref: '#/components/schemas/Slot' }
+    Slot:
+      type: object
+      properties:
+        slotId: { type: string }
+        index: { type: integer }
+        locked: { type: boolean }
+        item: { $ref: '#/components/schemas/Item' }
+        metadata: { type: object, additionalProperties: true }
+    Item:
+      type: object
+      required: [itemInstanceId, itemId, quantity]
+      properties:
+        itemInstanceId: { type: string }
+        itemId: { type: string }
+        name: { type: string }
+        rarity: { type: string }
+        type: { type: string }
+        quantity: { type: integer }
+        stackSize: { type: integer }
+        weight: { type: number }
+        boundType: { type: string, enum: [NONE, ACCOUNT, CHARACTER] }
+        durability:
+          type: object
+          properties:
+            current: { type: integer }
+            max: { type: integer }
+        stats: { type: object, additionalProperties: true }
+        expiresAt: { type: string, format: date-time }
+        metadata: { type: object, additionalProperties: true }
+    ItemTemplate:
+      type: object
+      properties:
+        itemId: { type: string }
+        name: { type: string }
+        description: { type: string }
+        rarity: { type: string }
+        weight: { type: number }
+        baseStats: { type: object, additionalProperties: true }
+        allowedSlots:
+          type: array
+          items: { type: string }
+    ItemPickupRequest:
+      type: object
+      required: [source, items]
+      properties:
+        source: { type: string, enum: [LOOT, QUEST, GRANT, TRADE, MAIL] }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ItemGrant' }
+        idempotencyKey: { type: string }
+    ItemGrant:
+      type: object
+      required: [itemId, quantity]
+      properties:
+        itemId: { type: string }
+        quantity: { type: integer }
+        metadata: { type: object, additionalProperties: true }
+        targetContainer: { type: string }
+    ItemDropRequest:
+      type: object
+      required: [itemInstanceId, quantity]
+      properties:
+        itemInstanceId: { type: string }
+        quantity: { type: integer }
+        worldPosition: { type: object, additionalProperties: true }
+    ItemMoveRequest:
+      type: object
+      required: [itemInstanceId, targetContainer]
+      properties:
+        itemInstanceId: { type: string }
+        sourceContainer: { type: string }
+        targetContainer: { type: string }
+        targetSlotIndex: { type: integer }
+        allowSwap: { type: boolean }
+    ItemSplitRequest:
+      type: object
+      required: [itemInstanceId, quantity]
+      properties:
+        itemInstanceId: { type: string }
+        quantity: { type: integer }
+        targetContainer: { type: string }
+        targetSlotIndex: { type: integer }
+    ItemMergeRequest:
+      type: object
+      required: [sourceItemInstanceId, targetItemInstanceId]
+      properties:
+        sourceItemInstanceId: { type: string }
+        targetItemInstanceId: { type: string }
+    ItemEquipRequest:
+      type: object
+      required: [itemInstanceId, slotType]
+      properties:
+        itemInstanceId: { type: string }
+        slotType: { type: string }
+        overrides: { type: object, additionalProperties: true }
+    ItemUnequipRequest:
+      type: object
+      required: [slotType]
+      properties:
+        slotType: { type: string }
+        targetContainer: { type: string }
+    ItemConsumeRequest:
+      type: object
+      required: [itemInstanceId]
+      properties:
+        itemInstanceId: { type: string }
+        consumeAll: { type: boolean }
+    ItemOperationResult:
+      type: object
+      properties:
+        item: { $ref: '#/components/schemas/Item' }
+        containerId: { type: string }
+        slotId: { type: string }
+        weight: { $ref: '#/components/schemas/WeightInfo' }
+    WeightInfo:
+      type: object
+      properties:
+        current: { type: number }
+        capacity: { type: number }
+        encumbrancePercent: { type: number }
+        penalty: { type: string }
+        modifiers:
+          type: array
+          items: { type: string }
+    StashTransferRequest:
+      type: object
+      required: [items, direction]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ItemTransfer' }
+        direction: { type: string, enum: [TO_STASH, TO_BACKPACK] }
+        idempotencyKey: { type: string }
+    ItemTransfer:
+      type: object
+      properties:
+        itemInstanceId: { type: string }
+        quantity: { type: integer }
+    InventoryHistoryResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/InventoryHistoryEntry' }
+        pagination: { $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta' }
+    InventoryHistoryEntry:
+      type: object
+      properties:
+        entryId: { type: string }
+        event: { type: string }
+        source: { type: string }
+        delta:
+          type: array
+          items: { $ref: '#/components/schemas/ItemTransfer' }
+        timestamp: { type: string, format: date-time }
+        relatedEntity: { type: string }
+    ReservationRequest:
+      type: object
+      required: [context, items]
+      properties:
+        context: { type: string, enum: [TRADE, MAIL, QUEST, RAID, OTHER] }
+        referenceId: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ItemTransfer' }
+        expiresAt: { type: string, format: date-time }
+    Reservation:
+      type: object
+      properties:
+        reservationId: { type: string }
+        context: { type: string }
+        referenceId: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ItemTransfer' }
+        status: { type: string, enum: [ACTIVE, RELEASED, EXPIRED, CANCELLED] }
+        expiresAt: { type: string, format: date-time }
+    ReservationReleaseRequest:
+      type: object
+      required: [reservationId]
+      properties:
+        reservationId: { type: string }
+        reason: { type: string }
+    InventoryFiltersResponse:
+      type: object
+      properties:
+        activeFilters:
+          type: array
+          items: { type: string }
+        presets:
+          type: array
+          items: { $ref: '#/components/schemas/FilterPreset' }
+    FilterPreset:
+      type: object
+      properties:
+        presetId: { type: string }
+        name: { type: string }
+        filters:
+          type: array
+          items: { type: string }
+    AutoSortRequest:
+      type: object
+      properties:
+        strategy: { type: string, enum: [TYPE, RARITY, WEIGHT, CUSTOM] }
+        includeStash: { type: boolean }
+    CleanupRequest:
+      type: object
+      properties:
+        rarityThreshold: { type: string }
+        dryRun: { type: boolean }
+    ItemEvent:
+      type: object
+      properties:
+        playerId: { type: string }
+        item: { $ref: '#/components/schemas/Item' }
+        containerId: { type: string }
+        changeType: { type: string, enum: [ADDED, REMOVED, UPDATED] }
+        timestamp: { type: string, format: date-time }
+    ContainerEvent:
+      type: object
+      properties:
+        playerId: { type: string }
+        container: { $ref: '#/components/schemas/Container' }
+        changeType: { type: string, enum: [UPDATED, RESET] }
+        timestamp: { type: string, format: date-time }
+    WeightEvent:
+      type: object
+      properties:
+        playerId: { type: string }
+        weight: { $ref: '#/components/schemas/WeightInfo' }
+        overloaded: { type: boolean }
+        timestamp: { type: string, format: date-time }
+    ReservationEvent:
+      type: object
+      properties:
+        playerId: { type: string }
+        reservation: { $ref: '#/components/schemas/Reservation' }
+        changeType: { type: string, enum: [CREATED, UPDATED, RELEASED] }
+        timestamp: { type: string, format: date-time }
+    EquipmentEvent:
+      type: object
+      properties:
+        playerId: { type: string }
+        slotType: { type: string }
+        item: { $ref: '#/components/schemas/Item' }
+        changeType: { type: string, enum: [EQUIPPED, UNEQUIPPED] }
+        timestamp: { type: string, format: date-time }
+    ItemOperationErrorDetail:
+      type: object
+      properties:
+        errorCode: { type: string }
+        message: { type: string }
+        extra: { type: object, additionalProperties: true }
+    InventoryError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [CONTAINER_FULL, SLOT_LOCKED, ITEM_NOT_FOUND, WEIGHT_LIMIT, REQUIREMENT_FAILED, RESERVATION_CONFLICT, RESERVATION_NOT_FOUND, AUTO_SORT_DISABLED]
+        message: { type: string }
+        traceId: { type: string }
+        details: { $ref: '#/components/schemas/ItemOperationErrorDetail' }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

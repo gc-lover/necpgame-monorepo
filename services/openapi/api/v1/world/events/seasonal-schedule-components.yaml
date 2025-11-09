@@ -1,0 +1,313 @@
+openapi: 3.0.3
+info:
+  title: Seasonal Events Schedule Components
+  version: 1.0.0
+  description: Переиспользуемые параметры, схемы и ошибки для управления расписанием сезонных событий.
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+paths: {}
+components:
+  parameters:
+    Frequency:
+      name: frequency
+      in: query
+      required: false
+      schema: { type: string, enum: [WEEKLY, SEASONAL, UNIQUE, ALL] }
+      description: Фильтр по типу частоты события.
+    Season:
+      name: season
+      in: query
+      required: false
+      description: Сезон согласно глобальному календарю.
+      schema:
+        type: string
+        enum: [SPRING, SUMMER, AUTUMN, WINTER, CYBERFEST, SPECTER]
+    Year:
+      name: year
+      in: query
+      required: false
+      schema: { type: integer, minimum: 2020, maximum: 2093 }
+    Timezone:
+      name: timezone
+      in: query
+      required: false
+      schema: { type: string, example: "UTC", default: "UTC" }
+      description: Часовой пояс для расчёта расписания.
+    Locale:
+      name: locale
+      in: query
+      required: false
+      schema: { type: string, example: "ru-RU", default: "en-US" }
+      description: Код локали ISO для локализованных описаний.
+    Region:
+      name: region
+      in: query
+      required: false
+      description: Региональный сегмент (например, Night City, Helios Orbital).
+      schema:
+        type: string
+        example: "night-city"
+    LocalizationHeader:
+      name: Accept-Language
+      in: header
+      required: false
+      description: Укажите локаль для локализованного ответа.
+      schema:
+        type: string
+        example: "ru-RU"
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    EventFrequency:
+      type: string
+      enum: [WEEKLY, SEASONAL, UNIQUE]
+    EventStatus:
+      type: string
+      enum: [SCHEDULED, ACTIVE, COMPLETED, CANCELLED, DELAYED]
+    TriggerSource:
+      type: string
+      enum: [SCHEDULED_JOB, GM_OVERRIDE, SYSTEM_ALERT, EMERGENCY, RESEARCH_GATE]
+    ExternalFlag:
+      type: string
+      enum: [WAR_METER, CITY_UNREST, PROXY_WAR, GLOBAL_RESEARCH, HELIOS_BALANCE, SPECTER_ACTIVITY]
+    LocalizationBundle:
+      type: object
+      properties:
+        locale: { type: string }
+        title: { type: string }
+        description: { type: string }
+        callToAction: { type: string }
+    EventWindow:
+      type: object
+      required: [startTimeUtc, endTimeUtc]
+      properties:
+        startTimeUtc: { type: string, format: date-time }
+        endTimeUtc: { type: string, format: date-time }
+        durationMinutes: { type: integer, minimum: 5 }
+    RewardDescriptor:
+      type: object
+      properties:
+        rewardId: { type: string }
+        type: { type: string, enum: [CURRENCY, ITEM, TITLE, BADGE, ACCESS] }
+        quantity: { type: integer, minimum: 1 }
+        delivery: { type: string, enum: [AUTO, CLAIM, MAIL] }
+    EconomicModifier:
+      type: object
+      required: [modifierId, scope, value]
+      properties:
+        modifierId: { type: string }
+        scope: { type: string, enum: [GLOBAL, REGION, CITY, GUILD] }
+        value: { type: number, format: float }
+        type: { type: string, enum: [DISCOUNT, SURCHARGE, TAX, BONUS_CREDIT] }
+        durationMinutes: { type: integer, minimum: 5 }
+        affectedCommodities:
+          type: array
+          items: { type: string }
+        metadata:
+          type: object
+          additionalProperties: true
+    OutcomeEffect:
+      type: object
+      properties:
+        worldFlags:
+          type: array
+          items: { type: string }
+        reputationChanges:
+          type: array
+          items:
+            type: object
+            properties:
+              factionId: { type: string, format: uuid }
+              delta: { type: integer, minimum: -200, maximum: 200 }
+        economicModifiers:
+          type: array
+          items: { $ref: '#/components/schemas/EconomicModifier' }
+        lootBundles:
+          type: array
+          items: { $ref: '#/components/schemas/RewardDescriptor' }
+    TelemetrySnapshot:
+      type: object
+      properties:
+        participationRate: { type: number, format: float, minimum: 0, maximum: 1 }
+        retentionRate: { type: number, format: float, minimum: 0, maximum: 1 }
+        completionRate: { type: number, format: float, minimum: 0, maximum: 1 }
+        eventImpactScore: { type: number, format: float }
+        issuedAt: { type: string, format: date-time }
+    TriggerCondition:
+      type: object
+      properties:
+        flag: { $ref: '#/components/schemas/ExternalFlag' }
+        threshold: { type: number, format: float }
+        operator: { type: string, enum: [GREATER_OR_EQUAL, LESS_OR_EQUAL, EQUAL, NOT_EQUAL] }
+    EventDefinition:
+      type: object
+      required: [eventId, name, frequency, window]
+      properties:
+        eventId: { type: string, format: uuid }
+        name: { type: string }
+        frequency: { $ref: '#/components/schemas/EventFrequency' }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        window: { $ref: '#/components/schemas/EventWindow' }
+        triggerConditions:
+          type: array
+          items: { $ref: '#/components/schemas/TriggerCondition' }
+        requiredResearch:
+          type: array
+          items: { type: string }
+        contactNpc: { type: string }
+        location: { type: string }
+        rewards:
+          type: array
+          items: { $ref: '#/components/schemas/RewardDescriptor' }
+        telemetry: { $ref: '#/components/schemas/TelemetrySnapshot' }
+        localization:
+          type: array
+          items: { $ref: '#/components/schemas/LocalizationBundle' }
+    RecurringEvent:
+      allOf:
+        - $ref: '#/components/schemas/EventDefinition'
+        - type: object
+          properties:
+            recurrencePattern: { type: string, enum: [DAILY, WEEKLY, BIWEEKLY] }
+            weekday: { type: string }
+    SeasonalEvent:
+      allOf:
+        - $ref: '#/components/schemas/EventDefinition'
+        - type: object
+          properties:
+            season: { type: string }
+            year: { type: integer }
+            featuredFactions:
+              type: array
+              items: { type: string }
+    UniqueEvent:
+      allOf:
+        - $ref: '#/components/schemas/EventDefinition'
+        - type: object
+          properties:
+            storyline: { type: string }
+            oncePerAccount: { type: boolean, default: false }
+            emergencyOnly: { type: boolean, default: false }
+    TriggerPayload:
+      type: object
+      required: [source]
+      properties:
+        source: { $ref: '#/components/schemas/TriggerSource' }
+        actorId: { type: string, format: uuid }
+        overrides:
+          type: object
+          properties:
+            startTimeUtc: { type: string, format: date-time }
+            endTimeUtc: { type: string, format: date-time }
+            forceActivation: { type: boolean, default: false }
+        notes: { type: string, maxLength: 500 }
+    CompletionPayload:
+      type: object
+      required: [result]
+      properties:
+        result: { type: string, enum: [SUCCESS, FAILURE, ABORTED] }
+        outcomes: { $ref: '#/components/schemas/OutcomeEffect' }
+        issuedRewards:
+          type: array
+          items: { $ref: '#/components/schemas/RewardDescriptor' }
+        telemetry: { $ref: '#/components/schemas/TelemetrySnapshot' }
+    EconomicApplyRequest:
+      type: object
+      required: [eventId, modifier]
+      properties:
+        eventId: { type: string, format: uuid }
+        modifier: { $ref: '#/components/schemas/EconomicModifier' }
+        appliedBy: { type: string, format: uuid }
+    SocialBroadcast:
+      type: object
+      required: [eventId, channel, message]
+      properties:
+        eventId: { type: string, format: uuid }
+        channel: { type: string, enum: [CITY_BILLBOARD, NIGHT_HUB, HOLOCAST, SOCIAL_FEED] }
+        message: { type: string }
+        memePayload:
+          type: object
+          properties:
+            memeId: { type: string }
+            template: { type: string }
+            tags:
+              type: array
+              items: { type: string }
+        audienceSegments:
+          type: array
+          items: { type: string }
+    ActivityRegistration:
+      type: object
+      required: [eventId, playerId, activityId]
+      properties:
+        eventId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+        activityId: { type: string }
+        partyId: { type: string, format: uuid }
+        score: { type: number, format: float }
+        durationSeconds: { type: integer, minimum: 1 }
+    EventScheduleResponse:
+      type: object
+      properties:
+        recurring:
+          type: array
+          items: { $ref: '#/components/schemas/RecurringEvent' }
+        seasonal:
+          type: array
+          items: { $ref: '#/components/schemas/SeasonalEvent' }
+        unique:
+          type: array
+          items: { $ref: '#/components/schemas/UniqueEvent' }
+        timezone: { type: string }
+        locale: { type: string }
+    CurrentEventsResponse:
+      type: object
+      properties:
+        active:
+          type: array
+          items: { $ref: '#/components/schemas/EventDefinition' }
+        upcoming:
+          type: array
+          items: { $ref: '#/components/schemas/EventDefinition' }
+        generatedAt: { type: string, format: date-time }
+    TelemetryEvent:
+      type: object
+      required: [eventType, timestamp]
+      properties:
+        eventType: { type: string, enum: [EVENT_TRIGGERED, EVENT_COMPLETED, EVENT_MEME_SHARED] }
+        timestamp: { type: string, format: date-time }
+        payload: { type: object, additionalProperties: true }
+    ScheduleError:
+      allOf:
+        - $ref: '../../shared/common/responses.yaml#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  enum:
+                    - BIZ_WORLD_EVENT_NOT_FOUND
+                    - BIZ_WORLD_EVENT_CONFLICT
+                    - BIZ_WORLD_EVENT_COOLDOWN
+                    - BIZ_WORLD_EVENT_TRIGGER_DISABLED
+                    - VAL_WORLD_EVENT_INVALID_WINDOW
+                    - VAL_WORLD_EVENT_INVALID_LOCALE
+                    - VAL_WORLD_EVENT_CONDITION_FAILED
+                    - INT_WORLD_EVENT_ECONOMY_FAILURE
+                    - INT_WORLD_EVENT_SOCIAL_FAILURE
+                    - INT_WORLD_EVENT_ANALYTICS_FAILURE
+              required: [code, message]
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

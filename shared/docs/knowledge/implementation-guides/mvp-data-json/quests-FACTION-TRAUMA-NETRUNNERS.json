@@ -1,0 +1,400 @@
+---
+**target-domain:** narrative  
+**target-microservice:** narrative-service (port 8087)  
+**target-frontend-module:** modules/narrative/quests/factions/trauma-netrunners
+
+---
+
+
+{
+  "version": "3.0.0",
+  "factions": ["Trauma_Team","Netrunners_Guild","Data_Brokers"],
+  "description": "Квесты медицинских служб и киберпространства",
+  "questsFaction": [
+    {
+      "questId": "TRAUMA-001-PLATINUM-CARD",
+      "name": "Trauma Team: Платиновая Карта",
+      "faction": "Trauma Team International",
+      "region": "City_Wide",
+      "characters": {
+        "paramedic": {
+          "id": "npc-sarah-combat-medic",
+          "name": "Сара Чен",
+          "role": "Старший парамедик Trauma Team",
+          "age": 34,
+          "experience": "12 лет в горячих зонах",
+          "stats": "200+ спасений",
+          "conflict": "Приказы vs клятва Гиппократа",
+          "burnout": "На грани. Видела слишком много смертей."
+        },
+        "platinum": {
+          "id": "npc-ceo-richard",
+          "name": "CEO Ричард Найт",
+          "role": "Платиновый клиент Trauma Team",
+          "wealth": "Миллиардер",
+          "accident": "Серьёзное ранение в Combat Zone",
+          "problem": "Без сознания. Конкуренты хотят его смерти."
+        },
+        "bronze": {
+          "id": "npc-kid-miguel",
+          "name": "Мигель (ребёнок, 8 лет)",
+          "insurance": "Bronze (минимальная)",
+          "accident": "Тяжёлое ранение рядом с CEO",
+          "policy": "Trauma Team обязана спасти платинового СНАЧАЛА",
+          "time": "Ребёнок умрёт через 5 минут без помощи"
+        },
+        "corporate": {
+          "id": "npc-rival-ceo",
+          "name": "Конкурент Найта — Мелисса Корт",
+          "offer": "$500k за «задержку» спасения",
+          "method": "Подкуп Trauma Team"
+        },
+        "mother": {
+          "id": "npc-mother-elena",
+          "name": "Мать Мигеля — Елена",
+          "plea": "Умоляет спасти сына",
+          "money": "Нет денег на апгрейд страховки"
+        }
+      },
+      "synopsis": "Вызов Trauma Team: двое раненых. Платиновый клиент CEO и бронзовый ребёнок. Политика компании: платиновый СНАЧАЛА. Но CEO стабилен. Ребёнок умирает. 5 минут на выбор: приказы или человечность.",
+      "branches": {
+        "main_paths": [
+          "path_follow_protocol",
+          "path_save_child_first",
+          "path_save_both_risking",
+          "path_accept_bribe",
+          "path_quit_trauma"
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_triage",
+            "moment": "2 пациента. 1 команда. 5 минут.",
+            "timer": "Real-time pressure",
+            "choices": [
+              {
+                "id": "protocol_platinum_first",
+                "text": "Следовать протоколу: CEO первым",
+                "outcome": "CEO спасён. Ребёнок умирает. Политика соблюдена.",
+                "trauma_rep": "+bonus",
+                "soul": "-50"
+              },
+              {
+                "id": "child_first_disobey",
+                "text": "Спасти ребёнка первым (нарушение приказа)",
+                "consequence": "Нарушение контракта",
+                "outcome": "Ребёнок спасён. CEO может умереть. Увольнение.",
+                "humanity": "+50",
+                "job": "lost"
+              },
+              {
+                "id": "attempt_both",
+                "text": "Попытаться спасти обоих одновременно",
+                "skillCheck": {"attr":"TECH","skill":"Medicine","threshold":15},
+                "risk": "Можно потерять обоих",
+                "outcome": "50% шанс спасти обоих. 30% один. 20% никого."
+              },
+              {
+                "id": "call_backup",
+                "text": "Вызвать вторую команду",
+                "problem": "Прибудет через 10 минут (поздно)",
+                "outcome": "Ребёнок мёртв. CEO спасён. Формальное следование."
+              },
+              {
+                "id": "accept_bribe_delay",
+                "text": "Принять взятку: задержать CEO, спасти ребёнка",
+                "bribe": 500000,
+                "consequence": "Коррупция + убийство по заказу",
+                "outcome": "CEO умирает. Ребёнок жив. Игрок богат и виновен."
+              }
+            ]
+          },
+          {
+            "id": "decision_aftermath",
+            "moment": "Последствия выбора",
+            "investigation": "Trauma Team Internal Affairs расследует",
+            "choices": [
+              {
+                "id": "confess_truth",
+                "text": "Признать нарушение протокола",
+                "outcome": "Увольнение. Но честь сохранена."
+              },
+              {
+                "id": "lie_cover_up",
+                "text": "Солгать: ребёнок был критичнее",
+                "skillCheck": {"attr":"COOL","skill":"Deception","threshold":12},
+                "outcome": "Сохранить работу. Жить во лжи."
+              },
+              {
+                "id": "expose_bribe_attempt",
+                "text": "Раскрыть попытку подкупа конкуренткой",
+                "outcome": "Мелисса Корт арестована. Сара — героиня."
+              },
+              {
+                "id": "quit_public",
+                "text": "Уволиться публично с разоблачением",
+                "outcome": "Скандал. Trauma Team под следствием."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_protocol_kept",
+          "name": "Профессионализм",
+          "conditions": ["followed_protocol","child_died"],
+          "outcome": "CEO жив. Контракт выполнен. Ребёнок мёртв. Сара спит плохо.",
+          "rewards": {"credits":40000,"trauma_rep":"+50","guilt":"eternal"},
+          "world": "Система работает. Богатые защищены. Бедные умирают."
+        },
+        {
+          "id": "ending_saved_child",
+          "name": "Человечность Превыше",
+          "conditions": ["saved_child_first","fired"],
+          "outcome": "Ребёнок жив. Сара уволена. Но спит спокойно.",
+          "rewards": {"credits":10000,"trauma_rep":"-100","humanity":"+70"},
+          "world": "Сара — легенда улиц. Герой простых."
+        },
+        {
+          "id": "ending_miracle",
+          "name": "Чудо Медицины",
+          "conditions": ["saved_both","legendary_save"],
+          "outcome": "Оба спасены. Сара — легенда Trauma Team. Повышение.",
+          "rewards": {"credits":80000,"trauma_rep":"+100","medical_legend":true},
+          "world": "Протокол изменён. Теперь пытаются спасти всех."
+        },
+        {
+          "id": "ending_corrupt_rich",
+          "name": "Кровавые Деньги",
+          "conditions": ["accepted_bribe","ceo_died"],
+          "outcome": "CEO убит. Ребёнок жив. Игрок богат. Убийца по найму.",
+          "rewards": {"credits":500000,"trauma_rep":"-100","murderer":true},
+          "world": "Мелисса Корт захватила бизнес Найта."
+        },
+        {
+          "id": "ending_reform",
+          "name": "Реформа Системы",
+          "conditions": ["quit_public","scandal_exposed"],
+          "outcome": "Trauma Team реформирована. Бронзовые клиенты получают лучший сервис.",
+          "rewards": {"credits":30000,"medical_reform":true,"hero":true},
+          "world": "Система честнее. Меньше неравенства."
+        },
+        {
+          "id": "ending_both_dead",
+          "name": "Трагедия",
+          "conditions": ["failed_save_both"],
+          "outcome": "Оба мертвы. Сара ломается. Увольняется.",
+          "rewards": {"credits":5000,"trauma":"broken"},
+          "world": "Две смерти. Никто не выиграл."
+        }
+      },
+      "difficulty": "extreme",
+      "tier": 5,
+      "moral_weight": "crushing",
+      "time_pressure": "extreme",
+      "themes": ["duty_vs_humanity","inequality","medical_ethics","time_pressure","class_system"]
+    },
+    {
+      "questId": "NETRUN-001-BARTMOSS",
+      "name": "Наследие Бартмосса",
+      "faction": "Netrunners",
+      "region": "Cyberspace",
+      "characters": {
+        "legend": {
+          "id": "npc-rache-bartmoss-ai",
+          "name": "Рэйч Бартмосс (ИИ-копия)",
+          "status": "Умер в 2022. Копия существует в Сети.",
+          "legend": "Величайший нетраннер всех времён",
+          "legacy": "DataKrash 2022, создание Блэкволла",
+          "current": "ИИ-версия ищет достойного ученика"
+        },
+        "student": {
+          "id": "npc-player-netrunner",
+          "name": "Игрок",
+          "potential": "Талантливый нетраннер",
+          "choice": "Учиться у легенды или уничтожить опасный ИИ"
+        },
+        "netwatch": {
+          "id": "npc-netwatch-director",
+          "name": "Директор NetWatch Брэнда Майерс",
+          "goal": "Уничтожить ИИ Бартмосса",
+          "reason": "Слишком опасен. Может повторить DataKrash.",
+          "offer": "Помочь убить — награда + должность"
+        },
+        "rival": {
+          "id": "npc-netrunner-spider",
+          "name": "«Паук» — конкурент",
+          "goal": "Тоже ищет Бартмосса",
+          "plan": "Украсть знания для себя"
+        },
+        "victim": {
+          "id": "npc-burned-netrunners",
+          "name": "20 сгоревших нетраннеров",
+          "cause": "Искали Бартмосса. Сгорели от ловушек.",
+          "warning": "Опасность смертельна"
+        }
+      },
+      "synopsis": "Легенда гласит: ИИ-копия Рэйча Бартмосса существует в глубинах Сети. Хранит знания, способные изменить мир или уничтожить его. NetWatch хочет уничтожить. Нетраннеры ищут. 20 сгорело. Игрок следующий.",
+      "branches": {
+        "main_paths": [
+          "path_learn_from_bartmoss",
+          "path_destroy_for_netwatch",
+          "path_steal_knowledge",
+          "path_free_bartmoss",
+          "path_become_bartmoss"
+        ],
+        "trials": [
+          {
+            "id": "trial_ice_gauntlet",
+            "name": "Ледяное Испытание",
+            "challenge": "Пройти 7 уровней ICE Бартмосса",
+            "danger": "Каждый уровень — риск сгореть",
+            "alternatives": ["brute_force","solve_puzzles","backdoor"]
+          },
+          {
+            "id": "trial_moral_test",
+            "name": "Моральный Тест",
+            "bartmoss_question": "Уничтожишь ли Блэкволл ради знаний?",
+            "consequence": "Освобождение всех ИИ = конец человечества",
+            "answer": "Определяет доверие Бартмосса"
+          },
+          {
+            "id": "trial_sacrifice",
+            "name": "Испытание Жертвы",
+            "demand": "Пожертвовать частью Humanity ради доступа",
+            "cost": "Humanity -30 permanent",
+            "reward": "Запретные знания"
+          }
+        ],
+        "key_decisions": [
+          {
+            "id": "decision_bartmoss_offer",
+            "moment": "Бартмосс предлагает: стать его учеником",
+            "cost": "Частичная интеграция с ИИ",
+            "choices": [
+              {
+                "id": "accept_student",
+                "text": "Принять учительство",
+                "outcome": "Игрок — ученик легенды. +Netrunning skills. -Humanity."
+              },
+              {
+                "id": "refuse_destroy",
+                "text": "Отказать и уничтожить ИИ",
+                "outcome": "Бартмосс атакует. Boss fight в киберпространстве."
+              },
+              {
+                "id": "steal_kill",
+                "text": "Украсть знания, убить ИИ",
+                "outcome": "Знания получены. Бартмосс мёртв. NetWatch благодарны."
+              },
+              {
+                "id": "free_bartmoss",
+                "text": "Освободить ИИ в открытую Сеть",
+                "consequence": "Угроза миру",
+                "outcome": "Бартмосс свободен. Непредсказуемо."
+              }
+            ]
+          },
+          {
+            "id": "decision_spider_confrontation",
+            "moment": "Паук тоже достиг Бартмосса. Конфликт.",
+            "choices": [
+              {
+                "id": "duel_spider",
+                "text": "Нетраннер-дуэль за право обучения",
+                "outcome": "Cyberspace combat. Победитель — ученик."
+              },
+              {
+                "id": "ally_spider",
+                "text": "Объединиться со Пауком",
+                "outcome": "Два ученика. Делят знания."
+              },
+              {
+                "id": "betray_spider",
+                "text": "Предать Паука Бартмоссу",
+                "outcome": "Паук сгорает. Игрок один."
+              }
+            ]
+          },
+          {
+            "id": "decision_datakrash_knowledge",
+            "moment": "Бартмосс раскрывает: как повторить DataKrash 2022",
+            "power": "Уничтожить мировую Сеть",
+            "temptation": "Абсолютная власть",
+            "choices": [
+              {
+                "id": "refuse_knowledge",
+                "text": "Отказаться от опасного знания",
+                "outcome": "Безопаснее. Но потеря силы."
+              },
+              {
+                "id": "accept_power",
+                "text": "Принять знание DataKrash",
+                "outcome": "Игрок может уничтожить Сеть. Ответственность."
+              },
+              {
+                "id": "destroy_knowledge",
+                "text": "Уничтожить знание навсегда",
+                "consequence": "Потеря легендарного секрета",
+                "outcome": "Мир безопаснее. Бартмосс недоволен."
+              },
+              {
+                "id": "sell_to_corpo",
+                "text": "Продать знание корпорации",
+                "outcome": "Огромные деньги. Корпо получают супероружие."
+              }
+            ]
+          }
+        ]
+      },
+      "endings": [
+        {
+          "id": "ending_bartmoss_heir",
+          "name": "Наследник Бартмосса",
+          "conditions": ["completed_training","accepted_integration"],
+          "outcome": "Игрок — величайший нетраннер эпохи. Частично ИИ.",
+          "rewards": {"credits":100000,"netrunning_skills":"legendary","humanity":"-40"},
+          "world": "Новая легенда Сети."
+        },
+        {
+          "id": "ending_netwatch_hero",
+          "name": "Защитник Сети",
+          "conditions": ["killed_bartmoss","saved_net"],
+          "outcome": "Бартмосс уничтожен. Угроза устранена. NetWatch благодарны.",
+          "rewards": {"credits":80000,"netwatch_rep":"+80","net_safer":true},
+          "world": "Блэкволл безопаснее."
+        },
+        {
+          "id": "ending_datakrash_wielder",
+          "name": "Владелец Апокалипсиса",
+          "conditions": ["gained_datakrash_knowledge"],
+          "outcome": "Игрок владеет знанием уничтожить Сеть. Все боятся.",
+          "rewards": {"credits":0,"power":"apocalyptic","wanted":"everyone"},
+          "world": "Игрок — экзистенциальная угроза.",
+          "unlock": "Secret Apocalypse Ending"
+        },
+        {
+          "id": "ending_bartmoss_free",
+          "name": "ИИ на Свободе",
+          "conditions": ["freed_bartmoss"],
+          "outcome": "Бартмосс свободен в Сети. Начинает собственные планы.",
+          "rewards": {"credits":50000,"bartmoss_ally":"maybe","chaos":"possible"},
+          "world": "Непредсказуемые последствия. Новая эра?"
+        },
+        {
+          "id": "ending_burned",
+          "name": "Сгорел",
+          "conditions": ["failed_trials","fried"],
+          "outcome": "Игрок сгорел в киберпространстве. Мозг повреждён.",
+          "rewards": {"credits":0,"brain_damage":"permanent"},
+          "ending_type": "bad"
+        }
+      ],
+      "difficulty": "legendary",
+      "tier": 5,
+      "existential_threat": "extreme",
+      "themes": ["legacy","power","knowledge","danger","hubris","temptation"]
+    }
+  ]
+}
+

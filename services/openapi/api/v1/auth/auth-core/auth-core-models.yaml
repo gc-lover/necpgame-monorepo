@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: Auth Core Models
+  version: 1.0.0
+  x-microservice:
+    name: auth-service
+    port: 8081
+    domain: auth
+    base-path: /api/v1/auth
+    directory: api/v1/auth/auth-core
+    package: com.necpgame.authservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Development API Gateway
+paths: {}
+components:
+  parameters:
+    AccountIdPath:
+      name: accountId
+      in: path
+      required: true
+      description: Account identifier (UUID)
+      schema:
+        type: string
+        format: uuid
+    OAuthProviderPath:
+      name: provider
+      in: path
+      required: true
+      description: OAuth provider identifier
+      schema:
+        type: string
+        enum: [google, discord, steam, twitch]
+    OAuthCodeQuery:
+      name: code
+      in: query
+      required: false
+      description: OAuth authorization code
+      schema:
+        type: string
+    OAuthStateQuery:
+      name: state
+      in: query
+      required: false
+      description: CSRF protection state parameter
+      schema:
+        type: string
+  schemas:
+    AccountProfile:
+      type: object
+      required:
+        - accountId
+        - email
+        - emailVerified
+        - roles
+        - createdAt
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          maxLength: 32
+        displayName:
+          type: string
+          maxLength: 64
+        emailVerified:
+          type: boolean
+        twoFactorEnabled:
+          type: boolean
+        security:
+          type: object
+          properties:
+            lastLoginAt:
+              type: string
+              format: date-time
+            lastLoginIp:
+              type: string
+            requiresPasswordChange:
+              type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [PLAYER, MODERATOR, ADMIN, SUPER_ADMIN]
+        permissions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken, expiresIn]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          description: Access token TTL in seconds
+        refreshExpiresIn:
+          type: integer
+          description: Refresh token TTL in seconds
+    SessionInfo:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        issuedAt:
+          type: string
+          format: date-time
+        clientVersion:
+          type: string
+        ipAddress:
+          type: string
+    LoginContext:
+      type: object
+      properties:
+        requiresTwoFactor:
+          type: boolean
+        twoFactorMethod:
+          type: string
+          enum: [totp, sms, email]
+        backupCodesRemaining:
+          type: integer
+    RateLimitInfo:
+      type: object
+      properties:
+        limit:
+          type: integer
+        remaining:
+          type: integer
+        resetAt:
+          type: string
+          format: date-time
+    PermissionMatrix:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [PLAYER, MODERATOR, ADMIN, SUPER_ADMIN]
+        permissions:
+          type: array
+          items:
+            type: string
+    JwtDescriptor:
+      type: object
+      required: [issuer, audience, subject, issuedAt, expiresAt, scopes]
+      properties:
+        issuer:
+          type: string
+        audience:
+          type: array
+          items:
+            type: string
+        subject:
+          type: string
+          description: Account ID
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        scopes:
+          type: array
+          items:
+            type: string
+        sessionId:
+          type: string
+          format: uuid
+        roles:
+          type: array
+          items:
+            type: string
+    TwoFactorSetup:
+      type: object
+      required: [secret, otpauthUrl, qrcodeSvg, backupCodes]
+      properties:
+        secret:
+          type: string
+        otpauthUrl:
+          type: string
+        qrcodeSvg:
+          type: string
+        backupCodes:
+          type: array
+          items:
+            type: string
+    EmailStatus:
+      type: object
+      properties:
+        verified:
+          type: boolean
+        verifiedAt:
+          type: string
+          format: date-time
+        pendingToken:
+          type: string
+          nullable: true
+        lastSentAt:
+          type: string
+          format: date-time
+    LockoutStatus:
+      type: object
+      properties:
+        lockedUntil:
+          type: string
+          format: date-time
+        failedAttempts:
+          type: integer
+        lastFailedAt:
+          type: string
+          format: date-time
+

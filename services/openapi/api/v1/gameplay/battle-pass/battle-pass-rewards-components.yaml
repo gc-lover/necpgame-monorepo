@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Battle Pass Rewards Components
+  version: 1.0.0
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay
+    package: com.necpgame.gameplayservice
+paths: {}
+
+components:
+  parameters:
+    ChallengeId:
+      name: challengeId
+      in: path
+      required: true
+      description: Идентификатор челленджа Battle Pass
+      schema: { type: string }
+  schemas:
+    RewardDefinition:
+      type: object
+      required: [level, track, rewardType, rewardData]
+      properties:
+        rewardId: { type: string }
+        level: { type: integer, minimum: 1 }
+        track: { type: string, enum: [FREE, PREMIUM] }
+        rewardType: { type: string, enum: [CURRENCY, ITEM, COSMETIC, XP_BOOST, BUNDLE] }
+        rewardData:
+          type: object
+          description: Детали награды
+          additionalProperties: true
+        rarity: { type: string, enum: [common, rare, epic, legendary] }
+        previewAsset: { type: string, format: uri }
+    RewardDefinitionList:
+      type: object
+      properties:
+        rewards:
+          type: array
+          items: { $ref: '#/components/schemas/RewardDefinition' }
+    RewardClaimRequest:
+      type: object
+      required: [level, track]
+      properties:
+        level: { type: integer }
+        track: { type: string, enum: [FREE, PREMIUM] }
+        autoClaimExtras: { type: boolean, default: false }
+        clientContext: { type: object, additionalProperties: true }
+    RewardClaimResponse:
+      type: object
+      properties:
+        rewards:
+          type: array
+          items: { $ref: '#/components/schemas/RewardDefinition' }
+        xpEarned: { type: integer }
+        premiumStatus: { type: boolean }
+        events:
+          type: array
+          items: { type: string }
+    RewardHistoryResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/RewardHistoryEntry' }
+        pagination: { $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta' }
+    RewardHistoryEntry:
+      type: object
+      properties:
+        rewardId: { type: string }
+        level: { type: integer }
+        track: { type: string }
+        rewardType: { type: string }
+        amount: { type: integer }
+        source: { type: string, enum: [LEVEL, CHALLENGE, BONUS] }
+        claimedAt: { type: string, format: date-time }
+    RewardRerollRequest:
+      type: object
+      required: [level, track]
+      properties:
+        level: { type: integer }
+        track: { type: string, enum: [FREE, PREMIUM] }
+        tokenId: { type: string }
+    ChallengeListResponse:
+      type: object
+      properties:
+        challenges:
+          type: array
+          items: { $ref: '#/components/schemas/ChallengeWithProgress' }
+        refreshAt: { type: string, format: date-time }
+    ChallengeWithProgress:
+      type: object
+      properties:
+        challenge: { $ref: '#/components/schemas/Challenge' }
+        progress: { $ref: '#/components/schemas/ChallengeProgress' }
+    Challenge:
+      type: object
+      required: [challengeId, challengeType, description, objectives]
+      properties:
+        challengeId: { type: string }
+        challengeType: { type: string, enum: [DAILY, WEEKLY, SEASONAL] }
+        description: { type: string }
+        objectives:
+          type: array
+          items: { $ref: '#/components/schemas/ChallengeObjective' }
+        xpReward: { type: integer }
+        rewardId: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        rerollCost: { type: integer }
+    ChallengeObjective:
+      type: object
+      required: [metric, target]
+      properties:
+        metric: { type: string }
+        target: { type: integer }
+        current: { type: integer }
+    ChallengeProgress:
+      type: object
+      properties:
+        challengeId: { type: string }
+        playerId: { type: string }
+        status: { type: string, enum: [IN_PROGRESS, COMPLETED] }
+        progressValue: { type: integer }
+        updatedAt: { type: string, format: date-time }
+    ChallengeProgressUpdateRequest:
+      type: object
+      required: [playerId, metric, amount]
+      properties:
+        playerId: { type: string }
+        metric: { type: string }
+        amount: { type: integer }
+        sourceEventId: { type: string }
+        allowOverflow: { type: boolean }
+    ChallengeCompleteRequest:
+      type: object
+      required: [playerId]
+      properties:
+        playerId: { type: string }
+        awardedXp: { type: integer }
+    ChallengeRerollRequest:
+      type: object
+      required: [playerId]
+      properties:
+        playerId: { type: string }
+        currency: { type: string }
+        cost: { type: integer }
+    BoostActivationRequest:
+      type: object
+      required: [boostId]
+      properties:
+        boostId: { type: string }
+        activationSource: { type: string, enum: [TOKEN, EVENT, ADMIN] }
+        cost: { type: integer }
+    BoostActivationResponse:
+      type: object
+      properties:
+        boost: { $ref: '#/components/schemas/BoostStatus' }
+        expiresAt: { type: string, format: date-time }
+    BoostStatusResponse:
+      type: object
+      properties:
+        activeBoosts:
+          type: array
+          items: { $ref: '#/components/schemas/BoostStatus' }
+        cooldowns:
+          type: array
+          items:
+            type: object
+            properties:
+              boostId: { type: string }
+              readyAt: { type: string, format: date-time }
+    BoostStatus:
+      type: object
+      properties:
+        boostId: { type: string }
+        boostType: { type: string, enum: [XP, REWARD_RATE, DOUBLE_DROPS] }
+        multiplier: { type: number }
+        activatedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+    LeaderboardResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              rank: { type: integer }
+              playerId: { type: string }
+              metricValue: { type: integer }
+        pagination: { $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta' }
+    RewardAnalyticsResponse:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        seasonId: { type: string }
+        range: { type: string }
+        totalClaims: { type: integer }
+        premiumClaims: { type: integer }
+        rerollUsage: { type: integer }
+        challengeCompletionRate: { type: number }
+        boostActivationRate: { type: number }
+        topRewards:
+          type: array
+          items:
+            type: object
+            properties:
+              rewardId: { type: string }
+              claimCount: { type: integer }
+    BattlePassRewardError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, enum: [LEVEL_LOCKED, ALREADY_CLAIMED, INSUFFICIENT_TOKEN, CHALLENGE_NOT_FOUND, BOOST_ACTIVE, REROLL_LIMIT] }
+        message: { type: string }
+        traceId: { type: string }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

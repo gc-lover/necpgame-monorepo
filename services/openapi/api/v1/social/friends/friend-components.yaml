@@ -1,0 +1,215 @@
+openapi: 3.0.3
+info:
+  title: Friend Components
+  version: 1.0.0
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+components:
+  parameters:
+    FriendId:
+      name: friendId
+      in: path
+      required: true
+      description: Идентификатор дружеской связи/игрока
+      schema: { type: string }
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      description: Идентификатор запроса в друзья
+      schema: { type: string }
+    BlockId:
+      name: blockId
+      in: path
+      required: true
+      description: Идентификатор записи блокировки
+      schema: { type: string }
+  schemas:
+    Friend:
+      type: object
+      properties:
+        playerId: { type: string }
+        nickname: { type: string }
+        platform: { type: string }
+        relationship: { type: string, enum: [FRIEND, FAVORITE, FOLLOWING] }
+        presence: { $ref: '#/components/schemas/Presence' }
+        favorite: { type: boolean }
+        metadata: { type: object, additionalProperties: true }
+    FriendListResponse:
+      type: object
+      properties:
+        friends:
+          type: array
+          items: { $ref: '#/components/schemas/Friend' }
+        total: { type: integer }
+    FriendRequest:
+      type: object
+      properties:
+        requestId: { type: string }
+        from: { type: string }
+        to: { type: string }
+        message: { type: string }
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        status: { type: string, enum: [PENDING, ACCEPTED, DECLINED, EXPIRED] }
+    FriendRequestsResponse:
+      type: object
+      properties:
+        incoming:
+          type: array
+          items: { $ref: '#/components/schemas/FriendRequest' }
+        outgoing:
+          type: array
+          items: { $ref: '#/components/schemas/FriendRequest' }
+    FriendRequestCreate:
+      type: object
+      required: [target]
+      properties:
+        target:
+          type: object
+          properties:
+            playerId: { type: string }
+            nickname: { type: string }
+            externalId: { type: string }
+            platform: { type: string }
+        message: { type: string }
+        idempotencyKey: { type: string }
+    FriendRequestDecline:
+      type: object
+      properties:
+        reason: { type: string }
+        block: { type: boolean }
+    Presence:
+      type: object
+      properties:
+        state: { type: string, enum: [ONLINE, AWAY, IN_MATCH, OFFLINE] }
+        activity: { type: string }
+        sessionId: { type: string }
+        platform: { type: string }
+        lastSeen: { type: string, format: date-time }
+    PresenceFeedResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/PresenceEntry' }
+    PresenceEntry:
+      type: object
+      properties:
+        playerId: { type: string }
+        presence: { $ref: '#/components/schemas/Presence' }
+    PresenceUpdateRequest:
+      type: object
+      required: [state]
+      properties:
+        state: { type: string, enum: [ONLINE, AWAY, IN_MATCH, OFFLINE] }
+        activity: { type: string }
+        sessionId: { type: string }
+        availability: { type: string, enum: [AVAILABLE, BUSY, DO_NOT_DISTURB] }
+    RecentPlayer:
+      type: object
+      properties:
+        playerId: { type: string }
+        nickname: { type: string }
+        metAt: { type: string, format: date-time }
+        context: { type: string, enum: [MATCH, TRADE, CLAN, OTHER] }
+        score: { type: number }
+    RecentPlayersResponse:
+      type: object
+      properties:
+        players:
+          type: array
+          items: { $ref: '#/components/schemas/RecentPlayer' }
+    Suggestion:
+      type: object
+      properties:
+        playerId: { type: string }
+        nickname: { type: string }
+        relevance: { type: number }
+        mutualFriends: { type: integer }
+        source: { type: string }
+    SuggestionsResponse:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items: { $ref: '#/components/schemas/Suggestion' }
+    BlockEntry:
+      type: object
+      properties:
+        blockId: { type: string }
+        targetId: { type: string }
+        type: { type: string, enum: [BLOCK, MUTE, REPORT] }
+        reason: { type: string }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+    BlockListResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/BlockEntry' }
+    BlockCreateRequest:
+      type: object
+      required: [targetId, type]
+      properties:
+        targetId: { type: string }
+        type: { type: string, enum: [BLOCK, MUTE] }
+        reason: { type: string }
+        durationMinutes: { type: integer }
+    SocialInviteRequest:
+      type: object
+      required: [recipientId, context]
+      properties:
+        recipientId: { type: string }
+        context: { type: string, enum: [PARTY, GUILD, MATCH, OTHER] }
+        payload: { type: object, additionalProperties: true }
+        expiresAt: { type: string, format: date-time }
+    FriendRequestEvent:
+      type: object
+      properties:
+        request: { $ref: '#/components/schemas/FriendRequest' }
+    FriendEvent:
+      type: object
+      properties:
+        playerId: { type: string }
+        friend: { $ref: '#/components/schemas/Friend' }
+        occurredAt: { type: string, format: date-time }
+    PresenceEvent:
+      type: object
+      properties:
+        playerId: { type: string }
+        presence: { $ref: '#/components/schemas/Presence' }
+        occurredAt: { type: string, format: date-time }
+    BlockEvent:
+      type: object
+      properties:
+        block: { $ref: '#/components/schemas/BlockEntry' }
+        occurredAt: { type: string, format: date-time }
+    SocialInviteEvent:
+      type: object
+      properties:
+        inviteId: { type: string }
+        from: { type: string }
+        context: { type: string }
+        payload: { type: object, additionalProperties: true }
+        expiresAt: { type: string, format: date-time }
+    FriendError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [REQUEST_LIMIT, ALREADY_FRIENDS, BLOCKED, PRIVACY_RESTRICTED, RATE_LIMITED, INVITE_FAILED]
+        message: { type: string }
+        traceId: { type: string }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

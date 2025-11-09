@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: Universe Operation Models
+  version: 1.0.0
+components:
+  schemas:
+    TimelineEventListResponse:
+      allOf:
+        - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: './universe-models.yaml#/components/schemas/TimelineEvent'
+    TimelineEventDetailResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './universe-models.yaml#/components/schemas/TimelineEvent'
+    LeagueListResponse:
+      allOf:
+        - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: './universe-models.yaml#/components/schemas/League'
+    LeaguePhaseListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: './universe-models.yaml#/components/schemas/LeaguePhase'
+    SimulationStageListResponse:
+      type: object
+      required: [stages]
+      properties:
+        stages:
+          type: array
+          items:
+            $ref: './universe-models.yaml#/components/schemas/SimulationStage'
+    SimulationAdvanceRequest:
+      type: object
+      required: [stageId, confirmedBy, triggers]
+      properties:
+        stageId:
+          type: string
+          format: uuid
+        confirmedBy:
+          type: string
+        triggers:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [triggerId, satisfied]
+            properties:
+              triggerId:
+                type: string
+                format: uuid
+              satisfied:
+                type: boolean
+              evidence:
+                type: string
+        notes:
+          type: string
+    SimulationAdvanceResponse:
+      type: object
+      required: [status, publishedEvents]
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected]
+        publishedEvents:
+          type: array
+          items:
+            type: string
+        nextStageId:
+          type: string
+          format: uuid
+    AnomalyListResponse:
+      allOf:
+        - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: './universe-models.yaml#/components/schemas/Anomaly'
+    AnomalyCreateRequest:
+      type: object
+      required: [location, severity, description]
+      properties:
+        location:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        description:
+          type: string
+        mitigation:
+          type: string
+        linkedEvents:
+          type: array
+          items:
+            type: string
+    AnomalyDetailResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './universe-models.yaml#/components/schemas/Anomaly'
+    BlackwallInsightListResponse:
+      allOf:
+        - $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: './universe-models.yaml#/components/schemas/BlackwallInsight'
+    ProgressionMetricsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './universe-models.yaml#/components/schemas/ProgressionMetrics'
+

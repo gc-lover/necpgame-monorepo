@@ -1,0 +1,176 @@
+openapi: 3.0.3
+info:
+  title: Database Management API
+  description: |
+    API для управления database infrastructure NECPGAME.
+    
+    **Функции:**
+    - Database health monitoring
+    - Sharding management
+    - Replication status
+    - Migration management
+    - Backup & restore
+    - Connection pool stats
+  version: 1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Database Health
+  - name: Sharding
+  - name: Migrations
+  - name: Backups
+
+paths:
+  /technical/database/status:
+    get:
+      tags:
+        - Database Health
+      summary: Database health & statistics
+      description: Health status всех database instances
+      operationId: getDatabaseStatus
+      responses:
+        '200':
+          description: Database status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  databases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseStatus'
+                  overall_health:
+                    type: string
+                    enum: ["healthy", "degraded", "critical"]
+
+  /technical/database/shards:
+    get:
+      tags:
+        - Sharding
+      summary: Sharding information
+      description: Информация о shards (по player_id)
+      operationId: getShards
+      responses:
+        '200':
+          description: Shards info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShardInfo'
+                  total_shards:
+                    type: integer
+
+  /technical/database/migrations/run:
+    post:
+      tags:
+        - Migrations
+      summary: Run database migration
+      description: Запуск database migration (admin only)
+      operationId: runMigration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - migration_id
+              properties:
+                migration_id:
+                  type: string
+                dry_run:
+                  type: boolean
+                  default: true
+      responses:
+        '202':
+          description: Migration started
+        '403':
+          $ref: '../../shared/common/responses.yaml#/components/responses/Forbidden'
+
+  /technical/database/backup:
+    post:
+      tags:
+        - Backups
+      summary: Trigger database backup
+      description: Запуск backup (admin only)
+      operationId: triggerBackup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                backup_type:
+                  type: string
+                  enum: ["full", "incremental"]
+                  default: "incremental"
+      responses:
+        '202':
+          description: Backup started
+
+components:
+  schemas:
+    DatabaseStatus:
+      type: object
+      properties:
+        db_name:
+          type: string
+        status:
+          type: string
+          enum: ["up", "degraded", "down"]
+        connections:
+          type: object
+          properties:
+            active:
+              type: integer
+            idle:
+              type: integer
+            max:
+              type: integer
+        replication:
+          type: object
+          properties:
+            lag_seconds:
+              type: integer
+            replicas_count:
+              type: integer
+
+    ShardInfo:
+      type: object
+      properties:
+        shard_id:
+          type: string
+        player_id_range:
+          type: object
+          properties:
+            start:
+              type: string
+            end:
+              type: string
+        size_gb:
+          type: number
+        status:
+          type: string
+          enum: ["active", "readonly", "migrating"]
+
+security:
+  - BearerAuth: []
+
+

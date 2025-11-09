@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: Stock Exchange Indices API
+  version: 1.0.0
+  description: |
+    API для биржевых индексов и фьючерсов.
+    
+    Источник: .BRAIN/02-gameplay/economy/economy-stock-exchange.md v1.0.0
+    
+    Индексы:
+    - CORPO-500: индекс 500 крупнейших корпораций
+    - TECH-100: индекс технологических компаний
+    - SECTOR индексы: Security, Biotech, Manufacturing, etc.
+    
+    Фьючерсы:
+    - На ресурсы (металлы, компоненты)
+    - На commodities
+    - На индексы
+    
+    Основной файл: stock-exchange-core.yaml
+
+  x-microservice:
+    name: economy-service
+    port: 8085
+    domain: economy
+    base-path: /api/v1/gameplay/economy
+    package: com.necpgame.economyservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Indices
+    description: Биржевые индексы
+  - name: Futures
+    description: Фьючерсы
+
+paths:
+  /gameplay/economy/stock/indices:
+    get:
+      summary: Получить биржевые индексы
+      description: |
+        Возвращает список биржевых индексов.
+        CORPO-500, TECH-100, секторальные индексы.
+      operationId: getStockIndices
+      tags:
+        - Indices
+      responses:
+        '200':
+          description: Биржевые индексы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StockIndex'
+              examples:
+                indices:
+                  summary: Основные индексы
+                  value:
+                    indices:
+                      - index_id: "CORPO-500"
+                        name: "Corporate 500"
+                        current_value: 5248.75
+                        change_24h: 1.2
+                        components_count: 500
+                      - index_id: "TECH-100"
+                        name: "Technology 100"
+                        current_value: 8950.32
+                        change_24h: -0.8
+                        components_count: 100
+
+  /gameplay/economy/stock/indices/{index_id}:
+    get:
+      summary: Получить детали индекса
+      description: |
+        Возвращает детальную информацию об индексе.
+        Состав, веса компаний, история значений.
+      operationId: getIndexDetails
+      tags:
+        - Indices
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали индекса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexDetails'
+
+  /gameplay/economy/stock/futures:
+    get:
+      summary: Получить список фьючерсов
+      description: |
+        Возвращает доступные фьючерсные контракты.
+        На ресурсы, commodities, индексы.
+      operationId: getFuturesContracts
+      tags:
+        - Futures
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [resources, commodities, indices]
+      responses:
+        '200':
+          description: Фьючерсные контракты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  futures:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FuturesContract'
+
+  /gameplay/economy/stock/futures/buy:
+    post:
+      summary: Купить фьючерсный контракт
+      description: |
+        Покупает фьючерсный контракт.
+        Обязательство купить/продать актив в будущем по фиксированной цене.
+      operationId: buyFuturesContract
+      tags:
+        - Futures
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - contract_id
+                - quantity
+                - side
+              properties:
+                character_id:
+                  type: string
+                contract_id:
+                  type: string
+                quantity:
+                  type: integer
+                side:
+                  type: string
+                  enum: [long, short]
+                  description: Long = ставка на рост, Short = ставка на падение
+      responses:
+        '200':
+          description: Контракт куплен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  position_id:
+                    type: string
+                  contract_id:
+                    type: string
+                  quantity:
+                    type: integer
+                  entry_price:
+                    type: number
+                  margin_required:
+                    type: number
+                  expiration_date:
+                    type: string
+                    format: date-time
+
+  /gameplay/economy/stock/futures/close:
+    post:
+      summary: Закрыть фьючерсную позицию
+      description: |
+        Закрывает фьючерсную позицию до истечения срока.
+      operationId: closeFuturesPosition
+      tags:
+        - Futures
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+                - position_id
+              properties:
+                character_id:
+                  type: string
+                position_id:
+                  type: string
+      responses:
+        '200':
+          description: Позиция закрыта
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  position_id:
+                    type: string
+                  profit_loss:
+                    type: number
+                  roi_percent:
+                    type: number
+
+components:
+  schemas:
+    StockIndex:
+      type: object
+      properties:
+        index_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        current_value:
+          type: number
+        change_24h:
+          type: number
+          description: Изменение за 24 часа (%)
+        components_count:
+          type: integer
+          description: Количество компаний в индексе
+
+    IndexDetails:
+      allOf:
+        - $ref: '#/components/schemas/StockIndex'
+        - type: object
+          properties:
+            components:
+              type: array
+              description: Компании, входящие в индекс
+              items:
+                type: object
+                properties:
+                  ticker:
+                    type: string
+                  weight:
+                    type: number
+                    description: Вес в индексе (%)
+            history:
+              type: array
+              description: История значений индекса
+              items:
+                type: object
+
+    FuturesContract:
+      type: object
+      properties:
+        contract_id:
+          type: string
+        underlying_asset:
+          type: string
+          description: Базовый актив
+        contract_type:
+          type: string
+          enum: [resource, commodity, index]
+        current_price:
+          type: number
+        expiration_date:
+          type: string
+          format: date-time
+        contract_size:
+          type: integer
+          description: Размер контракта
+        margin_requirement:
+          type: number
+          description: Требуемая маржа (%)
+
+

@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: Global State System API
+  version: 1.0.0
+  description: |
+    Техническая API для Event Sourcing системы глобального состояния.
+    
+    Источник: .BRAIN/05-technical/global-state-system.md v1.0.0
+    
+    Event Sourcing, State Management, MMORPG синхронизация, аудит, time travel
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+paths:
+  /technical/global-state/events:
+    post:
+      summary: Зарегистрировать событие
+      description: Event Sourcing - регистрация всех событий
+      operationId: registerEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Событие зарегистрировано
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /technical/global-state/current:
+    get:
+      summary: Получить текущее состояние
+      operationId: getCurrentState
+      responses:
+        '200':
+          description: Текущее состояние
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /technical/global-state/reconstruct:
+    post:
+      summary: Восстановить состояние
+      description: Time Travel - восстановление состояния на определенный момент
+      operationId: reconstructState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Состояние восстановлено
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    GameEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object
+

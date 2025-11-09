@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: Clan War Components
+  version: 1.0.0
+  x-microservice:
+    name: social-service
+    port: 8084
+    domain: social
+    base-path: /api/v1/social
+    package: com.necpgame.socialservice
+paths: {}
+
+components:
+  parameters:
+    ClanId:
+      name: clanId
+      in: path
+      required: true
+      description: Клан инициатор операции
+      schema: { type: string }
+    WarId:
+      name: warId
+      in: path
+      required: true
+      description: Идентификатор клановой войны
+      schema: { type: string }
+    TerritoryId:
+      name: territoryId
+      in: path
+      required: true
+      description: Идентификатор территории
+      schema: { type: string }
+  schemas:
+    WarDeclarationRequest:
+      type: object
+      required: [attackerClanId, defenderClanId, targetTerritories, proposedStart]
+      properties:
+        attackerClanId: { type: string }
+        defenderClanId: { type: string }
+        targetTerritories:
+          type: array
+          minItems: 1
+          items: { type: string }
+        proposedStart: { type: string, format: date-time }
+        allies:
+          type: array
+          items: { type: string }
+        payment:
+          type: object
+          properties:
+            amount: { type: integer, minimum: 0 }
+            currency: { type: string, enum: [credits, influence, shards] }
+        justification: { type: string, maxLength: 500 }
+    WarDeclarationResponse:
+      type: object
+      properties:
+        warId: { type: string }
+        status: { type: string, enum: [DECLARED, AWAITING_CONFIRMATION] }
+        preparationEndsAt: { type: string, format: date-time }
+        cost: { type: integer }
+    PendingWarsResponse:
+      type: object
+      properties:
+        wars:
+          type: array
+          items: { $ref: '#/components/schemas/ClanWarSummary' }
+    ClanWarSummary:
+      type: object
+      properties:
+        warId: { type: string }
+        attackerClanId: { type: string }
+        defenderClanId: { type: string }
+        status: { type: string }
+        preparationEndsAt: { type: string, format: date-time }
+        scheduledSieges: { type: integer }
+    WarAcceptanceRequest:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [accept, decline] }
+        reason: { type: string }
+    ClanWar:
+      type: object
+      required: [warId, status, attackerClanId, defenderClanId, createdAt]
+      properties:
+        warId: { type: string }
+        status: { type: string, enum: [DECLARED, PREPARATION, IN_PROGRESS, RESOLVED, CANCELLED] }
+        attackerClanId: { type: string }
+        defenderClanId: { type: string }
+        allies:
+          type: array
+          items: { $ref: '#/components/schemas/AllianceMember' }
+        timeline:
+          type: array
+          items: { $ref: '#/components/schemas/WarPhase' }
+        score:
+          $ref: '#/components/schemas/WarScore'
+        casualties:
+          type: object
+          properties:
+            attacker: { type: integer }
+            defender: { type: integer }
+        activeSieges:
+          type: array
+          items: { $ref: '#/components/schemas/SiegePlan' }
+        economicImpact: { type: integer }
+        createdAt: { type: string, format: date-time }
+        resolvedAt: { type: string, format: date-time }
+    AllianceMember:
+      type: object
+      properties:
+        clanId: { type: string }
+        role: { type: string, enum: [ally, mercenary] }
+        acceptedAt: { type: string, format: date-time }
+        sharedRewardsPercent: { type: integer, minimum: 0, maximum: 100 }
+    WarPhase:
+      type: object
+      properties:
+        phase: { type: string, enum: [DECLARATION, PREPARATION, SIEGE, RESOLUTION, COOLDOWN] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        notes: { type: string }
+    WarScore:
+      type: object
+      properties:
+        attacker: { type: integer }
+        defender: { type: integer }
+        territoriesCaptured: { type: integer }
+        objectivesCompleted: { type: integer }
+    SiegePlanRequest:
+      type: object
+      required: [territoryId, startTime, durationMinutes]
+      properties:
+        territoryId: { type: string }
+        startTime: { type: string, format: date-time }
+        durationMinutes: { type: integer, minimum: 15, maximum: 180 }
+        objectives:
+          type: array
+          items: { type: string }
+        attackerForces:
+          type: object
+          properties:
+            maxParticipants: { type: integer }
+            requiredGearScore: { type: integer }
+        defenderForces:
+          type: object
+          properties:
+            reinforcementSlots: { type: integer }
+            turretLevel: { type: integer }
+    SiegePlan:
+      type: object
+      required: [siegeId, territoryId, startTime, durationMinutes]
+      properties:
+        siegeId: { type: string }
+        territoryId: { type: string }
+        startTime: { type: string, format: date-time }
+        durationMinutes: { type: integer }
+        status: { type: string, enum: [SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED] }
+        objectives:
+          type: array
+          items: { type: string }
+        attackerForces: { type: object }
+        defenderForces: { type: object }
+    SiegeListResponse:
+      type: object
+      properties:
+        warId: { type: string }
+        sieges:
+          type: array
+          items: { $ref: '#/components/schemas/SiegePlan' }
+    AllianceRequest:
+      type: object
+      required: [action, clanId]
+      properties:
+        action: { type: string, enum: [invite, accept, decline, revoke] }
+        clanId: { type: string }
+        sharedRewardsPercent: { type: integer, minimum: 0, maximum: 50 }
+    TerritoryMapResponse:
+      type: object
+      properties:
+        region: { type: string }
+        territories:
+          type: array
+          items: { $ref: '#/components/schemas/Territory' }
+    Territory:
+      type: object
+      required: [territoryId, name, region, currentOwner]
+      properties:
+        territoryId: { type: string }
+        name: { type: string }
+        region: { type: string }
+        bonuses:
+          type: array
+          items: { type: string }
+        currentOwner: { type: string }
+        contestStatus: { type: string, enum: [stable, contested, vulnerable] }
+        vulnerabilityWindow:
+          type: object
+          properties:
+            start: { type: string, format: date-time }
+            end: { type: string, format: date-time }
+        fortifyLevel: { type: integer, minimum: 0, maximum: 5 }
+    FortifyRequest:
+      type: object
+      required: [investmentAmount]
+      properties:
+        investmentAmount: { type: integer, minimum: 1000 }
+        upgradeLevel: { type: integer, minimum: 1, maximum: 5 }
+        buffType: { type: string, enum: [turret_damage, shield_strength, respawn_speed] }
+    WarReportRequest:
+      type: object
+      required: [siegeId, reportType, metrics]
+      properties:
+        siegeId: { type: string }
+        reportType: { type: string, enum: [battle, infiltration, defense] }
+        metrics:
+          type: object
+          properties:
+            killsAttacker: { type: integer }
+            killsDefender: { type: integer }
+            objectivesSecured: { type: integer }
+            captureProgress: { type: number }
+        rewardsPreview:
+          type: array
+          items: { $ref: '#/components/schemas/WarReward' }
+    WarResolutionRequest:
+      type: object
+      required: [outcome]
+      properties:
+        outcome: { type: string, enum: [attacker_win, defender_win, truce, stalemate] }
+        capturedTerritories:
+          type: array
+          items: { type: string }
+        rewardDistribution:
+          type: array
+          items: { $ref: '#/components/schemas/RewardDistribution' }
+        penalties:
+          type: array
+          items: { $ref: '#/components/schemas/Penalty' }
+    WarResolutionResponse:
+      type: object
+      properties:
+        warId: { type: string }
+        outcome: { type: string }
+        rewards:
+          type: array
+          items: { $ref: '#/components/schemas/WarReward' }
+        cooldownEndsAt: { type: string, format: date-time }
+    RewardDistribution:
+      type: object
+      properties:
+        clanId: { type: string }
+        reward: { $ref: '#/components/schemas/WarReward' }
+        sharePercent: { type: integer }
+    WarReward:
+      type: object
+      required: [rewardType]
+      properties:
+        rewardType: { type: string, enum: [currency, item, buff, title, cosmetic] }
+        amount: { type: integer }
+        itemId: { type: string }
+        durationHours: { type: integer }
+    WarHistoryResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/WarHistoryEntry' }
+        pagination: { $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginationMeta' }
+    WarHistoryEntry:
+      type: object
+      properties:
+        warId: { type: string }
+        startedAt: { type: string, format: date-time }
+        endedAt: { type: string, format: date-time }
+        attackerClanId: { type: string }
+        defenderClanId: { type: string }
+        outcome: { type: string }
+        territoryChanges:
+          type: array
+          items: { $ref: '#/components/schemas/TerritoryChange' }
+    TerritoryChange:
+      type: object
+      properties:
+        territoryId: { type: string }
+        previousOwner: { type: string }
+        newOwner: { type: string }
+    WarAnalyticsResponse:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        range: { type: string }
+        warsPerWeek: { type: number }
+        winRate:
+          type: object
+          properties:
+            attacker: { type: number }
+            defender: { type: number }
+        territoryControl:
+          type: array
+          items:
+            type: object
+            properties:
+              territoryId: { type: string }
+              ownerClanId: { type: string }
+              controlPercent: { type: number }
+        economicImpact: { type: integer }
+        topClans:
+          type: array
+          items: { $ref: '#/components/schemas/ClanPerformance' }
+    ClanPerformance:
+      type: object
+      properties:
+        clanId: { type: string }
+        warsWon: { type: integer }
+        warsLost: { type: integer }
+        prestigeGained: { type: integer }
+    PenaltyRequest:
+      type: object
+      required: [penalty]
+      properties:
+        penalty: { $ref: '#/components/schemas/Penalty' }
+        reason: { type: string }
+    Penalty:
+      type: object
+      required: [penaltyType]
+      properties:
+        penaltyType: { type: string, enum: [ECONOMIC, COOLDOWN, RESTRICTION] }
+        value: { type: integer }
+        durationHours: { type: integer }
+        appliesTo: { type: string, enum: [attacker, defender, allies] }
+    BroadcastRequest:
+      type: object
+      required: [channel, message]
+      properties:
+        channel: { type: string, enum: [server, participants, allies, global_event] }
+        message: { type: string, maxLength: 500 }
+        attachments:
+          type: array
+          items: { type: string }
+    ClanWarSettings:
+      type: object
+      properties:
+        maxConcurrentWars: { type: integer }
+        warCostBase: { type: integer }
+        preparationWindowHours: { type: integer }
+        territoryImmunityHours: { type: integer }
+        allyLimit: { type: integer }
+        broadcastCooldownMinutes: { type: integer }
+    ClanWarError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [ALREADY_IN_WAR, INVALID_TERRITORY, INSUFFICIENT_FUNDS, PROTECTED_PERIOD, ALLY_LIMIT_REACHED, REPORT_DUPLICATE]
+        message: { type: string }
+        retryAfterSeconds: { type: integer }
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

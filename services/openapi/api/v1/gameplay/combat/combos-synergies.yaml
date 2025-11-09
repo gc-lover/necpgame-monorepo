@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Combos & Synergies API
+  version: 1.0.0
+  description: |
+    API для комбо и синергий.
+    
+    Источник: .BRAIN/02-gameplay/combat/combat-combos-synergies.md v1.0.0
+    
+    14+ combos: Solo, Team, Legendary
+
+  x-microservice:
+    name: gameplay-service
+    port: 8083
+    domain: gameplay
+    base-path: /api/v1/gameplay/combat
+    package: com.necpgame.gameplayservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Combos
+    description: Комбо способностей
+
+paths:
+  /gameplay/combat/combos:
+    get:
+      summary: Получить все комбо
+      operationId: getCombos
+      tags:
+        - Combos
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [solo, team, legendary]
+      responses:
+        '200':
+          description: Список комбо
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  combos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Combo'
+
+  /gameplay/combat/combos/execute:
+    post:
+      summary: Выполнить комбо
+      operationId: executeCombo
+      tags:
+        - Combos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                character_id:
+                  type: string
+                combo_id:
+                  type: string
+                targets:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Результат комбо
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /gameplay/combat/synergies:
+    get:
+      summary: Получить синергии
+      operationId: getSynergies
+      tags:
+        - Combos
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Активные синергии
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  synergies:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    Combo:
+      type: object
+      properties:
+        combo_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        required_abilities:
+          type: array
+          items:
+            type: string
+        execution_window:
+          type: number
+        effects:
+          type: object
+        skill_ceiling:
+          type: string
+

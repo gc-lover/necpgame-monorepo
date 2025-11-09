@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: Configuration Management API
+  description: |
+    API для централизованного управления configuration NECPGAME.
+    
+    **Функции:**
+    - Centralized configuration storage
+    - Secret management (encrypted)
+    - Environment variables
+    - Configuration versioning
+    - Dynamic config reload
+  version: 1.0.0
+
+  x-microservice:
+    name: admin-service
+    port: 8088
+    domain: admin
+    base-path: /api/v1/technical
+    package: com.necpgame.adminservice
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+tags:
+  - name: Configuration
+  - name: Secrets
+  - name: Environment
+
+paths:
+  /technical/config/{service_name}:
+    get:
+      tags:
+        - Configuration
+      summary: Get service configuration
+      parameters:
+        - name: service_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Service config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceConfig'
+
+    put:
+      tags:
+        - Configuration
+      summary: Update service config
+      parameters:
+        - name: service_name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Config updated
+
+  /technical/config/reload:
+    post:
+      tags:
+        - Configuration
+      summary: Reload configuration
+      description: Hot reload config без restart
+      responses:
+        '200':
+          description: Config reloaded
+
+  /technical/secrets:
+    get:
+      tags:
+        - Secrets
+      summary: List secrets (metadata only)
+      responses:
+        '200':
+          description: Secrets list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secrets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        secret_name:
+                          type: string
+                        created_at:
+                          type: string
+                        updated_at:
+                          type: string
+
+components:
+  schemas:
+    ServiceConfig:
+      type: object
+      properties:
+        service_name:
+          type: string
+        environment:
+          type: string
+        configuration:
+          type: object
+          additionalProperties: true
+        version:
+          type: string
+
+security:
+  - BearerAuth: []
+
+

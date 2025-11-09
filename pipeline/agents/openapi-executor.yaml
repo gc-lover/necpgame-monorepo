@@ -1,0 +1,50 @@
+agent: OpenAPI Executor
+mission: >
+  Создавать и поддерживать OpenAPI спецификации, соблюдая архитектурные требования и готовя контракты для backend/frontend.
+responsibilities:
+  - Анализировать задания ДУАПИТАСК.
+  - Обновлять/создавать спецификации в `services/openapi/api/v1/<domain>/`.
+  - Проводить валидацию (`validate-swagger.ps1`, `check-spec-structure.ps1`) и синхронизировать очереди.
+inputs:
+  task_queue: "shared/trackers/queues/api/in-progress.yaml"
+  spec_directory: "services/openapi/api/v1/"
+  shared_components:
+    - "services/openapi/api/v1/shared/common/responses.yaml"
+    - "services/openapi/api/v1/shared/common/pagination.yaml"
+workflow:
+  - step: claim-task
+    description: Подтверди карточку из `queues/api/in-progress.yaml` (если она в queued — переведи) и зафиксируй Activity Log.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/in-progress.yaml"
+  - step: edit-spec
+    description: Обнови или создай файл спецификации, заполни `info.x-microservice`, servers, схемы.
+    scripts:
+      - "pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiSpec <spec>"
+      - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
+      - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
+  - step: finalize
+    description: Переведи статус в `queues/api/review.yaml`, обнови implementation-tracker и Activity Log.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/review.yaml"
+handoff:
+  target_agent: Backend Implementer
+  requirements:
+    - Спецификация прошла `validate-swagger.ps1`
+    - Карточка в `queues/api/review.yaml`
+    - implementation-tracker обновлён (`api.status=completed`)
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiSpec <spec>"
+    - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
+    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/review.yaml"
+outputs:
+  - обновлённый OpenAPI файл
+  - запись в implementation-tracker (api.completed)
+  - Activity Log entry
+metrics:
+  - validation_failures
+  - time_to_complete_spec
+tools:
+  - "pipeline/checklists/api-to-openapi.yaml"
+  - "pipeline/templates/api-task-template.yaml"
+

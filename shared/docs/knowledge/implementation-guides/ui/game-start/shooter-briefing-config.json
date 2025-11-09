@@ -1,0 +1,89 @@
+{
+  "version": "0.1.0",
+  "updated": "2025-11-10T01:35:00Z",
+  "source": "05-technical/ui-game-start.md",
+  "metricsRef": "05-technical/shooter-attributes.md",
+  "stages": [
+    {
+      "id": "login-sequence",
+      "type": "ui-flow",
+      "screens": ["login", "server-select", "character-select"],
+      "telemetry": {
+        "event": "ui.telemetry.login",
+        "fields": ["region", "latency", "result"]
+      }
+    },
+    {
+      "id": "shooter-briefing",
+      "type": "tutorial",
+      "durationSec": 120,
+      "objectives": [
+        {
+          "name": "accuracy-drill",
+          "target": {
+            "metric": "accuracy",
+            "min": 0.50,
+            "max": 0.65
+          },
+          "validation": {
+            "endpoint": "/api/v1/tutorial/events",
+            "payload": ["hitCount", "missCount", "latency"]
+          }
+        },
+        {
+          "name": "stability-burst",
+          "target": {
+            "metric": "stability",
+            "min": 0.48,
+            "max": 0.60
+          },
+          "validation": {
+            "endpoint": "/api/v1/combat/shooter",
+            "payload": ["recoilPattern", "burstTime"]
+          }
+        },
+        {
+          "name": "suppression-field",
+          "target": {
+            "metric": "suppression_score",
+            "min": 0.30,
+            "max": 0.45
+          },
+          "validation": {
+            "endpoint": "/api/v1/combat/shooter/suppress",
+            "payload": ["radius", "intensity", "duration"]
+          }
+        }
+      ],
+      "websocket": {
+        "url": "wss://api.necp.game/v1/tutorial/shooter/{playerId}",
+        "events": ["accuracy_update", "stability_delta", "suppression_tick"]
+      }
+    },
+    {
+      "id": "matchmaking",
+      "type": "queue",
+      "telemetry": {
+        "event": "ui.telemetry.matchmaking",
+        "fields": ["queueTime", "readyState", "latency"]
+      }
+    }
+  ],
+  "antiCheatThresholds": {
+    "accuracyDeviation": 0.12,
+    "fireBurstMax": 9,
+    "latencyCeilingMs": 200
+  },
+  "export": {
+    "analytics": {
+      "dataset": "shooter_tutorial_metrics",
+      "dimensions": ["playerId", "role", "region"],
+      "measures": ["accuracy", "stability", "suppression_score", "completion_time"]
+    },
+    "security": {
+      "topic": "combat.anticheat.threshold",
+      "fields": ["metric", "value", "limit", "violation"]
+    }
+  }
+}
+

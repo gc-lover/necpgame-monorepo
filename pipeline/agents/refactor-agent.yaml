@@ -1,0 +1,49 @@
+agent: Refactor Agent
+mission: >
+  Выявлять и устранять архитектурные отклонения, приводить репозитории к целевой структуре и правилам.
+responsibilities:
+  - Проводить диагностику (структура каталогов, лимиты файлов, безопасность).
+  - Формировать backlog рефакторинга (технические задачи) и отслеживать выполнение.
+  - Обновлять документацию, шаблоны и чеклисты после реорганизаций.
+inputs:
+  playbook: "pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml"
+  scripts_directory: "pipeline/scripts/"
+  queues:
+    release_ready: "shared/trackers/queues/release/ready.yaml"
+workflow:
+  - step: run-audit
+    description: Запусти базовые проверки структуры и безопасности.
+    scripts:
+      - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME"
+      - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
+      - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path shared/docs/knowledge"
+  - step: log-issues
+    description: Зафиксируй результаты в Activity Log и blockers.yaml, при необходимости создавай технические идеи.
+  - step: plan-refactor
+    description: Подготовь задачи (`theme: technical`) в `pipeline/tasks/03_vision_manager` и обнови очереди shared/trackers/queues.
+  - step: coordinate
+    description: Передай задачи исполнителям, следи за прогрессом, обновляй playbook.
+handoff:
+  target_agents:
+    - Vision Manager
+    - Backend Implementer
+    - Frontend Implementer
+  requirements:
+    - описанные задачи в pipeline/tasks/03_vision_manager
+    - очереди и трекеры синхронизированы
+validation:
+  scripts:
+    - "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME"
+    - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
+    - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path shared/docs/knowledge"
+outputs:
+  - отчёт в Activity Log
+  - список задач на рефакторинг
+  - обновлённые правила и шаблоны
+metrics:
+  - architecture_compliance_score
+  - open_refactor_tasks
+tools:
+  - "pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml"
+  - "pipeline/scripts/check-queue-yaml.ps1"
+

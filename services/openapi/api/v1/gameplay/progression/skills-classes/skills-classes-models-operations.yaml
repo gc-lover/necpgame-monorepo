@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Skills Classes Operation Models
+  version: 1.0.0
+components:
+  schemas:
+    ClassSummaryListResponse:
+      allOf:
+        - $ref: '../../../shared/common/pagination.yaml#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: './skills-classes-models.yaml#/components/schemas/ClassSummary'
+    ClassDetailResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './skills-classes-models.yaml#/components/schemas/ClassDetail'
+    SubclassDetailResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: './skills-classes-models.yaml#/components/schemas/SubclassDetail'
+    UnlockAttemptRequest:
+      type: object
+      required: [characterId, classCode, tier, attributeSnapshot]
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        classCode:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+        tier:
+          type: integer
+          minimum: 0
+          maximum: 4
+        attributeSnapshot:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        completedQuests:
+          type: array
+          items:
+            type: string
+        reputation:
+          type: object
+          properties:
+            factionCode:
+              type: string
+            value:
+              type: integer
+              minimum: 0
+              maximum: 100
+        inventoryItems:
+          type: array
+          items:
+            type: string
+        perks:
+          type: array
+          items:
+            type: string
+        crossClassEnabled:
+          type: boolean
+          default: false
+        overrideSource:
+          type: string
+          description: Optional identifier when request originates from administrative override.
+    UnlockAttemptResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approved, denied, pending_review]
+        unlockedAt:
+          type: string
+          format: date-time
+        failureReasons:
+          type: array
+          items:
+            type: string
+        appliedModifiers:
+          type: array
+          items:
+            $ref: './skills-classes-models.yaml#/components/schemas/SkillModifier'
+        eventsPublished:
+          type: array
+          items:
+            type: string
+    ClassMetricsDashboard:
+      type: object
+      required: [classCode, period, usageShare, winRateDelta, overuseFlags, exclusiveSkillUsage, telemetryVersion]
+      properties:
+        classCode:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+        period:
+          type: string
+          enum: [daily, weekly, monthly]
+        metricType:
+          type: string
+        usageShare:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        winRateDelta:
+          type: number
+          format: float
+        overuseFlags:
+          type: array
+          items:
+            type: object
+            required: [code]
+            properties:
+              code:
+                type: string
+              description:
+                type: string
+        exclusiveSkillUsage:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              activationRate:
+                type: number
+                format: float
+              winContribution:
+                type: number
+                format: float
+        telemetryVersion:
+          type: string
+        overridesApplied:
+          type: boolean
+          default: false
+    BalanceOverrideRequest:
+      type: object
+      required: [effectiveFrom, modifiers, reason, author]
+      properties:
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveUntil:
+          type: string
+          format: date-time
+        modifiers:
+          type: array
+          minItems: 1
+          items:
+            $ref: './skills-classes-models.yaml#/components/schemas/OverrideModifier'
+        exclusiveAdjustments:
+          type: array
+          items:
+            $ref: './skills-classes-models.yaml#/components/schemas/ExclusiveOverride'
+        reason:
+          type: string
+        author:
+          type: string
+        rolesAllowed:
+          type: array
+          items:
+            type: string
+    ClassEventFeed:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          items:
+            $ref: './skills-classes-models-operations.yaml#/components/schemas/ClassEvent'
+        nextCursor:
+          type: string
+    ClassEvent:
+      type: object
+      required: [eventId, eventType, occurredAt, payload]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum: [unlock_attempted, unlock_success, modifier_applied, balance_override_applied]
+        occurredAt:
+          type: string
+          format: date-time
+        payload:
+          type: object
+        correlationId:
+          type: string
+

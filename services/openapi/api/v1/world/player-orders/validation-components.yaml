@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: World Player Order Validation Components
+  version: 1.0.0
+  description: Общие параметры и схемы для проверки заказов игроков в world-service.
+  x-microservice:
+    name: world-service
+    port: 8086
+    domain: world
+    base-path: /api/v1/world
+    package: com.necpgame.worldservice
+paths: {}
+components:
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: Уникальный идентификатор заказа игрока.
+      schema:
+        type: string
+        format: uuid
+    Locale:
+      name: locale
+      in: query
+      required: false
+      description: Код локали для локализованных сообщений (RFC 5646).
+      schema:
+        type: string
+        pattern: '^[a-z]{2}-[A-Z]{2}$'
+    ZoneId:
+      name: zoneId
+      in: path
+      required: true
+      description: Идентификатор зоны мира.
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 64
+  schemas:
+    ValidationStatus:
+      type: string
+      enum: [passed, warning, failed]
+    ValidationSeverity:
+      type: string
+      enum: [info, warning, error]
+    ViolationCode:
+      type: string
+      description: Код правила или нарушения.
+    ValidationIssue:
+      type: object
+      required: [code, severity, messageKey]
+      properties:
+        code:
+          $ref: '#/components/schemas/ViolationCode'
+        severity:
+          $ref: '#/components/schemas/ValidationSeverity'
+        messageKey:
+          type: string
+          minLength: 3
+          maxLength: 128
+        defaultMessage:
+          type: string
+        blocking:
+          type: boolean
+          default: false
+        affectedFields:
+          type: array
+          items:
+            type: string
+        recommendation:
+          type: string
+        links:
+          type: array
+          items:
+            type: string
+    ValidationCategoryResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/ValidationStatus'
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+    ValidationChecklist:
+      type: object
+      required:
+        - territory
+        - sanctions
+        - legal
+        - toxicity
+        - budgetBounds
+        - duplicates
+        - summary
+      properties:
+        territory:
+          $ref: '#/components/schemas/ValidationCategoryResult'
+        sanctions:
+          $ref: '#/components/schemas/ValidationCategoryResult'
+        legal:
+          $ref: '#/components/schemas/ValidationCategoryResult'
+        toxicity:
+          $ref: '#/components/schemas/ValidationCategoryResult'
+        budgetBounds:
+          $ref: '#/components/schemas/ValidationCategoryResult'
+        duplicates:
+          $ref: '#/components/schemas/ValidationCategoryResult'
+        summary:
+          $ref: '#/components/schemas/ValidationSummary'
+    ValidationSummary:
+      type: object
+      required: [overallStatus, blockingIssues, warningsCount, policyVersion]
+      properties:
+        overallStatus:
+          $ref: '#/components/schemas/ValidationStatus'
+        blockingIssues:
+          type: integer
+          minimum: 0
+        warningsCount:
+          type: integer
+          minimum: 0
+        recommendedActions:
+          type: array
+          items:
+            type: string
+        policyVersion:
+          type: string
+          description: Версия политик world-service, использованных при проверке.
+        auditTraceId:
+          type: string
+          format: uuid
+    TerritoryRestriction:
+      type: object
+      required: [zoneId, legalStatus]
+      properties:
+        zoneId:
+          type: string
+        legalStatus:
+          type: string
+          enum: [allowed, restricted, prohibited]
+        allowedTemplates:
+          type: array
+          items:
+            type: string
+        restrictedActions:
+          type: array
+          items:
+            type: string
+        curfew:
+          type: string
+        hazardLevel:
+          type: string
+          enum: [low, medium, high, critical]
+        requiredPermits:
+          type: array
+          items:
+            type: string
+    PlayerOrderValidationRequest:
+      type: object
+      required:
+        - orderId
+        - ownerId
+        - templateCode
+        - zoneId
+        - objectives
+        - budget
+      properties:
+        orderId: { type: string, format: uuid }
+        ownerId: { type: string, format: uuid }
+        templateCode:
+          type: string
+          enum: [combat, hacker, economy, social, exploration]
+        zoneId: { type: string }
+        privacyMode:
+          type: string
+          enum: [public, invite, private]
+        riskLevel:
+          type: string
+          enum: [low, medium, high, severe, extreme]
+        budget:
+          type: number
+          format: float
+          minimum: 0
+        objectives:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        invitees:
+          type: array
+          items:
+            type: string
+        documents:
+          type: array
+          items:
+            type: string
+        locale:
+          type: string
+    PlayerOrderValidationReport:
+      type: object
+      required: [status, checklist]
+      properties:
+        status:
+          $ref: '#/components/schemas/ValidationStatus'
+        checklist:
+          $ref: '#/components/schemas/ValidationChecklist'
+        generatedAt:
+          type: string
+          format: date-time
+    ZonePoliciesResponse:
+      type: object
+      required: [policyVersion, restrictions]
+      properties:
+        policyVersion:
+          type: string
+        restrictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TerritoryRestriction'
+    FactionValidationResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/ValidationStatus'
+        blockedInvitees:
+          type: array
+          items:
+            type: string
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+    ToxicityCheckResult:
+      type: object
+      required: [status, toxicityScore]
+      properties:
+        status:
+          $ref: '#/components/schemas/ValidationStatus'
+        toxicityScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        flaggedPhrases:
+          type: array
+          items:
+            type: string
+        categories:
+          type: array
+          items:
+            type: string
+    DuplicateOrderHint:
+      type: object
+      required: [similarOrderId, similarityScore]
+      properties:
+        similarOrderId: { type: string, format: uuid }
+        similarityScore: { type: number, format: float, minimum: 0, maximum: 1 }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }
+    ValidationHistoryItem:
+      type: object
+      required: [checkedAt, status]
+      properties:
+        checkedAt: { type: string, format: date-time }
+        status:
+          $ref: '#/components/schemas/ValidationStatus'
+        checklist:
+          $ref: '#/components/schemas/ValidationChecklist'
+servers:
+  - url: https://api.necp.game/v1
+    description: Production API Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway

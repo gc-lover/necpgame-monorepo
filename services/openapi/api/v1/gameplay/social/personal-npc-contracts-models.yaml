@@ -1,0 +1,332 @@
+openapi: 3.0.3
+info:
+  title: Personal NPC Contracts Models
+  version: 1.0.0
+components:
+  schemas:
+    ContractTerms:
+      type: object
+      properties:
+        duration:
+          type: number
+          format: float
+        payment:
+          type: object
+          required: [amount, currency]
+          properties:
+            amount:
+              type: number
+              format: float
+            currency:
+              type: string
+            schedule:
+              type: string
+        obligations:
+          type: array
+          items:
+            type: object
+            properties:
+              party:
+                type: string
+                enum: [owner, counterparty]
+              description:
+                type: string
+        penalties:
+          type: object
+          properties:
+            type:
+              type: string
+            value:
+              type: number
+              format: float
+        guarantees:
+          type: object
+          properties:
+            escrowAmount:
+              type: number
+              format: float
+            currency:
+              type: string
+        rights:
+          type: object
+          properties:
+            ownership:
+              type: boolean
+            administration:
+              type: boolean
+            delegation:
+              type: boolean
+            observation:
+              type: boolean
+    ContractSummary:
+      type: object
+      required: [id, type, npcId, fromOwnerId, toOwnerId, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [ownership_transfer, lease, loan]
+        npcId:
+          type: string
+          format: uuid
+        fromOwnerId:
+          type: string
+          format: uuid
+        toOwnerId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, active, fulfilled, breached, cancelled]
+        signedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+    ContractDetail:
+      type: object
+      required: [summary, terms]
+      properties:
+        summary:
+          $ref: '#/components/schemas/ContractSummary'
+        terms:
+          $ref: '#/components/schemas/ContractTerms'
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+              changedAt:
+                type: string
+                format: date-time
+              actorId:
+                type: string
+                format: uuid
+        auditReferences:
+          type: array
+          items:
+            type: string
+            format: uuid
+    ContractListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractSummary'
+        meta:
+          $ref: '../../shared/common/pagination.yaml#/components/schemas/PaginationMeta'
+    ContractDetailResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ContractDetail'
+    ContractCreateRequest:
+      type: object
+      required: [type, npcId, fromOwnerId, toOwnerId, terms]
+      properties:
+        type:
+          type: string
+          enum: [ownership_transfer, lease, loan]
+        npcId:
+          type: string
+          format: uuid
+        fromOwnerId:
+          type: string
+          format: uuid
+        toOwnerId:
+          type: string
+          format: uuid
+        terms:
+          $ref: '#/components/schemas/ContractTerms'
+        autoTransfer:
+          type: boolean
+    ContractStatusUpdateRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [draft, active, fulfilled, breached, cancelled]
+        breachDetails:
+          type: string
+        fulfilledAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+    License:
+      type: object
+      required: [id, ownerId, type, tier, status, limits, issuedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [npc_count, scenario_count, role_access, zone_access]
+        tier:
+          type: string
+          enum: [L1, L2, L3]
+        scopes:
+          type: array
+          items:
+            type: string
+        limits:
+          type: object
+          properties:
+            maxNPCs:
+              type: integer
+              minimum: 0
+            maxScenarios:
+              type: integer
+              minimum: 0
+            maxRoles:
+              type: integer
+              minimum: 0
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        issuer:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended, revoked, expired]
+    LicenseListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/License'
+    LicenseRequest:
+      type: object
+      required: [ownerId, type]
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [npc_count, scenario_count, role_access, zone_access]
+        requestedTier:
+          type: string
+          enum: [L1, L2, L3]
+        justification:
+          type: string
+        supportingDocuments:
+          type: array
+          items:
+            type: string
+            format: uuid
+    LicenseRequestResponse:
+      type: object
+      required: [requestId, status]
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, approved, rejected, escalated]
+        estimatedDecisionAt:
+          type: string
+          format: date-time
+    Certificate:
+      type: object
+      required: [id, ownerId, type, scope, issuedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        npcId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [role_certification, zone_access, scenario_approval]
+        scope:
+          type: string
+        requirements:
+          type: object
+          properties:
+            reputation:
+              type: object
+              additionalProperties:
+                type: integer
+            level:
+              type: integer
+            skills:
+              type: object
+              additionalProperties:
+                type: integer
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        issuer:
+          type: string
+    CertificateListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Certificate'
+    CertificateRequest:
+      type: object
+      required: [ownerId, type, scope]
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+        npcId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [role_certification, zone_access, scenario_approval]
+        scope:
+          type: string
+        justification:
+          type: string
+        supportingEvidence:
+          type: array
+          items:
+            type: string
+            format: uuid
+    CertificateRequestResponse:
+      type: object
+      required: [requestId, status]
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, scheduled, approved, rejected]
+        scheduledEvaluationAt:
+          type: string
+          format: date-time
+
