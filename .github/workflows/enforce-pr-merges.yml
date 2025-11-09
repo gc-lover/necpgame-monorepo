@@ -1,0 +1,23 @@
+name: Enforce PR merges
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  prevent-direct-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure push comes from PR merge
+        run: |
+          commit_message="${{ github.event.head_commit.message }}"
+          if [[ "$commit_message" == Merge\ pull\ request* ]]; then
+            echo "Merge commit detected: $commit_message"
+            exit 0
+          fi
+          echo "Direct pushes в ветки main/master запрещены. Создайте Pull Request."
+          exit 1
+
+
