@@ -65,6 +65,11 @@ jobs:
   frontend:
     needs: [changes]
     if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check frontend structure
+        run: pwsh -File pipeline/scripts/check-frontend-structure.ps1 -ProjectRoot services/frontend
   pr-main-validation:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
@@ -84,15 +89,9 @@ jobs:
         run: pwsh -Command "Get-Command pipeline/scripts/queue-manager.ps1"
       - name: Placeholder backend tests
         if: ${{ needs.changes.outputs.backend == 'true' }}
-        run: echo "TODO: добавить mvn test / gradle test"
+        run: |
+          echo "TODO: добавить mvn test / gradle test"
       - name: Placeholder frontend tests
         if: ${{ needs.changes.outputs.frontend == 'true' }}
-        run: echo "TODO: добавить npm test"
-
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check frontend structure
-        run: pwsh -File pipeline/scripts/check-frontend-structure.ps1 -ProjectRoot services/frontend
-
-
+        run: |
+          echo "TODO: добавить npm test"
