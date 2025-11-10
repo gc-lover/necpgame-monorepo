@@ -1,0 +1,132 @@
+metadata:
+  id: stock-dividends
+  title: Биржа акций — система дивидендов
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-07T16:19:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T11:21:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - stock-exchange
+    - dividends
+    - passive-income
+  topics:
+    - financial-markets
+    - rewards
+  related_systems:
+    - economy-service
+    - wallet-service
+    - tax-service
+    - notification-service
+  related_documents:
+    - id: stock-exchange-overview
+      relation: references
+    - id: economy-investments
+      relation: complements
+  source: shared/docs/knowledge/mechanics/economy/stock-exchange/stock-dividends.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-09T11:21:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось формализовать расчет, график и обработку дивидендов для игроков и корпораций.
+  goal: Описать формулы выплат, жизненный цикл, налоговый учёт и API дивидендной системы.
+  essence: Документ определяет расписания выплат, DRIP механику, налоги и интеграции, обеспечивающие пассивный доход инвесторов.
+  key_points:
+    - Quarterly и annual выплаты зависят от прибыли и payout ratio корпораций.
+    - DRIP план обеспечивает автоматическое реинвестирование и компаундинг.
+    - REST/API события и таблицы поддерживают расчёт, отчётность и интеграцию с налогами.
+content:
+  sections:
+    - id: dividend-basics
+      title: 'Основы дивидендов'
+      body: |
+        Дивиденды предоставляют игрокам пассивный доход, стимулируя долгосрочное владение акциями и расширяя экономический геймплей.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: schedule
+      title: 'Частота и расписание'
+      body: |
+        Ежеквартальные и ежегодные выплаты описаны с примерами расчёта для Arasaka и SovOil. Документ фиксирует ключевые даты declaration, ex-dividend, record и payment.
+      mechanics_links:
+        - mechanics/economy/economy-calendar.yaml
+      assets: []
+    - id: calculation
+      title: 'Расчёт и типы дивидендов'
+      body: |
+        Формула `(profit × payout_ratio) / shares_outstanding` определяет дивиденд на акцию. Описаны фиксированные и переменные дивиденды и их поведение.
+      mechanics_links:
+        - mechanics/economy/stock-analytics.yaml
+      assets: []
+    - id: payout-flow
+      title: 'Выплата и UI'
+      body: |
+        Жизненный цикл `DECLARED → PAID → RECONCILED` описывает автоматическую выплату, уведомления и интерфейс игрока.
+      mechanics_links:
+        - mechanics/implementation/frontend/modules/ui/finance-dashboard.yaml
+      assets: []
+    - id: drip
+      title: 'Реинвестирование (DRIP)'
+      body: |
+        План DRIP позволяет автоматически покупать акции на дивиденды, обеспечивая компаундинг и дополнительные настройки.
+      mechanics_links:
+        - mechanics/economy/economy-investments.yaml
+      assets: []
+    - id: data-structures
+      title: 'Структуры данных'
+      body: |
+        Таблицы `dividend_schedules` и `dividend_payments` фиксируют расписание, выплаты, реинвестирование и привязку к игрокам.
+      mechanics_links:
+        - mechanics/implementation/backend/database/schema.yaml
+      assets: []
+    - id: api-events
+      title: 'API, события и налоги'
+      body: |
+        REST эндпоинты управляют расписанием, историей и DRIP настройками, а шина `economy.dividends.*` распространяет события выплаты, реинвестирования и удержания налогов.
+      mechanics_links:
+        - mechanics/economy/economy-events.yaml
+      assets: []
+    - id: analytics
+      title: 'Аналитика и UI'
+      body: |
+        Графики yield, DRIP калькуляторы и уведомления обеспечивают прозрачность и вовлечённость инвесторов.
+      mechanics_links:
+        - mechanics/economy/stock-analytics.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#CON-2025-230
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Добавлены lifecycle выплат, DRIP, налоговые интеграции и REST/API интерфейсы.
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_director
+    changes: Первичный документ по дивидендам, расчётам и календарю выплат.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
