@@ -1,0 +1,120 @@
+metadata:
+  id: implementation-shooter-attributes
+  title: Shooter Attributes Core
+  document_type: implementation
+  category: gameplay
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-11-10T00:40:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - shooter
+    - combat
+    - attributes
+  topics:
+    - combat_balancing
+    - progression
+  related_systems:
+    - combat-service
+    - analytics-service
+    - session-service
+    - quest-engine
+    - economy-service
+  related_documents:
+    - id: mechanics-combat-shooter-core
+      relation: aligns_with
+    - id: mechanics-combat-abilities
+      relation: aligns_with
+    - id: mechanics-combat-stealth
+      relation: references
+    - id: mechanics-combat-freerun
+      relation: references
+    - id: mechanics-combat-hacking-networks
+      relation: references
+  source: shared/docs/knowledge/implementation/shooter-attributes.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Боевым подсистемам требуется общий набор непрерывных характеристик без опоры на кубики.
+  goal: Определить категории, диапазоны и формулы shooter-атрибутов для всех боевых модулей.
+  essence: Единые параметры связывают стрельбу, мобильность, социальные проверки и технические навыки с аналитикой и античитом.
+  key_points:
+    - Категории распределены по боевым, мобильным, защитным, социальным и техническим направлениям.
+    - Диапазоны значений и базовые роли формируют целевой TTK и контроль баланса.
+    - Формулы и телеметрия позволяют аналитике и античиту контролировать отклонения.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Shooter-атрибуты заменяют дискретные проверки на непрерывные параметры. Документ консолидирует требования боевых подсистем, прогрессии и аналитики, обеспечивая единый источник правды для расчётов урона, мобильности и социальных взаимодействий.
+      mechanics_links: []
+      assets: []
+    - id: category_matrix
+      title: Категории характеристик
+      body: |
+        Стрельба использует accuracy, stability, handling и suppression_score. Мобильность измеряется через mobility и momentum. Выживаемость отражают resilience и shield_capacity. Социальное давление контролирует presence, а технические взаимодействия зависят от tech_override и analysis. Диапазоны значений лежат в пределах 0.20–0.90 или фиксированы в единицах, синхронизированных с документами боевых подсистем.
+      mechanics_links: []
+      assets: []
+    - id: baseline_values
+      title: Базовые значения ролей
+      body: |
+        Assault стартует с accuracy 0.56, stability 0.52 и mobility 0.50. Support усиливает stability 0.55 и resilience 0.54. Tech Specialist фокусируется на tech_override 0.60 и analysis 0.62. Stealth/Recon повышает mobility 0.58 и presence 0.58. Гибридные билды удерживают показатели в диапазоне 0.45–0.52, поддерживая целевой TTK согласно analytics-service.
+      mechanics_links: []
+      assets: []
+    - id: thresholds
+      title: Пороги взаимодействий
+      body: |
+        Значения выше порога гарантируют успех, диапазон ±0.03 требует дополнительного подтверждения, а падение ниже порога −0.03 активирует негативные последствия. Tier 1 (0.35–0.45) покрывает базовые действия, Tier 3 (0.56–0.65) соответствует бою под огнём, Tier 5 (0.76–0.90) обслуживает рейды и корпоративные операции.
+      mechanics_links: []
+      assets: []
+    - id: formulas
+      title: Формулы и баланс
+      body: |
+        `effective_spread = base_spread * (1 - stability)` удерживает минимальный разброс на уровне 30% от базы. Подавление вычисляется как `suppression_apply = suppression_score * accuracy`. `mobility_speed = base_speed * (1 + mobility)` учитывает momentum, а `presence_check = presence - enemy_resolve` определяет исход переговоров. `duration_final = duration_base * (1 - resilience*0.4)` сокращает эффекты контроля.
+      mechanics_links: []
+      assets: []
+    - id: telemetry
+      title: Телеметрия
+      body: |
+        Потоки analytics.shooter.metrics, analytics.movement.momentum, analytics.social.interaction и combat.anticheat.threshold фиксируют значения параметров, исходы взаимодействий и нарушения. Данные применяются для балансировки и античита.
+      mechanics_links: []
+      assets: []
+    - id: progression_links
+      title: Связь с прогрессией
+      body: |
+        Каждые пять уровней игрок усиливает два параметра до +0.05. Импланты дают постоянные бонусы, редкость экипировки добавляет 0.02–0.12, а комбо способностей создают временные модификации. Настройки синхронизируются с прогрессией и экономикой модификаций.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-11-10
+    author: concept_director
+    changes: Консолидированы категории и формулы shooter-атрибутов для боевых подсистем.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
