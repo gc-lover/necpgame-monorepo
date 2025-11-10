@@ -1,0 +1,100 @@
+metadata:
+  id: guild-system-backend
+  title: Backend системы гильдий
+  document_type: implementation
+  category: systems
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - guilds
+    - social
+    - backend
+  topics:
+    - membership
+    - ranks
+    - wars
+  related_systems:
+    - social-service
+    - economy-service
+    - world-service
+  related_documents:
+    - id: guilds-overview
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - social
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T05:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Гильдиям необходим централизованный backend для управления участниками, банком и войнами.
+  goal: Описать архитектуру и данные, поддерживающие создание гильдий, ранги и прогрессию.
+  essence: Social-service обслуживает API гильдий, взаимодействуя с экономикой и миром, и управляет событиями гильдий.
+  key_points:
+    - Поддержка сценариев создания, приглашения, исключения и рангов.
+    - Общий банк и прогресс гильдии с уровнями и перками.
+    - Поддержка гильдейских войн и территорий через world-service.
+content:
+  sections:
+    - id: architecture
+      title: Микросервисная архитектура
+      body: |
+        Гильдейный сервис работает в social-service (порт 8084) и доступен по маршруту
+        `/api/v1/social/guilds/*`. Он публикует события `guild:created`, `guild:member-joined`,
+        `guild:leveled-up`, `guild:war-started`, а также подписывается на уровни персонажей
+        и захват территорий для прогресса гильдии.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Модель данных
+      body: |
+        Таблица `guilds` хранит ключевые параметры гильдии: лидер, уровень, банк, описание
+        и статус. Таблица `guild_members` фиксирует состав, ранги и разрешения. Дополнительные
+        таблицы (банк, события) расширяют функциональность. Индексы оптимизируют поиск по
+        имени, тегу и членам.
+      mechanics_links: []
+      assets: []
+    - id: features
+      title: Основные функции
+      body: |
+        Сервис поддерживает создание гильдии, управление приглашениями и правами, планирование
+        событий и ведение войн. Банк гильдии взаимодействует с economy-service для транзакций,
+        а world-service уведомляется о владении территориями и статусе войн.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: repository
+      path: shared/code/backend/social/guild-service/
+  decisions:
+    - id: adr-guild-service
+      summary: Утверждена архитектура гильдейного сервиса с поддержкой рангов, банка и войн.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: Concept Director
+    changes: Описана архитектура backend системы гильдий.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
