@@ -1,0 +1,143 @@
+metadata:
+  id: economy-contracts
+  title: Экономика — Контракты и сделки
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-10T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T03:22:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - contracts
+    - economy
+    - escrow
+  topics:
+    - player-economy
+    - trade
+  related_systems:
+    - economy-service
+    - inventory-service
+    - wallet-service
+  related_documents:
+    - id: economy-overview
+      relation: references
+    - id: economy-logistics
+      relation: integrates_with
+    - id: economy-analytics
+      relation: monitors
+  source: shared/docs/knowledge/mechanics/economy/economy-contracts.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - social
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-09T03:22:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Игрокам нужен безопасный способ заключать сделки с контролем исполнения и арбитражем.
+  goal: Описать типы контрактов, работу эскроу, залоги, арбитраж и техническую реализацию.
+  essence: Контракты используют эскроу и залоги для обмена предметами, услуг и перевозок c подробным audit trail и интеграциями.
+  key_points:
+    - Поддержка обменных, доставочных, крафтовых и сервисных контрактов.
+    - Эскроу и залоги гарантируют исполнение и управляются через state machine.
+    - API покрывает переговоры, выполнение, споры и мониторинг.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Система контрактов обеспечивает безопасные P2P сделки в экономике игры и связывает участников через эскроу и арбитраж.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-overview.yaml
+      assets: []
+    - id: contract_types
+      title: Типы контрактов
+      body: |
+        Поддерживаются обмен предметами, доставка, крафт и сервисные услуги. Для каждого типа указаны ключевые условия, оплата, сроки и штрафы.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-logistics.yaml
+      assets: []
+    - id: escrow
+      title: Эскроу и залоги
+      body: |
+        Эскроу блокирует активы обеих сторон до завершения сделки. Залог мотивирует выполнение условий и частично удерживается при нарушениях.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-investments.yaml
+      assets: []
+    - id: arbitration
+      title: Арбитраж и споры
+      body: |
+        Арбитраж запускается при нарушении условий. Система собирает доказательства, AI-модератор принимает решение и распределяет эскроу.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/social/social-mechanics-overview.yaml
+      assets: []
+    - id: data_model
+      title: Структура данных
+      body: |
+        Таблица `player_contracts` хранит тип контракта, стороны, условия, информация об эскроу и статусе. Приведена схема и state machine.
+      mechanics_links:
+        - shared/docs/knowledge/implementation/backend/trade-system.yaml
+      assets: []
+    - id: lifecycle
+      title: Жизненный цикл контракта
+      body: |
+        Состояния DRAFT, NEGOTIATION, ESCROW_PENDING, ACTIVE, COMPLETED, CANCELLED и DISPUTED описывают переходы и триггеры.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-logistics.yaml
+      assets: []
+    - id: api
+      title: API контрактов
+      body: |
+        REST маршруты дают доступ к созданию, переговорам, внесению эскроу, загрузке результатов и открытию споров. Интеграционные события синхронизируют инвентарь, кошельки и репутацию.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-analytics.yaml
+      assets: []
+    - id: validation
+      title: Правила, лимиты и безопасность
+      body: |
+        Определены требования по уровню, KYC, лимитам collateral, ограничению параллельных контрактов и проверкам на мошенничество.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-investments.yaml
+      assets: []
+    - id: notifications
+      title: Уведомления и UX
+      body: |
+        Игроки получают уведомления в HUD, push/email и имеют доступ к таймлайну контракта с комментариями и оценками.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-analytics.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции
+      body: |
+        Контракты взаимодействуют с inventory-service, wallet-service, reputation-service, logistics-service и social-service для полного цикла сделки.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-logistics.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#economy-contracts
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-10
+    author: AI Brain Manager
+    changes: Конвертация описания контрактной системы в YAML с детализацией API и ограничений.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
