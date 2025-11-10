@@ -1,0 +1,158 @@
+metadata:
+  id: quest-main-2077-relics-shadow
+  title: "Архив — 2077: Тень Реликта"
+  document_type: implementation
+  category: start-content
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-06T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - questline
+    - relic
+    - archive
+  topics:
+    - quests
+    - infiltration
+  related_systems:
+    - quest-engine
+    - shooter-service
+  related_documents:
+    - id: quest-main-2027-rebuild-protocol
+      relation: precedes
+  source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2077-relics-shadow.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+  risk_level: low
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется сохранить архивную версию квеста Relic's Shadow до перехода на shooter-механику.
+  goal: Задокументировать ветвления, проверочные значения и диалоги для исторического анализа.
+  essence: Квест про перехват данных Relic сочетает социальные, скрытные и боевые пути, предоставляя корпоративную конспирологию Night City.
+  key_points:
+    - Расследование Relic с участием Виктора Вектора и Элизабет Чен.
+    - Ветвления через COOL, STEALTH, TECH и INT проверки.
+    - Диалоговое дерево из 27 узлов и архивные shooter-метрики.
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис
+      body: |
+        - Контакт: Виктор Вектор, Элизабет Чен.
+        - Локации: Westbrook, Downtown, Watson.
+        - Цель: получить телеметрию Relic, перехватить переговоры и оценить угрозу.
+        - Бонусы по классам: netrunner, solo, techie.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: structure
+      title: Цели и ветвления
+      body: |
+        Основной путь:
+        1. Получить модуль записи телеметрии у Виктора.
+        2. Перехватить переговоры курьера в Westbrook (соц/стелс/бой).
+        3. Снять телеметрию с узла в Downtown.
+        4. Доставить данные Элизабет Чен.
+
+        Ветвления:
+        - Социальный путь (COOL 17) — убеждаем курьера, избегаем боёв.
+        - Скрытность (STEALTH 18) — кража чипа незаметно.
+        - Боевая ветка — до 5 противников с возможным подкреплением.
+        - Классовые бонусы упрощают взлом или устрашение.
+      mechanics_links:
+        - mechanics/combat/combat-dnd-integration-shooter.yaml
+    - id: shooter
+      title: Shooter параметры
+      body: |
+        - Инициатива: `reaction_time = 0.62 × REF`, элита использует `combat_sync`.
+        - Базовый defenseRating противников: 215–225, элита 235.
+        - Криты: headshot ×2.0, при `accuracy < 55%` риск jam.
+        - Состояния: подавление, кровотечение, ослепление.
+        - Социальные проверки нормированы в shooter thresholds 0.60–0.68.
+        - Модификаторы окружения: ночь (+1 STEALTH), дождь (−1 дальний бой), толпа (+1 COOL).
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: ux
+      title: UX макеты (архив)
+      body: |
+        - Стартовый интерфейс Виктора: выдача модуля записи.
+        - Перехват курьера в Westbrook со списком проверок.
+        - Снятие телеметрии в Downtown с TECH/INT вариантами.
+        - Возврат к Элизабет для выдачи награды.
+      mechanics_links:
+        - shared/docs/knowledge/implementation/ui/guild-contract-board.yaml
+    - id: dialogues
+      title: Диалоговое дерево
+      body: |
+        - 27 узлов, включая ветвления на социальные проверки, стелс и бой.
+        - Повторяющиеся переходы через NODE[v_module], NODE[w_approach], NODE[d_node] и финальный NODE[complete].
+        - Поражение возвращает игрока к Виктору с финансовым штрафом.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: rewards
+      title: Награды и баланс
+      body: |
+        - База: 720 XP, 950 eddies, `item-relic-data`.
+        - Соц/стелс успех: уменьшение количества боёв, +50–60 XP.
+        - TECH/INT успех: дополнительные компоненты и +50 XP.
+        - Провал: штраф −10% денег и рестарт из ветки Виктора.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API маппинг
+      body: |
+        - `POST /api/v1/quests/{id}/accept`
+        - `POST /api/v1/shooter-interaction`
+        - `POST /api/v1/combat/start`
+        - `POST /api/v1/items/collect`
+        - `POST /api/v1/quests/{id}/complete`
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: telemetry
+      title: Логи и телеметрия
+      body: |
+        - Запись skillChecks (COOL, STEALTH, TECH, INT).
+        - Журналы боёв, события тревоги и появления подкрепления.
+        - Поля JSON: epoch `2077-2093`, тема `relic-prototype`.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: qa
+      title: Тест-кейсы
+      body: |
+        1. COOL 17 успех — дипломатическое завершение без боя.
+        2. STEALTH 18 успех — кража чипа и пропуск боя.
+        3. Провал стелса — погоня ATHLETICS 15 и возможное подкрепление.
+        4. TECH 16 успех и повтор 18 при провале.
+        5. INT 16 успех — бонусный XP.
+        6. Поражение — рестарт у Виктора и штраф денег.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#quest-main-2077-relics-shadow
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_team
+    changes: Первичная спецификация Relic's Shadow с D&D проверками и UX-макетами.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
