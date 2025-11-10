@@ -1,0 +1,110 @@
+metadata:
+  id: analysis-quest-branching-validation
+  title: Проверка структуры БД для ветвления квестов
+  document_type: analysis
+  category: operations
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-11-09T12:49:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: ai_manager
+      contact: ai@necp.game
+  tags:
+    - quests
+    - database
+    - architecture
+  topics:
+    - data-migrations
+    - quest-engine
+  related_systems:
+    - quest-engine
+    - world-service
+    - economy-service
+  related_documents:
+    - id: quest-branching-database-design
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-quest-branching-validation.md
+  visibility: internal
+  audience:
+    - brain-team
+    - backend-architecture
+  risk_level: medium
+review:
+  chain:
+    - role: ai_manager
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется подтвердить соответствие схемы ветвящихся квестов MMO-требованиям и подготовить операционные решения.
+  goal: Описать партиционирование, кэширование, миграцию, API и производственные параметры для внедрения ветвлений.
+  essence: Консолидированная валидация архитектуры ветвящихся квестов с планом действий и рисками.
+  key_points:
+    - Определены стратегии хранения и кэширования.
+    - Сформулирован пошаговый сценарий миграции и API.
+    - Зафиксированы риски, метрики производительности и меры смягчения.
+content:
+  sections:
+    - id: storage_partitioning
+      title: Партиционирование и хранение
+      body: |
+        Прописаны диапазонные и списковые партиции для ключевых таблиц (`player_quest_choices`, `world_state_history`,
+        `player_quest_consequences`), а также индексация BRIN для `quest_progress`. Определены политики хранения и архивирования.
+      mechanics_links: []
+      assets: []
+    - id: caching_strategy
+      title: Кэширование и стримы
+      body: |
+        Используется Redis cluster 3x3 на 32 ГБ, кэшируются диалоговые деревья, активные флаги и `world_state`. Для аналитики
+        задействованы Redis Streams `quest-decisions` с ретеншном 7 дней.
+      mechanics_links: []
+      assets: []
+    - id: migration_plan
+      title: Миграция и cut-over
+      body: |
+        План миграции включает bootstrap через Liquibase, shadow-write, массовый импорт данных, переключение на новый сервис и
+        последующую очистку. Описаны шаги для конвертации JSON и поддержания консистентности.
+      mechanics_links: []
+      assets: []
+    - id: api_performance
+      title: API и производительность
+      body: |
+        Описаны REST маршруты (`/quests/{id}/graph`, `/choices`, `/flags`, `/world-state`) и целевые показатели (<120 мс чтение,
+        <80 мс запись). Предусмотрены нагрузки Locust/k6, индексы GIN и connection pooling через PgBouncer.
+      mechanics_links: []
+      assets: []
+    - id: synchronization
+      title: Синхронизация мирового состояния
+      body: |
+        Применяется event sourcing с топиком `world-state-events`, задержка консистентности < 3 секунд, конфликты решаются
+        приоритетом последних записей. Kafka lag мониторится для fallback стратегий.
+      mechanics_links: []
+      assets: []
+    - id: actions_and_risks
+      title: План действий и риски
+      body: |
+        Зафиксирован список шагов без внешних команд (миграции, генератор данных, нагрузочные тесты, мониторинг) и риски по
+        объёму данных, кэш-инвалидации, триггерам и Kafka с соответствующими mitigation.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-quest-branching-validation
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-11-11
+    author: AI Manager
+    changes: Конвертация валидационного отчёта по ветвящимся квестам в YAML.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
