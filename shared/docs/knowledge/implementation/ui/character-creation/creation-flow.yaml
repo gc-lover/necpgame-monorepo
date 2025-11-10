@@ -1,34 +1,36 @@
 metadata:
-  id: ui-character-creation-creation-flow
-  title: Поток создания персонажа
+  id: implementation-ui-character-creation-creation-flow
+  title: "Character Creation — Поток создания"
   document_type: implementation
   category: ui
-  status: approved
+  status: draft
   version: '1.0.0'
   last_updated: 2025-11-07T20:16:00Z
-  concept_approved: true
-  concept_reviewed_at: 2025-11-07T20:16:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
   owners:
-    - role: ai_brain_manager
-      contact: ai.brain@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
+    - character-creation
     - ui
-    - character_creation
-    - onboarding
+    - mvp
   topics:
-    - player_onboarding
+    - onboarding
+    - creation_flow
   related_systems:
-    - character-service
-    - faction-service
+    - frontend-gateway
   related_documents:
-    - id: implementation/ui/character-creation/appearance-editor
-      relation: companion
+    - id: implementation-ui-character-creation-appearance-editor
+      relation: complements
+    - id: mechanics-progression-classes-overview
+      relation: references
   source: shared/docs/knowledge/implementation/ui/character-creation/creation-flow.md
   visibility: internal
   audience:
     - concept
     - vision
-    - gameplay
+    - frontend
   risk_level: medium
 review:
   chain:
@@ -38,43 +40,51 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Необходимо провести игрока через последовательность выбора имени, пола, класса, происхождения и фракции с минимальными трениями.
-  goal: Формализовать шаги создания персонажа и требования к UI для MVP.
-  essence: Поток состоит из трёх экранов с последовательными выборами и проверками перед вызовом API создания персонажа.
+  problem: "Не зафиксирован формальный поток создания персонажа для MVP."
+  goal: "Описать пошаговый сценарий выбора имени, класса, происхождения и фракции."
+  essence: "Последовательность экранов обеспечивает быстрый старт персонажа и связывает выборы с системой классов."
   key_points:
-    - Экран имени и гендера собирает базовые атрибуты.
-    - Выбор класса формирует стартовые навыки и подсказки.
-    - Экран происхождения и фракции задаёт стартовые репутации.
+    - "Пять экранов оформляют ввод имени, пола, класса, происхождения и фракции."
+    - "Экраны связываются с прогрессией классов и социальными фракциями."
+    - "API `POST /api/v1/characters` принимает итоговую конфигурацию."
 content:
   sections:
-    - id: introduction
-      title: Введение
+    - id: flow_overview
+      title: "Обзор потока"
       body: |
-        Поток создания персонажа должен быть интуитивным, выдержанным в стилистике NECPGAME и допускать расширение шагов без переработки каркаса.
+        Поток создания персонажа содержит линейную последовательность экранов и ориентирован на выполнение
+        за одну сессию. Пользователь проходит через ввод базовых параметров, выбор боевой роли, происхождения
+        и фракционной принадлежности, после чего данные отправляются на сервер.
+      mechanics_links:
+        - mechanics/progression/classes-overview.yaml
+      assets: []
+    - id: step_identity
+      title: "Экран имени и идентичности"
+      body: |
+        Первый экран запрашивает имя персонажа и выбираемый пол. Доступны предустановленные варианты пола с
+        возможностью расширения. Валидация имени выполняется на клиенте перед переходом к следующему шагу.
       mechanics_links: []
       assets: []
-    - id: step_name_gender
-      title: Шаг 1 — Имя и гендер
+    - id: step_class
+      title: "Экран выбора класса"
       body: |
-        Экран содержит поле ввода имени с валидацией и переключатель гендера (Male, Female, Other). Кнопка «Next» активируется после успешной проверки имени.
-      mechanics_links: []
-      assets: []
-    - id: step_class_selection
-      title: Шаг 2 — Выбор класса
-      body: |
-        Игрок выбирает один из классов: Solo, Netrunner, Techie. Карточки показывают основную специализацию и бонусы. Доступны кнопки «Back» и «Next».
-      mechanics_links: []
+        Игрок выбирает один из отображаемых классов. Презентация классов включает краткое описание роли и
+        визуальные карточки. Решение влияет на стартовые бонусы и доступность способностей в прогрессии.
+      mechanics_links:
+        - mechanics/progression/classes-overview.yaml
       assets: []
     - id: step_origin_faction
-      title: Шаг 3 — Происхождение и фракция
+      title: "Экран происхождения и фракции"
       body: |
-        Сначала выбирается происхождение (Street Kid, Nomad, Corpo), затем фракция (Arasaka, Militech, NetWatch, Independent). Выбор влияет на стартовые локации и репутации. Интерфейс позволяет изменять выбор до подтверждения.
+        Экран предоставляет списки вариантов происхождения (Street Kid, Nomad, Corpo) и фракции (Arasaka,
+        Militech, NetWatch, Independent). Выбор определяет стартовые сюжетные и социальные связи.
       mechanics_links: []
       assets: []
-    - id: api_integration
-      title: Интеграция с API
+    - id: integration
+      title: "Интеграция с backend"
       body: |
-        После прохождения всех шагов вызывается `POST /api/v1/characters`. Платформа формирует payload с атрибутами имени, гендера, класса, происхождения, фракции и вложенным объектом внешности.
+        После подтверждения данных клиент вызывает `POST /api/v1/characters`, передавая выбранные параметры.
+        Ответ сервиса создаёт запись персонажа и возвращает идентификатор для дальнейшего онбординга.
       mechanics_links: []
       assets: []
 appendix:
@@ -89,8 +99,8 @@ implementation:
 history:
   - version: '1.0.0'
     date: 2025-11-07
-    author: AI Brain Manager
-    changes: Формализация последовательности шагов создания персонажа.
+    author: concept_director
+    changes: "Сконвертировано из creation-flow.md и структурировано по шаблону знаний."
 validation:
   checksum: ''
   schema_version: '1.0'
