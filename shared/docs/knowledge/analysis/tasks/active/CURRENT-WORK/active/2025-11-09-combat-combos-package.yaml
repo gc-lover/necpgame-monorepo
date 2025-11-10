@@ -1,0 +1,108 @@
+metadata:
+  id: analysis-combat-combos-package
+  title: Подготовка пакета combat combos & synergies
+  document_type: analysis
+  category: operations
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-09T02:48:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: brain_manager
+      contact: brain@necp.game
+  tags:
+    - combat
+    - combos
+    - shooter-transition
+  topics:
+    - gameplay
+    - combat-systems
+  related_systems:
+    - gameplay-service
+    - analytics-service
+  related_documents:
+    - id: combat-combos-synergies
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-combat-combos-package.md
+  visibility: internal
+  audience:
+    - brain-team
+    - combat-design
+  risk_level: medium
+review:
+  chain:
+    - role: brain_manager
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходимо зафиксировать текущий прогресс по подготовке API-пакета для комбинированных боевых синергий.
+  goal: Систематизировать перепроверенные зависимости, контуры REST/Events/WS и требования к хранению для дальнейшей декомпозиции.
+  essence: Документ собирает черновую архитектуру интерфейсов, событий и хранилища для combat combos, чтобы ускорить постановку задач.
+  key_points:
+    - Базовый документ подтверждён и готов к API-декомпозиции.
+    - Структура REST/Events/WebSocket описана на уровне черновых маршрутов.
+    - Зависимости с abilities, implants и аналитикой перечислены для дальнейшей интеграции.
+content:
+  sections:
+    - id: progress
+      title: Прогресс
+      body: |
+        Перепроверен `combat-combos-synergies.md`: подтверждены статус `approved`, `api-readiness: ready`, каталог
+        `api/v1/gameplay/combat/combos-synergies.yaml` и фронтенд `modules/combat/combos`. Уточнён перечень типов комбо
+        (solo, team, equipment, implant, timing) и параметры scoring. Зафиксированы зависимости с боевыми системами и аналитикой.
+      mechanics_links: []
+      assets: []
+    - id: interfaces
+      title: Интерфейсы (черновик)
+      body: |
+        REST контуры: `/combat/combos/catalog`, `/combat/combos/{comboId}`, `/combat/combos/loadouts`,
+        `/combat/combos/team`, `/combat/combos/scoring`. WebSocket поток `wss://api.necp.game/v1/gameplay/combat/combos/{sessionId}`
+        предназначен для уведомлений о синергиях и изменениях scoring. События включают
+        `combat.combo.triggered`, `combat.combo.failed`, `combat.combo.score-updated`, `combat.combo.team-synergy`,
+        `combat.combo.implant-activated`.
+      mechanics_links: []
+      assets: []
+    - id: storage
+      title: Хранение
+      body: |
+        Предварительно определены таблицы `combo_catalog`, `combo_loadouts`, `combo_team_synergies`, `combo_scores`,
+        `combo_logs` с использованием JSONB для условий и эффектов. Требуется уточнить индексацию и архивирование.
+      mechanics_links: []
+      assets: []
+    - id: integration
+      title: Интеграции
+      body: |
+        Комбо-пакет зависит от `combat-abilities`, `combat-shooting`, `combat-stealth`, `combat-implants`, `combat-extract`,
+        `combat-hacking`, `progression-backend` и аналитических сервисов для расчётов scoring. Связь с фронтендом
+        `modules/combat/combos` ожидает унификации payload.
+      mechanics_links: []
+      assets: []
+    - id: follow_up
+      title: Следующие шаги
+      body: |
+        - Декомпозировать REST, события и WebSocket на задачи с детальными payload и ответами.
+        - Описать пересечения с abilities/implants/shooting в приложении к брифу.
+        - Готовить пакет для ДУАПИТАСК после получения разрешения на постановку API.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-combat-combos-package
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: Brain Manager
+    changes: Конвертация заметки о подготовке пакета combat combos в YAML формат.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
