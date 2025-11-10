@@ -1,0 +1,117 @@
+metadata:
+  id: implementation-infrastructure-caching-strategy
+  title: Caching Strategy
+  document_type: implementation
+  category: infrastructure
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - caching
+    - performance
+    - infrastructure
+  topics:
+    - performance
+    - platform_architecture
+  related_systems:
+    - cdn
+    - redis-cluster
+    - gateway-cache-layer
+  related_documents:
+    - id: implementation-infrastructure-api-gateway-architecture
+      relation: complements
+    - id: implementation-infrastructure-database-architecture
+      relation: references
+  source: shared/docs/knowledge/implementation/infrastructure/caching-strategy.md
+  visibility: internal
+  audience:
+    - concept
+    - platform
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T05:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Производительность микросервисов падает без централизованной стратегии кэширования.
+  goal: Определить многоуровневую схему кэшей для статических и динамических данных.
+  essence: Архитектура делит кэширование на CDN, Redis и in-memory уровни с отдельными TTL и правилами инвалидирования.
+  key_points:
+    - CDN обслуживает статические ассеты с версионным инвалидацией.
+    - Redis хранит горячие игровые данные с гибкими TTL.
+    - Приложения кэшируют справочники до перезапуска или ручной очистки.
+    - Политики ключей и метрик поддерживают высокую долю cache hit.
+content:
+  sections:
+    - id: cache_layers
+      title: Уровни кэширования
+      body: |
+        L1 CDN хранит статические ассеты до 30 дней с версионными ключами.
+        L2 Redis держит сессии, профили, рыночные данные и квесты с различными TTL.
+        L3 приложений сохраняет шаблоны предметов, диалоги NPC и достижения до рестарта.
+      mechanics_links: []
+      assets: []
+    - id: key_schema
+      title: Схема ключей
+      body: |
+        Ключи формируются по шаблону `{service}:{entity}:{id}:{field}`, что исключает конфликты и упрощает очистку.
+        Примеры: `player:{id}:profile`, `market:orderbook:{itemId}`.
+      mechanics_links: []
+      assets: []
+    - id: ttl_policy
+      title: Политика TTL
+      body: |
+        Статические данные кэшируются от 24 часов до 7 дней, пользовательские — от 5 минут до часа,
+        а данные реального времени обновляются каждые 10 секунд — 1 минуту.
+      mechanics_links: []
+      assets: []
+    - id: invalidation
+      title: Инвалидация
+      body: |
+        Используются три подхода: истечение TTL, событийная очистка при изменении данных и ручная очистка через админ-инструменты.
+      mechanics_links: []
+      assets: []
+    - id: monitoring
+      title: Мониторинг эффективности
+      body: |
+        Целевые показатели hit-rate: CDN 95%+, Redis 80%+, in-memory 90%+.
+        Метрики собираются из Redis INFO и dashboards observability-стека.
+      mechanics_links: []
+      assets: []
+    - id: redis_topology
+      title: Топология Redis
+      body: |
+        Кластер разделён на инстансы для сессий, приложений и real-time данных с разной политикой TTL и персистентности (AOF, RDB, без сохранения).
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Database Architecture
+      link: ./database-architecture.md
+    - title: API Gateway Architecture
+      link: ./api-gateway-architecture.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#implementation-infrastructure-caching-strategy
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: AI Brain Manager
+    changes: Описана многоуровневая стратегия кэширования и правила обслуживания.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
