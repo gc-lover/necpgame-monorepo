@@ -1,0 +1,125 @@
+metadata:
+  id: implementation-ui-registration
+  title: Экран регистрации
+  document_type: implementation
+  category: ui
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-04T17:05:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - registration
+    - authentication
+  topics:
+    - account-lifecycle
+    - onboarding
+  related_systems:
+    - auth-service
+    - notification-service
+  related_documents:
+    - id: implementation-ui-character-creation
+      relation: follows
+    - id: implementation-api-requirements-mvp-endpoints
+      relation: references
+    - id: implementation-api-requirements-mvp-data-models
+      relation: references
+  source: shared/docs/knowledge/implementation/ui-registration.md
+  visibility: internal
+  audience:
+    - concept
+    - ui
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Не было единого описания экрана регистрации для текстового клиента.
+  goal: Зафиксировать структуру интерфейса регистрации, валидацию и интеграцию с auth-service.
+  essence: Экран регистрации обеспечивает создание аккаунта через форму с мгновенной валидацией и связанными API.
+  key_points:
+    - Определены элементы интерфейса и пользовательский поток от ввода данных до успеха.
+    - Описаны правила валидации на клиенте и ответы API auth-service.
+    - Зафиксированы требования к безопасности и UX особенностям.
+    - Приведены примеры сценариев успешной регистрации и ошибок.
+content:
+  sections:
+    - id: overview
+      title: 'Назначение экрана'
+      body: |
+        Экран служит входной точкой для новых игроков и обеспечивает создание аккаунта через email,
+        логин и пароль с обязательным подтверждением условий использования. Интерфейс рассчитан на
+        текстовую веб-версию без графического клиента.
+      mechanics_links: []
+      assets: []
+    - id: ui_structure
+      title: 'Состав интерфейса'
+      body: |
+        Форма содержит поля email, логина, пароля и подтверждения, чекбокс согласия и управляющие
+        кнопки. ASCII макет определяет расположение элементов и подсказок, поддерживая киберпанк стилистику.
+      mechanics_links:
+        - implementation/ui/ui-kit-compact.yaml
+      assets: []
+    - id: validation
+      title: 'Правила валидации'
+      body: |
+        Реализуется комбинированная валидация на клиенте и сервере. Email и логин проверяются на формат,
+        длину и уникальность, пароль требует букв и цифр, чекбокс обязателен. Состояния ошибок отображаются
+        под полями, кнопка регистрации блокируется при нарушениях.
+      mechanics_links:
+        - services/openapi/auth-service.yaml
+      assets: []
+    - id: api_contracts
+      title: 'Интеграция с backend'
+      body: |
+        Основной endpoint `POST /api/v1/auth/register` возвращает результат регистрации и токены.
+        Описаны ответы для успешного создания, валидационных ошибок, конфликтов и внутренних сбоев.
+        Пример тела запроса и ответов обеспечивает единый контракт с backend.
+      mechanics_links:
+        - implementation/backend/auth/auth-registration.yaml
+      assets: []
+    - id: flows
+      title: 'Пользовательские сценарии'
+      body: |
+        Зафиксированы шаги регистрации, обработка серверных ошибок и конфликтов, а также параметры
+        успешного завершения. Примеры демонстрируют корректное и некорректное заполнение формы и реакцию UI.
+      mechanics_links:
+        - implementation/ui/ui-game-start.yaml
+      assets: []
+    - id: security
+      title: 'Требования безопасности'
+      body: |
+        Пароли передаются в защищённом виде, на сервере хэшируются, аккаунт создаётся с токеном доступа.
+        Документ обозначает будущие расширения вроде CAPTCHA и подтверждения email как отдельные инициативы.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - ui-character-creation.md
+    - api-requirements/mvp-endpoints.md
+    - api-requirements/mvp-data-models.md
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#implementation-ui-registration
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-04
+    author: ui_guild
+    changes: Конвертировано из ui-registration.md с фиксацией интерфейса и API.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
