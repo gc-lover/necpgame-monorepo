@@ -1,0 +1,103 @@
+metadata:
+  id: backend-architecture-compact
+  title: Backend Architecture Overview
+  document_type: implementation
+  category: systems
+  status: draft
+  version: '2.1.0'
+  last_updated: 2025-11-08T12:20:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - backend
+    - architecture
+  topics:
+    - services
+    - infrastructure
+  related_systems:
+    - api-gateway
+    - auth-service
+    - character-service
+    - gameplay-service
+    - social-service
+    - economy-service
+    - world-service
+  related_documents:
+    - id: frontend-architecture
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется единая компактная спецификация бэкенд-архитектуры для новых сервисов и ревью.
+  goal: Задать актуальную структуру микросервисов и принципы интеграции через API Gateway.
+  essence: Упрощённое описание ключевых сервисов и правил разработки бэкенда после отказа от монолита.
+  key_points:
+    - Перечень основных микросервисов и точки доступа.
+    - Требования к OpenAPI спецификациям и ревью новых доменных сервисов.
+    - Ограничение прямого доступа к сервисам только dev-портами.
+content:
+  sections:
+    - id: architecture-overview
+      title: Микросервисная структура
+      body: |
+        Бэкенд построен на наборе доменных микросервисов, каждый из которых развёрнут за API Gateway.
+        В production доступ разрешён только через gateway, локальные порты (`8081-8086`) используются
+        разработчиками для отладки. Каждая OpenAPI спецификация должна содержать поле `info.x-microservice`
+        с именем, портом и доменом сервиса, чтобы автоматически собирать реестр интеграций.
+      mechanics_links: []
+      assets: []
+    - id: governance
+      title: Управление архитектурой
+      body: |
+        Монолитные компоненты удалены, а новые доменные сервисы проходят обязательное архитектурное ревью.
+        Детализированные схемы и sequence diagram размещены в `shared/docs/knowledge/implementation/backend/`
+        и `shared/docs/knowledge/implementation/architecture/`. Требуется синхронизировать описания перед
+        релизами и обновлять версии в OpenAPI при каждом изменении контрактов.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: directory
+      path: shared/docs/knowledge/implementation/backend/
+    - type: directory
+      path: shared/docs/knowledge/implementation/architecture/
+  decisions:
+    - id: adr-backend-microservices
+      summary: Переход на микросервисную архитектуру без монолитных модулей.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '2.1.0'
+    date: 2025-11-08
+    author: Concept Director
+    changes: Актуализирована компактная версия описания микросервисов.
+  - version: '2.0.0'
+    date: 2025-11-07
+    author: Concept Director
+    changes: Сокращена до компактного формата (<100 строк).
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: Concept Director
+    changes: Исходное подробное описание (522 строки).
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
