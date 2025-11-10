@@ -1,0 +1,107 @@
+metadata:
+  id: quest-engine-backend
+  title: Backend движка квестов
+  document_type: implementation
+  category: systems
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T18:15:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T18:15:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - backend
+    - quests
+    - gameplay
+  topics:
+    - quest-engine
+    - branching
+    - dialogue
+  related_systems:
+    - gameplay-service
+    - character-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: quest-system
+      relation: supports
+    - id: gameplay-service-architecture
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-08T18:15:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Без квестового движка невозможно запускать контент и ветвящиеся сценарии.
+  goal: Описать структуру и интеграции backend-компонента, обеспечивающего выполнение квестов.
+  essence: Микросервис gameplay-service обрабатывает state machine, диалоги и skill checks, взаимодействуя с другими сервисами и событиями.
+  key_points:
+    - Управление состоянием квеста и ветвлениями диалогов.
+    - Обработка проверок навыков и условий на основе данных персонажа.
+    - Обмен событиями с другими сервисами через event bus.
+content:
+  sections:
+    - id: service-architecture
+      title: Микросервисная архитектура
+      body: |
+        Quest Engine развёрнут как часть gameplay-service (порт 8083) и доступен через маршрут
+        `/api/v1/gameplay/quests/*` API Gateway. Он публикует события `quest:started`,
+        `quest:objective-completed`, `quest:completed`, `quest:failed` и подписывается на боевые,
+        инвентарные и социальные события. Для проверки условий сервис обращается к character-service,
+        economy-service и social-service.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Модель данных
+      body: |
+        Движок хранит состояния инстансов в таблицах `quest_instances`, `dialogue_state`,
+        `skill_check_results`. Схема фиксирует активные ветки, посещённые узлы диалога, результаты
+        проверок навыков и временные метки. Индексы оптимизируют выборку по персонажу и статусу,
+        обеспечивая реактивное обновление UI.
+      mechanics_links: []
+      assets: []
+    - id: execution-flow
+      title: Выполнение квеста
+      body: |
+        При старте квеста сервис проверяет требования, создаёт инстанс, инициализирует диалоговое
+        состояние и публикует событие начала. Обработка выбора диалогов и проверок навыков обновляет
+        состояние и, при необходимости, вызывает переходы на новые ветки или завершение квеста.
+        При выдаче наград сервис синхронизируется с экономикой и репутацией.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: api
+      path: api/v1/gameplay/quests/
+    - type: repository
+      path: shared/code/backend/gameplay/quest-engine/
+  decisions:
+    - id: adr-quest-engine-backend
+      summary: Утверждена архитектура state machine для квестов с event-driven интеграциями.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: Concept Director
+    changes: Утверждена структура backend-движка квестов и взаимодействие с микросервисами.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
