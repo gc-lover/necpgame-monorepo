@@ -1,0 +1,127 @@
+metadata:
+  id: player-market-core
+  title: Player Market — Core механики
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-11T03:15:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - player-market
+    - p2p-trade
+    - social-commerce
+  topics:
+    - marketplace_design
+    - player_trade
+  related_systems:
+    - economy-service
+    - inventory-service
+    - social-service
+  related_documents:
+    - id: player-market-database
+      relation: complements
+    - id: player-market-api
+      relation: complements
+    - id: player-market-analytics
+      relation: references
+  source: shared/docs/knowledge/mechanics/economy/player-market/player-market-core.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется описать P2P-рынок игроков без механик аукциона и определить ключевые правила сделок.
+  goal: Зафиксировать создание объявлений, поиск, покупку и социальные элементы Player Market.
+  essence: Торговая площадка поддерживает мгновенную куплю-продажу по фиксированной цене, обеспечивает защиту экономики и социальную репутацию продавцов.
+  key_points:
+    - Фиксированные цены и лимиты объявлений предотвращают инфляцию и злоупотребления.
+    - Поиск, фильтры и сортировка обеспечивают быстрый доступ к нужным товарам.
+    - Репутация и взаимодействие через чат добавляют социальный слой и прозрачность.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Player Market предоставляет игрокам мгновенные P2P-сделки без механики ставок. Площадка поддерживает
+        фиксированные цены, прямое общение через чат и сниженные комиссии по сравнению с аукционом. Документ описывает
+        бизнес-правила, ограничения и основные пользовательские сценарии.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-protection.yaml
+      assets: []
+    - id: listing_creation
+      title: Создание объявлений
+      body: |
+        Игрок может одновременно держать до 20 активных объявлений со сроком жизни 7 дней. При публикации предмет
+        блокируется в инвентаре, рассчитывается итоговая стоимость и фиксируется комиссия 1%. Границы цен ограничены
+        диапазоном 1–999,999,999 условных единиц, что предотвращает деструктивные листинги.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-database.yaml
+      assets: []
+    - id: search_filters
+      title: Поиск и фильтры
+      body: |
+        Каталог поддерживает полнотекстовый поиск и фильтрацию по типу предмета, качеству, диапазону цен, уровню,
+        продавцу и городу. Результаты сортируются по цене, дате, популярности или рейтингу продавца. Пагинация ограничена
+        50 позициями на страницу для стабильной производительности.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-api.yaml
+      assets: []
+    - id: purchase_flow
+      title: Покупка и расчёты
+      body: |
+        Транзакция выполняется атомарно: у покупателя списываются средства, у продавца удерживается комиссия, предмет
+        переносится адресно, а история торгов фиксирует сделку. Алгоритм обрабатывает частичные покупки, обновляет
+        остаток объявлений и отправляет уведомления обеим сторонам.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-analytics.yaml
+      assets: []
+    - id: social_features
+      title: Социальные элементы
+      body: |
+        Рынок включает систему отзывов, рейтинги продавцов, избранные контакты и черный список. Игроки могут
+        договариваться через чат, что усиливает социальный аспект и повышает доверие. Механики репутации интегрированы
+        с антифрод-правилами и аналитикой.
+      mechanics_links:
+        - mechanics/social/reputation-formulas.yaml
+      assets: []
+    - id: differentiation
+      title: Отличия от аукциона
+      body: |
+        Player Market фокусируется на быстром обмене и прямой коммуникации, тогда как аукционный дом решает задачи
+        долгосрочной торговли и ставок. Низкие комиссии, отсутствие конкурирующих ставок и мгновенное завершение сделки
+        делают площадку доступным инструментом для повседневной торговли.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#CON-2025-231
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: concept_director
+    changes: Конвертировано из player-market-core.md и структурировано по шаблону знаний.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
