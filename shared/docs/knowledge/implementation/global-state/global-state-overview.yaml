@@ -1,0 +1,125 @@
+metadata:
+  id: global-state-overview
+  title: Global State System — обзор и маршрутизация
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-07T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T00:00:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - world-state
+    - backend
+    - architecture
+  topics:
+    - world-service
+    - distributed-state
+  related_systems:
+    - world-service
+    - event-bus
+    - redis-cluster
+  related_documents:
+    - id: global-state-core
+      relation: expands
+    - id: global-state-management
+      relation: complements
+    - id: global-state-events
+      relation: complements
+  source: shared/docs/knowledge/implementation/global-state/README.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - devops
+  risk_level: medium
+review:
+  chain:
+    - role: world_service_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Обзор глобального состояния мира находился в Markdown и не обеспечивал структурированного описания сервисов и событий.
+  goal: Систематизировать архитектуру world-service, подключение к Event Bus и связанные документы для навигации по подсистемам.
+  essence: Документ описывает маршруты, взаимодействие сервисов, распределённое хранение и навигацию по деталям глобального состояния.
+  key_points:
+    - World-service отвечает за глобальное состояние и взаимодействует со всеми сервисами через Event Bus.
+    - Распределённое хранение использует PostgreSQL и Redis для кэша и realtime синхронизации.
+    - Территориальные события публикуются и распространяются по сервисам через единый пайплайн.
+    - Документ служит навигацией по частям core, management, events, sync и operations.
+content:
+  sections:
+    - id: architecture_overview
+      title: Микросервисная архитектура
+      body: |
+        World-service (порт 8086) предоставляет маршруты `/api/v1/world/state/*`, координирует состояние и
+        взаимодействует со всеми сервисами через Event Bus. События `world:state-changed`, `world:event-started`,
+        `world:faction-war-update` публикуются сервисом, а входящие события включают `combat:territory-captured`,
+        `guild:war-declared`, `quest:world-quest-completed`.
+      mechanics_links:
+        - implementation/global-state/global-state-management.yaml
+    - id: distributed_state
+      title: Распределённое состояние и синхронизация
+      body: |
+        World-service управляет PostgreSQL-хранилищем и Redis-кэшем. Другие сервисы (character-service,
+        gameplay-service, social-service) читают состояние через API, а Redis обеспечивает realtime обновления.
+        События захвата территорий проходят полный цикл публикации и обратной отправки уведомлений.
+      mechanics_links:
+        - implementation/global-state/global-state-sync.yaml
+    - id: document_structure
+      title: Структура документации
+      body: |
+        Обзор связывает пять частей: core (архитектура и event sourcing), management (pipeline обработки),
+        events (каталог мировых событий), sync (обновление клиентов), operations (CRUD/API). Каждая часть описана
+        отдельным документом в каталоге `global-state`.
+      mechanics_links:
+        - implementation/global-state/global-state-core.yaml
+    - id: redis_strategy
+      title: Redis и realtime обновления
+      body: |
+        Redis используется для хранения актуального состояния (`world:state:current`) и публикации изменений через
+        `redis.publish`. Подписчики (`redis.subscribe`) обновляют локальный кэш. Паттерн обеспечивает быструю синхронизацию
+        без нагрузки на основную БД.
+      mechanics_links:
+        - implementation/global-state/global-state-sync.yaml
+    - id: event_sourcing
+      title: Event Sourcing и аудит
+      body: |
+        Все изменения мирового состояния можно сохранять как последовательность событий (TerritoryCapture, FactionsWarDeclared,
+        EconomyCrashEvent). Реплей событий позволяет строить аудит, тайм-тревел и поддержку тестов.
+      mechanics_links:
+        - implementation/global-state/global-state-core.yaml
+    - id: related_docs
+      title: Связанные документы
+      body: |
+        Навигация по архитектуре микросервисов, backend-ядру и общей архитектуре помогает понимать зависимости.
+        Основные ссылки: `microservices-overview`, `backend/README`, `ARCHITECTURE`.
+      mechanics_links:
+        - implementation/architecture/microservices-overview.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: world_service_team
+    changes: Добавлена микросервисная архитектура и распределённое состояние.
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: world_service_team
+    changes: Разделена документация на пять частей.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
