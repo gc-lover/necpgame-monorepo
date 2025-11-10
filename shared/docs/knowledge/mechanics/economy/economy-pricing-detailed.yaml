@@ -1,0 +1,124 @@
+metadata:
+  id: economy-pricing-detailed
+  title: Детальная система ценообразования
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '2.0.0'
+  last_updated: 2025-11-09T04:03:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T04:03:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - pricing
+    - economy
+    - trading
+  topics:
+    - price-formula
+    - market-balance
+  related_systems:
+    - economy-service
+    - analytics-service
+    - tax-service
+  related_documents:
+    - id: trading-routes-global
+      relation: complements
+    - id: economy-currencies-detailed
+      relation: references
+  source: shared/docs/knowledge/mechanics/economy/economy-pricing-detailed.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - systems
+  risk_level: high
+review:
+  chain:
+    - role: economy_lead
+      reviewer: ''
+      reviewed_at: 2025-11-09T04:03:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Правила ценообразования содержались в Markdown и требовали структурированного описания для сервисов экономики и аналитики.
+  goal: Зафиксировать формулы базовых цен, модификаторы редкости и качества, динамические факторы спроса и интеграцию с региональными и фракционными системами.
+  essence: Документ определяет мультипликаторы, модификаторы, типы продавцов и торговые стратегии, необходимые для балансировки рынка.
+  key_points:
+    - Базовая формула цены учитывает редкость, качество, спрос/предложение, регион и фракционные бонусы.
+    - Таблицы мультипликаторов редкости и модификаторы качества регулируют разброс цен крафта.
+    - Региональные, фракционные и торговые модификаторы структурированы для NPC и игроков.
+    - Описаны стратегии аукциона, контроль инфляции и предотвращение манипуляций рынком.
+content:
+  sections:
+    - id: base_formula
+      title: Базовая формула
+      body: |
+        ItemPrice = BaseValue × RarityMultiplier × QualityModifier × SupplyDemandFactor × RegionModifier × FactionModifier.
+        Формула применяется ко всем категориям предметов, обеспечивает масштабируемость и учёт контекста.
+      mechanics_links:
+        - mechanics/economy/economy-overview.yaml
+    - id: rarity_quality
+      title: Мультипликаторы редкости и качества
+      body: |
+        Редкость: Common ×1.0, Uncommon ×3.0, Rare ×10.0, Epic ×35.0, Legendary ×100.0, Artifact ×500.0.
+        NPC продавцы используют скидки/наценки (продажа 60–100%, выкуп 150–800%). Качество крафта варьируется
+        ±20% (Perfect ×1.2, Poor ×0.9 и т.д.), критический крафт поднимает редкость на один уровень.
+      mechanics_links:
+        - mechanics/economy/economy-crafting.yaml
+    - id: supply_demand
+      title: Динамика спроса и предложения
+      body: |
+        Высокий спрос (мета, события) +50%, низкий −30%. Дефицит поставок +40%, избыток −25%. Серверный
+        алгоритм учитывает продажи за 7 дней, активные листинги и производство, обновляя коэффициенты каждые 6 часов.
+      mechanics_links:
+        - mechanics/economy/economy-currency-exchange.yaml
+    - id: regional_faction
+      title: Региональные и фракционные модификаторы
+      body: |
+        Night City ×1.0 (база), NUSA ×1.1, Badlands ×0.7, Pacifica ×0.5…1.5, Japantown ×1.3. Репутация фракций
+        даёт скидки/наценки: Friendly −10%/+10%, Honored −20%/+15%, Exalted −30%/+20%, Hostile +50%/−50%.
+      mechanics_links:
+        - mechanics/economy/economy-currencies-detailed.yaml
+    - id: vendor_types
+      title: Типы продавцов и стратегии
+      body: |
+        NPC магазины: general (+20%), speciality (+30%), black market (−10%…+100%, риск подделок).
+        Игровые магазины игроков: комиссия 5%, дополнительные налоги по территориям. Рекомендованы стратегии
+        для flipping, crafting, farming. Аукцион поддерживает стандартные торги, buyout и bid-only режим.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+    - id: trading_routes
+      title: Торговые маршруты и арбитраж
+      body: |
+        Сценарии Badlands→Night City (сырьё +80…100%), Militech→Arasaka (контрабанда +150…500%).
+        Учитываются транспортные затраты, риски (Wraiths, патрули) и репутационные последствия.
+      mechanics_links:
+        - mechanics/economy/trading-routes-global.yaml
+    - id: market_manipulation
+      title: Контроль манипуляций и инфляции
+      body: |
+        Легальные методы (cornering market, production monopoly) ограничены 30% рынка или механикой распространения рецептов.
+        Незаконные практики (price fixing, wash trading, exploit abuse) отслеживаются алгоритмами и приводят к банам.
+        Денежные синки (ремонт, аренда, налоги) и источники дохода поддерживают целевой рост 10%/месяц.
+      mechanics_links:
+        - mechanics/economy/trading-routes-global.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '2.0.0'
+    date: 2025-11-06
+    author: brain_manager
+    changes: Обновлены формулы, модификаторы, стратегии торговли и меры против манипуляций.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
