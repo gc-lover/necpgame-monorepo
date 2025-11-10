@@ -1,0 +1,111 @@
+metadata:
+  id: analysis-quest-branching-liquibase-plan
+  title: Liquibase план ветвящихся квестов
+  document_type: analysis
+  category: operations
+  status: draft
+  version: '0.1.7'
+  last_updated: 2025-11-09T14:22:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: ai_manager
+      contact: ai@necp.game
+  tags:
+    - quests
+    - liquibase
+    - branching
+  topics:
+    - data-migrations
+    - quest-engine
+  related_systems:
+    - quest-engine
+    - world-service
+    - analytics-service
+  related_documents:
+    - id: quest-branching-database-design
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-quest-branching-liquibase-plan.md
+  visibility: internal
+  audience:
+    - brain-team
+    - data-engineering
+  risk_level: high
+review:
+  chain:
+    - role: ai_manager
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется подготовить поэтапный Liquibase план для внедрения схемы ветвящихся квестов без нарушения текущих таблиц.
+  goal: Разбить дизайн на changeSet, описать shadow-write, порядок деплоя и контрольные метрики.
+  essence: Подробное руководство по структуре changelog и миграций для квестового движка.
+  key_points:
+    - Определена структура каталогов `scripts/migrations/quest-branching/v1`.
+    - Расписаны changeSet от создания таблиц до политик RLS и rollback сценариев.
+    - Зафиксирован порядок деплоя, параметры Liquibase и метрики валидации.
+content:
+  sections:
+    - id: goals
+      title: Цели миграции
+      body: |
+        План охватывает трансформацию дизайн-документа ветвящихся квестов в исполняемые Liquibase changeSet, поддержку
+        shadow-write и совместимость с существующими таблицами `quests` и `quest_progress`.
+      mechanics_links: []
+      assets: []
+    - id: structure
+      title: Структура changelog
+      body: |
+        Каталог `scripts/migrations/quest-branching/` содержит `master.xml` и подпапку `v1` с файлами `01-create-core-tables.xml`
+        по `08-rollback-scripts.xml`. `master.xml` подключает все файлы последовательно и маркируется тегом `quest-branching-v1`.
+      mechanics_links: []
+      assets: []
+    - id: changesets
+      title: Содержимое changeSet
+      body: |
+        - `01-create-core-tables.xml`: расширение таблиц `quests` и `quest_progress`, служебные поля и ENUM.
+        - `02-create-branching-tables.xml`: создание `quest_branches`, `dialogue_nodes`, `dialogue_choices`, `skill_checks`.
+        - `03-create-world-state-tables.xml`: таблицы состояний мира и последствий с внешними ключами.
+        - `04-indexes.xml`: B-tree, GIN и BRIN индексы.
+        - `05-shadow-triggers.xml`: функции и триггеры синхронизации.
+        - `06-materialized-views.xml`: представления `quest_path_popularity`.
+        - `07-rls-and-roles.xml`: роли и политики RLS.
+        - `08-rollback-scripts.xml`: сценарии отката и очистки shadow данных.
+      mechanics_links: []
+      assets: []
+    - id: shadow_write
+      title: Shadow-write и параметры
+      body: |
+        Функции `fn_sync_quests_shadow` и `fn_sync_quest_progress_shadow` обеспечивают дублирование операций. Управление
+        активностью производится параметром `SET LOCAL quest_branching.migration`. Уделено внимание обработке `DELETE` через
+        промежуточные таблицы `deleted_rows`.
+      mechanics_links: []
+      assets: []
+    - id: deployment
+      title: Порядок деплоя и метрики
+      body: |
+        Последовательность шагов: запуск `liquibase update --tag=quest-branching-v1`, включение shadow-write, проверка аудита,
+        импорт JSON PoC, затем раскатка на staging/prod. Параметры включают `liquibase.command.tablespace.default=gameplay`,
+        `rollbackOnError=true`, мониторинг времени триггеров (<5%) и обновления materialized views (<10 секунд).
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-quest-branching-liquibase-plan
+  blockers: []
+history:
+  - version: '0.1.7'
+    date: 2025-11-11
+    author: AI Manager
+    changes: Конвертация Liquibase плана ветвящихся квестов в YAML.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
