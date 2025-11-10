@@ -1,9 +1,9 @@
 metadata:
   id: player-orders-reputation
-  title: Система заказов — Репутация и рейтинг
+  title: Система заказов — репутация и рейтинг
   document_type: mechanics
   category: social
-  status: draft
+  status: in-review
   version: '1.0.0'
   last_updated: 2025-11-07T00:18:00Z
   concept_approved: false
@@ -12,25 +12,24 @@ metadata:
     - role: concept_director
       contact: concept@necp.game
   tags:
+    - social
     - player-orders
     - reputation
   topics:
-    - rating-system
-    - trust
+    - player-economy
+    - trust-systems
   related_systems:
-    - social-service
-    - analytics-service
+    - order-service
+    - reputation-service
   related_documents:
     - id: player-orders-system
       relation: references
-    - id: reputation-formulas
-      relation: complements
   source: shared/docs/knowledge/mechanics/social/player-orders-reputation.md
   visibility: internal
   audience:
     - concept
-    - social
     - economy
+    - systems
   risk_level: medium
 review:
   chain:
@@ -40,57 +39,57 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Не была описана единая модель репутации для заказчиков и исполнителей в системе заказов.
-  goal: Задать критерии и влияние рейтингов на доступ к заказам и вознаграждение.
-  essence: Репутация строится на двусторонних показателях, фиксирует отзывы и определяет доверие между игроками.
+  problem: Рейтинги заказчиков и исполнителей были описаны кратко и оставались без формализованной модели.
+  goal: Формализовать критерии оценки и подготовить систему к расчёту рейтингов и интеграции с сервисами.
+  essence: Документ фиксирует двустороннюю репутацию, критерии и требования к затуханию оценок.
   key_points:
-    - Отдельные рейтинги ведутся для заказчика и исполнителя.
-    - Метрики включают успешность заказов, соблюдение сроков и качество доказательств.
-    - Репутация влияет на доступ к сложным заказам и величину награды.
+    - Репутация рассчитывается отдельно для заказчика и исполнителя.
+    - Учтены отзывы, процент успешных заказов, соблюдение сроков и качество доказательств.
+    - Требуется определить финальные формулы весов и правила старения данных.
 content:
   sections:
-    - id: metrics
-      title: Ключевые метрики
+    - id: overview
+      title: Назначение подсистемы
       body: |
-        Система учитывает отзывы, процент завершённых заказов, сроки и качество подтверждающих материалов.
-        Показатели собираются отдельно для заказчика и исполнителя, что позволяет точнее оценивать риск.
+        Репутация обеспечивает доверие на рынке заказов и регулирует доступ к контрактам повышенной важности. Модель должна поддерживать прозрачность, арбитраж и интеграцию с экономикой.
       mechanics_links:
         - mechanics/social/player-orders-system.yaml
       assets: []
-    - id: rating-model
-      title: Модель рейтинга
+    - id: evaluation_criteria
+      title: Критерии оценки
       body: |
-        Рейтинг формируется на основе взвешенных критериев с временным затуханием. Высокие значения открывают
-        доступ к крупным заказам и бонусам, низкие — ограничивают участие и требуют дополнительных залогов.
+        Ключевые показатели включают отзывы, своевременность, качество доказательств и долю завершённых заказов. Метрики собираются из логов выполнения, подтверждений и результатов арбитражей.
       mechanics_links:
-        - mechanics/social/reputation-formulas.yaml
+        - mechanics/social/player-orders-system.yaml
       assets: []
-    - id: governance
-      title: Управление доверием
+    - id: dual_scores
+      title: Двусторонние рейтинги
       body: |
-        Арбитраж и модераторы могут корректировать рейтинг при спорных ситуациях. История контрактов хранится
-        для аналитики, а резкие изменения требуют подтверждения. Репутация синхронизирована с системой арбитража.
+        Заказчики и исполнители имеют независимые рейтинги, что позволяет отделять качество постановки задач от качества исполнения. Перекрёстные оценки помогают выявлять злоупотребления и повышают точность подбора партнёров.
       mechanics_links:
         - mechanics/social/player-orders-execution.yaml
+      assets: []
+    - id: backlog_work
+      title: Дальнейшая проработка
+      body: |
+        Необходимо определить формулы весов критериев, функцию затухания старых оценок и правила пересчёта рейтингов после вмешательства арбитража.
+      mechanics_links:
+        - mechanics/social/player-orders-economy.yaml
       assets: []
 appendix:
   glossary: []
   references: []
   decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
   - version: '1.0.0'
     date: 2025-11-03
-    author: concept_director
-    changes: Выделено описание репутации из player-orders-system.
-  - version: '1.0.1'
-    date: 2025-11-11
-    author: Concept Director
-    changes: Конвертация в YAML и детализация критериев рейтинга.
+    author: Concept Director Team
+    changes: Репутационная подсистема выделена в отдельный документ из player-orders-system.
 validation:
   checksum: ''
   schema_version: '1.0'
