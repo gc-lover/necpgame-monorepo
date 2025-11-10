@@ -1,0 +1,98 @@
+metadata:
+  id: mail-system
+  title: Backend почтовой системы
+  document_type: implementation
+  category: systems
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - social
+    - mail
+    - backend
+  topics:
+    - player-messaging
+    - deliveries
+  related_systems:
+    - social-service
+    - economy-service
+    - notification-service
+  related_documents:
+    - id: inventory-system
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - social
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T05:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Нужна универсальная система доставки сообщений, предметов и наград между игроками.
+  goal: Описать backend-компонент почты, который поддерживает письма, вложения, COD и системные рассылки.
+  essence: Social-service хранит письма, управляет вложениями и синхронизируется с экономикой и уведомлениями.
+  key_points:
+    - Поддержка писем игроку, системных наград и заданий.
+    - Вложения предметов и валюты, механика COD и возврата.
+    - Автоматическое истечение и журнал для аналитики.
+content:
+  sections:
+    - id: architecture
+      title: Архитектура сервиса
+      body: |
+        Почтовый сервис работает в рамках social-service (порт 8084) и доступен по маршруту
+        `/api/v1/social/mail/*`. Он публикует события `mail:sent`, `mail:received`,
+        `mail:attachment-claimed`, `mail:expired` и подписывается на события квестов и аукционов
+        для отправки наград.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Модель данных
+      body: |
+        Таблица `mail_messages` хранит отправителя, получателя, тип, вложения, статус и временные
+        метки (отправлено, прочитано, истекает). Поля поддерживают возврат писем, COD и очистку
+        просроченных сообщений. Индексы оптимизируют поиск по получателю и истечению срока.
+      mechanics_links: []
+      assets: []
+    - id: flows
+      title: Основные сценарии
+      body: |
+        При отправке письма сервис валидирует получателя, проверяет вложения и баланс, создаёт запись,
+        списывает предметы и валюту, уведомляет адресата и ставит срок истечения. Вложения можно забрать
+        один раз; при истечении письма возвращаются отправителю.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: repository
+      path: shared/code/backend/social/mail-service/
+  decisions:
+    - id: adr-mail-service
+      summary: Утверждён почтовый сервис с поддержкой вложений, COD и событийных рассылок.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: Concept Director
+    changes: Описана архитектура почтовой системы и поддерживаемые сценарии.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
