@@ -1,0 +1,105 @@
+metadata:
+  id: achievement-system
+  title: Backend системы достижений
+  document_type: implementation
+  category: systems
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - achievements
+    - engagement
+    - backend
+  topics:
+    - tracking
+    - rewards
+    - event-driven
+  related_systems:
+    - world-service
+    - notification-service
+    - mail-service
+  related_documents:
+    - id: quest-system
+      relation: supports
+    - id: progression-backend
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T05:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требуется система, мотивирующая игроков выполнять разнообразные действия и отражающая прогресс.
+  goal: Реализовать гибкую архитектуру достижений с отслеживанием событий и выдачей наград.
+  essence: World-service подписывается на события из игры, обновляет прогресс достижений и выдаёт награды через уведомления и почту.
+  key_points:
+    - Категории достижений охватывают бой, исследование, экономику, социальные и PvP сценарии.
+    - Событийный подход позволяет реагировать на действия игроков в реальном времени.
+    - Награды включают титулы, валюту, предметы и престижные статусы.
+content:
+  sections:
+    - id: architecture
+      title: Микросервисная архитектура
+      body: |
+        Achievement service развёрнут в world-service (порт 8086) и доступен по маршруту
+        `/api/v1/world/achievements/*`. Он подписывается на события боя, квестов, торговли,
+        социального взаимодействия и прогрессии. При разблокировке достижений сервис отправляет
+        уведомления и может инициировать выдачу наград через mail-service.
+      mechanics_links: []
+      assets: []
+    - id: categories
+      title: Категории и примеры
+      body: |
+        Система содержит категории Combat, Exploration, Economic, Social, Quests, Progression,
+        PvP и Special. Каждая категория имеет линейку достижений от простых до легендарных
+        целей. Прогресс хранится по игроку, а условия выражаются в виде событий и числовых
+        порогов (например, количество убийств, посещённых локаций, заработанных средств).
+      mechanics_links: []
+      assets: []
+    - id: tracking
+      title: Отслеживание и награды
+      body: |
+        Сервис отслеживает достижения через event bus, обновляет счётчики и фиксирует
+        завершённые достижения. При разблокировке выдаются награды (опыт, титулы, предметы),
+        отправляется уведомление и, при необходимости, письмо с вложениями. Настройки
+        сложности и редкости управляют мотивацией и планированием контента.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: api
+      path: api/v1/world/achievements/
+    - type: repository
+      path: shared/code/backend/world/achievement-service/
+  decisions:
+    - id: adr-achievement-service
+      summary: Утверждён событийный сервис достижений с поддержкой категорий и наград.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: Concept Director
+    changes: Утверждена архитектура и категории системы достижений.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
