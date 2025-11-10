@@ -1,0 +1,151 @@
+metadata:
+  id: progression-attributes-matrix
+  title: Матрица атрибутов — старт, рост и требования
+  document_type: mechanics
+  category: progression
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-07T16:46:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T11:21:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - progression
+    - attributes
+    - balance
+  topics:
+    - character-growth
+    - attribute-system
+  related_systems:
+    - gameplay-service
+    - economy-service
+  related_documents:
+    - id: progression-attributes
+      relation: references
+    - id: economy-equipment-matrix
+      relation: complements
+    - id: combat-implants-types
+      relation: complements
+  source: shared/docs/knowledge/mechanics/progression/progression-attributes-matrix.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - balance
+  risk_level: high
+review:
+  chain:
+    - role: progression_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T16:46:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось зафиксировать все диапазоны атрибутов, рост, капы и требования к предметам в едином формате для дальнейшей автоматизации.
+  goal: Описать стартовые значения, формулы роста, ограничения и проверки, а также документацию API и валидационные процессы.
+  essence: Матрица атрибутов определяет стартовые броски, уровневый рост, жёсткие/мягкие капы и требования к оборудованию с транзакционной валидацией.
+  key_points:
+    - Стартовые диапазоны атрибутов зависят от класса и модифицируются бонусами и свободным очком.
+    - Рост по уровням выдаёт +1 очко и дополнительные бонусы каждые 5 уровней, переходя на +2 с 41 уровня.
+    - Жёсткие, мягкие и абсолютные капы ограничивают значения атрибутов, влияя на эффективность перков и предметов.
+    - Требования предметов и имплантов валидируются скриптами и связаны с API gameplay-service.
+content:
+  sections:
+    - id: starting_ranges
+      title: Стартовые диапазоны и бонусы
+      body: |
+        Стартовый бросок для каждого атрибута находится в диапазоне 3–8 и модифицируется классовыми бонусами.
+        Игрок получает дополнительное свободное очко для распределения («Свой путь»). Примерные стартовые таблицы
+        для основных классов определяют STR, REF, BODY, INT, TECH, COOL, AGI, EMP, WILL. Расчёт выполняется
+        по формуле `base_roll + class_bonus` и сохраняется в `character_creation_snapshot`.
+      mechanics_links:
+        - mechanics/progression/progression-core.yaml
+    - id: level_growth
+      title: Прирост по уровням
+      body: |
+        Каждое повышение уровня добавляет +1 очко атрибутов, а каждые 5 уровней выдаётся дополнительный бонус +2.
+        Начиная с 41 уровня игрок получает +2 очка за уровень из-за роста стоимости перков и предметов эндгейма.
+        Таблица покрывает диапазоны 1–60 и фиксирует кумулятивные значения.
+      mechanics_links:
+        - mechanics/progression/progression-advancement.yaml
+    - id: attribute_caps
+      title: Капы атрибутов
+      body: |
+        Базовый жёсткий кап равен 20, мягкий кап через импланты и перки — 25 (эффективность модификаторов свыше
+        25 снижается на 50%), абсолютный кап с учётом перерождений — 30. Капы используются в балансировке предметов
+        и проверяются CI-пайплайном.
+      mechanics_links:
+        - mechanics/progression/progression-balance.yaml
+    - id: equipment_requirements
+      title: Требования экипировки и имплантов
+      body: |
+        Каждая запись предмета в `equipment-matrix` содержит `attribute_requirements`. Таблицы описывают пороги для
+        тяжёлого оружия, снайперских винтовок, умного оружия, экзоскелетов и кибердеков, а также расширенные пороги
+        для легендарного оружия, прототипов и социального контента. Несоблюдение накладывает штрафы (точность,
+        автонаведение, расход выносливости).
+      mechanics_links:
+        - mechanics/economy/economy-equipment-matrix.yaml
+    - id: class_modifiers
+      title: Классовые модификаторы
+      body: |
+        Модификаторы коэффициентов навыков задают бонусы для каждого архетипа: Solo усиливает REF и STR,
+        Netrunner — INT и WILL, Techie — TECH, Nomad — AGI и REF при вождении, Fixer — EMP в социальных проверках.
+        Значения используются в формулах навыков и могут отличаться по подклассам.
+      mechanics_links:
+        - mechanics/progression/progression-skills.yaml
+    - id: validation_pipeline
+      title: Проверки и валидация
+      body: |
+        Скрипт `scripts/validate-item-attributes.ps1` проверяет консистентность требований после обновления матрицы.
+        Процесс включает обновление документа, запуск валидации и обработку отчётов при коллизиях. Дополнительно
+        сверяются формулы с `progression-attributes.md`, `progression-skills-mapping.md` и экономическими матрицами.
+      mechanics_links:
+        - mechanics/progression/progression-validation.yaml
+    - id: data_structures
+      title: Структуры данных
+      body: |
+        SQL-схемы `attribute_matrix`, `attribute_requirements`, `attribute_level_thresholds` описывают хранение в
+        gameplay-service. Таблицы поддерживают версии, штрафы, ссылки на события и индексируются по серверу,
+        категории и игрокам.
+      mechanics_links:
+        - mechanics/backend/gameplay-data-structures.yaml
+    - id: api_contracts
+      title: REST и GraphQL API
+      body: |
+        Контракты REST включают `GET/PUT /progression/attributes/matrix`, `GET /progression/attributes/requirements`,
+        `PATCH /progression/attributes/requirements/{itemId}` и `GET /progression/attributes/thresholds`.
+        GraphQL тип `AttributeMatrix` обеспечивает фронтенд подсветкой недостающих атрибутов.
+      mechanics_links:
+        - mechanics/progression/progression-api.yaml
+    - id: synchronization
+      title: Синхронизация и CI
+      body: |
+        CI job `matrix-consistency` генерирует JSON для swagger и проверяет капы при изменениях YAML. Связанные документы
+        (`progression-skills-mapping`, `economy/equipment-matrix`, `combat-implants-types`) участвуют в перекрёстной
+        валидации и синхронизации данных.
+      mechanics_links:
+        - mechanics/devops/ci-validation-pipeline.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: progression_team
+    changes: Добавлены таблицы хранения, API и расширенные требования предметов.
+  - version: '1.0.0'
+    date: 2025-11-05
+    author: progression_team
+    changes: Определены стартовые диапазоны, рост и базовые требования.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
