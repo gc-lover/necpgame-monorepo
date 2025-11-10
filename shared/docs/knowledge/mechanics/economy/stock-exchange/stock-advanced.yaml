@@ -1,0 +1,139 @@
+metadata:
+  id: stock-advanced
+  title: Биржа акций — Продвинутые механики
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-07T16:19:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - stock-market
+    - derivatives
+    - margin-trading
+  topics:
+    - advanced_trading
+    - risk_management
+  related_systems:
+    - economy-service
+    - notification-service
+    - tax-service
+    - analytics-service
+  related_documents:
+    - id: stock-trading
+      relation: extends
+    - id: stock-analytics
+      relation: references
+  source: shared/docs/knowledge/mechanics/economy/stock-exchange/stock-advanced.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - analytics
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-09
+      status: approved
+  next_actions: []
+summary:
+  problem: Продвинутые биржевые инструменты не были формализованы и требовали отдельного описания рисков и требований.
+  goal: Описать механику коротких продаж, маржинальной торговли, опционов и фьючерсов с примерами, ограничениями и API.
+  essence: Расширенный набор инструментов предоставляет опытным игрокам способы хеджирования и спекуляций, требуя строгого контроля рисков и интеграции с сервисами экономики.
+  key_points:
+    - Короткие продажи и маржинальная торговля усиливают доходность и риски, вводят требования по коллатералу и маржин-коллам.
+    - Опционы и фьючерсы реализуются через отдельные контракты с поддержкой расчётных схем и лимитов допуска.
+    - Система рисков ограничивает волатильные сценарии, а интеграции обеспечивают налоги, уведомления и аналитику.
+content:
+  sections:
+    - id: short_selling
+      title: Короткие продажи
+      body: |
+        Игрок занимает акции у брокера, продаёт их по текущей цене и выкупает позже. При падении цены образуется прибыль, при росте — потенциально неограниченный убыток. Система удерживает коллатерал в размере 150 процентов позиции и отслеживает события, влияющие на цену.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: margin_trading
+      title: Маржинальная торговля
+      body: |
+        Маржинальные счета предоставляют плечо от двух до десяти единиц капитала. Доходность и потери масштабируются пропорционально заемным средствам. При падении equity ниже 30 процентов возникает маржин-колл, который требует пополнения счёта или автоматической ликвидации позиций.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: access_requirements
+      title: Требования к доступу
+      body: |
+        Для коротких продаж требуется уровень прогрессии 45 и торговый объём свыше пятисот тысяч единий в месяц. Маржинальная торговля доступна с сорокового уровня и требует положительной кредитной истории. Эти условия защищают экономику от злоупотреблений неопытными игроками.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: options
+      title: Опционы
+      body: |
+        Опционы Call и Put предоставляют право, но не обязательство, купить или продать актив по strike цене. Контракты размером сто акций выпускаются с шагами по цене и еженедельными экспирациями. Ценообразование использует модель Блэка — Шоулза с исторической волатильностью.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+      assets: []
+    - id: futures
+      title: Фьючерсы
+      body: |
+        Фьючерсные контракты выпускаются на индекс CORP100 и ключевые товары. Каждая позиция номинирована на десять тысяч кредитов, рассчитывается наличными и требует поддерживающей маржи десять процентов. В день истечения применяется средневзвешенная цена.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+      assets: []
+    - id: data_structures
+      title: Структура данных
+      body: |
+        Сущности margin_accounts, derivatives_contracts и derivatives_positions фиксируют кредитные лимиты, параметры контрактов и открытые позиции. Схемы поддерживают расчёт PnL, историю маржин-коллов и статус сделок.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+      assets: []
+    - id: api
+      title: API и события
+      body: |
+        REST интерфейсы обслуживают запросы к маржинальным счетам, займам, погашениям и операциям с деривативами. События economy.stocks.derivatives.* уведомляют сервисы о маржин-коллах, исполнении опционов, расчётах фьючерсов и ликвидациях.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+      assets: []
+    - id: risk_controls
+      title: Контроль рисков
+      body: |
+        Показатели здоровья маржи пересчитываются каждые пять секунд. Ограничение short interest на уровне тридцати процентов свободного float предотвращает перегрев рынка. Высокая волатильность временно отключает новые шорты и высокое плечо, а доступ к опционам требует прохождения обучения и успешных сделок.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции
+      body: |
+        economy-events корректирует маржинальные требования в кризисные периоды. tax-service формирует отчёты по прибыли и убыткам. notification-service предупреждает о маржин-коллах и сроках экспирации. analytics-service вычисляет показатели чувствительности (дельта, гамма) и поддерживает мониторинг волатильности.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Добавлены опционы, фьючерсы, структуры данных и контроль рисков.
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_director
+    changes: Сформировано описание продвинутых механик торговли.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
