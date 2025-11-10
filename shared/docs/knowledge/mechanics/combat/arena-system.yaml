@@ -1,0 +1,148 @@
+metadata:
+  id: mechanics-combat-arena-system
+  title: "Арены — киберспортивные режимы"
+  document_type: mechanics
+  category: combat
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:28:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T20:28:00Z
+  owners:
+    - role: brain_manager
+      contact: brain.manager@necp.game
+  tags:
+    - arena
+    - pvp
+    - progression
+    - economy
+  topics:
+    - gameplay-combat
+    - competitive
+    - live-ops
+  related_systems:
+    - gameplay-service
+    - voice-lobby
+    - leaderboard-service
+    - economy-service
+  related_documents:
+    - id: mechanics-combat-combat-combos-synergies
+      relation: complements
+    - id: mechanics-combat-combat-ai-enemies
+      relation: references
+    - id: mechanics-economy-betting
+      relation: depends_on
+  source: shared/docs/knowledge/mechanics/combat/arena-system.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - economy
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Не было консолидированного описания аренных режимов, рейтингов и наград."
+  goal: "Зафиксировать устройство арен, режимы матчей, прогресс и интеграции для киберспортивного ядра."
+  essence: "Арены дают 5–15 минутные матчи, сезонные рейтинги и экономику ставок, связывая сервисы лидербордов, голосовых лобби и контрактов."
+  key_points:
+    - "Поддерживаются четыре ключевые карты с уникальными механиками и лором."
+    - "Матч делится на этапы лобби, драфта, боевого цикла и пост-матча."
+    - "MMR, сезоны и кросс-прогресс обновляют прогресс боевого пропуска и фракционные рейтинги."
+    - "Арена-валюта, ставки и контракты формируют экономику и мотивируют участие."
+content:
+  sections:
+    - id: overview
+      title: "Назначение арен"
+      body: |
+        Арены обеспечивают быстрые матчевые сценарии (5–15 минут) в PvP и гибридных PvPvE форматах,
+        поддерживают голосовые лобби, сезонные рейтинги и выдачу эксклюзивных наград. Они работают
+        круглосуточно, синхронизируются с календарём и усиливают экономику спонсоров и ставок.
+      mechanics_links:
+        - mechanics/combat/combat-combos-synergies.yaml
+      assets: []
+    - id: arena_catalog
+      title: "Каталог арен"
+      body: |
+        Неоновые мосты Neon Circuit, орбитальная станция Orbital Pit, подземный Underbelly Gauntlet и
+        AR-симуляция HoloGrid Rumble покрывают контроль точек, элиминацию, PvPvE-кражу и смешанный
+        контроль/взлом. Каждая арена имеет спонсора, сюжетный контекст и уникальные модификаторы боя.
+      mechanics_links:
+        - mechanics/combat/combat-ai-enemies.yaml
+      assets: []
+    - id: match_structure
+      title: "Структура матчей"
+      body: |
+        Матч включает lobby с подбором по MMR, этап draft & loadout с выбором имплантов и гаджетов,
+        основной цикл захвата и событий Neon Burst, а также post-match с наградами, рейтинговыми
+        изменениями и телеметрией для античита.
+      mechanics_links:
+        - mechanics/combat/combat-abilities.yaml
+      assets: []
+    - id: ranking_progress
+      title: "Рейтинги и прогресс"
+      body: |
+        Система MMR базируется на рангах Bronze → Blackwall, сезон длится восемь недель, поддерживает
+        decay, streak бонусы и кросс-прогресс в боевом пропуске и фракционных войнах.
+      mechanics_links:
+        - mechanics/progression/progression-skills.yaml
+      assets: []
+    - id: rewards_economy
+      title: "Награды и экономика"
+      body: |
+        Арена-валюта ARENA_CHIPS, кейсы Neon Showcase и контракты спонсоров задают экономику арены.
+        Интеграция с сервисом ставок и системой salvage поддерживает проигравших и крафт имплантов.
+      mechanics_links:
+        - mechanics/economy/economy-monetization.yaml
+      assets: []
+    - id: integrations
+      title: "Интеграции и стек"
+      body: |
+        Арены опираются на voice lobby, лидерборды, достижения, daily reset, клановые войны и античит.
+        Технически используются Match Orchestrator, Redis pub/sub, Kafka `arena.match.state`, ClickHouse
+        телеметрия и конфигурация в Postgres JSONB.
+      mechanics_links:
+        - mechanics/combat/combat-ai-enemies.yaml
+      assets: []
+    - id: api_outline
+      title: "Контуры API"
+      body: |
+        Высокоуровневые REST маршруты включают поиск матчей, загрузку карт, готовность, отправку
+        loadout и телеметрию, а также выдачу сезонных наград и профилей.
+      mechanics_links:
+        - mechanics/combat/combat-combos-synergies.yaml
+      assets: []
+    - id: data_models
+      title: "Схемы данных"
+      body: |
+        Основные таблицы `arena_matches`, `arena_rewards` и `arena_leaderboard` фиксируют параметры
+        матчей, награды и рейтинги. Обновление лидербордов выполняется каждые пять минут.
+      mechanics_links:
+        - mechanics/economy/economy-monetization.yaml
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - mechanics/combat/combat-ai-enemies.yaml
+    - mechanics/combat/combat-combos-synergies.yaml
+    - mechanics/economy/economy-monetization.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#mechanics-combat-arena-system
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: brain_manager
+    changes: "Конвертировано из arena-system.md и структурировано по шаблону знаний."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
