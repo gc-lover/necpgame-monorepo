@@ -1,0 +1,127 @@
+metadata:
+  id: stock-analytics
+  title: Биржа акций — Аналитика и графики
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-07T16:19:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - stock-market
+    - analytics
+    - visualization
+  topics:
+    - market_analysis
+    - data_platform
+  related_systems:
+    - analytics-service
+    - notification-service
+    - economy-service
+  related_documents:
+    - id: stock-exchange-overview
+      relation: references
+    - id: stock-trading
+      relation: complements
+  source: shared/docs/knowledge/mechanics/economy/stock-exchange/stock-analytics.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-09
+      status: approved
+  next_actions: []
+summary:
+  problem: Игрокам и аналитическим сервисам требуется единый набор визуализаций и индикаторов для оценки динамики акций.
+  goal: Описать типы графиков, индикаторы, источники данных и API, поддерживающие биржевую аналитику NECPGAME.
+  essence: Аналитическая подсистема объединяет исторические данные, технические индикаторы и пользовательские дашборды с REST и WebSocket интерфейсами.
+  key_points:
+    - Поддерживаются линейные, свечные и объёмные графики с настраиваемыми интервалами.
+    - Технические индикаторы включают скользящие средние, RSI, MACD и полосы Боллинджера.
+    - REST и стриминговый API обеспечивают выборку данных, а интеграции с уведомлениями и событиями дополняют анализ.
+content:
+  sections:
+    - id: chart_types
+      title: Типы графиков
+      body: |
+        Линейный график предоставляет быстрый обзор цены по выбранному интервалу. Свечной график визуализирует значения Open, High, Low, Close и подходит для технического анализа волатильности. Объёмный график фиксирует торговый объём и облегчает выявление корреляций между активностью и изменением цены.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: technical_indicators
+      title: Технические индикаторы
+      body: |
+        Скользящие средние (MA7 и MA30) формируют сигналы пересечения для покупок и продаж. Индекс RSI отслеживает зоны перекупленности и перепроданности с порогами 70 и 30. Дополнительно применяются MACD для анализа трендов и полосы Боллинджера для оценки волатильности.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: analytics_tools
+      title: Дополнительные инструменты
+      body: |
+        Комплекс инструментов включает тепловые карты секторов, отображение глубины стакана заявок и систему алертов по пользовательским условиям. Игроки настраивают оповещения по цене, индикаторам и событиям, связывая их с портфелями.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+    - id: data_sources
+      title: Источники данных
+      body: |
+        Хранилище OHLC фиксирует котировки по интервалам от одной минуты до суток, а кеш индикаторов сохраняет вычисленные значения для ускоренного доступа. Обновление осуществляется пакетами и триггерами, поддерживающими агрегацию и пересчёт индикаторов.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets:
+        - type: code
+          description: Структура таблиц stock_ohlc и stock_indicator_cache
+          path: shared/docs/knowledge/mechanics/economy/stock-exchange/stock-analytics.md#database
+    - id: analytics_api
+      title: API аналитики
+      body: |
+        REST интерфейсы предоставляют исторические котировки, технические индикаторы, тепловые карты и данные по стакану заявок. WebSocket канал `/stocks/analytics/stream` транслирует обновления цены, объёма и индикаторов с частотой от одной секунды до одной минуты.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+    - id: dashboards
+      title: Дашборды и пользовательский опыт
+      body: |
+        Портфельный дашборд отображает P&L, распределение активов и риски. Обзор рынка выводит лидеров роста и падения, а также события рынка. Центр оповещений агрегирует активные триггеры и быстрые действия. Сравнительный график позволяет накладывать до четырёх тикеров или индексов.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции
+      body: |
+        analytics-service рассчитывает индикаторы и агрегаты, notification-service доставляет алерты игрокам, а economy-events поставляет аннотации о рыночных событиях. economy-investments использует данные аналитики для рекомендательных сервисов.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Добавлены источники данных, API, индикаторы и дашборды.
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_director
+    changes: Сформировано базовое описание аналитики биржи.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
