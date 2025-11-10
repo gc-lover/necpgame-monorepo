@@ -58,84 +58,98 @@ summary:
 content:
   sections:
     - id: pipeline
-      title: Общий конвейер
+      title: Конвейер создания
       body: |
-        Процесс включает подготовку брифа, валидацию, оценку сложности, настройку публикации, выбор гарантий и публикацию. `social-service` оркестрирует вызовы `economy-service` и `npc-service`.
+        Процесс включает подготовку брифа, валидацию, оценку сложности, настройку публикации, выбор
+        гарантий и публикацию. Социальный сервис оркестрирует взаимодействие с экономикой и NPC.
       mechanics_links:
-        - mechanics/social/player-orders-system-детально.md
-      assets: []
+        - mechanics/social/player-orders-system.yaml
     - id: prerequisites
       title: Предусловия
       body: |
-        Заказчик должен иметь рейтинг не ниже Bronze, отсутствие санкций и достаточно средств для депозита. Корпоративные заказы подтверждаются `factions-service`.
+        Требуются минимальный рейтинг (Bronze), отсутствие санкций, покрытие депозита, подтверждение
+        фракций для корпоративных заказов. Проверки выполняют economy и factions сервисы.
       mechanics_links:
-        - mechanics/social/player-orders-reputation-детально.md
-      assets: []
+        - mechanics/social/player-orders-reputation-детально.yaml
     - id: templates
       title: Шаблоны заказов
       body: |
-        Шаблоны (боевой, хакерский, экономический, социальный, исследовательский) задают предзаполненные поля и подсказки мастера, определяя структуру требований.
+        Боевые, хакерские, экономические, социальные и исследовательские шаблоны задают предзаполненные
+        поля и подсказки. Параметр `orderTemplate` управляет конфигурацией мастера.
       mechanics_links:
-        - mechanics/social/player-orders-types-детально.md
-      assets: []
-    - id: brief_parameters
+        - mechanics/social/player-orders-system.yaml
+    - id: brief-parameters
       title: Параметры брифа
       body: |
-        Бриф описывает цели, сроки, бюджет, риски, требования к команде, приватность и дополнительные документы. Документы хранятся в `content-service`.
+        Цели, сроки, бюджет, риски, требования к команде, приватность и вложения. Информация хранится
+        в social-service и content-service.
       mechanics_links:
-        - mechanics/social/player-orders-system-детально.md
-      assets: []
+        - mechanics/social/player-orders-system.yaml
     - id: complexity
       title: Оценка сложности
       body: |
-        `ComplexityScore` собирает факторы зон, навыков и рисков из `world-service` и `factions-service`, формируя рекомендуемый бюджет и требования к рейтингу исполнителей.
+        Сложность вычисляется на основе зон, целей, навыков и риска, используя данные world и factions
+        сервисов. Результат влияет на бюджет и требования к рейтингу исполнителей.
       mechanics_links:
-        - mechanics/social/player-orders-world-impact-детально.md
-      assets: []
+        - mechanics/social/player-orders-system.yaml
     - id: budget
       title: Расчёт бюджета
       body: |
-        Формула `BaseReward = ComplexityScore * RiskModifier * MarketIndex * TimeModifier` определяет базовую награду, escrow и комиссии. JSON схема `schemas/social/player-order-budget.schema.json` описывает контракт.
+        BaseReward = ComplexityScore × RiskModifier × MarketIndex × TimeModifier.
+        Escrow и комиссия рассчитываются от базовой суммы, сравниваются с медианой. Приведена JSON схема
+        `player-order-budget.schema.json`.
       mechanics_links:
         - mechanics/social/player-orders-economy.yaml
-      assets: []
     - id: publication
       title: Режимы публикации
       body: |
-        Публичный, пригласительный и закрытый режимы регулируют доступ исполнителей. Адресные списки используют `relationships-system`, а фракционные фильтры — `factions-service`.
+        Публичный, пригласительный и закрытый режимы. Адресные публикации требуют доверия из
+        relationships-system.
       mechanics_links:
         - mechanics/social/relationships-system-детально.md
-      assets: []
     - id: validation
       title: Валидации и проверки
       body: |
-        Проверяются полнота полей, юридические ограничения, бюджетные пороги, токсичность текста и санкции. Ошибки логируются в telemetry для аналитики.
+        Проверка полноты полей, юридических ограничений, бюджета, токсичности формулировок и санкций.
+        Ошибки логируются в telemetry-service.
       mechanics_links:
-        - mechanics/social/player-orders-system-детально.md
-      assets: []
+        - mechanics/social/player-orders-system.yaml
     - id: guarantees
       title: Гарантии и страхование
       body: |
-        Настраиваются уровни страховки (базовый, расширенный, премиум) и escrow. Полисы рассчитываются `economy-service` и используются арбитражом.
+        Настраиваются уровни страховки, escrow и комиссии. Дополнительные гарантии повышают рейтинг
+        заказчика и доступны арбитражу.
       mechanics_links:
-        - mechanics/social/player-orders-advanced-детально.md
-      assets: []
-    - id: ux_flow
-      title: UX поток
+        - mechanics/social/player-orders-reputation-детально.yaml
+    - id: ux-flow
+      title: UX-поток
       body: |
-        Мастер (Overview → Details → Budget → Publication → Review) предоставляет подсказки, индикатор готовности и симуляцию бюджета. Черновики сохраняются через `content-service`.
+        Многошаговый мастер (Overview → Details → Budget → Publication → Review) с подсказками, симуляцией
+        бюджета и черновиками. Макеты утверждены (PR `FW-PO-CREATION-021`).
       mechanics_links:
-        - mechanics/social/player-orders-creation.yaml
-      assets: []
+        - mechanics/social/player-orders-system.yaml
     - id: integrations
       title: Интеграции
       body: |
-        Документ связывает процесс с рейтингами, отношениями и наймом NPC, обеспечивая адресные приглашения и подключение исполнителей.
+        Связи с документами по репутации, отношениям и найму NPC обеспечивают адресные приглашения,
+        влияние на рейтинги и подключение NPC-исполнителей.
       mechanics_links:
-        - mechanics/social/player-orders-reputation-детально.md
-        - mechanics/social/npc-hiring-system-детально.md
-        - mechanics/social/relationships-system-детально.md
-      assets: []
+        - mechanics/social/player-orders-reputation-детально.yaml
+        - mechanics/social/npc-hiring-system-детально.yaml
+    - id: rest
+      title: REST API
+      body: |
+        POST `/social/player-orders` (создание), `/estimate`, `/validate`, `/publish`, `/draft`. JSON
+        схемы описаны для каждого запроса.
+      mechanics_links:
+        - mechanics/social/player-orders-system.yaml
+    - id: kafka
+      title: Kafka события
+      body: |
+        `social.player-orders.draft.saved`, `social.player-orders.validation.failed`, `social.player-orders.published`,
+        `economy.player-orders.escrow.locked` и подписчики telemetry, monitoring, factions и quest сервисов.
+      mechanics_links:
+        - mechanics/social/player-orders-system.yaml
 appendix:
   glossary: []
   references:
