@@ -1,0 +1,147 @@
+metadata:
+  id: quest-main-2050-network-recovery
+  title: "Архив — Основной квест: Восстановление Сети (2050)"
+  document_type: implementation
+  category: start-content
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:16:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - questline
+    - netrunning
+    - archive
+  topics:
+    - quests
+    - netrunning
+  related_systems:
+    - quest-engine
+    - netrunning-service
+  related_documents:
+    - id: quest-main-2027-rebuild-protocol
+      relation: superseded_by
+  source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2050-network-recovery.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+  risk_level: low
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Документ хранится как историческая версия квеста до перехода на shooter-механику и нужен для сравнения решений.
+  goal: Зафиксировать устаревшую структуру нетраннерского квеста с D&D-проверками и диалогами.
+  essence: Квест описывает восстановление сетевого узла в Downtown через последовательность нетраннерских испытаний и виртуальных боёв.
+  key_points:
+    - Подробный синопсис и контекст 2050 года после DataKrash.
+    - Полный диалоговый сценарий с 22 узлами и ветвлениями.
+    - Старые проверки способов (analysis, engineering, presence, perception) и виртуальные бои.
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис
+      body: |
+        - Время: 2050 год, пост-DataKrash восстановление сетей.
+        - Контакт: `npc-elizabeth-chen`, корпоративный посредник NetWatch.
+        - Требования: Нетраннер или высокий INT/TECH.
+        - Локация: Downtown, корпоративная зона.
+        - Тема: восстановление инфраструктуры, угрозы от повреждённых ИИ.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: context
+      title: Контекст
+      body: |
+        После DataKrash глобальная сеть разрушена, узлы изолированы, Blackwall держит угрозы за периметром. Элизабет Чен ищет специалиста для перезапуска критического узла в Downtown. Основные риски — повреждённые ИИ, вирусы и боевые программы, которые считают всех врагами.
+      mechanics_links:
+        - mechanics/combat/combat-cyberspace.yaml
+    - id: structure
+      title: Цели и структура
+      body: |
+        ### Основной путь
+        1. Принять задание у Элизабет.
+        2. Добраться до узла в Downtown.
+        3. Подключиться к узлу и войти в виртуальное пространство.
+        4. Очистить три сегмента повреждённых данных.
+        5. Победить или отключить три боевых прокси.
+        6. Восстановить узел и вернуться к Элизабет.
+
+        ### Ветвления
+        - **Analysis Breach** (`analysis ≥ 0.55`, `tech_override ≥ 0.55`) — ускоряет доступ, снижает количество боёв.
+        - **Engineering Override** (`handling ≥ 0.55`, `tech_override ≥ 0.50`) — стабилизирует узел и даёт бонусные eddies.
+        - **Presence Negotiation** (`presence ≥ 0.60`, `suppression_score ≤ 0.20`) — снижает ментальный стресс и даёт XP.
+        - **Recon Sweep** (`perception_sensor ≥ 0.55`, `accuracy ≥ 0.55`) — позволяет найти корпоративные данные.
+      mechanics_links:
+        - mechanics/combat/combat-dnd-integration-shooter.yaml
+    - id: dialogues
+      title: Диалоговое дерево
+      body: |
+        - Диалог с Элизабет содержит ответы об оплате, рисках, важности узла и принимает решение игрока.
+        - Физический доступ описывает осмотр помещения, поиск данных и инженерные проверки.
+        - Виртуальная зона управляет обходом файрвола, прокси и финальным ИИ с опцией мирного решения.
+        - Финал возвращает игрока к Элизабет и открывает дальнейшие задания.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: encounters
+      title: Виртуальные бои
+      body: |
+        - Боевые прокси: defenseRating 13, HP 40, ICE damage 12, пытаются наложить Disadvantage.
+        - Старый ИИ: defenseRating 15, HP 60, использует ICE Spike и Mental Assault с накруткой Disadvantage.
+        - Лут: `item-ai-core-fragment`, опыт за победы, корпоративные данные при успешном разведывательном чекe.
+      mechanics_links:
+        - mechanics/combat/combat-cyberspace.yaml
+    - id: rewards
+      title: Награды
+      body: |
+        - Базово: 520 XP, 640 eddies, репутация +12 (independent).
+        - Бонусы: обход файрвола (+30% XP), инженерный ремонт (+100 eddies), переговоры с ИИ (+50 XP), разведданные (+`item-corporate-data`).
+        - Максимум: 726 XP, 740 eddies (или 940 eddies с продажей данных).
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API маппинг
+      body: |
+        - `POST /api/v1/quests/{id}/accept`
+        - `POST /api/v1/shooter-interaction`
+        - `POST /api/v1/netrunning/jack-in`
+        - `POST /api/v1/netrunning/combat/start`
+        - `POST /api/v1/netrunning/hack`
+        - `POST /api/v1/quests/{id}/objective/complete`
+        - `POST /api/v1/quests/{id}/complete`
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: qa
+      title: Тест-кейсы
+      body: |
+        1. Успех всех проверок — максимум XP, мирный финал.
+        2. Провал всех проверок — все боевые столкновения и стандартные награды.
+        3. Мирный путь с ИИ — проверка Presence на снижение боёв.
+        4. Поиск корпоративных данных — проверка наград за разведку.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#quest-main-2050-network-recovery
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-05
+    author: concept_team
+    changes: Полная D&D спецификация с нетраннерскими проверками и виртуальными боями.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
