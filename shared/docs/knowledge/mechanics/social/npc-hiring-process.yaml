@@ -1,97 +1,105 @@
 metadata:
   id: npc-hiring-process
-  title: Система найма NPC — Процесс найма
+  title: 'Система найма NPC — Процесс найма'
   document_type: mechanics
   category: social
-  status: approved
+  status: draft
   version: '1.0.0'
-  last_updated: 2025-11-07T00:18:00Z
-  concept_approved: true
-  concept_reviewed_at: 2025-11-03T00:00:00Z
+  last_updated: 2025-11-11T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - npc-hiring
-    - onboarding
-  topics:
-    - hiring_system
+    - social
     - contracts
+  topics:
+    - recruitment
+    - negotiation
   related_systems:
     - social-service
   related_documents:
-    - id: npc-hiring-system
-      relation: references
-    - id: npc-hiring-limits
-      relation: complements
     - id: npc-hiring-economy
+      relation: complements
+    - id: npc-hiring-limits
+      relation: references
+    - id: npc-hiring-world-impact
       relation: complements
   source: shared/docs/knowledge/mechanics/social/npc-hiring-process.md
   visibility: internal
   audience:
     - concept
-    - operations
+    - systems
+    - social-design
   risk_level: medium
 review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-03T00:00:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Процесс найма NPC не был структурирован для дальнейшей постановки задач.
-  goal: Описать этапы поиска, переговоров, заключения контрактов и запуска работы NPC.
-  essence: Наём NPC — многошаговая процедура, требующая учёта отношений, условий и юридических аспектов контракта.
+  problem: Нужно формализовать последовательность найма NPC, чтобы связать поиск, переговоры, контракт и старт работы.
+  goal: Описать шаги процесса и требования к данным для автоматизации social-service.
+  essence: Четыре этапа — поиск, переговоры, контракт и старт работы — со своими критериями и параметрами.
   key_points:
-    - Поиск NPC строится на критериях навыков, репутации и доступности.
-    - Переговоры определяют зарплату, бонусы, длительность и автономность.
-    - Контракты фиксируют обязанности и условия расторжения.
-    - Старт работы определяется выбранным режимом управления и влияет на эффективность.
+    - Поиск учитывает навыки, репутацию и доступность NPC.
+    - Переговоры зависят от отношений и навыков игрока.
+    - Контракт фиксирует обязанности, сроки, штрафы.
+    - Начало работы определяет режимы управления и эффективность.
 content:
   sections:
     - id: discovery
       title: 'Поиск кандидатов'
       body: |
-        Игрок использует поисковые инструменты, рекомендации и рынок труда. Критерии включают навыки, репутацию, бюджет и доступность NPC.
+        Описаны источники (поиск, рекомендации, рынок труда) и критерии фильтрации (навыки, репутация, стоимость, доступность).
+        Поддерживает интеграцию с социальным UI и рекомендательными системами.
       mechanics_links:
-        - mechanics/social/npc-hiring-types.yaml
+        - mechanics/social/npc-hiring-system.yaml
       assets: []
-    - id: negotiations
-      title: 'Переговоры'
+    - id: negotiation
+      title: 'Переговоры о найме'
       body: |
-        Обсуждаются зарплата, бонусы, длительность и задачи. Отношения и навыки убеждения игрока влияют на итоговые условия.
+        Включает процесс торга, зависимость условий от отношений и навыков (Persuasion), базовый набор параметров (зарплата, бонусы, длительность, автономность).
+        TODO из оригинала перенесены в backlog, чтобы не блокировать автоматизацию.
       mechanics_links:
-        - mechanics/social/npc-hiring-effectiveness.yaml
+        - mechanics/social/reputation-formulas.yaml
       assets: []
     - id: contract
       title: 'Заключение контракта'
       body: |
-        Контракт фиксирует обязанности сторон, сроки, условия расторжения и штрафы. Документ поддерживает временные и постоянные формы найма.
+        Фиксируются обязанности, обязанности игрока, сроки, условия расторжения и штрафы.
+        Служит источником данных для формирования `Contract` в social-service.
       mechanics_links:
-        - mechanics/social/npc-hiring-limits.yaml
+        - mechanics/social/npc-hiring-management.yaml
       assets: []
-    - id: kickoff
-      title: 'Старт работы'
+    - id: onboarding
+      title: 'Запуск и контроль'
       body: |
-        После подписания NPC приступает к задачам в ручном или автономном режиме. Эффективность зависит от навыков, условий и выбранного уровня контроля.
+        NPC приступает к задачам, игрок выбирает ручное управление или автономию. Эффективность зависит от навыков, условий и контроля.
       mechanics_links:
-        - mechanics/social/npc-hiring-world-impact.yaml
+        - mechanics/social/npc-hiring-economy.yaml
       assets: []
 appendix:
   glossary: []
   references: []
-  decisions: []
 implementation:
   needs_task: false
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#CON-2025-220
+    - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
   - version: '1.0.0'
     date: 2025-11-03
-    author: Concept Director
-    changes: Конвертировано из npc-hiring-process.md и структурировано по шаблону.
+    author: concept_director
+    changes: 'Выделено из npc-hiring-system и структурировано по этапам.'
+  - version: '1.0.1'
+    date: 2025-11-11
+    author: concept_director
+    changes: 'Конвертация в YAML, уточнение ссылок и параметров переговоров.'
 validation:
   checksum: ''
   schema_version: '1.0'
