@@ -1,0 +1,121 @@
+metadata:
+  id: auction-house-database
+  title: Аукционный дом — база данных и интерфейсы
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-09T20:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T20:05:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - auction-house
+    - database
+    - economy
+  topics:
+    - trading-platform
+    - data-modeling
+  related_systems:
+    - economy-service
+    - analytics-service
+  related_documents:
+    - id: auction-house-mechanics
+      relation: complements
+    - id: auction-house-operations
+      relation: complements
+  source: shared/docs/knowledge/mechanics/economy/auction-house/auction-database.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: economy_lead
+      reviewer: ''
+      reviewed_at: 2025-11-09T20:05:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Схемы хранилищ и интерфейсы аукционного дома находились в Markdown и требовали структурированного описания для автоматизации экономики.
+  goal: Зафиксировать структуру таблиц, индексов, пользовательских сценариев и связи с другими микрофичами аукциона.
+  essence: Документ определяет реляционные объекты аукционного дома, индексацию для быстрых выборок и ключевые элементы пользовательского интерфейса.
+  key_points:
+    - Таблица `auctions` хранит состояние лотов, параметры цены, тайминги и историю продажи.
+    - Таблица `auction_bids` обеспечивает журнал ставок с каскадным удалением и индексацией по лоту и игроку.
+    - Индексы по статусу, времени истечения и идентификатору предмета сокращают стоимость запросов в активном каталоге.
+    - Интерфейсы включают поиск, сортировку и быстрые действия (ставка/выкуп) в едином экране.
+content:
+  sections:
+    - id: schema_auctions
+      title: Структура таблицы auctions
+      body: |
+        Основные поля: идентификаторы продавца и предмета, количество, стартовая цена, текущая ставка,
+        buyout, идентификатор лидирующего игрока, количество ставок, длительность, время истечения и статус
+        (`active`, `sold`, `expired`, `cancelled`). Для завершённых лотов фиксируются цена продажи, метод
+        (`won`, `buyout`) и временная отметка `sold_at`. Каскадные связи с таблицей игроков гарантируют
+        очистку незавершённых лотов при удалении персонажа.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+    - id: schema_bids
+      title: Структура таблицы auction_bids
+      body: |
+        Записи ставок содержат ссылку на лот, игрока, размер ставки и временную метку. Индексы
+        `auction_id, created_at DESC` и `bidder_id` ускоряют историю ставок и персональную аналитику.
+        Каскад с удалением аукциона очищает историю автоматически.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-mechanics.yaml
+    - id: indexing
+      title: Индексация и производительность
+      body: |
+        Индекс по статусу позволяет быстро фильтровать активные лоты. Частичный индекс по `expires_at`
+        (для `active`) поддерживает cron-задачи обработки истёкших лотов. Индекс по `item_id` ускоряет
+        подбор аналогичных товаров. Совокупность индексов обеспечивает масштабируемость каталога
+        при высоком количестве активных аукционов.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+    - id: data_flow
+      title: Поток данных и состояния
+      body: |
+        Лоты создаются в статусе `active`, получают обновления при ставках и завершаются в статусах
+        `sold`, `expired` или `cancelled`. Поля `current_bid`, `current_bidder_id`, `bid_count` обновляются
+        транзакционно, а возврат средств предыдущему лидеру фиксируется в бизнес-логике.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-mechanics.yaml
+    - id: ui_ux
+      title: Пользовательские интерфейсы
+      body: |
+        Экран включает поиск, фильтры и сортировки (ending soon, price, rarity), карточки лотов с
+        быстрыми действиями, вкладки «My Auctions» и «My Bids». Компоненты интерфейса синхронизируются
+        с API и отражают таймеры, buyout и количество ставок.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+    - id: integration
+      title: Интеграции и аналитика
+      body: |
+        База служит источником для аналитических счетчиков (`auctions.active`, `auctions.bids.daily`),
+        синхронизации с налоговыми и кошельковыми сервисами, а также аудита продаж.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: brain_manager
+    changes: Определены таблицы аукционного дома, индексация, UI-компоненты и связи с сервисами.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
