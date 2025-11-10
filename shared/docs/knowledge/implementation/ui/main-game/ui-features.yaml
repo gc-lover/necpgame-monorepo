@@ -1,0 +1,143 @@
+metadata:
+  id: ui-main-game-features
+  title: UI Main Game Features
+  document_type: implementation
+  category: ui
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:16:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - main-game
+    - navigation
+    - combat
+    - social
+  topics:
+    - navigation-experience
+    - quest-tracking
+    - combat-telemetry
+    - social-interactions
+  related_systems:
+    - ui-service
+    - quest-service
+    - combat-service
+    - social-service
+  related_documents:
+    - id: ui-main-game-hud
+      relation: complements
+    - id: ui-main-game-system
+      relation: complements
+  source: shared/docs/knowledge/implementation/ui/main-game/ui-features.md
+  visibility: internal
+  audience:
+    - concept
+    - vision
+    - ui
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: AI Brain Manager
+      reviewed_at: 2025-11-07T06:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Отсутствует целостное описание ключевых экранов основного игрового интерфейса.
+  goal: Зафиксировать требования к функциональным зонам UI основного игрового цикла.
+  essence: Базовые модули UI — навигация, квесты, бой и социальные взаимодействия — оформлены как единый сценарий игрока.
+  key_points:
+    - Карта города и селектор локаций поддерживают мгновенную навигацию и фильтры по активности.
+    - Списки квестов объединяют основные, побочные и экстракт-миссии с быстрыми действиями.
+    - Боевой интерфейс обеспечивает прозрачную телеметрию статусов игрока и врага по ходу хода.
+    - Социальный блок синхронизирует друзей, гильдии и быстрые коммуникации.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Документ фиксирует целевое состояние основных экранов игрового клиента для режима core loop. Блок описывает принципы размещения информации, перечни доступных действий и минимальные требования к интерактивности, которые должны быть реализованы в UI слоях.
+      mechanics_links: []
+      assets: []
+    - id: navigation_map
+      title: Навигация и карта
+      body: |
+        Экран карты Night City отображает текущую локацию игрока, доступные районы и точки быстрого перемещения. Основные элементы:
+          - панель районов мегаполиса с визуальным состоянием доступности;
+          - блок текущей позиции с координатами и статусом активности;
+          - список локаций с указанием статуса задания и стоимости перемещения.
+        Обязательные действия: приближение/отдаление, прыжок к локации, отображение контекстных событий. UI должен предоставлять доступ к фильтрам по типу активности и поддерживать расширение набора районов без структурных изменений макета.
+      mechanics_links:
+        - mechanics/world/fast-travel.yaml
+      assets: []
+    - id: quests_panel
+      title: Квестовые панели
+      body: |
+        Секция отображает активные задания в табличном виде с указанием приоритета и быстрых действий. Требования:
+          - группировка по типу задания (main, side, extract);
+          - отображение ключевого шага, координат и доступного CTA (Continue, Track);
+          - поддержка индикатора наград и уровня опасности.
+        Система должна интегрироваться с журналом квестов и синхронизироваться с сервером каждые 30 секунд или по событию обновления.
+      mechanics_links:
+        - mechanics/quests/quest-log.yaml
+      assets: []
+    - id: combat_overlay
+      title: Боевой интерфейс
+      body: |
+        Боевой блок представляет пошаговый лог взаимодействий игрока с противником. Функциональность включает:
+          - отображение основных ресурсов (HP, SP) обеих сторон;
+          - журнал событий по ходам с подсветкой критических моментов;
+          - быстрые действия (Attack, Defend, Special, Flee) и панель активных способностей.
+        Интерфейс обязан поддерживать расширение набора действий через конфигурацию и визуально разделять информацию игрока и врага для читабельности.
+      mechanics_links:
+        - mechanics/combat/core-loop.yaml
+      assets: []
+    - id: social_features
+      title: Социальные функции
+      body: |
+        Социальный модуль объединяет управление друзьями, гильдией и чатом в единой панели. Ключевые требования:
+          - отображение статуса присутствия друзей с фильтрами по состоянию;
+          - интеграция с панелью гильдии для просмотра онлайна и последних сообщений;
+          - быстрые кнопки для приглашений в группу и перехода к гильдейскому интерфейсу.
+        Модуль обязан реагировать на push-события WebSocket и обновлять состояния в реальном времени.
+      mechanics_links:
+        - mechanics/social/guilds.yaml
+      assets: []
+    - id: api_integration
+      title: API интеграция
+      body: |
+        Минимальный перечень REST-endpoint'ов:
+          - GET /api/v1/locations/{city} — геоданные и события по карте;
+          - GET /api/v1/quests/available — актуальные задания;
+          - POST /api/v1/combat/start — инициализация боевой сессии;
+          - GET /api/v1/social/friends — список друзей и их статусы;
+          - GET /api/v1/guilds/my — данные гильдии игрока.
+        Реализация должна учитывать безопасность запросов и кэширование на клиенте.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - id: ui-main-game-hud
+      description: Основной HUD с инвентарём и быстрыми действиями.
+    - id: ui-main-game-system
+      description: Системные панели торговли и настроек.
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: AI Brain Manager
+    changes: Создан документ на основе UI Main Game Features микрофичи.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
