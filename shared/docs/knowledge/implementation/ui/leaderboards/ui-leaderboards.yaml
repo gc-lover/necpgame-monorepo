@@ -1,0 +1,144 @@
+metadata:
+  id: ui-leaderboards
+  title: "UI Leaderboard System"
+  document_type: implementation
+  category: ui
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T00:59:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T00:59:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - leaderboard
+    - social
+    - progression
+  topics:
+    - leaderboards
+    - player_engagement
+  related_systems:
+    - social-service
+    - leaderboard-service
+    - frontend-leaderboard-modules
+  related_documents:
+    - id: backend-leaderboard-core
+      relation: references
+    - id: ui-achievements-main
+      relation: references
+    - id: ui-profile
+      relation: references
+  source: shared/docs/knowledge/implementation/ui/leaderboards/ui-leaderboards.md
+  visibility: internal
+  audience:
+    - concept
+    - frontend
+    - ui
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-08T00:59:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Отсутствует структурированная документация UI для глобальных и сезонных рейтингов, синхронизированная с социальными сервисами."
+  goal: "Определить UX и функциональные компоненты Leaderboard System, обеспечивающие многомерные рейтинги и контекст игрока."
+  essence: "Фронтенд-модули рейтингов предоставляют настраиваемые категории, фильтры по охвату, карточки игрока и стриминг обновлений в реальном времени."
+  key_points:
+    - "Многоуровневая навигация: категории рейтингов, фильтры охвата, сезонные лиги."
+    - "Карточка позиции игрока и таблица Top 100 строятся на обобщённых React-компонентах."
+    - "WebSocket канал и периодическое обновление обеспечивают live-данные без перегрузки API."
+content:
+  sections:
+    - id: introduction
+      title: "Введение"
+      body: |
+        UI Leaderboard System охватывает глобальные, региональные и серверные рейтинги.
+        Документ описывает ключевые экраны, структуру компонентов и интеграции с социальным сервисом.
+      mechanics_links: []
+      assets: []
+    - id: scope_and_status
+      title: "Область и состояние"
+      body: |
+        - Статус: approved.
+        - Приоритет: высокий для фронтенд-реализации.
+        - Автор: AI Brain Manager, ревью 2025-11-08.
+        - API readiness: ready, WebSocket `wss://api.necp.game/v1/social/leaderboard`.
+      mechanics_links: []
+      assets: []
+    - id: main_screen_layout
+      title: "Главный экран рейтингов"
+      body: |
+        ASCII-макет иллюстрирует верхнюю панель сезона, вкладки категорий, фильтры охвата и блоки с позицией игрока.
+        Таблица Top 100 выводит ранги, игроков, очки и динамику, поддерживает пагинацию через кнопку `Load More`.
+      mechanics_links: []
+      assets: []
+    - id: components
+      title: "Ключевые компоненты"
+      body: |
+        **Leaderboard**
+        - Принимает `type`, `scope`, `seasonId`.
+        - Использует `useLeaderboard` для запросов и отображает карточку игрока,Nearby Players и таблицу.
+
+        **PlayerPositionCard**
+        - Показывает ранк, счёт, изменение за 24 часа.
+        - Включает прогресс к следующему tier c инверсным прогресс-баром.
+
+        **LeaderboardRow**
+        - Подсвечивает текущего игрока, отображает медали TOP-3.
+        - Опционально показывает гильдию и изменение ранка.
+
+        **CategoryTabs и ScopeFilter**
+        - Предоставляют переключение между категориями (Overall, Combat, Economy и др.) и охватами (global, regional, server).
+
+        **SeasonalLeagueView**
+        - Заголовок сезона, мета-данные и грид наград по tier.
+        - Встраивает компонент Leaderboard с `seasonId`.
+      mechanics_links: []
+      assets: []
+    - id: realtime_and_updates
+      title: "Обновления в реальном времени"
+      body: |
+        WebSocket канал `wss://api.necp.game/v1/social/leaderboard` обрабатывает события `rank_change` и `new_leader`.
+        При изменении ранга вызываются уведомления и локальное обновление списка игроков.
+        Клиентский хук задаёт интервал опроса 60 секунд для синхронизации с API.
+      mechanics_links: []
+      assets: []
+    - id: api_integration
+      title: "API-интеграция"
+      body: |
+        **useLeaderboard**
+        - `GET /api/v1/leaderboards/{type}` c параметрами `scope` и `seasonId`.
+        - Хранит данные в react-query с ключом `['leaderboard', type, scope, seasonId]`.
+
+        **usePlayerPosition**
+        - `GET /api/v1/leaderboards/{leaderboardCode}/player/{playerId}`.
+
+        Обновления выполняются без избыточных запросов благодаря кешированию и WebSocket событиям.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - "../../backend/leaderboard/leaderboard-core.md"
+    - "../achievements/ui-achievements-main.md"
+    - "../profile/ui-profile.md"
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: ai_brain_manager
+    changes: "Сформирована спецификация UI Leaderboard System."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
