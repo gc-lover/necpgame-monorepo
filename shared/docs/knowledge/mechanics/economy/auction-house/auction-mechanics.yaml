@@ -1,0 +1,115 @@
+metadata:
+  id: auction-house-mechanics
+  title: Аукционный дом — механика торгов
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-09T20:15:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T20:15:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - auction-house
+    - trading
+    - gameplay-systems
+  topics:
+    - marketplace
+    - player-economy
+  related_systems:
+    - economy-service
+    - wallet-service
+  related_documents:
+    - id: auction-house-database
+      relation: complements
+    - id: auction-house-operations
+      relation: complements
+  source: shared/docs/knowledge/mechanics/economy/auction-house/auction-mechanics.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - systems
+  risk_level: medium
+review:
+  chain:
+    - role: economy_lead
+      reviewer: ''
+      reviewed_at: 2025-11-09T20:15:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Описание механик аукционного дома находилось в Markdown и требовало формализованной структуры для внедрения сервисов экономики.
+  goal: Зафиксировать правила создания лотов, повышение ставок, опцию выкупа, продление таймеров и процесс завершения.
+  essence: Документ описывает базовый игровой цикл аукциона — от публикации до расчёта с продавцом и уведомлений участников.
+  key_points:
+    - Разграничены роли аукционного дома и рынка с фиксированными ценами.
+    - Регламентирован процесс валидации при создании лота и блокировке предмета.
+    - Ставки требуют минимум +5% к текущей цене, запускают авто-продление и возврат средств прежнему лидеру.
+    - Завершение лота проводит транзакции, списывает комиссию 5% и фиксирует историю сделки.
+content:
+  sections:
+    - id: philosophy
+      title: Философия аукциона
+      body: |
+        Аукционный дом обеспечивает конкурентное ценообразование через ставки, таймеры и опцию buyout,
+        в отличие от рынка с фиксированными ценами (малая комиссия и мгновенные покупки).
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+    - id: create_auction
+      title: Создание лота
+      body: |
+        Валидация стартовой цены (≥100 €$) и buyout (> стартовой), блокировка предмета у продавца,
+        установка длительности (24/48/72 ч) и инициализация параметров (`currentBid`, `bidCount`, `status`).
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-database.yaml
+    - id: bidding
+      title: Логика ставок
+      body: |
+        Ставки допускаются только для активных лотов, сумма должна превышать текущую минимум на 5%,
+        у игрока резервируются средства, предыдущему лидеру возвращается депозит. Если ставка сделана
+        за ≤5 минут до завершения, таймер продлевается на 5 минут.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+    - id: buyout
+      title: Механика мгновенного выкупа
+      body: |
+        При наличии buyout игрок может закрыть сделку мгновенно: проверяется баланс, списывается сумма,
+        вызывается процедура `completeSale` с методом `buyout`, лот переводится в статус `sold`.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+    - id: settlement
+      title: Завершение и транзакции
+      body: |
+        Периодический процесс обрабатывает истёкшие лоты: победителю передаются предметы,
+        продавцу — 95% цены (учитывая комиссию 5%), история сделки фиксируется в торговом журнале.
+        Без ставок лот переводится в `expired`, предмет возвращается владельцу.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+    - id: notifications
+      title: Уведомления и события
+      body: |
+        Система отправляет уведомления продавцу и участникам при новых ставках, перебитии, победе, выкупе
+        и истечении сроков, обеспечивая прозрачность торгов.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-operations.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: brain_manager
+    changes: Описаны механики создания лотов, ставок, buyout и завершения аукциона.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
