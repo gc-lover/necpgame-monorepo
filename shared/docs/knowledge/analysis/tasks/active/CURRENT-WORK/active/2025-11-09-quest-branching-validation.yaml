@@ -1,109 +1,120 @@
 metadata:
-  id: analysis-quest-branching-validation
-  title: Проверка структуры БД для ветвления квестов
+  id: analysis-2025-11-09-quest-branching-validation
+  title: "Проверка БД ветвления квестов"
   document_type: analysis
-  category: operations
-  status: draft
+  category: quest-backend
+  status: in-review
   version: '0.1.0'
   last_updated: 2025-11-09T12:49:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
-    - role: ai_manager
-      contact: ai@necp.game
+    - role: brain_manager
+      contact: brain.manager@necp.game
   tags:
     - quests
     - database
-    - architecture
+    - migration
+    - caching
   topics:
-    - data-migrations
     - quest-engine
+    - branching
+    - data-platform
   related_systems:
-    - quest-engine
+    - gameplay-service
     - world-service
-    - economy-service
-  related_documents:
-    - id: quest-branching-database-design
-      relation: references
+    - analytics-service
+    - cache-cluster
+  related_documents: []
   source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-quest-branching-validation.md
   visibility: internal
   audience:
-    - brain-team
-    - backend-architecture
-  risk_level: medium
+    - concept
+    - backend
+    - data
+  risk_level: high
 review:
   chain:
-    - role: ai_manager
+    - role: brain_manager
       reviewer: ''
       reviewed_at: ''
       status: pending
   next_actions: []
 summary:
-  problem: Требуется подтвердить соответствие схемы ветвящихся квестов MMO-требованиям и подготовить операционные решения.
-  goal: Описать партиционирование, кэширование, миграцию, API и производственные параметры для внедрения ветвлений.
-  essence: Консолидированная валидация архитектуры ветвящихся квестов с планом действий и рисками.
+  problem: "Нужно подтвердить пригодность новой схемы ветвления квестов под MMO-нагрузку."
+  goal: "Зафиксировать решения по партиционированию, кэшу, миграциям, API и синхронизации мирового состояния."
+  essence: "Документ описывает план перехода на новую БД ветвящихся квестов с Shadow-write, Redis кэшем и Kafka событиями."
   key_points:
-    - Определены стратегии хранения и кэширования.
-    - Сформулирован пошаговый сценарий миграции и API.
-    - Зафиксированы риски, метрики производительности и меры смягчения.
+    - "Партиционирование таблиц player_quest_choices, world_state_history и player_quest_consequences."
+    - "Redis кластер используется для кэширования диалогов, флагов и мирового состояния."
+    - "Миграция выполняется через Liquibase, shadow-write триггеры и Reprocess скрипты."
+    - "Определены REST маршруты, целевые SLA и стратегия синхронизации world-state через Kafka."
 content:
   sections:
     - id: storage_partitioning
-      title: Партиционирование и хранение
+      title: "Партиционирование и хранение"
       body: |
-        Прописаны диапазонные и списковые партиции для ключевых таблиц (`player_quest_choices`, `world_state_history`,
-        `player_quest_consequences`), а также индексация BRIN для `quest_progress`. Определены политики хранения и архивирования.
+        Определены стратегии RANGE и LIST для ключевых таблиц (`player_quest_choices`, `world_state_history`,
+        `player_quest_consequences`). Исторические данные архивируются в cold storage и схему `history_archive`.
       mechanics_links: []
       assets: []
-    - id: caching_strategy
-      title: Кэширование и стримы
+    - id: caching_plan
+      title: "Кэширование"
       body: |
-        Используется Redis cluster 3x3 на 32 ГБ, кэшируются диалоговые деревья, активные флаги и `world_state`. Для аналитики
-        задействованы Redis Streams `quest-decisions` с ретеншном 7 дней.
+        Redis кластер 3×3 обслуживает диалоговые деревья, активные флаги игрока и агрегированное
+        мировое состояние. Используются TTL и pub/sub инвалидация, а также Streams для аналитики решений.
       mechanics_links: []
       assets: []
-    - id: migration_plan
-      title: Миграция и cut-over
+    - id: migration_strategy
+      title: "Миграция и shadow-write"
       body: |
-        План миграции включает bootstrap через Liquibase, shadow-write, массовый импорт данных, переключение на новый сервис и
-        последующую очистку. Описаны шаги для конвертации JSON и поддержания консистентности.
+        Внедряется комбинированный план: Liquibase bootstrap, shadow-write триггеры, reprocess JSON
+        сценариев и cut-over с materialized view `quests_legacy`. Завершение — удаление триггеров.
       mechanics_links: []
       assets: []
-    - id: api_performance
-      title: API и производительность
+    - id: api_surface
+      title: "API и SLA"
       body: |
-        Описаны REST маршруты (`/quests/{id}/graph`, `/choices`, `/flags`, `/world-state`) и целевые показатели (<120 мс чтение,
-        <80 мс запись). Предусмотрены нагрузки Locust/k6, индексы GIN и connection pooling через PgBouncer.
+        Перечислены REST конечные точки (graph, choices, flags, world-state, analytics) с целями по
+        latency (<120 мс чтение, <80 мс запись) и рекомендациями по индексам и connection pooling.
       mechanics_links: []
       assets: []
-    - id: synchronization
-      title: Синхронизация мирового состояния
+    - id: world_sync
+      title: "Синхронизация мирового состояния"
       body: |
-        Применяется event sourcing с топиком `world-state-events`, задержка консистентности < 3 секунд, конфликты решаются
-        приоритетом последних записей. Kafka lag мониторится для fallback стратегий.
+        Используется event sourcing: события пишутся в `world_state_history` и Kafka `world-state-events`,
+        серверы применяют изменения с задержкой до 3 секунд, конфликты решаются last-write-wins.
       mechanics_links: []
       assets: []
-    - id: actions_and_risks
-      title: План действий и риски
+    - id: action_plan
+      title: "План действий"
       body: |
-        Зафиксирован список шагов без внешних команд (миграции, генератор данных, нагрузочные тесты, мониторинг) и риски по
-        объёму данных, кэш-инвалидации, триггерам и Kafka с соответствующими mitigation.
+        Liquibase миграции, генератор SQL из JSON (`tools/quest-importer`), тестовый датасет, нагрузочное
+        тестирование k6 и настройка мониторинга Grafana.
+      mechanics_links: []
+      assets: []
+    - id: risks
+      title: "Риски и митигирующие меры"
+      body: |
+        Обработаны риски объёма данных, инвалидации кэша, ошибок shadow-write и задержек Kafka с
+        fallback стратегиями и административными endpoint-ами.
       mechanics_links: []
       assets: []
 appendix:
   glossary: []
-  references: []
+  references:
+    - shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-quest-engine-package.yaml
   decisions: []
 implementation:
   needs_task: false
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#analysis-quest-branching-validation
+    - shared/trackers/queues/concept/queued.yaml#analysis-2025-11-09-quest-branching-validation
   blockers: []
 history:
   - version: '0.1.0'
-    date: 2025-11-11
-    author: AI Manager
-    changes: Конвертация валидационного отчёта по ветвящимся квестам в YAML.
+    date: 2025-11-09
+    author: brain_manager
+    changes: "Конвертировано из 2025-11-09-quest-branching-validation.md; зафиксированы решения по БД, кэшу и API."
 validation:
   checksum: ''
   schema_version: '1.0'
