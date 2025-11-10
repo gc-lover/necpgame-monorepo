@@ -1,0 +1,160 @@
+metadata:
+  id: player-orders-creation-detailed
+  title: Система заказов — создание заказа (детально)
+  document_type: mechanics
+  category: social
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T09:53:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T09:53:00Z
+  owners:
+    - role: social_lead
+      contact: social@necp.game
+  tags:
+    - player-orders
+    - order-creation
+  topics:
+    - social-systems
+    - economy
+  related_systems:
+    - social-service
+    - economy-service
+    - world-service
+    - npc-service
+    - factions-service
+  related_documents:
+    - id: player-orders-system-detailed
+      relation: references
+    - id: player-orders-reputation-detailed
+      relation: references
+    - id: relationships-system-detailed
+      relation: references
+    - id: npc-hiring-system-detailed
+      relation: references
+  source: shared/docs/knowledge/mechanics/social/player-orders-creation-детально.md
+  visibility: internal
+  audience:
+    - concept
+    - social
+    - economy
+    - world
+  risk_level: medium
+review:
+  chain:
+    - role: social_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T09:53:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Процесс подготовки заказов существовал в виде неструктурированных заметок и требовал формализации для сервисов и UX.
+  goal: Зафиксировать конвейер создания заказа, параметры брифа, формулы бюджета и проверки для готовности API и интерфейсов.
+  essence: Документ описывает многошаговый мастер, шаблоны, расчёт бюджета, режимы публикации и интеграции с сервисами social, economy и world.
+  key_points:
+    - Конвейер охватывает от подготовки брифа до публикации, гарантий и логов в telemetry.
+    - Формулы бюджета используют ComplexityScore, RiskModifier, MarketIndex и TimeModifier, оформлены JSON схемами и валидациями.
+    - Режимы публикации и страховые уровни интегрируются с relationships-, factions-, economy- и npc-системами.
+content:
+  sections:
+    - id: pipeline
+      title: Общий конвейер
+      body: |
+        Процесс включает подготовку брифа, валидацию, оценку сложности, настройку публикации, выбор гарантий и публикацию. `social-service` оркестрирует вызовы `economy-service` и `npc-service`.
+      mechanics_links:
+        - mechanics/social/player-orders-system-детально.md
+      assets: []
+    - id: prerequisites
+      title: Предусловия
+      body: |
+        Заказчик должен иметь рейтинг не ниже Bronze, отсутствие санкций и достаточно средств для депозита. Корпоративные заказы подтверждаются `factions-service`.
+      mechanics_links:
+        - mechanics/social/player-orders-reputation-детально.md
+      assets: []
+    - id: templates
+      title: Шаблоны заказов
+      body: |
+        Шаблоны (боевой, хакерский, экономический, социальный, исследовательский) задают предзаполненные поля и подсказки мастера, определяя структуру требований.
+      mechanics_links:
+        - mechanics/social/player-orders-types-детально.md
+      assets: []
+    - id: brief_parameters
+      title: Параметры брифа
+      body: |
+        Бриф описывает цели, сроки, бюджет, риски, требования к команде, приватность и дополнительные документы. Документы хранятся в `content-service`.
+      mechanics_links:
+        - mechanics/social/player-orders-system-детально.md
+      assets: []
+    - id: complexity
+      title: Оценка сложности
+      body: |
+        `ComplexityScore` собирает факторы зон, навыков и рисков из `world-service` и `factions-service`, формируя рекомендуемый бюджет и требования к рейтингу исполнителей.
+      mechanics_links:
+        - mechanics/social/player-orders-world-impact-детально.md
+      assets: []
+    - id: budget
+      title: Расчёт бюджета
+      body: |
+        Формула `BaseReward = ComplexityScore * RiskModifier * MarketIndex * TimeModifier` определяет базовую награду, escrow и комиссии. JSON схема `schemas/social/player-order-budget.schema.json` описывает контракт.
+      mechanics_links:
+        - mechanics/social/player-orders-economy.yaml
+      assets: []
+    - id: publication
+      title: Режимы публикации
+      body: |
+        Публичный, пригласительный и закрытый режимы регулируют доступ исполнителей. Адресные списки используют `relationships-system`, а фракционные фильтры — `factions-service`.
+      mechanics_links:
+        - mechanics/social/relationships-system-детально.md
+      assets: []
+    - id: validation
+      title: Валидации и проверки
+      body: |
+        Проверяются полнота полей, юридические ограничения, бюджетные пороги, токсичность текста и санкции. Ошибки логируются в telemetry для аналитики.
+      mechanics_links:
+        - mechanics/social/player-orders-system-детально.md
+      assets: []
+    - id: guarantees
+      title: Гарантии и страхование
+      body: |
+        Настраиваются уровни страховки (базовый, расширенный, премиум) и escrow. Полисы рассчитываются `economy-service` и используются арбитражом.
+      mechanics_links:
+        - mechanics/social/player-orders-advanced-детально.md
+      assets: []
+    - id: ux_flow
+      title: UX поток
+      body: |
+        Мастер (Overview → Details → Budget → Publication → Review) предоставляет подсказки, индикатор готовности и симуляцию бюджета. Черновики сохраняются через `content-service`.
+      mechanics_links:
+        - mechanics/social/player-orders-creation.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции
+      body: |
+        Документ связывает процесс с рейтингами, отношениями и наймом NPC, обеспечивая адресные приглашения и подключение исполнителей.
+      mechanics_links:
+        - mechanics/social/player-orders-reputation-детально.md
+        - mechanics/social/npc-hiring-system-детально.md
+        - mechanics/social/relationships-system-детально.md
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: JSON схема бюджета заказа
+      link: schemas/social/player-order-budget.schema.json
+    - title: Мастер создания заказов (Figma)
+      link: figma://ui/player-orders/create-wizard
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#player-orders-creation-detailed
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: social_team
+    changes: Финализированы формулы бюджета, проверки, режимы публикации и интеграции с сервисами.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
