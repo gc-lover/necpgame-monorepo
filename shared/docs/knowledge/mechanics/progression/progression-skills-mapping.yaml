@@ -1,0 +1,130 @@
+metadata:
+  id: progression-skills-mapping
+  title: Навыки — соответствия предметам и имплантам
+  document_type: mechanics
+  category: progression
+  status: approved
+  version: '1.2.0'
+  last_updated: 2025-11-08T00:14:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T11:21:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - skills
+    - equipment
+    - mapping
+  topics:
+    - gameplay-progression
+    - itemization
+  related_systems:
+    - progression-service
+    - equipment-matrix
+    - combat-loadouts
+  related_documents:
+    - id: progression-skills
+      relation: references
+    - id: progression-skill-tags
+      relation: references
+    - id: combat-loadouts-system
+      relation: references
+  source: shared/docs/knowledge/mechanics/progression/progression-skills-mapping.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-09T11:21:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требуется сохранять консистентность между навыками, экипировкой и имплантами для рекомендаций и баланса.
+  goal: Описать таблицы соответствий, теги и API, обеспечивающие синхронизацию навыков с предметами и лодаутами.
+  essence: Структура данных связывает навыки с категориями предметов, имплантами, тегами и профилями лодаутов через единый маппинг.
+  key_points:
+    - Таблицы определяют соответствия навыков предметам, имплантам и тегам.
+    - YAML-экспорт используется для генерации OpenAPI и клиентских моделей.
+    - REST API и события обеспечивают обновление и валидацию в сервисах и UI.
+content:
+  sections:
+    - id: overview
+      title: Введение
+      body: |
+        Документ описывает маппинг навыков к предметам, имплантам и синергийным тегам. Цель — поддержать рекомендации, баланс и игровую аналитику.
+      mechanics_links:
+        - mechanics/progression/progression-skills.yaml
+      assets: []
+    - id: mapping_table
+      title: Сводная таблица соответствий
+      body: |
+        Таблица связывает навыки с категориями предметов, слотами имплантов и тегами. Данные используют матрицу экипировки и словари брендов, обеспечивая единый словарь для экономики и боевых систем.
+      mechanics_links:
+        - mechanics/economy/equipment/equipment-catalog-manual.md
+      assets: []
+    - id: tag_taxonomy
+      title: Таксономия тегов
+      body: |
+        Навыки, предметы и синергии описываются тегами (`skillTag`, `equipmentTag`, `synergyTag`). Отдельный документ хранит полный список тегов и используется валидатором.
+      mechanics_links:
+        - mechanics/progression/progression-skill-tags.yaml
+      assets: []
+    - id: loadout_integration
+      title: Связь с лодаутами и событиями
+      body: |
+        Маппинг поддерживает PvE профили (`stormbreaker`, `safebearer` и др.) и события `event-reactive`. Связь упрощает подбор навыков под экспедиции и динамические угрозы.
+      mechanics_links:
+        - mechanics/combat/combat-loadouts-system.md
+      assets: []
+    - id: data_model
+      title: Структура данных
+      body: |
+        Реляционная схема включает таблицы `skill_item_mapping`, `skill_implant_mapping`, `skill_synergy_tags`, `skill_unlock_requirements` и `skill_loadout_profile`. YAML-экспорт отражает те же поля для сервисов.
+      mechanics_links:
+        - implementation/backend/progression-backend.yaml
+      assets: []
+    - id: api
+      title: REST API и события
+      body: |
+        Описаны маршруты `/progression/skills/mapping`, `/{skillCode}`, `/tags`, `/validators/run` и `skills/profiles`. События `progression.skills_mapping.*` синхронизируют обновления с UI и аналитикой.
+      mechanics_links:
+        - implementation/backend/progression-backend.yaml
+      assets: []
+    - id: validation
+      title: Автоматическая валидация
+      body: |
+        Любые изменения проверяются скриптом `validate-skill-mapping`: контроль существования предметов, корректность тегов и синхронизации с CI-отчетом.
+      mechanics_links:
+        - pipeline/scripts/validate-skill-tags.ps1
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#progression-skills-mapping
+  blockers: []
+history:
+  - version: '1.2.0'
+    date: 2025-11-08
+    author: AI Brain Manager
+    changes: Добавлены профили лодаутов и расширенные теги.
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: AI Brain Manager
+    changes: Расширены таблицы соответствий и описаны REST API.
+  - version: '1.0.0'
+    date: 2025-11-05
+    author: AI Brain Manager
+    changes: Создан базовый маппинг навыков к предметам и имплантам.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
