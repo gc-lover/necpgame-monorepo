@@ -1,0 +1,138 @@
+metadata:
+  id: ui-main-game-hud
+  title: UI Main Game HUD
+  document_type: implementation
+  category: ui
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:16:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - hud
+    - inventory
+    - equipment
+  topics:
+    - hud-visibility
+    - inventory-management
+    - player-telemetry
+  related_systems:
+    - ui-service
+    - inventory-service
+    - equipment-service
+  related_documents:
+    - id: ui-main-game-features
+      relation: complements
+    - id: ui-main-game-system
+      relation: complements
+  source: shared/docs/knowledge/implementation/ui/main-game/ui-hud-core.md
+  visibility: internal
+  audience:
+    - concept
+    - vision
+    - ui
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: AI Brain Manager
+      reviewed_at: 2025-11-07T06:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Игровой интерфейс требует стандартизированного описания базового HUD для MVP.
+  goal: Сформулировать структуру главного экрана, меню действий и инвентаря так, чтобы UI-команда могла реализовать функционал без дополнительных уточнений.
+  essence: Единый HUD объединяет телеметрию персонажа и быстрые действия, а также синхронизируется с инвентарём и экипировкой.
+  key_points:
+    - Главный экран должен показывать ключевые параметры персонажа, локацию и быстрые действия в рамках одной панели.
+    - Меню действий разделяет постоянные и контекстные операции и масштабируется под дополнительные сценарии.
+    - Инвентарь использует сеточную компоновку с фильтрами, панелью предмета и полнотой CRUD-действий.
+    - Блок экипировки синхронизирует слоты предметов со статистикой, отображая мгновенный эффект изменений.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Документ описывает целевую структуру HUD основного игрового интерфейса. Включены требования к визуальной иерархии, списку элементов и обязательным действиям для игрока на главном экране.
+      mechanics_links: []
+      assets: []
+    - id: main_screen
+      title: Главный экран
+      body: |
+        Главный экран объединяет панель персонажа, локацию и быстрые действия. Основные элементы:
+          - блок характеристик персонажа (уровень, здоровье, ресурсные полосы, валюта, репутация фракций);
+          - панель локации с индикатором опасности и CTA для перехода к карте;
+          - матрица быстрых действий (квесты, инвентарь, карта, социальные функции, бой, рынок, контакты, статистика).
+        Макет обязан адаптироваться под разрешения 16:9 и 21:9, сохраняя расположение CTA в пределах верхнего экрана.
+      mechanics_links:
+        - mechanics/world/player-hub.yaml
+      assets: []
+    - id: action_menu
+      title: Меню действий
+      body: |
+        Меню делится на постоянные и контекстные опции. Постоянные команды (Quests, Inventory, Map, Social, Combat, Market, Contacts, Stats) присутствуют всегда и располагаются на быстрой панели. Контекстные команды активируются через конфигурацию локации (Shop, Job Board, Med Center, Cyberware Clinic).
+        Обязательные требования:
+          - возможность расширения списков без переработки макета;
+          - наличие пиктограмм и коротких описаний;
+          - поддержка геймпад- и клавиатурной навигации.
+      mechanics_links:
+        - mechanics/progression/player-actions.yaml
+      assets: []
+    - id: inventory_ui
+      title: Инвентарь
+      body: |
+        Инвентарь строится как сетка 6x5 с вкладками фильтрации и панелью выбранного предмета. Функциональные элементы:
+          - фильтры по типу предмета и уровню редкости;
+          - отображение веса и сортировок;
+          - карточка предмета с характеристиками и действиями Equip, Drop, Sell, Use.
+        У интерфейса должна быть поддержка drag-and-drop и выделение горячих клавиш для частых действий.
+      mechanics_links:
+        - mechanics/economy/inventory.yaml
+      assets: []
+    - id: equipment_panel
+      title: Экипировка
+      body: |
+        Панель экипировки визуализирует слоты персонажа и связанные характеристики. Требования:
+          - отображение основных слотов (голова, торс, ноги, оружие, вторичное оружие, аксессуары);
+          - синхронное обновление статистики персонажа при изменении предмета;
+          - поддержка предпросмотра бонусов до подтверждения.
+      mechanics_links:
+        - mechanics/combat/gear-synergy.yaml
+      assets: []
+    - id: api_integration
+      title: API интеграция
+      body: |
+        Критичные endpoint'ы:
+          - GET /api/v1/inventory/{characterId} — загрузка инвентаря;
+          - POST /api/v1/inventory/equip — экипировка предмета;
+          - POST /api/v1/inventory/use — использование;
+          - POST /api/v1/inventory/drop — удаление.
+        Клиент должен кэшировать результат и использовать optimistic UI для операций экипировки.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - id: ui-main-game-features
+      description: Требования к навигации, квестам, бою и социальным панелям.
+    - id: ui-main-game-system
+      description: Описание торговли, настроек и технических требований UI.
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: AI Brain Manager
+    changes: Создан документ на основе UI Main Game HUD микрофичи.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
