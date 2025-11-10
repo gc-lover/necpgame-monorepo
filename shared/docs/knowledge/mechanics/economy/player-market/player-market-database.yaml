@@ -1,0 +1,124 @@
+metadata:
+  id: player-market-database
+  title: Player Market — База данных и UI
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-11T03:15:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - player-market
+    - database-schema
+    - ui-wireframes
+  topics:
+    - data_architecture
+    - marketplace_design
+  related_systems:
+    - economy-service
+    - database-service
+    - ui-service
+  related_documents:
+    - id: player-market-core
+      relation: references
+    - id: player-market-api
+      relation: complements
+    - id: player-market-analytics
+      relation: references
+  source: shared/docs/knowledge/mechanics/economy/player-market/player-market-database.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходимо зафиксировать структуру БД Player Market и основные UI-концепции.
+  goal: Описать таблицы листингов, сделок, отзывов и ключевые экранные сценарии.
+  essence: Схемы хранят данные объявлений и истории торгов, а UI-макеты обеспечивают удобный доступ к предложениям.
+  key_points:
+    - Таблицы `market_listings`, `trade_history` и `seller_reviews` поддерживают полный цикл сделки.
+    - Индексы и ограничения обеспечивают производительность и целостность.
+    - UI-шаблоны описывают основные экраны просмотра и создания объявлений.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Player Market строится на специализированной схеме БД, которая хранит активные листинги, историю сделок и
+        отзывы продавцов. Документ также фиксирует ключевые UI-паттерны для браузинга и создания объявлений.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-core.yaml
+      assets: []
+    - id: listings_table
+      title: Таблица листингов
+      body: |
+        `market_listings` хранит идентификаторы продавца, предмета, цену, количество, статус и временные метки. Индексы
+        оптимизируют выборку активных объявлений, сортировку по цене и времени создания. Ограничения предотвращают
+        некорректные статусы и обеспечивают каскадное удаление.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-api.yaml
+      assets: []
+    - id: trade_history
+      title: История сделок
+      body: |
+        `trade_history` фиксирует данные о покупателе, продавце, сумме, количестве и времени завершения сделок. Индексы
+        поддерживают аналитические запросы по покупателям, продавцам и предметам. Внешние ключи очищают записи при
+        удалении игроков.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-analytics.yaml
+      assets: []
+    - id: seller_reviews
+      title: Отзывы продавцов
+      body: |
+        `seller_reviews` объединяет оценки, комментарии и ссылки на сделки. Ограничение уникальности защищает от
+        дублирующих отзывов, а каскадные зависимости обеспечивают согласованность. Метрики рейтингов интегрируются с
+        антискам-логикой.
+      mechanics_links:
+        - mechanics/social/reputation-formulas.yaml
+      assets: []
+    - id: ui_browse
+      title: UI — экран просмотра
+      body: |
+        Экран каталога содержит блок поиска, фильтры по типам и цене, список карточек товаров и быстрые действия «Buy
+        Now» и «Contact Seller». Макет отображает рейтинг продавца, количество продаж и текущую цену.
+      mechanics_links:
+        - mechanics/implementation/frontend/modules/ui/finance-dashboard.yaml
+      assets: []
+    - id: ui_create
+      title: UI — создание объявления
+      body: |
+        Экран создания листинга показывает выбранный предмет, доступное количество, расчёт комиссии и итоговую сумму.
+        Пользователь задаёт срок действия, подтверждает листинг и получает обратную связь об удерживаемой комиссии.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-core.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#CON-2025-233
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: concept_director
+    changes: Конвертировано из player-market-database.md и структурировано по шаблону знаний.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
