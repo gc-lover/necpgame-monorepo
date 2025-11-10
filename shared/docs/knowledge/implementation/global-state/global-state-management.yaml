@@ -1,0 +1,119 @@
+metadata:
+  id: global-state-management
+  title: Global State Management — обработка событий и обновления
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:00:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - world-state
+    - event-processing
+    - backend
+  topics:
+    - event-pipeline
+    - state-management
+  related_systems:
+    - world-service
+    - quest-service
+    - notification-service
+  related_documents:
+    - id: global-state-core
+      relation: references
+    - id: global-state-sync
+      relation: complements
+    - id: global-state-events
+      relation: complements
+  source: shared/docs/knowledge/implementation/global-state/global-state-management.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: world_service_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T06:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Управление глобальным состоянием описывалось в Markdown и не обеспечивало формальной структуры пайплайна событий.
+  goal: Документировать 10-этапный pipeline обработки, реализацию менеджера состояния, механизмы time travel и уведомления.
+  essence: Сервис обрабатывает событийные данные, обновляет глобальное состояние, кэширует результаты и инициирует уведомления и аналитику.
+  key_points:
+    - Pipeline обработки событий состоит из валидации, авторизации, обогащения, записи и публикации.
+    - Event Handler применяет последствия выбора игрока, обновляет репутацию, предметы и мировое состояние.
+    - Global State Manager использует Redis и PostgreSQL для чтения/записи состояния с кэшированием.
+    - Time Travel и Snapshots поддерживают откат состояния и аналитические исследования.
+content:
+  sections:
+    - id: event_pipeline
+      title: Пайплайн обработки событий
+      body: |
+        10 этапов: прием события, валидация, авторизация, обогащение, запись в Event Store, публикация,
+        обработка подписчиков, обновление состояния, уведомления и аналитика. Каждый шаг фиксирован, что
+        обеспечивает повторяемость и контроль доступа.
+      mechanics_links:
+        - implementation/global-state/global-state-core.yaml
+    - id: quest_event_handler
+      title: Обработчик событий квестов
+      body: |
+        Пример `QuestEventHandler` демонстрирует применение изменений прогресса, репутации, флагов, выдачи предметов,
+        мировых последствий, последующих событий и уведомлений. Обработчик интегрируется с репозиториями и сервисами,
+        а также публикует события для последующей обработки.
+      mechanics_links:
+        - implementation/gameplay/quest-events.yaml
+    - id: global_state_manager
+      title: Менеджер глобального состояния
+      body: |
+        `GlobalStateManager` предоставляет методы чтения (`getState`, `getStateCategory`) и обновления (`updateState`,
+        `applyChanges`). Используется Redis для кэширования, PostgreSQL для постоянного хранения, Event Store для
+        привязки к событиям и Event Bus для публикации изменений.
+      mechanics_links:
+        - implementation/global-state/global-state-sync.yaml
+    - id: state_update_flow
+      title: Поток обновления состояния
+      body: |
+        Обновление включает загрузку текущего состояния, применение делта-изменений, запись в БД, кэширование и публикацию
+        `world:state-changed`. Поддерживается категориальный доступ (территории, фракции, экономика) и батчевые операции.
+      mechanics_links:
+        - implementation/global-state/global-state-operations.yaml
+    - id: time_travel
+      title: Time Travel и Snapshots
+      body: |
+        Менеджер поддерживает восстановление состояния на основе снапшотов и реплея событий. Функции `rebuildState`,
+        `restoreSnapshot` и `compareStateVersions` используются для откатов, аудита и плановых проверок.
+      mechanics_links:
+        - implementation/global-state/global-state-core.yaml
+    - id: analytics_notifications
+      title: Аналитика и уведомления
+      body: |
+        После обновления состояния сервис отправляет уведомления игрокам и записывает события в аналитику.
+        Интеграции включают notification-service, analytics-service и social-service для синхронизации сообщений.
+      mechanics_links:
+        - implementation/global-state/global-state-events.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: world_service_team
+    changes: Определены pipeline обработки, менеджер состояния и механизмы time travel.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
