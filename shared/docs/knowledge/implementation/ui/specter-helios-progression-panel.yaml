@@ -1,0 +1,175 @@
+metadata:
+  id: specter-helios-progression-panel
+  title: "Specter / Helios Progression Panel"
+  document_type: implementation
+  category: ui
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T01:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T01:05:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - seasonal
+    - specter
+    - helios
+  topics:
+    - progression
+    - seasonal_activities
+  related_systems:
+    - world-service
+    - economy-service
+    - social-service
+    - narrative-service
+  related_documents:
+    - id: economy-specter-helios-balance
+      relation: references
+    - id: guild-contract-board
+      relation: references
+    - id: city-unrest-escalations
+      relation: references
+    - id: mission-kaede-family-rescue
+      relation: references
+  source: shared/docs/knowledge/implementation/ui/specter-helios-progression-panel.md
+  visibility: internal
+  audience:
+    - concept
+    - frontend
+    - ui
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-08T01:05:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Игрокам требуется централизованная точка обзора прогресса фракций Specter и Helios с учётом сезонных активностей и влияния на город."
+  goal: "Предоставить UI-панель, объединяющую War Meter, City Unrest, сезонные треки, контракты и связи с ключевыми NPC."
+  essence: "Интерактивная панель прогрессии связывает боевые, социальные и нарративные метрики, предоставляя actionable CTA для разных ролей."
+  key_points:
+    - "Единое отображение War Meter, Unrest, сезонных треков и контрактов."
+    - "UX-потоки для домашних экранов, сезонных активностей и связей с NPC."
+    - "Готовый перечень API-запросов и WebSocket событий для фронтенда и бэкенда."
+content:
+  sections:
+    - id: introduction
+      title: "Введение"
+      body: |
+        Панель Specter / Helios синхронизирует прогресс боевых фракций, сезонных событий и личных достижений.
+        Интерфейс выступает центральным хабом для War Meter, City Unrest, сезонных треков и контрактов гильдий.
+      mechanics_links: []
+      assets: []
+    - id: goals
+      title: "Цели панели"
+      body: |
+        - Отображать текущее состояние войны Specter ↔ Helios и влияние на город.
+        - Поддерживать сезонные активности и награды, связанные с PvE, PvP и социальными событиями.
+        - Предоставлять CTA для контрактов, миссий и нарративных сцен.
+      mechanics_links: []
+      assets: []
+    - id: widgets
+      title: "Ключевые виджеты"
+      body: |
+        | Виджет | Описание | API |
+        | --- | --- | --- |
+        | War Meter | Баланс сил Specter и Helios (0–1) | `GET /api/v1/world/war-meter` |
+        | City Unrest Card | Уровень напряжённости и модификаторы | `GET /api/v1/world/city-unrest/state` |
+        | Seasonal Track | Активный сезон, прогресс и награды | `GET /api/v1/world/seasons/current` |
+        | Contract Progress | Личные и гильдейские очки | `GET /api/v1/world/contracts/progression` |
+        | NPC Bonds | Доверие ключевых NPC | `GET /api/v1/narrative/npc/bonds` |
+        | Milestone Timeline | События недели | `GET /api/v1/world/war-meter/history` |
+      mechanics_links: []
+      assets: []
+    - id: ux_flows
+      title: "UX-потоки"
+      body: |
+        **Home Flow**
+        1. Игрок открывает панель через HUD → World Pulse → Progression.
+        2. Получает сводку War Meter, City Unrest и активного сезона.
+        3. Переключается между вкладками Specter, Helios, Balanced.
+        4. Выбирает контекстный CTA: контракт, миссия или кат-сцена.
+
+        **Seasonal Activity Flow**
+        1. Seasonal Track отражает текущую активность и этапы.
+        2. Игрок изучает требования этапов и награды.
+        3. CTA `View Activity` ведёт к соответствующему модулю (Raid, Mission, Event).
+
+        **NPC Bond Flow**
+        1. Секция NPC Bonds визуализирует доверие Kaede, Kaori, Dr. Lysander.
+        2. Показаны последние взаимодействия и эффекты на Unrest.
+        3. CTA `View Dialogue` запускает релевантную кат-сцену.
+      mechanics_links: []
+      assets: []
+    - id: seasonal_activities
+      title: "Сезонные активности и экономика"
+      body: |
+        | Сезон | Модификаторы | Активности | Награды |
+        | --- | --- | --- | --- |
+        | Winter Rush | `transport_cost -10%`, `specter-favor ×1.1` | Family Rescue, Snowfall Run | specter-winter-cloak, helios-winter-drone |
+        | Proxy War | ускоренный тик War Meter | CM-Phalanx PvP, Underlink Mediator | war-effort-cache, blackwall-signet |
+        | Neon Jubilee | ускоренное затухание Unrest | Social events, Specter Parade | social-trust +6, косметика |
+
+        Seasonal прогресс хранится в `seasonal_progress(player_id, season_id, tier, points)` с недельным сбросом по понедельникам 04:00 UTC.
+      mechanics_links: []
+      assets: []
+    - id: data_and_integrations
+      title: "Данные, API и интеграции"
+      body: |
+        **Frontend API**
+        - `GET /api/v1/world/war-meter`
+        - `GET /api/v1/world/city-unrest/state`
+        - `GET /api/v1/world/seasons/current`
+        - `GET /api/v1/world/contracts/progression`
+        - `GET /api/v1/narrative/npc/bonds`
+        - `GET /api/v1/world/milestones/week`
+        - WebSocket события: `WAR_METER_UPDATE`, `CITY_UNREST_UPDATE`, `SEASONAL_PROGRESS_UPDATE`, `NPC_BOND_UPDATE`.
+
+        **Backend обязанности**
+        - World-service агрегирует War Meter, сезон и таймлайн.
+        - Economy-service управляет выдачей наград за сезонные треки.
+        - Social-service публикует обновления прогресса.
+        - Narrative-service подключает кат-сцены и события.
+      mechanics_links: []
+      assets: []
+    - id: persistence_and_telemetry
+      title: "Персистентность и телеметрия"
+      body: |
+        **Модели хранения**
+        - `war_meter_history(date, value_specter, value_helios)`
+        - `seasonal_activity(player_id, season_id, points, tier)`
+        - `npc_bonds(player_id, npc_id, score, last_update)`
+        - `progression_milestones(guild_id, milestone_id, completed_at)`
+
+        **Телеметрия и SLA**
+        - События: `progress_panel_open`, `progress_action_click`, `season_tier_claim`, `bond_change`.
+        - KPI: использование панели ≥ 70% активных рейдеров; сезонная конверсия Tier 3 ≥ 60%.
+        - SLA: `progression_fetch ≤ 180 мс`, `action_trigger ≤ 220 мс`; дашборды `specter-helios-progress`, `seasonal-track`, `npc-bond-heatmap`.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - "../../02-gameplay/world/economy-specter-helios-balance.md"
+    - "../ui/guild-contract-board.md"
+    - "../../02-gameplay/world/city-unrest-escalations.md"
+    - "../../04-narrative/quests/side/2025-11-08-mission-kaede-family-rescue.md"
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: ai_brain_manager
+    changes: "Первичная спецификация UI панели прогрессии Specter/Helios."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
