@@ -1,107 +1,105 @@
 metadata:
   id: stock-integration
-  title: Биржа акций — интеграция с игровыми системами
+  title: Биржа акций — Интеграция с игровыми системами
   document_type: mechanics
   category: economy
   status: approved
   version: '1.1.0'
   last_updated: 2025-11-07T16:19:00Z
   concept_approved: true
-  concept_reviewed_at: 2025-11-09T11:21:00Z
+  concept_reviewed_at: 2025-11-09
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - stock-exchange
-    - gameplay-integration
+    - integration
     - economy-events
   topics:
-    - financial-markets
-    - narrative-integration
+    - market_integration
+    - cross_system_design
   related_systems:
     - quest-service
     - faction-service
     - economy-events
     - news-feed
   related_documents:
-    - id: stock-exchange-overview
-      relation: references
-    - id: quest-system
-      relation: complements
     - id: stock-events
+      relation: complements
+    - id: quest-system
       relation: references
   source: shared/docs/knowledge/mechanics/economy/stock-exchange/stock-integration.md
   visibility: internal
   audience:
     - concept
     - economy
-    - narrative
-  risk_level: high
+    - gameplay
+  risk_level: medium
 review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-09T11:21:00Z
+      reviewed_at: 2025-11-09
       status: approved
   next_actions: []
 summary:
-  problem: Необходима формализация влияния квестов, фракций и мировых событий на цены акций.
-  goal: Описать конвейер взаимосвязей между игровыми событиями и биржей, включая API, шину событий и мэппинги.
-  essence: Документ связывает результаты миссий, фракционные войны и мировые кризисы с изменением котировок и аналитикой рынка.
+  problem: Требуется консистентное описание связей биржи с квестами, фракциями и мировыми событиями.
+  goal: Определить потоки данных, API и таблицы, которые переводят игровые события в изменение стоимости акций.
+  essence: События из квестов, войн и глобальных кризисов транслируются в экономику через настроенные фоновые сервисы и аналитические структуры.
   key_points:
-    - Квестовые исходы напрямую меняют цены акций и формируют инвестиционные сценарии.
-    - Фракционные войны и события создают структурированные сигналы для фондового рынка.
-    - REST и Kafka интерфейсы обеспечивают регистрацию источников и отслеживание эффекта.
+    - Квестовые решения напрямую влияют на котировки корпоративных акций.
+    - Фракционные войны и репутация открывают доступ к особым инструментам и акциям.
+    - Мировые события и шина `economy.integration.events` синхронизируют массовые изменения.
 content:
   sections:
-    - id: quest-integration
-      title: 'Квестовая интеграция'
+    - id: introduction
+      title: Введение
       body: |
-        Результаты сюжетных и побочных миссий корректируют цены акций, позволяя игрокам зарабатывать на корпоративных событиях и обучающим квестам по инвестициям.
+        Документ описывает, как биржа акций связана с квестами, фракциями и глобальными событиями. Интеграция обеспечивает реакцию рынка на действия игроков и поддерживает внутриигровой лор.
       mechanics_links:
-        - mechanics/narrative/quest-system.yaml
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
       assets: []
-    - id: faction-impact
-      title: 'Фракционное влияние'
+    - id: quest_integration
+      title: Квестовые сценарии
       body: |
-        Фракционные войны, репутация и эксклюзивные акции учитываются при расчёте курсов. Победы и поражения фракций меняют стоимость акций и привилегии инвесторов.
-      mechanics_links:
-        - mechanics/canon/factions-overview.yaml
-      assets: []
-    - id: world-events
-      title: 'Мировые события'
-      body: |
-        Глобальные кризисы и технологические прорывы транслируются в индексы и тикеры через стандартизированные payload economy-events.
+        Исходы корпоративных квестов (например, «Corporate Espionage», «Biotechnica Sabotage») пересчитываются в проценты влияния на акции. Поддерживаются обучающие и серые квесты с риском инсайдерской торговли, что формирует инвестиционные возможности и штрафы.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-events.yaml
       assets: []
-    - id: event-bus
-      title: 'Событийная шина'
+    - id: faction_integration
+      title: Фракционные и репутационные эффекты
       body: |
-        Топик `economy.integration.events` распространяет данные о событиях между сервисами. Подписчики включают stock-events, currency-exchange, logistics и guild-system.
+        Фракционные войны изменяют стоимость акций участников, а высокая репутация открывает доступ к привилегированным выпуском, брокерским скидкам и легальным советам. Игроки видят связь между выбором стороны и инвестиционными результатами.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-protection.yaml
       assets: []
-    - id: mapping
-      title: 'Мэппинг событий'
+    - id: world_events
+      title: Мировые события
       body: |
-        Таблица `event_stock_mapping` хранит соответствие типов событий и корпораций, что позволяет дизайнерам быстро настраивать влияние.
+        Глобальные события вроде энергетических кризисов, технологических прорывов или войн транслируются в массовые изменения коэффициентов. Значения и сценарии фиксируются через таблицы соответствий и обновляются аналитиками.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+    - id: event_bus
+      title: Шина событий и мэппинг
+      body: |
+        Топик `economy.integration.events` доставляет payload с типом события, серьёзностью и списком корпораций. Таблица `event_stock_mapping` связывает события с процентами влияния, поддерживает overrides и админ-редактирование.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+    - id: api_interfaces
+      title: API интеграций
+      body: |
+        REST интерфейсы `/stocks/integration/event-hooks`, `/event-preview`, `/event-override` и `/journal` обслуживают регистрацию источников, моделирование what-if сценариев и аудит взаимосвязей. Админы управляют корректировками и проверяют соответствие реальным событиям.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-analytics.yaml
       assets: []
-    - id: api
-      title: 'API интеграций'
+    - id: system_dependencies
+      title: Связанные системы
       body: |
-        Эндпоинты регистрации источников событий, предпросмотра воздействия и журналирования взаимосвязей дают контроль над влиянием на биржу.
+        Quest-service отправляет webhooks, faction-service публикует статусы войн, economy-events поддерживает макроэкономические сигналы, news-feed транслирует внутриигровые новости для игроков и UI.
       mechanics_links:
-        - mechanics/implementation/infrastructure/api-gateway-architecture.yaml
-      assets: []
-    - id: related-systems
-      title: 'Связанные системы'
-      body: |
-        Quest-service, faction-service, economy-events и news-feed синхронизируют данные для единого информационного пространства.
-      mechanics_links:
-        - mechanics/economy/economy-events.yaml
+        - mechanics/economy/stock-exchange/stock-protection.yaml
       assets: []
 appendix:
   glossary: []
@@ -116,11 +114,11 @@ history:
   - version: '1.1.0'
     date: 2025-11-07
     author: concept_director
-    changes: Добавлены шина событий, REST API и расширенные мэппинги интеграции.
+    changes: Добавлены шина событий, таблицы мэппинга, REST API и расширенные сценарии.
   - version: '1.0.0'
     date: 2025-11-06
     author: concept_director
-    changes: Первичный документ связи биржи с квестами и фракциями.
+    changes: Создан базовый документ интеграции биржи с системами.
 validation:
   checksum: ''
   schema_version: '1.0'
