@@ -55,69 +55,79 @@ summary:
     - REST/JSON/Kafka контракты синхронизируют рейтинг с сервисами и UX.
 content:
   sections:
-    - id: rating_model
-      title: Общая схема рейтингов
+    - id: overview
+      title: Общая схема
       body: |
-        Рейтинги разделены на заказчика и исполнителя, используют шкалу 0–100 и категории Bronze/Silver/Gold/Platinum. Decay удерживает минимум на уровне 20% исторического пика.
+        Репутация состоит из двусторонних рейтингов исполнителей и заказчиков с диапазоном 0–100 и
+        категориями Bronze, Silver, Gold, Platinum. Decay снижает показатели при бездействии.
       mechanics_links:
-        - mechanics/social/player-orders-system-детально.md
-      assets: []
-    - id: executor_metrics
+        - mechanics/social/player-orders-system.yaml
+    - id: executor-metrics
       title: Метрики исполнителя
       body: |
-        Completion Rate, Timeliness, Quality, Reliability и Complexity Bonus формируют итоговый балл с весами 0.3/0.2/0.25/0.15/0.1. Значения нормализуются и умножаются на decay.
+        Completion Rate, Timeliness, Quality, Reliability, Complexity Bonus. Приведена формула со
+        стандартными весами и коэффициентами decay.
       mechanics_links:
-        - mechanics/social/player-orders-advanced-детально.md
-      assets: []
-    - id: client_metrics
+        - mechanics/social/player-orders-execution.yaml
+    - id: client-metrics
       title: Метрики заказчика
       body: |
-        Payment Reliability, Brief Quality, Dispute Rate, Reward Fairness и Repeat Business рассчитываются по весам 0.3/0.2/0.2/0.15/0.15. Арбитражные решения накладывают мгновенные штрафы.
+        Payment Reliability, Brief Quality, Dispute Rate, Reward Fairness, Repeat Business с примерными
+        весами и штрафами при арбитраже.
       mechanics_links:
-        - mechanics/social/player-orders-creation-детально.yaml
-      assets: []
+        - mechanics/social/player-orders-creation.yaml
     - id: feedback
       title: Отзывы и оценки
       body: |
-        Отзывы содержат текст и две шкалы оценок, проходят проверку на токсичность и могут вызывать арбитраж. Жалобы влияют на рейтинг обеих сторон.
+        Отзывы содержат текст, оценки по качеству и коммуникации, флаги и проверки на токсичность.
+        Жалобы запускают арбитраж и влияют на рейтинг.
       mechanics_links:
-        - mechanics/social/player-orders-system-детально.md
-      assets: []
+        - mechanics/social/player-orders-execution.yaml
     - id: categories
       title: Категории и привилегии
       body: |
-        Bronze, Silver, Gold и Platinum задают доступ к заказам, комиссии и бонусы. Низкие категории ограничивают создание заказов и участие в аукционах.
+        Bronze, Silver, Gold, Platinum и связанные бонусы, ограничения, сезонные сбросы и boosts.
       mechanics_links:
-        - mechanics/social/player-orders-reputation.yaml
-      assets: []
+        - mechanics/social/player-orders-system.yaml
     - id: dynamics
       title: Динамика рейтинга
       body: |
-        Decay, бусты за успешные серии, сезонные сбросы и фракционные модификаторы регулируют изменения рейтинга. Конфигурации управляются `social-service`.
+        Decay, boosts, сезонные обновления, влияние фракций и требования к минимальному уровню.
       mechanics_links:
-        - mechanics/social/player-orders-world-impact-детально.md
-      assets: []
+        - mechanics/social/player-orders-system.yaml
     - id: arbitration
       title: Арбитраж и безопасность
       body: |
-        Dispute Handler использует escrow, страховые фонды и журналы для расследования и применения санкций. Решения влияют на рейтинг заказчика и исполнителя.
+        Dispute Handler, штрафы, санкции, escrow, логи и интеграция с economy-service.
       mechanics_links:
-        - mechanics/social/player-orders-advanced-детально.md
-      assets: []
-    - id: ux_visuals
+        - mechanics/social/player-orders-system.yaml
+    - id: ux
       title: UX и визуализация
       body: |
-        Профили рейтингов, диаграммы, лидерборды и бейджи отображают динамику. Нотификации информируют о смене категории и штрафах.
+        Профиль рейтинга, диаграммы, leaderboard, бейджи и уведомления при изменении категории.
       mechanics_links:
-        - mechanics/social/visual-style-assets-детально.md
-      assets: []
-    - id: interfaces
-      title: REST, JSON и Kafka контракты
+        - mechanics/social/player-orders-system.yaml
+    - id: formulas
+      title: Формулы и схемы
       body: |
-        REST API предоставляет получение, пересчёт рейтингов, создание отзывов и санкций. JSON схемы и Kafka топики (`social.player-orders.rating.updated`, `social.player-orders.review.created`, `social.player-orders.penalty.applied`) обеспечивают интеграцию сервисов.
+        JSON схемы `player-order-rating`, `player-order-review`, `player-order-penalty`, `player-order-category`.
       mechanics_links:
-        - mechanics/social/player-orders-system-детально.md
-      assets: []
+        - mechanics/social/player-orders-system.yaml
+    - id: rest
+      title: REST API
+      body: |
+        `GET /social/player-orders/ratings/{playerId}`, `POST /social/player-orders/ratings/recalculate`,
+        `/reviews`, `/penalties`, `/categories` с фильтрами и job-статусами.
+      mechanics_links:
+        - mechanics/social/player-orders-system.yaml
+    - id: kafka
+      title: Kafka события
+      body: |
+        `social.player-orders.rating.updated`, `social.player-orders.review.created`,
+        `social.player-orders.penalty.applied`, `economy.player-orders.reward.adjusted` и подписчики UI,
+        telemetry, factions и quest сервисов.
+      mechanics_links:
+        - mechanics/social/player-orders-system.yaml
 appendix:
   glossary: []
   references:
