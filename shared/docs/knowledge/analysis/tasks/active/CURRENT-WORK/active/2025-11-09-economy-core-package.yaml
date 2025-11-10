@@ -1,0 +1,114 @@
+metadata:
+  id: analysis-economy-core-package
+  title: Подготовка пакета Economy Core
+  document_type: analysis
+  category: operations
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-09T13:40:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: brain_manager
+      contact: brain@necp.game
+  tags:
+    - economy
+    - inventory
+    - trade
+  topics:
+    - backend
+    - economy-systems
+  related_systems:
+    - economy-service
+    - inventory-service
+    - character-service
+    - world-service
+    - analytics-service
+  related_documents:
+    - id: trade-system
+      relation: references
+    - id: inventory-core
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-economy-core-package.md
+  visibility: internal
+  audience:
+    - brain-team
+    - economy-design
+  risk_level: medium
+review:
+  chain:
+    - role: brain_manager
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужно подготовить пакет задач по ядру экономики (inventory + trade), сохранив готовность документов до открытия окна API.
+  goal: Зафиксировать актуальный статус, зависимости и целевой backlog контрактов для последующей передачи в ДУАПИТАСК.
+  essence: Сводка по REST, событиям и хранилищам economy core с этапностью внедрения.
+  key_points:
+    - Инвентарь и торговля перепроверены и готовы к постановке задач.
+    - Определены ключевые REST/Events/Storage элементы и anti-fraud требования.
+    - Указаны блокеры по разрешению API-SWAGGER и шаги для подготовки брифа.
+content:
+  sections:
+    - id: progress
+      title: Прогресс и статус
+      body: |
+        Документы `trade-system.md` и `inventory-system/part1-core-system.md` находятся в статусе `ready`, подтверждены каталоги
+        `api/v1/trade/trade-system.yaml` и `api/v1/inventory/inventory-core.yaml`, а также фронтенд модули `modules/economy/trade`
+        и `modules/economy/inventory`. Уточнены зависимости от economy, inventory, character, world и analytics сервисов.
+      mechanics_links: []
+      assets: []
+    - id: requirements
+      title: Требования к задачам
+      body: |
+        Черновой бриф выделяет REST контракты P2P трейда (создание, обновление, подтверждение, отмена, история) и инвентаря
+        (CRUD по слотам, перенос, экипировка, stash), а также события `trade:*` и `inventory:*`, storage схемы и справочники
+        ограничений. Anti-fraud и дистанционные проверки заложены в базовый набор.
+      mechanics_links: []
+      assets: []
+    - id: follow_up
+      title: Следующие действия
+      body: |
+        Необходимо подготовить бриф ДУАПИТАСК с оценкой трудозатрат и зависимостями, обновить `current-status.md` и `TODO.md`
+        после согласования, а также дождаться разрешения на постановку задач в `API-SWAGGER`.
+      mechanics_links: []
+      assets: []
+    - id: rest_outline
+      title: REST и события
+      body: |
+        REST для inventory включает `POST /inventory/slots`, `GET/PUT /inventory/items/{itemId}`, `POST /inventory/transfer`,
+        `POST /inventory/equipment/{slot}/{action}`, операции stash. REST для trade охватывает `POST /trade/sessions`,
+        `POST /trade/sessions/{sessionId}/offers`, `POST /trade/sessions/{sessionId}/confirm`, `DELETE /trade/sessions/{sessionId}`,
+        `GET /trade/history`. Event Bus использует `inventory:item-added`, `inventory:item-removed`, `inventory:weight-updated`,
+        а также `trade:started`, `trade:confirmation-requested`, `trade:completed`, `trade:cancelled`, `trade:fraud-flagged`.
+      mechanics_links: []
+      assets: []
+    - id: storage_and_stages
+      title: Хранилище и этапность
+      body: |
+        Основные таблицы включают `inventories`, `inventory_items`, `inventory_slots`, `equipment_slots`, `trade_sessions`,
+        `trade_offers`, `trade_audit` и `trade_penalties`. Этап P0 запускает базовые REST и события, P1 добавляет transfer,
+        equip, anti-fraud логику, P2 покрывает историю, penalties и расширения stash.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-economy-core-package
+  blockers:
+    - Ожидание окна для economy-service и разрешения на постановку задач в API-SWAGGER.
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: Brain Manager
+    changes: Конвертация пакета economy core в формат знаний.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
