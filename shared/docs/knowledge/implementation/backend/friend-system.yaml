@@ -1,0 +1,98 @@
+metadata:
+  id: friend-system
+  title: Backend системы друзей
+  document_type: implementation
+  category: systems
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - social
+    - friends
+    - backend
+  topics:
+    - friend-management
+    - online-status
+  related_systems:
+    - social-service
+    - session-service
+    - notification-service
+  related_documents:
+    - id: relationships-system
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - social
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T05:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Игрокам требуется удобное управление друзьями и актуальный онлайн-статус.
+  goal: Описать backend-компонент, который обслуживает запросы на дружбу, блокировки и последние контакты.
+  essence: Social-service обрабатывает запросы, хранит связи и публикует события для уведомлений и статуса.
+  key_points:
+    - Поддержка заявок, принятия, удаления и блокировок.
+    - Событийное обновление статуса онлайн/офлайн.
+    - Интеграция с уведомлениями и отображением прогресса друзей.
+content:
+  sections:
+    - id: architecture
+      title: Архитектура сервиса
+      body: |
+        Сервис друзей доступен по маршруту `/api/v1/social/friends/*` внутри social-service
+        (порт 8084). Он взаимодействует с character-service для получения профилей, session-service
+        для статуса онлайн и notification-service для уведомлений о заявках. Публикуемые события:
+        `friend:request-sent`, `friend:request-accepted`, `friend:online`, `friend:offline`.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Модель данных
+      body: |
+        Таблица `friendships` хранит пары персонажей, статус (PENDING, ACCEPTED, BLOCKED),
+        инициатора и временные метки. Индексы по каждому персонажу позволяют быстро искать
+        друзей и запросы. Проверка `character_a_id < character_b_id` предотвращает дубликаты.
+      mechanics_links: []
+      assets: []
+    - id: flows
+      title: Основные сценарии
+      body: |
+        При отправке заявки сервис создаёт запись, уведомляет получателя и ждёт подтверждения.
+        Принятие обновляет статус и публикует событие о добавлении в друзья. События сессий
+        `session:created` и `session:ended` обновляют онлайн-статус друзей в реальном времени.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: repository
+      path: shared/code/backend/social/friend-service/
+  decisions:
+    - id: adr-friend-service
+      summary: Утверждён сервис друзей с событийным обновлением статуса и блок-листом.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: Concept Director
+    changes: Утверждена архитектура системы друзей.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
