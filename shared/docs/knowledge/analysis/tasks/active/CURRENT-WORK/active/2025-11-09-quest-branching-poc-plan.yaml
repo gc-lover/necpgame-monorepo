@@ -1,0 +1,96 @@
+metadata:
+  id: analysis-quest-branching-poc-plan
+  title: Quest Branching Liquibase PoC
+  document_type: analysis
+  category: operations
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-11-09T14:35:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: ai_manager
+      contact: ai@necp.game
+  tags:
+    - quests
+    - liquibase
+    - poc
+  topics:
+    - data-migrations
+    - quest-engine
+  related_systems:
+    - quest-engine
+    - analytics-service
+  related_documents:
+    - id: quest-branching-liquibase-plan
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-quest-branching-poc-plan.md
+  visibility: internal
+  audience:
+    - brain-team
+    - data-engineering
+  risk_level: medium
+review:
+  chain:
+    - role: ai_manager
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется подтвердить жизнеспособность полного цикла миграций ветвящихся квестов и собрать отчёт по результатам.
+  goal: Прогнать Liquibase tag `quest-branching-v1`, проверить shadow-write, материализованные представления и RLS, зафиксировать метрики.
+  essence: Пошаговый план PoC для нового схемного слоя ветвящихся квестов с требованиями к среде, проверками и измерениями.
+  key_points:
+    - Описаны подготовка окружения и сценарий запуска миграций.
+    - Проверяются shadow-write, materialized view и политики RLS.
+    - Фиксируются метрики и дальнейшие шаги по автоматизации.
+content:
+  sections:
+    - id: environment
+      title: Подготовка среды
+      body: |
+        PoC выполняется на PostgreSQL 15+ с расширением `pgcrypto`, отдельной базой `quest_branching_poc` и правами superuser.
+        Требуются Liquibase 4.17+, конфигурация `liquibase.properties` и вспомогательные скрипты из `scripts/poc/quest-branching/`.
+      mechanics_links: []
+      assets: []
+    - id: execution
+      title: Последовательность шагов
+      body: |
+        План включает очистку схемы, запуск `liquibase update --tag=quest-branching-v1`, проверки shadow-write и
+        материализованного представления, валидацию RLS, сценарий отката и повторный цикл через `run_poc.ps1`.
+      mechanics_links: []
+      assets: []
+    - id: metrics
+      title: Метрики и результаты
+      body: |
+        Фиксируются времена `update`, `rollback` и `quest_branching_rollback()`, актуальность `quest_path_popularity` и
+        количество флагов игрока. Отчёт 2025-11-09 отмечает успешное выполнение 58 changeSet за ~55 секунд и корректную работу
+        триггеров, MV и RLS.
+      mechanics_links: []
+      assets: []
+    - id: follow_up
+      title: Доработки и следующие шаги
+      body: |
+        Запланирована автоматизация скриптов, расширение отчёта метриками, интеграция helper-функций для rollback и возможные
+        нагрузочные тесты (k6). Готовится итоговый отчёт для readiness-трекеров и постановки задач.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-quest-branching-poc-plan
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-11-11
+    author: AI Manager
+    changes: Конвертация плана PoC Liquibase ветвящихся квестов в формат знаний.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
