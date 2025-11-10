@@ -1,0 +1,116 @@
+metadata:
+  id: analysis-combat-freerun-brief
+  title: Combat Freerun Brief
+  document_type: analysis
+  category: operations
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-09T14:15:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: brain_manager
+      contact: brain@necp.game
+  tags:
+    - combat
+    - freerun
+    - shooter-transition
+  topics:
+    - gameplay
+    - movement
+  related_systems:
+    - gameplay-service
+    - quest-engine
+    - analytics-service
+  related_documents:
+    - id: combat-freerun
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-combat-freerun-brief.md
+  visibility: internal
+  audience:
+    - brain-team
+    - combat-design
+  risk_level: medium
+review:
+  chain:
+    - role: brain_manager
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требовалось консолидировать паркур-компонент боевой системы для дальнейшей постановки API задач.
+  goal: Сформировать бриф с REST, WebSocket, событиями и требованиями к хранению, учитывая интеграции с боевыми сервисами.
+  essence: Документ описывает специфику паркура в шутере, ограничения и приоритеты API, чтобы ускорить декомпозицию.
+  key_points:
+    - Подтверждён статус readiness базового документа.
+    - Сформирован черновой backlog REST/WS/Event маршрутов.
+    - Определены зависимости и требования к анти-читу и безопасности.
+content:
+  sections:
+    - id: readiness
+      title: Сводка готовности
+      body: |
+        Каталог OpenAPI `api/v1/gameplay/combat/freerun.yaml` (порт 8083, `gameplay-service`) и фронтенд `modules/combat/movement`
+        готовы к детализации. Документ `combat-freerun.md` подтверждён в статусе approved, версия 1.1.0, блокирующих TODO нет.
+        Ключевые особенности: смешанный паркур, выносливость как ресурс, интеграция с боем и имплантами.
+      mechanics_links: []
+      assets: []
+    - id: rest_backlog
+      title: REST backlog
+      body: |
+        Черновые маршруты охватывают действия (`POST /combat/freerun/actions`), контекстные комбо, восстановление выносливости,
+        управление loadout, мобильные способности, пользовательские маршруты и телеметрию. Приоритеты P0–P2 указаны для
+        планирования этапов.
+      mechanics_links: []
+      assets: []
+    - id: realtime
+      title: WebSocket и события
+      body: |
+        Основной WebSocket `wss://api.necp.game/v1/combat/freerun/{sessionId}` передаёт действия и состояние stamina.
+        Дополнительный канал telemetry собирает данные тренировки. Event Bus включает `combat.freerun.action`,
+        `combat.freerun.combo`, `combat.freerun.stamina`, `combat.freerun.mobile-ability` с входящими событиями от combat session,
+        abilities, implants и квестов.
+      mechanics_links: []
+      assets: []
+    - id: storage
+      title: Хранение и телеметрия
+      body: |
+        Запроектированы таблицы `freerun_actions`, `freerun_profiles`, `freerun_combos_history`, `freerun_stamina_state`,
+        `freerun_routes`. Отдельно планируются журналы аудита и интеграция с anti-cheat.
+      mechanics_links: []
+      assets: []
+    - id: dependencies
+      title: Зависимости и ограничения
+      body: |
+        Система зависит от combat session, abilities, shooter core, inventory, analytics, quest engine и economy. Требуется
+        анти-спам, локализация манёвров, интеграция с anti-cheat и обработка GM операций.
+      mechanics_links: []
+      assets: []
+    - id: roadmap
+      title: Следующие шаги
+      body: |
+        - Подтвердить необходимость отдельного WebSocket или объединения с общим combat stream.
+        - Разбить задачи на этапы P0–P2 и синхронизировать с ДУАПИТАСК.
+        - Обновить внутренние журналы (TODO, status, readiness-tracker) после передачи брифа.
+        - Согласовать параметры с combat abilities и quest engine пакетами.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-combat-freerun-brief
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: Brain Manager
+    changes: Конвертация брифа по паркур-системе в YAML.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
