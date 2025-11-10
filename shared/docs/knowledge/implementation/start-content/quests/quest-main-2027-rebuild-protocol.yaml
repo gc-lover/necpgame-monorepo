@@ -12,22 +12,19 @@ metadata:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - main-quest
-    - shooter
+    - questline
     - netwatch
-    - red-era
+    - shooter
   topics:
-    - quest_design
-    - network_operations
+    - quests
+    - start-content
   related_systems:
-    - quest-service
-    - combat-service
-    - telemetry-service
+    - quest-engine
+    - shooter-service
+    - analytics-service
   related_documents:
-    - id: quest-main-2023-shattered-city
-      relation: precedes
-    - id: mechanics-combat-shooter-core
-      relation: references
+    - id: quest-main-2030-network-resurgence
+      relation: leads_to
   source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2027-rebuild-protocol.md
   visibility: internal
   audience:
@@ -43,70 +40,160 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Нужно зафиксировать обновлённый shooter-вариант квеста NetWatch по восстановлению сетей в 2027 году."
-  goal: "Документировать стадии, инженерные и боевые интеракции, логи и награды для квеста «Протокол восстановления»."
-  essence: "Игрок совместно с NetWatch выводит из тени слепую зону, восстанавливает три узла связи и отражает рейд банды Rust Tigers."
+  problem: Требуется описать квест NetWatch по восстановлению сетевых узлов и задать требования к боевым и инженерным механикам.
+  goal: Зафиксировать структуру основного квеста 2027 года с целями, стадиями, наградами, API и телеметрией.
+  essence: Квест сочетает инженерное восстановление узлов связи, оборону от Rust Tigers и телеметрию для shooter-рефактора.
   key_points:
-    - "Три узла требуют инженерных, взломных и саппорт-решений с чёткими порогами метрик."
-    - "Shooter-встречи масштабируются в зависимости от успеха разведки и хакерских интеракций."
-    - "Телеметрия покрывает uptime узлов, raid-интервалы и античит контроль задержек."
-    - "Награды открывают последующую цепочку 2030 года и усиливают NetWatch store."
+    - Четыре стадии с инженерными, боевыми и социальными проверками.
+    - Детализированные таблицы интеракций, вражеских волн и опасностей.
+    - Полный пакет API/телеметрии и тест-кейсов для QA и analytics.
 content:
   sections:
     - id: overview
-      title: "Контекст и структура"
+      title: Сводка
       body: |
-        Квест запускается в NetWatch HQ (Downtown) и отправляет игрока в industrial outskirts Santo
-        Domingo. Основная цель — восстановить три узла связи, удерживая линию и защищая лагерь от рейда
-        Rust Tigers. Документ фиксирует последовательность целей и ключевые роли (tech, assault, hacking).
-      mechanics_links: []
-      assets: []
+        - ID: `quest-main-2027-rebuild-protocol`
+        - Выдаёт: `npc-elizabeth-chen` (NetWatch HQ, Downtown)
+        - Период: 2027, восстановление сетей после DataKrash
+        - Основная петля: восстановление узлов связи и оборона при рейдах
+        - Ключевые роли: tech support, assault, hacking
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Контекст и цели
+      body: |
+        1. Получить задание у Элизабет Чен.
+        2. Добраться до слепой зоны NetWatch и восстановить три узла связи.
+        3. Защитить восстановленные узлы от рейда «Rust Tigers».
+        4. Вернуться и отчитаться о восстановлении сети.
+
+        ```yaml
+        quest-type: main
+        party: coop-2 (поддержка до 4)
+        expected-duration: 35-45m
+        repeatable: once
+        telemetry-topics:
+          - combat.shooter.encounter
+          - quest.progress.main
+          - analytics.network.restore
+        ```
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
     - id: stages
-      title: "Стадии и интеракции"
+      title: Стадии и интеракции
       body: |
-        Стадия «Blind Zone Recon» предлагает Recon Sweep, Presence Brief и Hazard Marking для подготовки
-        маршрута. «Node Bring-Up» описывает Field Repair Loop, Defensive Hacking и Support Stabilizer для
-        трёх узлов. «Rust Tigers Raid» фокусируется на Suppression Grid, Drone Hijack и вызове поддержки.
-        Финальная стадия «Uplink Confirmed» закрывает отчёт и экономический эффект.
+        ### Стадия A — Blind Zone Recon
+        - Локация: industrial outskirts Santo Domingo
+        - Цель: обследовать область и обнаружить угрозы
+
+        | Событие | Требования | Ресурсы | Эффект | Логи |
+        | --- | --- | --- | --- | --- |
+        | Recon Sweep | `accuracy ≥ 0.54`, `perception_sensor ≥ 0.55` | Дрон `scan-mk2`, имплант `optic_suite` | Помечает засады, открывает stealth-маршрут | `quest.recon.scan`, `analytics.heatmap` |
+        | Presence Brief | `presence ≥ 0.58`, `suppression_score ≤ 0.25` | 180 eddies, `voice_mod` | Переговоры с мародёрами → −1 encounter, +репутация Civilians +4 | `quest.social.presence`, `combat.shooter.social` |
+        | Hazard Marking | `analysis ≥ 0.52`, `mobility ≥ 0.48` | Тех-инструменты | Обходит ловушки, снижает урон от hazards на 30% | `environment.hazard.tag` |
+
+        ### Стадия B — Node Bring-Up
+        - Локация: NetWatch relay cluster `NW-23`
+        - Цель: восстановить узлы 1–3, удерживая линию связи
+
+        | Узел | Интеракция | Порог | Оснащение | Результат |
+        | --- | --- | --- | --- | --- |
+        | Node 1 | Field Repair Loop | `tech_override ≥ 0.56`, `handling ≥ 0.53` | `servo-glove`, `engineering_toolkit` | Сокращает время восстановления на 45 сек, открывает bonus XP | `quest.objective.progress` |
+        | Node 2 | Defensive Hacking | `hacking ≥ 0.58`, `analysis ≥ 0.55` | Дек `net-control`, имплант `neuro-weave` | Снижает волну рейда на 2 врага, активирует авто-турель | `combat.shooter.override` |
+        | Node 3 | Support Stabilizer | `support_efficiency ≥ 0.47`, `resilience ≥ 0.50` | Генератор `shield-dome` | Создаёт щит на 900 HP и защищает инженера NPC | `combat.shooter.support` |
+
+        ### Стадия C — Rust Tigers Raid
+        - Локация: временный лагерь у relay `NW-23`
+        - Цель: отразить атаку и сохранить uptime ≥ 85%
+
+        | Событие | Требования | Ресурсы | Эффект |
+        | --- | --- | --- | --- |
+        | Suppression Grid | `suppression_score ≥ 0.40`, `accuracy ≥ 0.55` | AR/LMG, ability `suppression_burst` | Замедляет рейдеров, снижает входящий урон на 20% | `combat.shooter.suppress` |
+        | Drone Hijack | `hacking ≥ 0.60`, `analysis ≥ 0.58` | Модуль `net-overclock` | Перехватывает боевого дрона → союзный огонь 45 сек | `combat.shooter.hack` |
+        | Evac Route Call | `mobility ≥ 0.52`, `presence ≥ 0.55` | Связь с NetWatch | Вызывает резервный отряд (delay 60 сек) → ускоряет завершение | `quest.signal.request` |
+
+        ### Стадия D — Uplink Confirmed
+        - Цель: зафиксировать восстановление сети и вернуться к Элизабет
+        - Интеракции: финальный отчёт, оценка экономического эффекта, триггер новых заданий NetWatch
       mechanics_links:
         - mechanics/combat/combat-shooter-core.yaml
-      assets: []
     - id: encounters
-      title: "Боевые сценарии"
+      title: Боевые сценарии
       body: |
-        Основные encounters: Rust Tigers Vanguard и Drone Reinforcements (появляется при провале разведки).
-        Таблицы включают параметры врагов, особенности и влияние успешных интеракций на состав волн.
-      mechanics_links: []
-      assets: []
+        | Враг | Роль | defenseRating | HP | Accuracy | DPS | Особенности |
+        | --- | --- | --- | --- | --- | --- | --- |
+        | Tiger Gunner | assault | 205 | 320 | 0.56 | 175 | Smoke ×1, suppression 0.35 |
+        | Tiger Technician | support | 195 | 260 | 0.50 | 130 | EMP гранаты, отключение щитов |
+        | Tiger Melee | bruiser | 210 | 360 | 0.42 | 160 | Rush, устойчивость к suppression |
+
+        **Drone Reinforcements (при провале Recon Sweep):**
+        | Враг | Роль | defenseRating | HP | Accuracy | DPS | Особенности |
+        | --- | --- | --- | --- | --- | --- | --- |
+        | Attack Drone Mk2 | harassment | 180 | 210 | 0.58 | 140 | Перегрев техники, требование Drone Hijack |
+        | Turret Drop Pod | static | 220 | 350 | 0.62 | 190 | Активируется через 30 сек, отключается Engineering Override |
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
     - id: hazards
-      title: "Опасности среды"
+      title: Опасности и окружение
       body: |
-        Электрические дуги, газовые выбросы и снайперский overwatch влияют на ход битвы. Указаны условия
-        возникновения, эффекты, контрмеры и связанные события.
-      mechanics_links: []
-      assets: []
+        | Hazard | Условие | Эффект | Контрмера | События |
+        | --- | --- | --- | --- | --- |
+        | Электрические дуги | Перегрузка узлов >85% | 18 HP/тик, перегрев оборудования | Field Repair Loop, shield-dome | `environment.hazard.arc` |
+        | Газовые выбросы | Бой > 120 сек | Accuracy −20%, плохая видимость | Vent override, поддержка дрона | `environment.hazard.gas` |
+        | Sniper Overwatch | Провал Recon Sweep | Target lock, крит ×2 | Smoke deploy, suppression | `combat.shooter.sniper` |
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
     - id: rewards
-      title: "Награды и последствия"
+      title: Награды и последствия
       body: |
-        Базовая награда — XP, eddies, `item-cyberdeck-netwatch-mk1`, репутация NetWatch. Бонусы зависят
-        от успеха Field Repair Loop, Defensive Hacking и Suppression Grid. Отдельно указаны штрафы за
-        падение uptime и открытие цепочки `quest-main-2030-network-resurgence`.
-      mechanics_links: []
-      assets: []
-    - id: telemetry
-      title: "API и тестирование"
+        - Базовые награды: 560 XP, 650 eddies, `item-cyberdeck-netwatch-mk1`, репутация NetWatch +18.
+        - Бонусы:
+          - Field Repair Loop успех → +70 XP и дополнительный loot cache.
+          - Defensive Hacking успех → открывает `auto-turret blueprint`.
+          - Suppression Grid успех → повышает шанс редкого оружия (AR Tactical Mk1).
+        - Штрафы: uptime < 70% уменьшает награды на 15% и повторяет Stage B.
+        - Продолжение: открывает цепочку `quest-main-2030-network-resurgence`, NetWatch store tier 2.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API и телеметрия
       body: |
-        REST endpoints фиксируют принятие, интеракции, боевые отчёты, восстановление сети и завершение.
-        WebSocket и Kafka топики отражают события repair/raid/telemetry. Тест-кейсы охватывают tech-perfect,
-        combat-heavy, support, failure recovery и latency spike сценарии.
-      mechanics_links: []
-      assets: []
+        - `POST /api/v1/quests/{questId}/accept`
+        - `POST /api/v1/quests/{questId}/interaction`
+        - `POST /api/v1/combat/shooter`
+        - `POST /api/v1/network/restore`
+        - `POST /api/v1/quests/{questId}/objective`
+        - `POST /api/v1/quests/{questId}/complete`
+
+        WebSocket: `wss://api.necp.game/v1/quests/{questId}/events`  
+        Kafka: `quest.progress.main`, `combat.shooter.encounter`, `analytics.network.restore`, `anti-cheat.validation`
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: qa
+      title: Тест-кейсы
+      body: |
+        1. Tech perfect — успех всех инженерных и хакерских проверок.
+        2. Combat heavy — провал Recon и Defensive Hacking для проверки максимальных рейдов.
+        3. Support focus — проверка Shield-дома и Suppression Grid на удержание инженера NPC.
+        4. Failure recovery — поражение и повтор Stage B, валидация наказаний и логов.
+        5. Latency spike — задержка > 220 мс и проверка уведомлений anti-cheat.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: analytics
+      title: Логи и аналитика
+      body: |
+        - Shooter метрики: accuracy, stability, suppression, shields uptime.
+        - Repair telemetry: время на узел, материалы, расход энергии.
+        - Economic impact: новые заказы NetWatch и влияние на цены tech-компонентов.
+        - Anti-cheat: rapid fire, macro detection, coordinate spoofing.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
 appendix:
   glossary: []
   references: []
   decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2027-rebuild-protocol
   blockers: []
@@ -114,12 +201,11 @@ history:
   - version: '2.0.0'
     date: 2025-11-10
     author: concept_team
-    changes: "Shooter-ориентированный рефактор с обновлёнными стадиями, телеметрией и наградами."
+    changes: Shooter-рефактор стадий, обновлённые награды, API и телеметрия.
   - version: '1.0.0'
     date: 2025-11-06
     author: concept_team
-    changes: "Первичная D&D спецификация (архив)."
+    changes: Первичная D&D версия квеста.
 validation:
   checksum: ''
   schema_version: '1.0'
-
