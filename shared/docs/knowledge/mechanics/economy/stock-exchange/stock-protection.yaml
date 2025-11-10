@@ -1,98 +1,105 @@
 metadata:
   id: stock-protection
-  title: Биржа акций — защита от манипуляций
+  title: Биржа акций — Защита от манипуляций
   document_type: mechanics
   category: economy
   status: approved
   version: '1.1.0'
   last_updated: 2025-11-07T16:19:00Z
   concept_approved: true
-  concept_reviewed_at: 2025-11-09T11:21:00Z
+  concept_reviewed_at: 2025-11-09
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - stock-exchange
-    - market-protection
-    - compliance
+    - anti-manipulation
+    - surveillance
   topics:
-    - financial-markets
-    - anti-fraud
+    - market_regulation
+    - economy_security
   related_systems:
     - economy-service
-    - security-service
+    - anti-cheat-service
     - guild-system
     - notification-service
   related_documents:
+    - id: stock-trading
+      relation: complements
     - id: stock-exchange-overview
       relation: references
-    - id: anti-cheat-system
-      relation: complements
   source: shared/docs/knowledge/mechanics/economy/stock-exchange/stock-protection.md
   visibility: internal
   audience:
     - concept
     - economy
     - security
-  risk_level: high
+  risk_level: medium
 review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-09T11:21:00Z
+      reviewed_at: 2025-11-09
       status: approved
   next_actions: []
 summary:
-  problem: Биржа нуждалась в формализованной системе защиты от манипуляций и инсайдерской торговли.
-  goal: Описать механизмы circuit breakers, лимитов цен, обнаружения манипуляций и связанные API/данные.
-  essence: Документ фиксирует комплекс технических, алгоритмических и административных мер защиты фондового рынка NECPGAME.
+  problem: Необходимы механизмы защиты биржи от манипуляций и инсайдерской торговли в условиях активной игровой экономики.
+  goal: Зафиксировать circuit breakers, ценовые лимиты, алгоритмы обнаружения и административные интерфейсы для биржевой безопасности.
+  essence: Совокупность правил, аналитики и API предотвращает манипуляции ценами, отслеживает подозрительные сделки и обеспечивает санкции.
   key_points:
-    - Circuit breakers и дневные лимиты предотвращают обвалы и панические сделки.
-    - Система мониторинга фиксирует инсайд, spoofing, wash trading и pump & dump.
-    - REST/Kafka интерфейсы и метрики обеспечивают администрирование и реагирование.
+    - Circuit breakers и ценовые лимиты стабилизируют волатильность.
+    - Алгоритмы выявляют spoofing, wash trading, insider trading и pump & dump.
+    - Автоматизированные таблицы и REST/API позволяют реагировать и логировать санкции.
 content:
   sections:
-    - id: protection-mechanisms
-      title: 'Механизмы защиты'
+    - id: introduction
+      title: Введение
       body: |
-        Circuit breakers останавливают торги при резких изменениях цены, а дневные лимиты ограничивают диапазон колебаний. Система выявляет инсайдерскую торговлю и запрещает подозрительные действия участников рынка.
+        Документ описывает защитные механизмы внутриигровой биржи, включая правила остановки торгов, лимиты цен, детекцию манипуляций и админ-инструменты. Система опирается на аналитические таблицы, события и интеграции с античитом и уведомлениями.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
       assets: []
-    - id: data-structures
-      title: 'Структуры данных'
+    - id: protection_mechanisms
+      title: Механизмы защиты
       body: |
-        Таблицы `surveillance_alerts` и `enforcement_actions` хранят алерты, детали расследований и санкции. Журналы используются для аудита и интеграции с системами безопасности.
+        Circuit breakers активируются при отклонении цены более чем на 15% за час и приостанавливают торги. Суточные ценовые лимиты ограничивают изменение стоимости ±20%, после достижения порога торги откладываются до следующего дня. Система отслеживает сроки остановки и перезапуска торговых сессий.
       mechanics_links:
-        - mechanics/implementation/backend/anti-cheat-system.yaml
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
       assets: []
-    - id: detection-algorithms
-      title: 'Алгоритмы обнаружения'
+    - id: detection_algorithms
+      title: Алгоритмы обнаружения
       body: |
-        Алгоритмы отслеживают spoofing, wash trading, pump & dump и утечки квестовых событий. Параметры чувствительности настраиваются через админ-инструменты.
+        Алгоритмы фиксируют insider trading по временным паттернам, spoofing по мгновенно отменённым крупным заявкам, wash trading по операциям связанных аккаунтов и pump & dump через резкие скачки без новостей. Настраиваемые пороги и пакеты статистики формируют алерты с классификацией по серьёзности.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+    - id: data_structures
+      title: Структуры данных и санкции
+      body: |
+        Таблицы `surveillance_alerts` и `enforcement_actions` хранят алерты, детали триггеров, статусы расследований и применённые меры (warning, suspension, ban, confiscation). Записи логируются с временными метками, поддерживают комментарии администраторов и интеграцию с отчётностью.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-integration.yaml
+      assets: []
+    - id: admin_interfaces
+      title: API и админ-интерфейсы
+      body: |
+        REST эндпоинты `/stocks/protection/alerts`, `/alerts/{id}`, `/enforcement` и `/enforcement/{id}` позволяют просматривать активные сигналы, обновлять статусы и создавать санкции. Админ UI отображает heatmap подозрительных тикеров и предоставляет контроль ручных override.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-analytics.yaml
       assets: []
-    - id: api-admin
-      title: 'API и админ-панель'
-      body: |
-        REST эндпоинты предоставляют список алертов, управление расследованиями и создание санкций. Админ UI содержит дашборды подозрительных активностей и тепловые карты по тикерам.
-      mechanics_links:
-        - mechanics/implementation/infrastructure/admin-moderation-tools.yaml
-      assets: []
     - id: monitoring
-      title: 'Мониторинг и метрики'
+      title: Мониторинг и метрики
       body: |
-        Метрики AlertRate, FalsePositiveRate, CircuitBreakerCount и AverageHaltDuration отслеживаются в реальном времени. PagerDuty оповещает о всплесках подозрительных событий.
+        Метрики `AlertRate`, `FalsePositiveRate`, `CircuitBreakerCount` и `AverageHaltDuration` отслеживают здоровье системы. PagerDuty реагирует на всплески алертов, а журнал `surveillance_audit` фиксирует ручные вмешательства и превышения лимитов.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-analytics.yaml
       assets: []
     - id: integrations
-      title: 'Интеграции'
+      title: Интеграции
       body: |
-        Защита биржи обменивается данными с anti-cheat, guild-system, economy-events и notification-service, синхронизируя санкции и исключения легитимных событий.
+        Anti-cheat получает данные о подозрительных аккаунтах, guild-system блокирует гильдейские операции при выявлении коллективных схем, economy-events фильтрует легитимные новости, notification-service информирует администраторов и игроков о санкциях.
       mechanics_links:
-        - mechanics/economy/stock-exchange/stock-integration.yaml
+        - mechanics/economy/stock-exchange/stock-events.yaml
       assets: []
 appendix:
   glossary: []
@@ -107,11 +114,11 @@ history:
   - version: '1.1.0'
     date: 2025-11-07
     author: concept_director
-    changes: Добавлены структуры данных, алгоритмы детекции, REST API и мониторинг защиты биржи.
+    changes: Зафиксированы circuit breakers, ценовые лимиты, алгоритмы выявления и админ-интерфейсы.
   - version: '1.0.0'
     date: 2025-11-06
     author: concept_director
-    changes: Первичное описание механизмов anti-manipulation на бирже.
+    changes: Создан базовый документ защиты биржи.
 validation:
   checksum: ''
   schema_version: '1.0'
