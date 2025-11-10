@@ -1,0 +1,133 @@
+metadata:
+  id: combat-shooter-core
+  title: 'Combat Shooter Core — Боевая петля 3D-шутера'
+  document_type: mechanics
+  category: combat
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-11T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T23:55:00Z
+  owners:
+    - role: combat_director
+      contact: combat@necp.game
+  tags:
+    - combat
+    - shooter
+    - networking
+  topics:
+    - realtime-combat
+    - telemetry
+    - anti-cheat
+  related_systems:
+    - gameplay-service
+    - analytics-service
+    - security-service
+  related_documents:
+    - id: combat-abilities
+      relation: complements
+    - id: combat-stealth
+      relation: integrates
+    - id: combat-freerun
+      relation: integrates
+    - id: combat-hacking
+      relation: integrates
+  source: shared/docs/knowledge/mechanics/combat/combat-shooter-core.md
+  visibility: internal
+  audience:
+    - combat
+    - systems
+    - security
+  risk_level: high
+review:
+  chain:
+    - role: combat_director
+      reviewer: ''
+      reviewed_at: ''
+      status: approved
+  next_actions: []
+summary:
+  problem: Необходимо заменить устаревшие D&D-проверки на реалтайм-шутерную модель с прозрачными параметрами оружия, сетевыми SLA и античитом.
+  goal: Зафиксировать базовые показатели оружия, хитбоксов, имплантов и сетевого слоя для дальнейшей реализации в gameplay-service и аналитике.
+  essence: Единый каркас боевой петли описывает атрибуты игроков, классы вооружения, баллистику, контроль отдачи и связанный телеметрический контур.
+  key_points:
+    - Формализованы таблицы оружия, хитбоксов и SLA.
+    - Определены импланты и способности, влияющие на стрельбу.
+    - Заданы телеметрические события и античит-пороговые значения.
+content:
+  sections:
+    - id: combat_overview
+      title: 'Обзор и назначение'
+      body: |
+        Боевая петля строится вокруг детерминированной модели стрельбы в 3D-шутере с авторитативным сервером.
+        Документ служит опорой для API, телеметрии и античит-политик, вытесняя кубовые проверки.
+      mechanics_links:
+        - mechanics/combat/combat-overview.md
+      assets: []
+    - id: player_attributes
+      title: 'Боевые атрибуты ролей'
+      body: |
+        Роли Assault, Support, Tech Specialist, Stealth/Recon и Hybrid Starter имеют базовые показатели accuracy, stability, handling и т.д.
+        Значения синхронизированы с `technical/shooter-attributes` и контролируются analytics-service с допуском ±0.10.
+      mechanics_links:
+        - mechanics/progression/classes-overview.yaml
+      assets: []
+    - id: weapon_classes
+      title: 'Классы оружия и параметры'
+      body: |
+        Восемь классов (пистолеты, SMG, штурмовые, дробовики, снайперские, тяжелое, энергетическое, экзотические) описаны по TTK, баллистике и особенностям.
+        Таблица урона, RPM, скоростей снарядов и перегрева фиксирует целевые значения PvP/PvE.
+      mechanics_links:
+        - mechanics/combat/combat-weapon-classes.yaml
+      assets: []
+    - id: hitboxes_armor
+      title: 'Хитбоксы, броня и модификаторы'
+      body: |
+        Хитбоксы head, torso, arms, legs и cyber-core имеют модификаторы урона и защиту по бронетиром.
+        Armor integrity ниже 25% повышает входящий урон, EMP игнорирует органическую броню.
+      mechanics_links:
+        - mechanics/combat/combat-implants.yaml
+      assets: []
+    - id: implants_abilities
+      title: 'Импланты и способности'
+      body: |
+        Оптика, нервные ускорители, стабилизаторы и матрицы охлаждения модифицируют отдачу, конус и энергобюджет.
+        Способности типа suppression field интегрируются с системой событий `combat.shooter.*`.
+      mechanics_links:
+        - mechanics/combat/combat-abilities.yaml
+        - mechanics/combat/combat-stealth.yaml
+      assets: []
+    - id: ballistics_network
+      title: 'Баллистика, отдача и сетевой слой'
+      body: |
+        Определены формулы drop, penetration, ricochet, режимы suppression и паттерны отдачи.
+        Таблица SLA задаёт tickrate, латентность, rewind buffer и допуски desync, с описанием shot validation и throttle.
+      mechanics_links:
+        - mechanics/combat/combat-networking.yaml
+      assets: []
+    - id: telemetry_security
+      title: 'Телеметрия и античит'
+      body: |
+        События fire, hit, kill, suppress, reload и overheat формируют основу аналитики.
+        Определены пороги макросов, агрегаты shooter_accuracy_rate, shooter_ttk_pvp/pve и Kafka-топики.
+      mechanics_links:
+        - mechanics/analytics/telemetry-spec.yaml
+        - mechanics/security/anti-cheat-policy.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-09
+    author: combat_director
+    changes: 'Финализированы параметры оружия, хитбоксов и сетевого слоя.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
