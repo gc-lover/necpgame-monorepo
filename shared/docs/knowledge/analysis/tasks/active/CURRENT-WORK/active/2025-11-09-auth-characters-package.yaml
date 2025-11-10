@@ -1,0 +1,163 @@
+metadata:
+  id: analysis-2025-11-09-auth-characters-package
+  title: "Auth & Character Management Package"
+  document_type: analysis
+  category: work-package
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-09T13:55:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: brain_manager
+      contact: brain.manager@necp.game
+  tags:
+    - auth
+    - characters
+    - progression
+    - backend
+  topics:
+    - account-management
+    - progression
+    - event-bus
+  related_systems:
+    - auth-service
+    - character-service
+    - gameplay-service
+    - session-service
+    - economy-service
+    - analytics-service
+  related_documents: []
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-auth-characters-package.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Необходим собранный пакет для auth, управления персонажами и прогрессии перед генерацией API."
+  goal: "Систематизировать статус документов, интерфейсов и событий для auth/characters/progression."
+  essence: "Пакет объединяет REST, WebSocket и Event Bus контракты, описывает БД и интеграции между сервисами авторизации и персонажей."
+  key_points:
+    - "Документы auth, character-management и progression находятся в статусе ready."
+    - "Определены ключевые таблицы, события и сервисные зависимости."
+    - "REST, WebSocket и Event Bus контракты сгруппированы по приоритетам P0–P2."
+content:
+  sections:
+    - id: progress
+      title: "Прогресс комплекта"
+      body: |
+        • Подтверждена готовность auth, character-management и progression документов с актуальными каталогами API и фронтенд-модулями.
+        • Собраны зависимости: auth-service (JWT, OAuth, roles), character-service (слоты, переключение), gameplay-service (level/skill progression), session-service, economy-service, analytics-service.
+        • Зафиксированы события Event Bus: ACCOUNT_CREATED, LOGIN_SUCCESS, LOGOUT, CharacterCreated, CharacterDeleted, CharacterSwitched, character:level-up, character:skill-leveled.
+        • Определены таблицы БД: accounts, account_oauth, account_sessions, players, characters, character_slots, character_state_snapshots, character_progression, skill_experience.
+      mechanics_links: []
+      assets: []
+    - id: readiness_snapshot
+      title: "Сводка готовности документов"
+      body: |
+        | Документ | Версия | Статус | API каталог | Фронтенд модуль | Ключевые моменты |
+        | --- | --- | --- | --- | --- | --- |
+        | auth/README.md | 1.0.1 | ready | `api/v1/auth/authentication.yaml` | `modules/auth` | регистрация, login, OAuth, роли и события |
+        | character-management.md | 1.1.0 | ready | `api/v1/characters/players.yaml` | `modules/characters` | создание/удаление, восстановление, переключение |
+        | progression-backend.md | 1.0.0 | ready | `api/v1/gameplay/progression/progression-core.yaml` | `modules/progression` | EXP, level, навыки, атрибуты |
+      mechanics_links: []
+      assets: []
+    - id: rest_backlog
+      title: "REST и события"
+      body: |
+        | Приоритет | Endpoint | Источник | Краткое описание |
+        | --- | --- | --- | --- |
+        | P0 | `POST /api/v1/auth/register` | auth/README.md | регистрация, подтверждение email, события ACCOUNT_CREATED |
+        | P0 | `POST /api/v1/auth/login` | auth-login-jwt.md | логин, выдача JWT/refresh, антибрютфорс |
+        | P0 | `POST /api/v1/auth/logout` | auth-login-jwt.md | инвалидация сессии и публикация LOGOUT |
+        | P0 | `POST /api/v1/auth/refresh` | auth-login-jwt.md | обновление токенов |
+        | P0 | `POST /api/v1/auth/password/forgot` | auth-database-registration.md | запрос сброса, запись токена восстановления |
+        | P0 | `POST /api/v1/auth/password/reset` | auth-database-registration.md | сброс пароля и аудит |
+        | P1 | `GET /api/v1/auth/roles` | auth-authorization-security.md | список ролей и permissions |
+        | P1 | `POST /api/v1/auth/oauth/{provider}/callback` | auth-database-registration.md | завершение OAuth и связывание аккаунта |
+        | P1 | `POST /api/v1/players/{accountId}/characters` | character-management.md | создание персонажа и события CharacterCreated |
+        | P1 | `DELETE /api/v1/players/{accountId}/characters/{characterId}` | character-management.md | soft-delete и восстановление |
+        | P1 | `POST /api/v1/players/{accountId}/characters/{characterId}/restore` | character-management.md | возврат soft-delete |
+        | P1 | `POST /api/v1/players/{accountId}/switch` | character-management.md | переключение активного персонажа |
+        | P1 | `POST /api/v1/players/{accountId}/slots/purchase` | character-management.md + economy | покупка дополнительных слотов |
+        | P1 | `GET /api/v1/players/{accountId}/activity` | character-management.md | аудит действий персонажей |
+        | P1 | `POST /api/v1/gameplay/progression/experience` | progression-backend.md | начисление опыта |
+        | P1 | `POST /api/v1/gameplay/progression/skills` | progression-backend.md | обновление навыков |
+        | P1 | `POST /api/v1/gameplay/progression/attributes` | progression-backend.md | распределение атрибутов |
+        | P2 | `GET /api/v1/gameplay/progression/{characterId}` | progression-backend.md | текущее состояние прогрессии |
+        | P2 | `POST /api/v1/auth/roles/{roleId}/permissions` | auth-authorization-security.md | управление permissions |
+        Каналы WebSocket:
+        | Канал | Источник | Payload |
+        | --- | --- | --- |
+        | `wss://api.necp.game/v1/auth/sessions/{accountId}` | auth-service | статусы сессий, события входа/выхода |
+        | `wss://api.necp.game/v1/characters/{accountId}` | character-service | список персонажей, слоты, активный персонаж |
+        | `wss://api.necp.game/v1/progression/{characterId}` | gameplay-service | level-up, skill-up, начисление атрибутов |
+        Event Bus:
+        | Topic | Producer | Consumer | Поля |
+        | --- | --- | --- | --- |
+        | `ACCOUNT_CREATED` | auth-service | character-service, notification-service, analytics-service | accountId, method, timestamp |
+        | `LOGIN_SUCCESS` | auth-service | session-service, analytics-service | accountId, ip, device, timestamp |
+        | `LOGOUT` | auth-service | session-service | accountId, sessionId, timestamp |
+        | `CharacterCreated` | character-service | gameplay-service, inventory-service, analytics | accountId, characterId, origin, class |
+        | `CharacterDeleted` | character-service | analytics-service, notification-service | characterId, deletedAt, canRestoreUntil |
+        | `CharacterSwitched` | character-service | session-service, gameplay-service | accountId, oldCharacterId, newCharacterId, timestamp |
+        | `character:level-up` | gameplay-service | analytics-service, achievement-service, notification-service | characterId, newLevel, reward |
+        | `character:skill-leveled` | gameplay-service | analytics-service, quest-engine | characterId, skill, level |
+      mechanics_links: []
+      assets: []
+    - id: storage_model
+      title: "Модели хранения"
+      body: |
+        • accounts, account_oauth, account_sessions — управление учетными записями и сессиями.
+        • players, characters, character_slots — слоты персонажей и активный выбор.
+        • character_state_snapshots, character_progression, skill_experience — фиксация прогрессии.
+      mechanics_links: []
+      assets: []
+    - id: security_notes
+      title: "Безопасность и дополнительные требования"
+      body: |
+        • JWT/Refresh токены: хранение в account_sessions с единым TTL и инвалидацией через LOGOUT.
+        • OAuth провайдеры: таблица account_oauth, проверка дублей и история привязок.
+        • Парольная политика: сложность и аудит password/reset через account_security_audit.
+        • Role/Permission хранение: таблицы roles, role_permissions, account_roles и события ROLE_UPDATED.
+        • Character slots: учёт покупок и событие CharacterSlotPurchased совместно с economy-service.
+        • Progression snapshots: audit журнал progression_audit и поддержка откатов.
+        • Антифрод входов: расширенный payload LOGIN_SUCCESS с risk score и интеграцией security-service.
+        • GDPR: soft-delete аккаунта с каскадным управлением персонажами и прогрессией.
+      mechanics_links: []
+      assets: []
+    - id: planning
+      title: "Наблюдения для дальнейшего планирования"
+      body: |
+        • Рассматривается объединение WebSocket потоков abilities/freerun/combos для единых сессий.
+        • В проработке волновое внедрение функций (Stage A–C) с учётом приоритетов P0/P1/P2.
+        • Требуется синхронизация обновлений с readiness-трекерами и боевыми пакетами.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-2025-11-09-auth-characters-package
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-09
+    author: brain_manager
+    changes: "Конвертировано из 2025-11-09-auth-characters-package.md и структурировано по шаблону знаний."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
