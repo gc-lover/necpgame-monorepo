@@ -18,6 +18,8 @@ metadata:
     - social-ecosystem
   topics:
     - world_simulation
+    - workforce
+    - world-state
     - hiring_system
   related_systems:
     - world-service
@@ -28,6 +30,10 @@ metadata:
       relation: overview
     - id: npc-hiring-system-detailed
       relation: references
+    - id: relationships-system-detailed
+      relation: references
+    - id: mentorship-system-detailed
+      relation: complements
     - id: player-orders-system-detailed
       relation: complements
   source: shared/docs/knowledge/mechanics/social/npc-hiring-world-impact-детально.md
@@ -50,64 +56,78 @@ summary:
   goal: Зафиксировать индексы, события и UX для интеграции world/economy/social сервисов и подготовки API.
   essence: Детализация показывает рынки труда, экономические индикаторы, кризисы и интерфейсы, которые формируются за счёт найма NPC.
   key_points:
-    - Определены экономические и социальные экосистемы, которые формируются вокруг найма NPC.
+    - Определены экономические и социальные экосистемы, формирующиеся вокруг найма NPC.
     - Зафиксированы REST/Kafka контуры, метрики и индексы влияния на городские и фракционные системы.
-    - Подготовлены UX-артефакты и аналитика для мониторинга рынка труда и кризисов.
+    - Подготовлены UX артефакты и аналитика для мониторинга рынка труда и кризисов.
 content:
   sections:
     - id: social_ecosystems
       title: 'Социальные экосистемы найма'
       body: |
-        Описаны биржи найма, сети NPC и рейтинги работодателей. Фракции и корпорации формируют штаты, создают карьерные лестницы и влияют на доступность элитных специалистов.
+        Биржи найма, агентства и рейтинги работодателей формируют конкуренцию за NPC. Социальные системы отслеживают сети сотрудников и реакцию на условия труда.
       mechanics_links:
         - mechanics/social/npc-hiring-system-detailed.yaml
       assets: []
     - id: economic_impact
       title: 'Экономическое влияние'
       body: |
-        Найм NPC влияет на рынки ресурсов, бухгалтерию и инвестиции. Макроиндикаторы EmploymentStabilityIndex и LaborDemandIndex применяются в economy-service и world-service для расчётов.
+        Найм NPC влияет на рынки ресурсов, бухгалтерию, инвестиции и конкуренцию. Макроиндикаторы EmploymentStabilityIndex и LaborDemandIndex применяются в economy-service и world-service.
       mechanics_links:
         - mechanics/social/npc-hiring-economy.yaml
       assets: []
     - id: faction_territories
       title: 'Фракции и территории'
       body: |
-        Лицензии, квоты и фракционные события (забастовки, headhunting) меняют контроль районов и политические сценарии. Нейтральные зоны и дипломатия зависят от кадровых потоков.
+        Лицензии, квоты и headhunting-кампании меняют политические расклады, вызывают world-events и требуют реакции фракций.
       mechanics_links:
         - mechanics/canon/factions-overview.yaml
       assets: []
     - id: gameplay_progress
       title: 'Геймплей и прогресс'
       body: |
-        Автоматизация задач, доступ к сложным миссиям и синергия с системами наставничества формируют новый игровой опыт. Влияние на PvE/PvP баланс и персонализацию игроков зафиксировано.
+        Автоматизация задач, доступ к сложным миссиям и персонализация нарратива через истории NPC создают новые сценарии для игроков.
       mechanics_links:
         - mechanics/social/mentorship-system.yaml
       assets: []
     - id: crises_events
       title: 'События и кризисы'
       body: |
-        Определены сценарии забастовок, похищений, миграций, чёрного рынка и локдаунов. Каждый кризис связан с world-events и требует реакции сервисов и геймплейных команд.
+        Забастовки, похищения, миграции, чёрные рынки и локдауны определяют риск-сценарии и требуют управления штатом.
       mechanics_links:
         - mechanics/world/world-events.yaml
       assets: []
     - id: ux_visuals
       title: 'UX и визуализация'
       body: |
-        Карта найма, HR-дэшборды и уведомления поддерживают контроль за индексами и рисками. VR/AR-интервью обеспечивают интерактивные переговоры с NPC.
+        Карты найма, HR-дэшборды, сводки и уведомления отображают индексы, риски и события. VR/AR-интервью поддерживают переговоры.
       mechanics_links:
         - mechanics/social/npc-hiring-management.yaml
       assets: []
-    - id: interfaces_integrations
-      title: 'API и интеграции'
+    - id: integrations
+      title: 'Интеграции с другими системами'
       body: |
-        Зафиксированы REST эндпоинты world/economy/social сервисов, JSON схемы и Kafka топики для влияния найма. Описаны основные payload и потребители.
+        Найм NPC связан с системами отношений, наставничества, заказов и городских алгоритмов, создавая единую социальную экосистему.
+      mechanics_links:
+        - mechanics/social/mentorship-world-impact-detailed.yaml
+      assets: []
+    - id: api_schemas
+      title: 'REST API и JSON схемы'
+      body: |
+        REST интерфейсы world, economy и social сервисов предоставляют влияние, индексы и новости. JSON схемы описывают структуру данных для аналитики и UX.
       mechanics_links:
         - mechanics/social/npc-hiring-system.yaml
       assets: []
-    - id: metrics_analytics
-      title: 'Метрики и аналитика'
+    - id: kafka_streams
+      title: 'Kafka события'
       body: |
-        Документирует EmploymentStabilityIndex, LaborDemandIndex, RetentionRate, StrikeRiskScore и NPCMigrationFlow, а также их применение в мониторинге и телеметрии.
+        События `world.npc-hiring.impact`, `economy.npc-hiring.index`, `social.npc-hiring.alert` и `world.npc-hiring.crisis` синхронизируют сервисы и world-events.
+      mechanics_links:
+        - mechanics/social/npc-hiring-system-detailed.yaml
+      assets: []
+    - id: metrics_alignment
+      title: 'Метрики и согласование'
+      body: |
+        Метрики EmploymentStabilityIndex, LaborDemandIndex, RetentionRate, StrikeRiskScore и NPCMigrationFlow применяются в мониторинге и согласованы с world, economy и UI командами.
       mechanics_links:
         - mechanics/economy/economy-analytics.yaml
       assets: []
