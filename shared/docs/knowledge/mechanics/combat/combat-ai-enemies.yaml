@@ -1,0 +1,138 @@
+metadata:
+  id: mechanics-combat-ai-enemies
+  title: "Боевой AI врагов — матрица"
+  document_type: mechanics
+  category: combat
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-09T01:22:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T01:22:00Z
+  owners:
+    - role: brain_manager
+      contact: brain.manager@necp.game
+  tags:
+    - ai
+    - raids
+    - combat
+    - telemetry
+  topics:
+    - gameplay-combat
+    - enemy-design
+    - raid-design
+  related_systems:
+    - gameplay-service
+    - world-service
+    - analytics-service
+    - social-service
+  related_documents:
+    - id: mechanics-combat-combat-cyberpsychosis
+      relation: references
+    - id: mechanics-combat-combat-abilities
+      relation: complements
+    - id: mechanics-combat-combat-session
+      relation: depends_on
+  source: shared/docs/knowledge/mechanics/combat/combat-ai-enemies.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - analytics
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Требовалось собрать воедино матрицу поведения боевого AI и рейдовых сценариев."
+  goal: "Определить слои сложности, поведенческие профили, телеметрию и интерфейсы для AI врагов."
+  essence: "Документ описывает архитектуру AI, Kafka-топики, матрицу сложности и интеграции с сервисами мира, экономики и аналитики."
+  key_points:
+    - "Четыре слоя сложности (Street, Tactical, Mythic, Raid) задают навыки и требования к порогам навыков игроков."
+    - "Kafka-топики `combat.ai.state`, `world.events.trigger`, `raid.telemetry` поддерживают синхронизацию сервисов."
+    - "Профили врагов с YAML-примером определяют навыки, лут и влияние на мир."
+    - "REST/WebSocket контуры обеспечивают управление профилями, рейдовыми фазами и телеметрией."
+content:
+  sections:
+    - id: architecture
+      title: "Архитектура AI"
+      body: |
+        AI управляется игровым сервисом, взаимодействует с world-service, social-service и
+        economy-service. Behaviour Tree и Utility AI комбинируются с shooter skill tests. Очереди
+        действий синхронизируются через combat session и Kafka.
+      mechanics_links:
+        - mechanics/combat/combat-abilities.yaml
+      assets: []
+    - id: difficulty_matrix
+      title: "Матрица сложности"
+      body: |
+        Слои Street, Tactical, Mythic и Raid описывают категории NPC, уникальные навыки (`Urban Sweep`,
+        `Sync Burst`, `Reality Tear`) и lore-события, а также требуемые характеристики игроков.
+      mechanics_links:
+        - mechanics/combat/combat-cyberpsychosis.yaml
+      assets: []
+    - id: behavior_profiles
+      title: "Поведенческие профили"
+      body: |
+        Для каждого слоя заданы фазы боя, способности, интеграция с world-state и влияние фракций.
+        Tactical слой учитывает сканы, адаптацию, уникальные навыки Arasaka, Militech, Kang Tao,
+        NetWatch и Voodoo Boys.
+      mechanics_links:
+        - mechanics/combat/combat-combos-synergies.yaml
+      assets: []
+    - id: raid_mechanics
+      title: "Рейдовые сценарии"
+      body: |
+        Raid Layer поддерживает Blackwall Expedition и Corpo Tower Assault с фазами, навыками боссов
+        и привязкой к квестовым событиям. Состояния публикуются в `raid.telemetry`.
+      mechanics_links:
+        - mechanics/combat/arena-system.yaml
+      assets: []
+    - id: data_models
+      title: "Схемы данных"
+      body: |
+        Таблицы `enemy_ai_profiles`, `enemy_ai_abilities` и `raid_boss_phases` хранят контекст,
+        способности и фазовые механики. Пример YAML-профиля демонстрирует структуру `aiprofile`.
+      mechanics_links:
+        - mechanics/economy/economy-monetization.yaml
+      assets: []
+    - id: interfaces
+      title: "REST, WebSocket и Kafka"
+      body: |
+        REST маршруты управляют профилями и рейдовыми фазами; WebSocket `wss://api.necp.game/v1/gameplay/raid/{raidId}`
+        транслирует события; Kafka обеспечивает обмен состояниями и телеметрией.
+      mechanics_links:
+        - mechanics/combat/arena-system.yaml
+      assets: []
+    - id: balance_telemetry
+      title: "Баланс и телеметрия"
+      body: |
+        Метрики (урон, время до падения, skill tests) и автотюнинг обновляют коэффициенты каждые 24 часа.
+        Аналитика предотвращает эксплойты и корректирует AI на основе данных.
+      mechanics_links:
+        - mechanics/combat/combat-abilities.yaml
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - mechanics/combat/combat-abilities.yaml
+    - mechanics/combat/combat-cyberpsychosis.yaml
+    - mechanics/combat/arena-system.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#mechanics-combat-ai-enemies
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: brain_manager
+    changes: "Конвертировано из combat-ai-enemies.md и структурировано по шаблону знаний."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
