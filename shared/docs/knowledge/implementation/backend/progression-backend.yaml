@@ -1,0 +1,101 @@
+metadata:
+  id: progression-backend
+  title: Backend системы прогрессии
+  document_type: implementation
+  category: systems
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-09T20:37:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T20:37:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - backend
+    - progression
+    - gameplay
+  topics:
+    - level-system
+    - skill-progression
+  related_systems:
+    - gameplay-service
+    - character-service
+    - achievement-service
+  related_documents:
+    - id: progression-economy
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-09T20:37:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Игрокам нужна прозрачная система получения опыта и роста характеристик.
+  goal: Определить backend-компонент, который обрабатывает опыт, уровень, очки атрибутов и навыков.
+  essence: Gameplay-service реализует расчёт опыта, повышение уровня и распределение очков с публикацией событий и синхронизацией с другими сервисами.
+  key_points:
+    - Расчёт опыта и повышение уровня с экспоненциальной формулой.
+    - Учёт очков атрибутов и навыков, распределение и проверка капов.
+    - Интеграция с уведомлениями и event bus для оповещения и достижений.
+content:
+  sections:
+    - id: service-architecture
+      title: Микросервисная архитектура
+      body: |
+        Компонент размещён в gameplay-service (порт 8083) и доступен через `/api/v1/gameplay/progression/*`.
+        Он публикует события `character:level-up`, `character:skill-leveled`, `character:attribute-increased`
+        и подписывается на источники опыта: `combat:enemy-killed`, `quest:completed`, `skill:used`.
+        Character-service обновляет уровень и параметры персонажа, achievement-service реагирует на достижения.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Модель данных
+      body: |
+        Хранилище включает таблицы `character_progression` (уровень, опыт, очки) и `skill_experience`
+        (прогресс по навыкам). Ограничения обеспечивают уникальность навыков на персонажа, каскадное
+        удаление и индексы по часто используемым полям.
+      mechanics_links: []
+      assets: []
+    - id: experience-flow
+      title: Расчёт опыта и повышение уровня
+      body: |
+        Сервис `ProgressionService` начисляет опыт, проверяет условия повышения уровня, пересчитывает
+        требования к следующему уровню и выдаёт очки атрибутов и навыков. После апдейта публикуются
+        события и отправляются уведомления игроку. Распределение очков валидирует наличие свободных
+        очков и ограничение на максимум значения атрибута.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: api
+      path: api/v1/gameplay/progression/
+    - type: repository
+      path: shared/code/backend/gameplay/progression/
+  decisions:
+    - id: adr-progression-backend
+      summary: Утверждена система прогрессии с событийной синхронизацией и наградами.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-09
+    author: Concept Director
+    changes: Завершена спецификация backend-логики прогрессии и интеграций с сервисами.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
