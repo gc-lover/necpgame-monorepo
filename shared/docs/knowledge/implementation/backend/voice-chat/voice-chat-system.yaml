@@ -1,0 +1,101 @@
+metadata:
+  id: voice-chat-system
+  title: Backend голосового чата
+  document_type: implementation
+  category: systems
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T02:40:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:40:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - voice
+    - communication
+    - social
+  topics:
+    - party-chat
+    - guild-chat
+    - proximity-chat
+  related_systems:
+    - voice-server
+    - social-service
+    - world-service
+  related_documents:
+    - id: guild-system-backend
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - social
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T02:40:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Игрокам нужна качественная голосовая связь для командной координации и атмосферного общения.
+  goal: Описать backend-компонент голосового чата с поддержкой групп, гильдий, proximity и рейдовых каналов.
+  essence: WebRTC-интеграция через dedicated voice server с маршрутизацией, настройками качества и управлением каналами.
+  key_points:
+    - Поддержка party, guild, proximity и raid каналов с разными настройками качества.
+    - Событийная интеграция с социальными и world-сервисами для статусов и пространственного звука.
+    - Управление разрешениями, mute/deafen и статистикой использования.
+content:
+  sections:
+    - id: architecture
+      title: Архитектура и каналы
+      body: |
+        Клиент устанавливает WebRTC-сессию к voice-server (Agora/Twilio/self-hosted), после чего
+        микшер маршрутизирует аудио к участникам канала. Поддерживаются party (2-5 игроков),
+        guild (до 100), raid (10-25 с сабканалами) и proximity (20 метров, 3D звук). Качество
+        определяется пресетами и может понижаться при перегрузке.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Модель данных
+      body: |
+        Таблица `voice_channels` хранит тип, владельца, лимиты и разрешения, а `voice_participants`
+        фиксирует подключённых игроков, их состояние (mute, deaf, speaking) и статистику.
+        Индексы ускоряют выборки по активным каналам и участникам.
+      mechanics_links: []
+      assets: []
+    - id: flows
+      title: Основные сценарии
+      body: |
+        При подключении сервис валидирует доступ, создаёт запись участника и выдаёт токен WebRTC.
+        Переходы между каналами обновляют счётчики и публикуют события для UI. Проксимити-канал
+        динамически обновляет участников на основе координат из world-service.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: api
+      path: api/v1/social/voice/
+    - type: repository
+      path: shared/code/backend/social/voice-service/
+  decisions:
+    - id: adr-voice-chat
+      summary: Утверждён WebRTC-стек с разделением на типы голосовых каналов и fallback на внешних провайдеров.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: Concept Director
+    changes: Утверждён голосовой чат с поддержкой party, guild, raid и proximity каналов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
