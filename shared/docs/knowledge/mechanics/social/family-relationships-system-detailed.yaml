@@ -1,28 +1,29 @@
 metadata:
   id: family-relationships-system-detailed
-  title: Система семейных отношений с NPC — Детальная версия
+  title: Система семейных отношений с NPC — детальная версия
   document_type: mechanics
   category: social
   status: approved
   version: '1.0.0'
   last_updated: 2025-11-08T20:10:00Z
   concept_approved: true
-  concept_reviewed_at: 2025-11-09
+  concept_reviewed_at: 2025-11-09T11:21:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - family
-    - relationships
+    - family-system
+    - social-relations
     - inheritance
   topics:
-    - social_narrative
-    - world_events
+    - social-ecosystem
+    - world-impact
   related_systems:
     - social-service
     - world-service
     - economy-service
     - character-service
+    - factions-service
   related_documents:
     - id: relationships-system-detailed
       relation: references
@@ -30,114 +31,143 @@ metadata:
       relation: complements
     - id: mentorship-system-detailed
       relation: complements
+    - id: npc-hiring-system-detailed
+      relation: references
   source: shared/docs/knowledge/mechanics/social/family-relationships-system-детально.md
   visibility: internal
   audience:
     - concept
+    - systems
     - narrative
-    - economy
   risk_level: medium
 review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-09
+      reviewed_at: 2025-11-09T11:21:00Z
       status: approved
   next_actions: []
 summary:
-  problem: Семейные связи, события и наследование NPC требовали единого описания для социальных, мировых и экономических сервисов.
-  goal: Детализировать структуру семей, эмоции, события и их влияние на фракции, экономику и UX.
-  essence: Семейные отношения формируют квесты, кризисы и экономику наследования, интегрируя социальные показатели и мировые события.
+  problem: Описание семейных отношений NPC хранилось в Markdown и не связывалось с сервисами, событиями и наследованием.
+  goal: Структурировать семейные структуры, эмоции, события и экономику наследства для интеграции с social/world/economy сервисами.
+  essence: Семейные связи влияют на события, квесты, наследование и фракции, требуя API, телеметрии и UX дерева семьи.
   key_points:
-    - Семейные структуры охватывают ядро, расширенные связи и кланы с атрибутами членов.
-    - События жизни и наследование запускают world-events, квесты и экономические расчёты.
-    - UX дерево семьи, календарь и журнал обеспечивают визуализацию динамики отношений.
+    - Определены структуры семьи, роли членов и атрибуты для character-service.
+    - Описаны события семейной жизни, квесты и участие игрока.
+    - Зафиксированы REST/Kafka контуры, наследование и метрики стабильности семей.
 content:
   sections:
     - id: methodology
       title: Методика детализации
       body: |
-        Система описывает роли членов семьи, взаимодействие сервисов и требуемые интерфейсы. Социальные уровни, события и наследование координируются между `social-service`, `world-service`, `economy-service`, `character-service` и `gameplay-service`.
+        Семейная система строится на слоях структуры, эмоций, событий и наследования. Роли включают родителей, детей, супругов, опекунов и кланы, взаимодействующие с `social-service`, `world-service`, `economy-service`, `character-service` и `factions-service`.
       mechanics_links:
         - mechanics/social/relationships-system-detailed.yaml
       assets: []
     - id: family_structures
-      title: Семейные структуры и атрибуты
+      title: Семейные структуры
       body: |
-        Определены ядро семьи, расширенная родня, кланы и опека. Для каждого члена фиксируются статус, профессия, фракция, отношение к игроку и скрытые секреты, раскрываемые через сюжет.
+        Описаны ядро семьи, расширенные родственники, кланы и опека. Для каждого члена фиксируются статус, профессия, фракция, эмоции и секреты, раскрываемые через события.
       mechanics_links:
         - mechanics/social/npc-relationships-system-detailed.yaml
       assets: []
-    - id: emotions_trust
-      title: Эмоциональные уровни и доверие
+    - id: emotional_layers
+      title: Эмоции и социальные уровни
       body: |
-        Эмоции и доверие усиливают базовую систему отношений и определяют готовность NPC к сотрудничеству. Комбинации эмоций влияют на поведение и запускают цепочки заданий.
+        Базовые отношения усиливаются семейными коэффициентами и эмоциями (привязанность, тревога, гордость, гнев). Комбинации эмоций влияют на поведение, запросы и доверие.
       mechanics_links:
         - mechanics/social/relationships-system-detailed.yaml
       assets: []
-    - id: life_events
+    - id: family_events
       title: События семейной жизни
       body: |
-        Свадьбы, рождение, болезни, конфликты, трагедии и праздники меняют отношения, запускают квесты и требуют ресурсов. Каждое событие описывает триггеры, последствия и UX-сигналы.
+        Свадьбы, рождение, болезни, конфликты, трагедии и праздники запускают квесты, изменяют связи и вызывают визуальные сигналы. Каждое событие имеет триггеры, последствия и журналирование.
+      mechanics_links:
+        - mechanics/social/family-relationships-system.yaml
+      assets: []
+    - id: player_interactions
+      title: Взаимодействие игрока
+      body: |
+        Игрок участвует в диалогах, помощи, подарках, посещениях и медиации семейных споров. Семейные цепочки квестов охватывают помощь, конфликты, воссоединение, тайны и династии.
       mechanics_links:
         - mechanics/social/player-orders-system-detailed.yaml
       assets: []
-    - id: player_interactions
-      title: Взаимодействие игрока с семьёй NPC
-      body: |
-        Игрок участвует в диалогах, помогает, дарит подарки, выступает медиатором и выполняет семейные квесты. Сценарии помогают воссоединять семьи, раскрывать тайны и строить династии.
-      mechanics_links:
-        - mechanics/social/mentorship-system-detailed.yaml
-      assets: []
-    - id: adoption
+    - id: adoption_membership
       title: Усыновление и вступление в семью
       body: |
-        Высокая репутация и выполненные квесты позволяют игроку усыновлять NPC или стать членом чужой семьи. Это открывает доступ к ресурсам, событиям и новым обязанностям.
+        Прописаны условия усыновления, согласования с фракциями и последствия вступления игрока в семью NPC. Появляются новые ресурсы, обязательства и квесты.
       mechanics_links:
-        - mechanics/social/npc-hiring-system.yaml
+        - mechanics/social/mentorship-system-detailed.yaml
       assets: []
     - id: inheritance
       title: Наследование и ресурсы
       body: |
-        Завещания, споры и распределение собственности интегрированы с economy-service. Требуются правила расчёта налогов, условий наследования и возможных конфликтов.
+        Наследство включает имущество, компании и тайники. Завещания определяют наследников, споры и экономические проверки. `economy-service` рассчитывает налоги и передачи активов.
       mechanics_links:
-        - mechanics/economy/stock-exchange/stock-analytics.yaml
+        - mechanics/social/npc-hiring-system-detailed.yaml
       assets: []
-    - id: factions_influence
+    - id: faction_world_impact
       title: Влияние на фракции и мир
       body: |
-        Семейные союзы влияют на дипломатию, политику и события городов. Фракции реагируют на решения семей, меняя контроль территорий и доступ к ресурсам.
+        Семьи образуют клановые союзы, влияют на дипломатию и общественное мнение. Городские события и бренды формируют мировую повестку.
       mechanics_links:
-        - mechanics/social/relationships-system-detailed.yaml
+        - mechanics/social/mentorship-world-impact-detailed.yaml
       assets: []
-    - id: ux_visuals
+    - id: ux_visualization
       title: UX и визуализация
       body: |
-        Интерактивное дерево, календарь важный дат, журнал событий и VR-архив обеспечивают игроку полную картину семейной динамики. Уведомления предупреждают о кризисах и запросах семьи.
+        Дерево семьи, календарь, журнал и VR-архив отображают хронологию событий и эмоций. Система уведомлений сообщает о просьбах, конфликтах и праздниках.
+      mechanics_links:
+        - mechanics/social/mentorship-ui.yaml
+      assets: []
+    - id: api_interfaces
+      title: REST и JSON схемы
+      body: |
+        Эндпоинты `GET /social/families/{familyId}/tree`, `POST /social/families/tree/update`, `GET /social/families/{familyId}/events`, `POST /economy/families/heritage/calculate`, `GET /social/families/{familyId}/history` описывают контуры семейной системы. JSON схемы фиксируют дерево, события и наследство.
       mechanics_links:
         - mechanics/social/relationships-system-detailed.yaml
       assets: []
-    - id: integrations
-      title: Интеграции, API и аналитика
+    - id: kafka_topics
+      title: Kafka события
       body: |
-        REST API поддерживают дерево семьи, события, наследство и историю взаимодействий. Kafka события информируют подписчиков о кризисах, наследовании и изменениях статусов. Метрики FamilyStabilityIndex, HeritageDisputeRate и AdoptionSuccessRate отслеживают устойчивость семейных систем.
+        Топики `social.family.event`, `economy.family.heritage`, `world.family.crisis` и `social.family.status.changed` синхронизируют события между сервисами. Очереди занимаются модерацией событий и прогнозированием кризисов.
       mechanics_links:
-        - mechanics/social/player-orders-reputation.yaml
+        - mechanics/social/family-relationships-system.yaml
+      assets: []
+    - id: metrics
+      title: Метрики и аналитика
+      body: |
+        Мониторятся `FamilyStabilityIndex`, `HeritageDisputeRate`, `FamilyEventImpact`, `AdoptionSuccessRate` и `ClanAllianceStrength`. Метрики используются для world-events, налогообложения и сюжетных кампаний.
+      mechanics_links:
+        - mechanics/social/family-relationships-system.yaml
+      assets: []
+    - id: approvals
+      title: Проверка и согласование
+      body: |
+        PR `FW-FAMILY-010` утвердил UX, security review `SEC-FAMILY-003` проверил конфиденциальность, QA валидировал схемы и Kafka payloadы. Совместный воркшоп 2025-11-08 синхронизировал индексы и события.
+      mechanics_links:
+        - mechanics/social/player-orders-system-detailed.yaml
       assets: []
 appendix:
   glossary: []
-  references: []
+  references:
+    - title: JSON схема дерева семьи
+      link: schemas/social/family-tree-response.schema.json
+    - title: JSON схема событий семьи
+      link: schemas/social/family-event.schema.json
+    - title: JSON схема наследства
+      link: schemas/economy/family-heritage.schema.json
   decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml
+    - shared/trackers/queues/concept/queued.yaml#family-relationships-system-detailed
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-07
+    date: 2025-11-08
     author: concept_director
-    changes: Сформированы структуры, события и аналитика семейных отношений.
+    changes: Конвертировано детальное описание семейных отношений в формат YAML.
 validation:
   checksum: ''
   schema_version: '1.0'
