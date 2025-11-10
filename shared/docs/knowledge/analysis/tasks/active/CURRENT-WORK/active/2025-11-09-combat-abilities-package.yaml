@@ -1,0 +1,138 @@
+metadata:
+  id: analysis-2025-11-09-combat-abilities-package
+  title: "Combat Abilities Package"
+  document_type: analysis
+  category: gameplay
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-09T14:25:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: brain_manager
+      contact: brain.manager@necp.game
+  tags:
+    - combat
+    - abilities
+    - progression
+  topics:
+    - gameplay-combat
+    - ability-system
+  related_systems:
+    - gameplay-service
+    - progression-service
+    - analytics-service
+    - economy-service
+  related_documents:
+    - id: brain-combat-abilities
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-combat-abilities-package.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Пакет по боевым способностям требовал актуализации статусов и интерфейсов."
+  goal: "Систематизировать контракты REST/Events/WebSocket и модели хранения для боевых способностей."
+  essence: "Документ собирает зависимости, каналы и требования для каталога боевых способностей и связанных систем."
+  key_points:
+    - "combat-abilities.md подтверждён со статусом approved и готовностью API."
+    - "Определены REST endpoints, события и модели хранения для каталога, лоадаутов и синергий."
+    - "Зафиксированы зависимости от progression, implants, combos, stealth и shooting."
+content:
+  sections:
+    - id: progress
+      title: "Прогресс пакета"
+      body: |
+        • combat-abilities.md перепроверен 2025-11-09 01:42: статус approved, api-readiness ready, каталог `api/v1/gameplay/combat/abilities.yaml`, фронтенд `modules/combat/abilities`.
+        • Зафиксированы источники данных: дерево прокачки, импланты, экипировка, ранги и влияние на киберпсихоз.
+        • Собраны зависимости: combat-implants-types, combat-combos-synergies, combat-shooting, combat-stealth, combat-ai-enemies, progression-backend, quest-engine-backend.
+      mechanics_links: []
+      assets: []
+    - id: interfaces
+      title: "REST, Events и WebSocket"
+      body: |
+        REST:
+        - `GET /combat/abilities/catalog`
+        - `GET /combat/abilities/{abilityId}`
+        - `POST /combat/abilities/loadouts`
+        - `GET /combat/abilities/loadouts`
+        - `POST /combat/abilities/activate`
+        - `POST /combat/abilities/cooldowns`
+        - `GET /combat/abilities/synergies`
+        - `POST /combat/abilities/synergies/apply`
+        - `POST /combat/abilities/cyberpsychosis`
+        - `GET /combat/abilities/metrics`
+        
+        Events:
+        - `combat.ability.activated`
+        - `combat.ability.cooldown-started`
+        - `combat.ability.cooldown-finished`
+        - `combat.ability.synergy-triggered`
+        - `combat.ability.cyberpsychosis-updated`
+        - `combat.ability.loadout-updated`
+        - Входящие: `combat.freerun.mobile-ability`, `combat.combos.apply`, `progression.attribute-updated`, `quest.trigger`.
+        
+        WebSocket (при необходимости):
+        - `wss://api.necp.game/v1/gameplay/combat/abilities/{sessionId}`
+        - `wss://api.necp.game/v1/combat/abilities/player/{characterId}`
+      mechanics_links: []
+      assets: []
+    - id: storage
+      title: "Хранение данных"
+      body: |
+        • `abilities_catalog` — идентификаторы, ранги, источники, модификаторы и влияние на киберпсихоз.
+        • `ability_loadouts` — конфигурации персонажей (слоты, приоритеты, авто-каст, обновление).
+        • `ability_cooldowns` — состояние кулдаунов с параметрами expirations и modifiers.
+        • `ability_synergies` — связи между способностями, имплантами и комбо.
+        • `ability_effects_history` — журнал активаций для аналитики и античита.
+        • `cyberpsychosis_state` — текущие уровни и ограничения.
+      mechanics_links: []
+      assets: []
+    - id: brief
+      title: "Бриф 2025-11-09 14:25"
+      body: |
+        REST таблица описывает каталоги, карточки, активацию, cooldown, синергии, cyberpsychosis и метрики.
+        WebSocket каналы фиксируют live события активаций и обновлений лоадаутов.
+        Event Bus охватывает активации, cooldown, синергии, киберпсихоз и обновления лоадаутов.
+        Storage раздел включает каталоги, лоадауты, cooldown, synergies, history и cyberpsychosis.
+        Зависимости: combat-implants-types, combat-combos-synergies, combat-stealth, combat-shooting, progression-backend, quest-engine, analytics-service, economy-service.
+        Требования: анти-спам, учёт киберпсихоза, локализация контента, поддержка GM операций, аудит.
+        Источники: `.BRAIN/02-gameplay/combat/combat-abilities.md`, `.BRAIN/02-gameplay/combat/combat-combos-synergies.md`, `.BRAIN/02-gameplay/combat/combat-implants-types.md`, `.BRAIN/05-technical/backend/progression-backend.md`.
+      mechanics_links: []
+      assets: []
+    - id: planning
+      title: "Контекст дальнейшего планирования"
+      body: |
+        • Обсуждается единый WebSocket поток для abilities, freerun и combos.
+        • Планирование стадий внедрения рассматривает приоритеты Stage P0 (catalog/loadouts/activate), Stage P1 (synergies/cyberpsychosis) и Stage P2 (metrics/поддержка модерации).
+        • Требуется синхронизация с readiness-трекингом и другими combat wave материалами.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-2025-11-09-combat-abilities-package
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-09
+    author: brain_manager
+    changes: "Конвертировано из 2025-11-09-combat-abilities-package.md и структурировано по шаблону знаний."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
