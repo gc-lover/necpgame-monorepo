@@ -1,0 +1,99 @@
+metadata:
+  id: implementation-infrastructure-cdn-asset-delivery
+  title: CDN & Asset Delivery
+  document_type: implementation
+  category: infrastructure
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - cdn
+    - asset_delivery
+    - performance
+  topics:
+    - content_delivery
+    - platform_architecture
+  related_systems:
+    - cdn
+    - patching-service
+  related_documents:
+    - id: implementation-infrastructure-api-gateway-architecture
+      relation: references
+  source: shared/docs/knowledge/implementation/infrastructure/cdn-asset-delivery.md
+  visibility: internal
+  audience:
+    - concept
+    - platform
+    - frontend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T05:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Доставка ассетов по миру вызывает задержки без распределённой CDN-архитектуры.
+  goal: Определить стратегию CDN для статических и динамических ассетов с версиями и сжатием.
+  essence: Глобальная CDN сеть с версионными URL обеспечивает быструю загрузку клиентских ассетов и патчей.
+  key_points:
+    - Cloudflare основная, AWS CloudFront резерв.
+    - Ассеты разделены на статические и обновляемые с версионными именами.
+    - Применяются gzip/brotli и ленивые загрузки.
+    - Каталог структурирован для текстур, моделей, аудио и патчей.
+content:
+  sections:
+    - id: cdn_strategy
+      title: CDN стратегия
+      body: |
+        Основной провайдер — Cloudflare с PoP в Америке, Европе и Азии, резерв — AWS CloudFront.
+        Цель — обеспечить латентность < 50 мс для 95% игроков.
+      mechanics_links: []
+      assets: []
+    - id: asset_types
+      title: Типы ассетов
+      body: |
+        Статические ассеты включают изображения, модели, аудио и видео с постоянным кэшированием.
+        Динамические ассеты — патчи и обновления клиента, публикуемые в виде версионных файлов.
+      mechanics_links: []
+      assets: []
+    - id: delivery_optimization
+      title: Оптимизация доставки
+      body: |
+        Сжатие gzip/brotli, оптимизация изображений в WebP и видео в H.265 сокращают размер.
+        Ленивые загрузки обеспечивают приоритетное скачивание критичных данных и фоновые обновления.
+      mechanics_links: []
+      assets: []
+    - id: structure
+      title: Структура каталогов
+      body: |
+        Ассеты организованы в `cdn.necpgame.com/assets` с подразделами для текстур, моделей, аудио и патчей.
+        Патчи и инсталляторы размещены отдельно с версионными именами.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: API Gateway Architecture
+      link: ./api-gateway-architecture.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#implementation-infrastructure-cdn-asset-delivery
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: AI Brain Manager
+    changes: Описана стратегия CDN и оптимизация доставки ассетов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
