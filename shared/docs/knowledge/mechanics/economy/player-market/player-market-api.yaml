@@ -1,0 +1,125 @@
+metadata:
+  id: player-market-api
+  title: Player Market — API
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-11T03:15:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - player-market
+    - rest-api
+    - marketplace
+  topics:
+    - marketplace_design
+    - api_contracts
+  related_systems:
+    - economy-service
+    - api-gateway
+    - notification-service
+  related_documents:
+    - id: player-market-core
+      relation: references
+    - id: player-market-database
+      relation: complements
+    - id: player-market-analytics
+      relation: complements
+  source: shared/docs/knowledge/mechanics/economy/player-market/player-market-api.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется описать REST API Player Market для публикации, поиска и закрытия листингов.
+  goal: Зафиксировать контракты, параметры, примеры ответов и требования безопасности.
+  essence: Набор REST эндпоинтов обслуживает P2P сделки, репутацию продавцов и интеграцию с сервисами экономики.
+  key_points:
+    - CRUD-листинги закрывают цикл создания, поиска и покупки.
+    - Механика отзывов и рейтингов поддерживает систему доверия.
+    - Безопасность включает антифрод-проверки, лимиты и модерацию.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Player Market API предоставляет REST интерфейсы для создаваемых объявлений, поиска предложений, оформления
+        сделок и отзывов. Контракты ориентированы на скорость ответа, поддержку фильтров и прямое взаимодействие с
+        сервисами экономики и уведомлений.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-core.yaml
+      assets: []
+    - id: listings_create
+      title: Создание листинга
+      body: |
+        POST `/api/v1/market/listings` принимает идентификаторы предмета и персонажа, количество и цену. В ответ
+        возвращается идентификатор листинга и срок действия. Сервис выполняет проверки наличия предмета, диапазона цен
+        и лимитов объявлений.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-database.yaml
+      assets: []
+    - id: listings_search
+      title: Поиск и выдача
+      body: |
+        GET `/api/v1/market/listings` поддерживает фильтры по тексту, типу, качеству, цене, городу и продавцу. Параметр
+        `sortBy` управляет порядком выдачи, а пагинация ограничивает результаты. Ответ содержит карточки листингов,
+        данные продавца и агрегированную статистику.
+      mechanics_links:
+        - mechanics/economy/player-market/player-market-analytics.yaml
+      assets: []
+    - id: listing_purchase
+      title: Покупка и удаление
+      body: |
+        POST `/api/v1/market/listings/{id}/buy` обрабатывает покупку с указанием количества, а DELETE `/api/v1/market/listings/{id}`
+        отменяет активное объявление. Обе операции возвращают статус, обеспечивают атомарность транзакций и интегрируются
+        с логикой уведомлений.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-protection.yaml
+      assets: []
+    - id: reviews
+      title: Отзывы и рейтинги
+      body: |
+        POST `/api/v1/market/reviews` и GET `/api/v1/market/sellers/{id}/reviews` фиксируют оценки и комментарии к
+        продавцам. Контракты включают проверку уникальности торговли, расчёт среднего рейтинга и публикацию истории отзывов.
+      mechanics_links:
+        - mechanics/social/reputation-formulas.yaml
+      assets: []
+    - id: security
+      title: Безопасность и ограничения
+      body: |
+        Антифрод-проверки следят за адекватностью цен, ограничивают частоту операций и требуют капчу для массовых действий.
+        Логика аудита хранит торговые записи, а модерация использует административные инструменты для рассмотрения споров.
+      mechanics_links:
+        - mechanics/implementation/infrastructure/admin-moderation-tools.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#CON-2025-232
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: concept_director
+    changes: Конвертировано из player-market-api.md и структурировано по шаблону знаний.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
