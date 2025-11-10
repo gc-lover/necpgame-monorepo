@@ -1,0 +1,99 @@
+metadata:
+  id: support-ticket-system
+  title: Backend системы тикетов поддержки
+  document_type: implementation
+  category: operations
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T21:50:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T21:50:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - support
+    - operations
+    - player-feedback
+  topics:
+    - ticketing
+    - customer-service
+  related_systems:
+    - support-service
+    - notification-service
+    - accounts-service
+  related_documents:
+    - id: social-mechanics-overview
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - operations
+    - support
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T21:50:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Нужно централизованное решение для обработки обращений игроков с контролем приоритетов и SLA.
+  goal: Описать backend тикетов поддержки с категориями, назначением агентов и уведомлениями игроков.
+  essence: Support-service принимает обращения, категоризирует, назначает приоритет, ведёт очередь и историю ответов.
+  key_points:
+    - Автокатегоризация, назначение приоритетов и цепочка статусов.
+    - Очереди агентов, история ответов и рейтинг удовлетворённости.
+    - Интеграция с уведомлениями и аналитикой для SLA.
+content:
+  sections:
+    - id: architecture
+      title: Архитектура сервиса
+      body: |
+        Support-service принимает тикеты игроков, выполняет автокатегоризацию и помещает их в очередь.
+        Сервис назначает агента, отслеживает время ответа и уведомляет игрока о всех изменениях.
+        Ответы могут быть публичными или внутренними, в зависимости от видимости.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Модель данных
+      body: |
+        Таблица `support_tickets` хранит информацию о тикете, игроке, категории, приоритете, назначенном
+        агенте и временных метках. Таблица `ticket_responses` фиксирует переписку, вложения и отметку
+        видимости. Индексы оптимизируют выборку по статусу, агенту и времени создания.
+      mechanics_links: []
+      assets: []
+    - id: flows
+      title: Жизненный цикл тикета
+      body: |
+        Игрок создаёт тикет; система присваивает номер, категорию и приоритет, затем ставит запрос в очередь.
+        Агент отвечает, меняет статус, назначает дополнительные шаги. После решения игрок получает уведомление
+        и может оценить качество ответа. SLA контролируется по временным меткам и статусам.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: api
+      path: api/v1/support/tickets/
+    - type: repository
+      path: shared/code/backend/support/support-service/
+  decisions:
+    - id: adr-support-ticket
+      summary: Утверждена архитектура тикет-сервиса с очередями агентов и SLA-мониторингом.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: Concept Director
+    changes: Утверждён backend тикетов поддержки со статусами, приоритетами и автоуведомлениями.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
