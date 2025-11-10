@@ -1,34 +1,36 @@
 metadata:
-  id: ui-character-creation-appearance-editor
-  title: Редактор внешности персонажа
+  id: implementation-ui-character-creation-appearance-editor
+  title: "Character Creation — Редактор внешности"
   document_type: implementation
   category: ui
-  status: approved
+  status: draft
   version: '1.0.0'
   last_updated: 2025-11-07T20:16:00Z
-  concept_approved: true
-  concept_reviewed_at: 2025-11-07T20:16:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
   owners:
-    - role: ai_brain_manager
-      contact: ai.brain@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
+    - character-creation
     - ui
-    - character_creation
     - customization
   topics:
-    - avatar_creation
+    - appearance
+    - onboarding
   related_systems:
-    - character-service
-    - customization-service
+    - frontend-gateway
   related_documents:
-    - id: implementation/ui/character-creation/creation-flow
-      relation: companion
+    - id: implementation-ui-character-creation-creation-flow
+      relation: complements
+    - id: mechanics-progression-classes-general-skills
+      relation: references
   source: shared/docs/knowledge/implementation/ui/character-creation/appearance-editor.md
   visibility: internal
   audience:
     - concept
     - vision
-    - gameplay
+    - frontend
   risk_level: medium
 review:
   chain:
@@ -38,48 +40,48 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Игрокам необходим гибкий редактор внешности при создании персонажа, охватывающий тело, лицо и кибернетические модификации.
-  goal: Описать параметры редактора внешности и интеграцию с API создания персонажа.
-  essence: Редактор предоставляет набор предустановок и визуальных опций, которые передаются в сервис персонажей через REST API.
+  problem: "Не описан базовый набор опций кастомизации внешности в формате знаний."
+  goal: "Зафиксировать структуру редактора внешности и состав полей, которые передаются в backend."
+  essence: "Редактор предоставляет базовые параметры тела, лица и кибернетики, интегрированные с API создания персонажа."
   key_points:
-    - Поддерживаются категории тела, лица и киберимплантов.
-    - Значения параметров ограничены справочниками для стабильного сохранения.
-    - API создания персонажа принимает вложенный объект appearance.
+    - "Опции разделены на тело, лицо и визуальные элементы кибернетики."
+    - "Все параметры передаются в `appearance` объекте запроса `POST /api/v1/characters`."
+    - "Набор значений поддерживает быструю визуальную настройку MVP."
 content:
   sections:
-    - id: introduction
-      title: Введение
+    - id: options_overview
+      title: "Основные опции"
       body: |
-        Редактор внешности открывается на втором шаге создания персонажа. Он содержит визуальные предпросмотры, вкладки по категориям и балансирует между киберпанк-эстетикой и читабельностью UI.
+        Редактор предоставляет пользователю выбор базовых параметров через пресеты и выпадающие списки.
+        Каждая категория сгруппирована для минимизации количества экранов и ускорения принятия решений.
       mechanics_links: []
       assets: []
     - id: body_options
-      title: Параметры тела
+      title: "Параметры тела"
       body: |
-        - Оттенки кожи: 10 вариантов, организованные по нейтральной шкале.
-        - Тип телосложения: slim, athletic, muscular, влияющие на пропорции модели.
-        - Предпросмотр обновляется в реальном времени.
+        Пользователь выбирает тон кожи и тип телосложения. Предусмотрены пресеты slim, athletic и muscular.
+        Значения сохраняются в профиле персонажа и влияют на визуализацию модели.
       mechanics_links: []
       assets: []
     - id: face_options
-      title: Параметры лица
+      title: "Параметры лица"
       body: |
-        - Прически: до 20 вариантов с поддержкой отражения и анимации.
-        - Цвет волос: палитра из 15 оттенков.
-        - Цвет глаз: 12 вариантов, включая неоновые комбинации.
-        - Формы лица: набор пресетов, сочетающихся с киберимплантами.
+        Категория включает выбор причёски, цвета волос, цвета глаз и формы лица. Для ускорения взаимодействия
+        используются фиксированные наборы значений, расширяемые в будущих версиях.
       mechanics_links: []
       assets: []
-    - id: cyberware
-      title: Кибернетические элементы
+    - id: cyberware_visuals
+      title: "Визуальная кибернетика"
       body: |
-        Вкладка киберимплантов позволяет добавлять визуальные протезы рук, глазные модификации и видимые пластины. Каждая опция сопровождается описанием редкости и происхождения.
+        Игрок активирует видимые импланты, модификации глаз и рук. Настройки влияют только на внешний вид и
+        сохраняются в профиле персонажа для отображения в UI и катсценах.
       mechanics_links: []
       assets: []
-    - id: api_integration
-      title: Интеграция с API
+    - id: api_payload
+      title: "Интеграция с API"
       body: |
-        Данные внешности передаются в сервис персонажей через `POST /api/v1/characters`. Объект `appearance` включает ключи `skinTone`, `bodyType`, `hairStyle`, `hairColor`, `eyeColor` и расширяется для киберимплантов. Валидация выполняется на сервере, сверяясь со справочниками.
+        Выбранные параметры добавляются в объект `appearance` при вызове `POST /api/v1/characters`. Поля skinTone,
+        bodyType, hairStyle, hairColor и eyeColor обязательны для корректной генерации модели на сервере.
       mechanics_links: []
       assets: []
 appendix:
@@ -94,8 +96,8 @@ implementation:
 history:
   - version: '1.0.0'
     date: 2025-11-07
-    author: AI Brain Manager
-    changes: Перенос описания параметров редактора внешности в YAML-формат.
+    author: concept_director
+    changes: "Сконвертировано из appearance-editor.md и структурировано по шаблону знаний."
 validation:
   checksum: ''
   schema_version: '1.0'
