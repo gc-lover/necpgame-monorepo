@@ -1,0 +1,144 @@
+metadata:
+  id: player-orders-reputation-detailed
+  title: Система заказов — репутация и рейтинг (детально)
+  document_type: mechanics
+  category: social
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T18:52:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T18:52:00Z
+  owners:
+    - role: social_lead
+      contact: social@necp.game
+  tags:
+    - player-orders
+    - reputation
+  topics:
+    - social-systems
+    - ratings
+  related_systems:
+    - social-service
+    - economy-service
+    - world-service
+    - factions-service
+  related_documents:
+    - id: player-orders-system-detailed
+      relation: references
+    - id: relationships-system-detailed
+      relation: references
+    - id: npc-hiring-system-detailed
+      relation: references
+    - id: visual-style-assets-detailed
+      relation: references
+  source: shared/docs/knowledge/mechanics/social/player-orders-reputation-детально.md
+  visibility: internal
+  audience:
+    - concept
+    - social
+    - economy
+  risk_level: medium
+review:
+  chain:
+    - role: social_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T18:52:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось формализовать рейтинги заказчиков и исполнителей для сервисов social и economy.
+  goal: Определить метрики, формулы, категории, decay и интерфейсы репутации, включая REST/Kafka контракты и UX требования.
+  essence: Документ описывает рейтинг с весовыми метриками, decay, категориями Bronze–Platinum, отзывами и арбитражом, обеспечивая готовность к реализации.
+  key_points:
+    - Метрики исполнителя и заказчика рассчитываются по весовым формулам с decay и роль-модификаторами.
+    - Категории управляют привилегиями, санкциями и сезонными сбросами.
+    - REST/JSON/Kafka контракты синхронизируют рейтинг с сервисами и UX.
+content:
+  sections:
+    - id: rating_model
+      title: Общая схема рейтингов
+      body: |
+        Рейтинги разделены на заказчика и исполнителя, используют шкалу 0–100 и категории Bronze/Silver/Gold/Platinum. Decay удерживает минимум на уровне 20% исторического пика.
+      mechanics_links:
+        - mechanics/social/player-orders-system-детально.md
+      assets: []
+    - id: executor_metrics
+      title: Метрики исполнителя
+      body: |
+        Completion Rate, Timeliness, Quality, Reliability и Complexity Bonus формируют итоговый балл с весами 0.3/0.2/0.25/0.15/0.1. Значения нормализуются и умножаются на decay.
+      mechanics_links:
+        - mechanics/social/player-orders-advanced-детально.md
+      assets: []
+    - id: client_metrics
+      title: Метрики заказчика
+      body: |
+        Payment Reliability, Brief Quality, Dispute Rate, Reward Fairness и Repeat Business рассчитываются по весам 0.3/0.2/0.2/0.15/0.15. Арбитражные решения накладывают мгновенные штрафы.
+      mechanics_links:
+        - mechanics/social/player-orders-creation-детально.yaml
+      assets: []
+    - id: feedback
+      title: Отзывы и оценки
+      body: |
+        Отзывы содержат текст и две шкалы оценок, проходят проверку на токсичность и могут вызывать арбитраж. Жалобы влияют на рейтинг обеих сторон.
+      mechanics_links:
+        - mechanics/social/player-orders-system-детально.md
+      assets: []
+    - id: categories
+      title: Категории и привилегии
+      body: |
+        Bronze, Silver, Gold и Platinum задают доступ к заказам, комиссии и бонусы. Низкие категории ограничивают создание заказов и участие в аукционах.
+      mechanics_links:
+        - mechanics/social/player-orders-reputation.yaml
+      assets: []
+    - id: dynamics
+      title: Динамика рейтинга
+      body: |
+        Decay, бусты за успешные серии, сезонные сбросы и фракционные модификаторы регулируют изменения рейтинга. Конфигурации управляются `social-service`.
+      mechanics_links:
+        - mechanics/social/player-orders-world-impact-детально.md
+      assets: []
+    - id: arbitration
+      title: Арбитраж и безопасность
+      body: |
+        Dispute Handler использует escrow, страховые фонды и журналы для расследования и применения санкций. Решения влияют на рейтинг заказчика и исполнителя.
+      mechanics_links:
+        - mechanics/social/player-orders-advanced-детально.md
+      assets: []
+    - id: ux_visuals
+      title: UX и визуализация
+      body: |
+        Профили рейтингов, диаграммы, лидерборды и бейджи отображают динамику. Нотификации информируют о смене категории и штрафах.
+      mechanics_links:
+        - mechanics/social/visual-style-assets-детально.md
+      assets: []
+    - id: interfaces
+      title: REST, JSON и Kafka контракты
+      body: |
+        REST API предоставляет получение, пересчёт рейтингов, создание отзывов и санкций. JSON схемы и Kafka топики (`social.player-orders.rating.updated`, `social.player-orders.review.created`, `social.player-orders.penalty.applied`) обеспечивают интеграцию сервисов.
+      mechanics_links:
+        - mechanics/social/player-orders-system-детально.md
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: JSON схема рейтинга заказа
+      link: schemas/social/player-order-rating.schema.json
+    - title: JSON схема отзыва
+      link: schemas/social/player-order-review.schema.json
+    - title: JSON схема санкций
+      link: schemas/social/player-order-penalty.schema.json
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#player-orders-reputation-detailed
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: social_team
+    changes: Утверждены метрики, категории, decay, REST/Kafka события и UX требования для рейтингов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
