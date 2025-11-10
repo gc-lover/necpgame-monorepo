@@ -1,0 +1,139 @@
+metadata:
+  id: implementation-microservices-overview
+  title: Микросервисная архитектура — детальный обзор
+  document_type: implementation
+  category: backend
+  status: draft
+  version: '1.1.0'
+  last_updated: 2025-11-08T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - architecture
+    - microservices
+    - backend
+  topics:
+    - infrastructure
+    - service-integration
+  related_systems:
+    - api-gateway
+    - auth-service
+    - character-service
+    - gameplay-service
+    - social-service
+    - economy-service
+    - world-service
+  related_documents:
+    - id: implementation-backend-architecture
+      relation: complements
+    - id: implementation-backend-quest-engine
+      relation: references
+    - id: implementation-backend-progression
+      relation: references
+  source: shared/docs/knowledge/implementation/microservices-overview.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - devops
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требовалось централизованное описание микросервисной архитектуры без ссылок на монолит.
+  goal: Зафиксировать текущую инфраструктуру, сервисы и взаимодействия backend NECPGAME.
+  essence: Архитектура основана на API Gateway, Eureka, Config Server и наборе доменных сервисов с асинхронными интеграциями.
+  key_points:
+    - Сформирован перечень инфраструктурных компонентов и их функции.
+    - Описаны доменные сервисы, планируемые эндпоинты и статусы реализации.
+    - Зафиксированы паттерны взаимодействия: REST, circuit breaker и событийная модель.
+    - Обозначены стратегии деплоймента, observability и дорожная карта миграции.
+content:
+  sections:
+    - id: architecture_state
+      title: 'Текущее состояние'
+      body: |
+        Производственный стек использует полностью микросервисный подход с единой точкой входа через API
+        Gateway и закрытым доступом к внутренним сервисам. OpenAPI спецификации обязаны указывать целевой
+        сервис через `info.x-microservice`, что обеспечивает трассировку ответственности.
+      mechanics_links: []
+      assets: []
+    - id: infrastructure_components
+      title: 'Инфраструктурные компоненты'
+      body: |
+        Gateway (8080), Eureka (8761) и Config Server (8888) обеспечивают маршрутизацию, обнаружение и
+        конфигурацию сервисов. Документ включает ключевые функции, пример настроек и расположение артефактов
+        в репозитории, что требуется для сопровождения DevOps командой.
+      mechanics_links:
+        - infrastructure/api-gateway/config.yaml
+        - infrastructure/service-discovery/config.yaml
+      assets: []
+    - id: domain_services
+      title: 'Доменные сервисы'
+      body: |
+        Auth, Character, Gameplay, Social, Economy и World сервисы описаны с портами, зонами ответственности,
+        статусами и оценкой количества эндпоинтов. Указаны связанные базы данных и стадии планирования, что
+        позволяет синхронизировать roadmap между командами.
+      mechanics_links:
+        - services/openapi/auth-service.yaml
+        - services/openapi/character-service.yaml
+        - services/openapi/gameplay-service.yaml
+      assets: []
+    - id: integration_patterns
+      title: 'Паттерны интеграций'
+      body: |
+        Используются синхронные вызовы через Feign, устойчивость через Resilience4j и событийная связь через
+        Kafka. Примеры кода демонстрируют публикацию и потребление событий для регистрации игроков, боевых
+        исходов и завершения торговли.
+      mechanics_links:
+        - implementation/backend/matchmaking/matchmaking-queue.yaml
+        - implementation/backend/notification-system.yaml
+      assets: []
+    - id: data_strategy
+      title: 'Стратегия данных'
+      body: |
+        применяется паттерн отдельной базы для сервиса, с текущей реализацией через схемы PostgreSQL и планом
+        миграции на независимые базы. Раздел охватывает управление транзакциями через Saga и eventual
+        consistency, что критично для экономических и социальных операций.
+      mechanics_links:
+        - implementation/backend/trade-system.yaml
+      assets: []
+    - id: deployment_monitoring
+      title: 'Деплоймент и мониторинг'
+      body: |
+        Docker Compose описывает локальный запуск, Kubernetes планируется для продуктивного кластера с
+        автошкалированием и сервис-мешем. Для наблюдаемости предусмотрены Zipkin, Prometheus+Grafana и ELK,
+        а roadmap фиксирует этапы от инфраструктуры до production-ready состояния.
+      mechanics_links:
+        - infrastructure/deployment/docker-compose-microservices.yaml
+        - infrastructure/deployment/kubernetes-plan.yaml
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - ../../BACK-GO/docs/БЭКТАСК-MICROSERVICES.md
+    - ../../BACK-GO/MICROSERVICES-FINAL-STATUS.md
+    - backend-architecture-overview.md
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#implementation-microservices-overview
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-08
+    author: backend_architect
+    changes: Конвертировано из microservices-overview.md с выделением инфраструктурных блоков.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
