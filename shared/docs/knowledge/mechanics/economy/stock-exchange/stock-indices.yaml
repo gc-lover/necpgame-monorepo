@@ -1,13 +1,13 @@
 metadata:
   id: stock-indices
-  title: Биржа акций — фондовые индексы
+  title: Биржа акций — Фондовые индексы
   document_type: mechanics
   category: economy
   status: approved
   version: '1.1.0'
   last_updated: 2025-11-07T16:19:00Z
   concept_approved: true
-  concept_reviewed_at: 2025-11-09T11:21:00Z
+  concept_reviewed_at: 2025-11-09
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -16,18 +16,17 @@ metadata:
     - indices
     - analytics
   topics:
-    - financial-markets
-    - economy-analytics
+    - market_metrics
+    - economy_reports
   related_systems:
     - economy-service
     - analytics-service
+    - economy-events
     - guild-system
   related_documents:
     - id: stock-exchange-overview
       relation: references
     - id: stock-analytics
-      relation: complements
-    - id: economy-investments
       relation: complements
   source: shared/docs/knowledge/mechanics/economy/stock-exchange/stock-indices.md
   visibility: internal
@@ -40,60 +39,60 @@ review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-09T11:21:00Z
+      reviewed_at: 2025-11-09
       status: approved
   next_actions: []
 summary:
-  problem: Требовалось задокументировать структуру фондовых индексов и их применение в экономике NECPGAME.
-  goal: Описать состав, расчёт, ребалансировку и API индексов для дальнейшей автоматизации.
-  essence: Документ вводит корпоративные, региональные и отраслевые индексы, обеспечивая их расчёт и распространение данных.
+  problem: Требуется стандартизировать индексы для анализа рынка и фич вроде индексных фондов.
+  goal: Описать состав, расчёт, хранение и API фондовых индексов NECPGAME.
+  essence: Корпоративные, региональные и секторные индексы рассчитываются по весам, обновляются ребалансом и доступны через REST и событийную шину.
   key_points:
-    - Индексы CORP100, NC50, ASIA25 и EURO30 отражают состояние ключевых сегментов рынка.
-    - Секторальные индексы поддерживают аналитику гильдий и инвест-фондов.
-    - REST и событийные интерфейсы обеспечивают доступ к значениям и управлению ребалансом.
+    - CORP100, NC50, ASIA25, EURO30 и секторные индексы формируют обзор рынка.
+    - Таблицы истории и составов поддерживают аналитику и индексные фонды.
+    - API и event bus публикуют значения и события ребаланса.
 content:
   sections:
-    - id: index-catalog
-      title: 'Каталог индексов'
+    - id: introduction
+      title: Введение
       body: |
-        Описаны CORP100, NC50, ASIA25, EURO30 и секторальные индексы. Для каждого указаны методика расчёта, состав и текущие показатели.
+        Индексы фиксируют сводную динамику рынка для глобальных и региональных корпораций, а также отраслевых сегментов. Они применяются в аналитике, UI и инвестиционных продуктах.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
       assets: []
+    - id: index_catalog
+      title: Каталог индексов
+      body: |
+        CORP100 агрегирует 100 крупнейших корпораций, NC50 отражает экономику Night City, ASIA25 и EURO30 покрывают региональные рынки, а секторные индексы (DEFENSE, TECH, ENERGY, MEDICAL, CYBER) показывают отраслевые тренды. Значения рассчитываются по взвешенной капитализации и публикуются в реальном времени.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-corporations-compact.yaml
+      assets: []
     - id: usage
-      title: 'Использование индексов'
+      title: Использование индексов
       body: |
-        Индексы позволяют отслеживать настроение рынка, различать bull/bear фазы и формировать индексные фонды. Документ включает примеры расчёта доходности.
+        Индексы показывают рыночное настроение (bull/bear), служат основой для индексных фондов и сравнения инвестиционных стратегий. Игроки могут отслеживать доходность, хеджировать риск и анализировать региональные тренды.
       mechanics_links:
-        - mechanics/economy/economy-investments.yaml
+        - mechanics/economy/stock-exchange/stock-dividends.yaml
       assets: []
-    - id: data-structures
-      title: 'Структуры данных'
+    - id: data_structures
+      title: Структуры данных и ребаланс
       body: |
-        Таблицы `stock_indices`, `stock_index_constituents` и `stock_index_history` хранят состав, веса и историю значений, обеспечивая гибкое управление.
-      mechanics_links:
-        - mechanics/implementation/backend/database/schema.yaml
-      assets: []
-    - id: rebalancing
-      title: 'Ребалансировка'
-      body: |
-        Квартальные процедуры и divisor adjustment поддерживают непрерывность индекса, а отчёты публикуют изменения состава.
+        Таблицы `stock_indices`, `stock_index_constituents` и `stock_index_history` фиксируют метаинформацию, состав и исторические значения. Ребаланс выполняется ежеквартально или при IPO/delisting, ограничивает веса и корректирует divisor для непрерывности.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-protection.yaml
       assets: []
     - id: api
-      title: 'API и события'
+      title: API и события
       body: |
-        REST эндпоинты предоставляют список индексов, историю и состав, а события `economy.indices.*` информируют сервисы о ребалансе и изменениях.
+        REST эндпоинты `/stocks/indices`, `/indices/{code}`, `/indices/{code}/history`, `/indices/{code}/constituents` и админские методы обеспечивают доступ к данным и управлению составом. Шина `economy.indices.*` публикует события ребаланса и изменения состава.
       mechanics_links:
-        - mechanics/implementation/infrastructure/api-gateway-architecture.yaml
+        - mechanics/economy/stock-exchange/stock-integration.yaml
       assets: []
     - id: integrations
-      title: 'Интеграции'
+      title: Интеграции
       body: |
-        Индексы используются в stock-analytics, economy-events, экономических отчётах гильдий и инвестиционных продуктах.
+        Analytics-service строит графики и сравнения, economy-events вносит массовые корректировки, economy-investments использует индексы для фондов, guild-system формирует отчёты. UI показывает динамику и рейтинг индексов.
       mechanics_links:
-        - mechanics/economy/stock-analytics.yaml
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
       assets: []
 appendix:
   glossary: []
@@ -108,11 +107,11 @@ history:
   - version: '1.1.0'
     date: 2025-11-07
     author: concept_director
-    changes: Добавлены структуры данных, ребаланс и API индексов.
+    changes: Добавлены структуры данных, расписание ребаланса, REST API и события.
   - version: '1.0.0'
     date: 2025-11-06
     author: concept_director
-    changes: Первичное описание фондовых индексов биржи.
+    changes: Описан первоначальный набор фондовых индексов.
 validation:
   checksum: ''
   schema_version: '1.0'
