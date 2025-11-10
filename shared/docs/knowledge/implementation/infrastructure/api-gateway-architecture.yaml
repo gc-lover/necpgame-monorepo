@@ -1,0 +1,110 @@
+metadata:
+  id: implementation-infrastructure-api-gateway-architecture
+  title: API Gateway Architecture
+  document_type: implementation
+  category: infrastructure
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T00:18:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T00:18:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - api_gateway
+    - microservices
+    - infrastructure
+  topics:
+    - platform_architecture
+    - service_mesh
+  related_systems:
+    - api-gateway
+    - service-registry
+    - observability-stack
+  related_documents:
+    - id: implementation-infrastructure-caching-strategy
+      relation: references
+    - id: implementation-infrastructure-database-architecture
+      relation: references
+  source: shared/docs/knowledge/implementation/infrastructure/api-gateway-architecture.md
+  visibility: internal
+  audience:
+    - concept
+    - platform
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T00:18:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требуется единая точка входа для микросервисов с управлением безопасностью и нагрузкой.
+  goal: Описать архитектуру API Gateway, покрывающую маршрутизацию, балансировку, защиту и наблюдаемость.
+  essence: Spring Cloud Gateway обслуживает входящий трафик, применяя аутентификацию, rate limiting, кэширование и логирование перед передачей запросов сервисам.
+  key_points:
+    - Маршруты регистрируются через сервис-дискавери и обрабатываются как единая конфигурация.
+    - Балансировка нагрузки использует Round Robin, Least Connections и IP Hash.
+    - Модули безопасности включают JWT-проверку, rate limiting и DDoS-защиту.
+    - Логи и метрики централизованы, поддерживается версия API и circuit breaker.
+content:
+  sections:
+    - id: implementation_status
+      title: Статус реализации
+      body: |
+        Первая фаза готова в production: развёрнут Spring Cloud Gateway на порту 8080, подключён к Eureka и Docker Compose.
+        Запуск производится через `docker-compose -f docker-compose-microservices.yml up api-gateway`.
+      mechanics_links: []
+      assets: []
+    - id: routing
+      title: Маршрутизация
+      body: |
+        Gateway принимает HTTP-запросы и направляет их микросервисам по шаблонам путей.
+        Конфигурация содержит маршруты к Auth, Character, Gameplay, Social, Economy и World сервисам через `lb://` URI.
+      mechanics_links: []
+      assets: []
+    - id: load_balancing
+      title: Балансировка нагрузки
+      body: |
+        Поддерживаются Round Robin, Least Connections и IP Hash.
+        Регулярные health-check'и удаляют неработоспособные инстансы и уведомляют администраторов.
+      mechanics_links: []
+      assets: []
+    - id: security
+      title: Безопасность и rate limiting
+      body: |
+        Gateway валидирует JWT, применяет лимиты на IP и пользователя, фиксирует всплески трафика и включает механизмы DDoS-защиты.
+      mechanics_links: []
+      assets: []
+    - id: observability
+      title: Наблюдаемость и кэширование
+      body: |
+        Система логирования и кэширования ответов снижает задержки и упрощает анализ инцидентов.
+        Поддерживается SSL/TLS termination, circuit breaker и версия API.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Database Architecture
+      link: ./database-architecture.md
+    - title: Caching Strategy
+      link: ./caching-strategy.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#implementation-infrastructure-api-gateway-architecture
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: AI Brain Manager
+    changes: Описана архитектура API Gateway и статус внедрения.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
