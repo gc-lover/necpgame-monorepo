@@ -1,0 +1,154 @@
+metadata:
+  id: reputation-formulas
+  title: Репутационные формулы NECPGAME
+  document_type: mechanics
+  category: social
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T01:05:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - social
+    - reputation
+    - formulas
+  topics:
+    - progression
+    - faction-balance
+  related_systems:
+    - reputation-service
+    - social-service
+  related_documents:
+    - id: social-mechanics-expansion-summary
+      relation: references
+  source: shared/docs/knowledge/mechanics/social/reputation-formulas.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - systems
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Формулы расчёта репутации находились в Markdown и не были синхронизированы с моделью сервисов.
+  goal: Структурировать диапазоны, модификаторы и примеры, чтобы передать их разработке и аналитике.
+  essence: Документ описывает способы изменения репутации, влияние на проверки, доступы, конфликты и бонусы классов и происхождений.
+  key_points:
+    - Диапазон репутации определён от -100 до легендарного уровня.
+    - Формулы учитывают модификаторы класса, происхождения, квеста и успехов бросков.
+    - Heat влияет на сложность событий и доступы, требуя механизмов затухания.
+    - Конфликты фракций распределяют изменение репутации между союзниками и противниками.
+content:
+  sections:
+    - id: reputation_range
+      title: Диапазон и структура репутации
+      body: |
+        Репутация измеряется на шкале от -100 до 100+ с разбиением на уровни враг, неприятель, нейтрал, друг, союзник и легенда. Уровни определяют базовые реакции системы и доступ к контенту.
+      mechanics_links:
+        - mechanics/social/reputation-tiers-detailed.yaml
+      assets: []
+    - id: change_formula
+      title: Формула изменения репутации
+      body: |
+        Изменение репутации рассчитывается как произведение базового значения на набор модификаторов.
+        ```
+        reputationChange = baseChange * (1 + modifier1) * (1 + modifier2) * ...
+        ```
+        Модификаторы включают бонусы класса, происхождения, квеста и исхода проверок.
+      mechanics_links:
+        - mechanics/social/player-orders-reputation.yaml
+      assets: []
+    - id: dc_influence
+      title: Влияние на сложность проверок
+      body: |
+        Репутация снижает или повышает сложность бросков через модификатор `dcModifier = floor(reputation / 10) * -1`.
+        Финальный DC формируется с учётом дополнительных факторов, таких как heat, травмы и преимущества.
+      mechanics_links:
+        - mechanics/social/mentorship-system.yaml
+      assets: []
+    - id: access_and_discounts
+      title: Доступы, скидки и бонусы
+      body: |
+        Уровень доступа рассчитывается по формуле `floor((reputation + 50) / 25)`, что определяет привилегии и ресурсы. Скидки ограничены 20% и зависят от текущего значения репутации.
+      mechanics_links:
+        - mechanics/social/npc-hiring-catalog.yaml
+      assets: []
+    - id: faction_relations
+      title: Влияние на другие фракции
+      body: |
+        Репутация в одной фракции переходит в бонусы или штрафы в союзных и враждебных организациях. Применяется матрица конфликтов и коэффициенты для автоматического пересчёта.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+      assets: []
+    - id: heat_system
+      title: Heat и его последствия
+      body: |
+        Heat формируется из штрафов за отрицательную репутацию, провалы квестов и критические ошибки.
+        ```
+        heat = baseHeat + reputationPenalties + questPenalties + skillCheckPenalties
+        ```
+        Heat увеличивает сложность проверок и шанс негативных событий, а также ограничивает доступ к ресурсам.
+      mechanics_links:
+        - mechanics/social/npc-hiring-management.yaml
+      assets: []
+    - id: heat_decay
+      title: Снижение Heat
+      body: |
+        Heat уменьшается со временем по формуле `heatReduction = (timePassed / cooldownTime) * reputationBonus`. Положительная репутация ускоряет спад тепла.
+      mechanics_links:
+        - mechanics/social/player-orders-system.yaml
+      assets: []
+    - id: class_origin_modifiers
+      title: Бонусы классов и происхождений
+      body: |
+        Для каждого класса и происхождения определены коэффициенты, влияющие на дружелюбные и враждебные фракции. Таблицы задают базовые значения для расчётов.
+      mechanics_links:
+        - mechanics/social/progression/progression-attributes.yaml
+      assets: []
+    - id: worked_examples
+      title: Примеры расчётов
+      body: |
+        Приведены расчёты для положительных и отрицательных сценариев: успехи нетраннера, предательство корпората и снижение DC. Примеры демонстрируют влияние множителей и конфликтов.
+      mechanics_links:
+        - mechanics/social/reputation-tiers-detailed.yaml
+      assets: []
+    - id: final_formula
+      title: Финальная формула
+      body: |
+        Финальная репутация вычисляется как сумма текущего значения и изменённого модификаторами результата.
+        ```
+        finalReputation = currentReputation + reputationChange * modifiers
+        modifiers = (1 + classBonus) * (1 + originBonus) * (1 + questBonus) *
+                    (1 + skillCheckBonus) * (1 + conflictModifier)
+        ```
+        Формула готова к реализации и требует проверки на крайние значения.
+      mechanics_links:
+        - mechanics/social/social-mechanics-expansion-summary.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: Concept Director Team
+    changes: Описаны диапазоны репутации, формулы и примеры расчётов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
