@@ -1,0 +1,138 @@
+metadata:
+  id: ui-main-game-system
+  title: UI Main Game System
+  document_type: implementation
+  category: ui
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:16:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - trading
+    - settings
+    - technical
+  topics:
+    - marketplace-flow
+    - player-settings
+    - responsive-ui
+  related_systems:
+    - marketplace-service
+    - settings-service
+    - ui-service
+  related_documents:
+    - id: ui-main-game-hud
+      relation: complements
+    - id: ui-main-game-features
+      relation: complements
+    - id: ui-game-start
+      relation: references
+  source: shared/docs/knowledge/implementation/ui/main-game/ui-system.md
+  visibility: internal
+  audience:
+    - concept
+    - vision
+    - ui
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: AI Brain Manager
+      reviewed_at: 2025-11-07T06:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Системные UI-панели торговли и настроек не имели формализованного описания для MVP.
+  goal: Зафиксировать требования к рыночным экранам, настройкам игрока и техническим зависимостям UI.
+  essence: Документ описывает связку торговых интерфейсов и панели настроек с указанием технологических ограничений и API.
+  key_points:
+    - Торговые панели должны поддерживать поиск, сортировку и взаимодействие с продавцами.
+    - Панель настроек включает основные категории и позволяет изменять параметры в реальном времени.
+    - Технические требования определяют стек React 18+, использование WebSocket и принципы оптимизации.
+    - UI обязан оставаться отзывчивым на десктопе, планшете и мобильных разрешениях.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Документ каталогизирует системные элементы пользовательского интерфейса: рынки, меню настроек и технические требования клиента. Материал задаёт минимальные UX-паттерны и интеграции для стабильной работы в core loop.
+      mechanics_links: []
+      assets: []
+    - id: trading_ui
+      title: Торговый интерфейс
+      body: |
+        Рыночный экран объединяет пользовательский маркет и аукцион. Основной макет включает строку поиска, сортировку, карточки товаров и CTA для покупки или связи с продавцом. Требования:
+          - фильтрация по редкости, цене и типу предмета;
+          - отображение рейтинга продавца и статуса товара;
+          - подготовка к интеграции с бесшовной оплатой и чатами.
+        UI должен поддерживать бесконечный скролл либо пагинацию и показывать состояние загрузки.
+      mechanics_links:
+        - mechanics/economy/marketplace.yaml
+      assets: []
+    - id: settings_panel
+      title: Панель настроек
+      body: |
+        Меню настроек разделяется на Graphics, Sound, Gameplay, Controls, Account. В блоке Gameplay обязательны переключатели авто-лута, боевого текста и масштаба интерфейса. Экраны сохраняют изменения мгновенно и предоставляют кнопку отката.
+        Вся конфигурация хранится на сервере и синхронизируется при входе игрока.
+      mechanics_links:
+        - mechanics/meta/player-settings.yaml
+      assets: []
+    - id: technical_requirements
+      title: Технические требования
+      body: |
+        Архитектура UI базируется на React 18+, Redux Toolkit, React Router v6 и библиотеке компонентов (Material-UI или Chakra UI). Взаимодействие с API реализуется через Axios либо fetch с обёрткой.
+        Обязательные меры производительности:
+          - ленивые маршруты;
+          - виртуальный скроллинг списков;
+          - мемоизация ключевых компонент;
+          - code splitting по флоу.
+        UI использует Socket.io-client для обновления рыночных данных и уведомлений.
+      mechanics_links: []
+      assets: []
+    - id: responsive_design
+      title: Адаптивность
+      body: |
+        Интерфейсы проектируются для разрешений 1920x1080, 1366x768, 1024x768, 768x1024, 375x667 и 414x896. Требования:
+          - сохранение функционала при переходе к мобильной сетке;
+          - перестройка колонок в вертикальные стековые панели;
+          - поддержка экранных клавиатур и touch-интеракций.
+      mechanics_links:
+        - mechanics/ui/responsive-guidelines.yaml
+      assets: []
+    - id: api_integration
+      title: API интеграция
+      body: |
+        Ключевые endpoint'ы:
+          - GET /api/v1/market/listings — список товаров;
+          - GET /api/v1/settings/{playerId} — загрузка настроек;
+          - PUT /api/v1/settings — сохранение параметров.
+        Рекомендуется реализовать polling fallback на случай недоступности WebSocket.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - id: ui-main-game-hud
+      description: HUD и инвентарь для основного игрового цикла.
+    - id: ui-main-game-features
+      description: Навигация, квесты, боевой и социальный интерфейсы.
+    - id: ui-game-start
+      description: Требования стартовых экранов.
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: AI Brain Manager
+    changes: Создан документ на основе UI Main Game System микрофичи.
+validation:
+  checksum: ''
+  schema_version: '1.0'
