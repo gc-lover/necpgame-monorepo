@@ -1,34 +1,36 @@
 metadata:
   id: player-orders-system-detailed
-  title: Система заказов от игроков — детальная версия
+  title: Система заказов от игроков — детально
   document_type: mechanics
   category: social
   status: approved
   version: '1.0.0'
   last_updated: 2025-11-08T09:51:00Z
   concept_approved: true
-  concept_reviewed_at: 2025-11-09T02:50:00Z
+  concept_reviewed_at: 2025-11-08T09:51:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
+    - social
     - player-orders
-    - contracts
-    - social-economy
+    - systems
   topics:
-    - order_system
-    - live_operations
+    - player-economy
+    - social-systems
   related_systems:
     - social-service
     - economy-service
     - world-service
     - gameplay-service
   related_documents:
+    - id: player-orders-types
+      relation: references
     - id: player-orders-creation-detailed
       relation: complements
     - id: player-orders-reputation-detailed
       relation: complements
-    - id: npc-hiring-system-detailed
+    - id: npc-hiring-system
       relation: references
   source: shared/docs/knowledge/mechanics/social/player-orders-system-детально.md
   visibility: internal
@@ -41,117 +43,120 @@ review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-09T02:50:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Система player orders требовала комплексной детализации по типам, процессам, экономике и интеграциям.
-  goal: Зафиксировать полный цикл заказов, роли участников и API взаимодействия между сервисами.
-  essence: Документ описывает экосистему заказов с типами, экономикой, рейтингами, NPC-брокерами и арбитражом.
+  problem: Детальное описание системы заказов находилось в Markdown и не обеспечивало структурированных ссылок.
+  goal: Сформировать полную модель процессов, экономических связей и интеграций системы заказов.
+  essence: Документ описывает типы заказов, жизненный цикл, каналы, экономику, рейтинги, роли NPC и интерфейсные требования.
   key_points:
-    - Детализированы типы заказов, каналы публикации и процесс выполнения.
-    - Описана экономика, escrow, комиссии и влияние заказов на мир.
-    - Зафиксированы REST/Kafka контуры, DTO и UX инструменты для доски заказов.
+    - Представлена многоуровневая структура ролей, слоёв и модулей.
+    - Зафиксированы процессы создания, выполнения и арбитража заказов.
+    - Определены экономические формулы, рейтинги и интеграции с внешними сервисами.
 content:
   sections:
     - id: methodology
-      title: 'Методика детализации'
+      title: Методика детализации
       body: |
-        Описаны слои системы, роли и сервисы, обеспечивающие создание, выполнение и анализ заказов. Приведены интерфейсы и структуру данных.
+        Система рассматривается по слоям: типы заказов, процесс, экономика, исполнители, рейтинги и арбитраж. Роли включают заказчика, исполнителя, брокера и наблюдателя, а модули social/economy/world/gameplay/npc/factions обеспечивают обработку данных и интерфейсы.
       mechanics_links:
-        - mechanics/social/player-orders-system.yaml
+        - mechanics/social/player-orders-types.yaml
       assets: []
-    - id: order_types
-      title: 'Типы заказов'
+    - id: extended_types
+      title: Расширенный каталог типов
       body: |
-        Каталог боевых, хакерских, логистических, политических, исследовательских, социальных, творческих и комбинированных заказов с параметрами сложности и риска.
+        Каталог охватывает боевые, хакерские, логистические, политические, исследовательские, социальные, творческие и комбинированные заказы с параметрами сложности, риска и требований к репутации.
+      mechanics_links:
+        - mechanics/social/player-orders-types.yaml
+      assets: []
+    - id: lifecycle
+      title: Жизненный цикл заказа
+      body: |
+        Процесс включает создание, настройку параметров, публикацию, отбор исполнителей, выполнение, сдачу результатов, расчёт наград, отзывы и арбитраж. Каждый этап синхронизируется с сервисами и журналируется.
       mechanics_links:
         - mechanics/social/player-orders-creation-detailed.yaml
+        - mechanics/social/player-orders-execution.yaml
       assets: []
-    - id: order_process
-      title: 'Процесс заказа'
+    - id: channels
+      title: Контракты и каналы
       body: |
-        Описан цикл от создания и публикации до исполнения, расчёта наград, отзывов и арбитража. Поддержаны разные каналы и формат контрактов.
+        Контракты распространяются через публичные доски, NPC-брокеров, фракционные каналы, прямые сделки и VR-конференции. Поддерживаются форматы публичных, отборных, закрытых, автоматизированных и аукционных заказов.
       mechanics_links:
-        - mechanics/social/player-orders-system.yaml
+        - mechanics/social/player-orders-via-npc.yaml
       assets: []
-    - id: contracts_channels
-      title: 'Контракты и каналы'
+    - id: economics
+      title: Экономика заказов
       body: |
-        Различаются доска заказов, NPC-брокеры, фракционные каналы, прямые сделки, VR-конференции и аукционные режимы.
+        Описаны модели оплаты, депозитов, комиссий, бонусов и штрафов. Исторические данные и рекомендации формируют рыночные индексы для расчёта стоимости заказов.
       mechanics_links:
-        - mechanics/social/player-orders-creation.yaml
+        - mechanics/social/player-orders-economy.yaml
       assets: []
-    - id: order_economy
-      title: 'Экономика заказов'
+    - id: ratings
+      title: Рейтинги и репутация
       body: |
-        Зафиксированы модели оплаты, депозиты, комиссии, бонусы и штрафы, а также исторические данные и индексы для аналитики.
-      mechanics_links:
-        - mechanics/economy/economy-events.yaml
-      assets: []
-    - id: reputation_roles
-      title: 'Рейтинги и репутация'
-      body: |
-        Рейтинги исполнителей, заказчиков, фракций и санкционные механики формируют доверие и доступ к заказам.
+        Рейтинги исполнителей, заказчиков и фракций отображаются в UI, сопровождаются бейджами и санкциями. Применяются чёрные списки и ограничения доступа.
       mechanics_links:
         - mechanics/social/player-orders-reputation-detailed.yaml
       assets: []
     - id: npc_role
-      title: 'Роль NPC'
+      title: Роль NPC
       body: |
-        NPC выступают заказчиками, исполнителями, брокерами и арбитрами. Описано их влияние на события и мир.
+        NPC выступают заказчиками, исполнителями, брокерами и арбитрами, поддерживая живость мира и баланс системы.
       mechanics_links:
-        - mechanics/social/npc-hiring-system-detailed.yaml
+        - mechanics/social/npc-hiring-system.yaml
       assets: []
-    - id: world_influence
-      title: 'Влияние на мир'
+    - id: world_impact
+      title: Влияние на мир и системы
       body: |
-        Заказы меняют влияние фракций, экономики городов и социальные связи. Связаны с city-life и визуальными гайдами.
+        Заказы изменяют влияние фракций, экономику городов, социальные связи и контент. Связаны с алгоритмами City Life и визуальными гайдами локаций.
       mechanics_links:
         - mechanics/social/player-orders-world-impact.yaml
+        - mechanics/social/player-orders-world-impact-detailed.yaml
       assets: []
     - id: ux_tools
-      title: 'UX и инструменты'
+      title: UX и инструменты
       body: |
-        Описаны доска заказов, панель создания, трекер статуса, уведомления и VR-панели.
-      mechanics_links:
-        - mechanics/social/player-orders-ui.yaml
-      assets: []
-    - id: arbitration_security
-      title: 'Арбитраж и безопасность'
-      body: |
-        Приведены механики жалоб, доказательств, решений и интеграции с security-service.
-      mechanics_links:
-        - mechanics/social/security-compliance.yaml
-      assets: []
-    - id: api_events
-      title: 'API и события'
-      body: |
-        Документирует REST эндпоинты, JSON схемы и Kafka топики для заказов, заявок, статусов, escrow и отзывов.
+        Определены требования к доске заказов, мастеру создания, трекеру прогресса, уведомлениям, журналу контрактов и VR-панелям. Макеты хранятся в Figma и поддерживаются UI-командой.
       mechanics_links:
         - mechanics/social/player-orders-creation-detailed.yaml
       assets: []
-    - id: dto_frontend
-      title: 'DTO и фронтенд'
+    - id: arbitration_security
+      title: Арбитраж и безопасность
       body: |
-        Перечислены DTO для фронтенда, генерация клиентов и фигма-макеты доски и escrow панелей.
+        Описаны механики жалоб, доказательств, санкций и интеграции с security-service и escrow. Все действия логируются для аудита.
       mechanics_links:
-        - mechanics/social/player-orders-ui.yaml
+        - mechanics/social/player-orders-reputation.yaml
+      assets: []
+    - id: api_kafka
+      title: API и события
+      body: |
+        Список REST эндпоинтов social/economy/world сервисов и Kafka топиков `social.player-orders.*`, `economy.player-orders.*`, `world.player-orders.*`, их payload и назначение подписчиков.
+      mechanics_links:
+        - mechanics/social/player-orders-execution.yaml
+        - mechanics/social/player-orders-creation-detailed.yaml
+      assets: []
+    - id: approvals
+      title: Проверка и согласование
+      body: |
+        Веса, процессы, UX и интеграции подтверждены продуктом, UI, экономикой, безопасностью и QA. JSON схемы и Kafka контракты валидированы.
+      mechanics_links:
+        - mechanics/social/player-orders-reputation-detailed.yaml
       assets: []
 appendix:
   glossary: []
   references: []
   decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#CON-2025-225
+    - shared/trackers/queues/concept/queued.yaml#player-orders-system-detailed
   blockers: []
 history:
   - version: '1.0.0'
     date: 2025-11-08
-    author: concept_director
-    changes: Детализирована экосистема player orders с типами, процессами, экономикой, рейтингами и API; документ готов к постановке задач.
+    author: Concept Director Team
+    changes: Детализировано ядро системы заказов, добавлены API, UX и интеграции.
 validation:
   checksum: ''
   schema_version: '1.0'
