@@ -1,0 +1,102 @@
+metadata:
+  id: notification-system
+  title: Backend системы уведомлений
+  document_type: implementation
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:20:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - backend
+    - social
+    - notifications
+  topics:
+    - event-driven
+    - player-messaging
+  related_systems:
+    - social-service
+    - world-service
+    - email-service
+  related_documents:
+    - id: session-management-system
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - social
+    - live-ops
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется единый сервис уведомлений, реагирующий на события из всех подсистем.
+  goal: Описать архитектуру и модель данных, позволяющую доставлять in-game, WebSocket и email уведомления.
+  essence: Social-service обрабатывает события, сохраняет их в истории и доставляет игрокам с учётом предпочтений.
+  key_points:
+    - Подписка на события от большинства сервисов и отправка в разные каналы.
+    - Настройки предпочтений и история уведомлений для аккаунта.
+    - Масштабируемая модель данных для push и почтовых рассылок.
+content:
+  sections:
+    - id: service-architecture
+      title: Архитектура сервиса
+      body: |
+        Notification System реализована в social-service (порт 8084) с маршрутом
+        `/api/v1/social/notifications/*`. Сервис подписывается на событийную шину и обрабатывает
+        события дружбы, гильдий, торговли, достижений, квестов и боёв. Для online-игроков
+        используется WebSocket канал world-service; email отправляется для уведомлений высокого
+        приоритета.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Модель данных и предпочтения
+      body: |
+        Таблица `notifications` хранит тип, приоритет, контент, дополнительные данные, статусы и
+        каналы доставки. Индексы оптимизированы под выборку по аккаунту и очистку просроченных
+        уведомлений. Настройки предпочтений и история читаемости обеспечивают контроль за
+        спамом и персонализацию каналов.
+      mechanics_links: []
+      assets: []
+    - id: delivery-flow
+      title: Поток доставки
+      body: |
+        Сервис проверяет пользовательские настройки, сохраняет уведомление, отправляет push
+        через WebSocket при активной сессии и, при необходимости, дублирует email. Для высокого
+        приоритета используются дополнительные каналы, а события логируются для аналитики.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: api
+      path: api/v1/social/notifications/
+    - type: repository
+      path: shared/code/backend/social/notification-service/
+  decisions:
+    - id: adr-notification-system
+      summary: Утверждён event-driven сервис уведомлений с поддержкой WebSocket и email.
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: Concept Director
+    changes: Описана архитектура уведомлений, каналы доставки и интеграции с сервисами.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
