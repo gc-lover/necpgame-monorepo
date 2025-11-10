@@ -1,0 +1,110 @@
+metadata:
+  id: auction-house-operations
+  title: Аукционный дом — операции и API
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-09T20:25:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T20:25:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - auction-house
+    - api
+    - operations
+  topics:
+    - service-contracts
+    - marketplace-automation
+  related_systems:
+    - economy-service
+    - wallet-service
+    - notification-service
+  related_documents:
+    - id: auction-house-mechanics
+      relation: complements
+    - id: auction-house-database
+      relation: references
+  source: shared/docs/knowledge/mechanics/economy/auction-house/auction-operations.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: economy_lead
+      reviewer: ''
+      reviewed_at: 2025-11-09T20:25:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Операционные требования аукционного дома и контракт API были описаны в Markdown и требовали структурированного представления.
+  goal: Зафиксировать публичные эндпоинты, ограничения безопасности, метрики и дорожную карту развития функции.
+  essence: Документ формализует REST/WS интерфейсы аукционного дома, правила антифрода и систему мониторинга.
+  key_points:
+    - Описаны основные REST-эндпоинты для создания лотов, поиска, ставок и buyout с примерами запросов и ответов.
+    - Антифрод-логика включает валидацию ставок, защиту от снайпинга, обнаружение подставных сделок и контроль лимитов.
+    - Метрики фиксируют ключевые показатели (`active`, `bids.daily`, `sold.daily`, `buyout.rate`) для наблюдаемости сервиса.
+    - Дорожная карта определяет MVP возможности и фичи следующей фазы (reserve price, watch list, bid history).
+content:
+  sections:
+    - id: endpoints
+      title: Публичные эндпоинты
+      body: |
+        - `POST /api/v1/auctions` — создание лота, возвращает идентификатор и время истечения.
+        - `GET /api/v1/auctions` — выдаёт каталог с фильтрами по поиску, диапазонам ставок и сортировкам.
+        - `POST /api/v1/auctions/{id}/bid` — размещение ставки с ответом об актуальной цене и статусе.
+        - `POST /api/v1/auctions/{id}/buyout` — мгновенный выкуп, возвращает сумму и содержимое передачи.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-mechanics.yaml
+    - id: security
+      title: Безопасность и лимиты
+      body: |
+        Валидация ставок, авто-продление, выявление подставных торгов и алертинг ценовых манипуляций.
+        Ограничения: максимум 10 активных лотов на игрока, минимальный шаг ставки 5%, максимальная
+        длительность торгов 7 дней.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-mechanics.yaml
+    - id: metrics
+      title: Метрики наблюдаемости
+      body: |
+        `auctions.active`, `auctions.bids.daily`, `auctions.sold.daily`, `auctions.buyout.rate` — ключевые метрики
+        для мониторинга нагрузки, конверсии покупок и соотношения ставок к выкупам.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-database.yaml
+    - id: roadmap
+      title: Дорожная карта
+      body: |
+        **MVP:** создание лотов, ставки, buyout, авто-закрытие.
+        **Phase 2:** резервные цены, история ставок, списки отслеживания, расширенные уведомления.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-mechanics.yaml
+    - id: integrations
+      title: Интеграции и уведомления
+      body: |
+        Сервис взаимодействует с кошельками (резервы/расчёты), уведомлениями (push/email) и аналитикой.
+        Предусмотрены события для мониторинга активности и оповещения игроков.
+      mechanics_links:
+        - mechanics/economy/auction-house/auction-database.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: brain_manager
+    changes: Определены сервисные интерфейсы, меры безопасности, метрики и дорожная карта аукционного дома.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
