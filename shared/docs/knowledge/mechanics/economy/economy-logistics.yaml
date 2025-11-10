@@ -1,0 +1,150 @@
+metadata:
+  id: economy-logistics
+  title: Экономика — Логистика и перевозки
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-10T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T03:36:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - logistics
+    - transportation
+    - economy
+  topics:
+    - supply-chain
+    - player-economy
+  related_systems:
+    - economy-service
+    - logistics-service
+    - insurance-service
+  related_documents:
+    - id: trading-routes-global
+      relation: references
+    - id: economy-contracts
+      relation: integrates_with
+    - id: economy-events
+      relation: influences
+  source: shared/docs/knowledge/mechanics/economy/economy-logistics.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+    - operations
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-09T03:36:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Игровой рынок требует логистической системы для перемещения товаров с учётом рисков и страхования.
+  goal: Описать типы транспорта, риски, страховые планы, структуру данных и API логистики.
+  essence: Логистический модуль покрывает выбор маршрутов и транспорта, управление конвоями, страхование и мониторинг SLA.
+  key_points:
+    - Несколько классов транспорта с различными скоростью, вместимостью и стоимостью.
+    - Модель рисков, страхования и эскорта позволяет балансировать безопасность и затраты.
+    - Lifecycle и API поддерживают расчёт, создание, трекинг и инциденты перевозок.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Логистика экономики отвечает за маршрутизацию грузов между регионами, работает в связке с контрактами и страховыми сервисами и учитывает мировые события.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-overview.yaml
+      assets: []
+    - id: transport_types
+      title: Типы транспорта
+      body: |
+        Описаны наземный, воздушный, железнодорожный, курьерский транспорт и самовывоз игрока с указанием скорости, вместимости, стоимости и рисков.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/trading-routes-global.md
+      assets: []
+    - id: transport_risks
+      title: Риски перевозки
+      body: |
+        Система моделирует атаки бандитов, аварии, таможенные задержки и погодные факторы. Для каждого риска указана вероятность, последствия и способы смягчения.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-events.yaml
+      assets: []
+    - id: insurance
+      title: Страхование
+      body: |
+        Три уровня страхования (basic, premium, full) определяют стоимость покрытия и франшизу. План страхования выбирается при создании перевозки.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-contracts.yaml
+      assets: []
+    - id: escort
+      title: Конвои и эскорт
+      body: |
+        Описаны варианты найма эскорта, бронированного транспорта и их влияние на вероятность атак. Стоимость эскорта учитывается в окончательной цене рейса.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/stock-exchange/stock-events.yaml
+      assets: []
+    - id: routes
+      title: Маршруты
+      body: |
+        Перевозки делятся на локальные, региональные и глобальные. Для каждого сценария заданы расстояния, время доставки, стоимость и базовый риск.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/trading-routes-global.md
+      assets: []
+    - id: data_model
+      title: Структура данных
+      body: |
+        Таблица `transport_shipments` хранит параметры груза, транспорт, страхование, эскорт и события риска. Приведена схема и ключевые поля.
+      mechanics_links:
+        - shared/docs/knowledge/implementation/backend/trade-system.yaml
+      assets: []
+    - id: lifecycle
+      title: Жизненный цикл перевозки
+      body: |
+        Описаны стадии DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED и LOST с привязкой к API и событиям `economy.logistics.*`.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-contracts.yaml
+      assets: []
+    - id: api
+      title: API и интеграции
+      body: |
+        Маршруты `/logistics/shipments/quote`, `/logistics/shipments`, `/logistics/shipments/{id}` и WebSocket поток обеспечивают расчёт, создание и трекинг перевозок, а также публикацию инцидентов.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-analytics.yaml
+      assets: []
+    - id: risk_engine
+      title: Управление рисками и SLA
+      body: |
+        Описаны вероятностные модели, динамическая смена маршрутов, интеграция со страхованием, мониторинг KPI и алертинг при отклонениях SLA.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-events.yaml
+      assets: []
+    - id: notifications
+      title: Уведомления и UX
+      body: |
+        Уведомления отправляются в HUD, push/email и webhooks гильдий. Клиенты получают статусы отправки, задержек и страховых выплат.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/economy/economy-contracts.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#economy-logistics
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-10
+    author: AI Brain Manager
+    changes: Конвертация документа по логистике в формат YAML с учётом рисков, API и SLA.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
