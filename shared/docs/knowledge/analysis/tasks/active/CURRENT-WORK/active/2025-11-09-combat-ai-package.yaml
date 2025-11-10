@@ -1,0 +1,130 @@
+metadata:
+  id: analysis-2025-11-09-combat-ai-package
+  title: "Combat AI Enemies Package"
+  document_type: analysis
+  category: gameplay
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-09T15:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: brain_manager
+      contact: brain.manager@necp.game
+  tags:
+    - combat
+    - ai
+    - raids
+  topics:
+    - gameplay-combat
+    - ai-design
+  related_systems:
+    - gameplay-service
+    - world-service
+    - analytics-service
+    - economy-service
+  related_documents:
+    - id: brain-combat-ai-enemies
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-combat-ai-package.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Боевой пакет AI требовал агрегирования статусов документов, контрактов и зависимостей."
+  goal: "Сконсолидировать REST, WebSocket, Kafka и модели хранения для AI врагов и рейдовых сценариев."
+  essence: "Комплект описывает готовность combat AI, shooter core и сопутствующих систем, фиксируя интерфейсы и блокеры."
+  key_points:
+    - "combat-ai-enemies и связанные документы переведены в актуальные статусы ready."
+    - "Определены ключевые каталоги API и каналы данных для рейдов."
+    - "Зафиксирован блокер на создание задач до получения разрешения."
+content:
+  sections:
+    - id: progress
+      title: "Прогресс пакета"
+      body: |
+        • Обновлены метаданные combat-ai-enemies: статус approved, api-readiness ready, приоритет highest.
+        • Зафиксированы REST интерфейсы `/combat/ai/...`, WebSocket `wss://api.necp.game/v1/gameplay/raid/{raidId}` и Kafka потоки `combat.ai.state`, `world.events.trigger`, `raid.telemetry`.
+        • D&D документы переведены в archived, новая спецификация combat-shooter-core в работе.
+        • readiness-трекеры обновлены для combat-комплекта (AI, shooter core, arenas, combat session, implants, combos, extraction, hacking).
+        • Зависимости между документами combat session, hacking, extraction, implants подтверждены.
+        • Подготовлен brief `2025-11-09-combat-systems-wave1-brief.md` со сводкой контрактов и зависимостей.
+      mechanics_links: []
+      assets: []
+    - id: document_summary
+      title: "Документы пакета"
+      body: |
+        | Документ | Версия | Каталог API | Фокус |
+        | --- | --- | --- | --- |
+        | combat-ai-enemies.md | 1.0.0 | `api/v1/gameplay/combat/ai-enemies.yaml` | REST/WS/Kafka и shooter телеметрия |
+        | combat-shooter-core.md | work-in-progress | `api/v1/gameplay/combat/shooter-core.yaml` | оружие, TTK, recoil, suppression |
+        | combat-session-backend.md | 1.0.0 | `api/v1/gameplay/combat/combat-session.yaml` | lifecycle, damage loop, события |
+        | combat-implants-types.md | 1.1.0 | `api/v1/gameplay/combat/implants.yaml` | импланты и модификаторы |
+        | combat-combos-synergies.md | 1.0.0 | `api/v1/gameplay/combat/combos-synergies.yaml` | синергии и комбинации |
+        | combat-extract.md | 1.3.0 | `api/v1/gameplay/combat/extraction.yaml` | extraction-механики |
+        | combat-hacking-networks.md | 1.0.0 | `api/v1/gameplay/combat/hacking/networks.yaml` | сетевое хакерство |
+        | combat-hacking-combat-integration.md | 1.0.0 | `api/v1/gameplay/combat/hacking/combat-integration.yaml` | интеграция хакерства в бою |
+        | combat-cyberspace.md | 1.0.0 | `api/v1/gameplay/combat/hacking/cyberspace.yaml` | cyberspace режимы |
+        | combat-shooting.md | 1.1.0 | `api/v1/gameplay/combat/shooting.yaml` | TTK, отдача |
+        | combat-stealth.md | 1.1.0 | `api/v1/gameplay/combat/stealth.yaml` | скрытность и обнаружение |
+        | combat-abilities.md | 1.2.0 | `api/v1/gameplay/combat/abilities.yaml` | активные способности |
+        | arena-system.md | 1.0.0 | `api/v1/gameplay/combat/arena-system.yaml` | арены и рейтинги |
+      mechanics_links: []
+      assets: []
+    - id: interfaces
+      title: "Интерфейсы пакета"
+      body: |
+        REST: `/combat/ai/profiles`, `/combat/ai/profiles/{id}`, `/combat/ai/profiles/{id}/telemetry`, `/combat/raids/{raidId}/phase`, `/combat/ai/encounter`.
+        WebSocket: `wss://api.necp.game/v1/gameplay/raid/{raidId}` с событиями PhaseStart, MechanicTrigger, PlayerDown, CheckRequired.
+        Kafka: `combat.ai.state`, `world.events.trigger`, `raid.telemetry`.
+        Схемы БД: `enemy_ai_profiles`, `enemy_ai_abilities`, `raid_boss_phases`.
+        Зависимости: combat-extract, combat-hacking, combat-combos, combat-implants, combat-session.
+      mechanics_links: []
+      assets: []
+    - id: wave_brief
+      title: "Combat Systems Wave 1"
+      body: |
+        • Приоритет пакета — критический, цель: подготовка боевого ядра gameplay-service.
+        • Оценка объёма — приблизительно 5–6 элементов (REST, WebSocket, Kafka, справочники).
+        • Готовые документы: combat-ai-enemies, combat-shooter-core, combat-abilities, combat-stealth, combat-freerun, combat-combos-synergies, combat-extract, combat-hacking-networks, combat-hacking-combat-integration, combat-session-backend, arena-system.
+        • Рекомендуемое разбиение охватывает профили AI, жизненный цикл рейдов, телеметрию, Kafka потоки, shooter core и метаданные способностей.
+        • Интеграции: gameplay-service, world-service, economy-service, analytics-service и готовые фронтенд-модули combat.
+        • Контрольные вопросы: SLA для WebSocket, shooter метрики, маппинг способностей ↔ импланты/экипировка.
+      mechanics_links: []
+      assets: []
+    - id: blockers
+      title: "Блокеры и наблюдения"
+      body: |
+        • Создание задач в API-SWAGGER приостановлено до отдельного разрешения.
+        • Требуется согласование shooter метрик с narrative и progression командами.
+        • Подготовка сводной таблицы соответствий способностей, имплантов и экипировки остаётся в работе.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-2025-11-09-combat-ai-package
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-09
+    author: brain_manager
+    changes: "Конвертировано из 2025-11-09-combat-ai-package.md и структурировано по шаблону знаний."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
