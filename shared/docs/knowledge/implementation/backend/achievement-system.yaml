@@ -1,11 +1,11 @@
 metadata:
   id: achievement-system
-  title: Backend системы достижений
+  title: 'Achievement System — Система достижений'
   document_type: implementation
-  category: systems
+  category: backend
   status: approved
   version: '1.0.0'
-  last_updated: 2025-11-07T05:20:00Z
+  last_updated: 2025-11-11T00:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-07T05:20:00Z
   owners:
@@ -16,89 +16,105 @@ metadata:
     - engagement
     - backend
   topics:
-    - tracking
-    - rewards
     - event-driven
+    - player-motivation
   related_systems:
     - world-service
     - notification-service
     - mail-service
   related_documents:
-    - id: quest-system
-      relation: supports
-    - id: progression-backend
+    - id: progression-skills
       relation: references
-  source: ''
+    - id: stock-exchange-overview
+      relation: references
+    - id: mentorship-system
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/achievement-system.md
   visibility: internal
   audience:
+    - backend
     - concept
     - gameplay
-    - backend
-  risk_level: medium
+  risk_level: high
 review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-07T05:20:00Z
+      reviewed_at: ''
       status: approved
   next_actions: []
 summary:
-  problem: Требуется система, мотивирующая игроков выполнять разнообразные действия и отражающая прогресс.
-  goal: Реализовать гибкую архитектуру достижений с отслеживанием событий и выдачей наград.
-  essence: World-service подписывается на события из игры, обновляет прогресс достижений и выдаёт награды через уведомления и почту.
+  problem: Требуется единая система достижений, мотивирующая игроков и объединяющая события из всех сервисов.
+  goal: Описать архитектуру, категории достижений, типы наград и взаимодействие с микросервисами.
+  essence: Событийно-ориентированная платформа, отслеживающая прогресс и выдающая награды, титулы и уведомления.
   key_points:
-    - Категории достижений охватывают бой, исследование, экономику, социальные и PvP сценарии.
-    - Событийный подход позволяет реагировать на действия игроков в реальном времени.
-    - Награды включают титулы, валюту, предметы и престижные статусы.
+    - world-service потребляет события от боёв, квестов, экономики, социальных действий.
+    - Определены категории, типы и примеры достижений с наградами.
+    - Прописаны API маршруты, форматы событий и требования к данным.
 content:
   sections:
     - id: architecture
-      title: Микросервисная архитектура
+      title: 'Микросервисная архитектура'
       body: |
-        Achievement service развёрнут в world-service (порт 8086) и доступен по маршруту
-        `/api/v1/world/achievements/*`. Он подписывается на события боя, квестов, торговли,
-        социального взаимодействия и прогрессии. При разблокировке достижений сервис отправляет
-        уведомления и может инициировать выдачу наград через mail-service.
-      mechanics_links: []
+        Achievement-service работает на порту 8086, публикует API `/api/v1/world/achievements/*`, подписывается на события (combat, quest, trade, friend, character) и взаимодействует с notification- и mail-service.
+      mechanics_links:
+        - implementation/backend/mail-system.yaml
+      assets: []
+    - id: concept
+      title: 'Концепция и цели'
+      body: |
+        Достижения повышают мотивацию, удержание, открывают возможности для престижа и вознаграждений. Поддерживаются титулы, баффы и внутриигровые ресурсы.
+      mechanics_links:
+        - mechanics/progression/progression-skills.yaml
       assets: []
     - id: categories
-      title: Категории и примеры
+      title: 'Категории достижений'
       body: |
-        Система содержит категории Combat, Exploration, Economic, Social, Quests, Progression,
-        PvP и Special. Каждая категория имеет линейку достижений от простых до легендарных
-        целей. Прогресс хранится по игроку, а условия выражаются в виде событий и числовых
-        порогов (например, количество убийств, посещённых локаций, заработанных средств).
+        Восемь направлений (Combat, Exploration, Economic, Social, Quests, Progression, PvP, Special) с примерами и наборами целей, включая прогресс и легендарные этапы.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: types
+      title: 'Типы достижений'
+      body: |
+        Описаны стандартные, прогрессивные и повторяющиеся достижения: структуры данных, примеры payload и наград.
       mechanics_links: []
       assets: []
-    - id: tracking
-      title: Отслеживание и награды
+    - id: rewards
+      title: 'Награды и титулы'
       body: |
-        Сервис отслеживает достижения через event bus, обновляет счётчики и фиксирует
-        завершённые достижения. При разблокировке выдаются награды (опыт, титулы, предметы),
-        отправляется уведомление и, при необходимости, письмо с вложениями. Настройки
-        сложности и редкости управляют мотивацией и планированием контента.
+        Награды включают валюту, предметы, титулы, байнд на фракционную репутацию, опыт и визуальные элементы. Система поддерживает ежедневные/еженедельные сюрпризы и сезонные таблицы лидеров.
+      mechanics_links: []
+      assets: []
+    - id: data_api
+      title: 'Данные и API'
+      body: |
+        Зафиксированы таблицы `achievement_definitions`, `player_achievement_progress`, `player_titles`, события `achievement.unlocked` и REST-методы `GET/POST /achievements`, `GET /players/{id}/achievements`.
+      mechanics_links: []
+      assets: []
+    - id: analytics
+      title: 'Телеметрия и аналитика'
+      body: |
+        Логируются и анализируются метрики unlock rate, время достижения и корреляции с удержанием. Интеграция с BI и A/B тестами.
       mechanics_links: []
       assets: []
 appendix:
   glossary: []
-  references:
-    - type: api
-      path: api/v1/world/achievements/
-    - type: repository
-      path: shared/code/backend/world/achievement-service/
-  decisions:
-    - id: adr-achievement-service
-      summary: Утверждён событийный сервис достижений с поддержкой категорий и наград.
+  references: []
 implementation:
-  needs_task: true
+  needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-07
-    author: Concept Director
-    changes: Утверждена архитектура и категории системы достижений.
+    date: 2025-11-06
+    author: concept_director
+    changes: 'Первичное описание системы достижений и взаимодействий.'
+  - version: '1.0.1'
+    date: 2025-11-11
+    author: concept_director
+    changes: 'Конвертация в YAML, структурирование категорий и API.'
 validation:
   checksum: ''
   schema_version: '1.0'
