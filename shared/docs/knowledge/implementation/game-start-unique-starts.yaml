@@ -1,9 +1,9 @@
 metadata:
   id: implementation-game-start-unique-starts
-  title: Уникальные старты для разных комбинаций
+  title: "Уникальные старты для комбинаций"
   document_type: implementation
-  category: gameplay
-  status: draft
+  category: game-start
+  status: in-review
   version: '1.0.0'
   last_updated: 2025-11-07T06:30:00Z
   concept_approved: false
@@ -13,29 +13,30 @@ metadata:
       contact: concept@necp.game
   tags:
     - onboarding
-    - combinatorics
-    - starting-experience
+    - systems-design
+    - narrative
   topics:
-    - player-onboarding
-    - quest-flow
+    - game_start
+    - combinatorial_design
   related_systems:
-    - quest-service
-    - reputation-service
     - narrative-service
+    - gameplay-service
   related_documents:
-    - id: implementation-game-start-by-origin
+    - id: implementation-game-start-by-class
       relation: references
     - id: implementation-game-start-by-faction
       relation: references
-    - id: implementation-game-start-by-class
+    - id: implementation-game-start-by-origin
       relation: references
+    - id: implementation-mvp-data-json-unique-starts
+      relation: provides_data_for
   source: shared/docs/knowledge/implementation/game-start-unique-starts.md
   visibility: internal
   audience:
     - concept
     - gameplay
     - narrative
-  risk_level: medium
+  risk_level: high
 review:
   chain:
     - role: concept_director
@@ -44,68 +45,70 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Не была описана система формирования уникальных стартов для всех комбинаций происхождения, фракции и класса.
-  goal: Зафиксировать структуру данных и паттерны для 45 комбинаций стартов.
-  essence: Комбинация происхождения, фракции и класса порождает уникальный набор локаций, NPC, квестов и репутации.
+  problem: "Не было целостной схемы 45 уникальных стартов, объединяющей происхождения, фракции и классы."
+  goal: "Определить структуру данных и правила генерации стартов для всех комбинаций."
+  essence: "Система комбинирует происхождение, фракцию и класс, формируя уникальные локации, NPC, квесты и репутацию."
   key_points:
-    - Система охватывает 3 происхождения, 5 фракций и 3 класса (45 стартов).
-    - Каждый старт состоит из локации, NPC, квеста, снаряжения, репутации и диалогов.
-    - Предусмотрен JSON-формат для сериализации стартов.
-    - Документ задаёт примеры и паттерны для дальнейшей автоматизации.
+    - "45 комбинаций формируются по формуле 3 происхождения × 5 фракций × 3 класса."
+    - "Каждый старт описывается структурой с локацией, NPC, квестом, диалогом, репутацией и снаряжением."
+    - "Документ синхронизирован с JSON данными `unique-starts.json` для автоматизированной генерации."
 content:
   sections:
-    - id: components
-      title: 'Базовые компоненты стартов'
+    - id: overview
+      title: "Общее описание"
       body: |
-        Комбинация происхождение × фракция × класс определяет локацию, NPC, квест, репутацию и диалог.
-        Этот раздел перечисляет доступные происхождения, фракции и классы и показывает их влияние.
+        Документ фиксирует рамки системы уникальных стартов, описывая количество комбинаций и базовые
+        компоненты, которые формируют стартовый опыт игрока при создании персонажа.
+      mechanics_links: []
+      assets: []
+    - id: components
+      title: "Компоненты системы"
+      body: |
+        Система опирается на три происхождения (Street Kid, Corpo, Nomad), пять фракций (Arasaka,
+        Militech, Valentinos, Maelstrom, NCPD) и три класса (Solo, Netrunner, Techie). Комбинации
+        образуют 45 уникальных стартов.
       mechanics_links:
         - implementation/game-start-by-origin.yaml
         - implementation/game-start-by-faction.yaml
         - implementation/game-start-by-class.yaml
       assets: []
     - id: start_structure
-      title: 'Структура данных старта'
+      title: "Структура стартового сценария"
       body: |
-        Старты описываются в JSON-формате с идентификатором, параметрами, локацией, NPC, квестом,
-        репутацией и стартовым снаряжением. Этот формат используется в `mvp-data-json/unique-starts.json`.
+        Каждый старт хранится как объект, содержащий идентификатор, происхождение, фракцию, класс,
+        стартовую локацию, первого NPC, первый квест, вступительный диалог, стартовую репутацию и
+        набор снаряжения. Пример структуры включён для синхронизации с JSON данными.
+      mechanics_links: []
+      assets: []
+    - id: differentiation
+      title: "Логика различий"
+      body: |
+        Происхождения определяют социальный контекст и бонусы репутации, фракции задают локации и
+        сюжетные мотивы, а классы определяют тип первого квеста и снаряжение. Примеры демонстрируют,
+        как уникальные комбинации формируют историю персонажа.
+      mechanics_links: []
+      assets: []
+    - id: examples
+      title: "Примеры стартов"
+      body: |
+        Приведены контрольные сценарии: Street Kid + Arasaka + Solo, Corpo + Valentinos + Netrunner
+        и Nomad + NCPD + Techie. Они служат эталонами для баланса и проверки UX.
       mechanics_links:
         - implementation/mvp-data-json/unique-starts.json
       assets: []
-    - id: differentiation_logic
-      title: 'Логика различий'
+    - id: future_work
+      title: "Дальнейшие шаги"
       body: |
-        Подразделы описывают, как происхождение даёт социальные связи, фракция формирует задачи и
-        репутацию, а класс задаёт тип задания и снаряжение. Механика позволяет масштабировать систему.
-      mechanics_links:
-        - mechanics/social/reputation-formulas.yaml
-        - mechanics/combat/combat-abilities.md
-      assets: []
-    - id: examples
-      title: 'Примеры стартов'
-      body: |
-        Примеры показывают реализацию отдельных комбинаций (Street Kid + Arasaka + Solo,
-        Corpo + Valentinos + Netrunner, Nomad + NCPD + Techie), что иллюстрирует применение шаблонов.
-      mechanics_links:
-        - implementation/game-first-quest-intro.yaml
-      assets: []
-    - id: expansion_notes
-      title: 'План расширения'
-      body: |
-        Требуется детализировать все 45 стартов, подготовить JSON-данные и расширить ветвление диалогов.
-        Эти доработки находятся в дорожной карте контентной команды.
+        Необходимо заполнить полный набор описаний 45 комбинаций, сгенерировать расширенный JSON
+        файл и уточнить ветвления диалогов в зависимости от выбранных параметров.
       mechanics_links: []
       assets: []
 appendix:
   glossary: []
-  references:
-    - game-start-by-origin.md
-    - game-start-by-faction.md
-    - game-start-by-class.md
-    - ../mvp-data-json/unique-starts.json
+  references: []
   decisions: []
 implementation:
-  needs_task: true
+  needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml#implementation-game-start-unique-starts
   blockers: []
@@ -113,7 +116,7 @@ history:
   - version: '1.0.0'
     date: 2025-11-05
     author: concept_team
-    changes: Конвертировано из game-start-unique-starts.md и адаптировано под формат знаний.
+    changes: "Сконвертировано из game-start-unique-starts.md и структурировано по шаблону знаний."
 validation:
   checksum: ''
   schema_version: '1.0'
