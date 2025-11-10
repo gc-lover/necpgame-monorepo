@@ -1,0 +1,147 @@
+metadata:
+  id: mechanics-stock-events
+  title: Биржевые события и влияние на цены
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-07T16:19:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - stock-exchange
+    - economy
+    - dynamic-events
+  topics:
+    - market_simulation
+    - player_economy
+  related_systems:
+    - economy-service
+    - quest-service
+    - analytics-service
+    - notification-service
+  related_documents:
+    - id: mechanics-stock-exchange-overview
+      relation: references
+    - id: mechanics-stock-corporations
+      relation: references
+    - id: mechanics-stock-integration
+      relation: extends
+  source: shared/docs/knowledge/mechanics/economy/stock-exchange/stock-events.md
+  visibility: internal
+  audience:
+    - concept
+    - economy
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-09
+      status: approved
+  next_actions: []
+summary:
+  problem: Игровые события должны предсказуемо влиять на котировки корпораций и становиться частью меты инвестиций.
+  goal: Описать типы событий, формулы влияния и требования к данным для экономики акций.
+  essence: Система переводит результаты квестов, войн и макроэкономики в изменения стоимости акций с учётом модификаторов.
+  key_points:
+    - События классифицированы по источникам и уровню воздействия.
+    - Формулы учитывают базовый эффект, модификаторы и длительность.
+    - База данных и API поддерживают отслеживание активных и исторических влияний.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Документ описывает влияние игровых событий на биржевые котировки. Система подключает результаты квестов, фракционных войн, территориальных изменений, коррупционных скандалов, технологических прорывов и макроэкономики.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: event_types
+      title: Типы событий
+      body: |
+        Quest Events отражают исходы сюжетных и побочных заданий. Faction Wars моделируют корпоративные конфликты с поэтапной эскалацией. Territory Control фиксирует переходы районов. Corporate Scandals и Technological Breakthroughs воздействуют на репутацию и перспективы. Economic Events охватывают общегородские кризисы или подъёмы.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: impact_examples
+      title: Примеры воздействий
+      body: |
+        Примеры демонстрируют изменение процентов по акциям Arasaka, Militech, Kang Tao, Trauma Team и другим корпорациям в зависимости от исходов квестов, войн и территориальных перемен. Сценарии Buy the Dip, Sell Before Disaster и Event Speculation иллюстрируют стратегии игроков и ожидаемые прибыли.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: formulas
+      title: Формулы влияния
+      body: |
+        Новая цена рассчитывается как current_price * (1 + event_impact_percent + modifiers). Модификаторы учитывают сектор, размер корпорации и масштаб участия игроков. Примеры показывают, как количество участников увеличивает эффект саботажа или как победа корпорации суммирует бонусы от территорий и устранения лидеров.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: duration
+      title: Продолжительность
+      body: |
+        Влияние делится на мгновенное, краткосрочное, долгосрочное и перманентное. Мгновенные изменения происходят сразу после события и могут частично откатиться. Краткосрочные отрабатываются за неделю. Долгосрочные тянутся неделями, а перманентные фиксируют банкротства и делистинг.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: data_model
+      title: Структура данных
+      body: |
+        Таблицы stock_event_impacts и stock_event_modifiers хранят базовый процент воздействия, длительность, тип кривой затухания и набор модификаторов. Связи обеспечивают каскадное удаление и аналитическое отслеживание изменений.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: pipeline
+      title: Пайплайн применения
+      body: |
+        Триггером выступают события economy-events или квестовые сигналы. event-impact-service определяет корпорации и базовый эффект, применяет модификаторы и записывает результат. pricing-engine обновляет цены, job снижает эффект со временем, а аналитика отображает аннотации.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: api
+      title: API и события
+      body: |
+        REST эндпоинты предоставляют доступ к активным воздействиям, истории и административным настройкам. Контур включает simulate для проверки гипотез. Event bus economy.stock_events.* публикует impact_created, impact_updated, impact_expired и impact_reversed.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: monitoring
+      title: Мониторинг
+      body: |
+        Метрики ImpactLatency, MaxDrawdown и EventAppliedCount отслеживают производительность. Алерты срабатывают при задержках более 30 секунд или отклонении фактического эффекта от модели более десяти процентов. Audit trail фиксирует ручные вмешательства.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции
+      body: |
+        Quest-service передаёт результаты миссий, economy-events транслирует макрособытия, analytics-service аннотирует графики и формирует отчёты, notification-service информирует инвесторов об изменениях портфелей.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-exchange-overview.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Добавлены схемы данных, пайплайн, API и мониторинг для событий биржи.
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_director
+    changes: Сформирована базовая классификация событий и формулы влияния на котировки.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
