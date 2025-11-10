@@ -1,0 +1,143 @@
+metadata:
+  id: player-orders-creation-detailed
+  title: Система заказов — создание заказа (детально)
+  document_type: mechanics
+  category: social
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T09:53:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T09:53:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - player-orders
+    - social-contracts
+    - budgeting
+  topics:
+    - order_system
+    - contract_creation
+  related_systems:
+    - social-service
+    - economy-service
+    - npc-service
+  related_documents:
+    - id: player-orders-system-detailed
+      relation: references
+    - id: player-orders-reputation-detailed
+      relation: complements
+    - id: npc-hiring-system-detailed
+      relation: complements
+  source: shared/docs/knowledge/mechanics/social/player-orders-creation-детально.md
+  visibility: internal
+  audience:
+    - concept
+    - systems
+    - economy
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-08T09:53:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось детально описать мастер создания игроком заказа с учётом бюджета, рисков и интеграций.
+  goal: Формализовать этапы подготовки брифа, расчёта бюджета и публикации для автоматизации в social-service.
+  essence: Документ фиксирует конвейер создания заказа, формулы бюджета, режимы публикации и API/UX требования.
+  key_points:
+    - Описан многошаговый процесс от предусловий до публикации с проверками и гарантиями.
+    - Приведены формулы расчёта бюджета, escrow и комиссий с JSON схемами.
+    - Зафиксированы REST/Kafka контуры, UX wizard и интеграции с economy/relationships сервисами.
+content:
+  sections:
+    - id: pipeline
+      title: 'Конвейер создания заказа'
+      body: |
+        Конвейер охватывает подготовку брифа, валидацию, оценку сложности, выбор публикации и гарантий. Оркестрация выполняется social-service с вызовами economy-service и npc-service.
+      mechanics_links:
+        - mechanics/social/player-orders-system-detailed.yaml
+      assets: []
+    - id: prerequisites
+      title: 'Предусловия'
+      body: |
+        Требования к рейтингу, финансовому покрытию и авторизации фракций фиксируют доступ к созданию заказов.
+      mechanics_links:
+        - mechanics/social/player-orders-reputation-detailed.yaml
+      assets: []
+    - id: templates
+      title: 'Шаблоны заказов'
+      body: |
+        Справочник шаблонов (боевой, хакерский, экономический, социальный, исследовательский) задаёт предзаполненные поля и подсказки для мастера.
+      mechanics_links:
+        - mechanics/social/player-orders-system.yaml
+      assets: []
+    - id: brief_parameters
+      title: 'Параметры брифа'
+      body: |
+        Определены поля цели, сроков, бюджета, рисков, команды и приватности. Документы загружаются через content-service.
+      mechanics_links:
+        - mechanics/social/player-orders-creation.yaml
+      assets: []
+    - id: complexity_estimation
+      title: 'Оценка сложности'
+      body: |
+        Сложность рассчитывается по данным world-service и factions-service. Результат влияет на рекомендованный бюджет и допуск исполнителей.
+      mechanics_links:
+        - mechanics/social/player-orders-world-impact.yaml
+      assets: []
+    - id: budget_formula
+      title: 'Расчёт бюджета'
+      body: |
+        Приведена формула BaseReward с модификаторами риска, рынка и времени, а также правила escrow и комиссий. Указана JSON схема бюджета.
+      mechanics_links:
+        - mechanics/economy/economy-analytics.yaml
+      assets: []
+    - id: publication_modes
+      title: 'Режимы публикации'
+      body: |
+        Описаны публичный, пригласительный и закрытый режимы, включая адресные публикации через relationships-system.
+      mechanics_links:
+        - mechanics/social/relationships-system.yaml
+      assets: []
+    - id: validation_guarantees
+      title: 'Валидация и гарантии'
+      body: |
+        Содержит проверки юридических ограничений, фильтрации контента, санкций и уровней страхования escrow.
+      mechanics_links:
+        - mechanics/social/security-compliance.yaml
+      assets: []
+    - id: ux_flow
+      title: 'UX-поток'
+      body: |
+        Мастер, подсказки, индикаторы готовности и симуляция бюджета обеспечивают удобство создания заказа. Поддержаны черновики и интеграции с relationships-service.
+      mechanics_links:
+        - mechanics/social/player-orders-ui.yaml
+      assets: []
+    - id: api_integrations
+      title: 'API и события'
+      body: |
+        Приведены REST эндпоинты создания, оценки, валидации и публикации заказов, а также основные Kafka события и подписчики.
+      mechanics_links:
+        - mechanics/social/player-orders-system-detailed.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#CON-2025-223
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: concept_director
+    changes: Детализирован мастер создания заказа, формулы бюджета и интеграции; подтверждена готовность к API задачам.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
