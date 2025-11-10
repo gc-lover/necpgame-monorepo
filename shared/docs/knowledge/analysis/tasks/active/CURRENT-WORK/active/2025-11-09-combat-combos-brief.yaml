@@ -1,0 +1,138 @@
+metadata:
+  id: analysis-2025-11-09-combat-combos-brief
+  title: "Combat Combos & Synergies Brief"
+  document_type: analysis
+  category: gameplay
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-09T15:05:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: brain_manager
+      contact: brain.manager@necp.game
+  tags:
+    - combat
+    - combos
+    - synergies
+  topics:
+    - gameplay-combat
+    - team-coordination
+  related_systems:
+    - gameplay-service
+    - analytics-service
+    - economy-service
+  related_documents:
+    - id: brain-combat-combos-synergies
+      relation: references
+  source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-combat-combos-brief.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Комбо и синергии требовали структурированного брифа с интерфейсами и ограничениями."
+  goal: "Описать REST, WebSocket, Event Bus и модели хранения для каталога комбо и синергий."
+  essence: "Документ фиксирует каталоги комбо, интерфейсы активации и аналитические требования."
+  key_points:
+    - "Готовность документа подтверждена: approved и api-readiness ready."
+    - "REST backlog включает каталоги, активации, синергии, лоадауты и аналитику."
+    - "Предусмотрены события, хранилища и зависимости от abilities, implants, progression и quest engine."
+content:
+  sections:
+    - id: readiness
+      title: "Сводка готовности"
+      body: |
+        • OpenAPI каталог: `api/v1/gameplay/combat/combos-synergies.yaml` (микросервис gameplay-service).
+        • Фронтенд модуль: `modules/combat/combos`.
+        • Статус документа: approved, api-readiness ready (проверено 2025-11-09 02:48).
+        • Область: комбо способности, командные синергии, оборудование, импланты, тайминговые комбинации, scoring.
+      mechanics_links: []
+      assets: []
+    - id: rest_backlog
+      title: "REST backlog"
+      body: |
+        | Endpoint | Назначение | Приоритет | Примечания |
+        | --- | --- | --- | --- |
+        | `GET /combat/combos/catalog` | Каталог доступных комбо | P0 | Описание, требования, бонусы, сложность |
+        | `GET /combat/combos/{comboId}` | Детальная информация о комбо | P0 | |
+        | `POST /combat/combos/activate` | Регистрация активации комбо | P0 | Payload включает участников, контекст, scoring |
+        | `POST /combat/combos/synergy` | Применение синергии | P0 | Возвращает модификаторы, cooldown adjustments |
+        | `GET /combat/combos/loadout` | Настройка активных комбо | P1 | |
+        | `POST /combat/combos/loadout` | Обновление конфигурации | P1 | |
+        | `POST /combat/combos/score` | Отправка результатов scoring | P1 | Используется для рейтингов |
+        | `GET /combat/combos/analytics` | Метрики эффективности | P2 | |
+        REST требования: проверка доступности комбо, учёт синергий, управление scoring параметрами (executionDifficulty, damageOutput, visualImpact, teamCoordination).
+      mechanics_links: []
+      assets: []
+    - id: websocket
+      title: "WebSocket"
+      body: |
+        • `wss://api.necp.game/v1/combat/combos/{sessionId}` — поток активированных комбо и синергий.
+        • Дополнительный канал `player/{characterId}` рассматривается для персональных уведомлений.
+        • Payload: comboId, participants, success, bonusEffects, score, chain.
+      mechanics_links: []
+      assets: []
+    - id: event_bus
+      title: "Event Bus"
+      body: |
+        • `combat.combo.activated` — участники, тип, бонусы, damage multiplier.
+        • `combat.combo.synergy` — фиксация синергий (ability/equipment/implant).
+        • `combat.combo.failure` — аналитика неудачных попыток.
+        • `combat.combo.score` — итоговый рейтинг и очки.
+        • Входящие события: `combat.ability.activated`, `combat.freerun.actions`, `combat.stealth.action`, `quest.trigger`, `combat.ai.state`.
+      mechanics_links: []
+      assets: []
+    - id: storage
+      title: "Хранение"
+      body: |
+        • `combo_catalog` — тип, требования, бонусы, сложность, cooldown.
+        • `combo_activations` — журнал активаций и результатов.
+        • `combo_synergies` — связи ability/implant/equipment.
+        • `combo_loadouts` — настройки персонажей.
+        • `combo_scoring_history` — история scoring.
+        • `combo_failure_log` — причины неудач.
+      mechanics_links: []
+      assets: []
+    - id: dependencies
+      title: "Зависимости и ограничения"
+      body: |
+        • Зависимости: combat-abilities, combat-implants-types, combat-shooting, combat-stealth, combat-freerun, progression-backend, quest-engine, analytics-service, economy-service.
+        • Требования: валидация участников, управление cooldown, поддержка chain-комбо, логирование Legendary combo, расширяемость каталога.
+      mechanics_links: []
+      assets: []
+    - id: planning
+      title: "Наблюдения для дальнейшей проработки"
+      body: |
+        • Синхронизация payload с брифами по abilities, freerun и stealth остаётся в повестке.
+        • Структура стадий обсуждается в разрезе P0 (catalog/activate/synergy), P1 (loadout/score), P2 (analytics/rating).
+        • Рассматриваются взаимодействия с combat-ai-enemies для реакции врагов и квестовыми достижениями.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#analysis-2025-11-09-combat-combos-brief
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-09
+    author: brain_manager
+    changes: "Конвертировано из 2025-11-09-combat-combos-brief.md и структурировано по шаблону знаний."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
