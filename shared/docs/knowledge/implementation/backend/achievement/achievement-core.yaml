@@ -1,0 +1,109 @@
+metadata:
+  id: backend-achievement-core
+  title: 'Achievement System: Core Mechanics'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T02:38:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T01:59:00Z
+  owners:
+    - role: backend_architect
+      contact: backend@necp.game
+  tags:
+    - achievements
+    - progression
+    - retention
+  topics:
+    - player-engagement
+    - reward-systems
+  related_systems:
+    - achievement-service
+    - event-bus
+    - notification-service
+  related_documents:
+    - id: backend-achievement-tracking
+      relation: references
+    - id: backend-achievement-examples-api
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/achievement/achievement-core.md
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+    - analytics
+    - operations
+  risk_level: high
+review:
+  chain:
+    - role: backend_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужна масштабируемая система достижений, поддерживающая сотни сценариев и удержание игроков.
+  goal: Описать ядро подсистемы достижений с типами, категориями, моделями данных и редкостями наград.
+  essence: Документ фиксирует архитектуру обработки событий, структуру категорий, схему данных и правила наград.
+  key_points:
+    - Единый обработчик событий с асинхронными слушателями и проверкой условий.
+    - Поддержка одноразовых, прогрессивных, сезонных, скрытых и метадостижений.
+    - Нормализованная схема БД с таблицами `achievements`, `player_achievements`, `achievement_categories`.
+    - Редкости задают стоимость в очках и визуальные параметры наград.
+content:
+  sections:
+    - id: architecture
+      title: 'Архитектура и поток событий'
+      body: |
+        Игровые события публикуются в Event Bus, где асинхронный Achievement Listener сопоставляет их с релевантными достижениями, обновляет прогресс, проверяет условия и выдаёт награды. После unlock создаются уведомления для UI.
+      mechanics_links: []
+      assets: []
+    - id: achievement_types
+      title: 'Типы достижений'
+      body: |
+        Система поддерживает одноразовые, прогрессивные с тировой шкалой, скрытые, сезонные и метадостижения. Каждый тип определяет способ подсчёта и отображения, а также влияет на UX (например, скрытые не раскрываются до получения).
+      mechanics_links: []
+      assets: []
+    - id: categories
+      title: 'Категории и примеры'
+      body: |
+        Категории охватывают Combat, Quests, Social, Economy, Exploration, Skills, Collections и Special. Для каждой категории заданы примеры и подсистемы: убийства, репутация, коллекции, скрытые точки и пр.
+      mechanics_links: []
+      assets: []
+    - id: data_model
+      title: 'Схема данных'
+      body: |
+        Таблица `achievements` хранит описание, тип, условия, награды и параметры отображения. `player_achievements` содержит прогресс, статус, временные метки и контекст. `achievement_categories` управляет сортировкой и иконографикой категорий. Предусмотрены индексы по категории, типу, редкости и сезонности.
+      mechanics_links: []
+      assets: []
+    - id: rarity_rewards
+      title: 'Редкости и награды'
+      body: |
+        Редкости COMMON -> LEGENDARY задают диапазон очков (10-250) и цветов. Награды включают титулы, косметику, перки, валюту и предметы. Приведён формат JSON для описания условий и наград.
+      mechanics_links: []
+      assets: []
+    - id: integration
+      title: 'Интеграция сервисов'
+      body: |
+        AchievementService взаимодействует с репозиторием, событийной шиной и Notification Service. Представлен пример сервиса с методами `trackProgress`, `unlockAchievement`, `grantRewards` и интеграцией с аналитикой.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Задокументировано ядро системы достижений, типы, категории и схема данных.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
