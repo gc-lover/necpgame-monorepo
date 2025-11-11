@@ -1,40 +1,36 @@
 metadata:
-  id: analysis-quest-engine-package
-  title: Подготовка пакета для quest engine backend
+  id: analysis-2025-11-09-quest-engine-package
+  title: "Пакет Quest Engine Backend"
   document_type: analysis
-  category: operations
-  status: draft
+  category: quest-backend
+  status: in-review
   version: '1.0.0'
   last_updated: 2025-11-09T14:05:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
     - role: brain_manager
-      contact: brain@necp.game
+      contact: brain.manager@necp.game
   tags:
     - quests
-    - gameplay-service
     - backend
+    - api
+    - events
   topics:
-    - gameplay
     - quest-engine
+    - gameplay-service
   related_systems:
     - gameplay-service
-    - character-service
     - economy-service
     - social-service
     - analytics-service
-  related_documents:
-    - id: quest-engine-backend
-      relation: references
-    - id: quest-system
-      relation: references
+  related_documents: []
   source: shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-quest-engine-package.md
   visibility: internal
   audience:
-    - brain-team
-    - quest-design
-  risk_level: medium
+    - concept
+    - backend
+  risk_level: high
 review:
   chain:
     - role: brain_manager
@@ -43,72 +39,74 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Необходимо подготовить пакет задач для backend квестового движка без запуска постановки в API-SWAGGER.
-  goal: Зафиксировать готовность документации, REST/WS/Event контрактов и зависимостей, чтобы сформировать бриф ДУАПИТАСК.
-  essence: Концентрированное описание прогресса и чернового брифа для запуска quest engine в shooter-модели.
+  problem: "Нужно подготовить пакет задач для backend quest engine без D&D зависимостей."
+  goal: "Собрать REST, WebSocket, Event Bus, хранение и зависимости для постановки задач ДУАПИТАСК."
+  essence: "Документ объединяет прогресс по `quest-engine-backend`, описывает контуры API и хранение, а также влияние на связанные сервисы."
   key_points:
-    - Документ `.BRAIN/quest-engine-backend.md` подтверждён, каталоги и фронтенд синхронизированы.
-    - Перечислены REST, WebSocket, Event Bus и storage требования.
-    - Определены зависимости с другими сервисами и дальнейшие шаги.
+    - "Quest engine базируется на gameplay-service и фронтенд модуле `modules/quests`."
+    - "REST включает старт, прогресс, диалоги и финализацию квестов."
+    - "WebSocket каналы и события позволяют пушить обновления клиента и телеметрию."
+    - "Хранение охватывает quest_instances, objectives, dialogue_state, skill tests и награды."
 content:
   sections:
     - id: progress
-      title: Прогресс
+      title: "Текущий прогресс"
       body: |
-        Подтверждён статус `ready` базового документа, уточнены зависимости между character, economy, social, combat и
-        analytics сервисами. Определены ключевые события Event Bus и REST точки для размещения в будущих заданиях.
+        Перепроверен `.BRAIN/05-technical/backend/quest-engine-backend.md` (ready), синхронизированы
+        материалы `quest-system.md` и `combat-shooter-core.md`, матрица зависимостей дополнена.
       mechanics_links: []
       assets: []
-    - id: handoff_overview
-      title: Резюме для передачи
+    - id: api
+      title: "REST и WebSocket"
       body: |
-        Каталог OpenAPI `api/v1/gameplay/quests/quest-engine.yaml` и фронтенд `modules/quests` готовы. Блокирующих задач нет,
-        очереди readiness обновлены. Следующий шаг — передача брифа после открытия окна задач.
+        Перечислены эндпоинты старт/прогресс/диалоги/завершение квестов и WebSocket каналы для
+        обновлений по instance и игроку.
       mechanics_links: []
       assets: []
-    - id: brief_rest
-      title: REST и WebSocket (черновой бриф)
+    - id: events
+      title: "Событийная модель"
       body: |
-        REST эндпоинты включают старт/завершение квестов, обработку целей, диалоговых выборов, управление флагами и skill
-        tests. Для realtime предусмотрены WebSocket каналы на quest instance и на персонажа.
+        Описаны исходящие события (`quest:started`, `quest:objective-progress`, `quest:completed`,
+        `quest:failed`) и входящие триггеры из combat, inventory, economy, social и world сервисов.
       mechanics_links: []
       assets: []
-    - id: events_storage
-      title: Event Bus и хранение
+    - id: storage
+      title: "Хранение и данные"
       body: |
-        Исходящие события `quest:*` покрывают старт, прогресс, завершение, диалог и проверки навыков; входящие события приходят
-        из combat, inventory, economy, social и world сервисов. Хранилище описывает `quest_instances`, `quest_objectives_state`,
-        `dialogue_state`, `skill_test_results`, `quest_rewards_history` и `quest_dependencies_cache`.
+        Структура таблиц `quest_instances`, `quest_objectives_state`, `dialogue_state`,
+        `skill_test_results`, `quest_rewards_history`, `quest_dependencies_cache`.
       mechanics_links: []
       assets: []
     - id: dependencies
-      title: Зависимости и ограничения
+      title: "Связанные сервисы"
       body: |
-        Документ синхронизирует требования с character-service, economy-service, social-service, combat-service, analytics-service
-        и схемой quest branching. Зафиксированы требования к shooter-проверкам, таймерам, версионности сценариев и аудиту.
-      mechanics_links: []
+        Зафиксированы зависимости от character, economy, social, combat, analytics, auth/characters
+        пакета и новой схемы ветвления квестов.
+      mechanics_links:
+        - shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-quest-branching-validation.yaml
       assets: []
-    - id: next_steps
-      title: Следующие действия
+    - id: roadmap
+      title: "Следующие шаги"
       body: |
-        Нужно подготовить итоговый бриф ДУАПИТАСК, собрать зависимости в приложении, отметить прогресс в трекерах после
-        разрешения на постановку задач и синхронизировать документ с другими готовыми материалами.
+        Подготовить бриф ДУАПИТАСК, собрать приложение с готовыми документами, обновить трекеры и
+        readiness-файлы после постановки задач.
       mechanics_links: []
       assets: []
 appendix:
   glossary: []
-  references: []
+  references:
+    - shared/docs/knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-quest-branching-validation.yaml
   decisions: []
 implementation:
   needs_task: false
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#analysis-quest-engine-package
+    - shared/trackers/queues/concept/queued.yaml#analysis-2025-11-09-quest-engine-package
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-11
-    author: Brain Manager
-    changes: Конвертация пакета quest engine backend в YAML.
+    date: 2025-11-09
+    author: brain_manager
+    changes: "Конвертировано из 2025-11-09-quest-engine-package.md; структурированы API, события и хранение."
 validation:
   checksum: ''
   schema_version: '1.0'
