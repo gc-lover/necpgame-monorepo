@@ -1,0 +1,94 @@
+metadata:
+  id: implementation-romance-event-dialogue
+  title: 'Romance Dialogue — Диалоговая система'
+  document_type: implementation
+  category: algorithms
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:35:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:35:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - romance
+    - dialogue
+    - api
+  topics:
+    - narrative
+    - conversation-system
+  related_systems:
+    - romance-service
+    - dialogue-service
+    - notification-service
+  related_documents:
+    - id: implementation-romance-event-triggers
+      relation: references
+    - id: implementation-romance-engine-execution
+      relation: complements
+  source: shared/docs/knowledge/implementation/algorithms/romance/romance-dialogue.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - narrative
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: 'Диалоговая модель романтики и API эндпоинты находились в Markdown и не контролировались через схему знаний.'
+  goal: 'Зафиксировать структуру RomanceDialogueNode и сопряжённые API операции в YAML для интеграции с Vision и backend.'
+  essence: 'Документ описывает узлы диалогов, выборы игрока и REST эндпоинты, обеспечивая связку romance-service и UI.'
+  key_points:
+    - 'RomanceDialogueNode хранит реплики NPC, варианты выбора, изменения отношений, флаги и переходы.'
+    - 'REST API включает получение доступных событий, запуск romantic flow и обработку выборов игрока.'
+    - 'Документ связывает диалоги с триггерами и RelationshipMemory для контекстуальных отсылок.'
+content:
+  sections:
+    - id: node_model
+      title: 'Структура диалогового узла'
+      body: |
+        Узел содержит идентификатор, NPC, текст и коллекцию выборов с влиянием на отношение, переходами и флагами.
+        Модель поддерживает ветвление, хранит последствия и пригодна для сериализации в JSON.
+      mechanics_links:
+        - implementation/algorithms/romance/romance-engine-execution.yaml
+      assets: []
+    - id: api_contract
+      title: 'API контракты'
+      body: |
+        REST набор включает получение списка событий (`GET /api/v1/romance/{npcId}/events`), запуск события (`POST /start`)
+        и передачу выбора (`POST /choice`). Контракты обеспечивают синхронизацию romance-service и UI.
+      mechanics_links: []
+      assets: []
+    - id: integration_context
+      title: 'Интеграция с триггерами и памятью'
+      body: |
+        Диалоги используют данные RelationshipMemory и триггеров, чтобы подставлять отсылки к прошлым событиям,
+        активировать дополнительные ветки и корректировать изменения отношений в зависимости от истории.
+      mechanics_links:
+        - implementation/algorithms/romance/romance-event-triggers.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Оформлена структура диалогов, варианты выбора и REST контракты romance-service.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
