@@ -1,0 +1,124 @@
+metadata:
+  id: implementation-global-state-operations
+  title: 'Global State Operations — запросы и мониторинг'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:00:00Z
+  owners:
+    - role: world_service_lead
+      contact: world@necp.game
+  tags:
+    - world-state
+    - operations
+    - monitoring
+  topics:
+    - state-management
+    - observability
+  related_systems:
+    - world-service
+    - analytics-service
+    - notification-service
+  related_documents:
+    - id: global-state-core
+      relation: references
+    - id: global-state-management
+      relation: complements
+    - id: global-state-sync
+      relation: complements
+  source: shared/docs/knowledge/implementation/global-state/global-state-operations.md
+  visibility: internal
+  audience:
+    - backend
+    - concept
+    - live-ops
+  risk_level: high
+review:
+  chain:
+    - role: world_service_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T06:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Операционная документация Global State существовала в Markdown и не могла участвовать в автоматизированных проверках.
+  goal: Формализовать сервис запросов, проекции, мониторинг, тестирование и масштабирование Global State в соответствии со схемой знаний.
+  essence: Документ описывает типы запросов, read-модели, метрики, оптимизации производительности, безопасность и API-эндпоинты для эксплуатации глобального состояния.
+  key_points:
+    - Сервис поддерживает пять типов запросов (point, range, aggregate, time-travel, projection) с примерами использования.
+    - Приведены схемы проекций, обработчики и health-check компоненты для наблюдаемости и восстановления.
+    - Зафиксированы практики нагрузочного тестирования, идемпотентности, безопасности и API Gateway операций.
+content:
+  sections:
+    - id: query_service
+      title: Сервис запросов состояния
+      body: |
+        Описано пять типов запросов (`point`, `range`, `aggregate`, `time-travel`, `projection`) и примеры Java-кода. Сервис
+        обеспечивает доступ к ключам состояния, агрегирует показатели фракций и позволяет воспроизводить значения на конкретный
+        момент времени.
+      mechanics_links:
+        - implementation/global-state/global-state-core.yaml
+        - implementation/global-state/global-state-sync.yaml
+      assets: []
+    - id: projections
+      title: Проекции и обработчики read-моделей
+      body: |
+        Приведены SQL-схемы и Java-проектор `PlayerProfileProjector`, который обновляет прогресс, репутацию, экономические показатели
+        и хранит ссылки на последнее событие. Проекции используются для быстрых чтений и аналитики.
+      mechanics_links:
+        - implementation/global-state/global-state-management.yaml
+      assets: []
+    - id: monitoring
+      title: Мониторинг и health checks
+      body: |
+        Список метрик для Event Store, State Store и синхронизации, а также Spring HealthIndicator, который отслеживает состояние
+        хранилищ, шины событий и задержку синхронизации. Определены условия degraded и down статусов.
+      mechanics_links:
+        - implementation/global-state/global-state-events.yaml
+      assets: []
+    - id: performance_testing
+      title: Производительность и тестирование
+      body: |
+        Фиксированы подходы к оптимизации (кэширование, батчи, асинхронная обработка), сценарии нагрузочного тестирования,
+        механизмы replay/time-travel и smoke-тесты для Event Store. Указаны требования по SLA и профилированию.
+      mechanics_links:
+        - implementation/global-state/global-state-management.yaml
+      assets: []
+    - id: security_scalability
+      title: Безопасность и масштабирование
+      body: |
+        Рассмотрены валидация событий, античитовые проверки, контроль версий, а также горизонтальное и вертикальное масштабирование
+        сервиса, требования к shard'ам и механизм Leader Election для обработчиков.
+      mechanics_links:
+        - implementation/backend/anti-cheat/anti-cheat-compact.yaml
+      assets: []
+    - id: operations_api
+      title: Операционные API и уведомления
+      body: |
+        Описаны REST/WebSocket-эндпоинты (`/state/query`, `/state/projection`, `/state/health`, `/state/replay`), интеграция с
+        notification-service для alert'ов и взаимодействие с analytics-service для записи метрик.
+      mechanics_links:
+        - implementation/global-state/global-state-sync.yaml
+        - implementation/backend/notification-system.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#implementation-global-state-operations
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: world_service_team
+    changes: Задокументированы запросы, проекции, мониторинг и эксплуатационные процессы Global State.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
