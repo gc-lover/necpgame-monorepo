@@ -1,0 +1,122 @@
+metadata:
+  id: architecture-mvp-backend
+  title: 'MVP Backend Architecture'
+  document_type: implementation
+  category: architecture
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T12:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T12:20:00Z
+  owners:
+    - role: backend_architect
+      contact: backend@necp.game
+  tags:
+    - architecture
+    - mvp
+    - backend
+  topics:
+    - microservices
+    - deployment
+  related_systems:
+    - api-gateway
+    - auth-service
+    - character-service
+    - gameplay-service
+    - social-service
+    - economy-service
+    - world-service
+  related_documents:
+    - id: architecture-mvp-frontend
+      relation: complements
+    - id: backend-systems-overview
+      relation: references
+    - id: infrastructure-index
+      relation: references
+  source: shared/docs/knowledge/implementation/architecture/mvp-backend-architecture.md
+  visibility: internal
+  audience:
+    - backend
+    - devops
+    - platform
+  risk_level: high
+review:
+  chain:
+    - role: backend_architect
+      reviewer: ''
+      reviewed_at: 2025-11-08T12:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Нужно зафиксировать целевую архитектуру backend для MVP, чтобы выровнять сервисы, интеграции и инфраструктуру.
+  goal: Описать сервисный ландшафт, коммуникационные паттерны, observability, безопасность и CI/CD практики для запуска MVP.
+  essence: Документ структурирует микросервисы, их ответственность, интеграционные каналы, прозрачность и защиту, формируя основу для релиза.
+  key_points:
+    - MVP состоит из gateway и шести микросервисов с перечислением портов, хранилищ и ответственности.
+    - Интеграции покрывают REST цепочку через gateway, Kafka топики и outbox-паттерн.
+    - Observability построена на OpenTelemetry, Prometheus и Jaeger; безопасность опирается на Keycloak и RBAC.
+    - CI/CD использует GitHub Actions, Gradle и ArgoCD для развёртывания контейнеров.
+content:
+  sections:
+    - id: architecture_overview
+      title: Архитектурный обзор
+      body: |
+        Архитектура основывается на контейнеризованных микросервисах (Docker, Kubernetes). Сервисы взаимодействуют через REST
+        и Kafka, используют PostgreSQL и Redis, а также Keycloak для аутентификации. Перечислены gateway, auth, character,
+        gameplay, social, economy и world сервисы.
+      mechanics_links: []
+      assets: []
+    - id: service_matrix
+      title: Ответственность сервисов
+      body: |
+        Приведена таблица с портами, хранилищами и зонами ответственности для каждого сервиса. Auth-service управляет регистрацией
+        и OAuth, character-service ведёт персонажей и профиль, gameplay-service отвечает за боевые подсистемы и Redis, social-
+        service обрабатывает заказы и рейтинги, economy-service управляет крафтом и escrow, world-service — событиями мира.
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: Интеграции и потоки
+      body: |
+        REST-трафик проходит через API Gateway. Kafka используется для событий (например, `world.unrest.updates`), а outbox
+        реализован через таблицу `mvp_meta.outbox` и Debezium. Документ фиксирует ключевые темы и схемы обмена.
+      mechanics_links: []
+      assets: []
+    - id: observability
+      title: Observability
+      body: |
+        Используются OpenTelemetry с отправкой логов в Loki, Prometheus для метрик и Grafana дашборд `mvp-backend`. Трейсинг
+        настраивается через Jaeger с пробросом `traceId` из gateway.
+      mechanics_links: []
+      assets: []
+    - id: security
+      title: Безопасность
+      body: |
+        Аутентификация базируется на Keycloak и проверке JWT через JWKS. RBAC применяется на уровне gateway и сервисов, секреты
+        хранятся во Vault.
+      mechanics_links: []
+      assets: []
+    - id: cicd
+      title: CI/CD
+      body: |
+        Конвейер GitHub Actions выполняет сборку Gradle, тесты и создание контейнеров (Buildx). ArgoCD разворачивает манифесты
+        на dev-кластере.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#architecture-mvp-backend
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: backend_guild
+    changes: Зафиксирована архитектура backend MVP, интеграции и практики observability/CI-CD.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
