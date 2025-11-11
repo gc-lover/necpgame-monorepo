@@ -1,0 +1,108 @@
+metadata:
+  id: api-mvp-auth-endpoints
+  title: 'MVP Auth Endpoints — Аутентификация'
+  document_type: implementation
+  category: api
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:05:00Z
+  owners:
+    - role: api_lead
+      contact: api@necp.game
+  tags:
+    - api
+    - authentication
+    - gateway
+  topics:
+    - auth-service
+    - session-management
+  related_systems:
+    - auth-service
+    - api-gateway
+  related_documents:
+    - id: api-mvp-gameplay-endpoints
+      relation: complements
+    - id: api-mvp-content-endpoints
+      relation: complements
+    - id: api-mvp-system-endpoints
+      relation: complements
+  source: shared/docs/knowledge/implementation/api-requirements/mvp-endpoints/auth-endpoints.md
+  visibility: internal
+  audience:
+    - backend
+    - api
+    - frontend
+  risk_level: high
+review:
+  chain:
+    - role: api_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T06:05:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Для MVP требуется формализованный набор REST endpoint'ов аутентификации через gateway.
+  goal: Описать маршрутизацию, запросы, ответы и валидацию для регистрации, входа, выхода, обновления токена и получения профиля.
+  essence: Документ фиксирует архитектурный поток через API Gateway и детализирует пять ключевых endpoint'ов auth-service.
+  key_points:
+    - 'Все запросы идут через `/api/v1/auth/*` и проксируются на auth-service (8081).'
+    - 'Регистрация проверяет уникальность email/username и возвращает идентификатор аккаунта.'
+    - 'Логин выдаёт access/refresh токены и данные аккаунта; logout завершает сессию.'
+    - '`/auth/me` возвращает профиль по access token, `/auth/refresh` выдает обновлённую пару токенов.'
+content:
+  sections:
+    - id: architecture_flow
+      title: Маршрутизация через gateway
+      body: |
+        Frontend отправляет запросы на http://localhost:8080/api/v1/auth/*. Spring Cloud Gateway маршрутизирует их на
+        auth-service (порт 8081), после чего ответ возвращается через gateway клиенту.
+      mechanics_links: []
+      assets: []
+    - id: endpoint_register
+      title: POST /api/v1/auth/register
+      body: |
+        Принимает email, username и password. Выполняет валидацию формата/длины, проверку уникальности и создаёт аккаунт.
+        Успешный ответ содержит признак success, идентификатор аккаунта и сервисное сообщение.
+      mechanics_links: []
+      assets: []
+    - id: endpoint_login
+      title: POST /api/v1/auth/login
+      body: |
+        Авторизует пользователя по username/password и возвращает access token, refresh token, срок действия и краткую информацию
+        об аккаунте. Служит точкой входа в систему.
+      mechanics_links: []
+      assets: []
+    - id: endpoint_logout_profile
+      title: Logout и профиль
+      body: |
+        `POST /api/v1/auth/logout` требует bearer токен и завершает сессию. `GET /api/v1/auth/me` возвращает идентификатор,
+        email, username, даты создания и последнего входа, статус активности.
+      mechanics_links: []
+      assets: []
+    - id: endpoint_refresh
+      title: POST /api/v1/auth/refresh
+      body: |
+        Принимает refreshToken, валидирует его и выдаёт новую пару access/refresh токенов с обновлённым `expiresIn`. Используется
+        для продления сеанса без повторного логина.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#api-mvp-auth-endpoints
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описаны endpoint'ы регистрации, логина, логаута, профиля и обновления токенов для auth-service.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
