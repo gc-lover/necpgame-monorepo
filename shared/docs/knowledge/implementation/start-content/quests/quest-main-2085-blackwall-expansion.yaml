@@ -1,0 +1,151 @@
+metadata:
+  id: quest-main-2085-blackwall-expansion
+  title: "Основной квест: Расширение Blackwall (2085)"
+  document_type: implementation
+  category: start-content
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-06T19:38:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - questline
+    - netwatch
+    - blackwall
+  topics:
+    - quests
+    - netrunning
+    - combat
+  related_systems:
+    - quest-engine
+    - combat-service
+    - analytics-service
+  related_documents:
+    - id: quest-side-2088-archive-expedition
+      relation: continues
+  source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2085-blackwall-expansion.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - analytics
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: NetWatch расширяет Blackwall и нуждается в картографии новых секторов с минимизацией риска киберпсихоза.
+  goal: Зафиксировать shooter и netrun ветки экспедиции, угрозы rogue-ИИ и требования устойчивости.
+  essence: Игрок под руководством Элизабет Чен пересекает границу Blackwall, собирает данные в трёх секторах и возвращается с целым отрядом.
+  key_points:
+    - Проверки INT/NETRUN/Cool определяют маршрут, количество встреч и устойчивость.
+    - Несколько боевых сценариев: периметр, ICE, элитный страж.
+    - API мэппинг для сбора данных и логирования статусов кибершока.
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис
+      body: |
+        - ID: `quest-main-2085-blackwall-expansion`
+        - Контакт: `npc-elizabeth-chen`
+        - Локации: граница Blackwall, виртуальные сектора
+        - Уровень: 10
+        - Темы: netwatch expedition, blackwall mapping, cyberpsychosis risk
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Цели и ветвления
+      body: |
+        Основные шаги:
+        1. Получить доступ к границе Blackwall.
+        2. Картографировать три сектора и собрать данные.
+        3. Противостоять rogue-ИИ или обойти их.
+        4. Вернуться к Элизабет с комплектом данных.
+
+        Ветви:
+        - INT 18 — оптимизация маршрута, сокращение времени.
+        - NETRUNNING COMBAT 19 — отключение ICE, снижение встреч.
+        - COOL 18 — защита от кибершока и статусов перегрева.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: interactions
+      title: Ключевые интеракции
+      body: |
+        - `Blackwall Navigation`: INT 18, событие `netwatch.route.optimize`.
+        - `ICE Shutdown`: NETRUN 19, событие `netwatch.ice.disable`.
+        - `Resilience Check`: COOL 18, событие `player.status.resist`.
+        - `Sector Scan`: собирает `item-blackwall-data`, вызывает телеметрию `analytics.blackwall.scan`.
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
+    - id: encounters
+      title: Боевые сценарии
+      body: |
+        - `Perimeter Guardians`: 3 противника, defense 220, оружие `smart-laser`.
+        - `ICE Assault`: 2 ICE, резист 275, используется при провале взлома.
+        - `Elite Sentinel`: defense 260+, способности `sync lag`, `overheat`.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: dialogue
+      title: Диалоговое дерево
+      body: |
+        25 узлов: брифинг Элизабет, ветви рисков, выбор маршрутов (INT/NETRUN/guard), три сектора со сборами данных, элитная встреча, возврат и награды.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: rewards
+      title: Награды и риски
+      body: |
+        База: 1000 XP, 1400 eddies, `item-blackwall-data`, +20 репутации NetWatch.
+        Бонусы: успехи INT/NETRUN дают доп. XP, уменьшенные встречи.
+        Штрафы: провал → дополнительные бои, статус кибершока, медцентр с −10% денег.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API и телеметрия
+      body: |
+        REST:
+        - `POST /api/v1/quests/{id}/accept`
+        - `POST /api/v1/skill-check`
+        - `POST /api/v1/combat/start`
+        - `POST /api/v1/items/collect`
+        - `POST /api/v1/quests/{id}/complete`
+
+        Kafka:
+        - `analytics.blackwall.scan`
+        - `combat.shooter.netwatch`
+        - `player.status.cybershock`
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: qa
+      title: Тестирование
+      body: |
+        - INT Route: минимальные бои, проверка времени.
+        - NETRUN Route: отключение ICE, сбор данных без элиты.
+        - Combat Route: все бои, проверка элитного стража.
+        - Failure Loop: тревога, дополнительные стражи, респаун.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#quest-main-2085-blackwall-expansion
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_team
+    changes: Первичная спецификация экспедиции на границе Blackwall.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
