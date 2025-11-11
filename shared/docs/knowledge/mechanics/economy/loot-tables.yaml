@@ -1,0 +1,140 @@
+metadata:
+  id: loot-tables
+  title: 'Лут-таблицы NECPGAME'
+  document_type: mechanics
+  category: economy
+  status: draft
+  version: '0.9.0'
+  last_updated: 2025-11-09T04:43:00Z
+  concept_approved: false
+  concept_reviewed_at: 2025-11-09T04:43:00Z
+  owners:
+    - role: economy_loot_lead
+      contact: economy@necp.game
+  tags:
+    - loot
+    - drop-rates
+    - progression
+  topics:
+    - rarity-curves
+    - quest-rewards
+    - economy-integration
+  related_systems:
+    - economy-service
+    - gameplay-service
+    - analytics-service
+  related_documents:
+    - id: economy-production-chains
+      relation: aligns
+    - id: progression-attributes-matrix
+      relation: depends-on
+    - id: economy-equipment-matrix
+      relation: consumes
+  source: shared/docs/knowledge/mechanics/economy/loot-tables.md
+  visibility: internal
+  audience:
+    - economy
+    - progression
+    - content
+  risk_level: high
+review:
+  chain:
+    - role: economy_loot_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: in_progress
+  next_actions: []
+summary:
+  problem: Требовалось описать структуру выпадения наград для квестов, событий и врагов, чтобы связать экономику, прогрессию и редкостные таблицы.
+  goal: Зафиксировать вероятности, примеры таблиц и модификаторы дропа для основных сценариев, сохраняя согласованность с требованиями экономики и прогрессии.
+  essence: Документ задаёт базовую шкалу редкости, формулы вероятностей и образцы таблиц для разных типов контента, а также описывает влияющие модификаторы.
+  key_points:
+    - Введена общая шкала редкостей и вероятность выпадения с учётом удачи, репутации и квестовых триггеров.
+    - Описаны примеры таблиц наград для ключевых квестов, побочных цепочек, событий мира и типов врагов.
+    - Детализированы различия по фракциям, экстракт-зонам и сетевым активностям.
+    - Зафиксированы будущие требования к расширению таблиц по регионам, брендам и живым событиям.
+content:
+  sections:
+    - id: rarity_scale
+      title: 'Базовая редкость и весовые коэффициенты'
+      body: |
+        Редкость делится на Common (60%), Uncommon (25%), Rare (12%), Epic (2.5%) и Legendary (0.5%) с диапазонами стоимости 50–5 000 €$.
+        Шкала служит базой для PvE, PvP и экстракт-миссий, а легендарные позиции резервируются для сюжетных и сезонных событий.
+      mechanics_links:
+        - mechanics/progression/progression-attributes-matrix.yaml
+      assets: []
+    - id: probability_formula
+      title: 'Формула расчёта вероятности'
+      body: |
+        Вероятность определяется формулой `P = baseChance × (1 + luckModifier) × (1 + reputationModifier) × (1 + questModifier)`.
+        Модификаторы ограничены (удача до 0.5, репутация до 0.3, квест до 0.5), что предотвращает выход за пределы баланса.
+      mechanics_links:
+        - mechanics/progression/progression-skills-mapping.yaml
+      assets: []
+    - id: main_quest_tables
+      title: 'Награды основных квестов'
+      body: |
+        Пример MQ-2020-002 содержит фиксированные награды по путям (eddy, предметы, репутация) и общий пул, в котором редкие и эпические позиции имеют собственные шансы и диапазоны валюты.
+        JSON-структура демонстрирует, как economy-service хранит многовариантные награды и опыт.
+      mechanics_links:
+        - content/quests/quests-master-list-2020-2093.md
+      assets: []
+    - id: side_quest_tables
+      title: 'Награды побочных цепочек'
+      body: |
+        SQ-2020-Solo-001 сочетает фиксированные награды за выбор пути (NetWatch, Fixer) и генеративный пул, где редкость влияет на тип оружия, имплантов и валюту.
+        Таблица учитывает репутацию нескольких фракций и адаптируется к уровню игрока.
+      mechanics_links:
+        - content/quests/quests-master-list-2020-2093.md
+      assets: []
+    - id: world_events
+      title: 'События мира и динамика NetWatch'
+      body: |
+        WE-2020-001 показывает, как каждый уровень редкости привязан к диапазонам валюты, уникальным предметам и приросту репутации NetWatch.
+        Таблицы используют тот же формат, что и квестовые награды, облегчая переработку в live-ops.
+      mechanics_links:
+        - mechanics/world/events/world-events-framework.md
+      assets: []
+    - id: enemy_loot
+      title: 'Дроп по типам противников'
+      body: |
+        Для бандитов, корпоративных сил и роботизированных подразделений описаны собственные шансы редкостей, валютные диапазоны и пул предметов.
+        Таблицы учитывают связи с брендовыми наборами, имплантами и боеприпасами, что поддерживает экономику вторичного рынка.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+        - mechanics/economy/equipment/procedural-equipment-library.yaml
+      assets: []
+    - id: faction_rewards
+      title: 'Фракционные награды и Extract контент'
+      body: |
+        Для экстракт-зон приведены вероятность выпадения артефактов и влияние рейтинга команды.
+        Фракционные награды включают валюту, чертежи, телеметрию и сетовые бонусы, связанные с live-ops сезонными событиями.
+      mechanics_links:
+        - mechanics/economy/trading-routes-global.yaml
+      assets: []
+    - id: modifiers
+      title: 'Модификаторы и корректировка дропа'
+      body: |
+        Дополнительные множители зависят от сложности активности, статуса команды, уровня угрозы зоны и активных событий.
+        Параметры экспонируются в analytics-service и используются для корректировки live-ops без правки таблиц.
+      mechanics_links:
+        - analysis/tasks/config/STATUSES-GUIDE.md
+      assets: []
+appendix:
+  glossary: []
+  references: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers:
+    - Требуются таблицы распределения по регионам и брендам.
+history:
+  - version: '0.9.0'
+    date: 2025-11-09
+    author: economy_loot_team
+    changes: 'Сформированы базовые редкости, примеры таблиц квестов, событий и врагов, определены модификаторы вероятностей.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
