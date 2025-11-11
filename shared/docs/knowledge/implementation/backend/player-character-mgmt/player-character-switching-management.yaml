@@ -1,0 +1,103 @@
+metadata:
+  id: backend-player-character-switching
+  title: 'Player Character Management: Switching & Operations'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-08T02:08:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:23:00Z
+  owners:
+    - role: character_systems_lead
+      contact: characters@necp.game
+  tags:
+    - character
+    - switching
+    - progression
+  topics:
+    - player-management
+    - character-operations
+  related_systems:
+    - character-service
+    - session-service
+    - inventory-service
+    - quest-service
+  related_documents:
+    - id: backend-player-character-management-overview
+      relation: references
+    - id: backend-player-character-creation
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/player-character-mgmt/part2-switching-management.md
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+    - live-ops
+  risk_level: high
+review:
+  chain:
+    - role: backend_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужен надёжный процесс переключения персонажей и управления их состоянием без потери прогресса.
+  goal: Описать сервисные операции переключения, пересчёта статов, сохранения данных и управления слотами.
+  essence: Документ фиксирует ключевые сценарии CharacterService и сопутствующие API для работы с персонажами и слотами.
+  key_points:
+    - Переключение сохраняет текущего персонажа, проверяет права и публикует событие CharacterSwitched.
+    - Пересчёт статов объединяет атрибуты, экипировку и активные бафы с защитой от переполнения.
+    - Сохранение и загрузка состояния включает инвентарь, квесты, бафы и снапшоты.
+    - Управление слотами учитывает премиальные покупки, ограничения и списание валюты.
+content:
+  sections:
+    - id: character_switching
+      title: 'Переключение персонажей'
+      body: |
+        SwitchCharacter обновляет session, сохраняет текущего персонажа, валидирует права на нового и публикует CharacterSwitchedEvent. Обновляется last_played_at и логируются операции.
+      mechanics_links: []
+      assets: []
+    - id: stats_recalculation
+      title: 'Пересчёт боевых статов'
+      body: |
+        RecalculateCharacterStats вычисляет базовые показатели из атрибутов, добавляет бонусы экипировки и бафов, синхронизирует здоровье и броню и сохраняет результат.
+      mechanics_links: []
+      assets: []
+    - id: state_management
+      title: 'Сохранение и загрузка состояния'
+      body: |
+        SaveCharacterState фиксирует основные записи, инвентарь, прогресс квестов и состояние сессии с опциональными снапшотами. LoadCharacterState собирает полное состояние для UI и сервисов.
+      mechanics_links: []
+      assets: []
+    - id: slot_management
+      title: 'Управление слотами и покупками'
+      body: |
+        PurchaseCharacterSlot проверяет лимиты, списывает премиальную валюту, увеличивает total_slots и ведёт статистику premium_slots_purchased с логированием расходов.
+      mechanics_links: []
+      assets: []
+    - id: api_summary
+      title: 'API и интеграции'
+      body: |
+        Документирует ключевые REST точки: переключение `/characters/switch`, управление слотами, профили игроков и связку с инвентарём и квестами через сервисные вызовы.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: character_core_team
+    changes: 'Добавлены процедуры переключения, управления слотами и пересчёта статов.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
