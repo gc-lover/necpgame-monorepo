@@ -1,6 +1,6 @@
 metadata:
   id: backend-session-lifecycle-heartbeat
-  title: Session Management — Lifecycle & Heartbeat
+  title: 'Session Management: Lifecycle & Heartbeat'
   document_type: implementation
   category: backend
   status: approved
@@ -9,19 +9,19 @@ metadata:
   concept_approved: true
   concept_reviewed_at: 2025-11-07T01:46:00Z
   owners:
-    - role: platform_lead
-      contact: platform@necp.game
+    - role: backend_architect
+      contact: backend@necp.game
   tags:
-    - sessions
+    - session
     - heartbeat
-    - afk
+    - lifecycle
   topics:
-    - session-service
-    - player-state
+    - session-management
+    - player-lifecycle
   related_systems:
-    - auth-service
-    - redis
-    - analytics-service
+    - session-service
+    - redis-cache
+    - event-bus
   related_documents:
     - id: backend-session-reconnection-monitoring
       relation: complements
@@ -29,69 +29,55 @@ metadata:
   visibility: internal
   audience:
     - backend
-    - platform
-    - infrastructure
+    - operations
+    - qa
   risk_level: high
 review:
   chain:
-    - role: platform_lead
+    - role: backend_lead
       reviewer: ''
-      reviewed_at: 2025-11-07T01:46:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Нужна детальная схема жизненного цикла игровых сессий и heartbeat-механизма для устойчивости MMORPG.
-  goal: Формализовать процессы создания/закрытия сессий, хранение состояния и правила AFK, чтобы синхронизировать сервисы и аналитику.
-  essence: Документ описывает состояние сессий, схемы данных в PostgreSQL и Redis, логику heartbeat, AFK-детектор и интеграцию с другими системами.
+  problem: Нужна надёжная система управления игровыми сессиями с контролем активности и состояния.
+  goal: Описать жизненный цикл сессии, хранение данных и heartbeat механизм для отслеживания онлайн игроков.
+  essence: Документ определяет схемы БД, кэш, создание сессий, heartbeat API и контроль таймаутов.
   key_points:
-    - Жизненный цикл охватывает состояния CREATED→ACTIVE→IDLE→AFK→DISCONNECTED→EXPIRED→CLOSED.
-    - Таблицы `player_sessions` и `session_audit_log` фиксируют состояние, heartbeats и причины закрытия.
-    - Redis хранит активные сессии и списки игроков, heartbeat endpoint обновляет кэш и инициирует batch-обновления.
-    - AFK-детектор переводит игроков между состояниями и завершает сессии при превышении таймаутов.
+    - Жизненный цикл охватывает состояния от CREATED до CLOSED с чёткими переходами.
+    - Структура таблиц player_sessions и session_audit_log обеспечивает аудит и хранение состояния.
+    - Redis хранит активные сессии и списки игроков по серверам.
+    - Heartbeat каждые 30 секунд и batch обновления защищают БД от перегрузки.
 content:
   sections:
     - id: lifecycle_overview
-      title: Жизненный цикл и архитектура
+      title: 'Жизненный цикл и состояния'
       body: |
-        Логин создаёт сессию через Session Manager, выдаёт токен и сохраняет данные в Redis и PostgreSQL. Heartbeat поддерживает
-        активность, а logout или тайм-аут закрывает сессию и очищает состояние. Диаграмма показывает взаимодействие клиента,
-        API Gateway и Session Manager.
+        Определены этапы CREATED, ACTIVE, IDLE, AFK, DISCONNECTED, EXPIRED и CLOSED. Таблицы переходов описывают условия перевода между состояниями и время ожидания.
       mechanics_links: []
       assets: []
     - id: data_model
-      title: Схема данных
+      title: 'Модель данных и аудит'
       body: |
-        Таблица `player_sessions` хранит токены, идентификаторы игрока/аккаунта/персонажа, статус, тайм-ауты и reconnect данные.
-        `session_audit_log` фиксирует события (создание, обновление, закрытие). Индексы поддерживают поиск по статусу, игроку и
-        времени heartbeat.
+        Таблица player_sessions хранит токены, статус, атрибуты персонажа и счётчики. audit_log фиксирует события, индексы ускоряют поиск активных записей.
       mechanics_links: []
       assets: []
-    - id: redis_cache
-      title: Redis структура
+    - id: cache_layout
+      title: 'Кэш и структуры Redis'
       body: |
-        Кэш `session:{token}` содержит ключевые поля сессии, TTL 24 часа. Дополнительно хранится сопоставление `player_session`
-        и набор `active_players:{serverId}` для быстрого определения онлайна.
+        Расписаны ключи session:{token}, player_session:{playerId} и множества active_players:{serverId}. TTL 24 часа, данные синхронизируются с БД.
       mechanics_links: []
       assets: []
     - id: session_creation
-      title: Создание сессии
+      title: 'Создание сессии и слоты'
       body: |
-        При логине система проверяет существующие сессии, при необходимости завершает их, создаёт новую запись, генерирует reconnect
-        токен, сохраняет в БД и Redis, публикует событие SESSION_CREATED и добавляет игрока в активный список сервера.
+        SessionManager проверяет существующие подключения, генерирует токены, сохраняет запись, обновляет кэш и публикует SessionCreatedEvent.
       mechanics_links: []
       assets: []
-    - id: heartbeat_flow
-      title: Heartbeat и batch-обновления
+    - id: heartbeat_mechanism
+      title: 'Heartbeat и обновления'
       body: |
-        Endpoint `/session/heartbeat` обновляет lastHeartbeat, переводит IDLE/AFK в ACTIVE и записывает изменения в Redis.
-        Планировщик SessionBatchUpdater каждые 60 секунд сбрасывает накопленные обновления в БД.
-      mechanics_links: []
-      assets: []
-    - id: afk_detection
-      title: AFK и тайм-ауты
-      body: |
-        Сервис AfkDetector переводит игроков в IDLE/AFK по отсутствию действий, отслеживает абсолютные тайм-ауты и завершает
-        сессии при превышении лимитов. Игроки получают уведомления о переходах и предстоящем разрыве.
+        Endpoint `/session/heartbeat` обновляет lastHeartbeat, сбрасывает статус в ACTIVE и ставит запись в очередь batch обновления. Срабатывают таймауты AFK и disconnect при отсутствии heartbeat.
       mechanics_links: []
       assets: []
 appendix:
@@ -99,15 +85,15 @@ appendix:
   references: []
   decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#backend-session-lifecycle-heartbeat
+    - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
   - version: '1.0.0'
     date: 2025-11-07
     author: ai_brain_manager
-    changes: Описаны жизненный цикл сессий, heartbeat и механизм AFK.
+    changes: 'Задокументированы жизненный цикл сессии, схема данных, кэш и heartbeat.'
 validation:
   checksum: ''
   schema_version: '1.0'
