@@ -1,0 +1,101 @@
+metadata:
+  id: implementation-loot-system-part2
+  title: "Loot System — Part 2: Advanced Loot"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-08T01:52:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: loot_system_owner
+      contact: economy@necp.game
+  tags:
+    - loot
+    - smart-loot
+    - boss-rewards
+  topics:
+    - loot-rolls
+    - party-distribution
+    - duplicate-control
+  related_systems:
+    - economy-service
+    - party-service
+    - achievement-service
+  related_documents:
+    - id: implementation-loot-system-index
+      relation: references
+    - id: implementation-loot-system-part1
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/loot-system/part2-advanced-loot.md
+  visibility: internal
+  audience:
+    - economy
+    - backend
+    - qa
+  risk_level: medium
+review:
+  chain:
+    - role: loot_system_owner
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Базовой генерации лута недостаточно — требуются механики партийных роллов, умного распределения и контроля повторов."
+  goal: "Описать продвинутые алгоритмы smart loot, boss loot и анти-дубликаты, включая схемы БД и сервисный код."
+  essence: "Документ охватывает таблицу `loot_rolls`, сервисы smart loot, boss loot, систему роллов и проверки на уникальные легендарки."
+  key_points:
+    - "`loot_rolls` хранит партийные броски, победителя и TTL на завершение."
+    - "`SmartLootService` повышает релевантность предметов по классу/специализации."
+    - "Boss loot гарантирует награды каждому участнику и генерирует общий лут с роллами."
+    - "Anti-duplicate контролирует выдачу легендарных предметов и синхронизируется с банком."
+content:
+  sections:
+    - id: loot-rolls
+      title: Таблица и процесс роллов
+      body: |
+        SQL-схема `loot_rolls` описывает хранение бросков, победителя и статусов. Процесс включает TTL в 60 секунд и индексы
+        для мониторинга активных роллов.
+      mechanics_links: []
+      assets: []
+    - id: smart-loot
+      title: Smart Loot
+      body: |
+        `SmartLootService` анализирует шаблоны предметов и характеристики персонажа, повышая шанс релевантных предметов и
+        модифицируя итоговый список дропа.
+      mechanics_links: []
+      assets: []
+    - id: boss-loot
+      title: Boss Loot
+      body: |
+        Описаны гарантированные награды для party/solo, генерация shared лута, интеграция с `createPartyLoot` и проверка
+        достижений после победы.
+      mechanics_links: []
+      assets: []
+    - id: duplicate-control
+      title: Anti-Duplicate система
+      body: |
+        `LootDuplicateChecker` проверяет легендарные предметы в инвентаре и банке, блокируя выдачу дублей, а также вызывает
+        дополнительные сценарии компенсации.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: loot_system_owner
+    changes: Добавлены smart loot, boss loot и механизм анти-дубликатов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
