@@ -1,0 +1,115 @@
+metadata:
+  id: architecture-mvp-frontend
+  title: 'MVP Frontend Architecture'
+  document_type: implementation
+  category: architecture
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T00:00:00Z
+  owners:
+    - role: frontend_lead
+      contact: frontend@necp.game
+  tags:
+    - frontend
+    - architecture
+    - mvp
+  topics:
+    - client-architecture
+    - state-management
+  related_systems:
+    - frontend-shell
+    - design-system
+    - event-bus
+  related_documents:
+    - id: architecture-mvp-backend
+      relation: complements
+    - id: ui-mvp-screens
+      relation: references
+  source: shared/docs/knowledge/implementation/architecture/mvp-frontend-architecture.md
+  visibility: internal
+  audience:
+    - frontend
+    - design
+    - platform
+  risk_level: medium
+review:
+  chain:
+    - role: frontend_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось описать целевую архитектуру фронтенда для MVP, чтобы выровнять технологии, модули и интеграции.
+  goal: Зафиксировать стек, структуру модулей, работу со слоями данных, UI-оболочкой и инженерные практики для команды FRONT-WEB.
+  essence: Документ описывает React стек, модульную организацию, RTK Query, WebSocket интеграции, инструменты разработки и CI/CD.
+  key_points:
+    - Стек включает React 18, TypeScript, Redux Toolkit, RTK Query, React Router и WebSocket-клиент.
+    - Приведена таблица модулей (auth, player, quests, combat, orders, crafting, world) с API и состояниями.
+    - Слой данных строится на RTK Query и STOMP, кэш расширяется IndexedDB для оффлайн сценариев.
+    - UI Shell реализует AppShell, темизацию и адаптивный подход; инструменты разработки покрывают Storybook, Jest, Cypress.
+    - CI/CD выполняет lint/test/build в GitHub Actions с доставкой через Vite → S3 + CloudFront.
+content:
+  sections:
+    - id: tech_stack
+      title: Технологический стек
+      body: |
+        Стек включает React 18, TypeScript, Redux Toolkit с RTK Query, React Router 6, Styled Components и WebSocket клиент
+        (SockJS + STOMP) для real-time взаимодействия.
+      mechanics_links: []
+      assets: []
+    - id: module_architecture
+      title: Модульная архитектура
+      body: |
+        Таблица описывает модули `modules/auth`, `modules/player`, `modules/quests`, `modules/combat`, `modules/orders`,
+        `modules/crafting`, `modules/world` с соответствующими REST и event каналами, а также состояниями.
+      mechanics_links: []
+      assets: []
+    - id: data_layer
+      title: Слой данных
+      body: |
+        RTK Query сервисы (`combatApi`, `ordersApi`, `worldApi`) и обёртка eventBus управляют запросами и WebSocket подписками.
+        Кэширование дополняется IndexedDB для оффлайн хранения ключевых данных игрока и заказов.
+      mechanics_links: []
+      assets: []
+    - id: ui_shell
+      title: UI Shell
+      body: |
+        Корневой компонент `AppShell` объединяет header, навигацию, контент и ленту событий. Темизация реализуется через
+        `ThemeProvider` из design-system, поддерживается mobile-first подход с ключевым breakpoint 768px.
+      mechanics_links: []
+      assets: []
+    - id: tooling
+      title: Инженерные инструменты
+      body: |
+        Проект использует Storybook 8 для UI-сценариев, Jest + Testing Library + MSW для unit/интеграционных тестов и Cypress
+        для smoke e2e сценариев (регистрация, туториал, заказ, крафт).
+      mechanics_links: []
+      assets: []
+    - id: cicd
+      title: CI/CD
+      body: |
+        GitHub Actions запускает lint, тесты и сборку. Сборка выполняется через Vite, артефакты выкладываются на S3 и раздаются
+        через CloudFront на dev окружении.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#architecture-mvp-frontend
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: frontend_guild
+    changes: Зафиксирована архитектура фронтенда MVP, модули, данные и инструменты.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
