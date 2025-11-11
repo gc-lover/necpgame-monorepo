@@ -1,0 +1,96 @@
+metadata:
+  id: backend-auth-overview
+  title: "Authentication & Authorization System — Навигация"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-09T20:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T20:05:00Z
+  owners:
+    - role: auth_lead
+      contact: auth@necp.game
+  tags:
+    - authentication
+    - authorization
+    - navigation
+  topics:
+    - auth-service
+    - security
+  related_systems:
+    - auth-service
+    - session-service
+    - notification-service
+  related_documents:
+    - id: backend-auth-part1-registration
+      relation: section
+    - id: backend-auth-part2-login
+      relation: section
+    - id: backend-auth-part3-authorization
+      relation: section
+  source: shared/docs/knowledge/implementation/backend/auth/README.md
+  visibility: internal
+  audience:
+    - backend
+    - platform
+  risk_level: medium
+review:
+  chain:
+    - role: auth_lead
+      reviewer: ''
+      reviewed_at: 2025-11-09T20:05:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Нужен навигационный документ по подсистеме аутентификации и авторизации."
+  goal: "Сконцентрировать ключевые сведения об архитектуре auth-service и ссылках на подробно описанные части."
+  essence: "README фиксирует микросервисную схему, ключевые эндпоинты и структуру разбивки на три части."
+  key_points:
+    - "Микросервис `auth-service` работает на порту 8081 с маршрутами `/api/v1/auth/*`."
+    - "Перечислены основные REST эндпоинты (register, login, refresh, OAuth)."
+    - "Указаны связи с другими сервисами и событиями event bus."
+content:
+  sections:
+    - id: architecture
+      title: Микросервисная архитектура
+      body: |
+        Auth-service отвечает за аутентификацию и авторизацию, слушает и публикует события (`ACCOUNT_CREATED`,
+        `LOGIN_SUCCESS`, `LOGOUT`, `PASSWORD_CHANGED`) и предоставляет API через Gateway `/api/v1/auth/*`.
+      mechanics_links: []
+    - id: endpoints
+      title: Основные эндпоинты
+      body: |
+        Навигация включает POST `/auth/register`, `/auth/login`, `/auth/logout`, `/auth/refresh`, `/auth/password/*`,
+        а также OAuth redirect/callback. Все маршруты проходят через API Gateway.
+      mechanics_links: []
+    - id: documents
+      title: Структура документов
+      body: |
+        Три части: `auth-database-registration` (БД и регистрация), `auth-login-jwt` (логин, JWT, recovery, 2FA),
+        `auth-authorization-security` (роли, права, безопасность).
+      mechanics_links: []
+    - id: integrations
+      title: Взаимодействия
+      body: |
+        Character-service и gameplay-service вызывают auth-service для проверки токенов и прав; auth-service публикует события
+        для session-service и notification-service; деплой осуществляется через `docker-compose`.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: auth_lead
+    changes: Обновлена архитектура и структура документов после разбивки на части.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
