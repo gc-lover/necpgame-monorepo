@@ -1,0 +1,106 @@
+metadata:
+  id: backend-achievement-tracking
+  title: 'Achievement System: Tracking & Notifications'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T02:52:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T01:59:00Z
+  owners:
+    - role: backend_architect
+      contact: backend@necp.game
+  tags:
+    - achievements
+    - tracking
+    - event-driven
+  topics:
+    - telemetry
+    - player-engagement
+  related_systems:
+    - achievement-service
+    - notification-service
+    - analytics-service
+  related_documents:
+    - id: backend-achievement-core
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/achievement/achievement-tracking.md
+  visibility: internal
+  audience:
+    - backend
+    - analytics
+    - operations
+  risk_level: high
+review:
+  chain:
+    - role: backend_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужно обеспечить точный и масштабируемый трекинг прогресса достижений с уведомлениями и аналитикой.
+  goal: Описать обработку событий, стратегии вычисления прогресса, пакетные обновления и систему уведомлений.
+  essence: Документ фиксирует архитектуру слушателей, расчёт условий,near-completion, батчевую запись и метрики.
+  key_points:
+    - Асинхронные слушатели обрабатывают боевые, квестовые, экономические события и мапят их на достижения.
+    - Реализованы стратегии подсчёта (счётчики, пороги, коллекции, композитные условия).
+    - Batch-процессор группирует обновления и уменьшает нагрузку на БД.
+    - Уведомления покрывают unlock, прогресс и напоминания о почти завершённых достижениях.
+content:
+  sections:
+    - id: event_architecture
+      title: 'Архитектура обработки событий'
+      body: |
+        Игровые события поступают в Event Bus и обрабатываются асинхронными слушателями для боёв, квестов, экономики и социальных действий. Каждый listener формирует контекст и вызывает `achievementService.trackProgress`.
+      mechanics_links: []
+      assets: []
+    - id: progress_strategies
+      title: 'Стратегии расчёта прогресса'
+      body: |
+        Предусмотрены функции для простых счётчиков, порогов, коллекций и композитных условий. Примеры на Python демонстрируют, как использовать текущие данные игрока и параметры события.
+      mechanics_links: []
+      assets: []
+    - id: batch_processing
+      title: 'Пакетная обработка прогресса'
+      body: |
+        Batch-процессор собирает обновления в очередь, группирует их по игроку и коду достижения и массово обновляет `player_achievements`. Планировщик запускается каждые 5 секунд и обрабатывает до 1000 записей.
+      mechanics_links: []
+      assets: []
+    - id: notifications
+      title: 'Уведомления и UX'
+      body: |
+        Описаны payload'ы для всплывающих окон unlock, тостов прогресса и ежедневных напоминаний. Сервис уведомлений использует WebSocket, push и почтовые каналы в зависимости от сценария.
+      mechanics_links: []
+      assets: []
+    - id: meta_and_points
+      title: 'Мета-достижения и очки'
+      body: |
+        MetaAchievementService отслеживает коллекционные условия, обновляет прогресс и автоматически разблокирует метадостижения. Очки зависят от редкости и связаны с глобальными наградами за накопление.
+      mechanics_links: []
+      assets: []
+    - id: analytics
+      title: 'Метрики и отчётность'
+      body: |
+        Приведены SQL-примеры для materialized view по статистике достижений, распределению редкостей и трендам завершения. Эти данные питают дашборды и баланс.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Описаны слушатели, расчёт прогресса, пакетная обработка, уведомления и аналитика по достижениям.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
