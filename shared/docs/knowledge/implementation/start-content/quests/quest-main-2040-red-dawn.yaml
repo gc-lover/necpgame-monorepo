@@ -12,22 +12,19 @@ metadata:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - main-quest
-    - shooter
-    - escort
+    - questline
     - red-era
+    - escort
   topics:
-    - quest_design
-    - hazard_management
+    - quests
+    - shooter
   related_systems:
-    - quest-service
+    - quest-engine
     - combat-service
     - analytics-service
   related_documents:
-    - id: mechanics-combat-shooter-core
-      relation: references
-    - id: mechanics-environment-hazards
-      relation: references
+    - id: quest-main-2045-red-dust-refugees
+      relation: continues
   source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2040-red-dawn.md
   visibility: internal
   audience:
@@ -43,70 +40,111 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Нужен shooter-шаблон для квеста эвакуации в красной зоне 2040 года, заменяющий устаревшую D&D версию."
-  goal: "Структурировать стадии, боевые встречи, интеракции и телеметрию для сопровождения группы выживших."
-  essence: "Игрок выводит беженцев из радиационной зоны Downtown, балансируя между боевыми, социалками и скрытными решениями."
+  problem: Красная зона Downtown изолирует выживших; требуется надёжный escort-квест.
+  goal: Зафиксировать shooter-структуру с интеракциями, боевыми сценариями и SLA.
+  essence: Игрок под руководством Марко выводит группу через радиацию и банды, используя assault/support/recon роли.
   key_points:
-    - "Четыре стадии: подготовка, вход в красную зону, спасение и эскорт, экстракция."
-    - "Shooter-интеракции покрывают медподдержку, suppression, stealth и переговоры."
-    - "Encounter’ы адаптируются от успехов разведки и скрытности."
-    - "Telemetria фиксирует escort состояние, hazard влияние и античит SLA."
+    - Четыре стадии с таблицами интеракций и подготовкой loadout.
+    - Ключевые shooter encounters и hazard-таблица красной зоны.
+    - API, WebSocket и Kafka маршруты с античит SLA.
 content:
   sections:
-    - id: overview
-      title: "Общий контекст"
+    - id: synopsis
+      title: Кратко
       body: |
-        Квест запускается из Watson Fixers Hub и ведёт через руины Downtown времён Red Era. Игроку
-        поручается вывести группу выживших, защищая их от радиации, банд и обрушений.
-      mechanics_links: []
-      assets: []
-    - id: stage_flow
-      title: "Стадии квеста"
+        - ID: `quest-main-2040-red-dawn`
+        - Тип: main (early mid-game)
+        - Выдаёт: `npc-marco-fix`
+        - Сеттинг: Red Era, руины Downtown
+        - Петля: rescue → escort → extraction
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: metadata_block
+      title: Метаданные
       body: |
-        Стадия A «Briefing & Prep» снижает расходы и выдаёт защитное снаряжение. Стадия B «Into the Red
-        Zone» предлагает Engineering Override, Recon Sweep и Scav Negotiation. Стадия C «Rescue & Escort»
-        раскрывает Field Triage, Suppression Cover и Stealth Extract. Стадия D закрывает экстракцию и
-        учитывает разные исходы.
+        ```yaml
+        city: Night-City
+        region: Watson-Downtown
+        period: 2040-2060
+        quest-type: main
+        difficulty: medium
+        party: coop-2-4 (solo допустимо)
+        expected-duration: 35-45m
+        repeatable: once
+        ```
       mechanics_links:
         - mechanics/combat/combat-shooter-core.yaml
-      assets: []
-    - id: encounters
-      title: "Боевые встречи"
+    - id: stages
+      title: Структура стадий
       body: |
-        Encounter A (Scav Patrol) и Encounter B (Gang Blockade) включают параметры врагов, триггеры
-        появления и влияние успешного Stealth Extract. Таблицы помогают балансировать уровни угрозы.
-      mechanics_links: []
-      assets: []
-    - id: hazards
-      title: "Опасности и окружение"
-      body: |
-        Радиация, обрушения и газовые выбросы описаны с условиями активации, эффектами и методами
-        смягчения (рад-защита, Recon Sweep, вентиляция).
+        **Stage A — Briefing & Prep:** Presence Briefing и Loadout Check дают скидку и рад-защиту.
+
+        **Stage B — Into the Red Zone:** Engineering Override, Recon Sweep, Scav Negotiation влияют на количество боёв и XP.
+
+        **Stage C — Rescue & Escort:** Field Triage, Suppression Cover, Stealth Extract управляют скоростью и безопасностью отряда.
+
+        **Stage D — Extraction & Report:** варианты assault/stealth/radiation detour и финальный отчёт Марко.
       mechanics_links:
-        - mechanics/environment/hazards.yaml
-      assets: []
+        - mechanics/combat/combat-overview.yaml
+    - id: dialogues
+      title: Диалоговые узлы
+      body: |
+        `marco_intro`, `scav_contact`, `survivor_meet`, `band_blockade`, `marco_wrap` — ветки социалки и выбора маршрутов.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: encounters
+      title: Shooter encounters
+      body: |
+        - Encounter A — Scav Patrol: Gunner и Bruiser с инициативой и лутом.
+        - Encounter B — Gang Blockade: лидер, шутеры, дрон; влияние Stealth Extract.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: hazards
+      title: Hazards
+      body: |
+        Радиация красной зоны, обрушение перекрытий, газовые выбросы; триггеры, эффекты, mitigation.
+      mechanics_links:
+        - mechanics/economy/trading-routes-global.yaml
     - id: rewards
-      title: "Награды и штрафы"
+      title: Награды и штрафы
       body: |
-        Базовые награды включают XP, eddies и репутацию Independent. Бонусы предоставляются за успешные
-        Engineering Override, Field Triage и Stealth Extract, а также за переговоры. Указаны штрафы за
-        провалы и превышение таймера.
-      mechanics_links: []
-      assets: []
+        База: 520 XP, 520 eddies, компоненты, репутация Independent +10.
+        Бонусы: Engineering Override (+20% XP), Field Triage (+50 XP), Stealth Extract (loot cache), Negotiation (экономия 200 eddies).
+        Штрафы: провал Field Triage, Negotiation, радиационный таймер.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API, сети и античит
+      body: |
+        REST: `/quests/{id}/accept`, `/interaction`, `/combat/shooter`, `/environment/hazard`, `/objective`, `/complete`.
+        WebSocket: `wss://gameplay/quests/{id}/events`.
+        Kafka: `combat.shooter.encounter`, `quest.progress.main`, `analytics.quest.red-era`, `anti-cheat.shooter.validation`.
+        SLA: latency > 180 мс, aim variance < 0.02 при accuracy > 0.8, rapid fire > 8 clicks/s.
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
     - id: telemetry
-      title: "API, события и тесты"
+      title: Логи и телеметрия
       body: |
-        REST, WebSocket и Kafka события фиксируют ключевые взаимодействия, боевые отчёты, hazard данные
-        и античит SLA (latency, macro, aim variance). Тест-кейсы покрывают golden path, combat-heavy,
-        stealth route, support, failure recovery и coop scaling.
-      mechanics_links: []
-      assets: []
+        Shooter-интеракции, combat telemetry, escort состояние, hazard журнал, решения игрока, пост-боевая аналитика.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: qa
+      title: Тест-кейсы
+      body: |
+        1. Golden Path
+        2. Combat Focus
+        3. Stealth Route
+        4. Support Carry
+        5. Failure Recovery
+        6. Coop Scaling
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
 appendix:
   glossary: []
   references: []
   decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2040-red-dawn
   blockers: []
@@ -114,11 +152,11 @@ history:
   - version: '2.0.0'
     date: 2025-11-10
     author: concept_team
-    changes: "Shooter-рефактор с обновлёнными стадиями, encounter’ами, наградами и логами."
+    changes: Shooter-рефактор, обновление стадий и SLA.
   - version: '1.0.0'
     date: 2025-11-05
     author: concept_team
-    changes: "Исходная D&D версия (архив)."
+    changes: Исходная D&D версия.
 validation:
   checksum: ''
   schema_version: '1.0'
