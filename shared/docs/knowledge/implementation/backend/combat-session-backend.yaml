@@ -1,0 +1,102 @@
+metadata:
+  id: backend-combat-session
+  title: Combat Session Backend
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-09T02:47:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T02:47:00Z
+  owners:
+    - role: gameplay_backend_lead
+      contact: gameplay@necp.game
+  tags:
+    - combat
+    - gameplay
+    - sessions
+  topics:
+    - combat
+    - gameplay-infra
+  related_systems:
+    - gameplay-service
+    - character-service
+    - economy-service
+    - quest-service
+  related_documents:
+    - id: backend-loot-system-part1
+      relation: references
+    - id: mechanics-combat-core
+      relation: supports
+  source: shared/docs/knowledge/implementation/backend/combat-session-backend.md
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: gameplay_backend_lead
+      reviewer: ''
+      reviewed_at: 2025-11-09T02:47:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Для MVP нужен стандартизованный backend боевых сессий с управлением участниками и событиями."
+  goal: "Документировать архитектуру combat sessions, схемы данных, ключевые сервисы и API."
+  essence: "Документ описывает микросервисную архитектуру, БД, процесс боя, обработку атак, события и интеграции."
+  key_points:
+    - Микросервис `gameplay-service` публикует события `combat:*`.
+    - SQL таблицы `combat_sessions` и `combat_logs`.
+    - Java сервис `startCombat`, `processAttack` и последовательности атак.
+    - Перечислены REST endpoints боя и интеграции с другими системами.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Combat Session Backend управляет инстансами боёв, расчётом урона, порядком ходов, наградами и событиями.
+      mechanics_links: []
+    - id: architecture
+      title: Микросервисная архитектура
+      body: |
+        Описаны взаимодействия gameplay-service с character, economy, quest сервисами и события bus.
+      mechanics_links: []
+    - id: database
+      title: База данных
+      body: |
+        SQL схемы `combat_sessions` и `combat_logs` с примерами полей участников, статусов, журналов действий.
+      mechanics_links: []
+    - id: start_combat
+      title: Запуск боя
+      body: |
+        Java метод `startCombat` создаёт сессию, определяет участников, порядок ходов и публикует событие `CombatStarted`.
+      mechanics_links: []
+    - id: process_attack
+      title: Обработка атаки
+      body: |
+        Метод `processAttack` рассчитывает урон, применяет модификаторы, обновляет логи и переключает ход.
+      mechanics_links: []
+    - id: api
+      title: API и интеграции
+      body: |
+        Перечислены основные REST endpoints (`/combat/start`, `/attack`, `/state`, etc.) и связанные документы.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: gameplay_backend_lead
+    changes: Создан backend боевых сессий.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
