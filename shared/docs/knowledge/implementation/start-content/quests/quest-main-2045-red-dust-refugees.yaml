@@ -1,9 +1,9 @@
 metadata:
   id: quest-main-2045-red-dust-refugees
-  title: "[Архив] Основной квест: Беженцы Красной пыли (2045)"
+  title: "Архив — Основной квест: Беженцы Красной пыли (2045)"
   document_type: implementation
   category: start-content
-  status: deprecated
+  status: draft
   version: '1.0.0'
   last_updated: 2025-11-05T00:00:00Z
   concept_approved: false
@@ -12,78 +12,100 @@ metadata:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - main-quest
-    - archived
-    - dnd
+    - questline
+    - archive
+    - red-era
   topics:
-    - quest_history
+    - quests
+    - escort
   related_systems:
-    - quest-service
+    - quest-engine
   related_documents:
     - id: quest-main-2040-red-dawn
-      relation: superseded_by
-    - id: quest-main-2023-shattered-city
-      relation: references
+      relation: precedes
   source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2045-red-dust-refugees.md
   visibility: internal
   audience:
     - concept
-    - narrative
+    - gameplay
   risk_level: low
 review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-05T00:00:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: "Документ хранится как архивная D&D версия квеста эвакуации до перехода на shooter-механику."
-  goal: "Зафиксировать ключевые элементы исторической спецификации, сохранив контекст для будущих ревизий."
-  essence: "Игрок сопровождает беженцев из Santo Domingo в Watson, используя социальные проверки, тактику и боевые столкновения согласно D&D правилам."
+  problem: Необходимо сохранить D&D-версию эвакуационного квеста после перехода на shooter.
+  goal: Структурировать цели, проверки и диалоговые ветки для архивного использования.
+  essence: Игрок обеспечивает эвакуацию беженцев, балансируя между переговорами, боём и тактическим планированием.
   key_points:
-    - "Содержит дерево диалогов из 26 узлов и проверки COOL, MEDICAL, TACTICS, PERCEPTION."
-    - "Боевые параметры оформлены через D&D метрики (AC, инициативы, кубы урона)."
-    - "Сохраняет UX макеты экранов и таблицу наград исторической версии."
-    - "Не использовать в текущей продакшн-работе — указан переход на shooter."
+    - Ветвления COOL 15, MEDICAL 13, TACTICS 14, PERCEPTION 14.
+    - Диалоговое дерево из 26 узлов с респаун сценарием.
+    - Базовые награды и API маппинг для исторического архива.
 content:
   sections:
     - id: synopsis
-      title: "Синопсис и цели"
+      title: Синопсис
       body: |
-        Марко «Фикс» направляет игрока сопровождать беженцев через красную зону 2045 года. Основной
-        маршрут предполагает зачистку или переговоры, стабилизацию раненых и эскорт до Watson. Документ
-        перечисляет основные цели и ветвления D&D-версии.
-      mechanics_links: []
-      assets: []
-    - id: skill_checks
-      title: "Проверки и ветвления"
+        - ID: `quest-main-2045-red-dust-refugees`
+        - Контакт: `npc-marco-fix`
+        - Локации: Santo Domingo → Watson
+        - Тема: эвакуация, гуманизм, риски Red Era
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Цели и ветвления
       body: |
-        Указаны пороги COOL 15, MEDICAL 13, TACTICS 14, PERCEPTION 14 и STEALTH 14. Таблица
-        демонстрирует последствия успеха или провала (снижение врагов, изменение маршрута, бонус XP).
-      mechanics_links: []
-      assets: []
-    - id: dialogues
-      title: "Диалоговое дерево"
+        Основной маршрут: встреча с беженцами, обеспечение маршрута, эскорт, возврат за наградой.
+        Ветви: COOL 15 (переговоры), MEDICAL 13 (стабилизация), TACTICS 14 (маршрут), PERCEPTION 14 (альтернативный пролаз).
+      mechanics_links:
+        - mechanics/combat/combat-dnd-core.yaml
+    - id: parameters
+      title: D&D параметры
       body: |
-        Раздел консолидирует 26 узлов диалогов, включая варианты переговоров, маршрутизацию и события
-        эскорта. Структура сохранена для последующего рефактора в shooter-модель.
-      mechanics_links: []
-      assets: []
-    - id: systems
-      title: "Боевые и API параметры"
+        Инициатива d20 + REF, AC врагов 11–14, состояния подавление/кровотечение/радиационный ожог.
+      mechanics_links:
+        - mechanics/combat/combat-dnd-core.yaml
+    - id: ux
+      title: UX экраны
       body: |
-        Приведены D&D акценты: инициативы, AC врагов, критические эффекты, состояния и базовая карта API
-        (accept, skill-check, combat, complete). Секция отмечена как устаревшая.
-      mechanics_links: []
-      assets: []
+        Примеры интерфейсов: встреча с беженцами, выбор маршрута, прибытие в Watson.
+      mechanics_links:
+        - shared/docs/knowledge/implementation/ui/guild-contract-board.yaml
+    - id: dialogue
+      title: Диалоговое дерево
+      body: |
+        Узлы `start`, `r_risks`, `r_arrive`, `r_med`, ветви проверки COOL/TACTICS/PERCEPTION, события пути `escort_1-3`, финал `complete`.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: rewards
+      title: Награды и баланс
+      body: |
+        База: 500 XP, 600 eddies, `item-components-basic`, репутация independent +15.
+        Бонусы за успешные проверки COOL, MEDICAL, TACTICS, PERCEPTION.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API маппинг
+      body: |
+        `POST /api/v1/quests/{id}/accept`, `/skill-check`, `/combat/start`, `/quests/{id}/complete`.
+        Соответствие JSON: `mvp-data-json/quests.json`.
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: telemetry
+      title: Логи и QA
+      body: |
+        Логи проверок, боёв, эскорта; тесты: социальный, боевой, медицинский, тактический, провал/респаун.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
 appendix:
   glossary: []
   references: []
-  decisions:
-    - "Документ оставлен исключительно как архивный пример D&D-подхода перед shooter pivot."
+  decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2045-red-dust-refugees
   blockers: []
@@ -91,7 +113,7 @@ history:
   - version: '1.0.0'
     date: 2025-11-05
     author: concept_team
-    changes: "Первичная спецификация до перехода на shooter-механику."
+    changes: Исходная D&D спецификация квеста.
 validation:
   checksum: ''
   schema_version: '1.0'
