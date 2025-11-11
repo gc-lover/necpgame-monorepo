@@ -1,88 +1,109 @@
 metadata:
   id: quest-main-2065-gray-theater
-  title: "[Архив] Основной квест: Серый театр (2065)"
+  title: "Архив — Основной квест: Серый театр (2065)"
   document_type: implementation
   category: start-content
-  status: deprecated
+  status: draft
   version: '1.0.0'
-  last_updated: 2025-11-05T00:00:00Z
+  last_updated: 2025-11-06T20:35:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - main-quest
-    - archived
-    - dnd
+    - questline
+    - archive
+    - stealth
   topics:
-    - quest_history
+    - quests
+    - sabotage
   related_systems:
-    - quest-service
+    - quest-engine
   related_documents:
-    - id: quest-main-2040-red-dawn
-      relation: references
-    - id: quest-main-2027-rebuild-protocol
-      relation: references
+    - id: quest-main-2077-relics-shadow
+      relation: precedes
   source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2065-gray-theater.md
   visibility: internal
   audience:
     - concept
-    - narrative
+    - gameplay
   risk_level: low
 review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-05T00:00:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: "Квест «Серый театр» представлен в устаревшем D&D формате и хранится для истории до shooter-рефактора."
-  goal: "Сохранить ключевые элементы архива: ветвления, проверки и логи, чтобы использовать их при будущей переработке."
-  essence: "Игрок выполняет саботаж прокси-войны между Arasaka и Militech по поручению NCPD, выбирая между stealth, tech и assault решениями."
+  problem: Требуется архивная фиксация прокси-войны Arasaka/Militech до shooter-рефактора.
+  goal: Сохранить цели, проверки и диалоги stealth/tech/cool квеста.
+  essence: Игрок выполняет скрытую операцию NCPD, саботируя «Серый театр» через проникновение, саботаж и эвакуацию.
   key_points:
-    - "Документ содержит цели миссии, ветки STEALTH/TECH/COOL и боевую схему с 7–9 врагами."
-    - "Диалоговое дерево из 25 узлов описывает варианты проникновения, саботажа и эвакуации."
-    - "API-секция ориентирована на D&D skill-check сервисы и должна быть заменена при shooter-переписке."
-    - "Файл помечен предупреждением о pivot’е и не используется в текущем продакшне."
+    - Ветвления STEALTH 18, TECH 17, COOL 17.
+    - Диалоговое дерево из 25 узлов с исходами для саботажа и боя.
+    - Награды, штрафы и API эндпоинты для исторической справки.
 content:
   sections:
     - id: synopsis
-      title: "Синопсис и цели"
+      title: Синопсис
       body: |
-        NCPD поручает Саре Миллер остановить эскалацию конфликта Arasaka vs Militech. Игрок инфильтрирует
-        объект, саботирует операцию (кража данных или взрыв) и покидает территорию незамеченным.
-      mechanics_links: []
-      assets: []
-    - id: branching
-      title: "Проверки и ветвления"
+        - ID: `quest-main-2065-gray-theater`
+        - Контакт: `npc-sarah-miller`
+        - Локации: Downtown и Watson
+        - Цель: предотвратить эскалацию прокси-войны Arasaka/Militech
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Цели и ветвления
       body: |
-        Основные проверки: STEALTH 18, TECH 17, COOL 17. Таблицы описывают влияние успехов на количество
-        врагов, время миссии и устойчивость к статусу «Паника».
-      mechanics_links: []
-      assets: []
+        Маршрут: принять задание → проникнуть → саботировать (данные или оборудование) → устранить охрану → уйти незамеченным → доложить.
+        Ветви: STEALTH 18 (−4 врага), TECH 17 (−15% времени), COOL 17 (защита от паники).
+      mechanics_links:
+        - mechanics/combat/combat-dnd-core.yaml
+    - id: parameters
+      title: D&D параметры
+      body: |
+        Инициатива d20 + REF, AC врагов 14–17, урон SMG/AR/heavy, состояния паника/сигнализация/ослепление.
+      mechanics_links:
+        - mechanics/combat/combat-dnd-core.yaml
     - id: dialogues
-      title: "Диалоговое дерево"
+      title: Диалоговое дерево
       body: |
-        Раздел сохраняет 25 узлов диалога, охватывающих брифинг, варианты саботажа, эвакуацию и возврат
-        к NPC. Структура служит основой для будущего shooter-рефактора.
-      mechanics_links: []
-      assets: []
-    - id: systems
-      title: "Боевые и API параметры"
+        Узлы `start`, `details`, `accept`, `travel`, `infiltrate_silent`, `infiltrate_loud`, `steal_data`, `destroy_equipment`, `escape_prep`, `combat`, `complete`.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: rewards
+      title: Награды и штрафы
       body: |
-        Содержит D&D параметры (инициатива, AC, урон) для корпо-гвардейцев, а также карту API
-        (`/accept`, `/skill-check`, `/combat/start`, `/complete`). Секция помечена как устаревшая.
-      mechanics_links: []
-      assets: []
+        База: 920 XP, 1200 eddies, `item-corporate-data`, репутация NCPD +22.
+        Бонусы: успешные STEALTH/TECH/COOL проверки (+100 XP, меньше врагов, защита).
+        Штрафы: провал (−15% денег), сигнализация (доп. враги), паника (−2 действия).
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API эндпоинты
+      body: |
+        - `POST /api/v1/quests/quest-main-2065-gray-theater/accept`
+        - `POST /api/v1/skill-check`
+        - `POST /api/v1/combat/start`
+        - `POST /api/v1/quests/quest-main-2065-gray-theater/complete`
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: telemetry
+      title: Логи и тестирование
+      body: |
+        Логи skill-check, stealth/combat, выбор саботажа.
+        Тесты: чистый stealth, силовой, смешанный, провал и alarm.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
 appendix:
   glossary: []
   references: []
-  decisions:
-    - "Документ оставлен как архивная версия до shooter-реализации."
+  decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2065-gray-theater
   blockers: []
@@ -90,7 +111,7 @@ history:
   - version: '1.0.0'
     date: 2025-11-05
     author: concept_team
-    changes: "Первичная D&D спецификация квеста до pivot на shooter."
+    changes: Исходная D&D спецификация.
 validation:
   checksum: ''
   schema_version: '1.0'
