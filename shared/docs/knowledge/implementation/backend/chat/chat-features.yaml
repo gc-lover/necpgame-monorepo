@@ -1,0 +1,122 @@
+metadata:
+  id: backend-chat-features
+  title: 'Chat Features — Возможности чата'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:30:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:30:00Z
+  owners:
+    - role: communications_lead
+      contact: communications@necp.game
+  tags:
+    - chat
+    - features
+    - communication
+  topics:
+    - player-communication
+    - social-systems
+  related_systems:
+    - chat-service
+    - voice-service
+    - translation-service
+  related_documents:
+    - id: backend-chat-channels
+      relation: complements
+    - id: backend-chat-moderation
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/chat/chat-features.md
+  visibility: internal
+  audience:
+    - backend
+    - community
+    - live-ops
+  risk_level: high
+review:
+  chain:
+    - role: communications_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T05:30:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Нужна единая спецификация возможностей чата (команды, форматирование, voice, переводы, история) для разработки backend и клиентов.
+  goal: Задать функциональные требования к расширенным функциям чата и описать интеграцию с голосом и переводами.
+  essence: Документ описывает slash-команды, rich formatting, голосовые каналы, автоперевод и хранение истории сообщений с примерами API.
+  key_points:
+    - Slash-команды покрывают whisper, party/raid сообщения, ignore/report и базовые emote команды.
+    - Rich formatting поддерживает bold/italic, ссылки, emoji и @mentions с серверной обработкой.
+    - Voice chat использует WebRTC и REST API для подключения, mute и управления участниками.
+    - Механизм автоперевода определяет язык сообщения и кеширует переводы для выбранных целевых языков.
+    - История сообщений хранится в Redis и БД, поддерживает пагинацию и обновление кеша.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание возможностей
+      body: |
+        Chat Features расширяет текстовый чат набором команд, форматирования, интеграцией голосовой связи и инструментами перевода.
+        Функции делятся на текстовые улучшения, голосовые каналы и сервисы истории/перевода.
+      mechanics_links: []
+      assets: []
+    - id: slash_commands
+      title: Slash-команды
+      body: |
+        Команды `/help`, `/whisper`, `/reply`, `/ignore`, `/report`, а также party/raid и emote команды обрабатываются сервисом
+        ChatCommandHandler. Каждая команда проверяет аргументы, маршрутизируется по назначению и генерирует ответ пользователю.
+      mechanics_links: []
+      assets: []
+    - id: rich_formatting
+      title: Расширенное форматирование
+      body: |
+        Форматирование преобразует **bold**, *italic*, ссылки, emoji-коды и @mentions в безопасный HTML. Алгоритм выполняет
+        whitelist ссылок, замену emoji и защиту от XSS.
+      mechanics_links: []
+      assets: []
+    - id: voice_chat
+      title: Голосовой чат (WebRTC)
+      body: |
+        Voice chat предоставляет каналы party, raid и guild. REST API поддерживает join/leave, mute/unmute и работу со списками
+        участников. Бэкенд управляет сигналингом и синхронизацией участников.
+      mechanics_links: []
+      assets: []
+    - id: translation
+      title: Поддержка переводов
+      body: |
+        TranslationService определяет язык сообщения, вызывает внешнего переводчика и кеширует результаты для целевых языков.
+        Повторные запросы используют кеш до истечения срока действия.
+      mechanics_links: []
+      assets: []
+    - id: message_history
+      title: История сообщений
+      body: |
+        Endpoint `/chat/history/{channelType}` сначала ищет историю в Redis, затем в БД. Сообщения кешируются и переиспользуются,
+        а запросы поддерживают пагинацию через параметр `beforeMessageId`.
+      mechanics_links: []
+      assets: []
+    - id: api_overview
+      title: API и интеграции
+      body: |
+        Основные endpoints: `GET /chat/history/{channelType}`, `POST /chat/voice/join`, `PUT /chat/settings` и другие операции для
+        управления голосовыми каналами и настройками перевода.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-chat-features
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описаны функции команд, форматирования, голоса, перевода и истории сообщений чата.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
