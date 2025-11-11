@@ -1,0 +1,109 @@
+metadata:
+  id: implementation-leaderboard-core
+  title: "Leaderboard System Core"
+  document_type: implementation
+  category: backend
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-08T06:45:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: backend_leaderboard_owner
+      contact: backend.leaderboards@necp.game
+  tags:
+    - leaderboards
+    - rankings
+    - realtime
+  topics:
+    - redis
+    - seasonal-leagues
+    - scoring
+  related_systems:
+    - combat-service
+    - economy-service
+    - social-service
+    - notification-service
+  related_documents:
+    - id: implementation-api-integration-map
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/leaderboard/leaderboard-core.md
+  visibility: internal
+  audience:
+    - backend
+    - analytics
+    - live-ops
+  risk_level: medium
+review:
+  chain:
+    - role: backend_leaderboard_owner
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions:
+    - "Зафиксировать финальные требования к seasonal reset и обновить cron расписание."
+summary:
+  problem: "Нужно описать универсальную систему рейтингов для глобального, регионального и сезонного соперничества."
+  goal: "Предоставить архитектуру, схему данных, расчёт очков и процессы синхронизации Redis ↔ PostgreSQL."
+  essence: "Документ охватывает типы лидербордов, schema DDL, Redis sorted sets, формулы подсчёта и процедуры сезонного сброса с выдачей наград."
+  key_points:
+    - "Рейтинги поддерживают глобальные, региональные, категориальные и сезонные таблицы с real-time обновлением."
+    - "Архитектура строится на Redis sorted sets (горячие данные) и периодической синхронизации в PostgreSQL."
+    - "SQL схемы описывают `leaderboards`, `leaderboard_entries`, `leaderboard_snapshots` с индексами и денормализацией."
+    - "Приведены функции расчёта очков (overall power, combat score) и распределение рангов."
+    - "Seasonal reset включает снапшоты, награды, архивацию и запуск нового сезона через планировщик."
+content:
+  sections:
+    - id: overview
+      title: Назначение и возможности
+      body: |
+        Система покрывает глобальные/региональные/категориальные/сезонные рейтинги, поддерживает WebSocket обновления и
+        выдаёт награды топ игрокам. Основной pipeline: событие → обновление статистики → пересчёт очков → обновление рейтинга.
+      mechanics_links: []
+      assets: []
+    - id: architecture
+      title: Архитектура и хранение
+      body: |
+        Описан поток от игровых действий до обновления Redis sorted set, батчевой записи в PostgreSQL и пуша клиентам.
+        Ключи Redis формируются как `leaderboard:{code}:{scope}`, доступны операции топ-100, ранк игрока, диапазоны.
+      mechanics_links: []
+      assets: []
+    - id: data-model
+      title: Схема данных
+      body: |
+        Приведены DDL для таблиц `leaderboards`, `leaderboard_entries`, `leaderboard_snapshots` с индексами, полями season,
+        reward и денормализованными данными игрока ради производительности.
+      mechanics_links: []
+      assets: []
+    - id: scoring
+      title: Расчёт очков
+      body: |
+        Пример функции `calculate_overall_power` учитывает уровень, экипировку, навыки, достижения, капитал, репутацию и PvP рейтинг.
+        Для боевого рейтинга используются убийства, точность, KDA и нанесённый урон.
+      mechanics_links: []
+      assets: []
+    - id: seasons
+      title: Сезонность и награды
+      body: |
+        Seasonal reset выполняется шедулером: создаёт финальный снапшот, распределяет награды, архивирует записи, сбрасывает
+        рейтинги и стартует новый сезон. Описаны tier наград (Diamond, Platinum, Gold, Silver, Bronze).
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: backend_leaderboard_owner
+    changes: Описаны архитектура, схемы БД, Redis операции и сезонные процессы лидербордов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
