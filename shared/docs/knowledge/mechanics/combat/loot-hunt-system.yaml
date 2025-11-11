@@ -1,0 +1,231 @@
+metadata:
+  id: loot-hunt-system
+  title: 'Loot Hunt System — Киберконтракты на добычу'
+  document_type: mechanics
+  category: combat
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:39:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T03:07:00Z
+  owners:
+    - role: combat_director
+      contact: combat@necp.game
+  tags:
+    - combat
+    - loot
+    - pvpve
+  topics:
+    - high-stakes
+    - loot-economy
+    - gameplay-combat
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - progression-service
+  related_documents:
+    - id: combat-extract
+      relation: complements
+    - id: economy-trading
+      relation: references
+    - id: progression-paths
+      relation: references
+  source: shared/docs/knowledge/mechanics/combat/loot-hunt-system.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - systems
+    - economy
+  risk_level: high
+review:
+  chain:
+    - role: combat_director
+      reviewer: ''
+      reviewed_at: 2025-11-09T03:07:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось зафиксировать единый PvPvE луп по охоте за лутом, который соединяет контракты, эвенты и экстракцию с экономикой и прогрессией.
+  goal: Описать структуру зон, риск/награду, генератор контрактов, API и интеграции, чтобы подготовить систему Loot Hunt к постановке задач.
+  essence: Документ формализует киберконтракты, типы зон, фазу миссии, события, телеметрию и экономические взаимодействия для высокорисковой охоты.
+  key_points:
+    - Контракты формируются динамически с учётом риска, репутации и состава команды.
+    - Heat и Exposure управляют редкостью наград, появлением элитных врагов и вторжениями.
+    - Система интегрирована с экстракт-зонами, торговлей, прогрессией и античитом.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Loot Hunt — основной PvPvE цикл по добыче имплантов, данных и редких ресурсов. Игроки получают контракты от фиксеров и корпораций, проникают в многоуровневые зоны, решают, когда экстрактиться, и управляют риском ради повышенных наград.
+      mechanics_links:
+        - mechanics/combat/combat-extract.yaml
+      assets: []
+    - id: fantasy
+      title: Игровая фантазия
+      body: |
+        - Получение контрактов от фиксеров или корпораций.
+        - Инфильтрация промзон, дата-ферм и разрушенных территорий.
+        - Взлом сейфов, охота за ядами Blackwall, доставка ядер данных.
+        - Дилемма между безопасной экстракцией и продолжением ради редких наград.
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
+      assets: []
+    - id: zone_types
+      title: Типы зон
+      body: |
+        | Код | Описание | Основной лут | Угрозы |
+        | --- | --- | --- | --- |
+        | ZN-01 | Abandoned Megastructure | Прототипы имплантов | Дроны Arasaka |
+        | ZN-02 | Blackwall Breach | Чёрные данные | Netwatch ICE |
+        | ZN-03 | Urban Ruins | Компоненты оружия | Банды и ловушки |
+        | ZN-04 | Offshore Vault | Криптовалюта | Militech SpecOps |
+      mechanics_links:
+        - mechanics/combat/combat-pvp-pve.yaml
+      assets: []
+    - id: mission_cycle
+      title: Цикл миссии
+      body: |
+        1. Контракт — выбор зоны, целей и ограничений.
+        2. Подготовка — анализ угрозы, подбор снаряжения и планирование в голосовой лобби.
+        3. Инфильтрация — управление Heat и Exposure, использование стелса и саботажа.
+        4. Loot Phase — Smart Loot, мини-эвенты («Black Market Drop», «System Overload»).
+        5. Extraction — выбор точки выхода, Emergency Lift и риск перехвата.
+      mechanics_links:
+        - mechanics/combat/combat-pvp-pve.yaml
+      assets: []
+    - id: risk_reward
+      title: Риск и награда
+      body: |
+        - Heat Level повышает редкость лута и спавнит элитных врагов.
+        - Exposure Meter увеличивает вероятность PvP-вторжений других экипажей.
+        - Страховка экипировки оформляется через economy/insurance.
+        - Fallback Rewards выдают аналитику данных при провале миссии.
+      mechanics_links:
+        - mechanics/economy/economy-contracts.yaml
+      assets: []
+    - id: events
+      title: Динамические события
+      body: |
+        1. Black Market Drop — капсула с уникальными предметами.
+        2. System Overload — энергетические всплески и глич-кейсы.
+        3. Corporate Sweep — рейд корпораций с таймером экстракции.
+        4. Fixer Contract Chain — последовательность мини-задач в рамках миссии.
+      mechanics_links:
+        - mechanics/economy/economy-events.yaml
+      assets: []
+    - id: contract_generator
+      title: Генератор контрактов
+      body: |
+        ```
+        Select TargetZone based on player_profile.preferred_risk
+        Select LootTable using faction_reputation and heat forecast
+        Assign Objectives (primary, secondary, optional)
+        Calculate Reward = base + heat_modifier + streak_bonus
+        ```
+        Алгоритм учитывает состав команды, репутацию и текущий уровень Heat для балансировки задач и вознаграждений.
+      mechanics_links:
+        - mechanics/economy/economy-contracts.yaml
+      assets: []
+    - id: loot_rarity
+      title: Лут и редкости
+      body: |
+        - Тиры: Common → Mythic.
+        - Семейства: импланты, моды оружия, плагины кибердек, энергетические ядра.
+        - Smart Loot ориентируется на состав команды и применяет soft pity после четырёх неудачных миссий.
+      mechanics_links:
+        - mechanics/economy/loot-tables.yaml
+      assets: []
+    - id: economy_exchange
+      title: Экономика и обмен
+      body: |
+        - Appraisal станции оценивают добычу, фиксеры запускают аукционы, чёрный рынок отслеживает репутацию.
+        - Crafting hooks позволяют перерабатывать ядра в компоненты и ресурсы.
+      mechanics_links:
+        - mechanics/economy/economy-trading.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции
+      body: |
+        - Связь с экстракт-зонами и системой страховки.
+        - Триггеры прогрессии и ежедневных сбросов.
+        - Автоконфигурация голосовых лобби и клановых экспедиций.
+      mechanics_links:
+        - mechanics/combat/combat-extract.yaml
+        - mechanics/progression/classes-progression-link.yaml
+      assets: []
+    - id: antagonists
+      title: Антагонисты и угрозы
+      body: |
+        - Corp Strike Teams, Rogue Runners, Blackwall Echoes.
+        - Экологические угрозы: токсичные выбросы, плесень, электромагнитные штормы.
+      mechanics_links:
+        - mechanics/combat/combat-ai-enemies.yaml
+      assets: []
+    - id: technical_stack
+      title: Технический стек и телеметрия
+      body: |
+        - Instance Server на Kubernetes, Spawn Controller на Rust (gRPC).
+        - Kafka `loot.hunt.events` передаёт телеметрию в ClickHouse.
+        - AI Director — отдельный Python-сервис с RL.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+      assets: []
+    - id: api_interfaces
+      title: API контуры
+      body: |
+        - `POST /api/v1/loot-hunt/contracts/request`
+        - `GET /api/v1/loot-hunt/contracts/active`
+        - `POST /api/v1/loot-hunt/match/{instanceId}/telemetry`
+        - `POST /api/v1/loot-hunt/extraction/trigger`
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+      assets: []
+    - id: data_models
+      title: Таблицы данных
+      body: |
+        Таблицы `loot_contracts`, `loot_instances`, `loot_telemetry` используют UUID, JSONB и временные метки для отслеживания прогресса миссий и состояния зон.
+      mechanics_links:
+        - mechanics/economy/economy-analytics.yaml
+      assets: []
+    - id: lore
+      title: Лор и NPC
+      body: |
+        - Фиксеры Pilar «Pix», Dex «Ghost», аналитик Hana Ito, номад Kang «Switch».
+        - Привязка зон к событиям Blackwall Surge и Corporate Divide.
+      mechanics_links:
+        - canon/lore/_03-lore/activities/activities-lore-compendium.yaml
+      assets: []
+    - id: kpi_risks
+      title: KPI и риски
+      body: |
+        - Мониторинг Retention, Average Loot Value, PvP Encounter Rate.
+        - Античит-контроль, анализ вторжений и дублирование телеметрии.
+      mechanics_links:
+        - mechanics/economy/economy-analytics.yaml
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Combat Extract Mechanics
+      link: ./combat-extract.yaml
+    - title: Economy Trading System
+      link: ../economy/economy-trading.yaml
+    - title: Progression Link Overview
+      link: ../progression/classes-progression-link.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#loot-hunt-system
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описан PvPvE цикл по добыче лута, события, генератор контрактов и интеграции с экономикой.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
