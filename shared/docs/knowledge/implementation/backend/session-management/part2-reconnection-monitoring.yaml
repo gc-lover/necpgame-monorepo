@@ -1,0 +1,99 @@
+metadata:
+  id: backend-session-management-part2
+  title: "Session Management — Part 2: Reconnection & Monitoring"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-07T21:35:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T21:35:00Z
+  owners:
+    - role: auth_lead
+      contact: auth@necp.game
+  tags:
+    - sessions
+    - reconnection
+    - monitoring
+  topics:
+    - authentication
+    - gameplay-infra
+  related_systems:
+    - auth-service
+    - analytics-service
+    - websocket-service
+  related_documents:
+    - id: backend-session-management-part1
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/session-management/part2-reconnection-monitoring.md
+  visibility: internal
+  audience:
+    - backend
+    - auth
+  risk_level: high
+review:
+  chain:
+    - role: auth_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T21:35:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Нужна формализованная логика переподключения, таймаутов и мониторинга игровых сессий."
+  goal: "Задокументировать fast reconnect, стратегии множественных сессий, очистку, метрики и безопасность."
+  essence: "Часть 2 описывает обработку reconnect, закрытие сессий, мониторинг показателей и защиту от взлома."
+  key_points:
+    - Fast reconnect с проверкой токена и окна 5 минут.
+    - Подходы к concurrent sessions и пример стратегии `One Session Per Player`.
+    - Таймауты (inactivity, absolute, idle) и cron cleanup.
+    - API logout, admin операции, метрики и средства защиты (IP binding, token rotation).
+content:
+  sections:
+    - id: reconnect
+      title: Reconnection Handling
+      body: |
+        Описаны шаги быстрого переподключения, endpoint `/reconnect`, проверка окна, обновление статуса и публикация событий.
+      mechanics_links: []
+    - id: concurrent
+      title: Concurrent Sessions
+      body: |
+        Рассматриваются стратегии одной/нескольких сессий, пример реализации закрытия старых сессий и уведомлений клиента.
+      mechanics_links: []
+    - id: timeouts
+      title: Таймауты и очистка
+      body: |
+        Типы таймаутов (inactivity, absolute, idle), сервис очистки каждые 5 минут и удаление старых закрытых сессий.
+      mechanics_links: []
+    - id: closing
+      title: Закрытие сессий
+      body: |
+        Endpoint logout, транзакционное закрытие, очистка кешей, уведомления и освобождение ресурсов (party, combat, trade).
+      mechanics_links: []
+    - id: monitoring
+      title: Мониторинг и API
+      body: |
+        Метрики сессий, админ dashboard, REST endpoints для управления и статистики.
+      mechanics_links: []
+    - id: security
+      title: Security
+      body: |
+        Меры защиты от session hijacking, brute force и вращение токенов.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: auth_lead
+    changes: Добавлены сценарии reconnect, таймауты и мониторинг.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
