@@ -1,0 +1,168 @@
+metadata:
+  id: implementation-analytics-faction-balance
+  title: 'Faction Analytics & Balance — Метрики и авто-тюнинг'
+  document_type: implementation
+  category: analytics
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T12:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T12:20:00Z
+  owners:
+    - role: analytics_lead
+      contact: analytics@necp.game
+  tags:
+    - analytics
+    - factions
+    - balance
+  topics:
+    - analytics
+    - world
+  related_systems:
+    - analytics-service
+    - world-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: implementation-analytics-dashboard-overview
+      relation: references
+    - id: mechanics-world-events-framework
+      relation: supports
+  source: shared/docs/knowledge/implementation/analytics/faction-analytics-balance.yaml
+  visibility: internal
+  audience:
+    - analytics
+    - backend
+    - live-ops
+  risk_level: medium
+review:
+  chain:
+    - role: analytics_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T12:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требуется единый документ с метриками и правилами авто-тюнинга для фракционных систем, чтобы синхронизировать сервисы и dashboard.
+  goal: Описать целевые метрики, алгоритмы авто-настройки, REST/WS контуры и схемы данных для analytics-service.
+  essence: Документ задаёт показатели эффективности фракций, триггеры автоматических правок и структуру данных для хранения и мониторинга.
+  key_points:
+    - Метрики охватывают контракты, рейды, экономику, климат и социальные деревья.
+    - Авто-тюнинг использует пороговые значения для корректировки сложности, наград и world flags.
+    - REST/WS интерфейсы и SQL-схемы определены для реализации analytics-service.
+content:
+  sections:
+    - id: goals
+      title: Цели
+      body: |
+        Документ фиксирует цели аналитики фракций: определение ключевых метрик, настройка авто-тюнинга наград и сложности,
+        обеспечение наблюдаемости через REST и WebSocket контуры. Интеграции охватывают raids, contracts, economy и
+        social-service.
+      mechanics_links:
+        - implementation/analytics/dashboard-overview.yaml
+        - mechanics/world/events/world-events-framework.yaml
+      assets: []
+    - id: metrics
+      title: Ключевые метрики
+      body: |
+        | Метрика | Описание | Источник | Использование |
+        | --- | --- | --- | --- |
+        | contractSuccessRate | Успешность этапов контрактов | world-service contracts | Тюнинг порогов репутации |
+        | branchPreferenceIndex | Распределение выборов веток | social-service decisions | Планирование событий |
+        | raidClearTime | Среднее время рейдов | raids telemetry | Корректировка HP/урона |
+        | ecoAssetVelocity | Скорость оборота активов | economy-service | Баланс цен и налогов |
+        | legacyImpactScore | Влияние исторических событий | history subsystem | Seasonal rotation |
+        | affinityGrowthRate | Рост привязанности | social-service dialogues | Настройка требований |
+        | climateStabilityIndex | Контролируемость погоды | world climate | Управление окнами Badlands |
+        | metanetComplianceRate | Решения трибуналов | analytics-service logs | Допуск ИИ |
+      mechanics_links:
+        - implementation/analytics/data-pipeline-overview.yaml
+        - mechanics/economy/economy-analytics.yaml
+      assets: []
+    - id: autotune
+      title: Авто-тюнинг
+      body: |
+        - **Контракты:** при contractSuccessRate > 0.8 повышать требования репутации на 5%, при < 0.4 снижать.
+        - **Рейды:** raidClearTime сравнивается с целевым диапазоном, отклонения корректируются через `/world/raids/{id}/balance`.
+        - **Экономика:** ecoAssetVelocity > 1.5 — повышать налог, < 0.7 — снижать.
+        - **История:** низкий legacyImpactScore активирует дополнительные historical events.
+        - **Социальные линии:** высокий affinityGrowthRate повышает стоимость ключевых выборов.
+        - **Климат:** climateStabilityIndex < 0.5 усиливает бури, > 0.8 снижает награды.
+        - **Metanet:** metanetComplianceRate > 0.75 открывает больше ИИ-сервисов, < 0.4 вводит ограничения.
+      mechanics_links:
+        - mechanics/world/world-state/world-bosses-catalog.yaml
+        - mechanics/social/player-orders-system.yaml
+      assets: []
+    - id: interfaces
+      title: REST и WebSocket контуры
+      body: |
+        | Endpoint | Метод | Назначение |
+        | --- | --- | --- |
+        | /analytics/factions/metrics | GET | Агрегированные метрики |
+        | /analytics/factions/metrics/{metricId} | GET | Детализация по времени |
+        | /analytics/factions/autotune | POST | Применение изменений |
+        | /analytics/factions/alerts | GET | Пороговые события для GM |
+
+        WebSocket `wss://api.necp.game/v1/analytics/factions` транслирует события MetricUpdate, AutotuneApplied и AlertRaised
+        для dashboard.
+      mechanics_links:
+        - implementation/api/api-gateway-overview.yaml
+        - implementation/analytics/dashboard-ws.yaml
+      assets: []
+    - id: schema
+      title: Схемы данных
+      body: |
+        ```sql
+        CREATE TABLE faction_metrics (
+            metric_id VARCHAR(64) PRIMARY KEY,
+            faction_id VARCHAR(64) NOT NULL,
+            metric_name VARCHAR(64) NOT NULL,
+            value NUMERIC(12,4) NOT NULL,
+            time_bucket TIMESTAMPTZ NOT NULL,
+            metadata JSONB,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE faction_autotune_actions (
+            action_id UUID PRIMARY KEY,
+            metric_id VARCHAR(64) NOT NULL,
+            previous_value NUMERIC(12,4) NOT NULL,
+            new_value NUMERIC(12,4) NOT NULL,
+            applied_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            applied_by VARCHAR(64) NOT NULL,
+            notes TEXT
+        );
+        ```
+      mechanics_links:
+        - implementation/backend/data-modeling-guidelines.yaml
+      assets: []
+    - id: readiness
+      title: Готовность
+      body: |
+        Метрики и правила авто-тюнинга описаны, интеграции с сервисами определены. Документ готов к реализации в
+        analytics-service и world-service и служит основой для dashboard.
+      mechanics_links:
+        - implementation/analytics/dashboard-overview.yaml
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Analytics Service Specification
+      link: ../service-spec/analytics-service.yaml
+    - title: World Events Integration
+      link: ../../../mechanics/world/events/world-events-framework.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/api/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: analytics_team
+    changes: Конвертирован документ аналитики и авто-тюнинга фракций в YAML.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
