@@ -1,0 +1,114 @@
+metadata:
+  id: backend-housing-system
+  title: 'Housing System — Личное жильё'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-11T11:10:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:34:00Z
+  owners:
+    - role: gameplay_backend_lead
+      contact: gameplay@necp.game
+  tags:
+    - housing
+    - social
+    - customization
+  topics:
+    - player-engagement
+    - ownership
+  related_systems:
+    - housing-service
+    - economy-service
+    - notification-service
+  related_documents:
+    - id: economy-overview
+      relation: aligns
+    - id: friend-system
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/housing/housing-system.md
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+    - live-ops
+  risk_level: medium
+review:
+  chain:
+    - role: gameplay_backend_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Система жилья описывалась в Markdown и не содержала структурированных ссылок для интеграции с экономикой и социальными подсистемами.
+  goal: Описать типы квартир, модели данных и функциональные плюсы мебели в формате YAML.
+  essence: Документ фиксирует архитектуру покупки жилья, схемы `apartments`, `placed_furniture`, `furniture_items`, категории мебели и бонусы престижа.
+  key_points:
+    - Игроки приобретают студии, стандартные квартиры, пентхаусы и гильдейские залы с различными слотами мебели.
+    - Схема `apartments` хранит тип, локализацию, публичность и список гостей.
+    - Таблица `placed_furniture` описывает позиционирование и масштаб предметов, `furniture_items` — параметры, категории и бонусы.
+    - Prestige Score зависит от типа квартиры, уникальности мебели и бонусов локации.
+content:
+  sections:
+    - id: architecture
+      title: 'Поток владения и кастомизации'
+      body: |
+        Игрок покупает квартиру, выбирает локацию, настраивает интерьер, размещает мебель и приглашает гостей. Гильдии могут приобретать залы с расширенными слотами и общими ресурсами.
+      mechanics_links: []
+      assets: []
+    - id: apartment_types
+      title: 'Типы квартир'
+      body: |
+        Стартовые студии стоят 50 000 eddies и предоставляют 20 слотов мебели. Стандартные квартиры расширяют пространство до 40 слотов и 200 000 eddies. Люксовые пентхаусы предлагают 80 слотов, вертолетную площадку и цену 1 000 000 eddies. Гильдейские залы хранят до 200 предметов и требуют взноса 5 000 000 eddies из гильдейского банка.
+      mechanics_links: []
+      assets: []
+    - id: data_model
+      title: 'Модель данных'
+      body: |
+        `apartments` хранит владельца, тип, цену, лимиты мебели, престиж и настройки доступа. `placed_furniture` фиксирует размещённые предметы и их трансформации. `furniture_items` описывает каталог мебели, категорию, престиж и функциональные бонусы.
+      mechanics_links: []
+      assets: []
+    - id: furniture_categories
+      title: 'Категории мебели'
+      body: |
+        Декоративные предметы (постеры, растения, неон, ковры, арт), функциональные бонусы (крафт-столы, регенерация, стойки оружия), комфорт (кровати, диваны, кресла, столы) и хранилища (шкафы, сейфы, оружейные шкафы) формируют базовый каталог.
+      mechanics_links: []
+      assets: []
+    - id: prestige_system
+      title: 'Престиж и посещения'
+      body: |
+        `calculatePrestigeScore` суммирует базовый престиж типа квартиры, очки за мебель и бонусы за локацию и уникальные предметы. Механика посещений проверяет доступ, загружает состояние квартиры, трекает визиты и уведомляет владельца через Notification Service.
+      mechanics_links: []
+      assets: []
+    - id: functional_bonuses
+      title: 'Функциональные бонусы мебели'
+      body: |
+        `FunctionalFurnitureService` агрегирует бонусы к скорости крафта, слотам хранилища и регенерации человечности, суммируя значения из JSON `function_bonus` для каждого размещенного предмета.
+      mechanics_links: []
+      assets: []
+    - id: api_surface
+      title: 'API жилья'
+      body: |
+        REST-интерфейс охватывает покупку квартиры, получение списка доступных вариантов, доступ к своей квартире, посещение чужих, размещение и удаление мебели, магазин мебели и лидерборд престижа.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-housing-system
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: gameplay_backend_lead
+    changes: Конвертация системы жилья в YAML с детализацией типов, схем данных, категорий мебели и бонусов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
