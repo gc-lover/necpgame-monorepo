@@ -1,0 +1,150 @@
+metadata:
+  id: quest-side-2088-archive-expedition
+  title: "Побочный квест: Экспедиция за заслон (2088)"
+  document_type: implementation
+  category: start-content
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-06T20:50:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - side-quest
+    - blackwall
+    - survival
+  topics:
+    - quests
+    - netrunning
+    - combat
+  related_systems:
+    - quest-engine
+    - analytics-service
+    - mental-health-service
+  related_documents:
+    - id: quest-main-2085-blackwall-expansion
+      relation: precedes
+  source: shared/docs/knowledge/implementation/start-content/quests/quest-side-2088-archive-expedition.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - analytics
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Экспедиции за Blackwall смертельно опасны, но необходимы для добычи архивных артефактов.
+  goal: Описать side quest с ветками netrunning, устойчивости и боёв против AI-сущностей.
+  essence: Игрок сопровождает Элизабет Чен за Blackwall, добывает артефакты и пытается сохранить рассудок.
+  key_points:
+    - Проверки NETRUNNING-COMBAT/COOL/INT регулируют врагов, insanity и бонусы данных.
+    - Бои с 5–10 AI прокси и событие `Reality Tear`.
+    - Финальное сохранение рассудка влияет на возвращение и награду.
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис
+      body: |
+        - ID: `quest-side-2088-archive-expedition`
+        - Контакт: `npc-elizabeth-chen`
+        - Локация: точка входа в Blackwall, архивные сектора
+        - Уровень: 11
+        - Темы: survival, insanity, blackwall artifacts
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Цели и ветвления
+      body: |
+        Основные шаги:
+        1. Принять поручение у Элизабет.
+        2. Пересечь Blackwall.
+        3. Сразиться с AI и собрать 3 артефакта.
+        4. Сохранить рассудок и вернуться.
+
+        Ветви:
+        - NETRUNNING-COMBAT 20 — оверклок и мгновенное отключение 5 AI.
+        - COOL 19 — подавление страха и безумия, защищает от insanity.
+        - INT 19 — анализ архивов, дополнительный лут и XP.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: interactions
+      title: Ключевые интеракции
+      body: |
+        - `Fear Suppression`: COOL 19, событие `player.status.insanity_resist`.
+        - `Archive Analysis`: INT 19, событие `analytics.blackwall.archive`.
+        - `Overclock Assault`: NETRUNNING 20, событие `combat.shooter.netrun_overclock`.
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
+    - id: encounters
+      title: Боевые сценарии
+      body: |
+        - `Blackwall Crossing`: проверка sanity, при провале — debuff.
+        - `AI Proxy Swarm`: 5–10 врагов с defense 240–260, способности reality distort.
+        - `Insanity Loop`: triggered при провале COOL, накладывает случайные эффекты.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: dialogue
+      title: Диалоговое дерево
+      body: |
+        27 узлов: брифинг Элизабет, обсуждение рисков, пересечение, анализ архивов, бои, сбор артефактов, сохранение рассудка и возвращение.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: rewards
+      title: Награды и последствия
+      body: |
+        База: 1250 XP, 1600 eddies, `item-blackwall-data ×3`, +40 репутации NetWatch.
+        Бонусы: успех NETRUN/Cool/INT → +150–180 XP, доп. данные.
+        Штрафы: провал → insanity, −20% денег, риск повторения боя.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API и телеметрия
+      body: |
+        REST:
+        - `POST /api/v1/quests/quest-side-2088-archive-expedition/accept`
+        - `POST /api/v1/skill-check`
+        - `POST /api/v1/combat/start`
+        - `POST /api/v1/quests/quest-side-2088-archive-expedition/complete`
+
+        Kafka:
+        - `player.status.insanity`
+        - `combat.shooter.blackwall`
+        - `analytics.blackwall.artifacts`
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: qa
+      title: Тестирование
+      body: |
+        - Overclock Success: бой на 5 врагов, проверка XP бонуса.
+        - Insanity Failure: безуспешный COOL, проверка статуса.
+        - Full Combat: все 10 AI, проверка награды и медпункта.
+        - Return Safe vs Mad: финальные узлы `return_safe` и `return_mad`.
+        - Respawn Loop: поражение и повторное сражение.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#quest-side-2088-archive-expedition
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_team
+    changes: Первичная спецификация экспедиции за Blackwall.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
