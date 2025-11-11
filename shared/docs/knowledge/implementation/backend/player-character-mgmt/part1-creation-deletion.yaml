@@ -1,0 +1,99 @@
+metadata:
+  id: implementation-player-character-mgmt-part1
+  title: "Player Character Management — Part 1: Creation & Deletion"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-08T02:24:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: character_system_owner
+      contact: characters@necp.game
+  tags:
+    - character-management
+    - account
+    - persistence
+  topics:
+    - creation-flow
+    - deletion
+    - database
+  related_systems:
+    - character-service
+    - inventory-service
+    - quest-service
+  related_documents:
+    - id: implementation-player-character-mgmt-part2
+      relation: continues
+  source: shared/docs/knowledge/implementation/backend/player-character-mgmt/part1-creation-deletion.md
+  visibility: internal
+  audience:
+    - backend
+    - account
+    - qa
+  risk_level: medium
+review:
+  chain:
+    - role: character_system_owner
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Нужно зафиксировать последовательность создания и удаления персонажей, чтобы сервисы аккаунтов и геймплея работали согласованно."
+  goal: "Определить схемы БД, валидации и события для жизненного цикла персонажа — от создания до soft delete и восстановления."
+  essence: "Документ описывает таблицы players/characters/slots, сервисный код создания, удаление с удержанием слота и процесс восстановления."
+  key_points:
+    - "Схемы `players`, `characters`, `character_slots` задают хранение атрибутов, внешности, прогресса и ограничений по слотам."
+    - "Flow `createCharacter` валидирует имя, создаёт слоты, выдаёт стартовый инвентарь, квесты и публикует события."
+    - "Soft delete освобождает слот, сохраняет таймер восстановления и оповещает систему достижений/инвентаря."
+    - "Процедуры восстановления проверяют срок, возвращают статус и пересоздают инвентарь/квесты."
+content:
+  sections:
+    - id: database-schema
+      title: Схемы данных
+      body: |
+        Описаны таблицы `players`, `characters`, `character_slots` с индексами и внешними ключами. Структуры включают
+        денормализованные поля (account_id, appearance, reputation) для ускорения запросов и мониторинга soft delete.
+      mechanics_links: []
+      assets: []
+    - id: creation-flow
+      title: Процесс создания персонажа
+      body: |
+        Сервис `createCharacter` выполняет проверку слотов, валидацию имени, назначение стартовых атрибутов/навыков,
+        инициализацию внешности и позиций, выдаёт начальные ресурсы, сохраняет агрегаты и публикует событие `CharacterCreated`.
+      mechanics_links: []
+      assets: []
+    - id: deletion
+      title: Удаление персонажа
+      body: |
+        Soft delete переводит статус в `DELETED`, освобождает слоты, даёт 30-дневный период восстановления и оповещает
+        связанные сервисы. Поддерживается логирование и публикация `CharacterDeletedEvent`.
+      mechanics_links: []
+      assets: []
+    - id: restore
+      title: Восстановление персонажа
+      body: |
+        Процедура `restoreCharacter` валидирует доступность, повышает used slots, восстанавливает бекапы и возвращает
+        персонажа в активный статус, синхронизируя инвентарь и квесты.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: character_system_owner
+    changes: Обновление схем и потоков после рефакторинга слотов и событий.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
