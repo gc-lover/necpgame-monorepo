@@ -1,0 +1,130 @@
+metadata:
+  id: living-world-kenshi-hybrid
+  title: Живой мир и прогресс по действиям — гибрид Kenshi
+  document_type: mechanics
+  category: world
+  status: draft
+  version: '0.2.0'
+  last_updated: 2025-11-08T09:30:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - living-world
+    - action-xp
+    - world-simulation
+  topics:
+    - world-state
+    - progression
+  related_systems:
+    - world-service
+    - gameplay-service
+    - economy-service
+    - analytics-service
+  related_documents:
+    - id: player-impact-systems
+      relation: references
+    - id: player-impact-mechanics
+      relation: references
+    - id: economy-world-impact
+      relation: complements
+  source: shared/docs/knowledge/mechanics/world/world-state/living-world-kenshi-hybrid.md
+  visibility: internal
+  audience:
+    - concept
+    - systems
+    - progression
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Симуляция живого мира и гибрид прогрессии находились в Markdown и не объединяли UX, API и баланс.
+  goal: Описать слои симуляции, модель Action XP и интерфейсы world/gameplay сервисов.
+  essence: Документ фиксирует фракционные войны, логистику, автономные отряды и прогрессию по действиям с API и индикаторами.
+  key_points:
+    - Фракции, поселения и логистика формируют основную симуляцию мира.
+    - Action XP сочетает квестовый опыт с накоплением по действиям и ограничениями усталости.
+    - REST, Kafka и GraphQL контракты обеспечивают синхронизацию сервисов и UX хроники.
+content:
+  sections:
+    - id: simulation-layers
+      title: Слои симуляции
+      body: |
+        Фракционные войны используют мировые флаги и события `Rebuild`, `Reprisal`, `Occupation`. Поселения игроков растут от лагеря
+        до города и транслируют влияние в экономику. Логистическая сеть генерирует автономные отряды с миссиями патруля, рейда и
+        торговли, а мировая хроника отражает столкновения и последствия.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-systems.yaml
+      assets: []
+    - id: action-xp-model
+      title: Модель Action XP
+      body: |
+        Общая формула включает квестовый опыт и Action XP, умноженный на активность и модификатор усталости. Таблица коэффициентов
+        задаёт базовые действия для навыков, множители и лимиты усталости. Превышение лимита снижает эффективность до 25%, а тренажёры
+        дают контролируемый прирост за ресурсы экономики.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-mechanics.yaml
+      assets: []
+    - id: data-models
+      title: Модели данных
+      body: |
+        world-service хранит контроль фракций, поселения, маршруты и отряды с полями влияния и угроз. gameplay-service фиксирует записи
+        Action XP и усталости для персонажей. Observability собирает события `world.timeline` и метрики `action_xp.metrics`.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-persistence.yaml
+      assets: []
+    - id: service-interfaces
+      title: Сервисные контракты
+      body: |
+        REST API world-service покрывают управление контроля фракций, маршрутов и хроники, а gameplay-service — Action XP и усталость.
+        Kafka события информируют о сменах контроля, логистике и прогрессе навыков. Frontend gateway предоставляет GraphQL запросы
+        для хроники и обзора Action XP.
+      mechanics_links:
+        - mechanics/world/world-bosses-catalog.yaml
+      assets: []
+    - id: ux-flows
+      title: UX-потоки
+      body: |
+        Хроника мира отображает ленту событий с детальными модальными окнами. Управление базой показывает метрики, апгрейды и
+        угрозы рейдов. Тренажёры демонстрируют ожидаемый XP и усталость, а интерфейс логистики позволяет сопровождать или атаковать
+        маршруты. Персональные истории игрока формируют карточки влияния.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-systems.yaml
+      assets: []
+    - id: analytics
+      title: Баланс и аналитика
+      body: |
+        Метрики `controlShiftRate`, `actionXpPerSkill`, `fatigueOverflow` и `routeSurvivalRate` контролируют частоту событий,
+        распределение XP и стабильность логистики. Они используются analytics-service для корректировки баланса и уведомлений.
+      mechanics_links:
+        - mechanics/world/world-bosses-catalog.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#living-world-kenshi-hybrid
+  blockers: []
+history:
+  - version: '0.2.0'
+    date: 2025-11-08
+    author: ai_brain_manager
+    changes: Добавлены модели данных, API, UX-потоки и коэффициенты Action XP.
+  - version: '0.1.0'
+    date: 2025-11-08
+    author: ai_brain_manager
+    changes: Черновик концепции живого мира и модели прогрессии.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
