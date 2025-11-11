@@ -1,0 +1,116 @@
+metadata:
+  id: implementation-api-integration-map
+  title: "API Integration Map"
+  document_type: implementation
+  category: api-architecture
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-06T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T12:20:00Z
+  owners:
+    - role: backend_architect
+      contact: backend@necp.game
+  tags:
+    - api
+    - integration
+    - system-design
+  topics:
+    - data-flow
+    - event-driven
+    - caching
+  related_systems:
+    - quest-service
+    - combat-service
+    - economy-service
+    - reputation-service
+    - social-service
+  related_documents:
+    - id: implementation-overview-index
+      relation: references
+  source: shared/docs/knowledge/implementation/api-specs/api-integration-map.md
+  visibility: internal
+  audience:
+    - backend
+    - frontend
+    - devops
+  risk_level: medium
+review:
+  chain:
+    - role: backend_architect
+      reviewer: ''
+      reviewed_at: 2025-11-08T12:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Команде нужен целостный взгляд на то, как фронтенд, gateway и микросервисы обмениваются данными в игровых сценариях."
+  goal: "Зафиксировать архитектуру, key flows, событийные интеграции и кеширование для основных игровых систем."
+  essence: "Документ описывает REST/WebSocket маршрутизацию, примеры потоков (квесты, бой, крафт), взаимные зависимости сервисов, событийную шину и стратегию кеширования."
+  key_points:
+    - "Диаграмма показывает путь от клиента через API Gateway к BACK-JAVA и микросервисам, с хранением в PostgreSQL."
+    - "Подробные data-flow сценарии охватывают завершение квеста, расчёт урона и крафт предметов."
+    - "Раздел Cross-System перечисляет, как события бой/экономика/репутация синхронизируют системы."
+    - "Описаны зависимости ключевых сервисов, структура Event Bus и WebSocket каналы для real-time обновлений."
+    - "Кеширование организовано в трёх слоях (клиент, gateway, Redis) с правилами TTL и инвалидации."
+content:
+  sections:
+    - id: architecture
+      title: Системная архитектура
+      body: |
+        Показывает фронтенд (FRONT-WEB / UE5), API Gateway с авторизацией и маршрутизацией и разделение на core логику
+        BACK-JAVA + микросервисы, которые работают с PostgreSQL. REST — основной протокол для клиентских вызовов.
+      mechanics_links: []
+      assets: []
+    - id: flows
+      title: Data Flow сценарии
+      body: |
+        Приведены последовательности для завершения квеста, боевого урона и крафта: валидации, расчёты, обновления таблиц,
+        генерация наград и отправка ответов клиенту. Каждый flow подчеркивает, какие подсистемы и базы задействованы.
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: Cross-system интеграции
+      body: |
+        Описано, как боевые события обновляют квестовые цели, трофеи влияют на экономику, а репутация распространяется
+        во все системы. Включены примеры кода, иллюстрирующие вызовы сервисов и обновления рынков, NPC и мировых зон.
+      mechanics_links: []
+      assets: []
+    - id: dependencies
+      title: Зависимости сервисов
+      body: |
+        Таблица ключевых сервисов (Quest, Combat, Economy, Reputation, Social) фиксирует зависимые компоненты,
+        потребителей и используемые базы данных, что помогает понимать транзитивные требования.
+      mechanics_links: []
+      assets: []
+    - id: events
+      title: Event-driven архитектура
+      body: |
+        Документ вводит enum типов событий для Event Bus, объясняет публикацию/подписку и роль сервисов в обработке,
+        а также описывает WebSocket каналы игрока, боя и рынка для real-time трансляций.
+      mechanics_links: []
+      assets: []
+    - id: caching
+      title: Стратегия кеширования
+      body: |
+        Три уровня кешей: клиентский (статические данные), gateway (часто запрашиваемые ресурсы) и Redis в сервисах.
+        Указаны TTL, правила инвалидации и обработка hot data (комбат, аукционы).
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: backend_architect
+    changes: Подготовлена карта интеграций с REST/WebSocket потоками, зависимостями сервисов и стратегией кеширования.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
