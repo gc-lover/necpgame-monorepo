@@ -1,0 +1,176 @@
+metadata:
+  id: content-quests-side-neon-ghosts
+  title: 'Neon Ghosts'
+  document_type: content
+  category: quests
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T17:45:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T17:45:00Z
+  owners:
+    - role: narrative_director
+      contact: narrative@necp.game
+  tags:
+    - side-quest
+    - underlink
+    - neon-ghosts
+  topics:
+    - content
+    - quests
+  related_systems:
+    - quest-service
+    - world-service
+    - social-service
+    - economy-service
+  related_documents:
+    - id: content-quests-raid-specter-surge
+      relation: precedes
+    - id: content-quests-raid-helios-countermesh-conspiracy
+      relation: complements
+  source: shared/docs/knowledge/content/quests/side/2025-11-07-quest-neon-ghosts.yaml
+  visibility: internal
+  audience:
+    - narrative
+    - systems-design
+    - liveops
+  risk_level: medium
+review:
+  chain:
+    - role: narrative_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T17:45:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Подпольная сеть курьеров Neon Ghosts похищает данные Helios, что грозит эскалацией в Underlink.
+  goal: Описать кооперативный сайд-квест с узлами, проверками, наградами и интеграцией с мировыми системами.
+  essence: Игроки отслеживают курьеров, принимают решение о судьбе сети и получают различные мировые модификаторы.
+  key_points:
+    - Структура из четырёх этапов: брифинг, проникновение, переговоры, финал.
+    - YAML-описание узлов с проверками Persuasion, Hacking, Stealth, Empathy, Intimidation.
+    - Три возможных исхода: поддержать Ghosts, отдать Helios, передать Maelstrom.
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис
+      body: |
+        Сайд-квест на 2–4 игроков. Игрок решает, сохранить ли сеть подпольных курьеров Neon Ghosts или воспользоваться
+        ситуацией в интересах Helios или Maelstrom. Каждый выбор меняет репутацию и мировые показатели.
+      mechanics_links: []
+      assets: []
+    - id: structure
+      title: Структура квеста
+      body: |
+        | Этап | Узел | Описание | Локация | Связанные сервисы |
+        |------|------|----------|---------|-------------------|
+        | 1 | `intel-briefing` | Получение координат у Echo Lynx | Neon Market | social-service, gameplay-service |
+        | 2 | `underlink-entry` | Проникновение в Underlink | Underlink tunnels | gameplay-service, world-service |
+        | 3 | `ghost-confrontation` | Переговоры с лидером Ghosts | Underlink core | social-service, economy-service |
+        | 4 | `resolution` | Финальное решение по сети | Helios data vault | world-service, economy-service |
+      mechanics_links: []
+      assets: []
+    - id: nodes
+      title: Узлы и проверки
+      body: |
+        ```yaml
+        - node-id: intel-briefing
+          options:
+            - id: pay-info
+              requirement: resource 5000 eddies
+              outcome: unlock underlink-entry, +5 rep.fixers.neon
+            - id: persuade
+              requirement: Persuasion DC 19
+              success: unlock underlink-entry, +2 rep.fixers.neon
+              failure: encounter lynx-bodyguards, -4 rep.fixers.neon
+        - node-id: underlink-entry
+          options:
+            - id: hack-gateway
+              requirement: Hacking DC 21
+              success: set_flag underlink.access, +1200 XP
+              failure: raise_alert medium, -150 HP
+              critical: disable ICE 180s, reward ghost-cypher
+            - id: stealth-route
+              requirement: Stealth DC 20
+              success: buff shadow-step 600s
+              failure: encounter ice-sentries
+        - node-id: ghost-confrontation
+          options:
+            - id: build-trust
+              requirements: Empathy DC 18, rep.fixers.neon 10
+              success: unlock branch ally
+              failure: -6 rep.fixers.neon
+            - id: threaten
+              requirement: Intimidation DC 20
+              success: unlock branch corporate
+              failure: encounter ghost-lieutenant
+            - id: double-agent
+              requirement: flag maelstrom.contact
+              success: unlock branch maelstrom
+        - node-id: resolution
+          branches:
+            ally:
+              world-modifier: underlink.delivery.boost +12
+              reputation: rep.fixers.neon +15
+              unlock: ghost-network-key
+            corporate:
+              world-modifier: helio.security.index +10
+              reputation: rep.corp.helios +20
+              contract: helios-shadow-ops
+            maelstrom:
+              world-modifier: city.chaos.level +8
+              reputation: gang.maelstrom +18
+              event: maelstrom-underlink-raid
+        ```
+      mechanics_links: []
+      assets: []
+    - id: systems
+      title: Механики и интеграции
+      body: |
+        Репутация изменяется для Fixers, Helios и Maelstrom. World-state модифицирует `underlink.delivery.boost`,
+        `helio.security.index`, `city.chaos.level`. Экономика открывает новые рынки и контракты, Social Resonance отражает
+        гармонию, порядок или unrest.
+      mechanics_links: []
+      assets: []
+    - id: rewards
+      title: Награды
+      body: |
+        | Ветка | EXP | Предметы | Кредиты | Особенности |
+        |-------|-----|----------|---------|-------------|
+        | Ally | 4500 | ghost-network-key, augment-shadow-step | 9000 | Daily Ghost contracts |
+        | Corporate | 4200 | helios-credstick, corp-access-pass | 12000 | Операция Helios Shadow Ops |
+        | Maelstrom | 4700 | maelstrom-ripper-chip, riot-sim booster | 8500 | Событие maelstrom-underlink-raid |
+      mechanics_links: []
+      assets: []
+    - id: api
+      title: API и тестирование
+      body: |
+        REST контуры: `/api/v1/quests/side-neon-ghosts`, `/api/v1/world/modifiers`, `/api/v1/social/reputation/batch`,
+        `/api/v1/economy/contracts/activate`. Тестирование включает unit, интеграционные и E2E сценарии, а также телеметрию
+        `quest.neonGhosts.branch` и `underlink.alert.level`.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: NPC Aisha Frost Dialogue
+      link: ../dialogues/npc-aisha-frost.md
+    - title: World Events Framework
+      link: ../../02-gameplay/world/events/world-events-framework.md
+    - title: Global State Management
+      link: ../../05-technical/global-state/global-state-management.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: narrative_team
+    changes: Квест Neon Ghosts перенесён в YAML с узлами, наградами и API.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
