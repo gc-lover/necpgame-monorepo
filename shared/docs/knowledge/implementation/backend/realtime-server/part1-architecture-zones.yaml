@@ -1,0 +1,97 @@
+metadata:
+  id: backend-realtime-server-part1-architecture-zones
+  title: "Realtime Server — Part 1: Architecture & Zones"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-07T17:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:12:00Z
+  owners:
+    - role: realtime_lead
+      contact: realtime@necp.game
+  tags:
+    - realtime
+    - networking
+    - zones
+  topics:
+    - gameplay-infra
+    - server-architecture
+  related_systems:
+    - world-service
+    - gameplay-service
+    - api-gateway
+  related_documents:
+    - id: backend-realtime-server-part2-protocol-optimization
+      relation: follows
+    - id: backend-realtime-server-part3-performance-profiles
+      relation: precedes
+  source: shared/docs/knowledge/implementation/backend/realtime-server/part1-architecture-zones.md
+  visibility: internal
+  audience:
+    - backend
+    - infrastructure
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: realtime_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T02:12:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требуется формализовать архитектуру realtime-сервера для синхронизации игрового состояния и управления зонами.
+  goal: Описать high-level архитектуру, game loop, зонирование и протоколы синхронизации для MMORPG NECPGAME.
+  essence: Документ фиксирует структуру инстансов, interest management, синхронизацию игроков и обновления по частоте.
+  key_points:
+    - Game server instances обслуживают набор зон с независимым game loop.
+    - Зоны делятся на ячейки для interest management, минимизируя трафик.
+    - Реализована детальная схема синхронизации состояний и протокол обмена сообщениями.
+    - Определена логика тикрейта и приоритетов обновлений.
+content:
+  sections:
+    - id: high_level_architecture
+      title: Архитектура
+      body: |
+        Реализация включает клиентов, API Gateway и пул game server instances. Каждый инстанс обслуживает 1–5 зон
+        (Watson, Westbrook и т.д.), использует Redis, PostgreSQL и event bus для общих сервисов.
+      mechanics_links: []
+    - id: game_loop
+      title: Game Server Instance и цикл
+      body: |
+        Инстанс управляет зонами и активными игроками, обновляя state до 20 раз в секунду. Game loop проходит обработку
+        инпута, обновление состояния, физики, AI, рассылку клиентам и очистку. Предусмотрены проверки и предупреждения при
+        превышении 50 мс на тик.
+      mechanics_links: []
+    - id: zones
+      title: Управление зонами
+      body: |
+        Зоны описываются в базе (`zones`), включают координаты, лимиты игроков и статусы. Interest management реализован
+        через ячейки 100x100 м, игрок видит свою и 8 соседних ячеек.
+      mechanics_links: []
+    - id: state_sync
+      title: Синхронизация состояния игрока
+      body: |
+        Определены поля state, форматы сообщений client→server и server→client. Частота обновлений адаптивна (combat 60 Hz,
+        movement 20 Hz, idle 5 Hz). Приведён Java код получения игроков в области интереса.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: realtime_lead
+    changes: Обновлены сценарии interest management и синхронизации для инстансов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
