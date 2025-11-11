@@ -1,0 +1,95 @@
+metadata:
+  id: player-impact-persistence
+  title: Хранение влияния игроков
+  document_type: mechanics
+  category: world
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:16:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T20:16:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - player-impact
+    - persistence
+    - world-state
+  topics:
+    - data-modeling
+    - world-observability
+  related_systems:
+    - world-service
+    - data-service
+    - analytics-service
+  related_documents:
+    - id: player-impact-mechanics
+      relation: references
+    - id: player-impact-systems
+      relation: references
+  source: shared/docs/knowledge/mechanics/world/world-state/player-impact-persistence.md
+  visibility: internal
+  audience:
+    - concept
+    - systems
+    - data
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: concept@necp.game
+      reviewed_at: 2025-11-07T20:16:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Хранение влияния игроков не было формализовано и мешало аналитике и API.
+  goal: Описать схему данных, индексы и API для постоянного хранения влияния игроков на мир.
+  essence: Документ фиксирует таблицы, REST-интерфейсы и связи с глобальным состоянием для аудита влияния.
+  key_points:
+    - Таблица `player_world_impact` хранит типы влияния и цель с индексами для аналитики.
+    - REST API открывают получение состояния мира, влияния игрока и управление голосами и территориями.
+    - Persistence связывает механики влияния с глобальным состоянием и техническим каталогом.
+content:
+  sections:
+    - id: database-schema
+      title: Схема данных
+      body: |
+        Таблица `player_world_impact` хранит id влияния, игрока, тип воздействия и целевой объект. Индексы по игроку, типу и цели
+        ускоряют отчёты и агрегации. Внешние ключи обеспечивают целостность и удаляют записи при удалении персонажа.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-mechanics.yaml
+      assets: []
+    - id: api-endpoints
+      title: REST интерфейсы
+      body: |
+        world-service предоставляет эндпоинты получения состояния мира, влияния игрока, голосований и территорий. Эти методы
+        используются квестами, UI и аналитикой для отображения текущей ситуации и применения новых влияний.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-systems.yaml
+      assets: []
+    - id: integration
+      title: Интеграция и каталоги
+      body: |
+        Документ ссылается на каталог глобального состояния и другие микрофичи влияния. Persistence соединяет агрегаторы,
+        очереди и telemetry, чтобы мир реагировал на действия игроков и сохранял результаты для истории.
+      mechanics_links:
+        - mechanics/world/world-bosses-catalog.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#player-impact-persistence
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описаны таблицы и API для хранения влияния игроков.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
