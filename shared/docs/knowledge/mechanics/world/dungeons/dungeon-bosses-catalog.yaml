@@ -1,0 +1,144 @@
+metadata:
+  id: dungeon-bosses-catalog
+  title: 'Каталог подземелий — боссы'
+  document_type: mechanics
+  category: world
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-08T12:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T12:20:00Z
+  owners:
+    - role: world_lead
+      contact: world@necp.game
+  tags:
+    - dungeons
+    - bosses
+    - gameplay
+  topics:
+    - dungeon-design
+    - boss-encounters
+  related_systems:
+    - world-service
+    - combat-service
+    - economy-service
+  related_documents:
+    - id: dungeon-scenarios-catalog
+      relation: complements
+    - id: combat-ai-enemies
+      relation: references
+    - id: loot-hunt-system
+      relation: references
+  source: shared/docs/knowledge/mechanics/world/dungeons/dungeon-bosses-catalog.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - live-ops
+  risk_level: medium
+review:
+  chain:
+    - role: world_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T12:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Каталог боссов хранился в Markdown и не был синхронизирован с YAML-схемой знаний.
+  goal: Зафиксировать фазы, навыки, уровни сложности, API и телеметрию боссов подземелий.
+  essence: Документ описывает семь ключевых боссов, их фазы, аффиксы Apex+, награды и аналитические метрики.
+  key_points:
+    - Таблица идентификаторов боссов с лор-связями и диапазоном сложности.
+    - Детальные фазы с D&D проверками, уникальными навыками и лутом.
+    - REST, WebSocket и Kafka интерфейсы, а также метрики балансировки.
+content:
+  sections:
+    - id: instance_scope
+      title: Структура инстанса
+      body: |
+        Подземелья рассчитаны на 4–10 игроков (Normal), 8–16 (Hard), 10–20 (Apex). Каждый босс выдаёт ключи для Hard Mode и комбинирует
+        shooter-механики с D&D проверками и взломами.
+      mechanics_links:
+        - mechanics/world/dungeons/dungeon-scenarios-catalog.yaml
+      assets: []
+    - id: boss_table
+      title: Каталог боссов
+      body: |
+        | ID | Подземелье | Тип | Сложность | Лор |
+        | --- | --- | --- | --- | --- |
+        | db-echo-guardian | Blackwall Echo | Ritual | Gold→Diamond | Guardian AI NetWatch |
+        | db-void-maestro | Neon Trials | Gauntlet | Platinum | Maestro арены |
+        | db-bio-harvester | Substructure 77 | Overrun | Gold | Hydra Biotechnica |
+        | db-specter-warden | Data Reliquary | Heist | Platinum | Arasaka Shadow Ops |
+        | db-rail-tyrant | Ghost Freight | Escort | Gold | Nomad renegade |
+        | db-glass-reaper | Aurora Vault | Heist | Platinum→Diamond | Cult of the Wave |
+        | db-cinder-archon | Reactor Depths | Gauntlet | Mythic | Petrochem Black Ops |
+      mechanics_links:
+        - mechanics/world/dungeons/dungeon-scenarios-catalog.yaml
+      assets: []
+    - id: boss_details
+      title: Детализация фаз
+      body: |
+        Для каждого босса описаны три фазы с уникальными навыками (например, `Mirror Pulse`, `Neon Crescendo`, `Harvest Protocol`,
+        `Aurora Collapse`, `Inferno Protocol`), требованиями по D&D проверкам (INT/STR/CON/REF) и лутом (визоры, катализаторы,
+        keycards, легендарные моды).
+      mechanics_links:
+        - mechanics/combat/combat-ai-enemies.yaml
+      assets: []
+    - id: difficulty_levels
+      title: Уровни сложности
+      body: |
+        Таблица Normal/Hard/Apex/Apex+ содержит отличия по механикам и уникальные навыки. Apex вводит постоянные дебаффы и таймеры,
+        Apex+ — перманентные DoT и двойные таймеры (`Reality Fade`, `Ash Storm`).
+      mechanics_links:
+        - mechanics/combat/combat-roles-detailed.yaml
+      assets: []
+    - id: interfaces
+      title: REST и WebSocket интерфейсы
+      body: |
+        REST: `GET /world/dungeons/{dungeonId}/bosses`, `GET /bosses/{bossId}`, `POST /bosses/{bossId}/checkpoint`,
+        `PUT /bosses/{bossId}/difficulty`, `POST /bosses/{bossId}/rewards`, `POST /bosses/{bossId}/aftermath`.
+        WebSocket: `wss://api.necp.game/v1/world/dungeons/{instanceId}/boss` с событиями PhaseStart, AbilityTrigger, DndCheck, Failure,
+        Success. Kafka топики `dungeon.boss.telemetry`, `dungeon.boss.outcome`, `dungeon.boss.progress`.
+      mechanics_links:
+        - mechanics/world/dungeons/dungeon-scenarios-catalog.yaml
+      assets: []
+    - id: rewards_progression
+      title: Награды и прогрессия
+      body: |
+        Loot распределяется через economy-service (`dungeon_boss_loot`), progression-service выдаёт навыки (`Neon Crescendo Resist`),
+        Battle Pass — `Dungeon Badge`, social-service обновляет репутацию (`rep.underground`, `rep.corp.arasaka`, `rep.nomad` и др.).
+      mechanics_links:
+        - mechanics/economy/loot-tables.yaml
+        - implementation/backend/battle-pass/README.yaml
+      assets: []
+    - id: analytics
+      title: Аналитика и ротация
+      body: |
+        Метрики: `dungeonBossClearRate`, `dungeonBossDndFailRate`, `dungeonBossTimeToKill`. Ротация на восемь недель задаёт бонусные
+        модификаторы и репутации для каждого босса, с повышением аффиксов для Hard/Apex после цикла.
+      mechanics_links:
+        - mechanics/world/events/live-events-system.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#dungeon-bosses-catalog
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-08
+    author: world_lead
+    changes: Добавлены два новых босса, модификаторы Apex+ и аналитические метрики.
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: world_lead
+    changes: Базовый каталог боссов подземелий с фазами, навыками и API.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
