@@ -1,0 +1,110 @@
+metadata:
+  id: implementation-romance-engine-filtering
+  title: 'Romance Event Engine — Фильтрация и взвешивание'
+  document_type: implementation
+  category: algorithms
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T01:46:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T01:46:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - romance
+    - filtering
+    - ai
+  topics:
+    - event-engine
+    - matchmaking
+  related_systems:
+    - romance-service
+    - narrative-engine
+    - analytics-pipeline
+  related_documents:
+    - id: implementation-romance-engine-scoring
+      relation: complements
+    - id: implementation-romance-event-triggers
+      relation: references
+  source: shared/docs/knowledge/implementation/algorithms/romance/romance-engine-filtering.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - ai
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: 'Алгоритм фильтрации романтических событий хранился в Markdown и не участвовал в автоматическом контроле знаний.'
+  goal: 'Структурировать микрофичу фильтрации и взвешивания событий в YAML, сохранив логику и зависимости.'
+  essence: 'Документ описывает двухфазную фильтрацию, систему весов и калькулятор химии для подбора подходящих событий.'
+  key_points:
+    - 'Hard filter отсеивает события по обязательным условиям: отношения, локация, время, химия, культурная совместимость.'
+    - 'Soft filter использует предпочтения игрока и NPC, стадии арки и историю, присваивая бонусы и штрафы.'
+    - 'Формула веса объединяет соответствие личностей, химию, тайминг, культурные факторы и предпочтения, включая штрафы за повторы.'
+content:
+  sections:
+    - id: engine_overview
+      title: 'Архитектура движка'
+      body: |
+        Event Selection Engine принимает контекст игрока, профиль NPC и текущее состояние отношений.
+        Конвейер выполняет последовательные шаги Filter → Weight → Score → Select → Adapt, выдавая рекомендованные события.
+      mechanics_links: []
+      assets: []
+    - id: hard_filters
+      title: 'Жёсткие фильтры'
+      body: |
+        Hard filter проверяет диапазон отношений, уникальность события, географию, время суток, сезон, минимальную химию
+        и культурную совместимость. Несоответствие любому требованию исключает событие из дальнейшего рассмотрения.
+      mechanics_links:
+        - implementation/algorithms/romance/romance-event-triggers.yaml
+      assets: []
+    - id: soft_filters
+      title: 'Мягкие фильтры и приоритеты'
+      body: |
+        Soft filter формирует предварительный рейтинг с учётом недавних категорий, текущей стадии арки, предпочтений игрока,
+        региональной релевантности и устойчивости отношений. Алгоритм избегает повторов и конфликтов при низком здоровье отношений.
+      mechanics_links: []
+      assets: []
+    - id: weighting
+      title: 'Взвешивание событий'
+      body: |
+        Вес события рассчитывается от базовых 50 пунктов и корректируется по шести группам факторов: соответствие личности,
+        химия, тайминг, культурная уместность, нарративная согласованность и предпочтения игрока, после чего применяются штрафы
+        за повторы и несовместимость. Вес ограничен диапазоном 0–100.
+      mechanics_links:
+        - mechanics/social/npc-hiring-system-detailed.yaml
+      assets: []
+    - id: chemistry_calculator
+      title: 'Калькулятор химии'
+      body: |
+        ChemistryCalculator агрегирует совместимость по Big Five, общим интересам, физическому притяжению и культурной совместимости.
+        Каждая метрика содержит собственную формулу и вес, результат нормализуется до 0–100 и используется в фильтрации и весах.
+      mechanics_links:
+        - implementation/algorithms/romance/romance-engine-scoring.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Разработана двухфазная система фильтрации и взвешивания романтических событий.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
