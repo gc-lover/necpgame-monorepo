@@ -1,108 +1,93 @@
 metadata:
   id: implementation-global-state-operations
-  title: 'Global State Operations — запросы и мониторинг'
+  title: 'Global State Operations — Операции и мониторинг'
   document_type: implementation
-  category: backend
+  category: global-state
   status: approved
   version: '1.0.0'
   last_updated: 2025-11-07T06:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-07T06:00:00Z
   owners:
-    - role: world_service_lead
-      contact: world@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
-    - world-state
+    - global-state
     - operations
-    - monitoring
-  topics:
-    - state-management
     - observability
+  topics:
+    - monitoring
+    - performance
+    - security
   related_systems:
-    - world-service
-    - analytics-service
-    - notification-service
+    - global-state-service
+    - projection-service
+    - monitoring-stack
   related_documents:
-    - id: global-state-core
+    - id: implementation-global-state-management
       relation: references
-    - id: global-state-management
-      relation: complements
-    - id: global-state-sync
+    - id: implementation-global-state-sync
       relation: complements
   source: shared/docs/knowledge/implementation/global-state/global-state-operations.md
   visibility: internal
   audience:
-    - backend
     - concept
-    - live-ops
+    - backend
+    - devops
   risk_level: high
 review:
   chain:
-    - role: world_service_lead
+    - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-07T06:00:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Операционная документация Global State существовала в Markdown и не могла участвовать в автоматизированных проверках.
-  goal: Формализовать сервис запросов, проекции, мониторинг, тестирование и масштабирование Global State в соответствии со схемой знаний.
-  essence: Документ описывает типы запросов, read-модели, метрики, оптимизации производительности, безопасность и API-эндпоинты для эксплуатации глобального состояния.
+  problem: 'Операционные практики глобального состояния были в Markdown и не участвовали в автоматических проверках.'
+  goal: 'Структурировать сервис запросов, проекции, мониторинг, DR, тестирование и масштабирование в YAML.'
+  essence: 'Документ описывает типы запросов, read-модели, метрики, восстановление, оптимизации, тесты, безопасность и масштабирование.'
   key_points:
-    - Сервис поддерживает пять типов запросов (point, range, aggregate, time-travel, projection) с примерами использования.
-    - Приведены схемы проекций, обработчики и health-check компоненты для наблюдаемости и восстановления.
-    - Зафиксированы практики нагрузочного тестирования, идемпотентности, безопасности и API Gateway операций.
+    - 'Query Service поддерживает point, range, aggregate, time travel и projection запросы.'
+    - 'Проекции формируют read модели через event listeners и материализованные представления.'
+    - 'Мониторинг, DR, performance tuning и security формализованы для production эксплуатации.'
 content:
   sections:
     - id: query_service
-      title: Сервис запросов состояния
+      title: 'Сервис запросов состояния'
       body: |
-        Описано пять типов запросов (`point`, `range`, `aggregate`, `time-travel`, `projection`) и примеры Java-кода. Сервис
-        обеспечивает доступ к ключам состояния, агрегирует показатели фракций и позволяет воспроизводить значения на конкретный
-        момент времени.
+        Описаны пять типов запросов с примерами Java-кода: точечные, диапазонные, агрегированные, time travel и projection.
+        Сервис обеспечивает доступ к состоянию, агрегации и историческим значениям.
       mechanics_links:
-        - implementation/global-state/global-state-core.yaml
-        - implementation/global-state/global-state-sync.yaml
+        - implementation/global-state/global-state-management.yaml
       assets: []
     - id: projections
-      title: Проекции и обработчики read-моделей
+      title: 'Проекции и read-модели'
       body: |
-        Приведены SQL-схемы и Java-проектор `PlayerProfileProjector`, который обновляет прогресс, репутацию, экономические показатели
-        и хранит ссылки на последнее событие. Проекции используются для быстрых чтений и аналитики.
-      mechanics_links:
-        - implementation/global-state/global-state-management.yaml
+        SQL-схема player_profile_projection и пример PlayerProfileProjector демонстрируют, как события обновляют статистику игрока
+        и формируют агрегаты для аналитики и API.
+      mechanics_links: []
       assets: []
     - id: monitoring
-      title: Мониторинг и health checks
+      title: 'Мониторинг и health checks'
       body: |
-        Список метрик для Event Store, State Store и синхронизации, а также Spring HealthIndicator, который отслеживает состояние
-        хранилищ, шины событий и задержку синхронизации. Определены условия degraded и down статусов.
+        Перечислены метрики Event Store, State Store и синхронизации, описан health check, который отмечает состояние сервисов и задержки.
       mechanics_links:
-        - implementation/global-state/global-state-events.yaml
+        - implementation-global-state/global-state-sync.yaml
       assets: []
-    - id: performance_testing
-      title: Производительность и тестирование
+    - id: disaster_recovery
+      title: 'Disaster Recovery и оптимизации'
       body: |
-        Фиксированы подходы к оптимизации (кэширование, батчи, асинхронная обработка), сценарии нагрузочного тестирования,
-        механизмы replay/time-travel и smoke-тесты для Event Store. Указаны требования по SLA и профилированию.
-      mechanics_links:
-        - implementation/global-state/global-state-management.yaml
+        Рассмотрены сценарии восстановления, batch/async запись, многоуровневый кэш, materialized views, индексы и партиционирование,
+        а также стратегий тестирования replay и time travel отладки.
+      mechanics_links: []
       assets: []
-    - id: security_scalability
-      title: Безопасность и масштабирование
+    - id: security_scaling
+      title: 'Безопасность и масштабирование'
       body: |
-        Рассмотрены валидация событий, античитовые проверки, контроль версий, а также горизонтальное и вертикальное масштабирование
-        сервиса, требования к shard'ам и механизм Leader Election для обработчиков.
+        EventValidator обеспечивает структуру, авторизацию, rate limiting и anti-cheat. Описаны горизонтальное и вертикальное
+        масштабирование, шардинг и репликация Event/State Store.
       mechanics_links:
-        - implementation/backend/anti-cheat/anti-cheat-compact.yaml
-      assets: []
-    - id: operations_api
-      title: Операционные API и уведомления
-      body: |
-        Описаны REST/WebSocket-эндпоинты (`/state/query`, `/state/projection`, `/state/health`, `/state/replay`), интеграция с
-        notification-service для alert'ов и взаимодействие с analytics-service для записи метрик.
-      mechanics_links:
-        - implementation/global-state/global-state-sync.yaml
-        - implementation/backend/notification-system.yaml
+        - implementation-global-state/global-state-events.yaml
       assets: []
 appendix:
   glossary: []
@@ -111,13 +96,13 @@ appendix:
 implementation:
   needs_task: true
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#implementation-global-state-operations
+    - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
   - version: '1.0.0'
     date: 2025-11-07
-    author: world_service_team
-    changes: Задокументированы запросы, проекции, мониторинг и эксплуатационные процессы Global State.
+    author: ai_brain_manager
+    changes: 'Задокументированы операционные практики, мониторинг и масштабирование Global State.'
 validation:
   checksum: ''
   schema_version: '1.0'
