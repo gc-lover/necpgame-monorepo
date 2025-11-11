@@ -1,0 +1,111 @@
+metadata:
+  id: implementation-romance-engine-scoring
+  title: 'Romance Event Engine — Оценка и выбор'
+  document_type: implementation
+  category: algorithms
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T01:46:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T01:46:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - romance
+    - scoring
+    - ai
+  topics:
+    - event-engine
+    - personalization
+  related_systems:
+    - romance-service
+    - notification-service
+    - analytics-pipeline
+  related_documents:
+    - id: implementation-romance-engine-filtering
+      relation: references
+    - id: implementation-romance-engine-execution
+      relation: complements
+  source: shared/docs/knowledge/implementation/algorithms/romance/romance-engine-scoring.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - ai
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: 'Оценка и ранжирование романтических событий в Markdown усложняли автоматическое ревью и интеграцию с Vision.'
+  goal: 'Перевести микрофичу scoring & selection в YAML, сохранив формулы, стратегию выбора и культурные адаптации.'
+  essence: 'Документ описывает расчёт итогового балла события, подбор топ-N рекомендаций и правила адаптации событий к культуре NPC.'
+  key_points:
+    - 'Composite Score учитывает контекст, состояние отношений, драматургию, предпочтения игрока и случайный фактор.'
+    - 'SelectNextEvents формирует кандидатов через фильтрацию, взвешивание, сортировку, разнообразие и добавление случайного wild card.'
+    - 'Система адаптации подстраивает диалоги, DC и дополнительные шаги под культуру NPC и знания игрока.'
+content:
+  sections:
+    - id: composite_score
+      title: 'Формула итогового балла'
+      body: |
+        calculate_final_event_score стартует с веса события и добавляет бонусы за локацию, особые даты, погодные условия,
+        прогресс отношений, химию, предпочтения игрока и позитивную историю NPC. Штрафы регулируют драму и конфликт.
+        Результат ограничен диапазоном 0–100 и подаётся на этап ранжирования.
+      mechanics_links:
+        - implementation/algorithms/romance/romance-engine-filtering.yaml
+      assets: []
+    - id: selection_strategy
+      title: 'Стратегия выбора событий'
+      body: |
+        select_next_events выполняет сбор всех событий, жесткую и мягкую фильтрацию, вычисление веса и итогового балла,
+        сортировку по убыванию, контроль разнообразия и добавление случайного кандидата. Метод поддерживает NPC-инициируемые
+        события через дополнительную функцию npc_initiate_event.
+      mechanics_links: []
+      assets: []
+    - id: cultural_adaptation
+      title: 'Культурная адаптация'
+      body: |
+        adapt_event_to_culture модифицирует диалоги, сложность проверок, публичность проявлений и добавляет шаги с семьёй.
+        Функция учитывает знания игрока о культуре, язык, темп романтического развития и выдаёт бонусы или штрафы к отношениям.
+      mechanics_links:
+        - implementation/algorithms/romance/romance-engine-execution.yaml
+      assets: []
+    - id: trigger_validation
+      title: 'Проверка триггеров события'
+      body: |
+        EventTriggerEngine агрегирует все условия: локацию, время, сезон, погоду, отношения, химию, активные квесты,
+        присутствие NPC, флаги приватности и случайные шансы. Метод возвращает статус и причину отказа, что помогает UI и аналитике.
+      mechanics_links:
+        - implementation/algorithms/romance/romance-event-triggers.yaml
+      assets: []
+    - id: context_collection
+      title: 'Сбор контекста'
+      body: |
+        gather_romance_context объединяет данные об окружении, социальном фоне, состоянии отношений и флагах,
+        обеспечивая модель данными для scoring и адаптации. Контекст используется также в аналитике и воспоминаниях NPC.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Описаны алгоритмы оценки, выбора и культурной адаптации романтических событий.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
