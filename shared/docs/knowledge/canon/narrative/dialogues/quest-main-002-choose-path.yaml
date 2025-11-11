@@ -1,0 +1,122 @@
+metadata:
+  id: canon-dialogue-quest-main-002-choose-path
+  title: 'Диалог: квест 1.2 «Выбор пути»'
+  document_type: canon
+  category: narrative
+  status: approved
+  version: '1.2.0'
+  last_updated: 2025-11-07T20:50:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: narrative_team
+      contact: narrative@necp.game
+  tags:
+    - faction-choice
+    - branching-dialogue
+    - tutorial
+  topics:
+    - progression
+    - reputation
+  related_systems:
+    - narrative-service
+    - reputation-system
+    - social-service
+    - world-service
+  related_documents:
+    - id: canon-quest-main-002-choose-path
+      relation: quest-brief
+    - id: canon-dialogue-npc-marco-fix-sanchez
+      relation: moderator
+  source: shared/docs/knowledge/canon/narrative/dialogues/quest-main-002-choose-path.md
+  visibility: internal
+  audience:
+    - narrative
+    - systems-design
+    - analytics
+  risk_level: high
+review:
+  chain:
+    - role: narrative_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Диалог выбора фракции существовал в Markdown и не был связан с телеметрией и распределением репутаций.
+  goal: Описать в YAML разветвленную сцену выбора корпораций, улиц, закона или фриланса.
+  essence: Совет Марко Санчеса, где игрок закрепляет стартовую фракцию и активирует соответствующие цепочки заданий.
+  key_points:
+    - Узел `council` задаёт направление и активирует соответствующую ветку.
+    - Каждая ветка (corp/gang/law/freelance) использует специализированные проверки и критические исходы.
+    - Финал обновляет мир, репутации и social HUD (`media-flash`).
+content:
+  sections:
+    - id: scene_flow
+      title: Поток сцен
+      body: |
+        - `council`: Марко представляется, игрок выбирает ориентир (корпы, улицы, закон, фриланс).
+        - `corp-track`: беседа с Хироши Танака и AI ассистентом, проверка Persuasion и выдача корпоративных контрактов.
+        - `gang-track`: клятва Valentinos под руководством Хосе Рамиреса, проверка Intimidation и социальные бонусы.
+        - `law-track`: экзамен NCPD с Сарой Миллер, проверки Persuasion и выдача значка.
+        - `freelance-track`: связь с Nomad Convoy, проверка ClassChoice и выдача приоритетного пропуска.
+        - `media-flash` и `wrap`: фиксация решения, публикация в HUD и подготовка к квесту 1.3.
+      mechanics_links:
+        - shared/docs/knowledge/canon/narrative/dialogues/npc-marco-fix-sanchez.yaml
+      assets: []
+    - id: mechanics
+      title: Проверки и модификаторы
+      body: |
+        - Persuasion (DC 18) для корп и закона, Intimidation (DC 17) для Valentinos, ClassChoice с классовыми бонусами для фриланса.
+        - Критические успехи выдают уникальные предметы (доступ Arasaka Serenity, медальон Valentinos, ключ NCPD, пасс Nomad).
+        - Критические провалы создают флаги watchlist/suspect/review и накладывают дебаффы (clearance delay, бюрократическая задержка).
+      mechanics_links:
+        - shared/docs/knowledge/canon/narrative/quests/main/002-choose-path-dnd-nodes.md
+      assets: []
+    - id: integrations
+      title: Интеграции и телеметрия
+      body: |
+        - REST/GraphQL `/narrative/dialogues/quest-main-002` управляет проверками, флагами и телеметрией распределения фракций.
+        - `validate-faction-choice.ps1` и `dialogue-simulator.ps1 -Scenario choose-path` контролируют ветки и выдачу наград.
+        - Social-service фиксирует медиа-реакции (`media-flash`), world-service обновляет карту влияния, репутации передаются в reputation-service.
+      mechanics_links: []
+      assets: []
+    - id: outcomes
+      title: Награды и последствия
+      body: |
+        - Корпоративный путь: `rep.corp.arasaka +10` (+14 при критическом успехе), контракт `contract.arasaka-entry`.
+        - Уличный путь: `rep.gang.valentinos +10` (+14 с медальоном), активность `activity.valentinos-caper`.
+        - Закон: `rep.law.ncpd +10` (+14 при taskforce), контракт `contract.ncpd-intro`.
+        - Фриланс: `rep.freelance.global +8` (+12 с Priority Pass), активность `activity.nomad-convoy`.
+        - HUD сцена повышает `rep.social.media` и запускает AR-историю `#ChooseYourPath`.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Reputation Formulas
+      link: ../../02-gameplay/social/reputation-formulas.md
+    - title: NCPD Protocols
+      link: ../../02-gameplay/social/npc-relationships-system.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.2.0'
+    date: 2025-11-07
+    author: narrative_team
+    changes: Добавлены пасхалки, HUD-сцена, расширены API и телеметрия.
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: narrative_team
+    changes: Дополнены экспорт YAML, REST/GraphQL блоки, метрики.
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: narrative_team
+    changes: Создан базовый сценарий выбора пути.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
