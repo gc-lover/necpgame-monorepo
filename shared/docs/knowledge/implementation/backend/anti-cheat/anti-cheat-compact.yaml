@@ -1,0 +1,91 @@
+metadata:
+  id: backend-anti-cheat-compact
+  title: Anti-Cheat System — Обзор мер
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T02:18:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:18:00Z
+  owners:
+    - role: security_lead
+      contact: security@necp.game
+  tags:
+    - anti-cheat
+    - fair-play
+    - realtime
+  topics:
+    - security
+    - gameplay-integrity
+  related_systems:
+    - session-service
+    - realtime-server
+  related_documents:
+    - id: backend-session-reconnection-monitoring
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/anti-cheat/anti-cheat-compact.md
+  visibility: internal
+  audience:
+    - security
+    - backend
+    - live-ops
+  risk_level: high
+review:
+  chain:
+    - role: security_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T02:18:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требуется зафиксировать набор серверных проверок для предотвращения читерства и синхронизации с системами сессий.
+  goal: Определить обязательные античит-проверки, их интеграцию с realtime-сервисом и методы мониторинга.
+  essence: Документ описывает ключевые серверные проверки (скорость, позиция, частота действий, reconciliation) и ссылки на углублённую реализацию.
+  key_points:
+    - Скорость, позиция и частота действий игроков валидируются сервером с жёсткими порогами.
+    - Клиент-сервер reconciliation компенсирует лаги и снижает ложные срабатывания.
+    - Отдельные подсистемы логируют нарушения и подключают мониторинг в realtime-сервере.
+content:
+  sections:
+    - id: detection_measures
+      title: Ключевые проверки
+      body: |
+        Основные проверки включают обнаружение speed hack, валидацию позиции, ограничение частоты действий и сверку клиентского
+        состояния с сервером. Любое отклонение фиксируется и отправляется в систему безопасности для дальнейших действий.
+      mechanics_links: []
+      assets: []
+    - id: implementation_notes
+      title: Интеграция с realtime сервером
+      body: |
+        Для компенсации лагов используется reconciliation из realtime-сервера. Каждое действие проходит серверную проверку, а
+        результаты пишутся в журнал нарушений. Дополнительные детали реализации приведены в документе про оптимизацию протокола.
+      mechanics_links: []
+      assets: []
+    - id: monitoring
+      title: Мониторинг и эскалация
+      body: |
+        Метрики нарушений (скорость, позиция, частота) агрегируются и передаются в систему мониторинга. Триггеры позволяют
+        инициировать расследование, временные блокировки или уведомления команды безопасности.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Realtime Protocol Validation
+      link: ../../realtime-server/part2-protocol-optimization.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-anti-cheat-compact
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Сформирован компактный перечень античит-проверок и их мониторинга.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
