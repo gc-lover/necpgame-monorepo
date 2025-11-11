@@ -1,0 +1,157 @@
+metadata:
+  id: combat-loadouts-system
+  title: Боевая система — Loadouts и комплекты
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.3.0'
+  last_updated: 2025-11-08T00:14:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - combat
+    - loadouts
+    - configuration
+  topics:
+    - build_management
+    - pve_preparation
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: combat-extract
+      relation: references
+    - id: progression-attributes-matrix
+      relation: complements
+    - id: economy-economy-investments
+      relation: references
+  source: shared/docs/knowledge/mechanics/combat/combat-loadouts-system.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Игрокам нужна гибкая система лодаутов для подготовки к различным режимам и событиям.
+  goal: Описать структуру лодаутов, комплекты, ограничения, API и интеграцию с прогрессией.
+  essence: Лодауты объединяют экипировку, способности, импланты и макросы, поддерживая категории режима, фракционные комплекты и сервисные процессы.
+  key_points:
+    - Лодаут формируется из модульных комплектов и учитывает лимиты веса, энергии и ролей.
+    - Система поддерживает фракционные и командные наборы, макросы и обмен шаблонами.
+    - API и очереди обеспечивают управление, валидацию и аналитические метрики.
+content:
+  sections:
+    - id: goals_definitions
+      title: Цели и определения
+      body: |
+        Лодауты дают до десяти готовых конфигураций для адаптации к PvE и PvP. Комплекты оборудования, имплантов,
+        способностей, кибердеки и расходников объединяются в единую структуру. Глобальные пресеты и фракционные наборы
+        дополняют личную библиотеку игрока.
+      mechanics_links:
+        - mechanics/combat/combat-roles-detailed.yaml
+      assets: []
+    - id: slot_limits
+      title: Ограничения и слоты
+      body: |
+        Базово доступно три слота лодаутов с расширением до десяти. Категории (PvE рейды, арены, экстракции, стелс,
+        кибервойна) влияют на доступные комплекты. В бою смена запрещена, а в безопасных зонах или мобильных станциях
+        возможна с проверкой веса, энергии и совместимости.
+      mechanics_links:
+        - mechanics/combat/combat-extract.yaml
+      assets: []
+    - id: loadout_structure
+      title: Структура лодаута
+      body: |
+        Лодаут включает экипировку, способности, импланты, навыки, кибердек, расходники и транспорт. Комплекты имеют
+        версии и могут переиспользоваться. Изменение комплекта обновляет все лодауты с логированием и историей версий.
+      mechanics_links:
+        - mechanics/economy/equipment-matrix.yaml
+      assets: []
+    - id: management_process
+      title: Управление и UI
+      body: |
+        Создание выполняется мастером, который проводит игрока через выбор роли, категории и комплектов. Режим
+        редактирования поддерживает историю и откаты. UI визуализирует энергобюджет, вес и синергии, а также подсвечивает
+        несовместимость.
+      mechanics_links:
+        - mechanics/implementation/frontend/modules/ui/LoadoutCard.yaml
+      assets: []
+    - id: progression_monetization
+      title: Прогрессия и монетизация
+      body: |
+        Расширение слотов зависит от уровня, репутации и подписок. Премиальные комплекты дают дополнительные гаджеты и
+        импланты при соблюдении баланса. Сезонные лодауты и фракционные награды стимулируют активность.
+      mechanics_links:
+        - mechanics/progression/progression-skills-mapping.yaml
+      assets: []
+    - id: pve_support
+      title: Поддержка PvE экспедиций
+      body: |
+        Лодауты должны обслуживать цикл «высадка → зачистка → эвакуация». Система предлагает профили, рекомендует
+        энергетическую защиту и гаджеты против ARC-угроз. Валидатор проверяет вес трофеев и наличие расходников для
+        эвакуации.
+      mechanics_links:
+        - mechanics/combat/combat-extract.yaml
+      assets: []
+    - id: domain_model_api
+      title: Доменные сущности и API
+      body: |
+        Описаны сущности `Loadout`, `LoadoutKit`, `LoadoutSlot`, `LoadoutMacro`, `LoadoutProfileRequirement` и таблицы в
+        gameplay-service. REST и async контракты покрывают создание, обновление, активацию и журнал событий. Очереди и
+        live patch hook поддерживают пересчёт после балансных обновлений.
+      mechanics_links:
+        - mechanics/api/gameplay/loadouts.yaml
+      assets: []
+    - id: sharing_policies
+      title: Политики обмена и макросов
+      body: |
+        Комплекты можно делиться через blueprintToken, а публичный обмен происходит через economy-service. Макросы
+        делятся на sequenced, conditional и sync, имеют лимит шагов и контроль конфликтов управления.
+      mechanics_links:
+        - mechanics/economy/economy-trading.yaml
+      assets: []
+    - id: telemetry
+      title: Метрики и интеграции
+      body: |
+        Метрики включают activation_success_rate, availability_conflicts и event_adjustments. Данные передаются в
+        matchmaking, социальные функции, прогрессию и аналитику для балансировки востребованных билдов.
+      mechanics_links:
+        - mechanics/gameplay/telemetry/loadouts-metrics.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#CON-2025-240
+  blockers: []
+history:
+  - version: '0.3.0'
+    date: 2025-11-08
+    author: concept_director
+    changes: Детализированы доменная модель, API и политики макросов.
+  - version: '0.2.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Добавлены PvE экспедиции, лутинг и динамические условия карты.
+  - version: '0.1.0'
+    date: 2025-11-08
+    author: concept_director
+    changes: Первичное описание структуры лодаутов и комплектов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
