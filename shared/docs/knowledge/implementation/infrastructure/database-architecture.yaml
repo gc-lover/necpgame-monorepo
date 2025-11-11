@@ -1,0 +1,99 @@
+metadata:
+  id: infrastructure-database-architecture
+  title: Database Architecture
+  document_type: implementation
+  category: infrastructure
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T00:18:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T00:00:00Z
+  owners:
+    - role: infrastructure_lead
+      contact: infrastructure@necp.game
+  tags:
+    - database
+    - postgresql
+    - infrastructure
+  topics:
+    - storage
+    - data-architecture
+  related_systems:
+    - infrastructure-service
+    - gameplay-service
+  related_documents:
+    - id: infrastructure-caching-strategy
+      relation: references
+  source: shared/docs/knowledge/implementation/infrastructure/database-architecture.md
+  visibility: internal
+  audience:
+    - infrastructure
+    - backend
+    - devops
+  risk_level: high
+review:
+  chain:
+    - role: infrastructure_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Базовые данные обслуживают множество микросервисов и требуют плана изоляции, масштабирования и резервирования.
+  goal: Сформировать целевую архитектуру баз данных NECPGAME, включая текущую схему и roadmap на выделенные сервисные БД.
+  essence: Документ описывает этапы эволюции PostgreSQL-инфраструктуры, шардирование, репликацию, резервное копирование и partitioning.
+  key_points:
+    - Фаза 1–3 использует shared PostgreSQL со схемами на сервис.
+    - Фаза 4 переводит архитектуру на модель database-per-service с отдельными экземплярами.
+    - Реализуются шардирование по player_id/региону, master-replica, и автоматизированные бэкапы.
+    - Внедряется partitioning и стандарты для резервного копирования и восстановления.
+content:
+  sections:
+    - id: architecture
+      title: Архитектура и roadmap
+      body: |
+        Текущая реализация (Фаза 1–3) использует один экземпляр PostgreSQL со схемами на сервис. Планируемая реализация
+        (Фаза 4) подразумевает выделенную БД на каждый сервис и общий Redis-кэш. Roadmap описывает преимущества и риски
+        обеих моделей.
+      mechanics_links: []
+    - id: core_database
+      title: Основной стек
+      body: |
+        Базовый выбор — PostgreSQL 15+. Причины: ACID, JSONB, материализованные представления, partitioning, репликация,
+        полнотекстовый поиск. Расписан процесс шардирования по игрокам и регионам.
+      mechanics_links: []
+    - id: replication
+      title: Репликация
+      body: |
+        Используется master-replica топология: master обслуживает записи, реплики перераспределяют чтения. Рассматривается
+        масштабирование чтения через несколько реплик.
+      mechanics_links: []
+    - id: backup
+      title: Резервное копирование
+      body: |
+        Планы бэкапов включают ежедневные полные копии, инкрементальные каждые 6 часов и непрерывное WAL-архивирование.
+        Схема хранения: 7 дневных, 4 недельных, 12 месячных бэкапов.
+      mechanics_links: []
+    - id: partitioning
+      title: Partitioning и производительность
+      body: |
+        Для больших таблиц используется time-based partitioning. Приведён пример SQL для разбивки на месячные секции.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: infrastructure_lead
+    changes: Определена архитектура PostgreSQL и стратегия эволюции базы данных.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
