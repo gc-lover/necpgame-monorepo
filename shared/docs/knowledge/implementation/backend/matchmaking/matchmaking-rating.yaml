@@ -1,0 +1,99 @@
+metadata:
+  id: backend-matchmaking-rating
+  title: Matchmaking Rating
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:30:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T22:25:00Z
+  owners:
+    - role: matchmaking_lead
+      contact: matchmaking@necp.game
+  tags:
+    - matchmaking
+    - rating
+    - backend
+  topics:
+    - gameplay-infra
+    - progression
+  related_systems:
+    - matchmaking-service
+  related_documents:
+    - id: backend-matchmaking-queue
+      relation: complements
+    - id: backend-matchmaking-algorithm
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/matchmaking/matchmaking-rating.md
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: matchmaking_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T22:25:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Рейтинговая система матчмейкинга требует унифицированного описания формул, базы данных и анти-smurf логики.
+  goal: Задокументировать MMR/ELO расчёты, уровни рейтинга, анти-smurf проверки и доступные API для получения рейтинга.
+  essence: Рассмотрены структура таблицы рейтингов, формула с K-факторами, уровни лиг и обнаружение смурфов.
+  key_points:
+    - SQL схема `player_ratings` с уникальными ограничениями и индексами.
+    - Формула ELO с примерами расчёта и K-факторами.
+    - Рейтинговые уровни от Bronze до Grandmaster.
+    - Анти-smurf проверки и основные API endpoints.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Matchmaking Rating определяет MMR/ELO систему для ranked матчей, управляет статистикой игрока и seasonal рейтингами.
+      mechanics_links: []
+    - id: database_schema
+      title: Схема базы данных
+      body: |
+        Таблица `player_ratings` хранит рейтинги, показатели игр, streak, tier/league и включает индексы для быстрого поиска.
+      mechanics_links: []
+    - id: elo
+      title: Формула MMR/ELO
+      body: |
+        Приведена классическая формула ELO с различными K-факторами для новичков, опытных и мастер-лиг, а также пример расчёта.
+      mechanics_links: []
+    - id: tiers
+      title: Рейтинговые уровни
+      body: |
+        Описаны границы рангов от Bronze до Grandmaster, используемые для матчмейкинга и отображения в UI.
+      mechanics_links: []
+    - id: anti_smurf
+      title: Обнаружение смурфов
+      body: |
+        Реализованы проверки win rate и скорости роста рейтинга, позволяющие помечать подозрительные аккаунты.
+      mechanics_links: []
+    - id: api
+      title: API
+      body: |
+        Список ключевых REST endpoints для получения рейтингов и лидеров по типу активности.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: matchmaking_lead
+    changes: Первичное описание рейтинговой системы матчмейкинга.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
