@@ -1,0 +1,167 @@
+metadata:
+  id: content-quests-side-kaede-family-rescue
+  title: 'Квест — Спасти семью Каэдэ'
+  document_type: content
+  category: quests
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T00:45:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T00:45:00Z
+  owners:
+    - role: narrative_director
+      contact: narrative@necp.game
+  tags:
+    - side-quest
+    - raid-support
+    - specter
+  topics:
+    - content
+    - quests
+  related_systems:
+    - narrative-service
+    - world-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: content-quests-raid-helios-countermesh-conspiracy
+      relation: complements
+    - id: content-quests-raid-specter-surge
+      relation: precedes
+  source: shared/docs/knowledge/content/quests/side/2025-11-08-mission-kaede-family-rescue.yaml
+  visibility: internal
+  audience:
+    - narrative
+    - systems-design
+    - liveops
+  risk_level: medium
+review:
+  chain:
+    - role: narrative_director
+      reviewer: ''
+      reviewed_at: 2025-11-08T00:45:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Семья Каэдэ Исикавы блокирована в Underlink после атаки Helios, что угрожает сезонным событиям и War Meter.
+  goal: Описать миссию спасения с фазами, проверками и выбором безопасной зоны.
+  essence: Игроки эвакуируют семью, выбирают Specter, Helios или нейтральный путь и изменяют городские показатели.
+  key_points:
+    - Пять фаз: подготовка, бой в доках, обход Blackwall, выбор safehouse, последствия.
+    - Ветвление по лояльности игрока (Specter, Helios, Neutral).
+    - Интеграция с сезонными событиями Memorial Blackout и Proxy War.
+content:
+  sections:
+    - id: context
+      title: Контекст
+      body: |
+        Квест активируется при флаге `flag.kaede.family-threatened` и city unrest ≥ 40. Выполнение влияет на события сезона
+        и War Meter Specter/Helios.
+      mechanics_links: []
+      assets: []
+    - id: phases
+      title: Структура и фазы
+      body: |
+        | Фаза | Название | Описание | Условия | Проверки |
+        |------|----------|----------|---------|----------|
+        | F1 | Evacuation Prep | Подготовка транспорта и маршрутов | Принятие квеста, unrest ≥ 40 | Logistics 18, Streetwise 17 |
+        | F2 | Dock Extraction | PvE/PvPvE бой в доках Underlink | Успех F1 | Combat 21, Tech 19 |
+        | F3 | Blackwall Bypass | Взлом шлюзов Helios | Требует countermesh-log или helios-signet | Hacking 22 |
+        | F4 | Safehouse Transfer | Выбор Specter, Helios или Neutral | Зависит от флагов лояльности | Negotiation 20 |
+        | F5 | Aftermath | Влияние на сезон и толпу | Завершение F4 | Leadership 18 |
+      mechanics_links: []
+      assets: []
+    - id: nodes
+      title: Узлы и варианты
+      body: |
+        ```yaml
+        quest:
+          prerequisites:
+            - flag.kaede.family-threatened == true
+            - city_unrest >= 40
+          stages:
+            - id: F1-prep
+              tasks:
+                - gather specter-evac-kit
+                - optional hack_terminal DC 18 -> flag route_clear; failure +4 unrest
+            - id: F2-dock-extraction
+              encounter: PvEvP vs Helios Drone Squad, Blackwall Remnants
+              success: cutscene CTS-HELIOS-001, +3 rep.city.gov
+              failure: trigger MEMORIAL_BLACKOUT
+            - id: F3-blackwall-bypass
+              requirement: countermesh-log or helios-blackwall-signet
+              check: Hacking DC 22
+              critical: unlock blackwall-glitch-hunt
+              failure: +6 unrest, flag kaede.betrayal
+            - id: F4-safehouse-transfer
+              branch:
+                specter_safehouse:
+                  requirement: flag.player.specter_loyal == true
+                  effects: destination Specter Safehouse Delta, +4 rep.fixers.neon, -8 unrest
+                helios_enclave:
+                  requirement: flag.player.helios_support == true
+                  effects: destination Helios Enclave Gamma, +5 rep.corp.helios, +5 unrest, event HELIOS_SPECTER_PROXY_WAR
+                neutral_otomo:
+                  requirement: flag.kaede.loyalty == balanced
+                  effects: destination Otomo Neutral Zone, -3 unrest, unlock neutral_supply_run
+            - id: F5-aftermath
+              outcomes:
+                specter: trigger FAMILY_RESCUE_MISSION_SUCCESS, narrative support
+                helios: trigger HELIOS_DOUBLE_AGENT_HUNT, corporate leverage
+                neutral: trigger UNDERLINK_MEDIATOR_UPDATE, balanced narrative
+        ```
+      mechanics_links: []
+      assets: []
+    - id: checks
+      title: Проверки и эффекты
+      body: |
+        | Фаза | Проверка | DC | Бонусы | Успех | Провал |
+        |------|----------|----|--------|-------|--------|
+        | F1 | Logistics | 18 | +2 при route_clear | Сокращение врагов F2 | +2 unrest |
+        | F2 | Combat | 21 | +1 specter-squad-ticket, +1 Helios поддержка | Нет потерь | Потери сторон, +4 unrest |
+        | F3 | Hacking | 22 | +1 countermesh-log, +1 ghost-in-the-wires | Секретный выход | Helios IDS, +6 unrest |
+        | F4 | Negotiation | 20 | +2 rep.city.gov ≥ 40, +1 helios-signet | Эвакуация без шума | Helios охота |
+        | F5 | Leadership | 18 | +1 specter-prestige ≥ 120 | Толпа успокоена | Протесты, +3 unrest |
+      mechanics_links: []
+      assets: []
+    - id: seasonal
+      title: Сезонные связи
+      body: |
+        - Мемориальный Blackout: провал F2/F3 активирует событие, успех отменяет и выдаёт `specter-family-cache`.
+        - Helios Specter Proxy War: выбор Helios усиливает War Meter и запускает новые операции.
+        - Winter Rush Season: миссия в зимний сезон даёт бонус `winter_supply_crate`.
+        - Rescue Points: участники получают очки на сезонном табло гильдий.
+      mechanics_links: []
+      assets: []
+    - id: api
+      title: API и телеметрия
+      body: |
+        narrative-service `/api/v1/narrative/quests/kaede-family-rescue/start|state`, world-service для city unrest и war
+        meter, economy-service для наград, события типа `FAMILY_RESCUE_MISSION_START`. Телеметрия — `family_rescue_phase`,
+        `family_rescue_choice`, `family_rescue_outcome`; SLA: обновление состояния ≤ 200 мс, отправка событий ≤ 220 мс.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: NPC Kaede Ishikawa Dialogue
+      link: ../../dialogues/npc-kaede-ishikawa.md
+    - title: City Unrest Escalations
+      link: ../../../02-gameplay/world/city-unrest-escalations.md
+    - title: Helios Conspiracy Cutscenes
+      link: ../raid/2025-11-07-quest-helios-countermesh-conspiracy.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: narrative_team
+    changes: Миссия спасения семьи Каэдэ перенесена в YAML с фазами, проверками и сезонными связями.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
