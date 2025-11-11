@@ -1,96 +1,90 @@
 metadata:
   id: implementation-global-state-sync
-  title: 'Global State Sync — синхронизация и персистентность'
+  title: 'Global State Sync — Синхронизация и персистентность'
   document_type: implementation
-  category: backend
+  category: global-state
   status: approved
   version: '1.0.0'
   last_updated: 2025-11-08T12:20:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-08T12:20:00Z
   owners:
-    - role: world_service_lead
-      contact: world@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
-    - world-state
+    - global-state
     - synchronization
-    - persistence
+    - websocket
   topics:
-    - realtime
-    - event-sourcing
+    - persistence
+    - conflict-resolution
   related_systems:
-    - world-service
-    - gateway-service
+    - websocket-gateway
+    - global-state-service
+    - event-store
   related_documents:
-    - id: global-state-core
-      relation: references
     - id: implementation-global-state-operations
-      relation: complements
-    - id: global-state-events
+      relation: references
+    - id: implementation-global-state-events
       relation: complements
   source: shared/docs/knowledge/implementation/global-state/global-state-sync.md
   visibility: internal
   audience:
-    - backend
     - concept
-    - live-ops
+    - backend
+    - devops
   risk_level: high
 review:
   chain:
-    - role: world_service_lead
+    - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-08T12:20:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Документация синхронизации Global State находилась в Markdown и не была доступна для автоматизированного контроля.
-  goal: Формализовать модели синхронизации, стратегии разрешения конфликтов и персистентность Global State в формате YAML.
-  essence: Документ описывает трёхуровневые модели состояния, стратегии конфликтов, WAL/Outbox персистентность и WebSocket-каналы `wss://api.necp.game/v1` для мгновенной доставки.
+  problem: 'Описание синхронизации глобального состояния оставалось в Markdown и не участвовало в контроле знаний.'
+  goal: 'Описать модели синхронизации, стратегии конфликтов, персистентность, replay и WebSocket каналы в YAML.'
+  essence: 'Документ фиксирует server-wide, player-specific и phased модели, conflict resolution, WAL/Outbox, idempotency и real-time sync.'
   key_points:
-    - Разделены server-wide, player-specific и phased состояния с разными гарантиями консистентности.
-    - Предложены четыре стратегии разрешения конфликтов (LWW, голосование, версионирование, merge) и механизмы идемпотентности.
-    - Включены схемы WAL, transactional outbox, оптимистическая блокировка и реал-тайм синхронизация через WebSocket и state versioning.
+    - 'MMORPG синхронизация делится на глобальную, персональную и фазовую модели.'
+    - 'Конфликты решаются стратегиями last write wins, голосованием, версионностью и merge.'
+    - 'Persistence использует WAL, transactional outbox, идемпотентность и event replay.'
 content:
   sections:
     - id: sync_models
-      title: Модели синхронизации
+      title: 'Модели синхронизации'
       body: |
-        Описаны три модели: `server-wide` (мировое состояние, события, экономика), `player-specific` (прогресс, флаги, инвентарь)
-        и `phased state` (фазы квестов и инстансы). Для каждой указаны характеристики консистентности и каналы доставки.
+        Server-wide покрывает мировые данные, player-specific — персональные квесты, phased — сюжетные фазы и инстансы.
+        Каждый подход описывает консистентность и каналы доставки.
       mechanics_links:
-        - implementation/global-state/global-state-core.yaml
+        - implementation-global-state/global-state-management.yaml
       assets: []
     - id: conflict_resolution
-      title: Разрешение конфликтов
+      title: 'Разрешение конфликтов'
       body: |
-        Четыре стратегии: Last Write Wins, Voting System, Event Versioning и Merge Strategy. Приведены примеры расчётов,
-        сценарии применения и ограничения для мировых событий и накопительных метрик.
-      mechanics_links:
-        - implementation/global-state/global-state-operations.yaml
+        Применяются Last Write Wins, голосование, event версионность и merge дельт. Optimistic locking защищает критичные операции.
+      mechanics_links: []
       assets: []
     - id: persistence
-      title: Персистентность и идемпотентность
+      title: 'Персистентность и идемпотентность'
       body: |
-        Используется Write-Ahead Log, transactional outbox и таблица `processed_events` для идемпотентной обработки. Документирует
-        транзакционные шаги, схемы таблиц и код на Java, фиксирующий повторную обработку.
+        Write-Ahead Log, transactional outbox и таблица processed_events гарантируют доставку и предотвращают повторную обработку.
       mechanics_links:
-        - implementation/global-state/global-state-management.yaml
+        - implementation-global-state/global-state-operations.yaml
+      assets: []
+    - id: replay_versioning
+      title: 'Event replay и версионность'
+      body: |
+        Replay Engine воспроизводит события батчами для восстановления, миграций и тестирования, а optimistic locking проверяет версии.
+      mechanics_links:
+        - implementation-global-state/global-state-events.yaml
       assets: []
     - id: realtime_sync
-      title: Реальное время и протоколы
+      title: 'Real-time синхронизация'
       body: |
-        WebSocket-канал `wss://api.necp.game/v1/global-state` доставляет события подписчикам; указаны метрики задержек,
-        формат сообщений и fallback к long polling. Зафиксирован state lag мониторинг.
-      mechanics_links:
-        - implementation/backend/notification-system.yaml
-      assets: []
-    - id: versioning_replay
-      title: Версионирование и реплей
-      body: |
-        Поддерживаются optimistic locking, `state_version`, `event_version`, снапшоты и реплей событий. Описаны сценарии восстановления,
-        audit trail и тестирование time travel.
-      mechanics_links:
-        - implementation/global-state/global-state-operations.yaml
+        WebSocket каналы (player, world, economy, combat) работают на `wss://api.necp.game/v1`, передают STATE_CHANGED сообщения,
+        поддерживая точечные, региональные и серверные трансляции.
+      mechanics_links: []
       assets: []
 appendix:
   glossary: []
@@ -99,13 +93,13 @@ appendix:
 implementation:
   needs_task: true
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#implementation-global-state-sync
+    - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-08
-    author: world_service_team
-    changes: Задокументированы модели синхронизации, стратегии конфликтов и персистентность Global State.
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Определены модели синхронизации, стратегии конфликтов и каналы реального времени.'
 validation:
   checksum: ''
   schema_version: '1.0'
