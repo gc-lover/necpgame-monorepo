@@ -1,0 +1,101 @@
+metadata:
+  id: backend-session-management-part1
+  title: "Session Management — Part 1: Lifecycle & Heartbeat"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-07T21:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T21:05:00Z
+  owners:
+    - role: auth_lead
+      contact: auth@necp.game
+  tags:
+    - sessions
+    - heartbeat
+    - lifecycle
+  topics:
+    - authentication
+    - gameplay-infra
+  related_systems:
+    - auth-service
+    - session-store
+    - redis
+  related_documents:
+    - id: backend-session-management-overview
+      relation: references
+    - id: backend-session-management-part2
+      relation: precedes
+  source: shared/docs/knowledge/implementation/backend/session-management/part1-lifecycle-heartbeat.md
+  visibility: internal
+  audience:
+    - backend
+    - auth
+  risk_level: high
+review:
+  chain:
+    - role: auth_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T21:05:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Нужен детальный регламент жизненного цикла игрового сеанса и heartbeat-потока."
+  goal: "Задокументировать состояния сессии, схемы БД, кеш Redis и обработку heartbeat."
+  essence: "Часть 1 фокусируется на создании, отслеживании и обновлении сессий, включая batch-обновления и контроль состояний."
+  key_points:
+    - Определены состояния сессии и переходы (CREATED → ACTIVE → … → CLOSED).
+    - SQL схемы `player_sessions` и `session_audit_log` с индексами и ограничениями.
+    - Redis ключи `session:{token}` и `active_players:{serverId}`.
+    - Java код `createSession`, heartbeat endpoint и batch обновления.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Система управляет созданием, поддержкой и завершением игровых сессий, контролируя heartbeats, AFK и авторизации.
+      mechanics_links: []
+    - id: lifecycle
+      title: Жизненный цикл
+      body: |
+        Содержит цепочки состояний, переходы и критерии (AFK, DISCONNECTED, EXPIRED) для игровых сессий.
+      mechanics_links: []
+    - id: database
+      title: Схемы баз данных
+      body: |
+        Подробные SQL определения `player_sessions` и `session_audit_log`, индексы, ограничения и уникальности.
+      mechanics_links: []
+    - id: cache
+      title: Redis Cache
+      body: |
+        Описаны структуры ключей, TTL, списки активных игроков и назначение кеша.
+      mechanics_links: []
+    - id: creation
+      title: Создание сессии
+      body: |
+        Приведен Java сервис `createSession` с обработкой параллельных сессий, кешированием и публикацией событий.
+      mechanics_links: []
+    - id: heartbeat
+      title: Heartbeat механизм
+      body: |
+        Определена периодичность heartbeat, логика статусов, endpoint и batch-обновления в БД.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: auth_lead
+    changes: Добавлены схемы, lifecycle и heartbeat механизмы.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
