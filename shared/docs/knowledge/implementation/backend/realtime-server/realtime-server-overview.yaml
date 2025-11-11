@@ -1,0 +1,112 @@
+metadata:
+  id: backend-realtime-server-overview
+  title: 'Realtime Server Architecture Overview'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.2'
+  last_updated: 2025-11-07T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T00:00:00Z
+  owners:
+    - role: realtime_lead
+      contact: realtime@necp.game
+  tags:
+    - realtime
+    - websocket
+    - architecture
+  topics:
+    - networking
+    - live-operations
+  related_systems:
+    - world-service
+    - gameplay-service
+    - social-service
+  related_documents:
+    - id: backend-realtime-part1-architecture
+      relation: references
+    - id: backend-realtime-part2-protocol
+      relation: references
+    - id: backend-realtime-part3-performance
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/realtime-server/README.md
+  visibility: internal
+  audience:
+    - backend
+    - infrastructure
+    - live-ops
+  risk_level: medium
+review:
+  chain:
+    - role: backend_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется обзор realtime-сервера и ссылочная структура частей, чтобы команды быстро ориентировались.
+  goal: Зафиксировать назначение сервиса, маршруты WebSocket и связь с остальными подсистемами.
+  essence: Документ описывает точку входа realtime-подсистемы и навигацию по деталям архитектуры, протоколов и производительности.
+  key_points:
+    - WebSocket сервер world-service обслуживает игровые события, чат и обновления мира.
+    - Маршруты `/topic/zone`, `/topic/character`, `/topic/world` распределяют сообщения по назначению.
+    - Связанные части разбивают описание на архитектуру зон, протоколы и профили производительности.
+    - Архитектура интегрирована с caching-strategy, anti-cheat и error-handling.
+content:
+  sections:
+    - id: service_overview
+      title: 'Назначение сервиса'
+      body: |
+        Realtime сервер предоставляет канал WebSocket через API Gateway и обрабатывает combat, чат и мировые события. Отвечает world-service, порт 8086, топики распределены по зонам и персонажам.
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: 'Интеграции и зависимости'
+      body: |
+        Сервис взаимодействует с gameplay-service для боевых событий, character-service для позиционирования и social-service для чата. Фазовое внедрение запланировано на третью фазу.
+      mechanics_links: []
+      assets: []
+    - id: routes
+      title: 'Маршруты WebSocket'
+      body: |
+        Основные топики: `/topic/zone/{zoneId}/players`, `/topic/character/{characterId}/combat`, `/topic/zone/{zoneId}/chat`, `/topic/world/events`. К каждому приложены правила подписки и назначения.
+      mechanics_links: []
+      assets: []
+    - id: document_structure
+      title: 'Структура документации'
+      body: |
+        Обзор делится на три части: архитектура и зоны, протокол и оптимизация, профили производительности. Каждая часть имеет собственный файл для подробностей.
+      mechanics_links: []
+      assets: []
+    - id: change_history
+      title: 'История изменений'
+      body: |
+        Версия 1.0.2 содержит навигацию и обновленные ссылки; версии 1.0.1 и 1.0.0 фиксируют разделение файла и начальную публикацию.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.2'
+    date: 2025-11-07
+    author: realtime_team
+    changes: 'Обновлена навигация и ссылки на части архитектуры.'
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: realtime_team
+    changes: 'Документ разбит на отдельные части.'
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: realtime_team
+    changes: 'Создан первичный обзор realtime сервера.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
