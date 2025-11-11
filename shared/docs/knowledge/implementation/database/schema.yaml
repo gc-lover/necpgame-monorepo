@@ -1,0 +1,125 @@
+metadata:
+  id: implementation-database-schema-mvp
+  title: 'Database Schema — MVP'
+  document_type: implementation
+  category: database
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T00:00:00Z
+  owners:
+    - role: data_guild
+      contact: data@necp.game
+  tags:
+    - database
+    - schema
+    - mvp
+  topics:
+    - implementation
+    - backend
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: implementation-database-migrations-mvp
+      relation: references
+    - id: implementation-database-mvp-initial-data
+      relation: references
+    - id: implementation-gameplay-service-erd
+      relation: references
+  source: shared/docs/knowledge/implementation/database/schema.yaml
+  visibility: internal
+  audience:
+    - backend
+    - data
+  risk_level: low
+review:
+  chain:
+    - role: data_guild_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Нужно формализовать схему БД MVP для генерации миграций и реализации сервисов.
+  goal: Описать сущности, связи, индексы и метрики для схем `mvp_core` и `mvp_meta`.
+  essence: Документ фиксирует ERD, структуры таблиц и требования к аудиту и метрикам.
+  key_points:
+    - PostgreSQL 15, схемы `mvp_core` и `mvp_meta`.
+    - Нормализация до 3НФ с soft-delete через `deleted_at`.
+    - Таблица `outbox` обеспечивает интеграцию с Kafka.
+content:
+  sections:
+    - id: overview
+      title: Обзор
+      body: |
+        Схема использует PostgreSQL 15 с разделением на `mvp_core` (gameplay, social, economy) и `mvp_meta` (аудит, ETL).
+        Принципы включают нормализацию до 3НФ, soft-delete и стандартные аудиторские поля.
+      mechanics_links: []
+      assets: []
+    - id: entities
+      title: Ключевые сущности
+      body: |
+        Основные таблицы: `player_account`, `character`, `weapon_profile`, `ballistics_metric`, `order`, `order_phase`,
+        `order_application`, `order_review`, `crafting_blueprint`, `crafting_job`, `world_district_state`. Таблицы отражают
+        игровые аккаунты, крафт, экономику и состояние районов.
+      mechanics_links:
+        - implementation/database/migrations.yaml
+      assets: []
+    - id: tables
+      title: Таблицы и поля
+      body: |
+        Документ перечисляет основные поля и связи для таблиц `player_account`, `character`, `weapon_profile`,
+        `ballistics_metric`, `order`, `order_phase`, `order_application`, `order_review`, `crafting_blueprint`, `crafting_job`,
+        `world_district_state`. Для каждой таблицы указаны первичные ключи, внешние связи, enum поля и jsonb структуры.
+      mechanics_links:
+        - implementation/database/mvp-initial-data.yaml
+      assets: []
+    - id: indexes
+      title: Индексы и ограничения
+      body: |
+        Уникальные индексы `UX_order_title_owner`, `UX_weapon_profile_character_type`, частичные индексы по состоянию заказов
+        и крафтов, а также проверки `CHECK` для JSON колонок. Эти требования закладываются в будущие миграции.
+      mechanics_links: []
+      assets: []
+    - id: audit
+      title: Аудит и метрики
+      body: |
+        Таблица `mvp_meta.outbox` служит для транзакционного вывода событий в Kafka, а `mvp_meta.event_log` фиксирует
+        события с payload и статусами. Блок обеспечивает соответствие паттерну outbox и наблюдаемость.
+      mechanics_links: []
+      assets: []
+    - id: next_steps
+      title: Следующие шаги
+      body: |
+        Завершена подготовка ERD и фиксация схем. Далее требуется сгенерировать SQL миграции и синхронизировать с
+        `migrations.md`. Задача отмечена как следующий шаг.
+      mechanics_links:
+        - implementation/database/migrations.yaml
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: ERD Diagram
+      link: ../diagrams/gameplay-service-erd.drawio
+    - title: Migration Plan
+      link: ./migrations.yaml
+    - title: Seed Data
+      link: ./mvp-initial-data.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: data_team
+    changes: Схема БД MVP перенесена в YAML с описанием таблиц, индексов и аудита.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
