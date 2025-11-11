@@ -1,0 +1,106 @@
+metadata:
+  id: backend-realtime-server-part3-performance-profiles
+  title: "Realtime Server — Part 3: Performance Profiles"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T09:26:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T09:26:00Z
+  owners:
+    - role: realtime_lead
+      contact: realtime@necp.game
+  tags:
+    - performance
+    - realtime
+    - scaling
+  topics:
+    - server-architecture
+    - capacity-planning
+  related_systems:
+    - world-service
+    - gameplay-service
+    - monitoring-service
+  related_documents:
+    - id: backend-realtime-server-part1-architecture-zones
+      relation: references
+    - id: backend-realtime-server-part2-protocol-optimization
+      relation: references
+    - id: infrastructure-caching-strategy
+      relation: references
+    - id: infrastructure-anti-cheat-system
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/realtime-server/part3-performance-profiles.md
+  visibility: internal
+  audience:
+    - backend
+    - infrastructure
+    - liveops
+  risk_level: high
+review:
+  chain:
+    - role: realtime_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T09:26:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Отсутствовали формальные профили производительности для различных видов realtime-контента.
+  goal: Определить профили тикрейта, сетевых бюджетов, оборудования и адаптивных настроек для серверов NECPGAME.
+  essence: Документ описывает матрицу контентных профилей, параметры QoS, автоскейлинг, live-migration и требования к мониторингу.
+  key_points:
+    - Введена матрица профилей (Esports, Siege, Extraction, Open World, Raids, Massive Warfront, Casual, Social).
+    - Заданы hardware классы, автоскейлинг и warm pools.
+    - Описаны QoS политики, адаптивная синхронизация и работа edge-нод.
+    - Регламентированы античит уровни, стресс-тесты, live-migration и SLO.
+content:
+  sections:
+    - id: profiles_matrix
+      title: Матрица профилей
+      body: |
+        Таблица контентных профилей указывает tick rate, snapshot interval, input buffer, лимит игроков и AI бюджет,
+        а также особенности QoS для каждой категории (Esports, Siege, Extraction, Open World, Raids, Massive, Casual, Social).
+      mechanics_links: []
+    - id: parameters
+      title: Параметры и оборудование
+      body: |
+        Описаны значения vCPU, RAM, сетевых требований и хранилища для каждого профиля. Автоскейлинг базируется на нагрузке
+        инстансов, предусмотрены warm pools и шаблоны Terraform.
+      mechanics_links: []
+    - id: qos
+      title: QoS и трафик
+      body: |
+        Настроены профили QoS, network shaping, batching, compression и FEC. Этапы адаптивной синхронизации разбиты по
+        Tier A/B/C с разными стратегиями state-diff.
+      mechanics_links: []
+    - id: edge
+      title: Edge ноды и миграция
+      body: |
+        Описаны параметры edge-нод, роутинг, пороги деградации, live-migration и fallback сценарии. Введены метрики
+        live-migration duration и session-drop-rate.
+      mechanics_links: []
+    - id: ai_security
+      title: AI offload, античит и тестирование
+      body: |
+        Гибридная симуляция AI, уровни античита по профилям и плановые network chaos тесты. Метрики SLO определены для
+        всех профилей.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: realtime_lead
+    changes: Финализированы профили производительности и политика live-migration для realtime серверов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
