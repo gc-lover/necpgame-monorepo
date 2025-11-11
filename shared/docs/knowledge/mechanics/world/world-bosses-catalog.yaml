@@ -1,0 +1,130 @@
+metadata:
+  id: world-bosses-catalog
+  title: Каталог мировых боссов — открытые столкновения
+  document_type: mechanics
+  category: world
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-08T12:20:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T12:20:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - world-bosses
+    - world-events
+    - raid-content
+  topics:
+    - world-encounters
+    - large-scale-combat
+  related_systems:
+    - world-service
+    - combat-service
+    - social-service
+    - economy-service
+  related_documents:
+    - id: combat-ai-enemies
+      relation: complements
+    - id: player-impact-systems
+      relation: references
+    - id: economy-world-impact
+      relation: complements
+  source: shared/docs/knowledge/mechanics/world/world-bosses-catalog.md
+  visibility: internal
+  audience:
+    - concept
+    - systems
+    - world
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: concept@necp.game
+      reviewed_at: 2025-11-08T12:20:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Каталог мировых боссов хранился в Markdown и не содержал структурированных ссылок и API.
+  goal: Зафиксировать список боссов, фазовые сценарии, телеметрию и REST/WebSocket контракты.
+  essence: Документ описывает лиговую ротацию мировых боссов, их способности, последствия и интеграцию с сервисами.
+  key_points:
+    - Каталог включает босса, локацию, эпоху, сложность и сюжетные триггеры.
+    - Фазовые сценарии определяют уникальные навыки, проверки и награды.
+    - REST и WebSocket интерфейсы world-service и аналитика связывают события с экономикой и социальной системой.
+content:
+  sections:
+    - id: overview
+      title: Обзор событий
+      body: |
+        Мировые боссы — публичные события на 20–60 игроков в Night City и Badlands. Запуск происходит по циклам лиг и сюжетным
+        флагам global-state. События используют гибрид D&D проверок и realtime боя с распределением ролей и WebSocket обновлениями.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-systems.yaml
+      assets: []
+    - id: boss-catalog
+      title: Каталог боссов
+      body: |
+        Каталог описывает `wb-neon-titan`, `wb-blackwall-wraith`, `wb-valentinos-saint`, `wb-nomad-leviathan`, `wb-netwatch-sphinx`,
+        `wb-eclipse-seraph` и `wb-hivemind-behemoth`. Для каждого фиксируются локация, эпоха, базовая сложность и сюжетный триггер.
+        Таблица ротации группирует боссов по лигам Bronze → Mythic и указывает особенности.
+      mechanics_links:
+        - mechanics/world/world-state/living-world-kenshi-hybrid.yaml
+      assets: []
+    - id: phase-scenarios
+      title: Фазовые сценарии
+      body: |
+        Каждая встреча делится на три фазы с уникальными навыками и проверками атрибутов. Примеры: `Spectral Audit` у Neon Titan,
+        `Neural Fracture` у Blackwall Wraith, `Reactor Implosion` у Nomad Leviathan, `Ablation Protocol` у Eclipse Seraph. Таблица
+        последствий описывает изменение мировых флагов, репутации и доступ к контенту.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-mechanics.yaml
+      assets: []
+    - id: telemetry
+      title: Телеметрия и динамика
+      body: |
+        WebSocket канал `wss://api.necp.game/v1/world/world-boss/{eventId}` публикует события `PhaseStart`, `AbilityCast`,
+        `DndCheck`, `PlayerDown`, `LootRoll`. Kafka топики `world.boss.spawn`, `world.boss.telemetry`, `world.boss.outcome` дополняют
+        балансировщик и обеспечивают аналитику боёв.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-persistence.yaml
+      assets: []
+    - id: api-contracts
+      title: REST контракты
+      body: |
+        REST API world-service включает эндпоинты каталога, деталей босса, расписания, записи на событие, исходов и последствий.
+        Дополнительный endpoint `aftermath` фиксирует изменение мировых флагов и публикует события в analytics-service.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-systems.yaml
+      assets: []
+    - id: rewards-analytics
+      title: Награды и аналитика
+      body: |
+        Награды масштабируются по лигам от Bronze до Mythic и синхронизируются с economy-service через `world_boss_loot`. social-service
+        обновляет репутацию фракций, а analytics-service отслеживает `worldBossClearTime`, `worldBossDndFailRate` и `worldBossAftermathImpact`.
+        Пример payload демонстрирует структуру аналитического события и связь с мировыми флагами.
+      mechanics_links:
+        - mechanics/world/world-state/living-world-kenshi-hybrid.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#world-bosses-catalog
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-08
+    author: ai_brain_manager
+    changes: Добавлены орбитальные и хакерские события, расширены последствия и API.
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Первичный каталог мировых боссов и лиговая структура.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
