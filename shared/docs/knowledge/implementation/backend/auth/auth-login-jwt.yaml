@@ -1,0 +1,93 @@
+metadata:
+  id: backend-auth-part2-login
+  title: "Authentication System — Part 2: Login & JWT Management"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T01:46:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T01:46:00Z
+  owners:
+    - role: auth_lead
+      contact: auth@necp.game
+  tags:
+    - authentication
+    - jwt
+    - security
+  topics:
+    - auth-service
+    - token-management
+  related_systems:
+    - auth-service
+    - redis
+    - session-service
+  related_documents:
+    - id: backend-auth-part1-registration
+      relation: references
+    - id: backend-auth-part3-authorization
+      relation: precedes
+  source: shared/docs/knowledge/implementation/backend/auth/auth-login-jwt.md
+  visibility: internal
+  audience:
+    - backend
+    - platform
+  risk_level: high
+review:
+  chain:
+    - role: auth_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T01:46:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Необходимо формализовать процессы логина, управления JWT и восстановления пароля."
+  goal: "Задокументировать логин email/пароль с защитами, генерацию/валидацию JWT, refresh, recovery и 2FA."
+  essence: "Часть 2 описывает обработку входа, структуру токенов, refresh endpoint, password reset и двухфакторную защиту."
+  key_points:
+    - "Метод `login` включает блокировку после неудачных попыток, проверки бана и двухфакторного кода."
+    - "Описаны структуры access/refresh токенов и сервис `JwtService` для генерации и валидации."
+    - "Password recovery и 2FA реализованы через отдельные эндпоинты с хранением токенов в Redis."
+content:
+  sections:
+    - id: login-flow
+      title: Поток логина
+      body: |
+        Email/пароль логин выполняет проверки блокировок, статуса, двухфакторной авторизации, генерирует JWT и создаёт
+        сессию через Session Manager.
+      mechanics_links: []
+    - id: jwt
+      title: JWT управление
+      body: |
+        Описана структура access/refresh токенов, сервис генерации и метод refresh, который проверяет тип токена и хранилище
+        Redis.
+      mechanics_links: []
+    - id: recovery
+      title: Восстановление пароля
+      body: |
+        Endpoints `/forgot-password` и `/reset-password` создают `PasswordResetToken`, отправляют письма и сбрасывают пароли,
+        аннулируя refresh токены.
+      mechanics_links: []
+    - id: two_factor
+      title: Двухфакторная аутентификация
+      body: |
+        Описан процесс включения, проверки и активации 2FA с временным хранением данных в Redis и генерацией backup-кодов.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: auth_lead
+    changes: Описаны логин, управление токенами, восстановление пароля и 2FA.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
