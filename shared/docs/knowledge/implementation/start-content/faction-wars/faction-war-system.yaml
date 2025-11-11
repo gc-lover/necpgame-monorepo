@@ -1,0 +1,121 @@
+metadata:
+  id: faction-war-system
+  title: 'Faction Wars System: Обзор'
+  document_type: implementation
+  category: start-content
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-06T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-06T22:05:00Z
+  owners:
+    - role: systems_designer
+      contact: concept@necp.game
+  tags:
+    - faction
+    - war
+    - progression
+  topics:
+    - live-events
+    - branching-content
+  related_systems:
+    - reputation-service
+    - world-service
+    - combat-service
+  related_documents:
+    - id: quest-factionwar-am-05-decisive-battle
+      relation: references
+    - id: quest-factionwar-gangs-04-gang-war-climax
+      relation: references
+  source: shared/docs/knowledge/implementation/start-content/faction-wars/faction-war-system.md
+  visibility: internal
+  audience:
+    - concept
+    - design
+    - gameplay
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: systems_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется целостная схема фракционных войн для запуска стартового контента и их влияния на мир.
+  goal: Описать этапы конфликтов, выбор сторон, награды и API-интеграцию для двух ключевых войн.
+  essence: Система охватывает корпоративную войну Arasaka vs Militech и бандитский конфликт Valentinos vs Maelstrom с пятью стадиями и динамическими последствиями.
+  key_points:
+    - Войны состоят из последовательных стадий с собственными квестами и возрастающей сложностью.
+    - Выбор стороны немедленно меняет репутацию, открывая и закрывая контент.
+    - Исход войны меняет территории, NPC и экономику локаций.
+    - REST API контролирует выбор стороны, прогресс стадий и мировое состояние.
+content:
+  sections:
+    - id: system_concept
+      title: 'Концепция и ключевые механики'
+      body: |
+        Система фракционных войн позволяет игрокам влиять на крупные конфликты через цепочки квестов. Выбор стороны определяет дальнейшие задания, репутацию и доступ к вооружению. Каждая война состоит из пяти стадий, где сложность и масштаб растут по мере продвижения.
+
+        Механика предусматривает ветвление, штрафы за смену стороны и возможность сохранять нейтралитет до середины кампании.
+      mechanics_links: []
+      assets: []
+    - id: arasaka_militech
+      title: 'Arasaka vs Militech'
+      body: |
+        Конфликт разворачивается в эпоху 2060-2077 и включает пять стадий: пограничная стычка, рейд на склады, устранение офицера, контроль территории и решающая битва. Каждая стадия имеет уникальные цели, количество противников и награды вплоть до 1500 XP и эксклюзивных предметов.
+
+        Победа Arasaka или Militech меняет контроль над Downtown, доступные квесты, NPC и рыночные цены. Командирские боссы и массовые сражения требуют координации групп с поддержкой.
+      mechanics_links: []
+      assets: []
+    - id: valentinos_maelstrom
+      title: 'Valentinos vs Maelstrom'
+      body: |
+        Война банд охватывает эпоху 2045-2060 и содержит четыре основные стадии от спора о территории до кульминации. Бои развертываются в Watson, использующие разрушимые окружения и дуэли лидеров.
+
+        Исход определяет контроль районов, доступ к торговцам и уровень преступности. Победа одной банды повышает репутацию союзников и делает противников враждебными.
+      mechanics_links: []
+      assets: []
+    - id: choice_and_switch
+      title: 'Выбор, нейтралитет и смена стороны'
+      body: |
+        Игрок получает мгновенный бонус к репутации выбранной фракции и штраф к оппоненту. Нейтралитет позволяет отложить участие и сохранить доступ к обеим сторонам до третьей стадии. Смена стороны возможна только до середины войны и сопровождается существенными штрафами и тайм-аутами.
+
+        Система учитывает повторяющиеся события и динамические столкновения, которые пересчитывают влияние фракций в мире.
+      mechanics_links: []
+      assets: []
+    - id: world_impact
+      title: 'Мировое влияние и экономика'
+      body: |
+        Контроль над территориями отражается в визуальных элементах, составе NPC, патрулях и ассортиментах торговцев. Экономика реагирует на исход войны изменением цен на категории товаров. Случайные события и патрули обеспечивают продолжение конфликта после основной кампании.
+
+        Репутационные каскады влияют на дружественность союзников противника и формируют долгосрочные последствия для будущих сезонов.
+      mechanics_links: []
+      assets: []
+    - id: integration
+      title: 'API и данные'
+      body: |
+        API включает методы выбора стороны, получения статуса войны, фиксации завершённой стадии, чтения мирового состояния и попытки смены стороны. Пример JSON демонстрирует параметры текущей стадии, лидирующей фракции, вклад участников и изменения мира.
+
+        Интерфейсы UI описывают экраны выбора и прогресса войны, визуализацию стадий, репутаций и активных задач.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: systems_team
+    changes: 'Система Faction Wars перенесена из Markdown и структурирована для дальнейшей реализации.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
