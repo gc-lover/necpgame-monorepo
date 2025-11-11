@@ -1,0 +1,151 @@
+metadata:
+  id: quest-main-2072-independence-celebration
+  title: "Основной квест: Празднование независимости (2072)"
+  document_type: implementation
+  category: start-content
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-06T20:10:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - questline
+    - downtown
+    - security
+  topics:
+    - quests
+    - social
+    - combat
+  related_systems:
+    - quest-engine
+    - combat-service
+    - analytics-service
+  related_documents:
+    - id: quest-main-2065-gray-theater
+      relation: precedes
+  source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2072-independence-celebration.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Ежегодное празднование независимости в Downtown может перерасти в хаос из-за заговорщиков и толпы.
+  goal: Описать shooter-сценарий патрулирования, расследования и деэскалации для защиты события.
+  essence: Игрок помогает Саре Миллер выявить угрозы, удержать площадь под контролем и завершить мероприятие без жертв.
+  key_points:
+    - Стадии патруля с проверками PERCEPTION/COOL/INVESTIGATION.
+    - Диалоговое дерево на 24 узла, ведущее к складу заговорщиков.
+    - Награды и API-мэппинг, учитывающие социальные и боевые исходы.
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис
+      body: |
+        - ID: `quest-main-2072-independence-celebration`
+        - Контакт: `npc-sarah-miller`
+        - Локация: `loc-downtown-001`
+        - Уровень: 8
+        - Основные роли: patrol, investigation, de-escalation
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Цели и ветвления
+      body: |
+        Основной маршрут:
+        1. Принять задание у Сары Миллер.
+        2. Патрулировать площадь и выявить угрозы.
+        3. Предотвратить инциденты и задержать заговорщиков.
+        4. Вернуться к Саре с отчётом.
+
+        Ветви:
+        - PERCEPTION 16 — заранее обнаружить закладки, снизить число боёв.
+        - COOL 16 — деэскалация толпы, бонус к репутации NCPD.
+        - INVESTIGATION 15 — выявить канал заговорщиков, открыть ветку склада.
+      mechanics_links:
+        - mechanics/combat/combat-dnd-core.yaml
+    - id: interactions
+      title: Shooter взаимодействия
+      body: |
+        - `Recon Sweep`: PERCEPTION 16, equipment `optic_suite`, событие `quest.recon.scan`, уменьшает встречи.
+        - `Crowd De-escalation`: COOL 16, ресурс `NCPD megaphone`, событие `quest.social.presence`, бонус репутации.
+        - `Conspiracy Trace`: INVESTIGATION 15, событие `quest.investigation.trace`, открывает склад.
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
+    - id: encounters
+      title: Боевые сценарии
+      body: |
+        - `Street Clash`: 2 нарушителя (defense 180–190), инициируется при провале COOL.
+        - `Warehouse Raid`: 3 лидера (defense 200), альтернатива сдаче через COOL 16.
+        - `Patrol Ambush`: triggered при провале INVESTIGATION, 2–3 врага.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: dialogue
+      title: Диалоговое дерево
+      body: |
+        24 узла: старт у Сары, ветви угроз, патруля, слежки за складом и финальный отчёт. Узлы `p_cool_ok`, `p_invest_ok`, `p_surrender` формируют основные исходы.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: rewards
+      title: Награды и баланс
+      body: |
+        Базовые награды: 680 XP, 900 eddies, +25 репутации NCPD.
+        Бонусы: успехи PERCEPTION/COOL/INVESTIGATION дают доп. репутацию и XP, снижают количество боёв.
+        Штрафы: провал проверок добавляет встречи, поражение в бою → медпункт и −10% денег.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API и телеметрия
+      body: |
+        REST:
+        - `POST /api/v1/quests/{id}/accept`
+        - `POST /api/v1/skill-check`
+        - `POST /api/v1/combat/start`
+        - `POST /api/v1/quests/{id}/complete`
+
+        Kafka:
+        - `quest.progress.main`
+        - `combat.shooter.encounter`
+        - `analytics.quest.ncpd`
+
+        SLA: latency ≤ 180 мс на патрульных ивентах, отслеживание деэскалаций.
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: qa
+      title: Тестирование
+      body: |
+        - Social Path: успешная деэскалация, минимум боёв.
+        - Combat Path: провал проверок, складовое сражение.
+        - Investigation Path: слежка, задержание лидеров без боя.
+        - Failure Loop: поражение и возврат через медпункт.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#quest-main-2072-independence-celebration
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_team
+    changes: Первичная shooter-спецификация праздника независимости.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
