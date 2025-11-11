@@ -1,0 +1,103 @@
+metadata:
+  id: player-impact-systems
+  title: Системы влияния игроков — интеграция подсистем
+  document_type: mechanics
+  category: world
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-09T09:35:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-09T09:35:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - player-impact
+    - world-state
+    - integration
+  topics:
+    - world-simulation
+    - system-orchestration
+  related_systems:
+    - world-service
+    - quest-service
+    - economy-service
+    - combat-service
+  related_documents:
+    - id: player-impact-mechanics
+      relation: complements
+    - id: player-impact-persistence
+      relation: complements
+  source: shared/docs/knowledge/mechanics/world/world-state/player-impact-systems.md
+  visibility: internal
+  audience:
+    - concept
+    - systems
+    - world
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: concept@necp.game
+      reviewed_at: 2025-11-09T09:35:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Влияние игроков на мир описывалось фрагментарно и не учитывало согласованность подсистем.
+  goal: Зафиксировать точки интеграции квестов, экономики и боя с глобальным состоянием мира.
+  essence: Документ описывает события и сервисы, которые обновляют world-state в ответ на действия игроков и поддерживают единые контуры данных.
+  key_points:
+    - Квесты, экономика и бой триггерят обновления world-state через события и cron-задачи.
+    - Все изменения фиксируются сервисом глобального состояния с аудитом и привязкой к событиям.
+    - NPC и территориальные последствия синхронизируются с другими подсистемами через единый API слой.
+content:
+  sections:
+    - id: integration-overview
+      title: Точки интеграции
+      body: |
+        Квестовые решения отправляют события `QuestChoiceMade` в world-service. Контроллер обрабатывает список `WorldStateChange`
+        и `NpcFateChange`, обновляя глобальные флаги и состояния NPC. Экономическая система раз в час пересчитывает цены и публикует
+        новые значения в global-state по ключам `economy.item.<itemId>.price`, обеспечивая перерасчёт спроса и предложения. Боевая
+        система передаёт победы игроков в территориальную службу, которая начисляет вклад в контроль и запускает перерасчёт влияния
+        фракций и статусов регионов.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-mechanics.yaml
+      assets: []
+    - id: event-flow
+      title: Потоки событий и аудит
+      body: |
+        Все вызовы world-service сопровождаются идентификаторами событий для трассировки. Контроллер обновления состояния принимает
+        контекст источника, чтобы аналитика могла связать изменения с конкретными квестами, контрактами или боями. Для экономических
+        и боевых потоков используются планировщики и слушатели доменных событий, а для квестов — синхронные обработчики решений
+        с записью в журнал NPC.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-persistence.yaml
+      assets: []
+    - id: cross-system-effects
+      title: Связь с внешними системами
+      body: |
+        Обновления глобального состояния триггерят вторичные процессы: уведомления фракциям, генерацию заказов NPC и выпуск мировых
+        событий. world-service публикует сообщения для social-service и economy-service, обеспечивая согласованность изменения
+        репутации, доступности контрактов и распределения NPC. Эти события используются UI для отображения новостей и состояния мира.
+      mechanics_links:
+        - mechanics/world/world-bosses-catalog.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  blockers: []
+  queue_reference:
+    - id: world-state-queue
+      relation: queue
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Документ выделен из общего описания влияния игроков и описывает интеграции подсистем.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
