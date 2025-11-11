@@ -1,0 +1,112 @@
+metadata:
+  id: implementation-database-mvp-initial-data
+  title: 'MVP Initial Data — Reference Pack'
+  document_type: implementation
+  category: database
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T00:00:00Z
+  owners:
+    - role: content_guild
+      contact: content@necp.game
+  tags:
+    - database
+    - seed-data
+    - mvp
+  topics:
+    - implementation
+    - backend
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: implementation-database-schema-mvp
+      relation: references
+    - id: implementation-database-migrations-mvp
+      relation: references
+    - id: narrative-main-quests-outline
+      relation: references
+  source: shared/docs/knowledge/implementation/database/mvp-initial-data.yaml
+  visibility: internal
+  audience:
+    - backend
+    - content
+  risk_level: low
+review:
+  chain:
+    - role: content_guild_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Для MVP требуется обязательный набор исходных данных, синхронизированный с миграциями и схемой.
+  goal: Зафиксировать справочники, крафтовые чертежи, стартовые заказы и настройки мировых показателей.
+  essence: Документ описывает структуру данных, формат поставки и контроль выполнения для начальной загрузки.
+  key_points:
+    - Справочники покрывают происхождения, классы, фракции и районы города.
+    - Крафтовые шаблоны включают ключевые компоненты оружия и имплантов.
+    - Туториальные квесты и социальные заказы синхронизированы с игровыми системами.
+content:
+  sections:
+    - id: composition
+      title: Общий состав
+      body: |
+        Набор включает справочники происхождения, классов и фракций, базовые крафт-чертежи, туториальные квесты и NPC, а также
+        стартовые социальные заказы. Данные обеспечивают целостность игровых систем при запуске MVP.
+      mechanics_links: []
+      assets: []
+    - id: tables
+      title: Таблицы и значения
+      body: |
+        - `ref_origin`: `street_kid`, `corpo`, `nomad`.
+        - `ref_class`: `solo`, `netrunner`, `techie`.
+        - `ref_faction`: `arasaka`, `militech`, `valentinos`, `maelstrom`, `ncpd`.
+        - `world_district_state`: `watson` (unrest 40), `westbrook` (55), `heywood` (35).
+        - `crafting_blueprint`: `smart_scope_mk1`, `ricochet_rounds`, `gyro_stabilizer`.
+        - `order`: `tutorial-protect-convoy`, `tutorial-hack-network`, `tutorial-supply-run`.
+      mechanics_links:
+        - implementation/database/schema.yaml
+        - implementation/database/migrations.yaml
+      assets: []
+    - id: delivery
+      title: Формат поставки
+      body: |
+        Данные подготавливаются в `data/mvp-seed/` в форматах CSV и JSON. Загрузка выполняется через Liquibase `loadData` в
+        миграции `V1_4__seed_reference_data.sql`. Требуется синхронизация с репозиторием BACK-JAVA.
+      mechanics_links: []
+      assets: []
+    - id: control
+      title: Контроль
+      body: |
+        Проверяется соответствие API контрактам (`/crafting/blueprints`, `/social/orders`), согласование с narrative по NPC и
+        подготовка smoke-теста для BACK-JAVA. Smoke-тест запланирован в качестве следующего шага.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Schema Overview
+      link: ./schema.yaml
+    - title: Migration Plan
+      link: ./migrations.yaml
+    - title: Main Quests Outline
+      link: ../../content/quests/main/main-quests-outline.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: content_team
+    changes: Пакет стартовых данных MVP перенесён в YAML с детальной раскладкой таблиц и контроля.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
