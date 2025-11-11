@@ -1,0 +1,96 @@
+metadata:
+  id: backend-realtime-server-part2-protocol-optimization
+  title: "Realtime Server — Part 2: Protocol & Optimization"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.1'
+  last_updated: 2025-11-07T20:35:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:13:00Z
+  owners:
+    - role: realtime_lead
+      contact: realtime@necp.game
+  tags:
+    - networking
+    - protocol
+    - optimization
+  topics:
+    - gameplay-infra
+    - netcode
+  related_systems:
+    - world-service
+    - gameplay-service
+  related_documents:
+    - id: backend-realtime-server-part1-architecture-zones
+      relation: references
+    - id: backend-realtime-server-part3-performance-profiles
+      relation: precedes
+  source: shared/docs/knowledge/implementation/backend/realtime-server/part2-protocol-optimization.md
+  visibility: internal
+  audience:
+    - backend
+    - infrastructure
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: realtime_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T02:13:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Необходима спецификация протокола realtime-сервера, компенсирующая задержки и оптимизирующая трафик.
+  goal: Описать выбор транспорта, serialization, lag compensation и методы сокращения трафика.
+  essence: Документ фиксирует стратегию WebSocket/MessagePack, prediction, reconciliation, delta-компрессию и QoS.
+  key_points:
+    - Использование WebSocket (TCP) для универсальной совместимости и надёжной доставки.
+    - Реализация client prediction и server reconciliation с античит проверками.
+    - Lag compensation для боевых событий с rewind логикой.
+    - Delta-компрессия и приоритезация обновлений снижают нагрузку на сеть.
+content:
+  sections:
+    - id: protocol_choice
+      title: Протокол и типы сообщений
+      body: |
+        WebSocket выбран вместо UDP из-за поддержки браузерами и надёжности. Определён набор сообщений client→server и
+        server→client для ввода, чата, боевых событий и уведомлений. Сериализация выполняется MessagePack.
+      mechanics_links: []
+    - id: lag_compensation
+      title: Формулы компенсации задержки
+      body: |
+        Client prediction немедленно применяет вход, хранит очередь pendingInputs и повторно применяет их после ответа
+        сервера. На сервере выполняется reconciliation и античит проверки скорости. Для боёв реализован rewind positions
+        с проверкой попаданий.
+      mechanics_links: []
+    - id: bandwidth
+      title: Оптимизация полосы пропускания
+      body: |
+        Delta-компрессия сохраняет последнее состояние и отправляет только изменения. Вводится приоритезация обновлений
+        по близости, боевому статусу и принадлежности к party. Ограничение — максимум 50 обновлений за тик.
+      mechanics_links: []
+    - id: api
+      title: Endpoints и метрики
+      body: |
+        Основной WebSocket endpoint `ws://localhost:8080/ws/game` и REST API для управления зонами/инстансами. Определены
+        целевые параметры производительности и набор метрик (tick duration, bandwidth, messages rate).
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.1'
+    date: 2025-11-07
+    author: realtime_lead
+    changes: Уточнены протоколы сериализации, lag compensation и bandwidth optimization.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
