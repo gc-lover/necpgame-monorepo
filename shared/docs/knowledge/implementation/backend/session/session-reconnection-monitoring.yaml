@@ -1,6 +1,6 @@
 metadata:
   id: backend-session-reconnection-monitoring
-  title: 'Session Management: Reconnection & Monitoring'
+  title: Session Management — Reconnection & Monitoring
   document_type: implementation
   category: backend
   status: approved
@@ -9,21 +9,19 @@ metadata:
   concept_approved: true
   concept_reviewed_at: 2025-11-07T01:46:00Z
   owners:
-    - role: backend_architect
-      contact: backend@necp.game
+    - role: platform_lead
+      contact: platform@necp.game
   tags:
-    - session
+    - sessions
     - reconnection
     - monitoring
-    - security
   topics:
-    - session-management
-    - player-lifecycle
-  related_systems:
     - session-service
-    - event-bus
-    - notification-service
+    - reliability
+  related_systems:
     - analytics-service
+    - event-bus
+    - redis
   related_documents:
     - id: backend-session-lifecycle-heartbeat
       relation: complements
@@ -31,55 +29,67 @@ metadata:
   visibility: internal
   audience:
     - backend
-    - operations
-    - analytics
+    - platform
+    - support
   risk_level: high
 review:
   chain:
-    - role: backend_lead
+    - role: platform_lead
       reviewer: ''
-      reviewed_at: ''
-      status: pending
+      reviewed_at: 2025-11-07T01:46:00Z
+      status: approved
   next_actions: []
 summary:
-  problem: Нужна устойчивая обработка разрывов связи и контроль сессий, чтобы игроки не теряли прогресс.
-  goal: Описать процессы переподключения, ограничение параллельных сессий, таймауты и мониторинг состояния.
-  essence: Документ фиксирует API и сервисную логику для восстановления сессий, очистки ресурсов и наблюдаемости.
+  problem: Нужно гарантировать устойчивое переподключение игроков и мониторинг сессий при обрывах связи.
+  goal: Задать правила reconnect окна, стратегий одновременных сессий, мониторинг метрик и закрытие сессий по тайм-аутам.
+  essence: Документ описывает API переподключения, стратегии concurrent login, политики тайм-аутов, сохранение состояния и метрики мониторинга.
   key_points:
-    - Быстрый reconnect с проверкой токена в пяти минутном окне.
-    - Управление параллельными входами через стратегии one session per player.
-    - Таймауты активности и плановая очистка старых сессий.
-    - Метрики, дашборды и защитные проверки от угонов сессий.
+    - Reconnect токен действителен 5 минут, валидируется сервером и восстанавливает состояние.
+    - Поддерживаются стратегии единственной сессии и вытеснения старых подключений.
+    - Тайм-ауты (inactivity, absolute, idle) обслуживаются scheduled cleanup сервисом.
+    - Мониторинг сессий поставляет статистику и интеграцию с аналитикой и event bus.
 content:
   sections:
     - id: reconnection_flow
-      title: 'Переподключение и API'
+      title: Механизм переподключения
       body: |
-        Клиент отправляет reconnect_token, сервис проверяет окно, статус и восстанавливает состояние. При успехе обновляется heartbeat, увеличивается счетчик disconnect и публикуется PlayerReconnectedEvent.
+        Endpoint `/reconnect` проверяет токен, окно действия и статус DISCONNECTED. При успешной проверке сессия возвращается в
+        ACTIVE, обновляется heartbeat, пишется в Redis и публикуется событие PlayerReconnected.
       mechanics_links: []
       assets: []
     - id: concurrent_sessions
-      title: 'Контроль параллельных сессий'
+      title: Управление параллельными сессиями
       body: |
-        Поддерживаются стратегии одного входа, нескольких устройств или вытеснения. Рекомендована схема single session per player с уведомлением и закрытием старой сессии через WebSocket.
+        Поддерживаются стратегии: одна сессия на игрока, несколько сессий и принудительное завершение старых подключений.
+        Рекомендуемая схема закрывает предыдущие сессии, уведомляет клиента и сохраняет целостность данных.
       mechanics_links: []
       assets: []
-    - id: session_timeouts
-      title: 'Таймауты и очистка'
+    - id: timeouts_cleanup
+      title: Тайм-ауты и очистка
       body: |
-        Определены inactivity, absolute и idle timeouts. Планировщик каждые пять минут закрывает истекшие сессии и удаляет архивные записи старше семи дней.
+        SessionCleanupService по расписанию ищет истекшие сессии, закрывает их с причиной TIMEOUT и удаляет старые записи.
+        Система поддерживает inactivity, absolute и idle тайм-ауты с разными порогами.
+      mechanics_links: []
+      assets: []
+    - id: state_management
+      title: Сохранение состояния
+      body: |
+        Session state хранит минимальный и расширенный набор атрибутов, включающих позицию, текущие задания и временные эффекты.
+        Это используется при восстановлении после reconnect и при публикации событий.
       mechanics_links: []
       assets: []
     - id: monitoring_metrics
-      title: 'Мониторинг и аналитика'
+      title: Мониторинг и метрики
       body: |
-        Отслеживаются показатели активных сессий, AFK, частоты heartbeat и reconnect. Админ API предоставляет статистику, а Redis хранит активных игроков по серверам.
+        Метрики отслеживают активные сессии, AFK, heartbeat rate, количество переподключений и среднюю длительность. Endpoint
+        `/admin/sessions/stats` предоставляет агрегации для панелей мониторинга.
       mechanics_links: []
       assets: []
     - id: security_controls
-      title: 'Безопасность и аудит'
+      title: Защита и интеграции
       body: |
-        Реализованы проверки IP, User-Agent, ротация токенов и ограничение попыток. Все события пишутся в журнал и используются для обнаружения захвата сессий.
+        Проверяются IP, User-Agent и применяется ротация токенов для защиты от hijacking. При закрытии сессии система очищает
+        состояния в party, combat и trade сервисах и отправляет события в Event Bus и Analytics.
       mechanics_links: []
       assets: []
 appendix:
@@ -95,7 +105,7 @@ history:
   - version: '1.0.0'
     date: 2025-11-07
     author: ai_brain_manager
-    changes: 'Описаны механизмы переподключения, ограничения параллельных сессий, таймауты и мониторинг.'
+    changes: Описаны переподключение, несколько сессий, тайм-ауты и мониторинг.
 validation:
   checksum: ''
   schema_version: '1.0'
