@@ -1,0 +1,158 @@
+metadata:
+  id: quest-main-2093-simulation-reveal
+  title: "Основной квест: Раскрытие симуляции (2093)"
+  document_type: implementation
+  category: start-content
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-06T19:12:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - questline
+    - endgame
+    - conspiracy
+  topics:
+    - quests
+    - netrunning
+    - social
+    - combat
+  related_systems:
+    - quest-engine
+    - analytics-service
+    - reputation-service
+  related_documents:
+    - id: quest-main-2093-net-shift
+      relation: parallel
+  source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2093-simulation-reveal.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - analytics
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Найт-Сити может оказаться в симуляции; требуется финальный квест с решающим выбором.
+  goal: Зафиксировать эндгейм-сценарий сбора доказательств, проникновения в ядро и трёх концовок.
+  essence: Герой с Виктором и Элизабет собирает доказательства симуляции, пробивается к ядру и решает судьбу мира.
+  key_points:
+    - Пять источников доказательств с проверками INT/TECH/LEGAL/TACTICS.
+    - Финальные ветки выбора: раскрыть, скрыть, частично рассказать.
+    - Масштабные бои с системными стражами и альтернативные социальные/нетран пути.
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис
+      body: |
+        - ID: `quest-main-2093-simulation-reveal`
+        - Контакты: `npc-victor-vector`, `npc-elizabeth-chen`
+        - Локации: Downtown Core, ядро симуляции
+        - Уровень: 12 (эндгейм)
+        - Темы: truth vs stability, world simulation, conspiracy
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Цели и ветвления
+      body: |
+        Основные этапы:
+        1. Принять задание у Виктора и Элизабет.
+        2. Собрать 5 доказательств симуляции.
+        3. Получить доступ к ядру: взлом, социальный допуск или штурм.
+        4. Победить стражей системы (при необходимости).
+        5. Сделать выбор: раскрыть, скрыть или частично раскрыть правду.
+
+        Ветви:
+        - INT 20 / TECH 19 — сбор доказательств без боёв.
+        - COOL 19 / LEGAL 18 — доступ к защищённым источникам.
+        - NETRUN 20 — обход стражей.
+        - Финальные концовки изменяют репутацию и состояние мира.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: interactions
+      title: Ключевые интеракции
+      body: |
+        - `Evidence Extraction`: INT/TECH проверки, событие `analytics.simulation.evidence`.
+        - `Guardian Negotiation`: COOL/LEGAL, событие `quest.social.truth`.
+        - `Core Breach`: NETRUN 20, событие `quest.netrun.core`.
+        - `Mass Broadcast`: финальный REST вызов с концовкой.
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
+    - id: encounters
+      title: Боевые сценарии
+      body: |
+        - `Surveillance ICE`: triggered при провале stealth, бой netrun 19.
+        - `Security Detail`: 4 охранника, defense 220, при отказе платить.
+        - `System Guardians`: 10 элит, defense 240–270, способности `integrity drain`.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: dialogue
+      title: Диалоговое дерево
+      body: |
+        28 узлов: брифинг, цикл вопросов, пять точек доказательств с альтернативами, узел ядра и три финальных концовки (truth/stability/gray).
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: rewards
+      title: Награды и последствия
+      body: |
+        База: 1500 XP, 2000 eddies, `item-simulation-core`.
+        Репутация:
+        - Раскрыть: независимые +50, unrest растёт.
+        - Скрыть: корпорации +40, порядок.
+        - Частично: баланс между фракциями.
+        Штрафы: поражение → медпункт, −10% денег, сохранение прогресса по доказательствам.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API и телеметрия
+      body: |
+        REST:
+        - `POST /api/v1/quests/{id}/accept`
+        - `POST /api/v1/skill-check`
+        - `POST /api/v1/combat/start`
+        - `POST /api/v1/items/collect`
+        - `POST /api/v1/quests/{id}/complete` (payload `endingType`)
+
+        Kafka:
+        - `quest.progress.endgame`
+        - `world.simulation.state`
+        - `analytics.truth.broadcast`
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: qa
+      title: Тестирование
+      body: |
+        - Social Route: без боёв, концовка truth.
+        - Netrun Route: обход стражей, концовка stability.
+        - Combat Route: штурм ядра, проверка integrity drain.
+        - Mixed Route: частичное раскрытие, фракционные эффекты.
+        - Failure Loop: поражение у стражей, повторный прогресс.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#quest-main-2093-simulation-reveal
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_team
+    changes: Финальная спецификация эндгейм-квеста «Раскрытие симуляции».
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
