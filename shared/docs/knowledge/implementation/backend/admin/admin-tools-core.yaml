@@ -1,0 +1,107 @@
+metadata:
+  id: backend-admin-tools-core
+  title: 'Admin Tools System: Core'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T03:27:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T01:59:00Z
+  owners:
+    - role: liveops_lead
+      contact: operations@necp.game
+  tags:
+    - admin-tools
+    - moderation
+    - live-ops
+  topics:
+    - player-management
+    - economy-control
+  related_systems:
+    - admin-api
+    - audit-log-service
+    - notification-service
+  related_documents:
+    - id: backend-announcement-system
+      relation: aligns
+  source: shared/docs/knowledge/implementation/backend/admin/admin-tools-core.md
+  visibility: internal
+  audience:
+    - backend
+    - live-ops
+    - support
+    - security
+  risk_level: high
+review:
+  chain:
+    - role: liveops_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется централизованный инструментарий для модерации игроков, управления экономикой и событий.
+  goal: Описать архитектуру админ-панели, ключевые функции и API для управления игроками, предметами, валютой и миром.
+  essence: Документ фиксирует защищённый Admin API, сценарии действий, аудит и аналитические панели.
+  key_points:
+    - Web UI взаимодействует с защищённым Admin API, все действия логируются и требуют разрешений.
+    - Реализованы операции ban/kick/mute, выдача предметов, корректировка валюты и управление мировыми флагами.
+    - Включены сценарии создания событий и уведомления игроков.
+    - Система содержит real-time аналитику и аудит, обеспечивающие наблюдаемость и compliance.
+content:
+  sections:
+    - id: system_architecture
+      title: 'Архитектура админ-инструментов'
+      body: |
+        Админ-панель обращается к Admin API, проходит проверку разрешений, выполняет действие, записывает аудит и отправляет уведомления. Все эндпоинты помечены `@RequiresPermission`.
+      mechanics_links: []
+      assets: []
+    - id: player_management
+      title: 'Управление игроками'
+      body: |
+        Описаны REST-методы для банов, киков, мутов и поиска игроков. Каждый вызов проверяет данные, записывает аудит и уведомляет целевого пользователя через сессии.
+      mechanics_links: []
+      assets: []
+    - id: inventory_economy
+      title: 'Инвентарь и экономика'
+      body: |
+        Приведены примеры выдачи и удаления предметов, настройки баланса валюты, проверки на отрицательные значения и уведомления о изменениях. Действия требуют специфических разрешений.
+      mechanics_links: []
+      assets: []
+    - id: world_events
+      title: 'Управление миром и событиями'
+      body: |
+        Admin API меняет флаги мира, уведомляет регионы и создаёт серверные события. События планируются, объявляются и транслируются игрокам через систему объявлений.
+      mechanics_links: []
+      assets: []
+    - id: analytics_dashboard
+      title: 'Аналитика и поиск'
+      body: |
+        Реал-тайм метрики по онлайну, экономике, боям и производительности доступны через защищённые эндпоинты. Предусмотрен поиск игроков по имени, email и ID с агрегацией результатов.
+      mechanics_links: []
+      assets: []
+    - id: audit_log
+      title: 'Аудит и соответствие'
+      body: |
+        Таблица `admin_audit_log` хранит тип действия, цель, детали, IP и user agent. Приведены индексы и утилита `auditLog` для записи всех операций.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Описаны ключевые функции админ-инструментов, API и аудит.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
