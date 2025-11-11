@@ -1,0 +1,110 @@
+metadata:
+  id: api-mvp-content-endpoints
+  title: 'MVP Content Endpoints — Контент игры'
+  document_type: implementation
+  category: api
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:05:00Z
+  owners:
+    - role: api_lead
+      contact: api@necp.game
+  tags:
+    - api
+    - quests
+    - combat
+    - trading
+  topics:
+    - gameplay-service
+    - social-service
+    - economy-service
+  related_systems:
+    - gameplay-service
+    - social-service
+    - economy-service
+  related_documents:
+    - id: api-mvp-auth-endpoints
+      relation: complements
+    - id: api-mvp-gameplay-endpoints
+      relation: complements
+    - id: api-mvp-system-endpoints
+      relation: complements
+  source: shared/docs/knowledge/implementation/api-requirements/mvp-endpoints/content-endpoints.md
+  visibility: internal
+  audience:
+    - backend
+    - api
+    - content
+  risk_level: high
+review:
+  chain:
+    - role: api_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T06:05:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требуется описать REST endpoint'ы контентных систем (квесты, NPC, бой, торговля) в рамках MVP.
+  goal: Задокументировать запросы и ответы для ключевых игровых взаимодействий, чтобы упростить генерацию OpenAPI и интеграцию команд.
+  essence: Документ структурирует API для получения/стартов квестов, взаимодействия с NPC, текстового боя и торговых операций.
+  key_points:
+    - Endpoint'ы распределены между gameplay-, social- и economy-сервисами и доступны через gateway.
+    - Примеры JSON покрывают выбор веток квестов, взаимодействие с NPC и combat turn-based реакции.
+    - Торговые API описывают рыночные списки и покупку с расчётом стоимости.
+content:
+  sections:
+    - id: service_mapping
+      title: Сопоставление сервисов
+      body: |
+        `/api/v1/gameplay/quests/*` и `/api/v1/gameplay/combat/*` обслуживает gameplay-service. `/api/v1/social/npcs/*` отвечает
+        social-service, `/api/v1/economy/trading/*` — economy-service. Все endpoint'ы доступны через gateway.
+      mechanics_links: []
+      assets: []
+    - id: quests_api
+      title: Квестовые endpoint'ы
+      body: |
+        Описаны получение доступных квестов, старт квеста, просмотр прогресса и выбор ветки. Примеры показывают структуру узлов,
+        наград и последствий выбора.
+      mechanics_links: []
+      assets: []
+    - id: npc_api
+      title: Взаимодействие с NPC
+      body: |
+        `GET /api/v1/npcs/{npcId}` возвращает данные NPC, доступные квесты и диалоги. `POST /api/v1/npcs/{npcId}/interact`
+        поддерживает типы взаимодействия (dialogue/trade/hire) и возвращает варианты ответов.
+      mechanics_links: []
+      assets: []
+    - id: combat_api
+      title: Текстовый бой
+      body: |
+        `POST /api/v1/combat/start` запускает бой и возвращает состояние участников. `POST /api/v1/combat/{combatId}/action`
+        описывает ход игрока, ответ врага, текущее HP и флаг завершения боя.
+      mechanics_links: []
+      assets: []
+    - id: trading_api
+      title: Торговля
+      body: |
+        `GET /api/v1/trade/market/{city}` отдаёт рыночные листинги, `POST /api/v1/trade/buy` оформляет покупку и возвращает
+        предмет и потраченную сумму.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#api-mvp-content-endpoints
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описаны квестовые, NPC, боевые и торговые endpoint'ы для MVP.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
