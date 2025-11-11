@@ -1,0 +1,133 @@
+metadata:
+  id: quest-main-2035-free-city-charter
+  title: "Основной квест: Хартия Свободного города (2035)"
+  document_type: implementation
+  category: start-content
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-05T18:27:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - questline
+    - diplomacy
+    - ncpd
+  topics:
+    - quests
+    - social_resolution
+  related_systems:
+    - quest-engine
+    - social-system
+    - analytics-service
+  related_documents:
+    - id: quest-main-2030-network-resurgence
+      relation: precedes
+  source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2035-free-city-charter.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Переговоры о Хартии требуют контролируемой безопасности и баланса интересов корпораций и NCPD.
+  goal: Задокументировать квестовые стадии, проверки и API для сопровождения переговоров 2035 года.
+  essence: Игрок обеспечивает порядок в Westbrook, взаимодействуя с Сарой Миллер и Элизабет Чен, предотвращая конфликт и охраняя делегации.
+  key_points:
+    - Социальная проверка COOL 14 отменяет бой, альтернативный TECH/INT смягчает угрозы.
+    - UX блоки для брифинга, консультации и переговоров.
+    - Награды и репутация варьируются в зависимости от исхода конфликта.
+content:
+  sections:
+    - id: synopsis
+      title: Кратко
+      body: |
+        - ID: `quest-main-2035-free-city-charter`
+        - Контакты: `npc-sarah-miller`, `npc-elizabeth-chen`
+        - Локация: Westbrook (`loc-westbrook-001`)
+        - Петля: брифинг → консультация → переговоры → отчёт
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Цели и ветки
+      body: |
+        Основная последовательность: обсудить задачу с Сарой, добраться до Westbrook, провести консультацию с Элизабет, урегулировать столкновение с корп-сопровождающими и вернуться в участок.
+
+        | Проверка | DC | Эффект | Телеметрия |
+        | --- | --- | --- | --- |
+        | COOL | 14 | Отмена боя, `reputation.ncpd += 8` | `quest.social.check` |
+        | INT/TECH | 13 | Саботаж микрофонов, stun на 1 раунд при бою | `quest.tech.prevent` |
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: interactions
+      title: UX экраны
+      body: |
+        - **Брифинг у Сары** — кнопки `[Принять]`, `[Позже]`.
+        - **Консультация с Элизабет** — `[Обсудить риски]`, `[Уйти]`.
+        - **Социальная проверка** — COOL 14 с вариантами урегулирования и эскалации.
+      mechanics_links:
+        - implementation/ui/character-creation/creation-flow.yaml
+    - id: combat_branch
+      title: Боевой сценарий
+      body: |
+        При провале социалки игрок сражается с 3 нарушителями:
+
+        | Враг | Role | defenseRating | HP | Особенности |
+        | --- | --- | --- | --- | --- |
+        | Gangster SMG | assault | 185 | 280 | suppression 0.25 |
+        | Gangster Bruiser | melee | 180 | 260 | bleed 15% |
+        | Gangster Tech | support | 178 | 250 | EMP граната |
+
+        INT/TECH проверка накладывает статус «ошеломление» на первого врага в 1-м раунде.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: rewards
+      title: Награды и репутация
+      body: |
+        - Базовая награда: 420 XP, 480 eddies.
+        - Репутация NCPD: +8 (социальный успех), +5 (боевой путь).
+        - Дополнительно: аналитический лог фиксирует выборы игрока и исход переговоров.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: api
+      title: API и телеметрия
+      body: |
+        - `POST /api/v1/quests/{id}/accept`
+        - `POST /api/v1/skill-check` (cool|int|tech)
+        - `POST /api/v1/combat/start`
+        - `POST /api/v1/quests/{id}/complete`
+
+        QA покрытия:
+        1. COOL успех — без боя.
+        2. COOL провал — бой без INT/TECH.
+        3. INT/TECH успех + бой.
+        4. Преждевременный возврат — отказ завершения.
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#quest-main-2035-free-city-charter
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: concept_team
+    changes: "Конвертировано из quest-main-2035-free-city-charter.md в формат знаний."
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
