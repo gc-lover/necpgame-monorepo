@@ -1,0 +1,100 @@
+metadata:
+  id: backend-auth-registration
+  title: 'Auth Registration — Регистрация аккаунтов'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:30:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:30:00Z
+  owners:
+    - role: auth_lead
+      contact: auth@necp.game
+  tags:
+    - authentication
+    - registration
+    - onboarding
+  topics:
+    - auth-service
+    - identity-management
+  related_systems:
+    - auth-service
+    - email-service
+    - session-service
+  related_documents:
+    - id: backend-auth-part2-login
+      relation: complements
+    - id: backend-auth-part3-authorization
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/auth/auth-registration.md
+  visibility: internal
+  audience:
+    - backend
+    - platform
+    - security
+  risk_level: high
+review:
+  chain:
+    - role: auth_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T05:30:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось реализовать безопасную регистрацию аккаунтов с поддержкой email/password и OAuth-провайдеров.
+  goal: Определить модели данных, процессы валидации и интеграции с email-подтверждением для выдачи первичного доступа игроку.
+  essence: Документ описывает схему аккаунтов, сервис регистрации, обработку OAuth и набор REST-эндпоинтов.
+  key_points:
+    - Таблицы `accounts` и `email_verification_tokens` хранят учётные данные и статус подтверждения.
+    - Сервис регистрации валидирует запрос, шифрует пароль и запускает выдачу роли и email-подтверждения.
+    - OAuth-ф low создаёт учётную запись или привязывает существующую и возвращает JWT токены.
+    - REST API покрывает регистрацию, подтверждение email и повторную отправку письма.
+content:
+  sections:
+    - id: data_model
+      title: Схемы данных
+      body: |
+        Таблица `accounts` описывает учетные записи, хранит хеш пароля, OAuth-данные, статус и временные метки. Таблица
+        `email_verification_tokens` управляет токенами подтверждения, сроками действия и состоянием верификации.
+      mechanics_links: []
+      assets: []
+    - id: email_password_flow
+      title: Регистрация по email и паролю
+      body: |
+        Сервис `register` выполняет валидацию запроса, проверяет уникальность email и username, хеширует пароль, создаёт запись
+        аккаунта, назначает роль PLAYER и генерирует письмо с токеном подтверждения.
+      mechanics_links: []
+      assets: []
+    - id: oauth_flow
+      title: OAuth регистрация
+      body: |
+        Процесс OAuth обменивает authorization code на токен, получает пользовательские данные, ищет существующий аккаунт или
+        создаёт новый и выдаёт пару JWT (access и refresh). Поддерживаются провайдеры Steam, Google и Discord.
+      mechanics_links: []
+      assets: []
+    - id: api_endpoints
+      title: REST эндпоинты
+      body: |
+        API включает `POST /api/v1/auth/register`, `POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification`, а
+        также OAuth-redirect и callback эндпоинты для каждого провайдера.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-auth-registration
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описаны схемы аккаунтов, процесс регистрации, OAuth и API эндпоинты.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
