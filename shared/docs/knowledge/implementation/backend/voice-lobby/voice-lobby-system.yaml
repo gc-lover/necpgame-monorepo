@@ -1,0 +1,114 @@
+metadata:
+  id: backend-voice-lobby-system
+  title: Voice Lobby & Party Finder
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T02:50:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T15:45:00Z
+  owners:
+    - role: voice_systems_lead
+      contact: voice@necp.game
+  tags:
+    - voice-chat
+    - party-finder
+    - matchmaking
+  topics:
+    - communication
+    - social
+  related_systems:
+    - voice-service
+    - party-service
+    - guild-service
+    - clan-service
+  related_documents:
+    - id: backend-party-system
+      relation: references
+    - id: backend-voice-chat-core
+      relation: depends_on
+  source: shared/docs/knowledge/implementation/backend/voice-lobby/voice-lobby-system.md
+  visibility: internal
+  audience:
+    - backend
+    - social
+  risk_level: high
+review:
+  chain:
+    - role: voice_systems_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T15:45:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Требовалась формализованная спецификация для голосовых лобби, подбора группы и управления подканалами."
+  goal: "Задокументировать архитектуру Voice Lobby & Party Finder, типы комнат, БД, алгоритмы и интеграции."
+  essence: "Документ описывает подсистемы лобби, структуру данных, party finder, управление подканалами и API."
+  key_points:
+    - Перечислены подсистемы (Lobby Directory, Party Finder, Subchannel Controller, Permissions).
+    - Описаны типы лобби: activity, clan/guild, raid, tournament.
+    - Приведены SQL таблицы `voice_lobbies`, `lobby_participants`, `lobby_subchannels`.
+    - Покрыты алгоритмы подбора, управление подканалами, права и интеграции.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Voice Lobby & Party Finder расширяет голосовой чат: доменные комнаты, подбор по ролям/рейтингу, подканалы и управление
+        правами с интеграцией в party, guild и clan системы.
+      mechanics_links: []
+    - id: architecture
+      title: Архитектура
+      body: |
+        Представлена цепочка Player → Lobby Finder → Voice Lobby Service → Voice Provider и перечислены подсистемы:
+        Lobby Directory API, Party Finder, Voice Lobby Manager, Subchannel Controller, Permissions Engine, Integration Layer.
+      mechanics_links: []
+    - id: lobby_types
+      title: Типы голосовых лобби
+      body: |
+        Описаны activity, clan/guild, raid и tournament лобби с ограничениями по участникам, подканалам и правам.
+      mechanics_links: []
+    - id: database
+      title: База данных
+      body: |
+        SQL схемы для `voice_lobbies`, `lobby_participants`, `lobby_subchannels` с индексами и атрибутами ролей, статусов, регионов.
+      mechanics_links: []
+    - id: party_finder
+      title: Алгоритм Party Finder
+      body: |
+        Параметры подбора (роли, рейтинг, активность, регион, язык), flow выбора лобби и Java-код проверки ролей и рейтингов.
+      mechanics_links: []
+    - id: subchannels
+      title: Управление подканалами
+      body: |
+        Java методы `ensureSubchannels` и `moveToSubchannel` создают основные, ролевые и командирские каналы и переводят участников.
+      mechanics_links: []
+    - id: permissions
+      title: Права и модерация
+      body: |
+        Таблица ролей (Leader, Commander, Party Leader, Officer, Member), ready-check и countdown механика с примером кода.
+      mechanics_links: []
+    - id: integrations
+      title: Интеграции и API
+      body: |
+        Описаны интеграции с party, guild, clan, housing системами и перечислены REST endpoints каталога и управления лобби.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: voice_systems_lead
+    changes: Создана спецификация Voice Lobby & Party Finder.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
