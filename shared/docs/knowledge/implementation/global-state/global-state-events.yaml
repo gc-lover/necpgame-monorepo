@@ -1,0 +1,146 @@
+metadata:
+  id: global-state-events
+  title: Global State Events — каталог игровых событий
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:00:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - world-state
+    - events
+    - event-sourcing
+  topics:
+    - event-catalog
+    - world-dynamics
+  related_systems:
+    - world-service
+    - gameplay-service
+    - social-service
+  related_documents:
+    - id: global-state-core
+      relation: references
+    - id: global-state-management
+      relation: complements
+    - id: global-state-sync
+      relation: complements
+  source: shared/docs/knowledge/implementation/global-state/global-state-events.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: world_service_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T06:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Каталог событий глобального состояния находился в Markdown и не обеспечивал структурированного описания категорий и payload.
+  goal: Систематизировать категории событий (player, quest, combat и др.), их назначение и ключевые поля для интеграций.
+  essence: Документ описывает 10 категорий событий, примеры payload и точки интеграции с глобальным состоянием и аналитикой.
+  key_points:
+    - Каталог покрывает игрока, квесты, бой, экономику, социальные системы, мир, NPC, технологии, политику и лиги.
+    - Каждая категория содержит список основных событий и дополнительные сценарии влияния на мир.
+    - События формируют единый контракт для Event Bus и глобального состояния.
+    - Категории связываются с менеджером состояния, аналитикой и уведомлениями.
+content:
+  sections:
+    - id: categories_overview
+      title: Категории событий
+      body: |
+        Global State Events включает десять категорий: Player, Quest, Combat, Economy, Social, World, NPC,
+        Technology, Political и League. Каждая категория объединяет десятки типов событий, которые логируются
+        и транслируются через Event Bus.
+      mechanics_links:
+        - implementation/global-state/global-state-management.yaml
+    - id: player_events
+      title: Player Events
+      body: |
+        События прогресса (PLAYER_CREATED, PLAYER_LEVELED_UP), экипировки (PLAYER_ITEM_EQUIPPED, PLAYER_IMPLANT_INSTALLED),
+        перемещения, статусов и состояний (PLAYER_DIED, PLAYER_CYBERPSYCHOSIS_STAGE_CHANGED). Используются для обновления
+        атрибутов, реплея и уведомлений.
+      mechanics_links:
+        - mechanics/progression/progression-attributes-matrix.yaml
+    - id: quest_events
+      title: Quest Events
+      body: |
+        Контролируют ход квестов: QUEST_STARTED, QUEST_OBJECTIVE_UPDATED, QUEST_CHOICE_MADE, QUEST_WORLD_STATE_CHANGED.
+        Влияют на мировое состояние, репутацию и территориальные изменения.
+      mechanics_links:
+        - implementation/gameplay/quest-events.yaml
+    - id: combat_events
+      title: Combat Events
+      body: |
+        Покрывают боевые сценарии и экстракт-шутер: COMBAT_DAMAGE_DEALT, COMBAT_ENEMY_KILLED, EXTRACT_ZONE_ENTERED,
+        EXTRACT_EXTRACTED. События обновляют боевую статистику, триггерят награды и влияют на глобальные войны.
+      mechanics_links:
+        - mechanics/combat/combat-session.yaml
+    - id: economy_events
+      title: Economy Events
+      body: |
+        Включают ITEM_CRAFTED, ITEM_PURCHASED, MARKET_LISTING_CREATED, AUCTION_BID_PLACED и события производственных цепочек.
+        Используются для экономики игроков и синхронизации с market/auction системами.
+      mechanics_links:
+        - mechanics/economy/economy-pricing-detailed.yaml
+    - id: social_events
+      title: Social Events
+      body: |
+        Описывают изменения репутации, отношений, найма NPC, заказов игроков и романтических арок. Пример: PLAYER_ORDER_CREATED,
+        ROMANCE_STAGE_ADVANCED. Поддерживают социальные и менторские механики.
+      mechanics_links:
+        - mechanics/social/npc-relationships-system.yaml
+    - id: world_events
+      title: World Events
+      body: |
+        Сценарии мировых событий и территорий: WORLD_EVENT_STARTED, TERRITORY_CAPTURED, FACTION_WAR_STARTED.
+        Влияют на контроль территорий, фракционные войны и глобальные модификаторы.
+      mechanics_links:
+        - implementation/global-state/global-state-core.yaml
+    - id: npc_events
+      title: NPC Events
+      body: |
+        Управляют жизненным циклом NPC: NPC_SPAWNED, NPC_STATE_CHANGED, NPC_VENDOR_INVENTORY_UPDATED. Используются
+        для синхронизации world-service с NPC- и vendor-подсистемами.
+      mechanics_links:
+        - implementation/content-generation/npc-profile-generator.yaml
+    - id: technology_events
+      title: Technology Events
+      body: |
+        Технологические изменения: TECHNOLOGY_UNLOCKED, BLACKWALL_STABILITY_CHANGED, RESEARCH_COMPLETED.
+        Отражают прогресс исследований, стабильность Blackwall и разблокировки имплантов.
+      mechanics_links:
+        - mechanics/progression/progression-technology.yaml
+    - id: political_league_events
+      title: Политические и лиговые события
+      body: |
+        POLITICAL события (например, ELECTION_RESULT_DECLARED) и LEAGUE события (LEAGUE_SEASON_STARTED, LEAGUE_RANKING_UPDATED)
+        управляют макроэкономикой и соревновательными лигами, влияя на мировое состояние и награды.
+      mechanics_links:
+        - mechanics/economy/economy-league-system.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: world_service_team
+    changes: Сформирован каталог событий для глобального состояния с примерами payload.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
