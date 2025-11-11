@@ -1,0 +1,115 @@
+metadata:
+  id: backend-cosmetic-system
+  title: 'Cosmetic System — Система косметики'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T22:45:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:30:00Z
+  owners:
+    - role: monetization_lead
+      contact: monetization@necp.game
+  tags:
+    - cosmetics
+    - personalization
+    - monetization
+  topics:
+    - cosmetic-service
+    - player-customization
+  related_systems:
+    - inventory-service
+    - shop-service
+    - analytics-service
+  related_documents:
+    - id: backend-battle-pass-system
+      relation: complements
+    - id: backend-achievement-core
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/cosmetic/cosmetic-system.md
+  visibility: internal
+  audience:
+    - gameplay
+    - backend
+    - live-ops
+  risk_level: medium
+review:
+  chain:
+    - role: monetization_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T02:30:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось описать серверную систему косметики, поддерживающую персонализацию, магазин и редкости.
+  goal: Сформировать каталог косметических предметов, процессы покупки и экипировки, а также модели данных и API.
+  essence: Документ описывает типы косметики, таблицы `cosmetic_items`, `player_cosmetics`, `player_equipped_cosmetics`, сервисы магазина и управление предметами.
+  key_points:
+    - Категории включают character/weapon skins, emotes, titles и name plates с уникальными редкостями и эффектами.
+    - Таблицы описывают каталог предметов, владение игроками и текущие экипировки с учётом эксклюзивности и ограничений.
+    - Магазин выполняет ежедневную ротацию ассортимента и уведомляет игроков.
+    - Процессы покупки и экипировки проверяют владение, списывают валюту и обновляют статистику использования.
+content:
+  sections:
+    - id: cosmetic_categories
+      title: Категории косметики
+      body: |
+        Категории включают character skins, weapon skins, emotes, titles и name plates. Каждая категория имеет редкости,
+        источники получения и визуальные эффекты, влияющие на работу магазина и прогрессии.
+      mechanics_links: []
+      assets: []
+    - id: data_model
+      title: Схемы данных
+      body: |
+        `cosmetic_items` описывает код, название, редкость, стоимость, эксклюзивные флаги и ассеты. Таблица `player_cosmetics`
+        фиксирует владение, источник получения и использование, а `player_equipped_cosmetics` хранит активные слоты персонажа,
+        оружия, титулов, табличек и быстрые эмоции.
+      mechanics_links: []
+      assets: []
+    - id: shop_rotation
+      title: Магазин и ротация
+      body: |
+        `CosmeticShopService` ежедневно собирает подборку из разных редкостей, сохраняет ротацию в базе и уведомляет игроков.
+        Алгоритм гарантирует микс Common, Rare, Epic и Legendary предметов.
+      mechanics_links: []
+      assets: []
+    - id: purchase_flow
+      title: Покупка косметики
+      body: |
+        Процесс покупки проверяет владение, возможность приобретения и наличие валюты. После списания стоимости предмет
+        добавляется игроку, отправляется уведомление и записывается событие в аналитику.
+      mechanics_links: []
+      assets: []
+    - id: equip_flow
+      title: Экипировка и управление слотами
+      body: |
+        Методы экипировки проверяют право владения, размещают предметы в нужных слотах, управляют эмоциями и обновляют
+        статистику использования и время изменения.
+      mechanics_links: []
+      assets: []
+    - id: api_endpoints
+      title: REST эндпоинты
+      body: |
+        API предоставляет доступ к ежедневному магазину, списку владения, операциям покупки и экипировки, а также к данным об
+        активных косметических предметах игрока.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-cosmetic-system
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описана система косметики, модели данных, магазин, покупка и экипировка.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
