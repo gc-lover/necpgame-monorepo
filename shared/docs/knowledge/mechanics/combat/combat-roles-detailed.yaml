@@ -9,99 +9,120 @@ metadata:
   concept_approved: true
   concept_reviewed_at: 2025-11-09T03:14:00Z
   owners:
-    - role: gameplay_lead
-      contact: gameplay@necp.game
+    - role: combat_lead
+      contact: combat@necp.game
   tags:
     - combat
     - roles
-    - progression
+    - builds
   topics:
-    - gameplay
+    - gameplay-combat
     - team-composition
   related_systems:
     - gameplay-service
-    - combat-ui
+    - analytics-service
   related_documents:
+    - id: combat-shooter-core
+      relation: complements
     - id: combat-abilities
-      relation: references
-    - id: combat-implants-types
-      relation: references
+      relation: complements
+    - id: combat-implants
+      relation: complements
   source: shared/docs/knowledge/mechanics/combat/combat-roles-detailed.md
   visibility: internal
   audience:
+    - concept
     - gameplay
-    - combat
-    - liveops
+    - systems
   risk_level: medium
 review:
   chain:
-    - role: gameplay_lead
-      reviewer: gameplay-lead@necp.game
+    - role: combat_lead
+      reviewer: ''
       reviewed_at: 2025-11-09T03:14:00Z
       status: approved
   next_actions: []
 summary:
-  problem: Команды требовали формализованного описания боевых ролей с атрибутами, имплантами и тактиками для подготовки API задач.
-  goal: Зафиксировать набор ролей, их характеристики, способности, синергии и мета-рекомендации.
-  essence: Документ систематизирует роли Tank, DPS, Support, Healer и гибридов, включая статы, билды и взаимодействия в PvE и PvP.
+  problem: Командные роли были описаны в разрозненных заметках, что мешало балансировать билды и готовить API задачи.
+  goal: Стандартизировать роли, их атрибуты, импланты, способности и синергии для PvE, PvP и экстракт-геймплея.
+  essence: Документ фиксирует философию боевых ролей, детализирует танка, DPS, поддержку, лекаря и гибриды, а также мету, прогрессию и составы команд.
   key_points:
-    - Описаны primary и secondary атрибуты для каждой роли.
-    - Указаны обязательные импланты и наборы способностей.
-    - Даны тактики, синергии и контр-пики.
-    - Добавлены рекомендации по прогрессии и мета-раскладкам.
+    - Для каждой роли определены атрибуты, обязательные импланты, способности и ключевые тактики.
+    - Описаны гибридные комбинации и их влияние на мету PvE/PvP.
+    - Предоставлены руководства по прогрессии и оптимальные составы команд для разных режимов.
 content:
   sections:
     - id: philosophy
-      title: Концепция ролей
+      title: Философия ролей
       body: |
-        Основные принципы: гибридность, специализация, адаптация и синергия. Роли должны переключаться в зависимости от контента,
-        сохраняя баланс между чистыми билдами и смешанными конфигурациями.
+        Ролевая система строится на гибридности, специализации, адаптации и командных синергиях. Игроки могут смешивать стили, но чистые билды остаются эталоном эффективности, а разнообразие ролей усиливает отряд.
       mechanics_links:
-        - shared/docs/knowledge/mechanics/combat/combat-overview.yaml
-    - id: tank
-      title: Tank
+        - mechanics/combat/combat-shooter-core.yaml
+      assets: []
+    - id: tank_role
+      title: Танк
       body: |
-        Описывает frontline-роль, её атрибуты (BODY, STR, WILL), обязательные импланты (Subdermal Armor, Reinforced Skeleton,
-        Pain Editor, Bio-Monitor), способности (Shield Boost, Taunt, Charge, Fortify) и пассивы. Приведены тактики агро-менеджмента,
-        позиционирования и взаимодействия с союзниками.
+        Танк принимает урон, контролирует поле боя и удерживает агро. Основные атрибуты — BODY, STR и WILL, а ключевые импланты включают Subdermal Armor, Reinforced Skeleton, Pain Editor и Bio-Monitor. Набор способностей ориентирован на защиту и привлечение внимания врагов, тактики сосредоточены на агро-менеджменте, позиционировании и взаимодействии с DPS, поддержкой и лекарем.
       mechanics_links:
-        - shared/docs/knowledge/mechanics/combat/combat-implants-types.yaml
-        - shared/docs/knowledge/mechanics/combat/combat-abilities.yaml
-    - id: dps
-      title: DPS
+        - mechanics/combat/combat-implants.yaml
+        - mechanics/combat/combat-abilities.yaml
+      assets: []
+    - id: dps_role
+      title: Damage Dealer
       body: |
-        Делится на burst и sustained специализации с соответствующими атрибутами и набором способностей (Precision Shot,
-        Rapid Fire и т.д.). Описаны тактики нанесения урона, рекомендуемое оружие и позиционирование.
+        DPS делится на взрывной и устойчивый варианты. Burst DPS делает ставку на быстрые убийства за счёт высоких REF и AGI, тогда как Sustained DPS поддерживает постоянный урон и контролирует ресурсы. Описаны способности, ротации и оружейные приоритеты для каждого архетипа.
       mechanics_links:
-        - shared/docs/knowledge/mechanics/combat/combat-abilities.yaml
-    - id: support
+        - mechanics/combat/combat-shooter-core.yaml
+        - mechanics/combat/combat-abilities.yaml
+      assets: []
+    - id: support_role
       title: Support
       body: |
-        Utility-роль с упором на баффы, дебаффы и контроль. Включает ключевые способности (Buff Drone, Debuff Field,
-        Tactical Override) и сценарии применения до, во время и после боя.
+        Поддержка управляет баффами, дебаффами и контролем. Основные атрибуты — INT, COOL и EMP. Способности включают Buff Drone, Debuff Field и Tactical Override, а тактические советы покрывают подготовку, управление боем и утилитарные задачи вроде ревайвов и хакинга окружения.
       mechanics_links:
-        - shared/docs/knowledge/mechanics/combat/combat-abilities.yaml
-    - id: healer
+        - mechanics/combat/combat-abilities.yaml
+        - mechanics/combat/combat-hacking.yaml
+      assets: []
+    - id: healer_role
       title: Healer
       body: |
-        Раскрывает приоритеты лечения, активные способности (Quick Heal, Healing Drone, Mass Resurrection), пассивы и
-        список инструментов (Trauma Kit, Cyberware Repair Kit и т.д.).
+        Лекарь обеспечивает выживаемость команды, снимает негативные эффекты и спасает при критических ситуациях. Указаны приоритеты лечения, набор активных и пассивных способностей, а также медицинские инструменты, требующие управления ресурсами и позиционированием.
       mechanics_links:
-        - shared/docs/knowledge/mechanics/combat/combat-abilities.yaml
-    - id: hybrids
-      title: Гибридные роли
+        - mechanics/combat/combat-abilities.yaml
+        - mechanics/combat/combat-implants.yaml
+      assets: []
+    - id: hybrid_roles
+      title: Гибридные комбинации
       body: |
-        Примеры гибридов: Battle Medic, Stealth DPS, Hacker Support, Tank DPS. Для каждого описаны пропорции ролей и
-        ключевые особенности билдов.
+        Battle Medic, Stealth DPS, Hacker Support и Tank DPS демонстрируют, как смешение ролей расширяет возможности игроков. Для каждого гибрида указаны пропорции ролей, ключевые навыки и особенности геймплея.
       mechanics_links:
-        - shared/docs/knowledge/mechanics/combat/combat-loadouts-system.yaml
-    - id: meta
-      title: Ролевая мета
+        - mechanics/combat/combat-abilities.yaml
+        - mechanics/combat/combat-stealth.yaml
+      assets: []
+    - id: meta_overview
+      title: Meta и тир-листы
       body: |
-        Обновлённые списки приоритетных ролей для PvE и PvP. Указывается обязательность Tank и Healer в PvE, сильные и
-        situational роли для разных режимов, а также рекомендации для арены.
+        Рассмотрены приоритеты ролей в PvE и PvP. PvE требует обязательного танка и лекаря, сильные позиции занимает Burst DPS и Support, а PvP выделяет ассасинов и нетраннеров. Приведены списки S/A/B-tier для разных режимов.
       mechanics_links:
-        - shared/docs/knowledge/mechanics/combat/combat-pvp-pve.yaml
+        - mechanics/combat/combat-pvp-pve.yaml
+        - mechanics/combat/combat-hacking.yaml
+      assets: []
+    - id: progression
+      title: Прогрессия ролей
+      body: |
+        Для танка описаны этапы развития от базового до легендарного уровня с акцентом на обучение агро-менеджменту, освоение защитных навыков и подготовку к рейдовому контенту. Рекомендации масштабируются для высокоуровневых активностей.
+      mechanics_links:
+        - mechanics/combat/combat-implants-limits.yaml
+        - mechanics/progression/classes-progression-link.yaml
+      assets: []
+    - id: team_compositions
+      title: Командные составы
+      body: |
+        Приведены оптимальные составы для рейдов, PvP арен и соло-экстрактов. Подчёркнута роль синергии между танком, тяжёлым и гибридным DPS, поддержкой и лекарем, а также рекомендации по экстракт-геймплею.
+      mechanics_links:
+        - mechanics/combat/combat-extract.yaml
+        - mechanics/combat/combat-pvp-pve.yaml
+      assets: []
 appendix:
   glossary: []
   references: []
@@ -109,13 +130,13 @@ appendix:
 implementation:
   needs_task: false
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml
+    - shared/trackers/queues/concept/queued.yaml#combat-roles-detailed
   blockers: []
 history:
   - version: '1.0.0'
     date: 2025-11-06
-    author: gameplay_lead
-    changes: Финализирована детализация ролей, синергий и мета-рекомендаций.
+    author: combat_team
+    changes: Зафиксированы основные и гибридные боевые роли, их способности, мета и командные составы.
 validation:
   checksum: ''
   schema_version: '1.0'
