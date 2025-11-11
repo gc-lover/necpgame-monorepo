@@ -1,0 +1,102 @@
+metadata:
+  id: api-mvp-gameplay-endpoints
+  title: 'MVP Gameplay Endpoints — Игровая механика'
+  document_type: implementation
+  category: api
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:05:00Z
+  owners:
+    - role: api_lead
+      contact: api@necp.game
+  tags:
+    - api
+    - gameplay
+    - character-management
+  topics:
+    - character-service
+    - world-service
+    - economy-service
+  related_systems:
+    - character-service
+    - world-service
+    - economy-service
+  related_documents:
+    - id: api-mvp-auth-endpoints
+      relation: complements
+    - id: api-mvp-content-endpoints
+      relation: complements
+    - id: api-mvp-system-endpoints
+      relation: complements
+  source: shared/docs/knowledge/implementation/api-requirements/mvp-endpoints/gameplay-endpoints.md
+  visibility: internal
+  audience:
+    - backend
+    - api
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: api_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T06:05:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Нужно описать REST endpoint'ы для персонажей, локаций и инвентаря в микроcервисной архитектуре MVP.
+  goal: Зафиксировать запросы, ответы и распределение по сервисам, чтобы API генераторы и команды могли строить спецификации.
+  essence: Документ структурирует операции CRUD по персонажам, перемещения по локациям и управление инвентарём с учётом gateway.
+  key_points:
+    - Эндпоинты разделены между character-service, world-service и economy-service и доступны через gateway.
+    - Содержит примеры запросов/ответов для создания и получения персонажей, обхода зон и операций с инвентарём.
+    - Описаны travel API и лимиты (до 5 персонажей на аккаунт, capacity инвентаря).
+content:
+  sections:
+    - id: service_mapping
+      title: Распределение сервисов
+      body: |
+        `/api/v1/characters/*` обслуживает character-service (порт 8082). `/api/v1/gameplay/locations/*` — world-service,
+        `/api/v1/economy/inventory/*` — economy-service. Все вызовы идут через API Gateway.
+      mechanics_links: []
+      assets: []
+    - id: characters_api
+      title: Персонажи
+      body: |
+        Включает список, создание, получение по ID и удаление персонажа. Приведены JSON-примеры и поля (class, origin, faction,
+        attributes, location). Создание возвращает идентификатор и стартовый уровень.
+      mechanics_links: []
+      assets: []
+    - id: locations_api
+      title: Локации и перемещения
+      body: |
+        `GET /api/v1/locations/{city}` и `GET /api/v1/locations/{city}/{zone}` описывают структуру города, типы зон и активностей.
+        `POST /api/v1/locations/travel` перемещает персонажа между городами/зонами и возвращает стоимость.
+      mechanics_links: []
+      assets: []
+    - id: inventory_api
+      title: Инвентарь
+      body: |
+        Включает получение инвентаря, equip/unequip/use операции. JSON примеры показывают структуру предмета, статистику, состояние
+        (equipped, capacity, weight).
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#api-mvp-gameplay-endpoints
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Детализированы gameplay endpoint'ы для персонажей, локаций и инвентаря.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
