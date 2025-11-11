@@ -1,0 +1,115 @@
+metadata:
+  id: backend-companion-system
+  title: Companion System — Спутники игроков
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T22:25:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:34:00Z
+  owners:
+    - role: gameplay_backend_lead
+      contact: gameplay@necp.game
+  tags:
+    - companions
+    - pets
+    - drones
+  topics:
+    - gameplay-service
+    - progression
+  related_systems:
+    - combat-service
+    - inventory-service
+    - economy-service
+  related_documents:
+    - id: gameplay-combat-overview
+      relation: references
+    - id: cosmetic-pet-customization
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/companion/companion-system.md
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+    - live-ops
+  risk_level: medium
+review:
+  chain:
+    - role: gameplay_backend_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T02:34:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требуется систематизировать механику спутников (боевые дроны, питомцы, утилитарные помощники) для backend-реализации.
+  goal: Задать категории компаньонов, модель данных, прокачку, API призыва и способности.
+  essence: Документ описывает типы компаньонов, схемы таблиц, сервисы призыва и прогрессии, а также основные API.
+  key_points:
+    - Три основные категории: combat drones, utility companions и social pets.
+    - Таблицы `companion_types` и `player_companions` управляют характеристиками, прогрессией и кастомизацией.
+    - Сервис компаньонов обрабатывает призыв, отзыв, начисление опыта и улучшение статов.
+    - API поддерживает покупку, список доступных компаньонов, призыв, переименование и использование способностей.
+content:
+  sections:
+    - id: companion_types
+      title: Категории компаньонов
+      body: |
+        Боевые дроны обеспечивают урон, поддержку и разведку; утилитарные помощники ускоряют сбор лута, хакинг и крафт; социальные
+        питомцы служат косметическими спутниками с бонусами к эмоциональной вовлечённости.
+      mechanics_links: []
+      assets: []
+    - id: data_model
+      title: Модель данных
+      body: |
+        `companion_types` содержит сведения о типе, статистике, активных и пассивных способностях и способах получения.
+        `player_companions` ведёт прогрессию, кастомизацию, экипировку и использование. Индексы поддерживают выборки по игроку и
+        категории.
+      mechanics_links: []
+      assets: []
+    - id: summon_flow
+      title: Призыв и отзыв компаньонов
+      body: |
+        Сервис проверяет владение, отзывает текущего спутника, помечает нового как активного, создаёт сущность в мире и применяет
+        бонусы. Отзыв снимает эффекты и удаляет сущность из игрового мира.
+      mechanics_links: []
+      assets: []
+    - id: progression
+      title: Прокачка и улучшения
+      body: |
+        Компаньоны получают опыт, растут до 50 уровня с увеличением здоровья и урона. Статы перерасчитываются при повышении уровня,
+        игроки уведомляются о прогрессе.
+      mechanics_links: []
+      assets: []
+    - id: abilities
+      title: Способности
+      body: |
+        Активные способности дают временные бонусы (атака, щиты, фокус цели), пассивные — постоянные эффекты (автоатак, сбор ресурсов).
+        JSON-схемы фиксируют cooldown, эффективность и описание.
+      mechanics_links: []
+      assets: []
+    - id: api_endpoints
+      title: API компаньонов
+      body: |
+        REST-интерфейсы предоставляют операции покупки, получения, призыва, отзыва, переименования и активации способностей, что
+        позволяет клиенту и админ-инструментам управлять спутниками.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-companion-system
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описаны категории компаньонов, модель данных, призыв и прогрессия.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
