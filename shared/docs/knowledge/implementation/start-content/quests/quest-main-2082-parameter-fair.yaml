@@ -1,0 +1,153 @@
+metadata:
+  id: quest-main-2082-parameter-fair
+  title: "Основной квест: Параметрическая ярмарка (2082)"
+  document_type: implementation
+  category: start-content
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-06T20:45:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - questline
+    - governance
+    - civic-event
+  topics:
+    - quests
+    - social
+    - combat
+  related_systems:
+    - quest-engine
+    - analytics-service
+    - governance-service
+  related_documents:
+    - id: quest-main-2093-simulation-reveal
+      relation: precedes
+  source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2082-parameter-fair.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Первая параметрическая ярмарка Night City уязвима к саботажу и манипуляциям голосованием.
+  goal: Определить shooter-сценарии обеспечения безопасности, честности голосования и реакции на угрозы.
+  essence: Игрок помогает Виктору Вектору защитить ярмарку, патрулирует площадку и предотвращает саботажников.
+  key_points:
+    - Проверки COOL/PERCEPTION/INVESTIGATION управляют голосованием и количеством врагов.
+    - Бой с саботажниками масштабируется от 4 до 8 врагов в зависимости от подготовки.
+    - Мир реагирует на исход: изменение параметров, репутация Independent.
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис
+      body: |
+        - ID: `quest-main-2082-parameter-fair`
+        - Контакт: `npc-victor-vector`
+        - Локация: `loc-downtown-001`
+        - Уровень: 10
+        - Тематика: meta-governance, civic event, sabotage
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: objectives
+      title: Цели и ветвления
+      body: |
+        Основные шаги:
+        1. Принять поручение у Виктора.
+        2. Посетить ярмарку, проголосовать.
+        3. Предотвратить саботаж и задержать лидеров.
+        4. Обеспечить честность голосования и отчёт Виктору.
+
+        Ветви:
+        - COOL 18 — повлиять на голосование, бонус XP 150, изменение параметров.
+        - PERCEPTION 19 — раннее обнаружение саботажа, −4 врага.
+        - INVESTIGATION 18 — выявление лидеров, −3 врага, репутация +20.
+      mechanics_links:
+        - mechanics/combat/combat-dnd-core.yaml
+    - id: interactions
+      title: Интеракции ярмарки
+      body: |
+        - `Vote Influence`: COOL 18, equipment `influence suite`, воздействует на параметры мира.
+        - `Detect Sabotage`: PERCEPTION 19, событие `quest.recon.scan`, уменьшает волну.
+        - `Identify Leaders`: INVESTIGATION 18, событие `quest.investigation.trace`, переносит бой в арест.
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
+    - id: encounters
+      title: Боевые сценарии
+      body: |
+        - `Sabotage Assault`: 4–8 врагов (defense 210–225), оружие SMG/explosives.
+        - `Leader Arrest`: 3 врага при успешном INVESTIGATION, менее интенсивный бой.
+        - `Crowd Panic`: условный encounter при провале checks, требует control событий.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
+    - id: dialogue
+      title: Диалоговое дерево
+      body: |
+        24 узла: Виктор объясняет параметры, голосование, патруль, события саботажа, финальный отчёт и награда.
+        Узлы `vote_influence`, `detect_sabotage`, `arrest_leaders` задают ключевые развилки.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: rewards
+      title: Награды и последствия
+      body: |
+        База: 1100 XP, 1400 eddies, +30 репутации Independent.
+        Бонусы: успехи checks дают +100–150 XP, изменение параметров мира.
+        Штрафы: поражение → медпункт (−15% денег), массовый взрыв увеличивает ущерб цивилам.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API и телеметрия
+      body: |
+        REST:
+        - `POST /api/v1/quests/quest-main-2082-parameter-fair/accept`
+        - `POST /api/v1/skill-check`
+        - `POST /api/v1/combat/start`
+        - `POST /api/v1/quests/quest-main-2082-parameter-fair/complete`
+
+        Kafka:
+        - `quest.progress.main`
+        - `analytics.quest.parameter`
+        - `governance.vote.change`
+
+        SLA: фиксировать latency саботажа, процент честного голосования, нагрузку на crowd-control.
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: qa
+      title: Тестирование
+      body: |
+        - Influence Path: успешное голосовое влияние, проверка изменения параметров.
+        - Early Detection: обнаружение саботажа, бой с 4 врагами.
+        - Full Failure: без предупреждений, бой с 8 врагами, проверка взрывов.
+        - Leader Arrest: арест лидеров без потерь, дополнительная репутация.
+        - Respawn Loop: поражение и повторная защита ярмарки.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#quest-main-2082-parameter-fair
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_team
+    changes: Первичная shooter-спецификация параметрической ярмарки.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
