@@ -1,0 +1,94 @@
+metadata:
+  id: content-quest-mq-001-first-steps
+  title: 'MQ-001 — Первые шаги (D&D проверки)'
+  document_type: content
+  category: quest-main
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-11T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - main-quest
+    - tutorial
+    - dnd-checks
+  topics:
+    - onboarding
+    - skill-checks
+  related_systems:
+    - narrative-service
+    - ui-service
+    - world-service
+    - economy-service
+  related_documents: []
+  source: shared/docs/knowledge/content/quests/main/001-first-steps-dnd-nodes.md
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - gameplay
+  risk_level: low
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Узлы обучающего квеста «Первые шаги» существовали в Markdown и не были включены в централизованную базу знаний.
+  goal: Структурировать D&D-проверки и системные интеграции туториала в формате YAML.
+  essence: Квест знакомит игрока с восприимчивостью улицы, паркуром, социальной коммуникацией, стелсом и тех-вскрытием, синхронизируя HUD и сервисы.
+  key_points:
+    - Пять узлов покрывают ориентирование, паркур, диалог, скрытность и тех-проверки с DC 10–12.
+    - Каждая сцена имеет критические успехи/провалы, HUD-подсказки и интеграцию с assist mode.
+    - Метрики мониторят процент успехов и активируют assist mode при серии провалов.
+content:
+  sections:
+    - id: tutorial_nodes
+      title: Узлы и проверки
+      body: |
+        N-1 «Восприятие улицы»: Perception (d20 + REF мод + бонус) ≥ DC 10; успех раскрывает скрытые объекты, критические значения дают подсказки или помехи.
+        N-2 «Паркур через баррикаду»: Parkour (d20 + AGI/REF) ≥ DC 10; критические успехи добавляют стилизованную анимацию, провалы дают задержку или лёгкий урон.
+        N-3 «Диалог с фиксером»: Communication (d20 + EMP/WILL) ≥ DC 10; результат влияет на скидки и отношения.
+        N-4 «Стелс-микроэпизод»: Stealth (d20 + AGI/COOL + укрытие) ≥ DC 10; открывает альтернативный путь.
+        N-5 «Вскрытие двери»: Tech/Hacking (d20 + TECH/INT) ≥ DC 12, с таймером и штрафами за повтор.
+      mechanics_links: []
+      assets: []
+    - id: multiplayer_rules
+      title: Кооператив и синхронизация
+      body: |
+        Паркур и тех-вскрытие получают +1 за ассистентов (макс +3).
+        Логи бросков сохраняются для группы; assist mode включается после серии провалов.
+        Narrative-service обновляет флаги `flag.main001.*`, world-service активирует маршруты `main001.alt_route`, economy-service выдаёт награды через очередь `quest-rewards`.
+        HUD использует карточки `tutorial-parkour`, `stealth.tip`, `tech.progress-wheel` с вспомогательными подсказками.
+      mechanics_links: []
+      assets: []
+    - id: telemetry_metrics
+      title: Метрики и события
+      body: |
+        Telemetry пишет результаты в `POST /narrative/quests/001/rolls`, метрики `tutorial-perception-success-rate`, `tutorial-parkour-success-rate`, `tutorial-stealth-alerts`, `tutorial-tech-critical-failures`.
+        Критические провалы генерируют `event.training-lockdown`, assist mode активируется при трёх провалах подряд.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#content-quest-mq-001-first-steps
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: concept_director
+    changes: Конвертирован квест «Первые шаги» в YAML, описаны узлы, HUD и интеграции.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
