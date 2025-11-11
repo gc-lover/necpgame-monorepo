@@ -1,0 +1,116 @@
+metadata:
+  id: canon-dialogue-quest-side-maelstrom-double-cross
+  title: 'Диалог: побочный квест «Maelstrom Double-Cross»'
+  document_type: canon
+  category: narrative
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-07T19:46:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: narrative_team
+      contact: narrative@necp.game
+  tags:
+    - maelstrom
+    - militech
+    - double-agent
+  topics:
+    - faction-conflict
+    - branching-dialogue
+  related_systems:
+    - narrative-service
+    - reputation-system
+    - law-service
+    - economy-service
+  related_documents:
+    - id: canon-quest-side-maelstrom-double-cross
+      relation: quest-brief
+    - id: canon-dialogue-npc-royce
+      relation: antagonist
+    - id: canon-dialogue-npc-james-iron-reed
+      relation: supporting-character
+  source: shared/docs/knowledge/canon/narrative/dialogues/quest-side-maelstrom-double-cross.md
+  visibility: internal
+  audience:
+    - narrative
+    - systems-design
+    - qa
+  risk_level: high
+review:
+  chain:
+    - role: narrative_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Диалог побочного квеста Maelstrom был доступен только в Markdown и не был увязан со службами репутаций и активностями.
+  goal: Структурировать квестовую ветку двойной игры для Maelstrom/Militech/NCPD в соответствии с шаблоном знаний.
+  essence: Игрок лавирует между бандой Maelstrom, корпорацией Militech и NCPD, выбирая предательство, двойную или тройную игру.
+  key_points:
+    - Сцены охватывают брифинг Ройса, встречу с Militech, соблазн украсть чертежи и финальные последствия.
+    - Проверки используют Negotiation, Deception, Hacking, Intimidation и Insight с критическими ветками.
+    - Итоги активируют активности (`maelstrom-heist`, `militech-blackops`, `activity.triple-weave`) и меняют репутацию трёх фракций.
+content:
+  sections:
+    - id: narrative_flow
+      title: Поток сцен и узлов
+      body: |
+        - **Briefing:** Ройс выдает задание, вызывая проверки Intimidation и формируя стартовые флаги.
+        - **Meet-corp:** игрок торгуется с Militech, может начать двойную игру или усилить репутацию корпорации.
+        - **Temptation & Betrayal:** варианты кражи, предательства одной из сторон или информирования NCPD.
+        - **Fallout:** финальное распределение наград и флагов (успех Maelstrom, сделка с Militech, тройной агент).
+      mechanics_links:
+        - shared/docs/knowledge/canon/narrative/npc-lore/important/royce.yaml
+      assets: []
+    - id: mechanics
+      title: Проверки и модификаторы
+      body: |
+        - Основные DC: 17–21 для Negotiation, Deception, Hacking и Intimidation.
+        - Модификаторы зависят от флагов подготовки (`flag.sqmdl.prep`, `flag.sqmdl.copy`) и репутации (`rep.gang.maelstrom`, `rep.corp.militech`).
+        - Провалы запускают эффекты `militech.suspicion`, `maelstrom.hitlist`, `ncpd.audit` с дальнейшими миссиями.
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: Интеграции и автоматизация
+      body: |
+        - Экспорт YAML обслуживает narrative-service и экономику (передача чертежей, кредиты, предметы).
+        - Валидация осуществляется `validate-maelstrom-double.ps1` и `dialogue-simulator.ps1 -Scenario maelstrom-double-cross`.
+        - Social-service обрабатывает `media-flash`, law-service реагирует на `ncpd.audit`, economy фиксирует продажу `blueprint.black-market`.
+      mechanics_links: []
+      assets: []
+    - id: outcomes
+      title: Репутация, награды и активности
+      body: |
+        - Maelstrom Loyalty: `rep.gang.maelstrom +18`, активность `activity.maelstrom-heist`, усиление для `maelstrom_underlink_raid`.
+        - Militech Deal: `rep.corp.militech +16`, контракт `contract.militech-blackops`, Maelstrom заносит игрока в `flag.sqmdl.exiled`.
+        - Triple Agent: разблокирует `activity.triple-weave`, дает бонусы `rep.law.ncpd`, `rep.gang.maelstrom`, `rep.corp.militech`.
+        - Personal Hoard: шанс на уникальные модификации имплантов, но вызывает риск аудита.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Side Quest Brief
+      link: ../quests/side/SQ-2078-004-blackwall-expedition.yaml
+    - title: Reputation Formulas
+      link: ../../02-gameplay/social/reputation-formulas.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: narrative_team
+    changes: Добавлены экспорт YAML, REST/GraphQL, расширены ветки тройного агента.
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: narrative_team
+    changes: Создана базовая версия диалога квеста.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
