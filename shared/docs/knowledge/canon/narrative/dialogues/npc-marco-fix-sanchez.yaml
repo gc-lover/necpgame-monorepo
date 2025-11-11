@@ -1,0 +1,123 @@
+metadata:
+  id: canon-narrative-dialogue-marco-fix-sanchez
+  title: 'Диалоги — Марко «Фикс» Санчес'
+  document_type: canon
+  category: narrative
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-11T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T17:32:00Z
+  owners:
+    - role: narrative_director
+      contact: narrative@necp.game
+  tags:
+    - dialogue
+    - fixer
+  topics:
+    - narrative
+    - quests
+  related_systems:
+    - narrative-service
+    - social-service
+    - world-service
+  related_documents:
+    - id: canon-npc-marco-fix-sanchez
+      relation: references
+    - id: canon-quests-main-001-first-steps
+      relation: references
+    - id: canon-quests-main-002-choose-path
+      relation: complements
+  source: shared/docs/knowledge/canon/narrative/dialogues/npc-marco-fix-sanchez.md
+  visibility: internal
+  audience:
+    - narrative
+    - systems-design
+    - liveops
+  risk_level: medium
+review:
+  chain:
+    - role: narrative_director
+      reviewer: Street Narrative Cell
+      reviewed_at: 2025-11-07T17:32:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Руководство по диалогам фикса Марко находилось в Markdown и не было синхронизировано с шаблоном знаний и системами контрактов.
+  goal: Стандартизировать состояния, проверки и реакции на события для onboarding фикса, выборов фракций и сценариев Blackwall.
+  essence: YAML фиксирует приветствия, ветки выбора корпораций/банд/фриланса, дисциплинарные последствия и реакции на Blackwall для narrative-service.
+  key_points:
+    - Состояния base, trusted, hostile и blackwall-alert управляются репутацией `rep.fixers.marco`, флагами доверия и глобальными событиями.
+    - Узлы `intro`, `choose-path`, `betrayal` и `blackwall` описывают выдачу стартовых контрактов, последствия предательства и срочные задания.
+    - Проверки Perception, Persuasion, Intimidation, NetrunnerFocus и Negotiation регулируют скидки, контракты и активность containment.
+content:
+  sections:
+    - id: context
+      title: Контекст и роль NPC
+      body: |
+        Марко «Фикс» Санчес — точка входа в Watson, помогает игроку выбрать корпорацию, банду или независимый путь,
+        реагируя на репутацию и глобальные события Blackwall. Он связывает стартовые квесты с экономикой контракта.
+      mechanics_links: []
+      assets: []
+    - id: states
+      title: Состояния и триггеры
+      body: |
+        Состояния base, trusted, hostile и blackwall-alert активируются диапазонами `rep.fixers.marco`, флагами
+        `flag.marco.*` и событием `world.blackwall_breach`. Hostile блокирует часть выбора, пока игрок не восстановит доверие.
+      mechanics_links:
+        - ../../02-gameplay/social/reputation-formulas.md
+        - ../../02-gameplay/world/events/blackwall/blackwall-breach.md
+      assets: []
+    - id: dialogue_nodes
+      title: Основные узлы
+      body: |
+        Узлы `intro`, `choose-path`, `betrayal` и `blackwall` задают выдачу стартовых контрактов, проверок фракций,
+        дисциплинарных мер и реакций на Blackwall. Каждый исход обновляет флаги (`flag.marco.met`, `flag.marco.corp`,
+        `flag.marco.betrayal`) и репутацию.
+      mechanics_links: []
+      assets: []
+    - id: checks
+      title: Проверки и исходы
+      body: |
+        Таблица проверок описывает Perception, Persuasion, Intimidation, ClassChoice, Negotiation и NetrunnerFocus,
+        включая модификаторы (корпоративный костюм, тату Valentinos, Blackwall-щит) и критические исходы (сейф-наводка,
+        скидки, события containment).
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: API и интеграции
+      body: |
+        Диалог синхронизирован с REST/GraphQL эндпоинтами `/narrative/dialogues/marco-fix-sanchez`, поддерживает запуск
+        контрактов `arasaka-entry`, `valentinos-trial`, `freelance-sprint` и ивента `blackwall-containment`.
+      mechanics_links: []
+      assets: []
+    - id: rewards
+      title: Награды и последствия
+      body: |
+        Контракты изменяют `rep.fixers.marco`, открывают предметы (`corp-access-pass`, street pointers), влияют на
+        репутации Arasaka и Valentinos и вызывают мировые события фракционных цепочек.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Fixer Reputation Scale
+      link: ../../02-gameplay/social/reputation-formulas.md
+    - title: Blackwall Breach Event
+      link: ../../02-gameplay/world/events/blackwall/blackwall-breach.md
+    - title: First Steps Quest
+      link: ../quests/main/001-first-steps-dnd-nodes.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.1.0'
+    date: 2025-11-11
+    author: narrative_team
+    changes: Диалог Марко Санчеса перенесён в YAML с описанием состояний, проверок и событий Blackwall.
+validation:
+  checksum: ''
+  schema_version: '1.0'
