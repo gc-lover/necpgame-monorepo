@@ -1,0 +1,104 @@
+metadata:
+  id: backend-chat-moderation
+  title: 'Chat Service — Модерация'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-11T11:10:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:30:00Z
+  owners:
+    - role: trust_and_safety_lead
+      contact: safety@necp.game
+  tags:
+    - chat
+    - moderation
+    - trust-safety
+  topics:
+    - player-safety
+    - live-operations
+  related_systems:
+    - chat-service
+    - moderation-service
+    - redis-cluster
+  related_documents:
+    - id: backend-chat-channels
+      relation: references
+    - id: backend-chat-features
+      relation: references
+    - id: backend-admin-tools-core
+      relation: aligns
+  source: shared/docs/knowledge/implementation/backend/chat/chat-moderation.md
+  visibility: internal
+  audience:
+    - trust-and-safety
+    - backend
+    - live-ops
+  risk_level: high
+review:
+  chain:
+    - role: trust_and_safety_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Описание модерации чата существовало только в Markdown и не было связано с остальными документами безопасности.
+  goal: Структурировать фильтры, антиспам, автосанкции и API модерации для handoff в LiveOps и Trust & Safety.
+  essence: Документ раскрывает схему `chat_bans`, алгоритмы фильтрации, антиспам, автосанкции и публичные эндпоинты модерации.
+  key_points:
+    - "Таблица `chat_bans` хранит глобальные и частичные блокировки с индексами по игроку и дате истечения."
+    - "`ModerationService` фильтрует текст, удаляет ссылки вне whitelist и снижает caps-lock."
+    - "`SpamDetector` отслеживает частоту сообщений и дубли, используя Redis для rate-limit."
+    - "Автоматические баны создают записи, уведомляют игрока и логируют событие."
+content:
+  sections:
+    - id: data_model
+      title: 'Схема данных chat_bans'
+      body: |
+        Таблица `chat_bans` хранит идентификатор игрока, тип канала, причину блокировки, администратора, даты начала и истечения и статус. Индексы по игроку и дате истечения ускоряют проверки активных блокировок.
+      mechanics_links: []
+      assets: []
+    - id: profanity_filter
+      title: 'Фильтрация контента'
+      body: |
+        `ModerationService` подгружает список запрещенных слов, заменяет их на `***`, удаляет несанкционированные URL и нормализует повторяющиеся символы. Дополнительно фильтр определяет сообщения с тяжелыми нарушениями для передачи в автосанкции.
+      mechanics_links: []
+      assets: []
+    - id: spam_detection
+      title: 'Антиспам и rate-limit'
+      body: |
+        `SpamDetector` увеличивает счетчик в Redis для каждого игрока и помечает сообщения как спам при превышении десяти сообщений в минуту или повторении последних пяти фраз. Очередь сообщений поддерживает TTL триста секунд.
+      mechanics_links: []
+      assets: []
+    - id: auto_bans
+      title: 'Автоматические санкции'
+      body: |
+        Метод `autoBan` создает глобальный бан, устанавливает истечение и уведомляет игрока через WebSocket. Событие фиксируется в логах и может инициировать пересмотр вручную через Admin Tools.
+      mechanics_links: []
+      assets: []
+    - id: moderation_api
+      title: 'API модерации'
+      body: |
+        Публичные эндпоинты включают `/api/v1/chat/report` для жалоб пользователей, `/api/v1/chat/ban` и `/api/v1/chat/bans` для администраторов, а также удаление блоков методом DELETE. Все запросы требуют проверку ролей Admin Tools и аудита действий.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-chat-moderation
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: trust_and_safety_lead
+    changes: Конвертация модерации чата в YAML с описанием фильтров, антиспама, автосанкций и API.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
