@@ -1,0 +1,89 @@
+metadata:
+  id: backend-daily-weekly-reset
+  title: 'Reset Service — Ежедневные и еженедельные задания'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-11T11:10:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:18:00Z
+  owners:
+    - role: liveops_lead
+      contact: operations@necp.game
+  tags:
+    - scheduling
+    - live-ops
+    - resets
+  topics:
+    - player-engagement
+    - service-operations
+  related_systems:
+    - reset-service
+    - quest-service
+    - economy-service
+  related_documents:
+    - id: quest-system
+      relation: complements
+    - id: economy-overview
+      relation: aligns
+  source: shared/docs/knowledge/implementation/backend/daily-reset/daily-reset-compact.md
+  visibility: internal
+  audience:
+    - live-ops
+    - backend
+    - support
+  risk_level: low
+review:
+  chain:
+    - role: liveops_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Расписание ежедневных и еженедельных сбросов находилось в коротком Markdown и не было связано с операционными системами.
+  goal: Зафиксировать источники сбросов, расписания и крон-задания в формате YAML.
+  essence: Документ описывает ежедневные квесты, недельные рейды, обновление магазинов и деградацию репутации с указанием Cron-триггеров.
+  key_points:
+    - Ежедневные задания, магазины и репутация сбрасываются в 00:00 серверного времени.
+    - Недельные рейды обнуляются по понедельникам в 00:00.
+    - Все операции выполняются Reset Service через Cron и публикуют события в очереди.
+content:
+  sections:
+    - id: reset_scope
+      title: 'Область сбросов'
+      body: |
+        Reset Service обрабатывает ежедневные квесты, недельные рейды, обновление ассортимента магазинов и пассивную деградацию репутации. Каждая подсистема подписана на события `reset.daily` или `reset.weekly`.
+      mechanics_links: []
+      assets: []
+    - id: schedule
+      title: 'Расписание Cron'
+      body: |
+        Ежедневный Cron `0 0 * * *` запускает цепочку обновлений: закрытие активных daily-квестов, расчёт наград, обновление витрин магазинов и перерасчет репутации. Недельный Cron `0 0 * * MON` сбрасывает рейд-ключи, прогресс босса и лимиты наград.
+      mechanics_links: []
+      assets: []
+    - id: event_flow
+      title: 'Публикация событий'
+      body: |
+        После выполнения Cron сервис публикует события в `event-bus`: `reset.daily.completed` и `reset.weekly.completed`. Подписчики (Quest Service, Economy Service, Reputation Service) обновляют состояние своих таблиц, что позволяет клиентам получать консистентные данные.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-daily-weekly-reset
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: liveops_lead
+    changes: Конвертация краткого описания сбросов в YAML с указанием расписания Cron и событий.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
