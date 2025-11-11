@@ -1,0 +1,106 @@
+metadata:
+  id: backend-maintenance-mode-system
+  title: Maintenance Mode System
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T06:35:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:27:00Z
+  owners:
+    - role: infrastructure_lead
+      contact: infrastructure@necp.game
+  tags:
+    - maintenance
+    - operations
+    - backend
+  topics:
+    - platform-operations
+    - deployment
+  related_systems:
+    - infrastructure-service
+    - social-service
+    - gameplay-service
+  related_documents:
+    - id: infrastructure-status-page
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/maintenance/maintenance-mode-system.md
+  visibility: internal
+  audience:
+    - infrastructure
+    - backend
+    - liveops
+  risk_level: high
+review:
+  chain:
+    - role: infrastructure_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T06:35:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Необходимо стандартизировать процессы планового и экстренного обслуживания серверов, включая уведомления игроков.
+  goal: Описать архитектуру maintenance mode, хранение окон обслуживания, сценарии graceful shutdown и уведомления.
+  essence: Документ фиксирует таблицы `maintenance_windows`/`maintenance_status`, типы обслуживания, бизнес-потоки и блокировку соединений.
+  key_points:
+    - Расписаны сущности maintenance window и статус с индексами и внешними ключами.
+    - Приведены типы обслуживания и статусы, включающие плановые, экстренные и хотфиксы.
+    - Описан полный поток планового обслуживания от планирования до выхода из режима.
+    - Рассмотрены блокировка соединений и middleware для ответов 503.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Maintenance Mode управляет плановыми и экстренными остановками, обеспечивает уведомления и блокирует новые
+        соединения во время обслуживания.
+      mechanics_links: []
+    - id: architecture
+      title: Архитектура системы
+      body: |
+        Процесс обслуживания включает обновление статуса, уведомления игроков, отсчёт до graceful shutdown, блокировку
+        новых подключений и выход из режима после завершения.
+      mechanics_links: []
+    - id: database_schema
+      title: Схема базы данных
+      body: |
+        Таблицы `maintenance_windows` и `maintenance_status` хранят расписание, фактические времена, статус, воздействие и
+        настройки блокировки подключений. Приведены индексы для выборок по статусу и расписанию.
+      mechanics_links: []
+    - id: types
+      title: Типы и статусы обслуживания
+      body: |
+        Перечислены enum типы (SCHEDULED, EMERGENCY, HOT_FIX, ROLLBACK, UPGRADE) и статусы окна обслуживания, влияющие на
+        логику уведомлений и блокировки.
+      mechanics_links: []
+    - id: scheduled_flow
+      title: Поток планового обслуживания
+      body: |
+        Описаны шаги планирования, автоуведомлений, входа в maintenance mode, graceful shutdown и публикация событий о
+        начале/завершении обслуживания.
+      mechanics_links: []
+    - id: connection_blocking
+      title: Блокировка подключений
+      body: |
+        Middleware перехватывает запросы, проверяет состояние системы и возвращает статус 503 для неадминских пользователей,
+        оставляя администраторов с доступом.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: infrastructure_lead
+    changes: Документирована система maintenance mode и связанные процессы.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
