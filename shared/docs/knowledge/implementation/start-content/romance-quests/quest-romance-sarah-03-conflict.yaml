@@ -1,0 +1,125 @@
+metadata:
+  id: quest-romance-sarah-03-conflict
+  title: "Romance Quest — Конфликт: Долг или сердце"
+  document_type: implementation
+  category: romance
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-06T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: narrative_lead
+      contact: narrative@necp.game
+  tags:
+    - romance
+    - branching
+    - ncpd
+  topics:
+    - dialogue-design
+    - shooter-skill-checks
+  related_systems:
+    - romance-service
+    - quest-service
+    - reputation-service
+  related_documents:
+    - id: romance-sarah-miller-full-arc
+      relation: references
+  source: shared/docs/knowledge/implementation/start-content/romance-quests/quest-romance-sarah-03-conflict.md
+  visibility: internal
+  audience:
+    - narrative
+    - backend
+    - systems
+  risk_level: medium
+review:
+  chain:
+    - role: narrative_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "На стадии 3 романса с Сарой необходимо детально описать конфликт долга и чувств для имплементации ветвлений."
+  goal: "Сформировать спецификацию квеста с целями, ветками (поддержка долга, расследование, разрыв), shooter-параметрами и API маппингом."
+  essence: "Документ даёт 22-узловое диалоговое дерево, проверки COOL/INVESTIGATION/EMPATHY, боевой сценарий и награды для каждой ветки."
+  key_points:
+    - "Три основных пути: поддержать долг (Path A), провести расследование (Path B), отвергнуть (Path C)."
+    - "Shooter-проверки: cool_resilience ≥ 68, investigation_proficiency ≥ 65, empathy_signal ≥ 60."
+    - "Награды и репутация зависят от выбранной ветки; Path B раскрывает коррупцию, Path C повреждает роман."
+content:
+  sections:
+    - id: synopsis
+      title: Синопсис и цели
+      body: |
+        Квест описывает конфликт между приказом NCPD и чувствами Сары. Игрок решает: поддержать долг, расследовать коррупцию
+        или отвергнуть Сару. Цели: получить информацию, расследовать, принять решение и завершить конфликт.
+      mechanics_links:
+        - romance-sarah-miller-full-arc.yaml
+      assets: []
+    - id: shooter
+      title: Shooter параметры
+      body: |
+        Указаны ключевые проверки (`cool_resilience`, `investigation_proficiency`, `empathy_signal`) и опциональный бой
+        с коррумпированными копами (5 врагов, defenseRating 190, HP 320). Сара может быть союзником или противником.
+      mechanics_links:
+        - services/backend/api/romance.yaml
+      assets: []
+    - id: ux
+      title: UX экраны
+      body: |
+        Представлены UI макеты стартового диалога и экрана расследования. Они показывают выборы игрока (поддержать долг,
+        расследовать, отвергнуть) и прогресс доказательств.
+      mechanics_links:
+        - services/frontend/docs/romance-ui.md
+      assets: []
+    - id: dialogue
+      title: Диалоговое дерево
+      body: |
+        Описано 22 узла с условиями и переходами. Ветки Path A, B, C имеют свои завершения (`path_a_end`, `path_b_end`,
+        `path_c_end`) и влияют на romance points, репутацию и состояние арки.
+      mechanics_links:
+        - narrative/dialogue/romance-sarah-stage3.json
+      assets: []
+    - id: rewards
+      title: Награды и последствия
+      body: |
+        Базовые награды: 550 XP, +15 NCPD репутации. Path A усиливает долг (+20 romance points, +25 NCPD rep); Path B спасает друга,
+        даёт +30 romance points и −10 NCPD rep; Path C снижает романтические очки и ставит арку на паузу.
+      mechanics_links:
+        - services/backend/api/reputation.yaml
+      assets: []
+    - id: api
+      title: API и соответствие JSON
+      body: |
+        Перечислены эндпоинты (`/romance/quest-start`, `/skill-check`, `/romance/branching-choice`, `/romance/points-update`,
+        `/romance/quest-complete`) и соответствие с `mvp-data-json/quests.json` (metadata: stage 3, branching: true, skill checks).
+      mechanics_links:
+        - services/backend/api/romance.yaml
+      assets: []
+    - id: testing
+      title: Тесты и логи
+      body: |
+        Описаны сценарии тестирования (Path A/B/C, провалы скилл-чеков, recovery quest). Требуется логирование
+        изменений очков, выбранной ветки, репутации и результатов проверок.
+      mechanics_links:
+        - qa/tests/romance-sarah-stage3.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: narrative_lead
+    changes: Создана детальная спецификация романтического квеста Stage 3 (22 узла, shooter-проверки, API).
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
