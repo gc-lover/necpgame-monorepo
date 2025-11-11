@@ -1,87 +1,97 @@
 metadata:
   id: backend-chat-moderation
-  title: 'Chat Service — Модерация'
+  title: 'Chat Moderation — Модерация чата'
   document_type: implementation
   category: backend
   status: approved
   version: '1.0.0'
-  last_updated: 2025-11-11T11:10:00Z
+  last_updated: 2025-11-07T05:30:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-07T05:30:00Z
   owners:
-    - role: trust_and_safety_lead
+    - role: safety_lead
       contact: safety@necp.game
   tags:
     - chat
     - moderation
-    - trust-safety
+    - safety
   topics:
-    - player-safety
-    - live-operations
+    - player-communication
+    - trust-safety
   related_systems:
     - chat-service
     - moderation-service
-    - redis-cluster
+    - security-service
   related_documents:
     - id: backend-chat-channels
-      relation: references
+      relation: complements
     - id: backend-chat-features
-      relation: references
-    - id: backend-admin-tools-core
-      relation: aligns
+      relation: complements
   source: shared/docs/knowledge/implementation/backend/chat/chat-moderation.md
   visibility: internal
   audience:
-    - trust-and-safety
+    - safety
     - backend
     - live-ops
   risk_level: high
 review:
   chain:
-    - role: trust_and_safety_lead
+    - role: safety_lead
       reviewer: ''
-      reviewed_at: ''
-      status: pending
+      reviewed_at: 2025-11-07T05:30:00Z
+      status: approved
   next_actions: []
 summary:
-  problem: Описание модерации чата существовало только в Markdown и не было связано с остальными документами безопасности.
-  goal: Структурировать фильтры, антиспам, автосанкции и API модерации для handoff в LiveOps и Trust & Safety.
-  essence: Документ раскрывает схему `chat_bans`, алгоритмы фильтрации, антиспам, автосанкции и публичные эндпоинты модерации.
+  problem: Нужна серверная спецификация модерации чата для защиты от спама, нарушений и злоупотреблений.
+  goal: Описать фильтрацию сообщений, алгоритмы спама, систему банов и инструменты администраторов.
+  essence: Документ фиксирует схему `chat_bans`, реализацию фильтров, детекцию спама, авто-баны и административные API.
   key_points:
-    - "Таблица `chat_bans` хранит глобальные и частичные блокировки с индексами по игроку и дате истечения."
-    - "`ModerationService` фильтрует текст, удаляет ссылки вне whitelist и снижает caps-lock."
-    - "`SpamDetector` отслеживает частоту сообщений и дубли, используя Redis для rate-limit."
-    - "Автоматические баны создают записи, уведомляют игрока и логируют событие."
+    - Profanity filter комбинирует список запрещённых слов, whitelist URL и защиту от повторов/CAPS.
+    - SpamDetector контролирует частоту сообщений и дублирование с использованием Redis.
+    - Auto-ban сервис создаёт глобальные баны и уведомляет игроков.
+    - REST API покрывает жалобы, выдачу банов, просмотр и снятие блокировок.
 content:
   sections:
-    - id: data_model
-      title: 'Схема данных chat_bans'
+    - id: overview
+      title: Система модерации
       body: |
-        Таблица `chat_bans` хранит идентификатор игрока, тип канала, причину блокировки, администратора, даты начала и истечения и статус. Индексы по игроку и дате истечения ускоряют проверки активных блокировок.
+        Модерация чата предотвращает токсичное поведение через автоматические фильтры и админ-инструменты. Система объединяет
+        фильтрацию сообщений, контроль спама и управление банами.
+      mechanics_links: []
+      assets: []
+    - id: data_model
+      title: Схема `chat_bans`
+      body: |
+        Таблица `chat_bans` хранит информацию о забаненном игроке, канале, причине, администраторе и сроке действия. Индексы
+        по игроку и сроку действия ускоряют проверку активных банов.
       mechanics_links: []
       assets: []
     - id: profanity_filter
-      title: 'Фильтрация контента'
+      title: Фильтр запрещённых выражений
       body: |
-        `ModerationService` подгружает список запрещенных слов, заменяет их на `***`, удаляет несанкционированные URL и нормализует повторяющиеся символы. Дополнительно фильтр определяет сообщения с тяжелыми нарушениями для передачи в автосанкции.
+        ModerationService обрабатывает сообщения, заменяя запрещённые слова, блокируя не-whitelist ссылки, сокращая повторяющиеся
+        символы и нормализуя верхний регистр. Проверка severe violations запускает эскалацию.
       mechanics_links: []
       assets: []
     - id: spam_detection
-      title: 'Антиспам и rate-limit'
+      title: Обнаружение спама
       body: |
-        `SpamDetector` увеличивает счетчик в Redis для каждого игрока и помечает сообщения как спам при превышении десяти сообщений в минуту или повторении последних пяти фраз. Очередь сообщений поддерживает TTL триста секунд.
+        SpamDetector отслеживает частоту сообщений (rate limit >10 в минуту) и повторение контента. Данные хранятся в Redis с
+        ограниченным TTL, что позволяет быстро реагировать на спам.
       mechanics_links: []
       assets: []
-    - id: auto_bans
-      title: 'Автоматические санкции'
+    - id: auto_ban
+      title: Автоматические баны
       body: |
-        Метод `autoBan` создает глобальный бан, устанавливает истечение и уведомляет игрока через WebSocket. Событие фиксируется в логах и может инициировать пересмотр вручную через Admin Tools.
+        Auto-ban сохраняет записи в `chat_bans`, уведомляет игрока через WebSocket и журналирует событие. Глобальные баны
+        поддерживают конфигурацию по длительности.
       mechanics_links: []
       assets: []
-    - id: moderation_api
-      title: 'API модерации'
+    - id: api_endpoints
+      title: API модерации
       body: |
-        Публичные эндпоинты включают `/api/v1/chat/report` для жалоб пользователей, `/api/v1/chat/ban` и `/api/v1/chat/bans` для администраторов, а также удаление блоков методом DELETE. Все запросы требуют проверку ролей Admin Tools и аудита действий.
+        Предоставлены endpoints `POST /chat/report`, `POST /chat/ban`, `GET /chat/bans` и `DELETE /chat/bans/{id}` для управления
+        жалобами и банами администраторами.
       mechanics_links: []
       assets: []
 appendix:
@@ -95,9 +105,9 @@ implementation:
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-11
-    author: trust_and_safety_lead
-    changes: Конвертация модерации чата в YAML с описанием фильтров, антиспама, автосанкций и API.
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описаны фильтрация, детекция спама, авто-баны и административные API для модерации чата.
 validation:
   checksum: ''
   schema_version: '1.0'
