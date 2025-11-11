@@ -1,0 +1,176 @@
+metadata:
+  id: combat-sandevistan-temporal-overdrive
+  title: 'Боевая система — Сандевистан: временной овердрайв'
+  document_type: mechanics
+  category: combat
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-11-11T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - implants
+    - time-dilation
+    - pvp
+  topics:
+    - cyberware_systems
+    - combat_signatures
+  related_systems:
+    - gameplay-service
+    - combat-service
+    - animation-service
+    - realtime-service
+    - safety-service
+  related_documents:
+    - id: combat-implants-mechanics
+      relation: references
+    - id: mechanics-combat-implants-types
+      relation: complements
+    - id: combat-shooter-core
+      relation: interacts_with
+    - id: combat-abilities
+      relation: interacts_with
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - combat
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется реализовать эффект «замедления времени» для конкретного игрока MMO без изменения серверного тайминга и нарушения честности PvP.
+  goal: Определить механику Сандевистана, сочетающую визуальную фантазию EdgeRunners с сетевой архитектурой NECPGAME.
+  essence: Игрок получает краткосрочный временной овердрайв с локальной иллюзией слоумо, при этом сервер использует приоритетные окна действий и дебаффы восприятия для остальных участников.
+  key_points:
+    - Временной овердрайв делится на подготовку, активную фазу и рекуперацию с тепловым стрессом и риском киберпсихоза.
+    - Сервер не меняет tick rate, а выделяет микробюджет действий игроку и применяет дебафф восприятия к затронутым целям.
+    - Клиент ускоренного игрока получает локальную слоумо-визуализацию и расширенный input-buffer, остальные видят afterimage и «пропуски» кадров.
+    - Контрплей строится вокруг EMP, анти-OS имплантов и ограниченного ресурса охлаждения.
+content:
+  sections:
+    - id: cyber_fantasy
+      title: Фантазия и контекст
+      body: |
+        Сандевистан позиционируется как легендарная ОС-имплантная линейка Zetatech, разогнанная подпольными техами.
+        Активатор вызывает локальный всплеск нейронной проводимости: игрок ощущает замедление мира, видит траектории
+        врагов, может совершать быстрые рывки и множественные удары. Визуально отсылаем к Cyberpunk: Edgerunners —
+        контрастные трассеры, искажённая перспектива, звуковой «тактильный гул». В PvE способность даёт моментальные
+        убийства групп врагов, в PvP — агрессивный вход или клик-додж навесного урона. Фантазия строится вокруг риска:
+        перегрев — путь к киберпсихозу, поэтому имплант требует дисциплины и расходных материалов для охлаждения.
+      mechanics_links:
+        - mechanics/combat/combat-implants-types.yaml
+        - mechanics/combat/combat-roles-detailed.yaml
+      assets: []
+    - id: activation_flow
+      title: Фазы активации
+      body: |
+        1. Подготовка (300 мс серверного времени): игрок запускает импульс, сервер ставит флаг «temporal_overdrive: armed»
+        и уведомляет соседних клиентов. Игрок получает Aim Assist Preview, но не ускоряется.
+        2. Активная фаза (4 секунды базово): вводится Action Priority Budget — до 3 действий за один серверный тик в пределах
+        лимита «burst_points». Сервер распределяет их последовательно внутри тика, гарантируя детерминизм.
+        3. Рекуперация (6 секунд): скорость и урон уменьшаются на 20%, активируются проверки перегрева. Успешное охлаждение
+        снимает штрафы, провал — вызывает короткий лаг (stutter) на стороне игрока и увеличивает стресс киберпсихоза.
+      mechanics_links:
+        - mechanics/combat/combat-abilities.yaml
+        - mechanics/progression/progression-attributes-matrix.yaml
+      assets: []
+    - id: networking_model
+      title: Сетевая модель и tick-budget
+      body: |
+        Серверный tick (например, 60 Гц) остаётся неизменным. При активации Сандевистана игрок получает «MicroTick Window» —
+        буфер ввода, где до трёх событий (перекаты, удары, выстрелы) собираются на клиенте и отправляются батчем. Сервер
+        распаковывает батч, проставляет подписи времени и исполняет события в один тик по приоритету способности.
+        Остальные игроки получают «Perception Drag» — искусственную задержку отображения анимаций атак Сандевистана до 120 мс
+        через клиентские шейдеры и motion blur, чтобы зрительно подтвердить слоумо, не влияя на механику. Для жертв сервер
+        снижает скорость их реакции, вводя временное удлинение глобального кулдауна на 15% и увеличивая время выката из
+        cover-to-cover. Если пинг превышает допуск, сервер понижает Action Budget до 2, чтобы избежать эксплойтов.
+      mechanics_links:
+        - implementation/backend/realtime-server/realtime-server-overview.yaml
+        - mechanics/combat/combat-shooter-core.yaml
+      assets: []
+    - id: gameplay_effects
+      title: Геймплейные эффекты и бонусы
+      body: |
+        В активной фазе игрок получает +40% к перемещению, +25% к скорострельности и доступ к авто-таргет dash на 15 метров.
+        Система «temporal_marks» фиксирует до трёх целей; при выходе из овердрайва они получают delayed burst урон или
+        «нейрошок» (оглушение 0.7 с). В PvE кластеры врагов теряют реакцию и попадают под «panic spread», повышая шанс
+        бегства. В PvP эффект ограничен: delayed burst наносит 60% базового урона, а нейрошок заменяется на aim sway и
+        затуманивание интерфейса. Сандевистан не увеличивает чистый DPS сверх заданного капа, а перераспределяет его во
+        временном окне, создавая ощущение превосходства скорости.
+      mechanics_links:
+        - mechanics/combat/combat-shooting-advanced.yaml
+        - mechanics/progression/progression-perks.yaml
+      assets: []
+    - id: counterplay
+      title: Контрплей и ограничения
+      body: |
+        Противники могут активировать импланты-антидоты: «Chrono-Jammer» уменьшает Action Budget Сандевистана до 1 и блокирует
+        dash. EMP-оружие, сетевые хакерские навыки и crowd-control накладывают «dilation_break», мгновенно завершая фазу.
+        Перегрев накапливается как «heat stacks» (до 4). На 4-м уровне имплант входит в «overstress»: игрок теряет 30% HP,
+        воспроизводится анимация неконтролируемого рывка, после чего способность уходит на долгий кулдаун. В PvP введены
+        «лицензии»: каждый матч ограничивает максимальные активации (например, 2), выдаёт оповещение врагам и сохраняет логи
+        для античит-аналитики.
+      mechanics_links:
+        - mechanics/combat/combat-implants-limits.yaml
+        - mechanics/combat/combat-hacking-combat-integration.yaml
+      assets: []
+    - id: ux_visuals
+      title: UX, аудио и визуальные эффекты
+      body: |
+        Клиент ускоренного игрока: чёрно-жёлтая палитра, растянутые звуки, heartbeat-ритм, HUD растягивает время на шкалах.
+        Остальные: видят трассеры и «afterimage silhouettes», звуки приглушены, появляется индикатор предупреждения. UI
+        предлагает настройку интенсивности эффектов (важно для эпилепсии). Камера в PvE добавляет кинематографические
+        ракурсы на добивания. В сетевом коде эффекты связаны с flag `temporal_overdrive`, чтобы отключить их при просмотре
+        повторов и в стрим-моде.
+      mechanics_links:
+        - mechanics/combat/combat-ux-guidelines.yaml
+        - mechanics/social/player-rights-charter.yaml
+      assets: []
+    - id: progression_economy
+      title: Прогрессия, экономика и Live Ops
+      body: |
+        Сандевистан открывается классам Netrunner/Fixer после репутации с Zetatech. Улучшения: усиление Action Budget,
+        снижение перегрева, расширение dash. Требуются редкие компоненты (нейро-гелий, хром-матрицы) и контракты Zetatech
+        или черный рынок. Live Ops может вводить временные варианты импланта с уникальными трейдами (например, «Street
+        Edition» с самонаводящимися dash) в сезонных событиях. Экономика: аренда импланта в PvE, подписки на охлаждающие
+        картриджи, пользовательский контент (скины) через рекламную платформу.
+      mechanics_links:
+        - mechanics/economy/economy-logistics.yaml
+        - mechanics/social/relationships-system.yaml
+      assets: []
+appendix:
+  glossary:
+    - term: Action Priority Budget
+      definition: Временный лимит дополнительных действий в тик для игрока под Сандевистаном, исполняемый сервером последовательно.
+    - term: Perception Drag
+      definition: Клиентский debuff восприятия противников, моделирующий слоумо без изменения серверного времени.
+    - term: Temporal Marks
+      definition: Теги целей, по которым после завершения овердрайва применяется delayed burst эффект.
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#combat-sandevistan-temporal-overdrive
+  blockers:
+    - Требуется прототип микробюджета действий на стенде realtime-service.
+history:
+  - version: '0.1.0'
+    date: 2025-11-11
+    author: concept_team
+    changes: Сформирован черновик концепции Сандевистана для MMO-сервера без изменения глобального тайминга.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
+
