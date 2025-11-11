@@ -1,0 +1,93 @@
+metadata:
+  id: backend-party-system
+  title: Party System Backend
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T05:20:00Z
+  owners:
+    - role: social_lead
+      contact: social@necp.game
+  tags:
+    - party
+    - social
+    - backend
+  topics:
+    - gameplay-infra
+    - social-systems
+  related_systems:
+    - social-service
+    - gameplay-service
+    - economy-service
+  related_documents:
+    - id: backend-loot-system
+      relation: references
+    - id: backend-matchmaking-queue
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/party-system.md
+  visibility: internal
+  audience:
+    - backend
+    - social
+  risk_level: medium
+review:
+  chain:
+    - role: social_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T17:45:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось структурированное описание backend-системы групп для кооперативного контента.
+  goal: Определить архитектуру party-сервиса, взаимодействия с другими системами, события и схему хранения.
+  essence: Документ описывает микросервис social-service для управления группами, интеграции с gameplay/economy и настройки добычи.
+  key_points:
+    - Party функционирует через social-service c API `/api/v1/social/party/*`.
+    - Поддерживаются события `party:created`, `member-joined`, `loot-rolled`.
+    - Приведена таблица `parties` с массивом участников и настройками лута.
+    - Партии интегрируются с quest progress и matchmaking.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Party System управляет группами до пяти игроков, поддерживает приглашения, роли, общие задания и режимы распределения лута.
+      mechanics_links: []
+    - id: architecture
+      title: Микросервисная архитектура
+      body: |
+        Сервис реализуется в social-service (порт 8084) и взаимодействует с gameplay-, economy- и matchmaking-сервисами.
+        Использует event bus для публикации и подписки на ключевые события.
+      mechanics_links: []
+    - id: database_schema
+      title: Схема базы данных
+      body: |
+        Таблица `parties` хранит лидера, список участников, лимиты, режим распределения лута и статус. Указаны индексы и связи.
+      mechanics_links: []
+    - id: integrations
+      title: Интеграции
+      body: |
+        Party-события обновляют прогресс квестов, распределяют лут через economy-сервис и позволяют использовать party-очереди
+        в матчмейкинге.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: social_lead
+    changes: Стартовое описание backend-архитектуры системы групп.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
