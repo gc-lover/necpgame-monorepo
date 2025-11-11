@@ -1,0 +1,109 @@
+metadata:
+  id: implementation-city-life-population-algorithm
+  title: 'City Life Population Algorithm'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T10:03:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T10:03:00Z
+  owners:
+    - role: liveops_lead
+      contact: liveops@necp.game
+  tags:
+    - simulation
+    - npc
+    - city-life
+  topics:
+    - content-generation
+    - world-simulation
+  related_systems:
+    - world-service
+    - social-service
+    - economy-service
+    - gameplay-service
+  related_documents:
+    - id: content-city-life-simulation-plan
+      relation: complements
+    - id: content-city-life-api-task-package
+      relation: references
+  source: shared/docs/knowledge/implementation/content-generation/city-life-population-algorithm.md
+  visibility: internal
+  audience:
+    - live-ops
+    - backend
+    - analytics
+  risk_level: high
+review:
+  chain:
+    - role: liveops_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Города должны выглядеть живыми и динамичными, реагируя на игроков и события без ручного скриптинга.
+  goal: Описать алгоритм распределения инфраструктуры и NPC по районам, обеспечивая SLA плотности и отклика.
+  essence: Документ определяет входные каталоги данных, этапы расчёта, таблицы БД и событийные интеграции для симуляции.
+  key_points:
+    - Алгоритм сегментирует районы, рассчитывает спрос и генерирует инфраструктуру и NPC.
+    - Поддерживаются расписания FSM, реакция на события и обработка влияния игроков.
+    - ER-схемы охватывают таблицы world-, economy-, social- и gameplay-сервисов.
+    - Определены Kafka топики и REST контуры для синхронизации состояния.
+content:
+  sections:
+    - id: inputs
+      title: 'Входные данные'
+      body: |
+        Используются каталоги `world_city_blueprints`, `npc_archetype_library`, `infrastructure_catalog`, `event_schedule` и потоки `player_impact_stream` для расчёта плотности и спроса.
+      mechanics_links: []
+      assets: []
+    - id: pipeline
+      title: 'Основной поток алгоритма'
+      body: |
+        Этапы включают сегментацию районов, расчёт спроса, генерацию инфраструктуры, формирование пулов NPC, назначение расписаний, интеграцию событий и реакцию на действия игроков.
+      mechanics_links: []
+      assets: []
+    - id: algorithm_details
+      title: 'Алгоритмические блоки'
+      body: |
+        Описаны методы кластеризации, оптимизации инфраструктуры, вычисление квот NPC, построение FSM расписаний и динамический адаптер с подпиской на события.
+      mechanics_links: []
+      assets: []
+    - id: data_model
+      title: 'Модель данных'
+      body: |
+        Приведены таблицы `city_districts`, `infrastructure_instances`, `npc_profiles`, `npc_schedules`, `world_events_bindings`, `player_impact_log` с основными полями и назначением.
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: 'Интеграции и API'
+      body: |
+        Определены Kafka топики (`world.city.lifecycle.v1`, `social.npc.schedule.v1`, `economy.infrastructure.alerts`, `gameplay.player.impact`) и REST методы world-, social-, economy- и gameplay-сервисов.
+      mechanics_links: []
+      assets: []
+    - id: baseline
+      title: 'Базовые конфигурации городов'
+      body: |
+        Примеры baseline для Watson, Westbrook, Shinjuku и Kreuzberg демонстрируют метрики, фракции и культурные ограничения.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-08
+    author: ai_brain_manager
+    changes: 'Зафиксирован полный алгоритм наполнения городов NPC, инфраструктурой и событиями.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
