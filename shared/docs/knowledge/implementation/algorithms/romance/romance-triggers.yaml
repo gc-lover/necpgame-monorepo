@@ -1,0 +1,104 @@
+metadata:
+  id: implementation-romance-event-triggers
+  title: 'Romance Event Triggers — Триггеры событий'
+  document_type: implementation
+  category: algorithms
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:35:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:35:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - romance
+    - triggers
+    - ai
+  topics:
+    - relationship-system
+    - event-engine
+  related_systems:
+    - romance-service
+    - relationship-service
+    - quest-service
+  related_documents:
+    - id: implementation-romance-event-dialogue
+      relation: complements
+    - id: implementation-romance-engine-filtering
+      relation: references
+  source: shared/docs/knowledge/implementation/algorithms/romance/romance-triggers.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - ai
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: 'Триггеры романтических событий находились в Markdown и не были включены в схемный контроль знаний.'
+  goal: 'Зафиксировать структуру и правила работы RomanceTrigger в YAML, чтобы синхронизировать AI-алгоритмы с очередями Vision.'
+  essence: 'Документ описывает условия активации романтических событий, примеры использования и общие правила оценки контекста.'
+  key_points:
+    - 'RomanceTrigger агрегирует требования по отношениям, флагам, квестам, уровню игрока и контексту локации.'
+    - 'Приведены примеры триггеров и псевдокод проверки условий через сервисы отношений, флагов и квестов.'
+    - 'Описан цикл evaluate/canTriggerEvent, позволяющий интегрировать систему в romance-service и quest pipelines.'
+content:
+  sections:
+    - id: trigger_model
+      title: 'Структура RomanceTrigger'
+      body: |
+        Сущность включает eventId, npcId и набор conditions: минимальный уровень отношений, требуемые флаги,
+        завершённые квесты, параметры локации и времени суток. Поля используются для жёсткой фильтрации событий,
+        чтобы исключить несогласованные сценарии и обеспечить детерминированность активации.
+      mechanics_links: []
+      assets: []
+    - id: trigger_examples
+      title: 'Примеры триггеров'
+      body: |
+        Для Morgana описан базовый триггер: требуется доверительный флаг, завершённый квест NCPD, уровень игрока не ниже 10,
+        конкретная локация NCPD HQ и вечернее время. Примеры показывают, как события зависят от сюжетного прогресса и контекста мира.
+      mechanics_links:
+        - content/quests/quests-master-list-2020-2093.yaml
+      assets: []
+    - id: evaluation_flow
+      title: 'Процесс проверки условий'
+      body: |
+        Псевдокод canTriggerEvent описывает последовательность проверок: отношения, флаги, квесты, уровень персонажа
+        и дополнительные условия. Логика оформлена в виде сервиса, который запрашивает данные у relationshipService,
+        flagService и questService, возвращая булево значение и причину отказа.
+      mechanics_links:
+        - implementation/algorithms/romance/romance-engine-filtering.yaml
+      assets: []
+    - id: integration
+      title: 'Интеграция и расширение'
+      body: |
+        Триггеры используются в romance-service для планирования событий и в сюжетных сценариях для условных ветвлений.
+        Документ рекомендует хранить настройки в БД, поддерживает расширение новыми полями (погодные условия, сезон, приватность)
+        и связывает систему с инструментами AI и LiveOps.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Описаны триггеры романтических событий и процесс их оценки в движке.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
