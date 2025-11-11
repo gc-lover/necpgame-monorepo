@@ -1,0 +1,96 @@
+metadata:
+  id: backend-auth-part1-registration
+  title: "Authentication System — Part 1: Database & Registration"
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T01:46:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T01:46:00Z
+  owners:
+    - role: auth_lead
+      contact: auth@necp.game
+  tags:
+    - authentication
+    - registration
+    - database
+  topics:
+    - auth-service
+    - account-management
+  related_systems:
+    - auth-service
+    - session-service
+    - redis
+  related_documents:
+    - id: backend-auth-overview
+      relation: references
+    - id: backend-auth-part2-login
+      relation: precedes
+    - id: backend-auth-part3-authorization
+      relation: precedes
+  source: shared/docs/knowledge/implementation/backend/auth/auth-database-registration.md
+  visibility: internal
+  audience:
+    - backend
+    - platform
+  risk_level: high
+review:
+  chain:
+    - role: auth_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T01:46:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: "Требуется формализовать базу данных и процессы регистрации в Auth System."
+  goal: "Документировать схемы БД, хранение токенов, регистрацию email/OAuth и привязку ролей."
+  essence: "Часть 1 описывает таблицы accounts/roles/tokens, поток регистрации и обработку OAuth."
+  key_points:
+    - "SQL схемы `accounts`, `account_roles`, `password_reset_tokens`, `email_verification_tokens`, `login_history`."
+    - "Регистрация email/password с валидацией и выдачей verification token."
+    - "OAuth flow с автоматическим созданием аккаунтов и сессий."
+content:
+  sections:
+    - id: architecture
+      title: Архитектура
+      body: |
+        Высокоуровневый поток включает клиент, auth-service, PostgreSQL, Redis и Session Manager для создания сессий после
+        регистрации/логина.
+      mechanics_links: []
+    - id: database
+      title: Схемы базы данных
+      body: |
+        Документ приводит определения таблиц `accounts`, `account_roles`, `password_reset_tokens`, `email_verification_tokens`
+        и `login_history` с индексами, ограничениями и полями аудита.
+      mechanics_links: []
+    - id: registration
+      title: Поток регистрации
+      body: |
+        Пример сервиса `register` описывает валидацию, хэширование паролей, назначение роли PLAYER, генерацию токена
+        подтверждения и отправку письма.
+      mechanics_links: []
+    - id: oauth
+      title: OAuth регистрация и логин
+      body: |
+        Рассмотрен сервис OAuth, создающий или находящий аккаунт, генерирующий JWT, создающий сессию и логирующий событие
+        успеха.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: auth_lead
+    changes: Описаны схемы БД, email/OAuth регистрация и привязка ролей.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
