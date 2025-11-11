@@ -1,6 +1,6 @@
 metadata:
   id: quest-faction-arasaka-2055-blackwall-breach
-  title: "Фракция: Arasaka — Брешь в Blackwall (2055)"
+  title: "Фракция Arasaka: Брешь в Blackwall (2055)"
   document_type: implementation
   category: start-content
   status: in-review
@@ -18,13 +18,14 @@ metadata:
   topics:
     - quests
     - netrunning
+    - combat
   related_systems:
     - quest-engine
     - netrun-service
     - analytics-service
   related_documents:
-    - id: quest-side-2088-archive-expedition
-      relation: complements
+    - id: quest-main-2085-blackwall-expansion
+      relation: leads_to
   source: shared/docs/knowledge/implementation/start-content/quests/quest-faction-arasaka-2055-blackwall-breach.md
   visibility: internal
   audience:
@@ -39,13 +40,13 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: В секторе Downtown обнаружена брешь в Blackwall, угрожающая проникновением AI.
-  goal: Зафиксировать квест Arasaka по исследованию и герметизации бреши с боевой и нетран составляющей.
-  essence: Игрок под руководством Элизабет Чен анализирует аномалию, сражается с AI прокси и закрывает брешь.
+  problem: Брешь в Blackwall позволяет AI-прокси проникать в Downtown и угрожает интересам Arasaka.
+  goal: Задокументировать миссию по анализу бреши, бою с AI и герметизации разлома.
+  essence: Игрок с Элизабет Чен исследует аномалию, проводит netrun-бой и закрывает брешь, защищая город.
   key_points:
-    - Проверки INT, NETRUNNING-COMBAT и COOL влияют на объём данных, состав врагов и риски кибершока.
-    - Бой включает 3–6 AI прокси и возможные нейро-штрафы.
-    - Герметизация завершает миссию и определяет репутационную награду Arasaka.
+    - INT, NETRUNNING-COMBAT и COOL проверки влияют на данные, число врагов и устойчивость к кибершоку.
+    - Бой масштабируется от 3 до 6 противников в зависимости от успеха оверклок проверки.
+    - Итоговая герметизация может быть полной или частичной, меняя награды.
 content:
   sections:
     - id: synopsis
@@ -53,50 +54,57 @@ content:
       body: |
         - ID: `quest-faction-arasaka-2055-blackwall-breach`
         - Контакт: `npc-elizabeth-chen`
-        - Локация: Downtown, брешь в Blackwall
-        - Уровень: 7, формат netrunning + shooter
+        - Локация: Downtown, сектор бреши Blackwall
+        - Геймплей: netrunning + shooter на уровне 7
       mechanics_links:
         - mechanics/quests/quest-system.yaml
     - id: objectives
-      title: Цели и ветки
+      title: Цели и проверки
       body: |
-        1. Сканировать брешь и собрать данные (INT 17).
-        2. Нейтрализовать AI прокси (6 врагов, сокращаются до 3 при успехе NETRUNNING-COMBAT 18).
-        3. Защититься от кибершока и запечатать брешь.
-        4. Вернуться к Элизабет с отчётом.
+        | Этап | Проверка | Эффект |
+        | --- | --- | --- |
+        | Анализ бреши | INT 17 | Дополнительные данные и XP |
+        | Оверклок | NETRUNNING-COMBAT 18 | Мгновенное отключение 3 AI-прокси |
+        | Герметизация | COOL 16 | Сопротивление кибершоку перед финальной проверкой |
       mechanics_links:
         - mechanics/netrun/netrunner-core.yaml
-    - id: combat
-      title: Боевая фаза
+    - id: stages
+      title: Стадии
       body: |
-        AI прокси используют энергоатаки и нейроурон. Успешный оверклок уменьшает волну врагов.
-        Провал ведёт к полноценной битве и риску нейроповреждений.
+        1. Брифинг у Элизабет Чен и получение координат.
+        2. Скан бреши и сбор телеметрии.
+        3. Netrun-бой с AI-прокси.
+        4. Герметизация разлома и отчёт.
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
+    - id: encounters
+      title: Встречи и состояния
+      body: |
+        - AI Proxy Wave: 3–6 врагов (defenseRating 210–230).
+        - Elite Guardians: появляются при провале герметизации.
+        - Состояния: кибершок, перегрев, системный сбой.
       mechanics_links:
         - mechanics/combat/combat-shooter-core.yaml
     - id: sealing
-      title: Герметизация бреши
+      title: Герметизация
       body: |
-        COOL 16 защищает от кибершока перед герметизацией.
-        Проверка запечатывания определяет, будет ли брешь закрыта полностью или потребует мониторинга.
+        Финальная проверка определяет, полностью ли закрыта брешь.
+        Частичная герметизация снижает награды и требует мониторинга Arasaka.
       mechanics_links:
         - mechanics/progression/progression-skills.yaml
     - id: rewards
       title: Награды
       body: |
         - 850 XP, 1100 eddies, `item-blackwall-data`, репутация Arasaka +30.
-        - Бонусы за успехи INT/NETRUNNING/COOL дают доп. XP и снижают риски.
-        - Штрафы: поражение уменьшает награды, частичная герметизация снижает XP.
+        - Дополнительные XP за успехи INT/NETRUNNING/COOL.
+        - Штрафы: поражение −15% денег, частичная герметизация −10% XP.
       mechanics_links:
         - mechanics/economy/stock-exchange/stock-analytics.yaml
     - id: api
-      title: API и телеметрия
+      title: API и QA
       body: |
-        - `POST /api/v1/quests/quest-faction-arasaka-2055-blackwall-breach/accept`
-        - `POST /api/v1/skill-check`
-        - `POST /api/v1/combat/start`
-        - `POST /api/v1/quests/quest-faction-arasaka-2055-blackwall-breach/complete`
-
-        Логи фиксируют анализ бреши, боевые этапы и статус герметизации.
+        REST: `POST /quests/quest-faction-arasaka-2055-blackwall-breach/accept`, `/skill-check`, `/combat/start`, `/quests/{id}/complete`.
+        QA: оверклок успех, силовой бой, смешанный сценарий, провал герметизации.
       mechanics_links:
         - implementation/backend/quest-engine-backend.yaml
 appendix:
@@ -112,7 +120,8 @@ history:
   - version: '1.0.0'
     date: 2025-11-06
     author: concept_team
-    changes: "Конвертировано из Markdown в формат знаний."
+    changes: Конверсия квеста Arasaka из Markdown в формат знаний.
 validation:
   checksum: ''
   schema_version: '1.0'
+
