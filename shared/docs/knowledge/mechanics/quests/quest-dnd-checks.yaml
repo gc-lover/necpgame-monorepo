@@ -1,0 +1,127 @@
+metadata:
+  id: quest-dnd-checks
+  title: Квесты и диалоги — Shooter skill tests
+  document_type: mechanics
+  category: quests
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-11-07T00:18:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - quests
+    - shooter-checks
+    - branching
+  topics:
+    - narrative
+    - skill-tests
+  related_systems:
+    - narrative-service
+  related_documents:
+    - id: combat-shooter-core
+      relation: references
+    - id: main-quests-outline
+      relation: references
+  source: shared/docs/knowledge/mechanics/quests/quest-dnd-checks.md
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - gameplay
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Проверки квестов и диалогов описывались в Markdown и не были готовы к автоматизированной проверке шаблонов.
+  goal: Стандартизировать shooter skill tests в квестах, задать категории, пороги и требования к UI.
+  essence: Документ описывает структуру проверок, диапазоны порогов и влияние на ветвления квестов и интерфейс.
+  key_points:
+    - Категории проверок разделены на социальные, исследовательские, технические и действия.
+    - Схема вычисления успеха учитывает модификаторы имплантов, окружения и состояний.
+    - Ветвления задаются формализованной структурой узла, исходов и критических эффектов.
+    - UI обязан отражать тип проверки, активные модификаторы и историю результатов.
+content:
+  sections:
+    - id: objective
+      title: Цель
+      body: |
+        Задать единую модель проверок в квестах и диалогах NECPGAME, чтобы выдерживать continuity между нарративом
+        и игровыми системами, и подготовить данные для генерации задач в narrative-service.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/quests/quest-system.yaml
+    - id: categories
+      title: Категории проверок
+      body: |
+        - Социальные: `persuasion_threshold`, `deception_threshold`, `intimidation_threshold`, `influence_rating`.
+        - Исследование: `perception_threshold`, `analysis_threshold`, `cartography_threshold`.
+        - Тех/Хак: `tech_mastery`, `repair_efficiency`, `hacking_latency`.
+        - Действия: `parkour_flow`, `stealth_rating`, `awareness_score`.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/quests/quest-system.yaml
+    - id: mechanics
+      title: Схема проверки
+      body: |
+        Проверка проходит при выполнении условия `base_metric × модификаторы ≥ threshold`. Источники модификаторов:
+        импланты, способности, окружение, временные эффекты. Критические эффекты фиксируются через `success_margin`:
+        ≥ 0.10 даёт усиленный результат, ≤ -0.10 — штраф и осложнения.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/combat/combat-shooter-core.yaml
+    - id: thresholds
+      title: Диапазоны порогов
+      body: |
+        - Социальные: 0.55 / 0.62 / 0.68 / 0.74 зависят от оппонента и контекста.
+        - Тех/Хак: 0.58 / 0.65 / 0.72 / 0.78 основаны на уровне устройства или сети.
+        - Исследование: 0.54 / 0.60 / 0.66, модифицируются окружением (±0.03).
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/combat/combat-shooter-core.yaml
+    - id: branching
+      title: Ветвления квестов
+      body: |
+        Каждая точка ветвления описывается структурой: `node_id`, описание, тип проверки, threshold, модификаторы, исходы.
+        Успех даёт доступ к новым веткам или наградам, провал формирует альтернативные пути и штрафы, критические значения
+        усиливают бонусы или риски. Структура обязана использоваться во всех новых квестовых задачах.
+      mechanics_links:
+        - shared/docs/knowledge/mechanics/quests/main-quests-outline.yaml
+    - id: ui_requirements
+      title: Требования к интерфейсу
+      body: |
+        UI отображает тип проверки, целевой порог или диапазон, активные модификаторы и историю значений. Это необходимо
+        для кооперативной аналитики и отладки дизайнеров.
+      mechanics_links:
+        - shared/docs/knowledge/implementation/ui/ui-kit-compact.yaml
+    - id: main_quests
+      title: Примеры порогов основных квестов
+      body: |
+        - `Первые шаги`: perception ≥ 0.52, parkour ≥ 0.52, communication ≥ 0.52.
+        - `Выбор пути`: социальные проверки 0.60–0.66 по фракциям.
+        - `Развитие навыков`: hacking 0.66–0.74, repair 0.62–0.68.
+        - `Выбор стороны`: социальные проверки 0.70–0.76 с влиянием на репутацию.
+        - `Взлом заслона`: многоступенчатые проверки 0.72 → 0.76 → 0.80 с растущим риском.
+      mechanics_links:
+        - shared/docs/knowledge/content/quests/main/mq-001-first-steps.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Первичная спецификация shooter-проверок для квестов и диалогов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
