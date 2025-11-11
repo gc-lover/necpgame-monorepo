@@ -1,0 +1,101 @@
+metadata:
+  id: backend-matchmaking-queue
+  title: Matchmaking Queue
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T05:30:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T22:05:00Z
+  owners:
+    - role: matchmaking_lead
+      contact: matchmaking@necp.game
+  tags:
+    - matchmaking
+    - queue
+    - backend
+  topics:
+    - gameplay-infra
+    - session-management
+  related_systems:
+    - matchmaking-service
+    - gameplay-service
+  related_documents:
+    - id: backend-matchmaking-algorithm
+      relation: complements
+    - id: backend-matchmaking-rating
+      relation: complements
+  source: shared/docs/knowledge/implementation/backend/matchmaking/matchmaking-queue.md
+  visibility: internal
+  audience:
+    - backend
+    - infrastructure
+    - gameplay
+  risk_level: high
+review:
+  chain:
+    - role: matchmaking_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T22:05:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Очереди матчмейкинга требовали формализованной схемы хранения и алгоритмов расширения поиска.
+  goal: Описать backend-реализацию системы очередей для PvP, PvE и рейдов с приоритетами и расширением диапазона рейтинга.
+  essence: Документ фиксирует структуру данных, API, стратегию расширения поискового диапазона и приоритеты ожидания.
+  key_points:
+    - Описана таблица `matchmaking_queues` с основными полями и индексами.
+    - Приведён REST endpoint для входа в очередь и сохранения в Redis.
+    - Описаны механизмы расширения диапазона поиска и повышения приоритета.
+    - Указаны API для управления очередями и связь с другими микрофичами.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Matchmaking Queue управляет очередями для PvP, PvE и рейдов, поддерживает партии, расширяет диапазон поиска и
+        учитывает длительность ожидания. Размер очереди и активность влияют на приоритет и диапазон рейтинга.
+      mechanics_links: []
+    - id: database_schema
+      title: Схема базы данных
+      body: |
+        Представлена таблица `matchmaking_queues` с полями игрока/партии, типа активности, ролей, состояния очереди и
+        параметров расширения поиска. Для ускорения выборок используются индексы по активности и рейтингу.
+      mechanics_links: []
+    - id: enter_queue
+      title: Вход в очередь
+      body: |
+        REST endpoint `/api/v1/matchmaking/queue` проверяет наличие активной заявки, сохраняет запись, выставляет
+        начальный диапазон рейтинга и публикует идентификатор в Redis списке. Ответ содержит ожидаемое время.
+      mechanics_links: []
+    - id: wait_optimization
+      title: Оптимизация ожидания
+      body: |
+        Каждые 15 секунд расширяется диапазон поиска для игроков, ожидающих дольше двух минут, и отправляется уведомление.
+        Прописана таблица приоритетов, увеличивающих вероятность матчей при длительном ожидании.
+      mechanics_links: []
+    - id: api_endpoints
+      title: API
+      body: |
+        Ключевые запросы: вход в очередь, выход и проверка статуса. Документ указывает связь с другими микросервисами и
+        зависимостями.
+      mechanics_links: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: matchmaking_lead
+    changes: Первичное описание системы очередей для матчмейкинга.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
