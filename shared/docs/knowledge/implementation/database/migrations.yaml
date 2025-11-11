@@ -1,0 +1,114 @@
+metadata:
+  id: implementation-database-migrations-mvp
+  title: 'Database Migrations — MVP'
+  document_type: implementation
+  category: database
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-08T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-08T00:00:00Z
+  owners:
+    - role: data_guild
+      contact: data@necp.game
+  tags:
+    - database
+    - migrations
+    - liquibase
+  topics:
+    - implementation
+    - backend
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: implementation-database-schema-mvp
+      relation: references
+    - id: implementation-database-mvp-initial-data
+      relation: references
+    - id: implementation-api-preparation-plan
+      relation: supports
+  source: shared/docs/knowledge/implementation/database/migrations.yaml
+  visibility: internal
+  audience:
+    - backend
+    - data
+  risk_level: low
+review:
+  chain:
+    - role: data_guild_lead
+      reviewer: ''
+      reviewed_at: 2025-11-08T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Для MVP требуется зафиксированный набор миграций с описанием инструментов и контроля качества.
+  goal: Сформировать перечень Liquibase-файлов, правила изменений и проверки готовности.
+  essence: Документ описывает baseline миграции `V1_0` и инкрементальные изменения до `V1_5`, включая правила и QA.
+  key_points:
+    - Используется Liquibase в формате YAML с версионной схемой `V1_x`.
+    - Каталог миграций покрывает схемы, индексы, типы, триггеры и сиды.
+    - Проверки включают локальные тесты PostgreSQL, `liquibase validate` и интеграционные тесты.
+content:
+  sections:
+    - id: tooling
+      title: Инструмент и стратегия
+      body: |
+        Миграции выполняются через Liquibase (YAML). Базовая версия `V1_0` создаёт схемы `mvp_core`, `mvp_meta` и ключевые
+        таблицы. Все дальнейшие изменения оформляются как `V1_x`, переход на `V2_x` запланирован для новых сервисов.
+      mechanics_links: []
+      assets: []
+    - id: migration_list
+      title: Перечень миграций
+      body: |
+        | Версия | Файл | Содержание | Статус |
+        |--------|------|------------|--------|
+        | V1_0 | `V1_0__init_core.yaml` | Схемы и базовые таблицы, включая `player_account`, `character`, `order`, `weapon_profile`, `crafting_blueprint`, `world_district_state`, `event_log`, `outbox`. | ready |
+        | V1_1 | `V1_1__indexes_constraints.sql` | Индексы, уникальные ограничения, внешние ключи. | ready |
+        | V1_2 | `V1_2__enum_types.sql` | Enum-типы `order_state`, `order_access`, `crafting_status`, `weapon_type`. | ready |
+        | V1_3 | `V1_3__audit_triggers.sql` | Триггеры `updated_at` и soft-delete. | ready |
+        | V1_4 | `V1_4__seed_reference_data.sql` | Сидинг базовых справочников и данных. | ready |
+        | V1_5 | `V1_5__ballistics_metrics_extension.sql` | Расширение метрик оружия, jsonb-колонки и partial index. | ready |
+      mechanics_links:
+        - implementation/database/schema.yaml
+        - implementation/database/mvp-initial-data.yaml
+      assets: []
+    - id: rules
+      title: Правила изменений
+      body: |
+        Новые миграции добавляются в папку `database/migrations/` с префиксом версии. Enum типы обновляются через создание
+        новых типов и кастинг данных. Для каждого сервиса создаются независимые ветки версий.
+      mechanics_links: []
+      assets: []
+    - id: quality
+      title: Контроль качества
+      body: |
+        Проверки включают локальный запуск PostgreSQL (docker-compose), `liquibase validate` и интеграционные тесты
+        BACK-JAVA. Планируется добавить автоматическую проверку миграций в CI.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Liquibase Documentation
+      link: https://www.liquibase.org/
+    - title: Schema Overview
+      link: ./schema.yaml
+    - title: Seed Data Pack
+      link: ./mvp-initial-data.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: data_team
+    changes: План миграций MVP перенесён в YAML с таблицей версий и правилами качества.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
