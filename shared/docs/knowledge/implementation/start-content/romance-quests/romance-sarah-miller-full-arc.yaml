@@ -1,0 +1,117 @@
+metadata:
+  id: romance-sarah-miller-full-arc
+  title: "Романтическая линия — Сара Миллер"
+  document_type: implementation
+  category: romance
+  status: in-review
+  version: '1.0.0'
+  last_updated: 2025-11-06T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: narrative_lead
+      contact: narrative@necp.game
+  tags:
+    - romance
+    - ncpd
+    - narrative
+  topics:
+    - character-relationships
+    - branching-dialogue
+  related_systems:
+    - romance-service
+    - quest-service
+    - social-service
+  related_documents:
+    - id: quest-romance-sarah-03-conflict
+      relation: references
+  source: shared/docs/knowledge/implementation/start-content/romance-quests/romance-sarah-miller-full-arc.md
+  visibility: internal
+  audience:
+    - narrative
+    - backend
+    - frontend
+  risk_level: medium
+review:
+  chain:
+    - role: narrative_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: "Нужно описать полную романтическую арку с NPC Сара Миллер, включая стадии, диалоги, проверки и награды."
+  goal: "Предоставить структуру из пяти стадий с диалоговыми узлами, боевыми проверками и API-маппингом для реализации romance-системы."
+  essence: "Документ подробно описывает персонажа, стадии знакомства → доверие → конфликт → обязательство → будущее, систему очков и финальные награды."
+  key_points:
+    - "5 стадий романса, каждая с отдельным квестом, диалоговыми деревьями и проверками COOL/EMPATHY/COMBAT."
+    - "Романтические очки (0–100) и пороги для перехода между стадиями."
+    - "Финальная награда — способность «Sarah's Backup» и WebSocket уведомления о прогрессе."
+content:
+  sections:
+    - id: character
+      title: Персонаж и триггеры
+      body: |
+        Описываются бэкграунд Сары (офицер NCPD, пережила DataKrash), личные черты, романтические триггеры и требования к игроку.
+        Указаны ключевые атрибуты: защита партнёра, поддержка в конфликтах, COOL/EMPATHY проверки.
+      mechanics_links:
+        - content/quests/quests-master-list-2020-2093.yaml
+      assets: []
+    - id: stages
+      title: Стадии 1–5
+      body: |
+        Каждая стадия имеет уникальный квест (ID `quest-romance-sarah-01`…`05`), диалоговые узлы и боевые/социальные проверки.
+        Подробно описаны события: знакомство, ночной патруль, конфликт долга, совместная миссия и финал с обязательством.
+      mechanics_links:
+        - implementation/start-content/romance-quests/quest-romance-sarah-03-conflict.yaml
+      assets: []
+    - id: romance-points
+      title: Система Romance Points
+      body: |
+        Очки распределены по диапазонам (0–20 знакомство, 21–40 доверие и т.д.). Описано, как игрок получает/теряет очки
+        через проверки, выборы и защиту НПЦ. В финале открывается способность «Sarah's Backup».
+      mechanics_links:
+        - services/backend/api/romance.yaml
+      assets: []
+    - id: api
+      title: API и WebSocket
+      body: |
+        Перечислены REST-эндпоинты (`/romance/start`, `/romance/stage-complete`, `/romance/status`, `/romance/partner-ability-activate`)
+        и WebSocket `wss://api.necp.game/v1/social/romance/{romanceId}` для live-обновлений очков и стадий.
+      mechanics_links:
+        - services/backend/api/romance.yaml
+      assets: []
+    - id: ux
+      title: UX/UI
+      body: |
+        Описаны панели romance UI (heart meter, стадия, доступный квест) и диалоговый интерфейс с выбором (флирт, дружба, уход).
+        Приведены ASCII макеты экранов для справки.
+      mechanics_links:
+        - services/frontend/docs/romance-ui.md
+      assets: []
+    - id: testing
+      title: Тестирование и логи
+      body: |
+        Приведены тестовые сценарии (полный успех, провал флирта, защита в бою, ветви stage 3, финальная битва) и требования к логированию
+        изменений очков, выбранных веток и репутации.
+      mechanics_links:
+        - qa/tests/romance-sarah-suite.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: narrative_lead
+    changes: Создана полная романтическая арка Сары Миллер (5 стадий, 28+ диалоговых узлов).
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
