@@ -12,22 +12,19 @@ metadata:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - main-quest
-    - shooter
-    - red-era
-    - network-restoration
+    - questline
+    - netwatch
+    - urban-combat
   topics:
-    - quest_design
-    - combat_encounters
+    - quests
+    - shooter
   related_systems:
-    - quest-service
+    - quest-engine
     - combat-service
     - analytics-service
   related_documents:
     - id: quest-main-2027-rebuild-protocol
-      relation: continues
-    - id: mechanics-combat-shooter-core
-      relation: references
+      relation: leads_to
   source: shared/docs/knowledge/implementation/start-content/quests/quest-main-2023-shattered-city.md
   visibility: internal
   audience:
@@ -43,74 +40,104 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Нужна согласованная спецификация первого пост-DataKrash квеста, который демонстрирует shooter-подход и сетевое восстановление."
-  goal: "Задокументировать обновлённый квест «Разбитый город» с описанием стадий, боевых взаимодействий, телеметрии и наград."
-  essence: "Игрок восстанавливает магистраль связи 2023 года, комбинируя штурм, техподдержку и переговоры под постоянной угрозой банд и радиации."
+  problem: Районы South Watson остались без связи после DataKrash; требуется восстановить узел и удержать район.
+  goal: Описать shooter-вариант квеста с инженерными, боевыми и социальными сценариями для API handoff.
+  essence: Игрок очищает доступ к панели, ремонтирует узел под атаками банды и сопровождает конвой питания в Watson.
   key_points:
-    - "Три активные стадии и финальный escort формируют петлю зачистка → ремонт → охрана."
-    - "Каждая стадия имеет shooter-интеракции с порогами метрик и привязкой к событиям."
-    - "Телеметрия покрывает бой, инженерные действия, экономику и античит SLA."
-    - "Успехи открывают доступ к последующей цепочке NetWatch и рыночным эффектам."
+    - Таблицы интеракций Signal Hunt, Repair Under Fire, Convoy Escort с порогами метрик.
+    - Подробные shooter encounters с античит телеметрией и hazard-таблицей.
+    - Полный REST/Kafka маппинг и QA-кейсы для golden/combat/tech/stealth путей.
 content:
   sections:
     - id: overview
-      title: "Обзор квеста"
+      title: Сводка
       body: |
-        Квест разворачивается в Santo Domingo и Watson в первые недели после DataKrash. Фиксер Анна
-        Петрова просит восстановить ключевой узел питания, удержать ремонт под обстрелом и сопроводить
-        энергоконвой. Документ фиксирует базовые параметры (тип, сложность, ожидаемую длительность),
-        а также синопсис и роль игрока.
-      mechanics_links: []
-      assets: []
-    - id: stage_flow
-      title: "Структура стадий"
+        - ID: `quest-main-2023-shattered-city`
+        - Выдаёт: `npc-anna-petrova` (Santo Domingo)
+        - Период: первые недели 2023 после DataKrash
+        - Основная петля: зачистка → ремонт узла → сопровождение конвоя
+        - Роли: assault, tech, negotiation
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: metadata_block
+      title: Метаданные
       body: |
-        Стадия A «Signal Hunt» очищает доступ к панели через Recon Sweep, Presence Pact и Engineering
-        Bypass. Стадия B «Repair Under Fire» фокусируется на удержании узла `grid-node-23` с трёмя
-        ключевыми интеракциями. Стадия C «Convoy Escort» выводит питание в Watson с переговорами,
-        взломом дронов и навигацией по опасностям. Стадия D «Aftermath» завершает операцию и фиксирует
-        экономические последствия.
+        ```yaml
+        quest-type: main
+        difficulty: medium
+        party: solo (coop-2 support)
+        expected-duration: 30-40m
+        repeatable: once
+        tags:
+          - engineering
+          - urban-combat
+          - negotiation
+        ```
       mechanics_links:
         - mechanics/combat/combat-shooter-core.yaml
-      assets: []
+    - id: stages
+      title: Стадии
+      body: |
+        ### Stage A — Signal Hunt
+        Recon Sweep, Presence Pact, Engineering Bypass формируют stealth/социальные/технические ветви.
+
+        ### Stage B — Repair Under Fire
+        Field Repair Loop сокращает таймер обороны, Support Shield спасает инженера, Suppression Fire снимает давление с ремонтников.
+
+        ### Stage C — Convoy Escort
+        Negotiation Toll, Drone Hijack, Hazard Routing управляют боевыми и экономическими исходами на пути к Watson.
+
+        ### Stage D — Aftermath
+        Финальное восстановление питания и экономический эффект Market Revival.
+      mechanics_links:
+        - mechanics/combat/combat-overview.yaml
     - id: encounters
-      title: "Боевые встречи"
+      title: Shooter встречи
       body: |
-        Описаны три encounter’а: Warehouse Skirmish, Node Defense и Rust Tigers Ambush. Для каждого
-        приведены роли врагов, ключевые параметры, альтернативные решения (переговоры, взлом) и лут.
-        Тайминги волн, условия отмены боя и влияние интеракций отражены в таблицах.
-      mechanics_links: []
-      assets: []
+        - **Warehouse Skirmish:** Marauder SMG, Sniper, Turret Mk0, лут и smoke/hack особенности.
+        - **Node Defense:** три волны с таймером 180 сек, античит мониторинг latency/rapid fire.
+        - **Rust Tigers Ambush:** Bruiser, Gunner, Attack Drone; переговоры могут отменить бой.
+      mechanics_links:
+        - mechanics/combat/combat-shooter-core.yaml
     - id: hazards
-      title: "Опасности окружения"
+      title: Опасности
       body: |
-        Радиационные канализации, газовые скопления и обрушения складов влияют на ход миссии.
-        Указаны триггеры, эффекты, контрмеры и связанные событийные топики телеметрии.
-      mechanics_links: []
-      assets: []
+        Таблица радиационных канализаций, газовых выбросов и обрушений складов с trigger, эффектом и mitigation.
+      mechanics_links:
+        - mechanics/economy/trading-routes-global.yaml
     - id: rewards
-      title: "Награды и последствия"
+      title: Награды и экономика
       body: |
-        Базовая награда включает XP, eddies и компоненты. Бонусы выдаются за успехи Engineering Bypass,
-        Field Repair Loop, Drone Hijack и Hazard Routing. Также описан экономический эффект «Market Revival»
-        и подключение цепочки `quest-main-2027-rebuild-protocol`.
-      mechanics_links: []
-      assets: []
-    - id: telemetry
-      title: "API, события и логи"
+        Базовые награды: 540 XP, 600 eddies, компоненты, репутация Watson Civil Council +12.
+        Бонусы: Engineering Bypass (schematic), Field Repair Loop (loot cache), Drone Hijack (ally), Hazard Routing (supply-cache), Negotiation Toll (экономия ресурсов).
+        Экономический эффект: событие «Market Revival» и доступ к цепочке 2027.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/stock-analytics.yaml
+    - id: interfaces
+      title: API и телеметрия
       body: |
-        REST endpoints охватывают принятие, интеракции, боевые отчёты, hazard-логирование и завершение.
-        Kafka-топики (`combat.shooter.encounter`, `quest.progress.main`, `analytics.quest.economy`,
-        `anti-cheat.validation`) и античит SLA (latency, aim variance, rapid fire) фиксируют надзор.
-        Секция также резюмирует требования к аналитике и тестовым сценариям.
-      mechanics_links: []
-      assets: []
+        REST: `/quests/{id}/accept`, `/interaction`, `/combat/shooter`, `/environment/hazard`, `/objective`, `/complete`.
+        Kafka: `combat.shooter.encounter`, `quest.progress.main`, `analytics.quest.economy`, `anti-cheat.validation`.
+        SLA: latency > 200 мс, aim variance < 0.02 при accuracy > 0.8, rapid fire > 9 clicks/s.
+      mechanics_links:
+        - implementation/backend/quest-engine-backend.yaml
+    - id: qa
+      title: Тест-кейсы
+      body: |
+        1. Basic Clear — успех большинства интеракций.
+        2. Negotiation Path — минимум боёв.
+        3. Combat Heavy — провал социалок и инженерии.
+        4. Tech Carry — ускоренный ремонт и дрон союзник.
+        5. Hazard Fail — штрафы за радиацию.
+        6. Coop Duo — распределение ролей assault + tech.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
 appendix:
   glossary: []
   references: []
   decisions: []
 implementation:
-  needs_task: false
+  needs_task: true
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml#quest-main-2023-shattered-city
   blockers: []
@@ -118,11 +145,11 @@ history:
   - version: '2.0.0'
     date: 2025-11-10
     author: concept_team
-    changes: "Shooter-рефактор: добавлены стадии, интеракции, телеметрия и античит SLA."
+    changes: Shooter-рефактор стадий, интеракций, телеметрии и наград.
   - version: '1.0.0'
     date: 2025-11-05
     author: concept_team
-    changes: "Исходная версия (D&D checks, архивирована после рефактора)."
+    changes: Исходная D&D версия квеста (архив).
 validation:
   checksum: ''
   schema_version: '1.0'
