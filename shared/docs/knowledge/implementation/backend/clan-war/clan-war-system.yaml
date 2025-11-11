@@ -1,0 +1,119 @@
+metadata:
+  id: backend-clan-war-system
+  title: 'Clan War System — Система клановых войн'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T02:34:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:34:00Z
+  owners:
+    - role: pvp_lead
+      contact: pvp@necp.game
+  tags:
+    - clan-war
+    - territories
+    - pvp
+  topics:
+    - large-scale-pvp
+    - territory-control
+  related_systems:
+    - guild-service
+    - territory-service
+    - event-service
+  related_documents:
+    - id: backend-chat-channels
+      relation: references
+    - id: backend-chat-moderation
+      relation: references
+  source: shared/docs/knowledge/implementation/backend/clan-war/clan-war-system.md
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+    - live-ops
+  risk_level: high
+review:
+  chain:
+    - role: pvp_lead
+      reviewer: ''
+      reviewed_at: 2025-11-07T02:34:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Требовалось зафиксировать механику клановых войн, тайминги и управление территориями для endgame PvP.
+  goal: Стандартизировать фазы войны, схему данных, расчёт очков и наград, а также API для событий войны.
+  essence: Документ описывает жизненный цикл войны (подготовка, активная фаза, завершение), базы данных `clan_wars`, `war_battles`, `territories` и ключевые сервисные операции.
+  key_points:
+    - Война включает 24 часа подготовки, 7 дней активных боёв и немедленную фазу подведения итогов.
+    - Таблицы `clan_wars`, `war_battles` и `territories` управляют участниками, сражениями и владением ресурсами.
+    - Сервисы объявляют войну, запускают битвы за территорию, рассчитывают очки и распределяют награды.
+content:
+  sections:
+    - id: overview
+      title: Архитектура войны
+      body: |
+        Поток клановой войны начинается с объявления, включает подготовку, активную фазу и завершение с передачей территорий.
+        На протяжении войны отслеживаются Territory battles, Siege события и kill-score.
+      mechanics_links: []
+      assets: []
+    - id: phases
+      title: Фазы войны
+      body: |
+        Фаза подготовки (24 ч) позволяет объявить войну, собрать союзников и ресурсы. Активная фаза (7 дней) содержит ежедневные
+        Territory battles, Siege события и open world PvP. Фаза завершения рассчитывает очки, определяет победителя и выдаёт награды.
+      mechanics_links: []
+      assets: []
+    - id: data_model
+      title: Схемы данных
+      body: |
+        `clan_wars` хранит кланы, союзников, статус, фазы, очки и победителя. `war_battles` описывает битвы, тип, участников и очки.
+        `territories` фиксирует владение, ресурсы, защиту и сложность осады.
+      mechanics_links: []
+      assets: []
+    - id: declare_war
+      title: Объявление войны
+      body: |
+        ClanWarService проверяет размер кланов, cooldown и текущее состояние перед созданием записи войны, планирует начало войны
+        и уведомляет обе стороны. Союзники фиксируются в записи.
+      mechanics_links: []
+      assets: []
+    - id: territory_battles
+      title: Бои за территорию
+      body: |
+        Battles создаются и запускаются для спорных территорий, уведомляют участников и открывают PvP-зону. Убийства начисляют
+        очки сторонам, а сервис следит за активными событиями.
+      mechanics_links: []
+      assets: []
+    - id: war_resolution
+      title: Завершение войны и награды
+      body: |
+        После подсчёта очков определяется победитель, территория при необходимости передаётся и выдаются награды победителю и
+        утешительные призы проигравшим. Событие войны логируется и рассылаются уведомления.
+      mechanics_links: []
+      assets: []
+    - id: api
+      title: API и интеграции
+      body: |
+        API покрывает объявление войны, запуск битв, расчёт наград и управление территориями. Сервисы взаимодействуют с guild-service,
+        territory-service и событийному сервису для расписания событий.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#backend-clan-war-system
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: Описаны фазы клановой войны, схемы данных, сценарии битв и распределение наград.
+validation:
+  checksum: ''
+  schema_version: '1.0'
