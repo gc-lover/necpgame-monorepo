@@ -1,0 +1,106 @@
+metadata:
+  id: backend-announcement-system
+  title: 'Announcement System'
+  document_type: implementation
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T23:25:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:30:00Z
+  owners:
+    - role: liveops_lead
+      contact: operations@necp.game
+  tags:
+    - announcements
+    - live-ops
+    - communications
+  topics:
+    - player-engagement
+    - messaging
+  related_systems:
+    - admin-api
+    - notification-service
+    - player-service
+  related_documents:
+    - id: backend-admin-tools-core
+      relation: aligns
+  source: shared/docs/knowledge/implementation/backend/announcement/announcement-system.md
+  visibility: internal
+  audience:
+    - live-ops
+    - backend
+    - communications
+  risk_level: medium
+review:
+  chain:
+    - role: liveops_lead
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходима единая система доставки новостей, патчноутов, событий и уведомлений всем игрокам.
+  goal: Сформировать архитектуру объявлений с хранением контента, таргетингом и много канальной доставкой.
+  essence: Документ описывает модель данных, API для публикации, доставку по каналам и учёт прочтений.
+  key_points:
+    - Таблицы `announcements` и `player_announcement_reads` управляют контентом и статусом прочтения.
+    - Система поддерживает типы (Game News, Patch Notes, Event, Maintenance и др.) и приоритеты.
+    - Delivery Service обеспечивает popup, push, email и новостную ленту с таргетингом по регионам и уровням.
+    - Patch Notes форматируются отдельно с вложениями и модальными окнами.
+content:
+  sections:
+    - id: system_overview
+      title: 'Архитектура и поток публикации'
+      body: |
+        Админ создаёт объявление, назначает время публикации, система публикует сразу или по расписанию и доставляет по каналам. Track read status фиксирует взаимодействия.
+      mechanics_links: []
+      assets: []
+    - id: data_model
+      title: 'Схема данных'
+      body: |
+        Таблица `announcements` хранит контент, таргетинг, отображение, медиа и ссылки. `player_announcement_reads` фиксирует прочтение, скрытие и клики. Индексы ускоряют выборки по статусу и сроку действия.
+      mechanics_links: []
+      assets: []
+    - id: types_priority
+      title: 'Типы и приоритеты'
+      body: |
+        Enum перечисляет типы (GAME_NEWS, PATCH_NOTES, MAINTENANCE, EVENT, PROMOTION, COMMUNITY, EMERGENCY) и приоритеты от LOW до CRITICAL. DisplayStyle управляет способом отображения.
+      mechanics_links: []
+      assets: []
+    - id: publish_workflow
+      title: 'Публикация и планирование'
+      body: |
+        Service создаёт объявление, формирует статус DRAFT/SCHEDULED/PUBLISHED, планирует публикацию и при необходимости немедленно доставляет игрокам. Все действия логируются.
+      mechanics_links: []
+      assets: []
+    - id: delivery_channels
+      title: 'Каналы доставки'
+      body: |
+        Delivery Service выбирает целевых игроков, отправляет in-game popup, email, push и всегда добавляет запись в news feed. Для срочных приоритетов используется e-mail и push по умолчанию.
+      mechanics_links: []
+      assets: []
+    - id: patch_notes
+      title: 'Patch Notes и новостная лента'
+      body: |
+        PatchNotesService генерирует модальные объявления с версиями, списками улучшений и известными проблемами. JSON пример news feed показывает, как фронтенд отображает опубликованные записи.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: ai_brain_manager
+    changes: 'Задокументирована система объявлений, хранение, каналы доставки и патчноуты.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
