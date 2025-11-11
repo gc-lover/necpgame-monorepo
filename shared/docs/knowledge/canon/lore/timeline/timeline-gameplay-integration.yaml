@@ -1,0 +1,203 @@
+metadata:
+  id: canon-timeline-gameplay-integration
+  title: 'Интеграция хронологии с геймплеем'
+  document_type: canon
+  category: timeline
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-05T18:12:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-05T18:12:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - timeline
+    - gameplay
+    - integration
+  topics:
+    - lore
+    - systems-design
+  related_systems:
+    - world-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: canon-timeline-master-index
+      relation: references
+    - id: canon-timeline-detailed-2077-2093
+      relation: complements
+    - id: mechanics-quest-system
+      relation: integrates
+  source: shared/docs/knowledge/canon/lore/timeline/timeline-gameplay-integration.md
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - vision
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: 'Concept Directorate'
+      reviewed_at: 2025-11-05T18:12:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: 'Нужно связать исторические периоды с объектами геймплея, чтобы команды понимали, какие события активируют механики.'
+  goal: 'Сформировать карту интеграции временных узлов с системами навыков, экономики, социальных хабов и API.'
+  essence: 'Каждый временной блок задаёт набор активностей, а карта указывает, какие сервисы и документы необходимо синхронизировать.'
+  key_points:
+    - 'Для каждого периода указаны ключевые игровые активности и ссылки на системные документы.'
+    - 'Определён мэппинг навыков, имплантов, экономики и киберпсихоза.'
+    - 'Приведены API и JSON-схемы, поддерживающие визуальные профили локаций.'
+content:
+  sections:
+    - id: period-2020-2030
+      title: '2020–2030'
+      body: |
+        - Узел Триака и слепые зоны MAX-TAC → PvE/PvP рейды hacking/defense, спрос на кибердеки Tier 1-2.
+        - Сертификат человечности и гильдии рипдоков → механики имплантов, страховки и шкалы человечности.
+        - Ссылки: `mechanics/progression/progression-skills.yaml`, `mechanics/combat/combat-hacking-combat-integration.yaml`.
+      mechanics_links:
+        - mechanics/progression/progression-skills.yaml
+        - mechanics/combat/combat-hacking-combat-integration.yaml
+      assets: []
+    - id: period-2030-2045
+      title: '2030–2045'
+      body: |
+        - Купола и DAO → сезонные режимы районов, налоги и охранные протоколы.
+        - Картография «Низа» → конкурентные маршруты экстракт-миссий.
+        - Ссылки: `mechanics/economy/economy-logistics.yaml`, `mechanics/world/events/world-events-2020-2040.md`.
+      mechanics_links:
+        - mechanics/economy/economy-logistics.yaml
+      assets: []
+    - id: period-2045-2060
+      title: '2045–2060'
+      body: |
+        - Рёбра города и тёплые коридоры → инфраструктурные операции и Blackwall-рейды.
+        - Красные рынки → аукционы высоких редкостей и брендов.
+        - Ссылки: `mechanics/combat/combat-hacking-combat-integration.yaml`, `mechanics/economy/economy-trading-guilds.yaml`.
+      mechanics_links:
+        - mechanics/economy/economy-trading-guilds.yaml
+      assets: []
+    - id: period-2060-2077
+      title: '2060–2077'
+      body: |
+        - Серые театры и радиомолчание → прокси-войны и оффлайн-рейды.
+        - Грань намёков → спавн артефактов реальности и судебные ветви.
+        - Ссылки: `mechanics/world/events/world-events-2060-2077.md`.
+      mechanics_links:
+        - mechanics/world/events/world-events-2060-2077.md
+      assets: []
+    - id: period-2078-2090
+      title: '2078–2090'
+      body: |
+        - Параметрические ярмарки и конституции → голосования параметров мира, мета-суды и управляемые события.
+        - Архивы за заслоном → высокорисковые экспедиции за артефактами Blackwall.
+        - Ссылки: `mechanics/world/events/world-events-2077.md`, `mechanics/social/player-orders-creation.yaml`.
+      mechanics_links:
+        - mechanics/social/player-orders-creation.yaml
+      assets: []
+    - id: mapping
+      title: 'Мэппинг ключевых систем'
+      body: |
+        - Навыки: gunplay, melee, mobility, stealth, hacking, tech, social (`mechanics/progression/progression-skills.yaml`).
+        - Импланты/Деки: slotType, tier, heat/energy (`mechanics/combat/combat-implants-types.yaml`, `mechanics/economy/equipment/procedural-equipment-library.yaml`).
+        - Экономика: аукционы, лицензии, контракты (`mechanics/economy/economy-contracts.yaml`).
+        - Киберпсихоз: уровни, штрафы, лечение (`mechanics/combat/combat-hacking-combat-integration.yaml`).
+      mechanics_links:
+        - mechanics/combat/combat-implants-types.yaml
+        - mechanics/economy/economy-contracts.yaml
+      assets: []
+    - id: api-integration
+      title: 'API и данные'
+      body: |
+        - world-service: `GET /world/cities/{cityId}/snapshot` и `GET /world/districts/{districtId}` возвращают `visualProfileId`.
+        - social-service: `GET /social/hubs/{hubId}` использует `visualMood` и `ambientSound`.
+        - economy-service: `GET /economy/vendors/{vendorId}` включает `stallVisual`.
+        - Экспорт визуальных профилей выполняется скриптом `scripts/export-visual-style.ps1`.
+      mechanics_links: []
+      assets: []
+    - id: schemas
+      title: 'JSON схемы и payload'
+      body: |
+        JSON Schema (`schemas/world/visual-profile.schema.json`):
+
+        ```json
+        {
+          "$id": "schemas/world/visual-profile.schema.json",
+          "type": "object",
+          "required": ["assetId", "palette", "lighting", "moodTags"],
+          "properties": {
+            "assetId": { "type": "string", "pattern": "^ASSET-(LOC|DIST|HUB|RAID|WILD)-[A-Z]{2,3}-\\d{3}$" },
+            "palette": {
+              "type": "object",
+              "required": ["primary", "secondary", "accent"],
+              "properties": {
+                "primary": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6})$" },
+                "secondary": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6})$" },
+                "accent": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6})$" }
+              }
+            },
+            "lighting": { "type": "string", "enum": ["neon", "bioluminescent", "industrial", "natural", "mixed"] },
+            "moodTags": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1,
+              "maxItems": 5
+            }
+          }
+        }
+        ```
+
+        REST payload пример:
+
+        ```json
+        {
+          "assetId": "ASSET-DIST-NC-019",
+          "title": "Pacifica Reclamation Zone",
+          "palette": {
+            "primary": "#1B1F3B",
+            "secondary": "#6420AA",
+            "accent": "#00E0FF"
+          },
+          "lighting": "neon",
+          "moodTags": ["salvage", "underground", "contraband"],
+          "keyElements": [
+            "leaning towers with neon grid",
+            "markets under holographic nets",
+            "Maelstrom patrol drones"
+          ]
+        }
+        ```
+      mechanics_links: []
+      assets: []
+    - id: narrative-links
+      title: 'Связанные сценарии и ветки'
+      body: |
+        - Основные сюжеты: `../../04-narrative/scenarios/main-story/2020-2030-main-story.yaml` → `2078-2093-main-story.yaml`.
+        - Ветки по классам: `../../04-narrative/scenarios/main-story/classes/index.yaml`.
+        - Origins: `../../04-narrative/scenarios/origins/index.yaml`.
+        - Авторские события: `../timeline-author/` (quests, regions, activities).
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: 'Visual profile schema'
+      url: 'schemas/world/visual-profile.schema.json'
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-05
+    author: 'Concept Directorate'
+    changes: 'Сформирована карта интеграции хронологии с игровыми системами и API.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
