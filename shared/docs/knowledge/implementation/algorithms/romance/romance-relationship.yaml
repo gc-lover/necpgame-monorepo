@@ -1,0 +1,118 @@
+metadata:
+  id: implementation-romance-relationship-algorithm
+  title: 'Romance Relationship - Расчет отношений'
+  document_type: implementation
+  category: algorithms
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T06:35:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T06:35:00Z
+  owners:
+    - role: ai_brain_manager
+      contact: ai@necp.game
+  tags:
+    - romance
+    - relationship
+    - ai
+  topics:
+    - implementation
+    - ai
+  related_systems:
+    - npc-ai-service
+    - social-service
+  related_documents:
+    - id: implementation-romance-triggers
+      relation: references
+    - id: implementation-romance-dialogue
+      relation: references
+  source: shared/docs/knowledge/implementation/algorithms/romance/romance-relationship.yaml
+  visibility: internal
+  audience:
+    - ai
+    - gameplay
+    - narrative
+  risk_level: medium
+review:
+  chain:
+    - role: ai_brain_manager
+      reviewer: ''
+      reviewed_at: 2025-11-07T06:35:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Нужен формализованный алгоритм расчёта романтических отношений между игроком и NPC.
+  goal: Определить диапазон очков, стадии отношений и обработку переходов с генерацией событий.
+  essence: Алгоритм обновляет очки отношений, ограничивает значения, вычисляет стадии и публикует события при смене этапа.
+  key_points:
+    - Диапазон очков от -100 до +100 с семью стадиями.
+    - Изменения ограничиваются и приводят к событию `RelationshipStageChanged`.
+    - Документ является частью набора микрофич (триггеры, расчёт, диалог).
+content:
+  sections:
+    - id: points
+      title: Диапазон и стадии
+      body: |
+        Отношения хранятся в диапазоне от -100 (Hostile) до +100 (Love). Стадии:
+        Hostile (-100..-50), Dislike (-49..0), Neutral (1..20), Friendly (21..50),
+        Close (51..75), Romantic Interest (76..90), Love (91..100).
+      mechanics_links: []
+      assets: []
+    - id: calculation
+      title: Обновление очков
+      body: |
+        ```
+        public void updateRelationship(String playerId, String npcId, int change) {
+            int current = relationshipRepository.get(playerId, npcId);
+            int newValue = Math.max(-100, Math.min(100, current + change));
+
+            relationshipRepository.set(playerId, npcId, newValue);
+
+            String prevStage = getStage(current);
+            String newStage = getStage(newValue);
+
+            if (!prevStage.equals(newStage)) {
+                eventPublisher.publish(new RelationshipStageChangedEvent(
+                    playerId, npcId, prevStage, newStage
+                ));
+            }
+        }
+        ```
+        Логика гарантирует ограничение значений и публикацию события при смене стадии.
+      mechanics_links: []
+      assets: []
+    - id: integration
+      title: Интеграция
+      body: |
+        Алгоритм используется AI подсистемой романтики и связан с документами по триггерам (`romance-triggers`) и диалогам
+        (`romance-dialogue`). Событие `RelationshipStageChanged` обрабатывается сценарной и UI логикой.
+      mechanics_links: []
+      assets: []
+    - id: history
+      title: История изменений
+      body: |
+        v1.0.0 (2025-11-07) — выделена микрофича 2/3 из `romance-event-engine.md`.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Romance Triggers
+      link: ./romance-triggers.md
+    - title: Romance Dialogue
+      link: ./romance-dialogue.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-11
+    author: ai_team
+    changes: Алгоритм расчёта романтических отношений перенесён в YAML с кодом и стадиями отношений.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
