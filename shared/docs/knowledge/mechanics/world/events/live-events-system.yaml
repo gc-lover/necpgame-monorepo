@@ -1,6 +1,6 @@
 metadata:
   id: live-events-system
-  title: 'Live Events System — динамика Найт-Сити'
+  title: Live Events System — Динамика Найт-Сити
   document_type: mechanics
   category: world
   status: approved
@@ -9,117 +9,150 @@ metadata:
   concept_approved: true
   concept_reviewed_at: 2025-11-08T00:14:00Z
   owners:
-    - role: world_lead
-      contact: world@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
     - live-events
     - world
-    - live-ops
+    - economy
   topics:
-    - world-events
-    - gameplay-world
+    - глобальные-события
+    - сезонные-системы
   related_systems:
     - world-service
     - announcement-service
     - battle-pass-service
   related_documents:
     - id: combat-loadouts-system
-      relation: complements
-    - id: loot-hunt-system
+      relation: influences
+    - id: progression-skills-mapping
       relation: references
-    - id: arena-system
-      relation: references
-  source: shared/docs/knowledge/mechanics/world/events/live-events-system.md
+  source: mechanics/world/events/live-events-system.md
   visibility: internal
   audience:
     - concept
-    - live-ops
-    - gameplay
+    - world
   risk_level: medium
 review:
   chain:
-    - role: world_lead
+    - role: concept_director
       reviewer: ''
       reviewed_at: 2025-11-08T00:14:00Z
       status: approved
   next_actions: []
 summary:
-  problem: Описание live-events находилось в Markdown и не соответствовало знаниевой структуре для handoff в World-service.
-  goal: Зафиксировать категории событий, жизненный цикл, модификаторы систем и интеграции в формате YAML.
-  essence: Документ описывает фреймворк live-events, данные, примеры сценариев 2025–2026, взаимодействие с лодаутами и требования к аналитике.
+  problem: Игровой мир нуждается в динамических событиях, которые связывают лор, экономику и боевые системы в единую сезонную программу.
+  goal: Сформировать фреймворк live-событий, включающий категории, жизненный цикл, модификаторы систем и интеграции.
+  essence: Модульная система событий, обновляющая состояние мира по расписанию, влияющая на лодауты, экономику и социальные активности.
   key_points:
-    - Классифицированы категории событий и их жизненный цикл от планирования до архива.
-    - Определены структуры данных и системные модификаторы для мира, экономики и боевых режимов.
-    - Зафиксированы интеграции с Announcement, Battle Pass, Achievement и аналитическими метриками.
+    - Определены категории событий, охватывающие кризисы, корпоративные операции, фестивали и сезонные кампании.
+    - Жизненный цикл включает планирование, анонс, активную фазу, завершение и архивирование.
+    - События модифицируют боевые лодауты, рейды, экономику и социальные системы через события `world.events.*`.
+    - Интеграции с объявлениями, battle pass и аналитикой обеспечивают оповещение игроков и оценку эффективности.
 content:
   sections:
-    - id: categories
-      title: Категории и описание
+    - id: introduction
+      title: Введение
       body: |
-        Система поддерживает City-Wide Crisis, Corporate Ops, Social Festivals, Underground Alerts, Environmental Shifts и Season
-        Specials. Каждая категория влияет на разные слои мира и задаёт приоритет для world-service.
+        Live Events System задаёт каркас постоянных и сезонных активностей Найт-Сити. События формируют динамику мира, синхронизируются с календарём и усиливают связь игроков с лором.
       mechanics_links:
         - mechanics/world/events/world-events-framework.yaml
+      assets: []
+    - id: categories
+      title: Категории событий
+      body: |
+        Выделены шесть категорий: City-Wide Crisis, Corporate Ops, Social Festivals, Underground Alerts, Environmental Shifts, Season Specials. Каждая категория определяет тональность, задействованные фракции и масштаб влияния.
+      mechanics_links:
+        - mechanics/world/events/global-events-2020-2093.yaml
       assets: []
     - id: lifecycle
-      title: Жизненный цикл события
+      title: Жизненный цикл
       body: |
-        Цикл включает Planning (запись в `live_events_plan`), Announcement (новости, UI, push), Active Phase (модификаторы, временные
-        квесты), Resolution (награды, лор-флаги) и Archive. Жизненный цикл синхронизируется с календарём и кураторами NPC.
+        Цикл событий состоит из этапов планирования, анонса, активной фазы, завершения и архивирования. На стадиях прописаны действия NPC, каналы коммуникации, выдача наград и обновление лорных флагов.
       mechanics_links:
-        - mechanics/world/events/world-events-framework.yaml
+        - mechanics/world/events/world-events-travel-2020-2093.yaml
       assets: []
     - id: data_model
-      title: Данные и сервисы
+      title: Данные и хранилища
       body: |
-        Используются таблицы `live_events_plan`, `live_event_progress`, `live_event_effects` с UUID и JSONB полями. События
-        транслируются через world-service, требуют интеграции с announcement-service и web-компаньоном.
+        Система использует таблицы `live_events_plan`, `live_event_progress`, `live_event_effects` с UUID, JSONB и временными метками для описания расписания, состояний и применённых модификаторов.
       mechanics_links:
-        - mechanics/implementation/backend/announcement/announcement-system.yaml
+        - implementation/backend/announcement/announcement-system.yaml
       assets: []
-    - id: examples
-      title: Примеры событий 2025–2026
+    - id: samples
+      title: Примеры событий
       body: |
-        Blackwall Surge добавляет редкие Shards и сетевые риски, Neon Bash Tournament активирует подпольный PvP, Corporate Divide
-        разворачивает конфликт Arasaka vs Militech. Примеры показывают влияние на лор, экономику и социальные системы.
+        Примеры периода 2025–2026 включают Blackwall Surge с сетевой нестабильностью, Neon Bash Tournament для подпольных боёв и Corporate Divide с конфликтом Arasaka и Militech. Каждое событие демонстрирует влияние на режимы и награды.
       mechanics_links:
-        - mechanics/economy/stock-exchange/stock-events.yaml
+        - mechanics/world/events/world-events-2040-2060.yaml
       assets: []
     - id: system_modifiers
       title: Модификаторы систем
       body: |
-        Live-events влияют на Arena System, Loot Hunt, Dungeons, Loadouts, экономику и социальные награды. Поддерживаются профили
-        лодаутов (stormbreaker/safebearer/scout/stormrunner) и автоподбор комплектов для экспедиций ARC.
+        События влияют на арены, лут, данжи, лодауты, экономику и социальные активности. Доступно динамическое назначение профилей лодаутов, дополнительных эвентов и ценовых корректировок.
       mechanics_links:
         - mechanics/combat/combat-loadouts-system.yaml
-        - mechanics/world/dungeons/dungeon-scenarios-catalog.yaml
+      assets: []
+    - id: loadout_integration
+      title: Интеграция с боевыми лодаутами
+      body: |
+        Публикуется событие `world.events.loadouts-modifier`, которое обновляет рекомендации лодаутов. Экспедиции получают требуемые профили и оборудование, UI подсвечивает неподготовленные комплекты и предлагает преднастроенные пресеты.
+      mechanics_links:
+        - mechanics/progression/progression-skills-mapping.yaml
       assets: []
     - id: integrations
-      title: Интеграции и аналитика
+      title: Интеграции и сервисы
       body: |
-        Система связана с Announcement, Support Ticket, Maintenance Mode, Battle Pass, Achievement. Аналитика отслеживает participation
-        rate, retention lift, economy impact и voice lobby activity.
+        Live Events синхронизируются с Announcement System, Support Ticket, Maintenance Mode, Battle Pass, Achievement System. Обеспечивается рассылка уведомлений, начисление прогресса и контроль технических окон.
       mechanics_links:
-        - implementation/backend/battle-pass/README.yaml
+        - implementation/backend/battle-pass/part1-core-progression.yaml
+        - implementation/backend/support/support-ticket-system.yaml
+      assets: []
+    - id: analytics
+      title: Метрики и UX
+      body: |
+        Основные метрики: Participation Rate, Retention Lift, Economy Impact, Voice Lobby Activity. Пользовательский опыт включает таймеры, голосовые анонсы и сопровождение через веб-компаньон.
+      mechanics_links:
+        - implementation/backend/voice-lobby/voice-lobby-system.yaml
+      assets: []
+    - id: narrative
+      title: NPC и нарратив
+      body: |
+        Кураторы событий — DJ Rix, Commander Imani, Naoko Sato, Hana Ito и другие. Их решения влияют на ветки будущих событий и поддерживают непрерывность лора.
+      mechanics_links:
+        - canon/lore/characters/activity-npc-roster.yaml
+        - canon/lore/activities/activities-lore-compendium.yaml
       assets: []
 appendix:
-  glossary: []
-  references: []
-  decisions: []
+  glossary:
+    - term: Live Event
+      definition: Динамическая активность, временно изменяющая состояние мира и систем игры.
+    - term: Loadout Profile
+      definition: Набор снаряжения и имплантов, рекомендованный для конкретного события или режима.
+  references:
+    - type: internal
+      link: mechanics/combat/combat-loadouts-system.yaml
+    - type: internal
+      link: mechanics/progression/progression-skills-mapping.yaml
+  decisions:
+    - id: live-events-framework
+      title: Фреймворк live-событий Найт-Сити
+      status: approved
+      rationale: Обеспечивает предсказуемое управление контентом и модификаторами систем.
 implementation:
   needs_task: false
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#live-events-system
+    - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
-  - version: '1.1.0'
-    date: 2025-11-08
-    author: world_lead
-    changes: Добавлены модификаторы для боевых лодаутов, ARC-экспедиций и уточнены интеграции.
   - version: '1.0.0'
     date: 2025-11-07
-    author: world_lead
-    changes: Базовое описание фреймворка live-events.
+    author: concept_team
+    changes: Описаны базовые категории и жизненный цикл live-событий.
+  - version: '1.1.0'
+    date: 2025-11-08
+    author: concept_team
+    changes: Добавлены модификаторы боевых лодаутов и расширены интеграции.
 validation:
   checksum: ''
   schema_version: '1.0'
