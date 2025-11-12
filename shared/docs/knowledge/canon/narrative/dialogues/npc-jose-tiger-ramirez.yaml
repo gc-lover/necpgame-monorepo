@@ -1,121 +1,109 @@
 metadata:
-  id: canon-narrative-dialogue-jose-tiger-ramirez
-  title: 'Диалоги — Хосе «Тигр» Рамирес'
+  id: dialogue-npc-jose-tiger-ramirez
+  title: Диалог Хосе «Тигр» Рамирес
   document_type: canon
-  category: narrative
+  category: dialogue
   status: approved
   version: '1.2.0'
-  last_updated: 2025-11-11T00:00:00Z
-  concept_approved: true
-  concept_reviewed_at: 2025-11-07T21:08:00Z
+  last_updated: 2025-11-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
   owners:
-    - role: narrative_director
-      contact: narrative@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
-    - dialogue
+    - npc
     - valentinos
+    - dialogue
   topics:
-    - narrative
-    - gangs
+    - gang-relations
+    - branching-dialogues
   related_systems:
     - narrative-service
-    - social-service
-    - world-service
+    - social-reputation-service
   related_documents:
-    - id: canon-npc-jose-tiger-ramirez
+    - id: npc-lore-jose-tiger-ramirez
       relation: references
-    - id: canon-quests-side-heywood-valentinos-chain
-      relation: references
-    - id: canon-quests-main-002-choose-path
-      relation: complements
+    - id: quest-heywood-valentinos-chain
+      relation: influences
   source: shared/docs/knowledge/canon/narrative/dialogues/npc-jose-tiger-ramirez.md
   visibility: internal
   audience:
+    - concept
     - narrative
-    - systems-design
-    - liveops
   risk_level: medium
 review:
   chain:
-    - role: narrative_director
-      reviewer: Heywood Narrative Cell
-      reviewed_at: 2025-11-07T21:08:00Z
-      status: approved
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Диалог лидера Valentinos сохранялся в Markdown и требовал структурирования для систем ветвления и событий района.
-  goal: Зафиксировать состояния семьи, подозрения и turf-war сценарии с интеграцией в narrative-service и социальные системы.
-  essence: YAML описывает приветствия, клятву, семейные поручения, допросы и военные команды, а также реакции на события Heywood.
+  problem: Структура диалога лидера Valentinos была описана в Markdown и не синхронизировалась с системой знаний.
+  goal: Сформировать канонический документ с состояниями, проверками и интеграциями для Хосе «Тигра» Рамиреса.
+  essence: Хосе сочетает семейную теплоту и жесткость уличных войн, меняя поведение в зависимости от репутации и событий.
   key_points:
-    - Состояния включают base, familia, mistrust, turf-war, fiesta и memorial с соответствующими флагами и событиями.
-    - Узлы охватывают клятву Valentinos, семейные задания, допрос на предательство и командование в turf-war.
-    - Проверки Intimidation, StreetSense, Deception и CombatLeadership управляют доступом к заданиям и последствиям.
+    - Ветвления диалога зависят от репутации Valentinos и мировых флагов turf-war.
+    - Доступны ритуал клятвы, боевые поручения и реакции на подозрения в предательстве.
+    - Успехи и провалы влияют на флаги банды, выдачу контрактов и динамику войны с Maelstrom.
 content:
   sections:
     - id: context
       title: Контекст и цели
       body: |
-        Хосе «Тигр» Рамирес балансирует между семейными традициями Valentinos, turf-war конфликтами и праздниками района.
-        Диалог поддерживает клятву, семейные поручения и кризисные ситуации.
-      mechanics_links: []
+        Локация — баррио Vista del Rey. Диалог поддерживает семейный тон, усиливает сюжет войны за кварталы и
+        подключает активности Valentinos, включая AR-офренды и уличные гонки.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-systems.yaml
       assets: []
     - id: states
       title: Состояния и условия
       body: |
-        Таблица состояний охватывает нейтральное отношение, принятого члена семьи, недоверие, активную войну, праздники и
-        мемориальные сценарии. Используются репутации Valentinos и флаги `flag.valentinos.*`, а также события района.
+        Состояния base, familia, mistrust, turf-war, fiesta и memorial переключаются по репутации и событиям.
+        При активном `world.event.heywood_turf_war` запускается ветка боевых приказов, праздничные состояния
+        используют событие Día de los Muertos, а подозрение возникает при контактах с Maelstrom или NCPD.
       mechanics_links:
-        - ../../02-gameplay/social/reputation-formulas.md
-        - ../../02-gameplay/world/events/world-events-framework.md
+        - shared/docs/knowledge/canon/narrative/npc-lore/common/traders/rita-moreno.yaml
       assets: []
-    - id: dialogue_nodes
-      title: Узлы диалога
+    - id: structure
+      title: Узлы и проверки
       body: |
-        Узлы oath, familia-brief, mistrust-interrogation и turf-command описывают опции игрока, требования и результаты,
-        включая выдачу контрактов, снятие подозрений или изгнание.
-      mechanics_links: []
-      assets: []
-    - id: checks
-      title: Таблица проверок
-      body: |
-        Таблица фиксирует проверки Intimidation, StreetSense, Deception и CombatLeadership с модификаторами и критическими
-        исходами, влияющими на награды и флаги.
-      mechanics_links: []
-      assets: []
-    - id: events
-      title: Реакции на события
-      body: |
-        Диалог реагирует на `world.event.heywood_turf_war` и праздничные события, активируя специальные ветки,
-        временные бафы и побочные активности (офренды, кавер-фиесты).
-      mechanics_links: []
+        Узлы oath, familia-brief, mistrust-interrogation и turf-command покрывают вступление, семейные поручения,
+        допросы и управление войной. Проверки Intimidation, StreetSense, Deception и CombatLeadership дают разные
+        исходы, включая выдачу медальона, контрактов и изгнание.
+      mechanics_links:
+        - mechanics/narrative/quest-system.yaml
       assets: []
     - id: rewards
       title: Награды и последствия
       body: |
-        Описаны изменения репутации Valentinos и Maelstrom, выдача медальонов и кастомного оружия, управление флагами
-        изгнания и запуск контрактов `valentinos-family-rescue` и `valentinos-turf-counterstrike`.
+        Репутация Valentinos изменяется в диапазоне ±20, флаги фиксируют клятву, подозрения и изгнание. Контракты
+        `valentinos-family-rescue`, `valentinos-double-blind` и эвент `valentinos-turf-counterstrike` зависят от
+        успешных решений игрока.
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: Интеграции и экспорт
+      body: |
+        Диалог подключается к `modules/social/informants`, использует симуляцию `dialogue-simulator.ps1` и экспорт
+        в narrative-service для REST/GraphQL интерфейсов. Телеметрия отслеживает успех проверок и вовлеченность в
+        turf-war сценариях.
       mechanics_links: []
       assets: []
 appendix:
   glossary: []
-  references:
-    - title: NPC Lore — Хосе Рамирес
-      link: ../npc-lore/important/jose-tiger-ramirez.md
-    - title: Heywood Valentinos Chain
-      link: ../quests/side/heywood-valentinos-chain.md
-    - title: Branching Dialogues
-      link: ./branching-dialogues.md
+  references: []
   decisions: []
 implementation:
   needs_task: false
-  queue_reference:
-    - shared/trackers/queues/concept/queued.yaml
+  queue_reference: []
   blockers: []
 history:
   - version: '1.2.0'
-    date: 2025-11-11
-    author: narrative_team
-    changes: Диалог Хосе Рамиреса перенесён в YAML со всеми состояниями, проверками и turf-war сценариями.
+    date: 2025-11-12
+    author: concept_director
+    changes: Конвертирован диалог Хосе «Тигр» Рамирес в формат знаний с выделенными состояниями и проверками.
 validation:
   checksum: ''
   schema_version: '1.0'
