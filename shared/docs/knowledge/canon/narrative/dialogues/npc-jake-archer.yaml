@@ -1,121 +1,107 @@
 metadata:
-  id: canon-narrative-dialogue-jake-archer
-  title: 'Диалоги — Джейк Арчер'
+  id: dialogue-npc-jake-archer
+  title: Диалог Джейка Арчера
   document_type: canon
-  category: narrative
+  category: dialogue
   status: approved
   version: '1.0.0'
-  last_updated: 2025-11-11T00:00:00Z
-  concept_approved: true
-  concept_reviewed_at: 2025-11-07T20:43:00Z
+  last_updated: 2025-11-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
   owners:
-    - role: narrative_director
-      contact: narrative@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
+    - npc
+    - trade
     - dialogue
-    - economy
   topics:
-    - narrative
-    - trading
+    - economy
+    - branching-dialogues
   related_systems:
     - narrative-service
     - economy-service
-    - social-service
   related_documents:
-    - id: canon-npc-jake-archer
+    - id: npc-lore-jake-archer
       relation: references
-    - id: canon-quests-main-001-first-steps
-      relation: references
-    - id: canon-economy-trading
-      relation: complements
+    - id: mechanics-economy-trading
+      relation: supports
   source: shared/docs/knowledge/canon/narrative/dialogues/npc-jake-archer.md
   visibility: internal
   audience:
-    - narrative
+    - concept
     - economy
-    - liveops
   risk_level: medium
 review:
   chain:
-    - role: narrative_director
-      reviewer: Economy Narrative Cell
-      reviewed_at: 2025-11-07T20:43:00Z
-      status: approved
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Диалог торговца Джейка Арчера хранился в Markdown и требовал структурирования для сервисов торговли и нарратива.
-  goal: Зафиксировать состояния, узлы, проверки и экономические интеграции для торговых веток Downtown Market.
-  essence: YAML описывает приветствия, привилегии клиентов, корпоративные цепочки и кризисные сценарии с привязкой к REST API.
+  problem: Диалог торговца Джейка Арчера содержался в Markdown и не был приведён к стандарту знаний.
+  goal: Структурировать состояния, скидки и кризисные ветки торгового NPC для интеграции с экономическими сервисами.
+  essence: Джейк управляет скидками, корпоративными контрактами и логистическими кризисами, адаптируя предложения по репутации.
   key_points:
-    - Состояния охватывают знакомство, статус привилегированного клиента, корпоративный контракт и кризис поставок.
-    - Узлы включают торговые скидки, секретные витрины, корпоративные задания и сценарии логистического кризиса.
-    - Проверки Negotiation, Insight, Streetwise, Technical и Hacking управляют доступом к скидкам, контрактам и эвентам.
+    - Состояния market-entry, preferred-client, corporate-sponsor и supply-chain-crisis зависят от репутаций и мировых событий.
+    - Узлы handshake, preferred-catalog, corporate-brief и crisis-routing охватывают скидки, скрытые товары и логистику.
+    - Диалог подключён к системе контрактов, выдаёт активности доставки и реагирует на эвенты Blackwall и забастовок.
 content:
   sections:
     - id: context
-      title: Контекст и цели
+      title: Контекст
       body: |
-        Джейк Арчер обслуживает независимую торговую сеть, реагируя на репутацию игрока, экономические события и
-        корпоративные заказы. Диалог комбинирует социальные и экономические механики.
-      mechanics_links: []
+        Джейк Арчер — независимый торговец Downtown Market. Диалог раскрывает его роль поставщика с гибкой системой
+        скидок и связями с корпорациями и Nomad-кланами.
+      mechanics_links:
+        - mechanics/economy/economy-trading.yaml
       assets: []
     - id: states
-      title: Состояния и условия
+      title: Состояния и зависимости
       body: |
-        Режимы market-entry, preferred-client, corporate-sponsor и supply-chain-crisis определяются репутацией, флагами
-        корпораций и мировыми событиями `logistics_strike` и `blackwall_breach`.
+        Репутация `rep.traders.jake` и флаги `flag.jake.preferred`, `flag.jake.corporate`, `flag.jake.crisis`
+        переключают диалоговые ветви. События `world.event.logistics_strike` и `world.event.blackwall_breach`
+        инициируют сценарии кризиса поставок.
       mechanics_links:
-        - ../../02-gameplay/social/reputation-formulas.md
-        - ../../02-gameplay/economy/economy-trading.md
+        - mechanics/world/world-state/player-impact-systems.yaml
       assets: []
-    - id: dialogue_nodes
-      title: Узлы диалога
+    - id: structure
+      title: Узлы и проверки
       body: |
-        Узлы handshake, preferred-catalog, corporate-brief и crisis-routing фиксируют опции игрока, требования и
-        последствия, включая выдачу контрактов, активностей и стимулов.
-      mechanics_links: []
-      assets: []
-    - id: checks
-      title: Таблица проверок
-      body: |
-        Таблица описывает проверки Negotiation, Insight, Streetwise, Technical и Hacking с модификаторами и критическими
-        исходами, влияющими на цены, события и безопасность.
-      mechanics_links: []
+        Проверки Negotiation, Insight, Streetwise, Technical и Hacking определяют скидки, доступ к экзотике,
+        выдачу контрактов и решение кризисов. Ветви включают выдачу активностей и возможные засады Tyger Claws.
+      mechanics_links:
+        - mechanics/narrative/quest-system.yaml
       assets: []
     - id: integrations
-      title: Интеграции и API
+      title: Интеграции и сервисы
       body: |
-        Диалог синхронизирован с REST/GraphQL эндпоинтами для получения узлов, выполнения проверок, сохранения состояния и
-        запуска торговых активностей. Отслеживаются метрики discount-rate, activity uptake и кризисные решения.
+        Диалог экспортируется в narrative-service и economy-service. REST/GraphQL эндпоинты управляют
+        проверками и активностями, а симуляция `dialogue-simulator.ps1 -Scenario trader-jake` поддерживает тесты.
       mechanics_links: []
       assets: []
-    - id: rewards
-      title: Награды и последствия
+    - id: outcomes
+      title: Экономические эффекты
       body: |
-        Описаны изменения `rep.traders.jake`, косвенные влияния на корпорации, награды (чертежи, товары, активности) и
-        флаги предпочтений, кризиса и чёрных списков.
+        Репутация торговца меняется в диапазоне -20..+40, открываются магазины `jake-default` и `jake-exotics`,
+        контракты `arasaka-supply-run` и `militech-salvage`, а также активности `delivery-night-shift` и
+        `blackwall-manifest-hack`.
       mechanics_links: []
       assets: []
 appendix:
   glossary: []
-  references:
-    - title: NPC Lore — Джейк Арчер
-      link: ../npc-lore/common/traders/jake-archer.md
-    - title: Economy Logistics
-      link: ../../02-gameplay/economy/economy-logistics.md
-    - title: Global Events
-      link: ../../02-gameplay/world/events/global-events-2020-2093.md
+  references: []
   decisions: []
 implementation:
   needs_task: false
-  queue_reference:
-    - shared/trackers/queues/concept/queued.yaml
+  queue_reference: []
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-11
-    author: narrative_team
-    changes: Диалог Джейка Арчера структурирован в YAML с состояниями, проверками и экономическими интеграциями.
+    date: 2025-11-12
+    author: concept_director
+    changes: Конвертирован диалог Джейка Арчера в формат знаний с интеграцией экономических веток.
 validation:
   checksum: ''
   schema_version: '1.0'
