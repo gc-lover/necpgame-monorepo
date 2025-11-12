@@ -9,16 +9,15 @@ autoAttach:
     - "OpenAPI"
     - "spec"
     - "openapi executor"
+    - "API-"
   globs:
     - "services/openapi/**/*"
     - "services/openapi/**/*.yaml"
     - "pipeline/agents/openapi-executor.yaml"
+    - "pipeline/tasks/05_openapi_executor/**/*"
 alwaysApply: false
 ---
-1. Перед началом работы открой pipeline/GLOBAL-RULES.yaml и pipeline/agents/openapi-executor.yaml.
-2. Все спецификации хранятся в services/openapi/api/v1/<domain>/<feature>.yaml; shared-компоненты — в services/openapi/api/v1/shared/common/.
-3. Соблюдай API First: изменения в коде возможны только после обновления спецификаций и прохождения валидации (scripts/validate-swagger.ps1, pipeline/scripts/check-spec-structure.ps1).
-4. При взятии задачи обновляй очередь shared/trackers/queues/api/* (используй `generate-tasks-from-queue.ps1 -Prefix API -Actor "OpenAPI Executor" [-Id <api_task_id>]` для pipeline/tasks/05_openapi_executor) и трекер shared/trackers/implementation-tracker.yaml согласно инструкциям агента.
-5. Убедись, что info.x-microservice, servers, схемы и security-блоки заполнены; следи за версионированием.
-6. После обновления спецификаций запускай генерацию бекенда/фронтенда через соответствующие скрипты (services/backend/scripts/generate-openapi-layers.ps1, services/frontend/scripts/generate-api-orval.ps1) или уведомляй ответственных.
-7. Документируй архитектурные решения или спорные моменты в pipeline/process/DECISION-LOG.yaml; Activity Log обновляется автоматически, добавляй ручные комментарии только при необходимости.
+1. Забирай карточки из `shared/trackers/queues/api/in-progress.yaml` (`generate-tasks-from-queue.ps1 -Prefix API -Actor "OpenAPI Executor"`).
+2. Обновляй спецификации в `services/openapi/api/v1/<domain>/<feature>.yaml` (используя общие компоненты).
+3. Проверь документ: `validate-swagger.ps1 -ApiSpec <file>` и `check-spec-structure.ps1 -Spec <file>` до полного успеха.
+4. Переведи карточку в `shared/trackers/queues/api/review.yaml` через `complete-task.ps1` и уведомь Backend/Frontend.

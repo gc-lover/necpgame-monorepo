@@ -22,10 +22,12 @@ items:
 - `frontend/{not-started,in-progress,completed}.yaml`
 - `qa/{planned,executing,completed}.yaml`
 - `release/{ready,released}.yaml`
+- `refactor/{queued,in-progress,completed}.yaml`
 
 ## Правила
 - При смене статуса задача удаляется из старого файла и добавляется в новый.
 - Все timestamps в формате `YYYY-MM-DD HH:MM`.
 - Скрипт `check-queue-yaml.ps1` проверяет структуру и уникальность идентификаторов. Выполняй его перед коммитом.
 - При превышении 500 строк разбивай файл на `_0001.yaml`, `_0002.yaml` и т.п., добавляй ссылки в README.
+- Для агрегированной сводки запускай `pipeline/scripts/status-dashboard.ps1` (файл `shared/trackers/status-dashboard.yaml`).
 

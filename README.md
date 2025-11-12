@@ -7,7 +7,7 @@
   - `agents/` — YAML-инструкции для всех агентов.
   - `checklists/` — обязательные проверки при переходах между стадиями.
   - `templates/` — шаблоны задач, отчётов и коммуникаций.
-  - `scripts/` — PowerShell-утилиты и автоматизация (валидаторы, queue-manager, pre-commit).
+  - `scripts/` — PowerShell-утилиты и автоматизация (валидаторы, генерация/закрытие задач, pre-commit).
 - `shared/`
   - `docs/knowledge/` — канон, механики, контент, исследования (YAML).
   - `docs/communications/` — коммуникационные пакеты (Community Agent).
@@ -23,15 +23,6 @@
 # Проверка структуры репозитория
 pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\NECPGAME
 
-# Управление очередями без ручного редактирования YAML
-pwsh -File pipeline/scripts/queue-manager.ps1 -Command add `
-     -SourceFile shared/trackers/queues/backend/not-started.yaml `
-     -Id BE-2025-999 -Title "Новый сценарий" -Owner "Backend Implementer"
-# Требуется модуль powershell-yaml (однократно): pwsh -Command "Install-Module -Name powershell-yaml -Scope CurrentUser -Force"
-# Альтернатива без PowerShell (требуется PyYAML)
-python pipeline/scripts/queue_manager.py add shared/trackers/queues/backend/not-started.yaml \
-       --id BE-2025-999 --title "Новый сценарий" --owner "Backend Implementer"
-
 # Валидация OpenAPI
 pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiDirectory services/openapi/api/v1
 
@@ -45,18 +36,48 @@ pwsh -File services/frontend/scripts/generate-api-orval.ps1
 pwsh -File pipeline/scripts/run-precommit.ps1
 # Установка pre-commit hook
 pwsh -File pipeline/scripts/install-precommit.ps1
-# Генерация задач из очереди (shared/trackers/queues → pipeline/tasks) с автогенерацией ID
+# Генерация задач из очереди (shared/trackers/queues → pipeline/tasks) с автогенерацией ID, обновлением очереди и Activity Log
 pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 \
      -QueueFile shared/trackers/queues/backend/not-started.yaml \
      -TargetDirectory pipeline/tasks/06_backend_implementer \
      -Prefix BE -Actor "Backend Implementer" \
-     [-Id BE-2025-029] [-TemplateFile pipeline/templates/task-from-queue-template.yaml] [-Force] [-NoQueueUpdate] [-DisableActivityLog]
+     [-Id BE-2025-029] [-TemplateFile pipeline/templates/task-from-queue-template.yaml] \
+     [-Force] [-NoQueueUpdate] [-DisableActivityLog] [-SkipIndexUpdate] [-ValidateSync] [-ValidateSyncOnly]
+# Завершение задачи (перенос в новую очередь, архивация и Activity Log)
+pwsh -File pipeline/scripts/complete-task.ps1 \
+     -TaskFile pipeline/tasks/06_backend_implementer/BE-042-new-api-layer.yaml \
+     -TargetQueueFile shared/trackers/queues/backend/completed.yaml \
+     -Actor "Backend Implementer" \
+     [-SourceQueueFile shared/trackers/queues/backend/in-progress.yaml] [-ArchiveDirectory pipeline/tasks/archive]
+# Создание новой записи знания
+pwsh -File pipeline/scripts/new-knowledge.ps1 \
+     -Title "Рабочее название" \
+     -DocumentType canon \
+     -Category vision \
+     -OutputDirectory shared/docs/knowledge/canon/vision \
+     -Tags vision,lore \
+     [-Owners concept_director,vision_manager] [-Actor "Vision Manager"]
+# Запуск сценария агента (workflow → последовательные команды)
+pwsh -File pipeline/scripts/run-scenario.ps1 -Role openapi-executor -Step claim-task [-Variables @{ "spec" = "services/openapi/api/v1/foo.yaml" }] [-DryRun]
+# Генерация чеклистов для Cursor (`.cursor/tasks/*.json`)
+pwsh -File pipeline/scripts/generate-checklist-tasks.ps1 -All [-Force]
+# Мониторинг и авто-карточки по знаниям
+pwsh -File pipeline/scripts/watch-knowledge.ps1 [-ProcessGlossary] [-DryRun]
+# Сравнение версий документа знаний
+pwsh -File pipeline/scripts/knowledge-diff.ps1 -File shared/docs/knowledge/.../document.yaml [-Since HEAD~1]
+# Проверка обязательного обновления Activity Log
+pwsh -File pipeline/scripts/check-activity-log.ps1 [-BaseRef origin/develop]
+# Формирование статус-дэшборда
+pwsh -File pipeline/scripts/status-dashboard.ps1 [-IncludeTasks]
+# Итоговая сводка для handoff
+pwsh -File pipeline/scripts/handoff-summary.ps1 -QueueFile shared/trackers/queues/backend/in-progress.yaml -Role "Backend Implementer" [-TasksDirectory pipeline/tasks/06_backend_implementer] [-Format markdown]
 ```
 
 - Если в карточке очереди нет `id`, укажите `-Prefix` — скрипт присвоит номер (`<PREFIX>-000`, `<PREFIX>-001`, …), допишет slug из `title` и обновит очередь.
 - Имя файла формируется как `<ID>-<slug>.yaml`; если title пустой или после нормализации slug отсутствует, используется только идентификатор.
 - Параметр `-Actor` фиксирует запись в `shared/trackers/activity-log.yaml`; без него используется значение `automation`. `-DisableActivityLog` отключает автоматическую запись.
-- После генерации задач отдельное редактирование `shared/trackers/activity-log.yaml` не требуется: запись добавляется автоматически. Ручные правки допустимы только в исключительных ситуациях (например, ретроактивное восстановление истории) и фиксируются через отдельный MR.
+- После генерации/закрытия задач отдельное редактирование `shared/trackers/activity-log.yaml` не требуется: запись добавляется автоматически. Ручные правки допустимы только в исключительных ситуациях (например, ретроактивное восстановление истории) и фиксируются через отдельный MR.
+- Параметры `-ValidateSync` и `-ValidateSyncOnly` проверяют соответствие между очередями и task-файлами. Скрипт автоматически обновляет `pipeline/tasks/index.yaml`, в котором собрана сводка по всем очередям.
 
 ## Git-поток (lightweight GitFlow)
 
@@ -71,11 +92,10 @@ pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 \
 - Мержим только через Pull Request с обязательной проверкой CI и checklist агента.
 - После merge feature → develop ветку удаляем (локально и на origin).
 - Используйте `git worktree add ../feature-x feature/<task>` для параллельных потоков.
-- Перед открытием PR выполняйте `pipeline/scripts/run-precommit.ps1`.
-- Установите hook: `pwsh -File pipeline/scripts/install-precommit.ps1` (на Linux/macOS не забудьте `chmod +x .git/hooks/pre-commit`).
+- Перед открытием PR выполняйте `pipeline/scripts/run-precommit.ps1` (включает `check-activity-log.ps1` в режиме проверки индексированных файлов).
+- Установите hook: `pwsh -File pipeline/scripts/install-precommit.ps1` (на Linux/macOS не забудьте `chmod +x .git/hooks/pre-commit`) — он автоматически вызывает run-precommit при каждом коммите.
 - Обновление трекеров и логов (Activity, Decision) обязательно при переходе задач между стадиями.
 - Тяжёлые артефакты (рендеры, media, UE5) храните в отдельном хранилище или через git LFS.
-- Для окружений без PowerShell применяйте Python CLI `pipeline/scripts/queue_manager.py` и аналогичные обёртки.
 - Настройте защиту ветки `main` и, при необходимости, `develop` в настройках GitHub (Branch protection rules).
 
 ## CI
@@ -85,7 +105,8 @@ pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 \
 - `structure` — выполняет проверки архитектуры, Markdown и review-меток.
 - `openapi` — запускает `validate-swagger` при изменениях в `services/openapi/**`.
 - `backend` / `frontend` — запускают структурные проверки сервисов только при изменениях соответствующих директорий.
-- `pr-main-validation` — включается только для Pull Request в `main`, прогоняет `run-precommit`, `check-knowledge-schema`, доступность queue-manager и зарезервированные шаги для `mvn test` / `npm test`.
+- `pr-main-validation` — включается только для Pull Request в `main`, прогоняет `run-precommit`, `check-knowledge-schema`, а также гарантирует успешный запуск maven/npm тестов.
+- Отдельный workflow `task-link` проверяет, что в описании PR указаны ID задач и путь к соответствующей очереди (`shared/trackers/queues/...`).
 
 Следите за успешным прохождением workflow перед merge.
 
@@ -100,7 +121,10 @@ pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 \
 - Лимит файла — 400 строк; превышение → новые файлы с суффиксами `_0001`, `_0002`, ….
 - Запускайте `pipeline/scripts/check-file-limits.ps1`, `check-knowledge-schema.ps1`, `check-knowledge-review.ps1` перед передачей.
 - Markdown-файлы в knowledge недопустимы, проверяется `check-knowledge-markdown.ps1`.
-- Очереди обновляйте через `pipeline/scripts/queue-manager.ps1` или `python pipeline/scripts/queue_manager.py`.
+- Очереди обновляйте через автоматические скрипты (`generate-tasks-from-queue.ps1` для создания карточек, `complete-task.ps1` для перевода статусов); ручное редактирование YAML запрещено.
+- Общая сводка по состоянию очередей и задач — `pipeline/tasks/index.yaml` (обновляется `generate-tasks-from-queue.ps1` или вручную через `-ValidateSyncOnly`).
+- Генерируйте новые знания через `pipeline/scripts/new-knowledge.ps1` (быстрый запуск: `.cursor/tasks/new-knowledge.json`, автоматическое обновление глоссария и Activity Log).
+- Мониторинг статусов: `pipeline/scripts/status-dashboard.ps1` (результат — `shared/trackers/status-dashboard.yaml`) и точечные handoff-сводки через `pipeline/scripts/handoff-summary.ps1` (`shared/trackers/handovers/`).
 
 ## Связанные правила Cursor
 

@@ -26,6 +26,7 @@ workflow:
     description: Перенеси карточку в соответствующую YAML-очередь (`shared/trackers/queues/api/queued.yaml`, `shared/trackers/queues/vision/in-progress.yaml` и т.п.), при создании новой задачи используй `generate-tasks-from-queue.ps1 -Actor "Readiness Reviewer"` для автоматической записи в Activity Log.
     scripts:
       - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/queued.yaml"
+      - "pwsh -File pipeline/scripts/handoff-summary.ps1 -QueueFile shared/trackers/queues/vision/review.yaml -Role \"Readiness Reviewer\" -TasksDirectory pipeline/tasks/03_vision_manager -Format markdown -Actor \"Readiness Reviewer\""
   - step: notify-next-agent
     description: Убедись, что Activity Log содержит запись (генератор задач делает это автоматически); при необходимости добавь ручное сообщение со статусом и ссылкой для API Task Architect.
 handoff:
@@ -53,4 +54,7 @@ metrics:
 tools:
   - "shared/trackers/readiness-tracker.yaml"
   - "pipeline/scripts/check-readiness-entry.ps1"
+  - "pipeline/scripts/watch-knowledge.ps1"
+  - "pipeline/scripts/handoff-summary.ps1"
+  - "pipeline/scripts/watch-knowledge.ps1"
 

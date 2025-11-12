@@ -1,0 +1,184 @@
+metadata:
+  id: ui-game-start
+  title: UI — Game Start & Shooter Intro
+  document_type: implementation
+  category: ui
+  status: draft
+  version: '2.0.0'
+  last_updated: 2025-11-10T00:45:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - onboarding
+    - shooter
+  topics:
+    - ui_flow
+    - tutorial
+  related_systems:
+    - combat-shooter-core
+    - session-service
+    - frontend-ui-service
+  related_documents:
+    - id: ui-hud-core
+      relation: continuation
+    - id: shooter-attributes
+      relation: references
+    - id: shooter-briefing-config
+      relation: configuration
+  source: shared/docs/knowledge/implementation/ui-game-start.md
+  visibility: internal
+  audience:
+    - concept
+    - vision
+    - frontend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Игроки сталкиваются с разрознённым стартовым опытом и не получают целостного ввода в стрелковую петлю.
+  goal: Сконструировать единый UI-поток от логина до подключения к боевой сессии с обязательным обучением стрелку.
+  essence: Чёткая последовательность экранов, синхронизированных с сервисами матчмейкинга и телеметрии, которая обучает механикам и готовит к бою.
+  key_points:
+    - Пять последовательных экранов покрывают авторизацию, выбор сервера, персонажа, брифинг и лобби.
+    - Shooter Briefing подключает телеметрию и интерактивное обучение с записью прогресса.
+    - UI интегрирован с Auth, Session, Characters, Loadout и Matchmaking API.
+    - Телеметрия фиксирует эффективность обучения через сравнение показателей до и после.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Документ описывает обновлённый стартовый пользовательский опыт: от авторизации до выхода в боевую сессию. Основной упор сделан на интеграцию стрелковой учебной петли, которая должна быть обязательной для новых игроков и необязательной для опытных пользователей с подтверждёнными показателями.
+      mechanics_links: []
+      assets: []
+    - id: screens_overview
+      title: Структура экранов
+      body: |
+        | Экран | Файл | Цель | Ключевые элементы |
+        | --- | --- | --- | --- |
+        | Login | ui/game-start/login-screen | Авторизация, выбор региона | Форма логина, MFA, индикатор латентности |
+        | Server Select | ui/game-start/server-selection | Подбор сервера и фильтрация | Карточки серверов, фильтры, вызов `GetServers` |
+        | Character Select | ui/game-start/character-select | Выбор персонажа и лодаута | Карточки персонажей, модуль loadout, readiness meter |
+        | Shooter Briefing | ui/game-start/shooter-briefing | Обучение стрелковой петле | Телеметрия атрибутов, мини-сцены, переход в сессию |
+        | Matchmaking Lobby | ui/main-game/ui-hud-core#pre-match | Подготовка к бою | Ready check, swap лодаута, squad chat |
+      mechanics_links: []
+      assets: []
+    - id: shooter_briefing
+      title: Shooter Briefing
+      body: |
+        Брифинг выполняет роль обязательного обучения стрелка и должен длиться не менее двух минут. Игрок получает доступ к Telemetry Panel, интерактивным сценам и превью экипировки. Атрибуты `accuracy`, `stability`, `mobility` и `presence` подтягиваются из атрибутивной модели стрелка. События мини-сцен отправляются в `POST /api/v1/tutorial/events`, завершение — в `POST /api/v1/combat/shooter/briefing`. Экран также выводит уведомление об анти-чит политике и серверном авторитете.
+      mechanics_links:
+        - implementation/shooter-attributes
+      assets: []
+    - id: api_and_events
+      title: API и события
+      body: |
+        | Поток | Endpoint | Описание |
+        | --- | --- | --- |
+        | Auth | `POST /api/v1/auth/login` | Авторизация и выдача токена |
+        | Session | `GET /api/v1/session/regions` | Получение списка серверов с метриками задержки |
+        | Characters | `GET /api/v1/characters/players` | Список персонажей игрока |
+        | Loadout | `GET /api/v1/combat/loadouts/current` | Текущий боевой комплект |
+        | Tutorial | `POST /api/v1/tutorial/events` | Фиксация прогресса обучения |
+        | Matchmaking | `POST /api/v1/matchmaking/queue` | Добавление в очередь |
+        | Shooter Intro | `POST /api/v1/combat/shooter/briefing` | Завершение брифинга и фиксация параметров |
+
+        **WebSocket**
+
+        - `wss://api.necp.game/v1/matchmaking/{sessionId}` — статус очереди и готовность сквада.
+        - `wss://api.necp.game/v1/tutorial/shooter/{playerId}` — прогресс обучения и подсказки в реальном времени.
+
+        **Kafka / Event Bus**
+
+        - `ui.telemetry.login` — успешные авторизации.
+        - `ui.telemetry.shooter-briefing` — завершение обучения и записи параметров.
+        - `ui.telemetry.matchmaking` — тайминги ожидания и отказы.
+      mechanics_links: []
+      assets: []
+    - id: ux_flow
+      title: UX-флоу
+      body: |
+        1. Login → Server Select: авторизация и подбор рекомендованного региона.
+        2. Character Select: отображение параметров персонажа, `loadout power`, `TTK preview` и `role tags`.
+        3. Shooter Briefing: интерактивное обучение с настройкой чувствительности мыши и ассистами.
+        4. Matchmaking Lobby: готовность сквада, быстрый чат, предупреждения по латентности.
+        5. Combat Session: переход к интерфейсу `ui-hud-core` после подтверждения готовности.
+      mechanics_links: []
+      assets: []
+    - id: ui_states
+      title: Состояния UI
+      body: |
+        | Состояние | Триггер | Действие |
+        | --- | --- | --- |
+        | maintenance | `GET /maintenance/status` возвращает `true` | Показываем баннер и блокируем вход |
+        | queue-paused | Matchmaking load high | Предлагаем PvE-тренировку |
+        | tutorial-required | Новый аккаунт без завершённого брифинга | Автоматически открываем обучающий экран |
+      mechanics_links: []
+      assets: []
+    - id: telemetry_analytics
+      title: Телеметрия и аналитика
+      body: |
+        Система собирает данные о времени прохождения брифинга, точности в мини-сценах и выборе лодаутов. Передаются пары `accuracy_before` и `accuracy_after` для оценки эффективности обучения. Также фиксируется событие `tutorial_skipped`, если игрок пропускает брифинг из-за подтверждённой статистики клиента UE5.
+      mechanics_links: []
+      assets: []
+    - id: design_resources
+      title: Ресурсы дизайна
+      body: |
+        Ключевые артефакты для команды дизайна и контента:
+        - Figma `https://figma.com/file/shooter-start-ui` (MVP макеты).
+        - Видео-инструктаж на стороне контент-команды.
+        - Голосовые подсказки зависят от `audio-service`.
+        - JSON-конфигурация обучения `ui/game-start/shooter-briefing-config.json`.
+      mechanics_links: []
+      assets:
+        - type: figma
+          path: https://figma.com/file/shooter-start-ui
+    - id: implementation_next_steps
+      title: Следующие шаги
+      body: |
+        1. Синхронизировать макеты с фронтенд-модулем `FRONT-WEB/modules/game-start`.
+        2. Развернуть `shooter-briefing-config.json` на dev-среде и интегрировать с `POST /api/v1/tutorial/events`.
+        3. Проверить доступность интерфейса (screen reader, управление клавиатурой).
+        4. После готовности WebGL демо обновить раздел UE5 Launchpad.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: TTK
+      definition: Показатель времени на устранение цели, зависит от оружия и экипировки.
+    - term: Readiness meter
+      definition: Индикатор готовности персонажа и сквада к старту матча.
+    - term: Shooter briefing
+      definition: Обязательная обучающая последовательность для освоения стрелковых механик.
+  references:
+    - title: ui/main-game/ui-hud-core
+      link: shared/docs/knowledge/implementation/ui/ui-hud-core.md
+    - title: shooter-attributes
+      link: shared/docs/knowledge/implementation/shooter-attributes.md
+    - title: shooter-briefing-config
+      link: shared/docs/knowledge/implementation/mvp-data-json/shooter-briefing-config.json
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/frontend/not-started.yaml#ui-game-start
+  blockers:
+    - Требуется обновление голосовых подсказок после поставки ассетов от audio-service.
+history:
+  - version: '2.0.0'
+    date: 2025-11-10
+    author: concept_team
+    changes: Документ перенесён в единый YAML-формат и актуализирован под стрелковый onboarding.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

@@ -1,0 +1,49 @@
+{
+  "id": "vision-manager-scenario",
+  "title": "Vision Manager",
+  "source": "pipeline/agents/vision-manager.yaml",
+  "generated_at": "2025-11-10T22:10:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Обнови знание по шаблону",
+          "scripts": [],
+          "status": "pending"
+        },
+        {
+          "label": "Запусти проверку",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <idea-file>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Очередь",
+      "items": [
+        {
+          "label": "Создай/обнови карточку",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/vision/queued.yaml -TargetDirectory pipeline/tasks/03_vision_manager -Prefix VSN -Actor \"Vision Manager\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача",
+      "items": [
+        {
+          "label": "Переведи в review",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/03_vision_manager/<task-file.yaml> -TargetQueueFile shared/trackers/queues/vision/review.yaml -Actor \"Vision Manager\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

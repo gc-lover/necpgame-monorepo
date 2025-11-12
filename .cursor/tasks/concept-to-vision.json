@@ -1,0 +1,49 @@
+﻿{
+  "id": "concept-to-vision",
+  "title": "Concept → Vision",
+  "source": "pipeline/agents/concept-director.yaml",
+  "generated_at": "2025-11-10T22:10:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Обнови знание по шаблону",
+          "scripts": [],
+          "status": "pending"
+        },
+        {
+          "label": "Запусти проверку",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <draft-file>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Очередь",
+      "items": [
+        {
+          "label": "Создай/обнови карточку",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/concept/queued.yaml -TargetDirectory pipeline/tasks/02_concept_director -Prefix CCD -Actor \"Concept Director\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача",
+      "items": [
+        {
+          "label": "Переведи в Vision",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/02_concept_director/<task-file.yaml> -TargetQueueFile shared/trackers/queues/vision/review.yaml -Actor \"Concept Director\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

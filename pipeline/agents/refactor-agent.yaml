@@ -14,6 +14,7 @@ inputs:
   scripts_directory: "pipeline/scripts/"
   queues:
     release_ready: "shared/trackers/queues/release/ready.yaml"
+    refactor_backlog: "shared/trackers/queues/refactor/queued.yaml"
 workflow:
   - step: run-audit
     description: Запусти базовые проверки структуры и безопасности.
@@ -26,20 +27,24 @@ workflow:
   - step: log-issues
     description: Зафиксируй результаты в Activity Log и blockers.yaml; предпочитай автоматизированные записи (через генератор задач или сценарии), ручные записи добавляй только для сводок.
   - step: plan-refactor
-    description: Подготовь задачи (`theme: technical`) в `pipeline/tasks/03_vision_manager` и обнови очереди shared/trackers/queues.
+    description: Подготовь рефакторинг-задачи в `pipeline/tasks/01_refactor_agent`, синхронизируй очереди `shared/trackers/queues/refactor`. Пользуйся автоматизацией (generate/complete-task) вместо ручного редактирования YAML.
     scripts:
-      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/concept/queued.yaml -TargetDirectory pipeline/tasks/03_vision_manager -Prefix VSN -Actor \"Refactor Agent\" [-Id <task_id>]"
-      - "pwsh -File pipeline/scripts/queue-manager.ps1 -Command list -SourceFile shared/trackers/queues/concept/queued.yaml"
-      - "python pipeline/scripts/queue_manager.py list shared/trackers/queues/concept/queued.yaml"
+      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/refactor/queued.yaml -TargetDirectory pipeline/tasks/01_refactor_agent -Prefix RFA -Actor \"Refactor Agent\" [-ValidateSync] [-Id <task_id>]"
+      - "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/01_refactor_agent/<task-file.yaml> -TargetQueueFile shared/trackers/queues/refactor/completed.yaml -Actor \"Refactor Agent\""
+  - step: monitor
+    description: Сформируй статус-дэшборд и handoff-сводки для заинтересованных ролей.
+    scripts:
+      - "pwsh -File pipeline/scripts/status-dashboard.ps1 -IncludeTasks"
+      - "pwsh -File pipeline/scripts/handoff-summary.ps1 -QueueFile shared/trackers/queues/vision/review.yaml -Role \"Vision → Readiness\" -TasksDirectory pipeline/tasks/03_vision_manager -Format markdown -Output shared/trackers/handovers/vision-to-readiness.md"
   - step: coordinate
-    description: Передай задачи исполнителям, следи за прогрессом, обновляй playbook.
+    description: Передай задачи исполнителям, следи за прогрессом, обнови playbook.
 handoff:
   target_agents:
     - Vision Manager
     - Backend Implementer
     - Frontend Implementer
   requirements:
-    - описанные задачи в pipeline/tasks/03_vision_manager
+    - описанные задачи в pipeline/tasks/01_refactor_agent
     - очереди и трекеры синхронизированы
 validation:
   scripts:
@@ -47,12 +52,12 @@ validation:
     - "pwsh -File pipeline/scripts/check-directory-structure.ps1 -ApiRoot services/openapi/api/v1"
     - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path shared/docs/knowledge"
     - "pwsh -File pipeline/scripts/run-precommit.ps1"
-    - "python pipeline/scripts/queue_manager.py list shared/trackers/queues/backend/not-started.yaml"
     - "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -KnowledgeRoot shared/docs/knowledge"
     - "pwsh -File pipeline/scripts/check-knowledge-markdown.ps1"
 outputs:
   - отчёт в Activity Log (авто или ручная запись при необходимости)
   - список задач на рефакторинг
+  - актуальный `pipeline/tasks/index.yaml`
   - обновлённые правила и шаблоны
 metrics:
   - architecture_compliance_score
@@ -60,8 +65,11 @@ metrics:
 tools:
   - "pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml"
   - "pipeline/scripts/check-queue-yaml.ps1"
-  - "pipeline/scripts/queue_manager.py"
   - "pipeline/scripts/install-precommit.ps1"
   - ".github/workflows/ci.yml"
   - ".github/workflows/enforce-pr-merges.yml"
+  - "pipeline/tasks/index.yaml"
+  - "pipeline/scripts/status-dashboard.ps1"
+  - "pipeline/scripts/handoff-summary.ps1"
+  - "pipeline/scripts/new-knowledge.ps1"
 

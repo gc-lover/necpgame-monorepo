@@ -1,0 +1,50 @@
+{
+  "id": "openapi-executor-scenario",
+  "title": "OpenAPI Executor",
+  "source": "pipeline/agents/openapi-executor.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Прими задачу",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/api/in-progress.yaml -TargetDirectory pipeline/tasks/05_openapi_executor -Prefix API -Actor \"OpenAPI Executor\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Спецификация",
+      "items": [
+        {
+          "label": "Обнови OpenAPI файл",
+          "scripts": [],
+          "status": "pending"
+        },
+        {
+          "label": "Пройди проверки",
+          "scripts": [
+            "pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiSpec <spec-path>",
+            "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec-path>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача",
+      "items": [
+        {
+          "label": "Переведи задачу в review",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile <openapi-task-file> -TargetQueueFile shared/trackers/queues/api/review.yaml -Actor \"OpenAPI Executor\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

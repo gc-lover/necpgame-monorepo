@@ -1,0 +1,45 @@
+{
+  "id": "readiness-reviewer-scenario",
+  "title": "Readiness Reviewer",
+  "source": "pipeline/agents/readiness-reviewer.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Возьми карточку Vision",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/vision/review.yaml -TargetDirectory pipeline/tasks/03_vision_manager -Prefix VSN -Actor \"Readiness Reviewer\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Проверка",
+      "items": [
+        {
+          "label": "Проверь знание",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <idea-file>",
+            "pwsh -File pipeline/scripts/check-readiness-entry.ps1 -TrackerFile shared/trackers/readiness-tracker.yaml -DocumentPath <idea-file>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача",
+      "items": [
+        {
+          "label": "Переведи карточку в API queue",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/03_vision_manager/<task-file.yaml> -TargetQueueFile shared/trackers/queues/api/queued.yaml -Actor \"Readiness Reviewer\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

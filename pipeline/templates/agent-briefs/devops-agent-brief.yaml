@@ -6,6 +6,7 @@ supporting_files:
   - "pipeline/checklists/qa-to-release.yaml"
   - "shared/trackers/release-notes.yaml"
 work_instructions:
+  - "Разово установи локальный pre-commit (`pwsh -File pipeline/scripts/install-precommit.ps1`); hook запускает run-precommit с `check-activity-log.ps1` перед каждым коммитом."
   - "Создай файл релизной задачи через `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/release/ready.yaml -TargetDirectory pipeline/tasks/09_devops_release -Prefix REL -Actor \"DevOps Agent\" [-Id <release_id>]` (Activity Log обновится автоматически)."
   - "Проверь артефакты, docker/helm, переменные окружения и секреты."
   - "Выполни dry-run, подготовь мониторинг и обнови release notes."
@@ -17,4 +18,5 @@ validation_scripts:
 completion_actions:
   - "Обнови `shared/trackers/implementation-tracker.yaml` (`release.released`), проверь автоматическую запись в Activity Log и добавь сообщение в communication log."
   - "Перенеси карточку в `shared/trackers/queues/release/released.yaml` (валидация `check-queue-yaml.ps1`) и задокументируй пост-релизный мониторинг."
+  - "Закрой задачу через `pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/09_devops_release/<task-file.yaml> -TargetQueueFile shared/trackers/queues/release/released.yaml -Actor \"DevOps Agent\"`."
 

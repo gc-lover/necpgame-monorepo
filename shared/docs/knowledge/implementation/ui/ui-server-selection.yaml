@@ -1,0 +1,108 @@
+metadata:
+  id: ui-server-selection
+  title: Server Selection UI
+  document_type: implementation
+  category: ui
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:16:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - infrastructure
+    - matchmaking
+  topics:
+    - user-interface
+    - server-selection
+  related_systems:
+    - world-service
+    - frontend-client
+  related_documents:
+    - id: ui-login-screen
+      relation: complements
+    - id: ui-character-select
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - vision
+    - frontend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Игрокам требуется прозрачный выбор региона и статуса сервера после авторизации.
+  goal: Зафиксировать UX и API Server Selection, чтобы синхронизировать фронтенд с сервисом миров.
+  essence: Спецификация экрана выбора сервера с требованиями к данным и взаимодействиям.
+  key_points:
+    - Интерфейс показывает статус, онлайн и доступность каждого сервера.
+    - Точка интеграции с world-service определена через GET /api/v1/servers.
+    - Экран является частью общего onboarding-потока и должен быть консистентен по стилю.
+content:
+  sections:
+    - id: layout
+      title: Макет и элементы управления
+      body: |
+        Основная структура экрана — список серверов с цветовым статусом, краткими метриками и кнопкой выбора.
+
+        Макет:
+        ┌──────────────────────────────────────────────────────┐
+        │ SELECT SERVER                                        │
+        ├──────────────────────────────────────────────────────┤
+        │ ● Server 01 (US-East) — Online: 2,543 — [SELECT]     │
+        │ ● Server 02 (EU-West) — Online: 1,892 — [SELECT]     │
+        │ ○ Server 03 (Asia) — Online: 4,123 — [SELECT]        │
+        └──────────────────────────────────────────────────────┘
+
+        Цветовые индикаторы отражают состояние: зелёный — доступен, жёлтый — ограниченный доступ, красный — офлайн.
+      mechanics_links: []
+      assets: []
+    - id: data-requirements
+      title: Требования к данным и бизнес-правила
+      body: |
+        - Список серверов загружается при открытии экрана, с обновлением по таймеру каждые 15 секунд.
+        - Для каждого сервера возвращаются атрибуты: id, регион, онлайновый онлайн, лимит, статус очереди, задержка для игрока.
+        - Слот «Select» заблокирован, если сервер в состоянии maintenance или если пинг превышает критический порог, заданный в настройках игрока.
+        - При подтверждении выбора сохраняется регион в профиле игрока и инициируется инициализация игровых сессий.
+      mechanics_links: []
+      assets: []
+    - id: api-integration
+      title: Интеграции и зависимости
+      body: |
+        - REST: GET /api/v1/servers — основной источник данных.
+        - Дополнительно должна быть поддержка push-обновлений через WebSocket канал server-status.
+        - Ошибки соединения обрабатываются локально, повторная попытка доступна по кнопке «Retry».
+        - Экран синхронизируется с `ui-login-screen` и `ui-character-select`, чтобы передавать выбранный контекст сессии.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: AI Brain Manager
+    changes: Конвертирована спецификация Server Selection из Markdown в формат знания.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
+
+
+

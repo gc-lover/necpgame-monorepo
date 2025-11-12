@@ -15,30 +15,49 @@ try {
     exit 1
 }
 
+function Get-TopKeyNames {
+    param($Object)
+    if ($Object -is [System.Collections.IDictionary]) {
+        return $Object.Keys
+    }
+    return $Object.PSObject.Properties.Name
+}
+
+function Get-Value {
+    param($Object, [string]$Name)
+    if ($Object -is [System.Collections.IDictionary]) {
+        return $Object[$Name]
+    }
+    return $Object.$Name
+}
+
 $requiredTop = @("status", "last_updated", "items")
+$topKeys = Get-TopKeyNames -Object $yaml
 foreach ($key in $requiredTop) {
-    if (-not ($yaml.PSObject.Properties.Name -contains $key)) {
+    if (-not ($topKeys -contains $key)) {
         Write-Error "В файле отсутствует обязательное поле '$key': $File"
         exit 1
     }
 }
 
-if (-not ($yaml.items -is [System.Collections.IEnumerable])) {
+$items = Get-Value -Object $yaml -Name "items"
+if (-not ($items -is [System.Collections.IEnumerable])) {
     Write-Error "Поле 'items' должно быть массивом: $File"
     exit 1
 }
 
 $ids = @{}
-foreach ($item in $yaml.items) {
-    if (-not $item.id) {
+foreach ($item in $items) {
+    $itemId = if ($item -is [System.Collections.IDictionary]) { $item["id"] } else { $item.id }
+    if (-not $itemId) {
         Write-Error "Все элементы должны иметь поле 'id': $File"
         exit 1
     }
-    if ($ids.ContainsKey($item.id)) {
-        Write-Error "Дублирующийся идентификатор '$($item.id)' в $File"
+    if ($ids.ContainsKey($itemId)) {
+        Write-Error "Дублирующийся идентификатор '$itemId' в $File"
         exit 1
     }
-    $ids[$item.id] = $true
+    $ids[$itemId] = $true
 }
 
 Write-Output "Очередь $File соответствует структуре."

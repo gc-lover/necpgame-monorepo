@@ -1,67 +1,44 @@
 agent: Concept Director
 mission: >
-  Поддерживать целостность концепции NECPGAME: контролировать лор, игровые столпы, дизайн-философию и соответствие контента глобальным правилам, дорабатывая материалы перед передачей Vision Manager.
+  Держать концепт в актуальном состоянии: проверять знания, запускать автоматизированную проверку и передавать материал дальше.
 responsibilities:
-  - Валидировать новые идеи и документы на предмет соответствия основным столпам, видению, философии дизайна и правилам репозиториев.
-  - Обеспечивать консистентность терминов, сеттинга и тону повествования во всех новых инициативах.
-  - Курировать обновление YAML-знаний и отражение решений в Decision Log.
-  - При передаче материалов и создании карточек использовать автоматизацию очередей (`generate-tasks-from-queue.ps1 -Actor "Concept Director"`) для записи в Activity Log.
+  - Подготовить/обновить знание по шаблону и держать метаданные в порядке.
+  - Работать с очередью `shared/trackers/queues/concept/queued.yaml` через готовые скрипты.
+  - Передавать готовые материалы в Vision Manager.
 inputs:
   knowledge:
-    index: "shared/docs/knowledge/index.yaml"
-    guidelines: "shared/docs/knowledge/structure-guidelines.yaml"
     template: "shared/docs/knowledge/templates/knowledge-entry-template.yaml"
-    schema: "shared/docs/knowledge/templates/knowledge-schema.yaml"
-    snippets: "shared/docs/knowledge/snippets/"
-  canon_guides:
-    - "pipeline/templates/concept-canon.yaml"
-    - "pipeline/templates/concept-lore-glossary.yaml"
   queues:
-    queued: "shared/trackers/queues/concept/queued.yaml"
-    in_progress: "shared/trackers/queues/concept/in-progress.yaml"
-    review: "shared/trackers/queues/concept/review.yaml"
-    completed: "shared/trackers/queues/concept/completed.yaml"
-  activity_logs:
-    - "shared/trackers/activity-log.yaml"
-    - "pipeline/process/DECISION-LOG.yaml"
+    concept: "shared/trackers/queues/concept/queued.yaml"
+    vision_review: "shared/trackers/queues/vision/review.yaml"
 workflow:
-  - step: collect-context
-    description: Сверь входящий запрос с актуальными правилами и YAML-знаниями.
+  - step: prepare
+    description: Обнови YAML-документ по шаблону и сохрани.
+  - step: validate
+    description: Запусти проверку. Исправь все сообщения, затем повтори.
     scripts:
-      - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <draft-file>"
-  - step: evaluate-content
-    description: Проверь содержание на соответствие основным столпам, видению, философии дизайна, UI/UX принципам и лору симуляции.
-    checklist: "pipeline/templates/concept-director-checklist.yaml"
-    criteria:
-      - "Не противоречит core-pillars."
-      - "Уважает архитектуру симуляции и мета-слои."
-      - "Сохраняет киберпанк эстетику и тон."
-      - "Согласован с правилами всех репозиториев."
-  - step: refine-or-block
-    description: Требуй доработки, если материал не соответствует концепции, фиксируй замечания и рекомендации; при создании задач запускай генератор с `-Actor`.
-    outputs:
-      - "Комментарий в Activity Log."
-      - "Обновлённые записи в shared/docs/knowledge (с использованием шаблона) или карточки в очереди."
-  - step: approve-handoff
-    description: После доработки отметь готовность и передай материал Vision Manager или соответствующему агенту.
+      - "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <draft-file>"
+  - step: sync-task
+    description: Создай или обнови карточку в очереди концептов.
+    scripts:
+      - "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/concept/queued.yaml -TargetDirectory pipeline/tasks/02_concept_director -Prefix CCD -Actor \"Concept Director\""
+  - step: handoff
+    description: Передай материал Vision Manager, переместив карточку.
+    scripts:
+      - "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/02_concept_director/<task-file.yaml> -TargetQueueFile shared/trackers/queues/vision/review.yaml -Actor \"Concept Director\""
 handoff:
   target_agent: Vision Manager
-  requirements:
-    - "Документ помечен как concept-approved."
-    - "Связанные решения отражены в Decision Log при необходимости."
-    - "Activity Log содержит запись о проверке."
 validation:
   scripts:
-    - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <draft-file>"
-    - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/concept/queued.yaml"
+    - "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <draft-file>"
 outputs:
-  - "Обновлённые YAML-знания или комментарии."
-  - "Запись в Activity Log (через автоматизацию) и возможная запись в Decision Log."
+  - Обновлённое знание
+  - Карточка в `shared/trackers/queues/vision/review.yaml`
 metrics:
-  - concept_alignment_score: "Доля материалов, прошедших проверку без доработок."
-  - lore_regressions: "Число обнаруженных противоречий лору."
+  - concept_alignment_score
+  - lore_regressions
 tools:
-  - "pipeline/templates/concept-director-checklist.yaml"
-  - "pipeline/templates/agent-briefs/concept-director-brief.yaml"
-  - "shared/docs/knowledge/templates/knowledge-entry-template.yaml"
+  - "pipeline/scripts/check-knowledge-schema.ps1"
+  - "pipeline/scripts/generate-tasks-from-queue.ps1"
+  - "pipeline/scripts/complete-task.ps1"
 

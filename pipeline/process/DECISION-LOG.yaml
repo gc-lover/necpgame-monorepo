@@ -64,25 +64,23 @@ decision_log:
         После миграции в монорепозиторий ручное редактирование YAML-очередей и отсутствие единых проверок приводили к риску рассинхронизации.
         Для поддержки Digital Factory требуется автоматизировать управление очередями и запуск ключевых валидаторов.
       decision:
-        - "Добавлен скрипт pipeline/scripts/queue-manager.ps1 для операций add/move/remove без правки YAML вручную."
-        - "Подготовлен кроссплатформенный CLI pipeline/scripts/queue_manager.py (PyYAML) в дополнение к PowerShell-версии."
-        - "Создан набор проверок pipeline/scripts/run-precommit.ps1 (архитектура, очереди, знания, OpenAPI)."
-        - "Разработан инсталлятор hook'а pipeline/scripts/install-precommit.ps1."
-        - "Введены проверки check-knowledge-review.ps1 и check-knowledge-markdown.ps1 для контроля знаний."
-        - "Создан workflow .github/workflows/ci.yml с path-фильтрами для structure/backend/frontend/openapi."
+        - "Вместо ручных CLI закреплён единый стек: `generate-tasks-from-queue.ps1` + `complete-task.ps1`, опирающиеся на модуль `Pipeline.Automation` (очереди/Activity Log обновляются автоматически)."
+        - "Сохраняем pre-commit стек: pipeline/scripts/run-precommit.ps1 (архитектура, очереди, знания, OpenAPI) и установщик hook'а pipeline/scripts/install-precommit.ps1."
+        - "Контроль знаний выполняют check-knowledge-review.ps1 и check-knowledge-markdown.ps1; очереди валидируются check-queue-yaml.ps1."
+        - "Workflow .github/workflows/ci.yml использует path-фильтры для structure/backend/frontend/openapi и требует run-precommit."
       consequences:
         short_term:
-          - "Агентам необходимо обновить свои процессы: использовать queue-manager и запускать run-precommit перед push."
+          - "Агентам необходимо обновить процессы: использовать `generate-tasks-from-queue.ps1` / `complete-task.ps1`, запускать run-precommit перед push."
           - "Refactor Agent актуализирует инструкции, `.cursor/rules` и подключает pre-commit hook."
-          - "Команды ставят PyYAML (при использовании Python-CLI) и проверяют совместимость на Windows/Linux."
+          - "Команды проверяют совместимость скриптов на Windows/Linux и поддерживают модуль Pipeline.Automation."
         long_term:
           - "Снижается риск порчи трекеров, улучшена прозрачность ревью."
           - "CI выполняет только релевантные проверки, ускоряя цикл."
       status: "accepted"
       related:
         - ".github/workflows/ci.yml"
-        - "pipeline/scripts/queue-manager.ps1"
-        - "pipeline/scripts/queue_manager.py"
+        - "pipeline/scripts/generate-tasks-from-queue.ps1"
+        - "pipeline/scripts/complete-task.ps1"
         - "pipeline/scripts/run-precommit.ps1"
         - "pipeline/scripts/install-precommit.ps1"
         - "pipeline/agents/refactor-agent.yaml"

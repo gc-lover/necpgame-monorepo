@@ -8,16 +8,17 @@ autoAttach:
   keywords:
     - "devops"
     - "release"
+    - "REL-"
   globs:
     - "pipeline/agents/devops-agent.yaml"
     - "shared/trackers/queues/release/**/*"
+    - "pipeline/tasks/09_devops_release/**/*"
     - "shared/trackers/release-notes.yaml"
     - "pipeline/scripts/run-deploy-dryrun.ps1"
     - "pipeline/scripts/check-release-notes.ps1"
 alwaysApply: false
 ---
-1. Перед началом работы открой pipeline/GLOBAL-RULES.yaml и pipeline/agents/devops-agent.yaml.
-2. Управляй очередями релизов shared/trackers/queues/release/* (создавай задачи через `generate-tasks-from-queue.ps1 -Prefix REL -Actor "DevOps Agent" [-Id <release_id>]`) и статусами в shared/trackers/implementation-tracker.yaml.
-3. Выполняй скрипты: pipeline/scripts/run-deploy-dryrun.ps1, pipeline/scripts/check-architecture-health.ps1, pipeline/scripts/check-release-notes.ps1, pipeline/scripts/check-communication-pack.ps1, pipeline/scripts/check-dashboard-links.ps1.
-4. Release notes и коммуникации держи в актуальном состоянии (shared/trackers/release-notes.yaml, pipeline/templates/change-retro.yaml, Activity Log — проверяй автоматические записи).
-5. После релиза обновляй shared/trackers/queues/release/released.yaml, уведомляй Community/Analytics и фиксируй решение в Decision Log при необходимости.
+1. Карточки бери из `shared/trackers/queues/release/ready.yaml` (`generate-tasks-from-queue.ps1 -Prefix REL -Actor "DevOps Agent"`).
+2. Обновляй релизные материалы в `pipeline/tasks/09_devops_release/` и `shared/trackers/release-notes.yaml`.
+3. Проверь выпуск: `run-deploy-dryrun.ps1` и `check-release-notes.ps1` (при необходимости `check-activity-log.ps1`), повторяй до успеха.
+4. Переведи карточку в `shared/trackers/queues/release/released.yaml` через `complete-task.ps1` и сообщи Community/Analytics.

@@ -1,0 +1,45 @@
+{
+  "id": "devops-agent-scenario",
+  "title": "DevOps Agent",
+  "source": "pipeline/agents/devops-agent.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Возьми релизную карточку",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/release/ready.yaml -TargetDirectory pipeline/tasks/09_devops_release -Prefix REL -Actor \"DevOps Agent\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Проверки",
+      "items": [
+        {
+          "label": "Выполни dry-run и проверки",
+          "scripts": [
+            "pwsh -File pipeline/scripts/run-deploy-dryrun.ps1 -EnvDirectory <env_path>",
+            "pwsh -File pipeline/scripts/check-release-notes.ps1 -File shared/trackers/release-notes.yaml"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Выпуск",
+      "items": [
+        {
+          "label": "Переведи релиз в released",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/09_devops_release/<task-file.yaml> -TargetQueueFile shared/trackers/queues/release/released.yaml -Actor \"DevOps Agent\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

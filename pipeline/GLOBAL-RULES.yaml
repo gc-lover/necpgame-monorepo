@@ -7,6 +7,20 @@ global_rules:
     - "Инструкции ссылаются на источники вместо дублирования правил."
     - "Монорепозиторий: работай через git worktree или короткоживущие ветки, избегай долгих feature-веток."
     - "GitFlow-light: main защищена, develop — интеграция, feature/hotfix/release ветки живут краткосрочно."
+  game_context:
+    setting: "MMORPG/экстракт-шутер в киберпанк-сеттинге (NECPGAME): мегаполис, фракции, рисковая экономика."
+    pillars:
+      - "Комбинация боёв, прогрессии и социального взаимодействия."
+      - "Опасность ↔ награда: каждое действие несёт риск потери ресурсов."
+      - "Фракции и сезонные события определяют сюжетные арки."
+    reference_docs:
+      - "shared/docs/knowledge/concept-canon.yaml"
+      - "shared/docs/knowledge/concept-lore-glossary.yaml"
+  architecture_patterns:
+    - "DDD + ограниченные контексты: knowledge → API → backend → frontend."
+    - "Чистая/шестигранная архитектура сервисов (порты/адаптеры, application/service/domain)."
+    - "Event-driven и асинхронные очереди для интеграций между доменами."
+    - "Набор конвенций по README модулей, тестам и миграциям (см. shared/docs/knowledge/structure-guidelines.yaml)."
   documentation_hierarchy:
     - "shared/docs/knowledge/ — канон, механики, контент и исследования в формате YAML."
     - "shared/trackers/ — очереди и статусные трекеры."
@@ -20,9 +34,11 @@ global_rules:
     - "Перед стартом сверяйся с зависимостями (статусы предыдущих стадий)."
     - "Приступая к работе, обновляй трекер (например, status: in_progress, отметка времени)."
     - "Завершая работу, выполняй чеклист, фиксируй результаты, обновляй статусы."
-    - "Заполняй записи в trackers/activity-log.yaml через автоматизацию: генератор задач (`generate-tasks-from-queue.ps1 -Actor <роль>`) или специализированные сценарии; ручное редактирование допускается только если автоматизация недоступна."
+    - "Заполняй записи в trackers/activity-log.yaml через автоматизацию: `generate-tasks-from-queue.ps1` и `complete-task.ps1`; ручное редактирование допускается только если автоматизация недоступна."
     - "Любые изменения попадают в main только через Pull Request (merge commit)."
     - "Используй pipeline/scripts/generate-tasks-from-queue.ps1 (с указанием префикса, например -Prefix API/BE/FE/QA/REL, и параметра -Actor <роль>) для создания карточек задач в pipeline/tasks; если id отсутствует, скрипт присвоит номер и обновит очередь."
+    - "Держи `pipeline/tasks/index.yaml` в актуальном состоянии: скрипт обновляет его автоматически, а для проверки синхронизации очереди и task-файлов используй `-ValidateSync` или `-ValidateSyncOnly`."
+    - "Для закрытия работ пользуйся `pipeline/scripts/complete-task.ps1`: перенос карточек, архивация YAML и запись в Activity Log выполняются автоматически."
   quality_management:
     - "Перед коммитом запускай валидаторы и линтеры (OpenAPI, Java, TypeScript и т.д.)."
     - "Для знаний выполняй pipeline/scripts/check-knowledge-schema.ps1; для очередей — pipeline/scripts/check-queue-yaml.ps1."
@@ -30,9 +46,14 @@ global_rules:
     - "Спорные решения фиксируй через process/DECISION-LOG.yaml."
     - "Перед push используй pipeline/scripts/run-precommit.ps1 (или эквивалентный pre-commit hook)."
     - "Установи hook через pipeline/scripts/install-precommit.ps1, чтобы run-precommit запускался автоматически."
-    - "Используй pipeline/scripts/queue-manager.ps1 или python pipeline/scripts/queue_manager.py вместо ручного редактирования shared/trackers/queues/*.yaml."
-    - "Pull Request в main должны проходить статус pr-main-validation (включает run-precommit, check-knowledge-schema и тестовые шаги)."
-    - "Ветки develop/main защищены: merge только через PR, с обязательными статусами structure, openapi, backend, frontend, pr-main-validation (для main)."
+    - "run-precommit обязательно содержит проверку `pipeline/scripts/check-activity-log.ps1` в режиме `-UseIndex`; коммит без актуальной записи в Activity Log запрещён."
+    - "Для контроля знаний используй `pipeline/scripts/watch-knowledge.ps1` (автокарточки) и `pipeline/scripts/knowledge-diff.ps1` (summary по изменениям)."
+    - "Создавая новые знания, применяй `pipeline/scripts/new-knowledge.ps1`; для обзора статуса запускай `pipeline/scripts/status-dashboard.ps1` и при передаче стадий формируй сводку `pipeline/scripts/handoff-summary.ps1`."
+  git_practices:
+    - "Автоматизированные скрипты (check-knowledge-schema/complete-task) подготавливают стандартные git add/commit — перед пушем оцени diff и дополни сообщение при необходимости."
+    - "Коммиты атомарны: один тип изменения (знание, очередь, лог) → одно сообщение вида `feat|fix|chore(scope): summary`."
+    - "Не смешивай несвязанные изменения; при необходимости дели работу на несколько задач."
+    - "Используй `git status` перед завершением шага, чтобы убедиться в чистоте рабочей директории."
   maintenance:
     - "Назначай ответственных за роли и трекеры в trackers/owners.yaml."
     - "Проводить ревизию инструкций и чеклистов не реже раза в неделю."
@@ -42,7 +63,7 @@ global_rules:
     - "Ветки: main (релиз), develop (интеграция), feature/*, release/*, hotfix/*."
     - "feature/* ветки создаются от develop и мержатся через PR с checklist соответствующего агента."
     - "release/* ветки формируются при подготовке релиза, после проверки мержатся в main и develop."
-    - "hotfix/* создаются от main, после устранения проблемы мержатся в main и develop."
+    - "hotfix/* создаются от main, после устранения проблемы мержятся в main и develop."
     - "Direct push в main/master запрещён (контролируется workflow enforce-pr-merges)."
 
 

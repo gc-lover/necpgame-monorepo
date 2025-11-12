@@ -1,18 +1,16 @@
 agent: Concept Director
 tasks_source:
-  description: Очередь идей и документов, требующих концептуального согласования
+  description: Очередь концептов
   location: "shared/trackers/queues/concept/queued.yaml"
 supporting_files:
-  - "pipeline/templates/concept-canon.yaml"
-  - "pipeline/templates/concept-lore-glossary.yaml"
-  - "pipeline/templates/concept-director-checklist.yaml"
+  - "shared/docs/knowledge/templates/knowledge-entry-template.yaml"
 work_instructions:
-  - "Применяй checklist, проверяя соответствие столпам, видению, философии дизайна и эстетике."
-  - "Используй `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/concept/queued.yaml -TargetDirectory pipeline/tasks/02_concept_director -Prefix CCD -Actor \"Concept Director\" [-Id <concept_id>]` для карточек; Activity Log заполнится автоматически, при необходимости дополни запись и обнови DECISION-LOG."
+  - "Обнови знание по шаблону."
+  - "Запусти `pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <draft-file>`; исправь ошибки, если есть."
+  - "Создай/обнови карточку: `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/concept/queued.yaml -TargetDirectory pipeline/tasks/02_concept_director -Prefix CCD -Actor \"Concept Director\"`."
+  - "Передай материал Vision: `pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/02_concept_director/<task-file.yaml> -TargetQueueFile shared/trackers/queues/vision/review.yaml -Actor \"Concept Director\"`."
 validation_scripts:
-  - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <material>"
-  - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/concept/<status>.yaml"
+  - "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <draft-file>"
 completion_actions:
-  - "Отметь документ как concept-approved и перенеси карточку в `shared/trackers/queues/concept/completed.yaml`."
-  - "Сделай запись для Vision Manager (проверь автоматическую запись и добавь ручное резюме при необходимости) о готовности материала."
+  - "Убедись, что карточка в `shared/trackers/queues/vision/review.yaml` и ошибок нет."
 

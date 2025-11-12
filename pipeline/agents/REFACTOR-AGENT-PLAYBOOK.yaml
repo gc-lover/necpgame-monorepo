@@ -8,7 +8,7 @@ refactor_playbook:
         - "knowledge-glossary.yaml"
         - "structure-guidelines.yaml"
         - "templates/knowledge-entry-template.yaml"
-        - "canon/, mechanics/, content/, implementation-guides/, analysis/, archives/"
+        - "canon/, mechanics/, content/, implementation/, analysis/, archives/"
     - path: "shared/trackers"
       purpose: "Глобальные очереди и трекеры статусов."
       key_items:
@@ -18,7 +18,7 @@ refactor_playbook:
         - "readiness-tracker.yaml"
         - "release-notes.yaml"
     - path: "pipeline/"
-      purpose: "Агентские инструкции, чеклисты, скрипты, задачи."
+      purpose: "Агентские инструкции, чеклисты, шаблоны, скрипты, задачи."
       key_items:
         - "agents/*.yaml"
         - "checklists/*.yaml"
@@ -53,24 +53,16 @@ refactor_playbook:
         structure-guidelines.yaml
         changelog.yaml
         canon/
-          vision/
-          lore/
-          narrative/
         mechanics/
-          combat/
-          progression/
-          economy/
-          quests/
         content/
-          quests/
-        implementation-guides/
+        implementation/
         analysis/
         archives/
         templates/knowledge-entry-template.yaml
     audit:
       - "Все знания в YAML и соответствуют шаблону."
       - "metadata.document_type согласован с директориями."
-      - "alidation.schema_version=1.0."
+      - "validation.schema_version=1.0."
       - "structure-guidelines.yaml отражает актуальные правила."
   services_layout:
     openapi:
@@ -127,25 +119,11 @@ refactor_playbook:
         agents/*.yaml
         checklists/*.yaml
         templates/
-          agent-briefs/*.yaml
-          api-task-template.yaml
-          frontend-brief.yaml
-          test-plan.yaml
-          test-report.yaml
-          change-retro.yaml
         tasks/
-          03_vision_manager/
-          04_api_task_architect/
-          05_openapi_executor/
-          06_backend_implementer/
-          07_frontend_implementer/
-          08_qa_validation/
-          09_devops_release/
-          archive/
         scripts/*.ps1
         process/*.yaml
     audit:
-      - "Инструкции и брифы указывают на shared/docs/knowledge и shared/trackers."
+      - "Инструкции и брифы ссылаются на автоматические скрипты (generate/complete-task)."
       - "scripts/VALIDATION-SUMMARY.yaml актуализирован."
       - "Checklists отражают новые пути."
   automation:
@@ -169,7 +147,17 @@ refactor_playbook:
       - name: "pipeline/scripts/check-release-notes.ps1"
         description: "Проверка release notes."
       - name: "pipeline/scripts/generate-tasks-from-queue.ps1"
-        description: "Создание файлов задач из очередей с автогенерацией ID/slug."
+        description: "Создание файлов задач из очередей с автоматическим обновлением Activity Log, очередей и индекса."
+      - name: "pipeline/scripts/complete-task.ps1"
+        description: "Перенос карточек в новую очередь, архивация YAML задачи и пересборка pipeline/tasks/index.yaml."
+      - name: "pipeline/scripts/run-precommit.ps1"
+        description: "Комплексная проверка перед коммитом (архитектура, знания, очереди, OpenAPI) с обязательным вызовом `check-activity-log.ps1 -UseIndex`."
+      - name: "pipeline/scripts/watch-knowledge.ps1"
+        description: "Мониторинг знаний и глоссария, автоматическое создание карточек для ревью."
+      - name: "pipeline/scripts/knowledge-diff.ps1"
+        description: "Формирование отчётов об изменениях YAML-документов знаний между ревизиями."
+      - name: "pipeline/scripts/check-activity-log.ps1"
+        description: "Контроль, что знания/очереди/задачи сопровождаются обновлением Activity Log."
   workflow:
     steps:
       - id: inventory
@@ -181,15 +169,15 @@ refactor_playbook:
       - id: migrate_docs
         description: "Перенеси устаревшие .md в shared/docs/knowledge по шаблону, обнови changelog."
       - id: align_queues
-        description: "Синхронизируй shared/trackers с pipeline/tasks, запускай `generate-tasks-from-queue.ps1 -Actor \"Refactor Agent\"` и смежные сценарии, Activity Log заполняется автоматически."
+        description: "Синхронизируй shared/trackers/queues/refactor с pipeline/tasks/01_refactor_agent: используй `generate-tasks-from-queue.ps1 -Actor \"Refactor Agent\"` и при закрытии `complete-task.ps1`, Activity Log обновляется автоматически."
       - id: verify_services
         description: "Убедись, что backend и frontend проходят проверки из pipeline/scripts."
       - id: handoff
         description: "Подготовь change-pack и передай статус владельцам очередей."
   reporting:
-    - "Обновляй shared/trackers/activity-log.yaml и pipeline/process/DECISION-LOG.yaml, предпочитая автоматические записи (генератор задач, сценарии)."
+    - "Обновляй shared/trackers/activity-log.yaml и pipeline/process/DECISION-LOG.yaml, предпочитая автоматические записи (генератор/complete-task)."
+    - "Контролируй состояние pipeline/tasks/index.yaml; при расхождениях запускай `generate-tasks-from-queue.ps1 -ValidateSyncOnly`."
     - "Используй pipeline/templates/change-retro.yaml после завершения блока."
-    - "Фиксируй изменения скриптов в pipeline/scripts/VALIDATION-SUMMARY.yaml."
   notes:
     - "Лимит 400 строк на знания и спецификации."
     - "Все новые документы должны иметь validation.schema_version=1.0."

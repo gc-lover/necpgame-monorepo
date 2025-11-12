@@ -8,16 +8,18 @@ autoAttach:
   keywords:
     - "refactor"
     - "audit"
+    - "RFA-"
   globs:
     - "pipeline/agents/refactor-agent.yaml"
     - "pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml"
     - "pipeline/scripts/check-architecture-health.ps1"
     - "pipeline/scripts/check-directory-structure.ps1"
     - "pipeline/scripts/check-file-limits.ps1"
+    - "pipeline/tasks/01_refactor_agent/**/*"
+    - "shared/trackers/status-dashboard.yaml"
 alwaysApply: false
 ---
-1. Перед работой прочитай pipeline/GLOBAL-RULES.yaml, pipeline/agents/refactor-agent.yaml и pipeline/agents/REFACTOR-AGENT-PLAYBOOK.yaml.
-2. Выполняй базовые проверки: pipeline/scripts/check-architecture-health.ps1, pipeline/scripts/check-directory-structure.ps1, pipeline/scripts/check-file-limits.ps1, а также профильные скрипты для backend/frontend/security.
-3. Все изменения структур фиксируй в Decision Log и Activity Log; для задач используй автоматические записи (генератор задач), дополняй вручную только итоговые сводки и changelog знаний.
-4. Синхронизируй очереди и задачи (Vision/API/Backend/Frontend) — используй `generate-tasks-from-queue.ps1` с соответствующим префиксом и параметром `-Actor "Refactor Agent"` (VSN/API/BE/FE/QA/REL) и pipeline/templates/CHANGE-PACK.yaml для пошаговых внедрений.
-5. После миграций обновляй CI, удаляй устаревшие каталоги (например, TO_REFACTOR/*) и информируй владельцев ролей.
+1. Карточки бери из `shared/trackers/queues/refactor/queued.yaml` (`generate-tasks-from-queue.ps1 -Prefix RFA -Actor "Refactor Agent"`).
+2. Фиксируй план в `pipeline/tasks/01_refactor_agent/` и при крупных изменениях используй `pipeline/templates/CHANGE-PACK.yaml`.
+3. Запускай `check-architecture-health.ps1`, `check-directory-structure.ps1`, `check-file-limits.ps1`; повторяй до успеха.
+4. Переведи карточку в `shared/trackers/queues/refactor/completed.yaml` через `complete-task.ps1` и обнови Activity/Decision Log.

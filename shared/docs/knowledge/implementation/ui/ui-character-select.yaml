@@ -1,0 +1,108 @@
+metadata:
+  id: ui-character-select
+  title: Character Select UI
+  document_type: implementation
+  category: ui
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T20:16:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - character
+    - onboarding
+  topics:
+    - user-interface
+    - progression
+  related_systems:
+    - character-service
+    - frontend-client
+  related_documents:
+    - id: ui-login-screen
+      relation: complements
+    - id: ui-server-selection
+      relation: complements
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - vision
+    - frontend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: После выбора сервера игроку необходимо быстро выбрать существующего персонажа либо создать нового, сохраняя контекст ММО.
+  goal: Задать UI и интеграции Character Select для MVP, чтобы обеспечить непрерывность onboarding-потока.
+  essence: Спецификация выбора и создания персонажа с управлением слотами и вызовами сервисов персонажей.
+  key_points:
+    - Макет содержит список персонажей и пустые слоты с CTA создания.
+    - Описан вызов API GET /api/v1/characters и реакции на выбор или удаление.
+    - Учтены ограничения по количеству слотов и актуализации статуса.
+content:
+  sections:
+    - id: layout
+      title: Макет и взаимодействия
+      body: |
+        Экран показывает список существующих персонажей и пустые слоты. Для каждого персонажа отображаются имя, уровень, локация и время последней игры. Доступны кнопки выбора и удаления, а также CTA «Create New».
+
+        Макет:
+        ┌──────────────────────────────────────────────────────┐
+        │ SELECT CHARACTER                        [CREATE NEW] │
+        ├──────────────────────────────────────────────────────┤
+        │ Viktor "V" Chen — Level 15 Solo, Night City          │
+        │ [SELECT] [DELETE]                                    │
+        │                                                      │
+        │ Empty Slot 2/5                                       │
+        │ [CREATE CHARACTER]                                   │
+        └──────────────────────────────────────────────────────┘
+      mechanics_links: []
+      assets: []
+    - id: rules
+      title: Правила и состояния
+      body: |
+        - Максимум пять слотов; отсутствие свободных слотов блокирует кнопку создания.
+        - Удаление требует подтверждения и обработку задержки на стороне сервиса.
+        - Статусы персонажей обновляются после входа; если персонаж занят, отображается индикатор «In mission».
+        - Создание нового запускает отдельный поток `appearance-editor` и `creation-flow`.
+      mechanics_links: []
+      assets: []
+    - id: api-integration
+      title: Интеграции и зависимости
+      body: |
+        - REST: GET /api/v1/characters — загрузка списка; DELETE /api/v1/characters/{id}; POST /api/v1/characters — создание.
+        - Требуются уведомления по WebSocket channel character-state для обновления статусов в реальном времени.
+        - Экран принимает контекст выбранного сервера и передаёт выбранного персонажа в запуск игровой сессии.
+        - Локализация имён и ролей должна поддерживаться через общий UI dictionary.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: AI Brain Manager
+    changes: Переведена спецификация Character Select в структурированный YAML для пайплайна знаний.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
+
+
+
