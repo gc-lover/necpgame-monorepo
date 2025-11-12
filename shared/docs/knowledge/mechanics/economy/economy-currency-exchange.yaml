@@ -1,5 +1,5 @@
 metadata:
-  id: mechanics-economy-currency-exchange
+  id: economy-currency-exchange
   title: Экономика — Валютная биржа
   document_type: mechanics
   category: economy
@@ -7,151 +7,158 @@ metadata:
   version: '1.1.0'
   last_updated: 2025-11-07T16:14:00Z
   concept_approved: true
-  concept_reviewed_at: 2025-11-09T03:32:00Z
+  concept_reviewed_at: 2025-11-07T16:14:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - currency_exchange
-    - trading
     - economy
+    - trading
+    - exchange
   topics:
-    - forex
-    - player_economy
+    - валютные-системы
+    - игрок-и-рынок
   related_systems:
     - economy-service
     - wallet-service
     - tax-service
+    - analytics-service
   related_documents:
-    - id: mechanics-economy-currencies-resources
+    - id: economy-currencies-resources
       relation: references
-    - id: mechanics-economy-overview
+    - id: economy-overview
       relation: references
-  source: shared/docs/knowledge/mechanics/economy/economy-currency-exchange.md
+  source: mechanics/economy/economy-currency-exchange.md
   visibility: internal
   audience:
     - concept
     - economy
-    - backend
-  risk_level: high
+  risk_level: medium
 review:
   chain:
     - role: concept_director
       reviewer: ''
-      reviewed_at: 2025-11-09T03:32:00Z
+      reviewed_at: 2025-11-07T16:14:00Z
       status: approved
   next_actions: []
 summary:
-  problem: Игрокам нужен обмен между региональными валютами и инструменты для спекуляции.
-  goal: Разработать механики биржи с парами, комиссиями, API и контролем рисков.
-  essence: Биржа поддерживает instant и лимитные обмены, динамические курсы и интеграцию с сервисами кошелька, налогов и аналитики.
+  problem: Игроки перемещаются между регионами с разными валютами и нуждаются в надёжной системе обмена, регулирующей цены и создающей возможности для спекуляции.
+  goal: Спроектировать валютную биржу с динамическими курсами, комиссиями, ордерами и интеграциями в экономический стек NECPGAME.
+  essence: Централизованная биржа с поддержкой instant и limit ордеров, риск-контролем и событийным API, синхронизированным с экономическими событиями мира.
   key_points:
-    - Основные пары EDDY↔YEN/YUAN/RUB/EUR с параметрами объёма, волатильности и спреда.
-    - Поддержка рыночных и лимитных ордеров с комиссией 1% и скидками для VIP/гильдий.
-    - Курсы реагируют на события мира, экономические кризисы и войны фракций.
-    - Реализована модель данных, API и события для интеграции с другими сервисами.
+    - Поддерживаются major и cross валютные пары с описанными курсами, спредами и объёмами.
+    - Система ордеров включает instant обмен и лимитные заявки с комиссиями и скидочными модификаторами.
+    - Курсы реагируют на внутриигровые события, а risk-компонент ограничивает волатильность и злоупотребления.
+    - Matching engine и API обеспечивают потоковые котировки, историю сделок и интеграцию с сервисами кошельков, налогов и аналитики.
 content:
   sections:
-    - id: concept
-      title: Концепция биржи
+    - id: introduction
+      title: Введение
       body: |
-        Централизованная биржа решает проблему множества региональных валют. Курсы основаны на спросе/предложении, а игроки
-        могут спекулировать или совершать обычный обмен при путешествиях.
+        Валютная биржа позволяет игрокам обменивать региональные валюты и участвовать в спекулятивной торговле. Система поддерживает постоянное обновление курсов, учитывает рыночные события и интегрируется с экономическими сервисами NECPGAME.
       mechanics_links:
         - mechanics/economy/economy-overview.yaml
+      assets: []
+    - id: feature_scope
+      title: Объём функциональности
+      body: |
+        Биржа предоставляет доступ к обмену через instant операции и лимитные ордера, отображает динамические курсы и поддерживает торговые гильдии, VIP-статусы и высокообъёмных трейдеров. Статус документа — approved, фича планируется к пост-MVP и готова к постановке задач.
+      mechanics_links:
+        - mechanics/economy/economy-resources-catalog.yaml
       assets: []
     - id: currency_pairs
       title: Валютные пары
       body: |
-        Major-пары включают EDDY/YEN, EDDY/YUAN, EDDY/RUB и EDDY/EUR с указанием базового курса, спреда, дневного объёма
-        и волатильности. Поддерживаются кросс‑пары для региональных операций.
+        Система описывает пары EDDY с основными валютами и их параметры: курс, спред, суточный объём, волатильность. Также поддерживаются кросс-пары между основными валютами. Курсы указываются как референсные значения, обновляемые ежедневно.
       mechanics_links:
-        - mechanics/economy/economy-currencies-resources.md
+        - mechanics/economy/economy-resources-catalog.yaml
       assets: []
     - id: exchange_mechanics
-      title: Механики обмена
+      title: Механика обмена
       body: |
-        Биржа поддерживает instant сделки и лимитные ордера. Приведены расчёты для мгновенного обмена и примеры экономии
-        при лимитном ордере. Комиссия по умолчанию 1% с изменениями по статусам и гильдиям.
+        Instant обмен рассчитывает результат с учётом текущего курса и комиссии. Лимитные ордера фиксируют желаемый курс и исполняются при достижении условия. Примеры расчётов описывают торговые сценарии в токийском регионе и экономию на лимитных заявках.
       mechanics_links:
         - mechanics/economy/economy-overview.yaml
       assets: []
-    - id: pricing
-      title: Котировки и события
+    - id: fees_structure
+      title: Комиссии и спреды
       body: |
-        Базовые ставки задаются системой и обновляются ежедневно. Корпоративные войны, экономические кризисы и другие события
-        изменяют курсы на ±5–10% и запускают волатильность.
+        Базовая комиссия составляет 1% с возможностью снижения до 0.5% для крупных объёмов, VIP и торговых гильдий. Спред задаётся как разница между ставками покупки и продажи и масштабируется в зависимости от ликвидности и волатильности.
       mechanics_links:
-        - mechanics/economy/economy-events.yaml
+        - mechanics/economy/economy-overview.yaml
+      assets: []
+    - id: rates_dynamics
+      title: Динамика курсов
+      body: |
+        Базовые курсы устанавливаются системой и корректируются событиями мира. Примеры охватывают корпоративные войны и экономические кризисы, которые изменяют соотношения валют и формируют повод для спекуляции.
+      mechanics_links:
+        - mechanics/world/events/live-events-system.yaml
       assets: []
     - id: data_model
       title: Структура данных
       body: |
-        Таблицы `currency_exchange_rates` и `currency_exchange_orders` фиксируют курсы, спреды, объёмы и состояние ордеров.
-        Жизненный цикл ордера включает стадии проверки, частичного заполнения, исполнения и отмены.
+        Описаны таблицы `currency_exchange_rates` и `currency_exchange_orders`, хранящие пары, курсы, спреды, объём и статусы ордеров. Жизненный цикл ордера включает стадии валидации, активного матчинга, частичного и полного исполнения, отмены и блокировки антифродом.
       mechanics_links:
         - mechanics/economy/economy-production-chains.yaml
       assets: []
-    - id: api
+    - id: api_surface
       title: API и события
       body: |
-        Описаны REST и WebSocket точки: получение курсов, создание/отмена ордеров, история операций и предварительные
-        котировки. Event bus транслирует `rate_updated`, `order_filled`, `market_halt` для подписчиков.
+        Экономический сервис предоставляет REST и WebSocket эндпоинты для котировок, создания и отмены ордеров, истории сделок и расчёта предварительных котировок. Событийная шина публикует обновления курсов и состояний ордеров для сервисов кошельков, налогов, аналитики и уведомлений.
       mechanics_links:
-        - mechanics/economy/economy-trading-routes.yaml
+        - implementation/api-requirements/mvp-endpoints/system-endpoints.yaml
       assets: []
-    - id: risk_controls
-      title: Риск и комплаенс
+    - id: risk_management
+      title: Риск и соответствие
       body: |
-        Реализуются AML‑проверки для крупных сделок, лимиты на котировки, режим торговой паузы при волатильности >15% и
-        антиарбитражные ограничения при большом числе исполнений.
-      mechanics_links:
-        - mechanics/economy/economy-trading-routes.yaml
-      assets: []
-    - id: matching_engine
-      title: Matching engine
-      body: |
-        Сопоставление заявок работает по FIFO внутри курса с tie-break по времени и приоритету гильдий. Поддерживаются
-        маркет-мейкеры и автоматическое расширение спреда при низкой ликвидности.
-      mechanics_links:
-        - mechanics/economy/economy-trading-guilds.md
-      assets: []
-    - id: ux_notifications
-      title: UX и уведомления
-      body: |
-        Игроки получают HUD-оповещения, push/email и обновления в UI-графиках. WebSocket-канал отдаёт свечи 1s–1h для
-        визуализации.
+        Введены лимиты AML, троттлинг котировок, механизм торговых остановок при резкой волатильности и защита против кросс-регионального арбитража. Эти меры поддерживают честный рынок и соответствие внутриигровым регуляциям.
       mechanics_links:
         - mechanics/economy/economy-analytics.yaml
       assets: []
-    - id: integrations
-      title: Интеграции
+    - id: matching_engine
+      title: Matching Engine
       body: |
-        Биржа взаимодействует с wallet-service (блокировка средств), tax-service (комиссии и отчётность), analytics-service
-        (агрегаты), event-service (экономические события) и notification-service.
+        Очередь заявок обслуживается по принципу FIFO с учётом времени, поддерживается системный маркет-мейкер для основых пар, а спред расширяется при недостаточной ликвидности. TTL лимитных ордеров задаёт время жизни заявок.
       mechanics_links:
-        - mechanics/economy/economy-trading-guilds.md
+        - mechanics/economy/economy-trading-guilds.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции и UX
+      body: |
+        Биржа взаимодействует с сервисами кошельков, налогов, событий и аналитики, обеспечивая блокировку средств, сбор комиссий и отчётность. Интерфейс предоставляет веб-сокеты для графиков и уведомления для игроков.
+      mechanics_links:
+        - mechanics/economy/economy-trading.yaml
       assets: []
 appendix:
-  glossary: []
+  glossary:
+    - term: EDDY
+      definition: Базовая внутриигровая валюта NECPGAME, используемая для торговых операций.
+    - term: Spread
+      definition: Разница между ставками покупки и продажи валютной пары, отражающая ликвидность рынка.
   references:
-    - title: Currency Resources
-      link: ./economy-currencies-resources.md
-  decisions: []
+    - type: internal
+      link: mechanics/economy/economy-resources-catalog.yaml
+    - type: internal
+      link: mechanics/economy/economy-overview.yaml
+  decisions:
+    - id: currency-exchange-centralized
+      title: Централизованная модель валютной биржи
+      status: approved
+      rationale: Обеспечивает единый контроль курсов и интеграцию с сервисами риска.
 implementation:
   needs_task: false
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#mechanics-economy-currency-exchange
+    - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
-  - version: '1.1.0'
-    date: 2025-11-07
-    author: economy_team
-    changes: Добавлены API, риск-контроль и события, обновлены статусы и matching engine.
   - version: '1.0.0'
     date: 2025-11-06
-    author: economy_team
-    changes: Базовая концепция валютной биржи и курсов.
+    author: concept_team
+    changes: Сформулированы цели биржи, базовые курсы и структура ордеров.
+  - version: '1.1.0'
+    date: 2025-11-07
+    author: concept_team
+    changes: Добавлены API, жизненный цикл ордеров, risk-контроль и интеграции.
 validation:
   checksum: ''
   schema_version: '1.0'
