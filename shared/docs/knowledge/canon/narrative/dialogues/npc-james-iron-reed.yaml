@@ -1,121 +1,108 @@
 metadata:
-  id: canon-narrative-dialogue-james-iron-reed
-  title: 'Диалоги — Джеймс «Железный» Рид'
+  id: dialogue-npc-james-iron-reed
+  title: Диалог Джеймса «Железного» Рида
   document_type: canon
-  category: narrative
+  category: dialogue
   status: approved
   version: '1.1.0'
-  last_updated: 2025-11-11T00:00:00Z
-  concept_approved: true
-  concept_reviewed_at: 2025-11-07T17:18:00Z
+  last_updated: 2025-11-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
   owners:
-    - role: narrative_director
-      contact: narrative@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
-    - dialogue
+    - npc
     - militech
+    - dialogue
   topics:
-    - narrative
-    - corporate
+    - corporate-war
+    - branching-dialogues
   related_systems:
     - narrative-service
-    - world-service
-    - social-service
+    - corporate-reputation-service
   related_documents:
-    - id: canon-npc-james-iron-reed
+    - id: npc-lore-james-iron-reed
       relation: references
-    - id: canon-quests-main-002-choose-path
-      relation: references
-    - id: canon-quests-faction-world-arasaka
-      relation: contrasts
+    - id: quest-arasaka-vs-militech
+      relation: depends-on
   source: shared/docs/knowledge/canon/narrative/dialogues/npc-james-iron-reed.md
   visibility: internal
   audience:
+    - concept
     - narrative
-    - systems-design
-    - liveops
   risk_level: medium
 review:
   chain:
-    - role: narrative_director
-      reviewer: Military Narrative Cell
-      reviewed_at: 2025-11-07T17:18:00Z
-      status: approved
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Диалог Militech агента Джеймса Рида требовал переноса в единый YAML-формат с сохранением проверок и эвентов.
-  goal: Стандартизировать состояния Militech, реакции на корпоративную войну и интеграцию с narrative-service.
-  essence: Документирует приветствия, узлы набора, доверия и подозрений, а также обработку эскалации корпоративной войны.
+  problem: Материал по диалогу агента Militech хранился в Markdown и не имел связной структуры в базе знаний.
+  goal: Оцифровать состояния, проверки и API-интеграции Джеймса Рида для корпоративных сюжетов.
+  essence: Рид проверяет лояльность, выдаёт боевые задачи и реагирует на двойные игры между Militech и Arasaka.
   key_points:
-    - Состояния base, loyal, rival-suspect и war-alert работают через репутацию Militech и флаги Clearance A/подозрения.
-    - Узлы intake, loyal-brief, rival-hearing и war-order содержат проверки Persuasion, Strategy, Deception и Intimidation.
-    - Реакции на `world.event.corporate_war_escalation` и `world.event.blackwall_breach` управляют событиями и бонусами.
+    - Состояния base, loyal, rival-suspect и war-alert зависят от репутации Militech и глобальных событий.
+    - Ветви охватывают первичный intake, допросы и военные приказы с проверками Strategy, Negotiation и Deception.
+    - Влияние диалога распространяется на контракты, флаги корпоративной войны и телеметрию API narrative-service.
 content:
   sections:
     - id: context
       title: Контекст и цели
       body: |
-        Джеймс «Железный» Рид курирует наёмников Militech, распределяя боевые задачи и контролируя лояльность. Диалог
-        охватывает набор, выдачу контрактов и противодействие Arasaka.
-      mechanics_links: []
+        Джеймс Рид — куратор наёмников Militech. Диалог служит точкой входа для боевых контрактов и проверяет
+        готовность игрока участвовать в эскалации против Arasaka.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-systems.yaml
       assets: []
     - id: states
-      title: Состояния и условия
+      title: Состояния и триггеры
       body: |
-        Определены условия для base, loyal, rival-suspect и war-alert. Используются репутация `rep.corp.militech`, флаги
-        clearance и подозрений, а также события корпоративной войны.
+        Репутация Militech управляет переходом от base к loyal. Флаги `flag.militech.clearanceA` и
+        `flag.militech.arasaka_contact` включают доверенные брифинги и допросы, а событие
+        `world.event.corporate_war_escalation` активирует режим war-alert.
       mechanics_links:
-        - ../../02-gameplay/social/reputation-formulas.md
+        - shared/docs/knowledge/canon/narrative/npc-lore/factions/corporations/militech/head-rnd-2035-2050.yaml
       assets: []
-    - id: nodes
-      title: Узлы диалога
+    - id: structure
+      title: Узлы и проверки
       body: |
-        Узлы intake, loyal-brief, rival-hearing и war-order описывают требования, ответы NPC и последствия, включая
-        выдачу контрактов, применение штрафов и управление флагами.
-      mechanics_links: []
-      assets: []
-    - id: checks
-      title: Таблица проверок
-      body: |
-        Таблица фиксирует проверки Persuasion, Strategy, Negotiation, Deception, Intimidation и Technical с модификаторами
-        и критическими исходами для каждой ветки.
-      mechanics_links: []
-      assets: []
-    - id: events
-      title: Реакции на события
-      body: |
-        Диалог реагирует на корпоративную эскалацию и взломы Blackwall, активируя специальные ветки, бафы и задачи
-        контрразведки.
+        Узлы intake, loyal-brief, rival-hearing и war-order задают ход разговора. Проверки Persuasion, Strategy,
+        Negotiation, Deception, Intimidation и Technical определяют выдачу clearance, вооружения и контрразведки.
       mechanics_links:
-        - ../../02-gameplay/world/events/global-events-2020-2093.md
+        - mechanics/narrative/quest-system.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции и API
+      body: |
+        Диалог экспортируется в narrative-service и обслуживается REST/GraphQL эндпоинтами `/narrative/dialogues`.
+        Валидация выполняется сценариями `validate-dialogue-flags.ps1` и `dialogue-simulator.ps1`, телеметрия
+        отслеживает метрику `militech-dialogue-success-rate`.
+      mechanics_links: []
       assets: []
     - id: rewards
       title: Награды и последствия
       body: |
-        Описаны изменения репутаций Militech/Arasaka, выдача оружия и экзоскелетов, а также активация эвентов
-        `militech-iron-dawn` и `militech-warfront-berlin`.
+        Репутация Militech изменяется в диапазоне ±15, возможны штрафы к Arasaka. Выдаются предметы вроде
+        `militech-garrison-AR`, открываются контракты `militech-iron-dawn`, `militech-counterintel` и эвент
+        `militech-warfront-berlin`.
       mechanics_links: []
       assets: []
 appendix:
   glossary: []
-  references:
-    - title: NPC Lore — Джеймс Рид
-      link: ../npc-lore/important/james-iron-reed.md
-    - title: Arasaka World Quests
-      link: ../quests/faction-world/arasaka-world-quests.md
-    - title: Corporate War Events
-      link: ../../02-gameplay/world/events/world-events-framework.md
+  references: []
   decisions: []
 implementation:
   needs_task: false
-  queue_reference:
-    - shared/trackers/queues/concept/queued.yaml
+  queue_reference: []
   blockers: []
 history:
   - version: '1.1.0'
-    date: 2025-11-11
-    author: narrative_team
-    changes: Диалог Джеймса Рида перенесён в YAML с поддержкой корпоративной эскалации и проверок Militech.
+    date: 2025-11-12
+    author: concept_director
+    changes: Конвертирован диалог Джеймса Рида в формат знаний с состояниями и корпоративными проверками.
 validation:
   checksum: ''
   schema_version: '1.0'
