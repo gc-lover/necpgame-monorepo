@@ -1,121 +1,107 @@
 metadata:
-  id: canon-narrative-dialogue-hiroshi-tanaka
-  title: 'Диалоги — Хироши Танака'
+  id: dialogue-npc-hiroshi-tanaka
+  title: Диалог Хироши Танака
   document_type: canon
-  category: narrative
+  category: dialogue
   status: approved
   version: '1.0.0'
-  last_updated: 2025-11-11T00:00:00Z
-  concept_approved: true
-  concept_reviewed_at: 2025-11-07T17:45:00Z
+  last_updated: 2025-11-12T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
   owners:
-    - role: narrative_director
-      contact: narrative@necp.game
+    - role: concept_director
+      contact: concept@necp.game
   tags:
-    - dialogue
+    - npc
     - arasaka
+    - dialogue
   topics:
-    - narrative
-    - corporate
+    - corporate-recruitment
+    - branching-dialogues
   related_systems:
     - narrative-service
-    - world-service
-    - social-service
+    - corporate-reputation-service
   related_documents:
-    - id: canon-npc-hiroshi-tanaka
+    - id: npc-lore-hiroshi-tanaka
       relation: references
-    - id: canon-narrative-dialogues-faction-social-lines
-      relation: complements
-    - id: canon-quests-main-002-choose-path
-      relation: references
+    - id: quest-arasaka-serenity
+      relation: produces
   source: shared/docs/knowledge/canon/narrative/dialogues/npc-hiroshi-tanaka.md
   visibility: internal
   audience:
+    - concept
     - narrative
-    - systems-design
-    - liveops
   risk_level: medium
 review:
   chain:
-    - role: narrative_director
-      reviewer: Brain Manager
-      reviewed_at: 2025-11-07T17:45:00Z
-      status: approved
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Диалог корпоративного агента Arasaka был сохранён в Markdown и требовал переноса в стандартизированный формат.
-  goal: Зафиксировать состояния, узлы, проверки и события для веток набора оперативников Arasaka.
-  essence: YAML документирует приветствия, узлы оценки кандидатов, режим подозрений и корпоративные протоколы, интегрированные с narrative-service.
+  problem: Диалог корпоративного рекрутёра Arasaka существовал в Markdown и не был оформлен в соответствии со схемой знаний.
+  goal: Формализовать состояния, проверки и события Хироши Танаки для корпоративных сценариев Arasaka.
+  essence: Танака проверяет кандидатов, выдаёт операции уровня А и жестко реагирует на связь с Militech и режим Lockdown.
   key_points:
-    - Состояния охватывают первичную оценку, доступ уровня А, подозрения и протокол lockdown.
-    - Узлы содержат проверки Persuasion, Strategy, Deception и Composure с критическими исходами.
-    - Реагирование на события `world.event.arasaka_lockdown` и управление корпоративными флагами.
+    - Состояния base, loyal, suspicious и lockdown управляются репутацией Arasaka и глобальными событиями.
+    - Узлы assessment, loyalty-briefing, suspicion и lockdown-directive покрывают проверку кандидата, выдачу контрактов и кризисные протоколы.
+    - Репутационные последствия затрагивают Arasaka, Militech и активируют контракты вроде `arasaka-serenity` и эвент `arasaka-lockdown-response`.
 content:
   sections:
     - id: context
-      title: Контекст и цели
+      title: Контекст
       body: |
-        Хироши Танака оценивает кандидатов, управляет корпоративными заданиями и отслеживает двойных агентов. Диалог
-        поддерживает стадии набора, эскалации и внутреннего контроля Arasaka.
-      mechanics_links: []
+        Хироши Танака — агент Arasaka по набору оператов. Диалог определяет доступ к корпоративным операциям,
+        управляет clearance и отвечает на корпоративные кризисы.
+      mechanics_links:
+        - mechanics/world/world-state/player-impact-systems.yaml
       assets: []
     - id: states
-      title: Состояния и условия
+      title: Состояния и флаги
       body: |
-        Определены состояния base, loyal, suspicious и lockdown с триггерами по репутации, флагам и мировым событиям.
-        Состояния используют шкалу `rep.corp.arasaka` и флаги clearance/подозрений.
+        Репутация Arasaka и флаг `flag.arasaka.clearanceA` переводят игрока в состояние loyal, а контакты с
+        Militech вызывают suspicious. Событие `world.event.arasaka_lockdown` активирует протокол Kōsetsu.
       mechanics_links:
-        - ../../02-gameplay/social/reputation-formulas.md
+        - shared/docs/knowledge/canon/narrative/npc-lore/factions/corporations/arasaka/ceo-arasaka-2020-2030.yaml
       assets: []
-    - id: dialogue_nodes
-      title: Узлы диалога
+    - id: nodes
+      title: Узлы и проверки
       body: |
-        Узлы assessment, loyalty-briefing, suspicion и lockdown-directive описаны с требованиями, откликами NPC и
-        последствиями. Поддерживаются выдача контрактов, штрафы и управление флагами.
+        Проверки Persuasion, Strategy, Deception и Composure определяют выдачу clearance, контрактов и переходы
+        между состояниями. Узлы assessment, loyalty-briefing, suspicion и lockdown-directive обрабатывают ключевые
+        сценарии взаимодействия.
+      mechanics_links:
+        - mechanics/narrative/quest-system.yaml
+      assets: []
+    - id: integrations
+      title: Интеграции и инструменты
+      body: |
+        Диалог экспортируется в narrative-service, поддерживается REST/GraphQL методами и симулируется скриптами
+        `validate-dialogue-flags.ps1` и `dialogue-simulator.ps1`. Телеметрия отслеживает метрики по успешным
+        проверкам и срабатыванию протокола Lockdown.
       mechanics_links: []
       assets: []
-    - id: checks_table
-      title: Таблица проверок D&D
-      body: |
-        Таблица фиксирует проверки Persuasion, Strategy, Deception и Composure с модификаторами и диапазоном исходов,
-        включая критические успехи и провалы.
-      mechanics_links: []
-      assets: []
-    - id: event_reactions
-      title: Реакции на события
-      body: |
-        Диалог реагирует на `world.event.arasaka_lockdown`, активируя ветку протокола Kōsetsu и бафы корпоративной
-        готовности, а также включает последствия для world-state.
-      mechanics_links:
-        - ../../02-gameplay/world/events/world-events-framework.md
-      assets: []
-    - id: rewards
+    - id: outcomes
       title: Награды и последствия
       body: |
-        Описаны изменения репутации Arasaka, доступ к контрактам `arasaka-serenity`, выдача экипировки и управление
-        флагами лояльности и подозрения.
+        Репутация Arasaka изменяется в диапазоне ±15, выдаются предметы вроде `arasaka-delta-suit`, активируются
+        контракты `arasaka-serenity` и эвент `arasaka-lockdown-response`, а также флаги blacklist и silence_note.
       mechanics_links: []
       assets: []
 appendix:
   glossary: []
-  references:
-    - title: NPC Lore — Хироши Танака
-      link: ../npc-lore/important/hiroshi-tanaka.md
-    - title: Квесты Arasaka
-      link: ../quests/faction-world/arasaka-world-quests.md
-    - title: Choose Path Nodes
-      link: ../quests/main/002-choose-path-dnd-nodes.md
+  references: []
   decisions: []
 implementation:
   needs_task: false
-  queue_reference:
-    - shared/trackers/queues/concept/queued.yaml
+  queue_reference: []
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-11
-    author: narrative_team
-    changes: Диалог Хироши Танаки перенесён в YAML с сохранением состояний, проверок и реакций на события.
+    date: 2025-11-12
+    author: concept_director
+    changes: Конвертирован диалог Хироши Танаки в формат знаний с выделенными состояниями и протоколами Lockdown.
 validation:
   checksum: ''
   schema_version: '1.0'
