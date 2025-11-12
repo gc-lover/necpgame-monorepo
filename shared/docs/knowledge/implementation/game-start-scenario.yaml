@@ -1,0 +1,151 @@
+metadata:
+  id: game-start-scenario
+  title: Сценарий запуска игры
+  document_type: implementation
+  category: onboarding
+  status: in-review
+  version: '0.1.1'
+  last_updated: 2025-11-10T21:09:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-10T21:09:00Z
+  owners:
+    - role: concept_director
+      contact: concept-director@necp.game
+  tags:
+    - onboarding
+    - gameplay
+    - tutorial
+  topics:
+    - player_experience
+    - start_flow
+  related_systems:
+    - quest-engine-service
+    - frontend-ui-service
+    - session-management-service
+  related_documents:
+    - id: game-tutorial-flow
+      relation: references
+    - id: game-first-quest-intro
+      relation: references
+    - id: ui-game-start
+      relation: references
+    - id: ui-main-game
+      relation: references
+  source: shared/docs/knowledge/implementation/game-start-scenario.md
+  visibility: internal
+  audience:
+    - concept
+    - vision
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions:
+    - Оценить влияние на очередь заданий по сохранению прогресса туториала
+    - Согласовать требования к проверке доступности квестов
+    - Подготовить план уведомлений о событиях после первого квеста
+summary:
+  problem: Новичок получает разрозненный опыт и может пропустить ключевые механики при первом входе в игру.
+  goal: Сформировать стандартизованный сценарий запуска, который направляет игрока через приветствие, знакомство с интерфейсом, первый диалог и квест.
+  essence: Последовательный поток экранов и системных действий обеспечивает плавное погружение игрока и поддерживает опциональный туториал.
+  key_points:
+    - Последовательность из восьми этапов от приветствия до постквестового состояния
+    - Вариант без туториала с мгновенным доступом ко всем действиям
+    - Сценарий повторного входа без повторного обучения
+    - Набор обработок ошибок для персонажа, локации и NPC
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Сценарий запуска определяет, как игрок впервые взаимодействует с NECPGAME после создания персонажа.
+        Он описывает ожидаемое поведение UI, системные проверки и действия игрока для обеспечения управляемого начала.
+      mechanics_links:
+        - mechanics/quests/quest-system.md
+      assets: []
+    - id: startup_flow
+      title: Последовательность запуска
+      body: |
+        Этап 1: экран приветствия длится до тридцати секунд, знакомит с персонажем и предлагает выбор между туториалом и свободным стартом.
+        Этап 2: игрок оказывается в стартовом хабе, где получает основные показатели и меню действий.
+        Этап 3: интерфейс раскрывает детали локации Downtown и список базовых активностей.
+        Этап 4: игрок выбирает NPC через подсказанный список, предусмотрены роли офицера, торговца и риппердока.
+        Этап 5: диалоговое окно предоставляет варианты разговора и выдает подсказки, если включен туториал.
+        Этап 6: первый квест «Доставка груза» добавляется в журнал и содержит награды за выполнение.
+        Этап 7: выполнение квеста включает перемещение в Watson, передачу предмета и получение наград.
+        Этап 8: после завершения квеста игрок возвращается в хаб с расширенными возможностями.
+      mechanics_links: []
+      assets: []
+    - id: no_tutorial
+      title: Сценарий без туториала
+      body: |
+        При отказе от туториала игрок видит короткое приветствие, затем сразу попадает в основной хаб без подсказок.
+        Все действия становятся доступными мгновенно, подсветка NPC и квестов отключена.
+      mechanics_links: []
+      assets: []
+    - id: returning_players
+      title: Повторный вход
+      body: |
+        Повторный вход начинается с выбора персонажа, после чего пользователь появляется в последней посещенной локации.
+        Активные квесты восстанавливаются, подсказки не отображаются, прогресс сохраняется.
+      mechanics_links: []
+      assets: []
+    - id: exceptions
+      title: Обработка ошибок
+      body: |
+        Отсутствие персонажа вызывает сообщение и возвращение на экран выбора персонажа.
+        Ошибка загрузки локации переводит героя в стартовый район Downtown с уведомлением.
+        Недоступность NPC заменяется сообщением и обновлением списка, позволяя выбрать альтернативу.
+      mechanics_links: []
+      assets: []
+    - id: dependencies
+      title: Связанные материалы
+      body: |
+        Сценарий опирается на документы о туториале, первом квесте и интерфейсах начального этапа.
+        Их синхронизация требуется для корректного распределения задач между командами UI и контента.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: Downtown
+      definition: Стартовый район мегаполиса, обеспечивающий базовые активности и NPC.
+    - term: Watson
+      definition: Локация первой доставки, связанная с квестом «Доставка груза».
+    - term: Туториал
+      definition: Опциональный обучающий режим, включающий подсказки и подсветку NPC.
+  references:
+    - type: internal
+      title: game-tutorial-flow
+      link: shared/docs/knowledge/implementation/game-tutorial-flow.md
+    - type: internal
+      title: game-first-quest-intro
+      link: shared/docs/knowledge/implementation/game-first-quest-intro.md
+    - type: internal
+      title: ui-game-start
+      link: shared/docs/knowledge/implementation/ui-game-start.yaml
+    - type: internal
+      title: ui-main-game
+      link: shared/docs/knowledge/implementation/ui/main-game/ui-system.md
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/vision/review.yaml#game-start-scenario
+  blockers:
+    - Требуется постановка задач на сохранение прогресса туториала и уведомления событий
+history:
+  - version: '0.1.0'
+    date: 2025-11-10
+    author: concept_director
+    changes: Перенос сценария запуска игры в формат знания.
+  - version: '0.1.1'
+    date: 2025-11-10
+    author: concept_director
+    changes: Концепция согласована и передана Vision Manager.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

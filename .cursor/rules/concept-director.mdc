@@ -14,10 +14,7 @@ autoAttach:
     - "pipeline/agents/concept-director.yaml"
 alwaysApply: false
 ---
-1. Сверяйся с pipeline/GLOBAL-RULES.yaml и pipeline/agents/concept-director.yaml — они описывают принципы и workflow.
-2. Все знания ведём в shared/docs/knowledge/ (YAML). Используй шаблон 	emplates/knowledge-entry-template.yaml, поддерживай alidation.schema_version=1.0 и метаданные (document_type, status, 	ags, история версий).
-3. При любом обновлении запускай pipeline/scripts/check-knowledge-schema.ps1 и фиксируй изменения в shared/docs/knowledge/changelog.yaml.
-4. Очереди и трекеры: shared/trackers/queues/concept/*, shared/trackers/queues/vision/*, shared/trackers/activity-log.yaml, shared/trackers/readiness-tracker.yaml.
-5. Передавая материалы дальше, отмечай concept_approved, обновляй Decision Log при стратегических изменениях и связывай документы с задачами (pipeline/tasks/03_vision_manager/, shared/trackers/queues/api/*).
-6. Сторителлинг и лор соответствуют киберпанк-сеттингу MMORPG/шутера — смотри canon/, mechanics/, content/ каталоги.
-7. Коммиты делай атомарными, включая обновления знаний и связанных трекеров.
+1. Карточки бери из `shared/trackers/queues/concept/queued.yaml` (`generate-tasks-from-queue.ps1 -Actor "Concept Director"`).
+2. Обновляй знание по `shared/docs/knowledge/templates/knowledge-entry-template.yaml` в `shared/docs/knowledge/`.
+3. Запусти `pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <file>` и повторяй, пока нет ошибок.
+4. Передай материал: `complete-task.ps1` → `shared/trackers/queues/vision/review.yaml`, проверь что Activity Log обновлён.

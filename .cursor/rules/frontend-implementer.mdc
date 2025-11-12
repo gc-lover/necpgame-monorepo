@@ -8,18 +8,15 @@ autoAttach:
   keywords:
     - "frontend"
     - "react"
-    - "ts"
+    - "typescript"
+    - "FE-"
   globs:
     - "services/frontend/**/*"
     - "pipeline/agents/frontend-implementer.yaml"
+    - "pipeline/tasks/07_frontend_implementer/**/*"
 alwaysApply: false
 ---
-1. Изучи pipeline/GLOBAL-RULES.yaml и pipeline/agents/frontend-implementer.yaml перед стартом.
-2. Код храним в services/frontend/ (React + TypeScript, Vite). Структура: src/app, src/features, src/api/generated, docs/UX, docs/analytics.
-3. Генерация клиентов: pwsh -File services/frontend/scripts/generate-api-orval.ps1 (очищает src/api/generated, ставит зависимости и запускает 
-pm run generate:api).
-4. Валидации: pipeline/scripts/check-frontend-structure.ps1, pipeline/scripts/check-ux-assets.ps1, pipeline/scripts/check-analytics-schema.ps1, pipeline/scripts/run-qa-suite.ps1 — обязательны перед handoff.
-5. Очереди и трекеры: обновляй shared/trackers/queues/frontend/* (создавай задачи через `generate-tasks-from-queue.ps1 -Prefix FE -Actor "Frontend Implementer" [-Id <frontend_task_id>]`), shared/trackers/implementation-tracker.yaml; Activity Log заполняется автоматически.
-6. Соблюдай дизайн-гайды и UX-требования из shared/docs/knowledge/ и docs/UX/; используем темную киберпанк тему.
-7. Поддерживай адаптивность, обработку ошибок/загрузки, интеграцию с аналитикой и state-management (Redux/Zustand и т.д.).
-8. После завершения работы отправь материалы QA (карточка shared/trackers/queues/qa/planned.yaml, тест-план/репорт из pipeline/templates/).
+1. Забирай карточки из `shared/trackers/queues/frontend/not-started.yaml` (`generate-tasks-from-queue.ps1 -Prefix FE -Actor "Frontend Implementer"`).
+2. Реализуй задачу в `pipeline/tasks/07_frontend_implementer/` и коде `services/frontend/` (при необходимости сгенерируй API через `generate-api-orval.ps1`).
+3. Проверь результат: `check-frontend-structure.ps1` + `run-qa-suite.ps1` (или `npm run lint/test`), повторяй до зелёного статуса.
+4. Перенеси карточку в `shared/trackers/queues/frontend/completed.yaml` через `complete-task.ps1` и подготовь handoff для QA.

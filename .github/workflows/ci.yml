@@ -30,6 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Check architecture health
         run: pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath $PWD
       - name: Detect markdown in knowledge
@@ -43,6 +45,47 @@ jobs:
             ForEach-Object {
               pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File $_.FullName
             }
+
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Run yamllint
+        run: yamllint . -c .yamllint
+
+  spectral:
+    needs: [changes]
+    if: needs.changes.outputs.openapi == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Spectral CLI
+        run: npm install -g @stoplight/spectral-cli
+      - name: Lint OpenAPI specs
+        run: spectral lint "services/openapi/**/*.yaml" -c .spectral.yaml
+
+  activity-log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch base ref
+        if: github.event_name == 'pull_request' && github.base_ref != ''
+        run: git fetch origin ${{ github.base_ref }} --depth=1
+      - name: Check Activity Log coverage
+        shell: pwsh
+        run: |
+          $base = if ("${{ github.event_name }}" -eq "pull_request" -and "${{ github.base_ref }}") { "origin/${{ github.base_ref }}" } else { $null }
+          if ($base) {
+            pwsh -File pipeline/scripts/check-activity-log.ps1 -BaseRef $base
+          } else {
+            pwsh -File pipeline/scripts/check-activity-log.ps1
+          }
 
   openapi:
     needs: [changes]
@@ -79,14 +122,23 @@ jobs:
       - openapi
       - backend
       - frontend
+      - yamllint
+      - spectral
+      - activity-log
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Run precommit suite
         run: pwsh -File pipeline/scripts/run-precommit.ps1
       - name: Validate knowledge schema
         run: pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -KnowledgeRoot shared/docs/knowledge
-      - name: Ensure queue manager available
-        run: pwsh -Command "Get-Command pipeline/scripts/queue-manager.ps1"
+      - name: Ensure automation module available
+        shell: pwsh
+        run: |
+          $modulePath = Join-Path (Resolve-Path pipeline/scripts/modules) 'Pipeline.Automation.psm1'
+          Import-Module -Name $modulePath -ErrorAction Stop
+          Write-Output "Loaded Pipeline.Automation from $modulePath"
       - name: Placeholder backend tests
         if: ${{ needs.changes.outputs.backend == 'true' }}
         run: |

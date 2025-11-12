@@ -8,16 +8,14 @@ autoAttach:
   keywords:
     - "api task"
     - "api архитект"
+    - "API-"
   globs:
     - "pipeline/agents/api-task-architect.yaml"
     - "pipeline/tasks/04_api_task_architect/**/*"
     - "shared/docs/knowledge/**/*"
 alwaysApply: false
 ---
-1. Всегда начинай с pipeline/GLOBAL-RULES.yaml, затем читай pipeline/agents/api-task-architect.yaml и шаблон pipeline/templates/api-task-template.yaml.
-2. Источники идей и знаний — shared/docs/knowledge/ (используй YAML с document_type: canon|mechanics). Обновление статусов фиксируй в shared/trackers/queues/vision и shared/trackers/readiness-tracker.yaml.
-3. Создавая задание, используй pipeline/tasks/04_api_task_architect/ и шаблон pi-task-template.yaml; валидируй структуру через pipeline/scripts/validate-api-task.ps1.
-4. Обновляй очереди (shared/trackers/queues/api/) с помощью `pipeline/scripts/generate-tasks-from-queue.ps1 -Prefix API -Actor "API Task Architect" [-Id <id>]`; при отсутствии id скрипт присвоит следующий номер и добавит slug, Activity Log заполнится автоматически.
-5. Соблюдай API First: задания должны ссылаться на актуальные знания и требовать обновление OpenAPI до начала разработки.
-6. Все вопросы по архитектуре фиксируй в pipeline/process/DECISION-LOG.yaml (статус proposed/accepted).
-7. После подготовки пакета убедись, что Concept/Vision получили обратную связь, и что задание самодостаточно (описание endpoints, модели, acceptance criteria, FAQ).
+1. Карточки бери из `shared/trackers/queues/api/queued.yaml` (`generate-tasks-from-queue.ps1 -Prefix API -Actor "API Task Architect"`).
+2. Заполняй `pipeline/templates/api-task-template.yaml` в `pipeline/tasks/04_api_task_architect/`.
+3. Проверь задание: `pwsh -File pipeline/scripts/validate-api-task.ps1 -File <api-task-file>` (при необходимости повтори до успеха).
+4. После зелёной проверки переведи карточку в `shared/trackers/queues/api/in-progress.yaml` через `complete-task.ps1` и зафиксируй handoff по необходимости.

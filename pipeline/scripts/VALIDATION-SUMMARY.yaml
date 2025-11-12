@@ -64,26 +64,47 @@ validation_scripts:
     compliance: "Гарантирует единый формат перемещения задач."
   - name: check-knowledge-schema.ps1
     purpose: "Валидирует YAML-знания относительно шаблона и схемы."
-    compliance: "Обеспечивает требования Concept/Vision/Readiness к структуре знаний."
+    compliance: "Обеспечивает требования Concept/Vision/Readiness к структуре знаний; поддерживает выборочную проверку через параметр -Path."
   - name: check-knowledge-review.ps1
     purpose: "Сравнивает metadata.last_updated и metadata.concept_reviewed_at для подсветки материалов, требующих повторной проверки."
     compliance: "Помогает Readiness Reviewer держать знания и очереди синхронизированными."
   - name: check-knowledge-markdown.ps1
     purpose: "Выявляет Markdown-файлы в shared/docs/knowledge для миграции в YAML."
     compliance: "Поддерживает переход от .BRAIN к формату Docs-as-Code."
-  - name: queue-manager.ps1
-    purpose: "Добавляет, перемещает и удаляет карточки очередей без ручного редактирования YAML."
-    compliance: "Снижает вероятность ошибок при работе с shared/trackers/queues."
-  - name: queue_manager.py
-    purpose: "Python-аналог управления очередями (PyYAML) для сред без PowerShell."
-    compliance: "Обеспечивает кроссплатформенность процессов Refactor/Readiness."
   - name: run-precommit.ps1
-    purpose: "Запускает базовые структурные проверки (структура, очереди, OpenAPI) перед коммитом."
-    compliance: "Рекомендуется всем агентам перед push."
+    purpose: "Запускает базовые структурные проверки (структура, очереди, OpenAPI) и `check-activity-log.ps1` перед коммитом."
+    compliance: "Обязателен всем агентам перед push; выполняется автоматически через pre-commit hook."
   - name: install-precommit.ps1
     purpose: "Устанавливает git pre-commit hook, автоматически вызывающий run-precommit."
     compliance: "Гарантирует обязательные проверки перед коммитами."
   - name: generate-tasks-from-queue.ps1
-    purpose: "Создаёт файлы задач на основе карточек в shared/trackers/queues, поддерживает автогенерацию ID по префиксу, обновление очереди и Activity Log."
-    compliance: "Требует указания `-Actor` для корректной записи в Activity Log; помогает Vision/API/Backend/Frontend/QA/DevOps агентам быстро формировать pipeline/tasks/* по очередям."
+    purpose: "Создаёт файлы задач на основе карточек в shared/trackers/queues, поддерживает автогенерацию ID по префиксу, обновляет очередь, Activity Log и индекс `pipeline/tasks/index.yaml`."
+    compliance: "Требует `-Actor` для корректной записи в Activity Log; опции `-ValidateSync`/`-ValidateSyncOnly` проверяют синхронизацию очередей и task-файлов. Используется всеми агентами для формирования pipeline/tasks/*."
+  - name: complete-task.ps1
+    purpose: "Переносит карточку задачи в целевую очередь, архивирует YAML в `pipeline/tasks/archive/` и обновляет Activity Log."
+    compliance: "Гарантирует корректное завершение задач (перемещение очередей, Activity Log, пересборка pipeline/tasks/index.yaml); минимизирует ручные ошибки при закрытии статусов."
+  - name: run-scenario.ps1
+    purpose: "Выполняет последовательность команд из `pipeline/agents/<role>.yaml` (workflow), упрощая запуск типовых сценариев."
+    compliance: "Обеспечивает единообразное исполнение шагов чеклистов, снижает риск пропустить обязательную команду."
+  - name: generate-checklist-tasks.ps1
+    purpose: "Конвертирует YAML-чеклисты в задачи Cursor (`.cursor/tasks/*.json`)."
+    compliance: "Позволяет отмечать прогресс прямо в IDE, синхронизируя чеклисты и фактические действия агентов."
+  - name: watch-knowledge.ps1
+    purpose: "Сканирует знания и глоссарий, создавая карточки для повторного ревью при обновлении без concept_reviewed_at."
+    compliance: "Помогает Vision/Readiness/Refactor синхронизировать знания с очередями и избегать устаревших описаний."
+  - name: knowledge-diff.ps1
+    purpose: "Формирует YAML-отчёт о разнице между ревизиями документа знаний."
+    compliance: "Обеспечивает прозрачность изменений и облегчает ревью для Vision/Readiness."
+  - name: check-activity-log.ps1
+    purpose: "Проверяет, что изменения знаний/очередей/задач сопровождаются обновлением `shared/trackers/activity-log.yaml`."
+    compliance: "Закрепляет дисциплину ведения Activity Log перед merge/push."
+  - name: new-knowledge.ps1
+    purpose: "Создаёт новый документ знания по шаблону, обновляет knowledge-glossary.yaml и Activity Log."
+    compliance: "Стандартизирует создание знаний и фиксирует владельцев/метаданные."
+  - name: status-dashboard.ps1
+    purpose: "Генерирует агрегированный отчёт (status-dashboard.yaml) по очередям и задачам."
+    compliance: "Помогает Refactor и менеджерам контролировать загруженность и узкие места."
+  - name: handoff-summary.ps1
+    purpose: "Готовит Markdown/YAML-сводку для handoff между агентами (очередь → список карточек)."
+    compliance: "Уменьшает риск потери контекста при передаче стадий."
 

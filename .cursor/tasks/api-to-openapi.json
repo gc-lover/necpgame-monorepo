@@ -1,0 +1,59 @@
+﻿{
+  "id": "api-to-openapi",
+  "title": "API Task → OpenAPI",
+  "source": "pipeline/checklists/api-to-openapi.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "API Task Architect",
+      "items": [
+        {
+          "label": "Карточка создана из `shared/trackers/queues/api/queued.yaml`",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/api/queued.yaml -TargetDirectory pipeline/tasks/04_api_task_architect -Prefix API -Actor \"API Task Architect\""
+          ],
+          "status": "pending"
+        },
+        {
+          "label": "Задание заполнено по шаблону и проверено",
+          "scripts": [
+            "pwsh -File pipeline/scripts/validate-api-task.ps1 -File <api-task-file>"
+          ],
+          "status": "pending"
+        },
+        {
+          "label": "Карточка передана OpenAPI",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile <api-task-file> -TargetQueueFile shared/trackers/queues/api/in-progress.yaml -Actor \"API Task Architect\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "OpenAPI Executor",
+      "items": [
+        {
+          "label": "Спецификация обновлена в `services/openapi/api/v1`",
+          "scripts": [],
+          "status": "pending"
+        },
+        {
+          "label": "Проверки прошли успешно",
+          "scripts": [
+            "pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiSpec <spec>",
+            "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
+          ],
+          "status": "pending"
+        },
+        {
+          "label": "Карточка в review",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile <openapi-task-file> -TargetQueueFile shared/trackers/queues/api/review.yaml -Actor \"OpenAPI Executor\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

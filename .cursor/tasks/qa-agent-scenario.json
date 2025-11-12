@@ -1,0 +1,49 @@
+{
+  "id": "qa-agent-scenario",
+  "title": "QA Agent",
+  "source": "pipeline/agents/qa-agent.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Забери задачу из очереди",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/qa/planned.yaml -TargetDirectory pipeline/tasks/08_qa_validation -Prefix QA -Actor \"QA Agent\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Тестирование",
+      "items": [
+        {
+          "label": "Выполни тест-план",
+          "scripts": [],
+          "status": "pending"
+        },
+        {
+          "label": "Запусти автопроверки",
+          "scripts": [
+            "pwsh -File pipeline/scripts/run-qa-suite.ps1"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача",
+      "items": [
+        {
+          "label": "Закрой задачу и передай DevOps",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/08_qa_validation/<task-file.yaml> -TargetQueueFile shared/trackers/queues/qa/completed.yaml -Actor \"QA Agent\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

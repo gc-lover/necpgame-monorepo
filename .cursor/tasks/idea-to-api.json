@@ -1,0 +1,56 @@
+﻿{
+  "id": "idea-to-api",
+  "title": "Idea → API Task",
+  "source": "pipeline/checklists/idea-to-api.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Vision Manager",
+      "items": [
+        {
+          "label": "Идея оформлена в YAML по шаблону",
+          "scripts": [],
+          "status": "pending"
+        },
+        {
+          "label": "Проверка лимита строк",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <idea-file>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Readiness Reviewer",
+      "items": [
+        {
+          "label": "Проверка прошла, запись обновлена в readiness-tracker",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-readiness-entry.ps1 -TrackerFile shared/trackers/readiness-tracker.yaml -DocumentPath <idea-file>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача API",
+      "items": [
+        {
+          "label": "Карточка создана для API Task Architect",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/vision/queued.yaml -TargetDirectory pipeline/tasks/03_vision_manager -Prefix VSN -Actor \"Vision Manager\""
+          ],
+          "status": "pending"
+        },
+        {
+          "label": "Очередь vision/in-progress проверена",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/vision/in-progress.yaml"
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

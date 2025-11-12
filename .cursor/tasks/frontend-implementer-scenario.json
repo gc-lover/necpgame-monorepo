@@ -1,0 +1,53 @@
+{
+  "id": "frontend-implementer-scenario",
+  "title": "Frontend Implementer",
+  "source": "pipeline/agents/frontend-implementer.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Забери задачу из очереди",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/frontend/not-started.yaml -TargetDirectory pipeline/tasks/07_frontend_implementer -Prefix FE -Actor \"Frontend Implementer\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Реализация",
+      "items": [
+        {
+          "label": "Синхронизируй API клиент",
+          "scripts": [
+            "pwsh -File services/frontend/scripts/generate-api-orval.ps1"
+          ],
+          "status": "pending"
+        },
+        {
+          "label": "Пройди проверки",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-frontend-structure.ps1 -ProjectRoot services/frontend",
+            "npm run lint",
+            "npm test"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача",
+      "items": [
+        {
+          "label": "Переведи задачу в QA",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/07_frontend_implementer/<task-file.yaml> -TargetQueueFile shared/trackers/queues/frontend/completed.yaml -Actor \"Frontend Implementer\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

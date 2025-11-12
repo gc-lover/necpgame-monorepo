@@ -6,6 +6,7 @@ supporting_files:
   - "services/openapi/tasks/templates/api-generation-task-template.md"
   - "pipeline/checklists/api-to-openapi.yaml"
 work_instructions:
+  - "Разово установи локальный pre-commit (`pwsh -File pipeline/scripts/install-precommit.ps1`); hook запускает run-precommit с `check-activity-log.ps1` перед каждым коммитом."
   - "Создай файл задачи в `pipeline/tasks/05_openapi_executor` через `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/api/in-progress.yaml -TargetDirectory pipeline/tasks/05_openapi_executor -Prefix API -Actor \"OpenAPI Executor\" [-Id <api_task_id>]` (Activity Log обновляется автоматически)."
   - "Создавай или обновляй спецификацию в `services/openapi/api/v1/<domain>/`, соблюдая `info.x-microservice` и общие компоненты."
   - "Поддерживай DRY: выноси общие схемы в shared, следи за версиями и servers."
@@ -14,5 +15,5 @@ validation_scripts:
   - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
 completion_actions:
   - "Обнови `implementation-tracker.yaml` (`api.completed`) и перенеси карточку в `shared/trackers/queues/api/review.yaml` (валидация `check-queue-yaml.ps1`)."
-  - "Проверь автоматическую запись Activity Log (дополни ссылками при необходимости)."
+  - "Проверь автоматическую запись Activity Log (дополни ссылками при необходимости) и при завершении запусти `pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/05_openapi_executor/<task-file.yaml> -TargetQueueFile shared/trackers/queues/api/review.yaml -Actor \"OpenAPI Executor\"`."
 

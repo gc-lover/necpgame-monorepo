@@ -24,6 +24,8 @@ workflow:
       - "pwsh -File pipeline/scripts/check-queue-yaml.ps1 -File shared/trackers/queues/api/in-progress.yaml"
   - step: notify
     description: Подтверди, что генератор задач записал событие в Activity Log (`-Actor "API Task Architect"`); при необходимости добавь дополнительную запись с ссылкой на чеклист.
+    scripts:
+      - "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/04_api_task_architect/<task-file.yaml> -TargetQueueFile shared/trackers/queues/api/in-progress.yaml -Actor \"API Task Architect\" [-SourceQueueFile shared/trackers/queues/api/queued.yaml]"
 handoff:
   target_agent: OpenAPI Executor
   requirements:

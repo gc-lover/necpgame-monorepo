@@ -1,0 +1,45 @@
+name: Task Link Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - ready_for_review
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR description for task link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require('@actions/core');
+            const pr = context.payload.pull_request;
+            const body = (pr && pr.body) ? pr.body : '';
+
+            const idPattern = /\b(?:[A-Z]{2,6}-\d{2,5})\b/g;
+            const queuePattern = /shared\/trackers\/queues\/[A-Za-z0-9/_-]+\.yaml/;
+
+            const matchedIds = body.match(idPattern) || [];
+            const hasQueuePath = queuePattern.test(body);
+
+            core.info(`Найденные Task ID: ${matchedIds.join(', ') || 'нет'}`);
+            core.info(`Присутствует ссылка на очередь: ${hasQueuePath}`);
+
+            if (matchedIds.length === 0) {
+              core.setFailed('Описание PR должно содержать идентификатор задачи (например, API-123).');
+            }
+
+            if (!hasQueuePath) {
+              core.setFailed('Описание PR должно ссылаться на очередь (shared/trackers/queues/<role>/<status>.yaml).');
+            }
+
+
+
+
+
+
+

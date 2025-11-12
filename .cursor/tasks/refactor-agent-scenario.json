@@ -1,0 +1,46 @@
+{
+  "id": "refactor-agent-scenario",
+  "title": "Refactor Agent",
+  "source": "pipeline/agents/refactor-agent.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Возьми задачу из очереди",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/refactor/queued.yaml -TargetDirectory pipeline/tasks/01_refactor_agent -Prefix RFA -Actor \"Refactor Agent\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Аудит",
+      "items": [
+        {
+          "label": "Пройди проверки",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-architecture-health.ps1 -RootPath C:\\NECPGAME",
+            "pwsh -File pipeline/scripts/check-directory-structure.ps1 -RootPath C:\\NECPGAME",
+            "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <target>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Доклад",
+      "items": [
+        {
+          "label": "Подготовь handoff и обнови логи",
+          "scripts": [
+            "pwsh -File pipeline/scripts/handoff-summary.ps1 -QueueFile shared/trackers/queues/refactor/queued.yaml -Role \"Refactor Agent\" -TasksDirectory pipeline/tasks/01_refactor_agent -Output shared/trackers/handovers/refactor-summary.md"
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

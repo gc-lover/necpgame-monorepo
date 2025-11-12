@@ -1,0 +1,62 @@
+﻿{
+  "id": "qa-to-release",
+  "title": "QA → Release",
+  "source": "pipeline/checklists/qa-to-release.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "DevOps подготовка",
+      "items": [
+        {
+          "label": "Карточка релиза создана",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/release/ready.yaml -TargetDirectory pipeline/tasks/09_devops_release -Prefix REL -Actor \"DevOps Agent\""
+          ],
+          "status": "pending"
+        },
+        {
+          "label": "Dry-run и инфраструктурные проверки",
+          "scripts": [
+            "pwsh -File pipeline/scripts/run-deploy-dryrun.ps1 -EnvDirectory <env-path>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Релиз",
+      "items": [
+        {
+          "label": "Release notes и коммуникации обновлены",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-release-notes.ps1 -File shared/trackers/release-notes.yaml",
+            "pwsh -File pipeline/scripts/check-communication-pack.ps1 -PackFile <pack-file>"
+          ],
+          "status": "pending"
+        },
+        {
+          "label": "Мониторинг настроен",
+          "scripts": [],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Пост-релиз",
+      "items": [
+        {
+          "label": "implementation-tracker обновлён (release.status = released)",
+          "scripts": [],
+          "status": "pending"
+        },
+        {
+          "label": "Отчёт и дэшборды проверены",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-dashboard-links.ps1 -ReportFile <post-release-report.md>"
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

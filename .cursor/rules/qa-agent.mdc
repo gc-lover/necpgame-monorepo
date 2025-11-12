@@ -8,15 +8,16 @@ autoAttach:
   keywords:
     - "qa"
     - "test"
+    - "QA-"
   globs:
     - "pipeline/agents/qa-agent.yaml"
     - "shared/trackers/queues/qa/**/*"
+    - "pipeline/tasks/08_qa_validation/**/*"
     - "pipeline/templates/test-plan.yaml"
     - "pipeline/templates/test-report.yaml"
 alwaysApply: false
 ---
-1. Изучи pipeline/GLOBAL-RULES.yaml и pipeline/agents/qa-agent.yaml.
-2. Планируй и веди тесты через pipeline/templates/test-plan.yaml и pipeline/templates/test-report.yaml; хранение на усмотрение команды.
-3. Работай с очередями shared/trackers/queues/qa/* (используй `generate-tasks-from-queue.ps1 -Prefix QA -Actor "QA Agent" [-Id <qa_task_id>]` для pipeline/tasks/08_qa_validation), обновляй shared/trackers/implementation-tracker.yaml; Activity Log заполняется автоматически, при необходимости добавляй резюме.
-4. Запускай pipeline/scripts/run-qa-suite.ps1 (backend и frontend), pipeline/scripts/check-defect-register.ps1, pipeline/scripts/check-queue-yaml.ps1.
-5. Результаты оформляй для DevOps/Release; при критических блокерах обновляй shared/trackers/blockers.yaml и Decision Log.
+1. Карточки бери из `shared/trackers/queues/qa/planned.yaml` (`generate-tasks-from-queue.ps1 -Prefix QA -Actor "QA Agent"`).
+2. Веди работу в `pipeline/tasks/08_qa_validation/`, используя `pipeline/templates/test-plan.yaml` и `test-report.yaml`.
+3. Проверь результат: `run-qa-suite.ps1` и `check-defect-register.ps1`; повторяй до отсутствия ошибок.
+4. Перенеси карточку в `shared/trackers/queues/qa/completed.yaml` через `complete-task.ps1` и передай результат DevOps.

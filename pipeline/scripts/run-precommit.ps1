@@ -30,6 +30,9 @@ if (-not $SkipOpenApi) {
     pwsh -File (Join-Path $scriptDir "validate-swagger.ps1") -ApiDirectory (Join-Path $repoRoot "services/openapi/api/v1") | Write-Output
 }
 
+Write-Output "== Проверка Activity Log для индексированных изменений =="
+pwsh -File (Join-Path $scriptDir "check-activity-log.ps1") -UseIndex | Write-Output
+
 Write-Output "Pre-commit проверки завершены."
 
 

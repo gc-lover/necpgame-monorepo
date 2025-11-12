@@ -1,0 +1,49 @@
+{
+  "id": "api-task-architect-scenario",
+  "title": "API Task Architect",
+  "source": "pipeline/agents/api-task-architect.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Создай карточку из очереди",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/api/queued.yaml -TargetDirectory pipeline/tasks/04_api_task_architect -Prefix API -Actor \"API Task Architect\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Работа",
+      "items": [
+        {
+          "label": "Оформи задачу по шаблону",
+          "scripts": [],
+          "status": "pending"
+        },
+        {
+          "label": "Проверь задание",
+          "scripts": [
+            "pwsh -File pipeline/scripts/validate-api-task.ps1 -File <api-task-file>"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача",
+      "items": [
+        {
+          "label": "Переведи задачу OpenAPI",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile <api-task-file> -TargetQueueFile shared/trackers/queues/api/in-progress.yaml -Actor \"API Task Architect\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

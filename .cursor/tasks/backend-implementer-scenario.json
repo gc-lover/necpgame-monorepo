@@ -1,0 +1,53 @@
+{
+  "id": "backend-implementer-scenario",
+  "title": "Backend Implementer",
+  "source": "pipeline/agents/backend-implementer.yaml",
+  "generated_at": "2025-11-10T22:20:00Z",
+  "sections": [
+    {
+      "title": "Подготовка",
+      "items": [
+        {
+          "label": "Забери задачу из очереди",
+          "scripts": [
+            "pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/backend/not-started.yaml -TargetDirectory pipeline/tasks/06_backend_implementer -Prefix BE -Actor \"Backend Implementer\""
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Реализация",
+      "items": [
+        {
+          "label": "Сгенерируй и реализуй слои по OpenAPI",
+          "scripts": [
+            "pwsh -File services/backend/scripts/generate-openapi-layers.ps1 -ApiSpec <spec-path>"
+          ],
+          "status": "pending"
+        },
+        {
+          "label": "Пройди проверки",
+          "scripts": [
+            "pwsh -File pipeline/scripts/check-backend-structure.ps1 -ProjectRoot services/backend",
+            "pwsh -File pipeline/scripts/check-seed-integrity.ps1 -SeedDirectory services/backend/src/main/resources/db/changelog",
+            "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Передача",
+      "items": [
+        {
+          "label": "Переведи задачу в completed",
+          "scripts": [
+            "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/06_backend_implementer/<task-file.yaml> -TargetQueueFile shared/trackers/queues/backend/completed.yaml -Actor \"Backend Implementer\""
+          ],
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

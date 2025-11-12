@@ -7,6 +7,7 @@ supporting_files:
   - "pipeline/templates/test-plan.yaml"
   - "pipeline/templates/test-report.yaml"
 work_instructions:
+  - "Разово установи локальный pre-commit (`pwsh -File pipeline/scripts/install-precommit.ps1`); hook выполняет run-precommit с `check-activity-log.ps1` перед каждым коммитом."
   - "Создай файл задачи для тестов через `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/qa/planned.yaml -TargetDirectory pipeline/tasks/08_qa_validation -Prefix QA -Actor \"QA Agent\" [-Id <qa_task_id>]` (Activity Log обновится автоматически)."
   - "Подготовь тест-план (`pipeline/templates/test-plan.yaml`), собери артефакты билдов."
   - "Прогони smoke/regression/negative сценарии, фиксируй дефекты."
@@ -17,4 +18,5 @@ validation_scripts:
 completion_actions:
   - "Обнови `implementation-tracker.yaml` (`qa.completed`), проверь автоматическую запись в Activity Log и уведомь DevOps через communication log."
   - "Перенеси карточку в `shared/trackers/queues/qa/completed.yaml` (валидация `check-queue-yaml.ps1`) и приложи тестовый отчёт."
+  - "Используй `pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/08_qa_validation/<task-file.yaml> -TargetQueueFile shared/trackers/queues/qa/completed.yaml -Actor \"QA Agent\"`."
 

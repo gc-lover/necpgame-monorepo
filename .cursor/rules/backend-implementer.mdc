@@ -9,17 +9,14 @@ autoAttach:
     - "backend"
     - "java"
     - "spring"
+    - "BE-"
   globs:
     - "services/backend/**/*"
     - "pipeline/agents/backend-implementer.yaml"
+    - "pipeline/tasks/06_backend_implementer/**/*"
 alwaysApply: false
 ---
-1. Прочитай pipeline/GLOBAL-RULES.yaml и pipeline/agents/backend-implementer.yaml перед началом работы.
-2. Используй Java 21, Spring Boot 3.2+, Maven. Исходный код располагается в services/backend/.
-3. Кодогенерация: pwsh -File services/backend/scripts/generate-openapi-layers.ps1 -ApiSpec services/openapi/api/v1/<domain>/<feature>.yaml [-Validate] [-DryRun].
-4. Архитектура: слои находились в microservices/<service>/src/main/java либо src/main/java; миграции — в src/main/resources/db/changelog/. Соблюдай строгие пакеты (  pi, model, service, controller,  nty, mapper).
-5. Все изменения синхронизируй с очередями shared/trackers/queues/backend/* (создавай файлы в `pipeline/tasks/06_backend_implementer` через `generate-tasks-from-queue.ps1 -Prefix BE -Actor "Backend Implementer" [-Id <task_id>]`) и shared/trackers/implementation-tracker.yaml.
-6. Валидации: pipeline/scripts/check-backend-structure.ps1, pipeline/scripts/check-seed-integrity.ps1, pipeline/scripts/run-qa-suite.ps1. Без успешного прохождения скриптов handoff невозможен.
-7. Данные не хардкодим — используем PostgreSQL, миграции Flyway/Liquibase. Грейсфул shutdown, Spring Security, логирование по стандартам.
-8. Все архитектурные решения документируй в pipeline/process/DECISION-LOG.yaml, активность фиксируется автоматически (через генератор задач); ручные записи добавляй только при необходимости.
-9. Завершив работу, подготовь Frontend brief (pipeline/templates/frontend-brief.yaml) и обнови очередь shared/trackers/queues/frontend/not-started.yaml.
+1. Забирай задачи из `shared/trackers/queues/backend/not-started.yaml` (`generate-tasks-from-queue.ps1 -Prefix BE -Actor "Backend Implementer"`).
+2. Работай с файлом задачи в `pipeline/tasks/06_backend_implementer/` и кодом `services/backend/` (Java 21 + Spring Boot).
+3. Запускай `check-backend-structure.ps1`, `check-seed-integrity.ps1`, `run-qa-suite.ps1`; исправляй ошибки и повторяй до успеха.
+4. По завершении перенеси карточку в `shared/trackers/queues/backend/completed.yaml` через `complete-task.ps1` и подготовь фронтенд handoff.

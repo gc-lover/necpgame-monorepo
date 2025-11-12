@@ -1,17 +1,16 @@
 agent: Vision Manager
 tasks_source:
-  description: Очередь идей для проработки
+  description: Очередь Vision
   location: "shared/trackers/queues/vision/queued.yaml"
 supporting_files:
-  - "shared/docs/knowledge/analysis/tasks/ideas/IDEA-TEMPLATE.md"
-  - "pipeline/checklists/idea-to-api.yaml"
+  - "shared/docs/knowledge/templates/knowledge-entry-template.yaml"
 work_instructions:
-  - "Создай файл задачи в `pipeline/tasks/03_vision_manager` через `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/vision/queued.yaml -TargetDirectory pipeline/tasks/03_vision_manager -Prefix VSN -Actor \"Vision Manager\" [-Id <idea_id>]` (Activity Log обновится автоматически)."
-  - "Оформляй идею по шаблону, указывая микросервис, каталог OpenAPI и frontend модуль."
-  - "Поддерживай статус `draft → review → approved`, обновляй метаданные и Activity Log (проверяй автоматические записи)."
+  - "Обнови идею по шаблону."
+  - "Проверь: `pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <idea-file>`."
+  - "Создай/обнови карточку: `pwsh -File pipeline/scripts/generate-tasks-from-queue.ps1 -QueueFile shared/trackers/queues/vision/queued.yaml -TargetDirectory pipeline/tasks/03_vision_manager -Prefix VSN -Actor \"Vision Manager\"`."
+  - "Передай дальше: `pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/03_vision_manager/<task-file.yaml> -TargetQueueFile shared/trackers/queues/vision/review.yaml -Actor \"Vision Manager\"`."
 validation_scripts:
-  - "pwsh -File pipeline/scripts/check-file-limits.ps1 -Path <idea-file>"
+  - "pwsh -File pipeline/scripts/check-knowledge-schema.ps1 -Path <idea-file>"
 completion_actions:
-  - "Обнови `shared/trackers/readiness-tracker.yaml`, проверь запись Activity Log и при необходимости добавь summary."
-  - "Перенеси карточку в `shared/trackers/queues/vision/in-progress.yaml`."
+  - "Убедись, что карточка в `shared/trackers/queues/vision/review.yaml` и ошибок нет."
 

@@ -1,0 +1,118 @@
+metadata:
+  id: concept-automation-hardening
+  title: Укрепление автоматизации Concept Director
+  document_type: implementation
+  category: pipeline
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-11-11T00:30:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - automation
+    - reliability
+    - pipeline
+  topics:
+    - process
+    - devops
+  related_systems:
+    - concept-automation
+  related_documents:
+    - id: concept-automation-demo
+      relation: reference
+    - id: concept-validation-test
+      relation: reference
+  source: shared/trackers/logs/automation-errors.yaml
+  visibility: internal
+  audience:
+    - concept
+    - vision
+    - devops
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Скрипты Concept Director периодически блокируются при одновременных обращениях к очередям и журналу активности.
+  goal: Сформировать требования к устойчивому пайплайну автоматизации Concept Director без конфликтов файловых блокировок.
+  essence: План расширения автоматизации с управлением конкуренцией, отслеживанием состояний и синхронизацией очередей.
+  key_points:
+    - Выявлены проблемные сценарии по журналу ошибок 2025-11-10.
+    - Требуется внедрить координацию доступа к очередям и activity-log.
+    - Пайплайн должен предоставлять наблюдаемость и контроль повторных запусков.
+content:
+  sections:
+    - id: context
+      title: Контекст и наблюдения
+      body: |
+        Конвейер Concept Director опирается на последовательность `check-knowledge-schema.ps1`, `generate-tasks-from-queue.ps1` и `complete-task.ps1`.
+        Логи от 2025-11-10 фиксируют блокировки файлов `shared/trackers/queues/vision/review.yaml` и `shared/trackers/activity-log.yaml`, а также отсутствие элементов очереди после досрочного чтения.
+        Повторные вызовы скриптов без арбитража доступа формируют TOCTOU-гонки: элементы очереди читаются несколькими процессами, записи в журнале активности прерываются, результатом становятся незаполненные карточки и незавершённые задачи.
+        Автоматизация Concept Director должна обеспечивать стабильный handoff к Vision Manager, иначе срываются сроки обзора ключевых документов и нарушается принцип «Мир живёт сам по себе» из канона.
+      mechanics_links: []
+      assets: []
+    - id: hardening-requirements
+      title: Требования к усилению пайплайна
+      body: |
+        1. Ввести механизм взаимного исключения для операций записи в очереди и activity-log:
+           - единый lock-файл с экспоненциальной повторной попыткой;
+           - тайм-ауты и уведомления при превышении лимитов ожидания;
+           - безопасное завершение при невозможности получить блокировку.
+        2. Добавить транзакционный буфер для элементов очереди:
+           - чтение переносится в staging-файл;
+           - подтверждение удаления выполняется после успешной генерации task.
+        3. Расширить телеметрию:
+           - логирование продолжительности шагов;
+           - счётчики повторных попыток и падений;
+           - автоматическое оповещение Concept Director при накоплении ошибок.
+        4. Обновить документацию по оркестрации запусков, синхронизировать расписание CI и ручных вызовов.
+        Эти изменения обеспечат непрерывность лиги и соответствие столпам «Каждый выбор имеет последствия» и «Глобальная иерархическая структура», поскольку статус задач перестанет теряться.
+      mechanics_links: []
+      assets: []
+    - id: workflow-updates
+      title: Обновлённый рабочий процесс
+      body: |
+        - Подготовка знания выполняется с предварительной проверкой блокировок и записью метаданных о запуске.
+        - После успешной валидации новый документ заносится в staging-очередь, а затем синхронизируется в основную очередь при подтверждении генерации task.
+        - Завершение задачи включает пост-проверку очереди Vision Manager и публикацию телеметрии, чтобы зафиксировать влияние на pipeline.
+        - При нештатной остановке система запускает автоматический roll-forward: повторный `generate-tasks-from-queue.ps1` с флагом восстановления, чтобы вернуть элементы в очередь без дубликатов.
+        Обновлённый процесс поддерживает устойчивую передачу знаний и позволяет Vision Manager планировать ревью без задержек.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: log
+      title: Automation Errors 2025-11-10
+      path: shared/trackers/logs/automation-errors.yaml
+    - type: canon
+      title: Основные столпы игры NECPGAME
+      path: shared/docs/knowledge/canon/vision/core-pillars.md
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers:
+    - Требуются изменения в pipeline/scripts/modules/Pipeline.Automation.psm1 для реализации блокировок и телеметрии.
+history:
+  - version: '0.1.0'
+    date: 2025-11-11
+    author: Concept Director
+    changes: Зафиксирован план укрепления автоматизации Concept Director по итогам анализа ошибок 2025-11-10.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
+
+
+
+
+

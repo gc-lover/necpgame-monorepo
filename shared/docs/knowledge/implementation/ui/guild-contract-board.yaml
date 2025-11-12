@@ -1,0 +1,147 @@
+metadata:
+  id: guild-contract-board
+  title: Guild Contract Board UI
+  document_type: implementation
+  category: ui
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T23:05:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - ui
+    - guild
+    - economy
+  topics:
+    - user-interface
+    - live-operations
+  related_systems:
+    - world-service
+    - economy-service
+    - social-service
+  related_documents:
+    - id: specter-hq-overview
+      relation: references
+    - id: helios-countermesh-ops
+      relation: references
+    - id: city-unrest-system
+      relation: references
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - vision
+    - frontend
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходима единая точка управления гильдейскими контрактами Specter/Helios и влиянием City Unrest.
+  goal: Описать UI, UX-потоки и API Guild Contract Board для интеграции фронтенда и сервисов мира.
+  essence: Комплексная спецификация борда контрактов с поддержкой ролей, телеметрии и событий.
+  key_points:
+    - Три основных вкладки объединяют Specter Ops, Helios Countermesh и City Response.
+    - Зафиксированы UX-потоки для лидеров гильдий и участников.
+    - Определены REST и WebSocket интеграции, включая требования к телеметрии и SLA.
+content:
+  sections:
+    - id: context
+      title: Назначение и роли
+      body: |
+        Guild Contract Board служит центральным интерфейсом для Specter HQ и союзных гильдий. Цель — соединить рейдовые валюты, Helios операции и уровни City Unrest в одном управляемом пространстве.
+
+        Пользовательские роли:
+        - Guild Leader и Officer управляют контрактами, апгрейдами и распределением наград.
+        - Member принимает задания и отслеживает таймеры.
+        - Helios Collaborator работает с альтернативными PvPvE операциями и влияет на баланс.
+      mechanics_links: []
+      assets: []
+    - id: ux-flows
+      title: UX-потоки
+      body: |
+        Specter HQ:
+        1. Открыть Contract Board и выбрать вкладку Specter Ops.
+        2. Просмотреть списки Active, Pending, Completed.
+        3. Принять контракт при соблюдении требований и лимитов.
+        4. После выполнения — отправить результаты и распределить specter-favor.
+
+        Helios Countermesh:
+        1. Игрок открывает вкладку Helios Countermesh.
+        2. Выбирает операцию с оценкой риска и влияния.
+        3. Завершение обновляет helios.alert и связанные показатели.
+
+        City Unrest:
+        1. Правая панель показывает текущий уровень unrest и активный сценарий.
+        2. Кнопка Mitigate открывает список мероприятий.
+        3. Обновления приходят через события реального времени.
+      mechanics_links: []
+      assets: []
+    - id: ui-layout
+      title: Визуальная структура
+      body: |
+        Макет:
+        ┌────────────────────────────────────────────────────────┐
+        │ GUILD CONTRACT BOARD           City Unrest: 62 (Crisis)│
+        ├──────────────┬──────────────────────┬──────────────────┤
+        │ Specter Ops  │ Helios Countermesh   │ City Response    │
+        ├──────────────┴──────────────────────┴──────────────────┤
+        │ Active Contracts list with controls and status timers  │
+        │ Active Scenario summary with progress and rewards      │
+        └────────────────────────────────────────────────────────┘
+      mechanics_links: []
+      assets: []
+    - id: api-requirements
+      title: API и интеграции
+      body: |
+        REST:
+        - GET /api/v1/world/specter-hq/contracts
+        - POST /api/v1/world/specter-hq/contracts/{contractId}/accept
+        - POST /api/v1/world/specter-hq/contracts/{contractId}/complete
+        - GET /api/v1/world/helios-ops/available
+        - POST /api/v1/world/helios-ops/{opId}/join
+        - GET /api/v1/world/city-unrest/state
+
+        WebSocket события: CITY_UNREST_UPDATE, CONTRACT_PROGRESS_UPDATE, HELIOS_OP_UPDATE.
+        Дополнительно требуется RBAC роль guild.officer и экономика распределения наград.
+      mechanics_links: []
+      assets: []
+    - id: persistence-telemetry
+      title: Данные, телеметрия и SLA
+      body: |
+        - Таблицы: guild_contracts, guild_contract_assignments, guild_contract_history с индексами по guild_id, contract_type, status.
+        - События телеметрии: contract_viewed, contract_accepted, contract_completed, helios_op_joined.
+        - KPI: среднее принятие ≤ 5 минут, завершение ≥ 80%.
+        - Латентность: contract_fetch ≤ 150 мс, contract_action ≤ 200 мс.
+        - Дашборды Grafana и алерты PagerDuty обеспечивают наблюдаемость.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: AI Brain Manager
+    changes: Перенесён Guild Contract Board UI из Markdown в структурированный YAML.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
+
+
+
