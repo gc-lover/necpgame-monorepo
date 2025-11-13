@@ -1,0 +1,100 @@
+metadata:
+  id: canon-step-by-step-backend-setup-part2
+  title: 'Step-by-Step Backend Setup — Part 2: Backend Code'
+  document_type: canon
+  category: narrative-coherence
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-13T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - narrative
+    - backend
+    - implementation-guide
+  topics:
+    - data-modeling
+    - service-architecture
+  related_systems:
+    - narrative-service
+    - quest-service
+  related_documents:
+    - id: canon-step-by-step-backend-setup-part1
+      relation: references
+    - id: canon-step-by-step-backend-setup-part3
+      relation: continues
+    - id: canon-backend-integration-part2-services
+      relation: references
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part2-code.md
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: После подготовки окружения требуется единый алгоритм реализации кодовой базы narrative backend для работы с квестовым графом.
+  goal: Описать последовательность создания сущностей, репозиториев, сервисов и контроллеров, обеспечивающих API доступа к квестам.
+  essence: Документ связывает структуры данных с REST-слоями и указывает контрольные точки по завершении каждого блока разработки.
+  key_points:
+    - Сущности покрывают квесты, ветвления, диалоги и флаги игроков с хранением сложных структур в JSONB.
+    - Репозитории расширяют JpaRepository и добавляют выборки по эпохе, типам и состояниям прогресса.
+    - Сервисы и контроллеры формируют публичные endpoints для загрузки графа, проверки доступности и обработки решений.
+content:
+  sections:
+    - id: entities
+      title: 'Сущности'
+      body: |
+        Шаг описывает создание Quest, QuestBranch, DialogueNode, DialogueChoice, PlayerFlag, PlayerWorldState, ServerWorldState и TerritoryControl. Приводятся аннотации JPA и пример объявления JSONB полей. Все классы размещаются в каталоге narrative/entity, после чего разработчик сверяется с источником backend-integration-complete для полной реализации.
+      mechanics_links:
+        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part1-entities.yaml
+      assets: []
+    - id: repositories
+      title: 'Репозитории'
+      body: |
+        Инструкция фиксирует создание интерфейсов с аннотацией @Repository, примером кастомного запроса findByEra и методами поиска по типам. Отдельно подчёркнуто, что аналогичные репозитории создаются для веток, флагов и мирового состояния, а чекпойнт подтверждает наличие шести готовых интерфейсов.
+      mechanics_links:
+        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part1-entities.yaml
+      assets: []
+    - id: services
+      title: 'Сервисы'
+      body: |
+        QuestGraphService собирает и кеширует граф квестов, а также предоставляет методы loadQuestGraph, isQuestAvailable, getAvailableQuests и processChoice. Раздел указывает на необходимость адаптации логики под источник JSON и подчёркивает использование Redis как кеша. После реализации сервисов группа методов отмечается как рабочая.
+      mechanics_links:
+        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part2-services.yaml
+      assets: []
+    - id: controllers
+      title: 'Контроллеры'
+      body: |
+        QuestController содержит endpoints для получения доступных квестов, детальной информации и обработки выбора игрока. Раздел связывает эндпоинты с сервисом, уточняет использование POST для принятия решения и завершает шаг контрольной точкой о готовности REST API.
+      mechanics_links:
+        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part3-api.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-13
+    author: Concept Director
+    changes: 'Конвертация Step-by-Step Backend Setup Part 2 в формат YAML с фиксацией кодовых шагов.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
