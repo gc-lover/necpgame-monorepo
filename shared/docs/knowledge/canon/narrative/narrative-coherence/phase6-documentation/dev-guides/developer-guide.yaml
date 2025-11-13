@@ -1,0 +1,110 @@
+metadata:
+  id: canon-narrative-developer-guide
+  title: 'Developer Guide: Narrative System'
+  document_type: canon
+  category: narrative-coherence
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-13T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - narrative
+    - developer-guide
+    - quest-graph
+  topics:
+    - system-architecture
+    - world-state
+  related_systems:
+    - narrative-service
+    - world-state-service
+    - dynamic-content-service
+  related_documents:
+    - id: canon-backend-integration-part1-entities
+      relation: references
+    - id: canon-backend-integration-part2-services
+      relation: references
+    - id: canon-backend-integration-part3-api
+      relation: references
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/developer-guide.md
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - backend
+    - data
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Команде требовалось единое руководство по использованию сюжетного графа, состоянию мира и динамическому контенту.
+  goal: Зафиксировать архитектуру, сценарии использования и практики тестирования narrative системы.
+  essence: Документ объясняет как проверять доступность квестов, управлять состоянием мира и генерировать динамические задания.
+  key_points:
+    - Квестовый граф объединяет зависимости, флаги и блокировки для выдачи контента.
+    - Состояние мира агрегируется из персональных, серверных и фракционных слоёв.
+    - Система динамических квестов использует вероятностные модификаторы на основе world state.
+    - Performance раздел описывает кэширование и индексацию критичных запросов.
+content:
+  sections:
+    - id: architecture
+      title: 'Архитектура и компоненты'
+      body: |
+        Система состоит из графа квестов, слоя состояния мира, триггеров событий и генератора динамического контента. Quest Graph насчитывает сотни узлов и связей, отражая зависимости между сюжетными линиями. World State разделён на personal, server и faction уровни, что позволяет строить локализованные последствия. Event Triggers управляют запуском новых веток, а Dynamic Content создаёт задания в ответ на изменения.
+      mechanics_links: []
+      assets: []
+    - id: quest-availability
+      title: 'Проверка доступности квестов'
+      body: |
+        Алгоритм проверяет выполнение зависимых квестов, наличие обязательных флагов, отсутствие блокировок и соответствие уровня персонажа. При успешном прохождении всех проверок квест считается доступным. Логика позволяет расширять проверки без изменения интерфейса методов.
+
+        Обработка выбора применяет репутационные изменения, управляет флагами и обновляет набор доступных квестов. Последствия фиксируются в аудите, чтобы восстановить состояние при необходимости.
+      mechanics_links: []
+      assets: []
+    - id: world-state
+      title: 'Управление состоянием мира'
+      body: |
+        World State комбинирует персональные, серверные и фракционные данные с учётом приоритетов. Голосование позволяет игрокам влиять на состояние серверного слоя. При достижении порога система применяет изменения и триггерит последствия, включая запуск событий и обновление NPC.
+
+        Подсистема голосования использует веса на основе репутации и поддерживает расширение новыми правилами валидации.
+      mechanics_links: []
+      assets: []
+    - id: dynamic-content
+      title: 'Динамический контент'
+      body: |
+        Генерация квестов использует пул шаблонов, где вероятность каждого шаблона модифицируется текущим состоянием мира. После выбора шаблона создаётся экземпляр квеста, адаптированный под контекст персонажа и сервера. Метод применяет ограничение диапазона вероятностей, что предотвращает появление некорректных значений.
+      mechanics_links: []
+      assets: []
+    - id: performance
+      title: 'Производительность и тестирование'
+      body: |
+        Кэширование quest graph в Redis с часовой валидностью и хранение серверного состояния с коротким TTL уменьшают нагрузку на базу данных. Индексы на player_flags, server_world_state и quest_branches ускоряют проверки. Тестовые сценарии включают проверку доступности при выполненных зависимостях и обработку взаимного исключения после сюжетных развилок.
+
+        Рекомендуется поддерживать набор юнит-тестов, покрывающих ключевые выборы и квоты голосования, чтобы гарантировать корректность при наполнении контентом.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: narrative_platform_team
+    changes: Обобщено руководство по narrative системе и практикам её использования.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
