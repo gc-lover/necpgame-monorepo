@@ -1,101 +1,91 @@
 metadata:
-  id: narrative-coherence-event-export-guide
-  title: 'YAML → JSON Export Scripts'
+  id: narrative-coherence-event-matrix-export-scripts
+  title: "YAML → JSON Export Scripts"
   document_type: canon
   category: narrative-coherence
   status: draft
   version: '1.0.0'
-  last_updated: 2025-11-07T00:31:00Z
+  last_updated: 2025-11-13T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_tools
+      contact: tools@necp.game
   tags:
     - export
-    - quest-graph
-    - automation
+    - event-matrix
+    - tooling
   topics:
-    - data-pipeline
+    - pipelines
     - backend-integration
   related_systems:
     - narrative-service
-    - quest-service
+    - backend-build
   related_documents:
-    - id: narrative-coherence-side-quests-matrix
+    - id: narrative-coherence-event-matrix-architecture
       relation: references
-    - id: narrative-coherence-quest-triggers
+    - id: narrative-coherence-quest-dependencies-graph
       relation: references
-    - id: narrative-coherence-quest-blockers
-      relation: references
-    - id: narrative-coherence-quest-dependencies
-      relation: references
-  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase3-event-matrix/export/README.md
+  source: "shared/docs/knowledge/canon/narrative/narrative-coherence/phase3-event-matrix/export/README.md"
   visibility: internal
   audience:
     - concept
+    - narrative
     - backend
-    - data
-  risk_level: medium
+  risk_level: low
 review:
   chain:
-    - role: concept_director
+    - role: tools_lead
       reviewer: ''
       reviewed_at: ''
       status: pending
   next_actions: []
 summary:
-  problem: Требуется автоматизированная конвертация YAML-графа событий в JSON для использования сервисами и клиентами.
-  goal: Описать доступные скрипты экспорта, результирующие файлы и способы валидации данных.
-  essence: Гайд покрывает Python и Node конвертеры, структуру выходных JSON и проверку корректности перед интеграцией.
+  problem: "Нужен единый процесс конвертации YAML графов событий в JSON для backend."
+  goal: "Описать доступные скрипты, входные и выходные файлы и шаги проверки."
+  essence: "Скрипты Python и Node.js генерируют JSON-артефакты графа событий для загрузки в сервисы."
   key_points:
-    - Поддерживаются Python и Node.js скрипты для генерации JSON.
-    - Конвертация охватывает матрицы побочных квестов, триггеров и блокеров.
-    - Приведены примеры структуры JSON и рекомендации по проверке результата.
+    - "Рекомендуемый путь — Python с PyYAML."
+    - "Поддерживается альтернативный Node.js конвертер."
+    - "Конвертируются четыре основных YAML файла в JSON."
+    - "Приведён формат JSON и шаги валидации."
 content:
   sections:
-    - id: overview
-      title: 'Назначение'
-      body: |
-        Документ описывает процесс преобразования YAML-файлов графа событий в JSON, который используется narrative backend и аналитическими пайплайнами. Скрипты поддерживают воспроизводимый экспорт перед сборкой сервисов.
-      mechanics_links: []
-      assets: []
     - id: scripts
-      title: 'Доступные скрипты'
+      title: "Доступные скрипты"
       body: |
-        ### Python
-        ```
+        ### Python (рекомендуется)
+        ```bash
         pip install pyyaml
         python convert-quest-graph.py
         ```
 
         ### Node.js
-        ```
+        ```bash
         npm install js-yaml
         node convert-quest-graph.js
         ```
       mechanics_links: []
       assets: []
-    - id: datasets
-      title: 'Входные и выходные файлы'
+    - id: io-mapping
+      title: "Входные и выходные файлы"
       body: |
         **Input YAML:**
-        1. phase2-narrative/connections/side-quests-matrix.yaml
-        2. phase2-narrative/connections/quest-triggers.yaml
-        3. phase2-narrative/connections/quest-blockers.yaml
-        4. phase3-event-matrix/graph/quest-dependencies.yaml
+        1. `phase2-narrative/connections/side-quests-matrix.yaml`
+        2. `phase2-narrative/connections/quest-triggers.yaml`
+        3. `phase2-narrative/connections/quest-blockers.yaml`
+        4. `phase3-event-matrix/graph/quest-dependencies.yaml`
 
         **Output JSON:**
-        1. export/side-quests-matrix.json
-        2. export/quest-triggers.json
-        3. export/quest-blockers.json
-        4. export/quest-dependencies-full.json
+        1. `export/side-quests-matrix.json`
+        2. `export/quest-triggers.json`
+        3. `export/quest-blockers.json`
+        4. `export/quest-dependencies-full.json`
       mechanics_links: []
       assets: []
-    - id: output-structure
-      title: 'Формат выходных данных'
+    - id: output-format
+      title: "Формат JSON"
       body: |
-        Пример `quest-dependencies-full.json`:
         ```
         {
           "metadata": {
@@ -103,10 +93,20 @@ content:
             "total_quests": 550
           },
           "nodes": [
-            { "id": "MQ-2020-001", "name": "Первые шаги", "era": "2020-2030", "type": "main" }
+            {
+              "id": "MQ-2020-001",
+              "name": "Первые шаги",
+              "era": "2020-2030",
+              "type": "main"
+            }
           ],
           "edges": [
-            { "from": "MQ-2020-001", "to": "MQ-2020-002", "type": "unlocks", "timing": "immediate" }
+            {
+              "from": "MQ-2020-001",
+              "to": "MQ-2020-002",
+              "type": "unlocks",
+              "timing": "immediate"
+            }
           ],
           "statistics": {
             "total_nodes": 550,
@@ -116,17 +116,16 @@ content:
         ```
       mechanics_links: []
       assets: []
-    - id: backend
-      title: 'Интеграция с backend'
+    - id: backend-integration
+      title: "Интеграция с backend"
       body: |
-        Пример загрузки графа в Spring Boot:
-        ```
+        ```java
         @Service
         public class QuestGraphService {
             private QuestGraph graph;
 
             @PostConstruct
-            public void init() throws IOException {
+            public void init() {
                 ObjectMapper mapper = new ObjectMapper();
                 graph = mapper.readValue(
                     new File("quest-dependencies-full.json"),
@@ -135,21 +134,20 @@ content:
             }
         }
         ```
-      mechanics_links:
-        - implementation/backend/narrative/service-logic.yaml
+        Сервис загружает JSON, рассчитывает доступные квесты и использует граф для выдачи веток игрокам.
+      mechanics_links: []
       assets: []
     - id: validation
-      title: 'Проверка результатов'
+      title: "Проверка результатов"
       body: |
-        Используйте `ls -lh export/` для проверки размеров файлов и `jq` для валидации JSON:
-        ```
+        ```bash
+        ls -lh export/
         cat export/quest-dependencies-full.json | jq '.statistics'
         cat export/quest-dependencies-full.json | jq '.nodes | length'
         cat export/quest-dependencies-full.json | jq '.edges | length'
         ```
-        Ожидаемые значения: 4 JSON файла, 550+ узлов, 1200+ связей и общий размер 500KB–1MB.
-      mechanics_links:
-        - implementation/tooling/json-validation.yaml
+        Ожидаемые показатели: 4 файла, суммарный размер ~500KB–1MB, 550+ узлов и 1200+ связей.
+      mechanics_links: []
       assets: []
 appendix:
   glossary: []
@@ -161,9 +159,9 @@ implementation:
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-07
+    date: 2025-11-13
     author: concept_director
-    changes: Описаны скрипты экспорта YAML → JSON и проверка результатов.
+    changes: "Конвертация руководства по экспортным скриптам из MD в YAML."
 validation:
   checksum: ''
   schema_version: '1.0'
