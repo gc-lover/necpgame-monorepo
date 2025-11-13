@@ -1,0 +1,201 @@
+metadata:
+  id: narrative-coherence-api-integration
+  title: API Integration Guide
+  document_type: canon
+  category: narrative-coherence
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-07T00:01:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - api
+    - narrative-coherence
+    - integration
+  topics:
+    - quest-service
+    - world-state
+  related_systems:
+    - narrative-service
+    - quest-service
+    - world-state-service
+  related_documents:
+    - id: narrative-coherence-developer-guide
+      relation: references
+    - id: narrative-coherence-quest-tables
+      relation: references
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/api-integration.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - api
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требуется описать интеграцию квестового графа и глобального состояния с REST и WebSocket интерфейсами.
+  goal: Зафиксировать рекомендуемые эндпоинты, структуры данных и события для сервисов narrative и world state.
+  essence: Документ определяет единый контракт API, охватывающий чтение и обновление квестов, мирового состояния и подписку на события.
+  key_points:
+    - Рекомендованные REST маршруты для квестов и мирового состояния с параметрами запросов.
+    - Типы данных для сущностей Quest, WorldState и PlayerFlag.
+    - WebSocket события и стандартные ответы об ошибках.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Руководство описывает интеграцию квестового графа и глобального состояния через REST и WebSocket. Оно задаёт
+        структуру API для получения, обновления и отслеживания изменений в игре.
+      mechanics_links: []
+      assets: []
+    - id: quest-api
+      title: Quest API
+      body: |
+        Рекомендуемые эндпоинты:
+
+        ```
+        GET /api/v1/narrative/quests/available
+          Query: characterId*, era, type
+          Response: quests[], total
+
+        GET /api/v1/narrative/quests/{questId}
+          Query: characterId*
+          Response: quest, branches[], dialogue_tree, available, blocked_by[]
+
+        POST /api/v1/narrative/quests/{questId}/choice
+          Body: characterId, choiceId, nodeId
+          Response: success, consequences, unlocked_quests[], blocked_quests[], reputation_changes, flags_set[]
+        ```
+      mechanics_links:
+        - services/backend/narrative/api-spec.yaml
+      assets: []
+    - id: world-state-api
+      title: World State API
+      body: |
+        Эндпоинты мирового состояния:
+
+        ```
+        GET /api/v1/narrative/world-state
+          Query: characterId*, serverId*
+          Response: personal_state, server_state, faction_state, combined_view
+
+        POST /api/v1/narrative/world-state/vote
+          Body: characterId, serverId, stateKey, voteValue
+          Response: vote_recorded, current_votes, threshold_required, status
+
+        GET /api/v1/narrative/territory-control
+          Query: serverId*, territoryId
+          Response: territories[]
+        ```
+      mechanics_links:
+        - services/backend/world-state/api-overview.yaml
+      assets: []
+    - id: data-models
+      title: Модели данных
+      body: |
+        Основные структуры:
+
+        ```
+        interface Quest {
+          id: string;
+          name: string;
+          description: string;
+          type: QuestType;
+          era: string;
+          minLevel: number;
+          requiredQuests: string[];
+          requiredFlags: Flag[];
+          hasBranches: boolean;
+          dialogueTreeRoot: number | null;
+          rewards: Rewards;
+        }
+        ```
+
+        ```
+        interface WorldState {
+          personal: Map<string, any>;
+          server: Map<string, any>;
+          faction: Map<string, any> | null;
+        }
+        ```
+
+        ```
+        interface PlayerFlag {
+          characterId: UUID;
+          flagKey: string;
+          flagValue: any;
+          setByQuest: string | null;
+          createdAt: Date;
+        }
+        ```
+      mechanics_links:
+        - services/backend/narrative/data-contracts.yaml
+      assets: []
+    - id: websocket
+      title: WebSocket события
+      body: |
+        Канал реального времени поддерживает события:
+
+        ```
+        world_state_changed:
+          serverId, stateKey, oldValue, newValue, timestamp
+
+        quest_unlocked:
+          characterId, questId, unlockedBy, timestamp
+
+        territory_control_changed:
+          serverId, territoryId, oldFaction, newFaction, controlPercentage
+        ```
+      mechanics_links:
+        - services/backend/narrative/realtime-events.yaml
+      assets: []
+    - id: error-handling
+      title: Обработка ошибок
+      body: |
+        Стандартные ответы:
+
+        ```
+        QUEST_NOT_AVAILABLE → причины недоступности, требования уровня
+        QUEST_BLOCKED → блокировка выбором, возможность восстановления
+        CHOICE_INVALID → недоступная ветка, требуемый навык
+        ```
+      mechanics_links:
+        - services/backend/common/error-codes.yaml
+      assets: []
+    - id: references
+      title: Связанные документы
+      body: |
+        - Developer Guide
+        - Quest Tables
+        - Event Matrix Architecture
+      mechanics_links: []
+      assets:
+        - type: document
+          path: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/developer-guide.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Конвертирован гайд по интеграции API из Markdown в YAML и структурирован по разделам контрактов.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
