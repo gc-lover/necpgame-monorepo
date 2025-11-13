@@ -1,0 +1,95 @@
+metadata:
+  id: canon-backend-integration-part3-api
+  title: 'Backend Integration — Part 3: API и WebSocket'
+  document_type: canon
+  category: narrative-coherence
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-13T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - narrative
+    - api
+    - websocket
+  topics:
+    - quest-delivery
+    - realtime-updates
+  related_systems:
+    - narrative-service
+    - realtime-gateway
+  related_documents:
+    - id: canon-backend-integration-part1-entities
+      relation: references
+    - id: canon-backend-integration-part2-services
+      relation: references
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part3-api.md
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - backend
+    - liveops
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходимо унифицировать описание публичных API и WebSocket-конфигурации для narrative backend.
+  goal: Зафиксировать контракт REST и параметры WebSocket для выдачи квестов и обработки выбора игрока.
+  essence: Документ описывает контроллер квестов и конфигурацию брокера сообщений для событий повествования.
+  key_points:
+    - REST контроллер предоставляет эндпоинты получения доступных квестов и отправки выбора игрока.
+    - Контроллер опирается на QuestGraphService для бизнес-логики.
+    - WebSocket конфигурируется через STOMP с префиксом /app и брокером /topic и /queue.
+    - Точка подключения /ws/narrative доступна для клиентов и поддерживает SockJS.
+content:
+  sections:
+    - id: quest-controller
+      title: 'QuestController'
+      body: |
+        Контроллер обрабатывает запросы /api/v1/narrative/quests. Метод getAvailableQuests возвращает список доступных квестов для переданного characterId, используя QuestGraphService. Метод makeChoice получает идентификатор квеста и структуру запроса, передаёт её в сервис и возвращает результат выбора с последствиями.
+
+        Контракты реализованы через ResponseEntity, что упрощает расширение кодов ответов и передачу заголовков.
+      mechanics_links: []
+      assets: []
+    - id: websocket-config
+      title: 'WebSocketConfig'
+      body: |
+        Конфигурация включает Simple Broker с топиками /topic и /queue, а также префикс приложений /app. Клиентские подключения регистрируются по адресу /ws/narrative, где разрешены кросс-доменные обращения и доступна совместимость с SockJS.
+
+        Такая настройка поддерживает рассылку обновлений о состоянии квестов и позволяет сервису публиковать события в режиме реального времени.
+      mechanics_links: []
+      assets: []
+    - id: rollout-notes
+      title: 'Сетевое взаимодействие'
+      body: |
+        REST и WebSocket интерфейсы совместно обеспечивают цикл: клиент получает доступные квесты, отправляет выборы и подписывается на обновления. Требования к безопасности предполагают добавление аутентификации и проверку происхождения запросов на уровне шлюза.
+
+        Контракты рассчитаны на интеграцию с фронтендом и игровыми серверами, поэтому важно поддерживать обратную совместимость при будущих обновлениях.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: narrative_platform_team
+    changes: Задокументированы REST и WebSocket компоненты narrative backend.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
