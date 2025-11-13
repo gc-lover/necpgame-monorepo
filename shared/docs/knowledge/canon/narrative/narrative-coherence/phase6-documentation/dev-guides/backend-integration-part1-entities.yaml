@@ -1,0 +1,96 @@
+metadata:
+  id: canon-backend-integration-part1-entities
+  title: 'Backend Integration — Part 1: Entities & Repositories'
+  document_type: canon
+  category: narrative-coherence
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-13T00:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - narrative
+    - backend
+    - quest-graph
+  topics:
+    - data-modeling
+    - quest-structure
+  related_systems:
+    - narrative-service
+    - quest-service
+  related_documents:
+    - id: canon-backend-integration-part2-services
+      relation: continues
+    - id: canon-backend-integration-part3-api
+      relation: continues
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part1-entities.md
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - backend
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Требовалось описать базовые сущности и репозитории, поддерживающие сюжетный граф квестов для последующей интеграции.
+  goal: Сформировать структурированное описание доменных сущностей, связей и запросов для narrative backend.
+  essence: Документ фиксирует сущности квестов, веток и флагов игрока вместе с каркасом хранилища на JPA.
+  key_points:
+    - Quest хранит основные атрибуты, зависимые квесты и флаги ветвления.
+    - QuestBranch задаёт условия, репутационные эффекты и разблокировки контента.
+    - PlayerFlag фиксирует флаги, выставленные квестами для конкретного персонажа.
+    - Репозитории предоставляют фильтрацию по эпохе, типу и уровню персонажа.
+content:
+  sections:
+    - id: entity-overview
+      title: 'Структура сущностей'
+      body: |
+        Quest реализуется как сущность JPA с полями идентификатора, названия, описания, типа и минимального уровня. Списки обязательных квестов и требований по флагам хранятся в JSONB, что позволяет динамически обновлять зависимости. Атрибуты era и region поддерживают группировку по временным периодам и географии, а признак hasBranches фиксирует наличие разветвлений. Связь с ветками реализована через коллекцию QuestBranch.
+
+        QuestBranch сохраняет условия выполнения, репутационные изменения и перечни квестов, которые открываются или блокируются после выбора ветки. Использование JSONB для условий и последствий позволяет хранить комплексные структуры без дополнительной нормализации.
+
+        PlayerFlag сопоставляет персонажу набор ключевых флагов с произвольным значением, фиксирует источник изменения и время создания записи. Это обеспечивает аудит состояния персонажа и повторную проверку условий.
+      mechanics_links: []
+      assets: []
+    - id: repositories
+      title: 'Запросы и доступ к данным'
+      body: |
+        QuestRepository расширяет JpaRepository и добавляет запросы по эпохе, типу и доступному уровню. Фильтрация по era поддерживает вывод актуальных квестов, а поиск по типу разделяет основные, побочные и фракционные линии. Диапазон уровней позволяет собирать квесты, подходящие персонажу без дополнительной логики в сервисах.
+
+        PlayerFlagRepository предоставляет методы для выборки флагов по персонажу, поиска конкретного ключа и проверки наличия флага с помощью агрегатного запроса. Такое API поддерживает быструю проверку условий доступности веток и событий.
+      mechanics_links: []
+      assets: []
+    - id: persistence-notes
+      title: 'Особенности хранения'
+      body: |
+        Для работы с JSONB используется тип JsonBinaryType, расширяющий стандартные возможности Hibernate. Поля audit типа createdAt позволяют отслеживать историю изменений. Связи построены без каскадного удаления, что облегчает сохранение истории веток.
+
+        Индексы на уровне базы данных предполагаются по идентификаторам и комбинациям characterId и flagKey, что снижает стоимость выборки при проверке условий квестов.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: narrative_platform_team
+    changes: Перенесены сущности и репозитории narrative backend в формат знания.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
