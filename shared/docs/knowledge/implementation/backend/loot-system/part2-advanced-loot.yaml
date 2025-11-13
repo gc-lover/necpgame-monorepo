@@ -1,85 +1,106 @@
 metadata:
-  id: implementation-loot-system-part2
+  id: implementation-backend-loot-system-part2
   title: "Loot System — Part 2: Advanced Loot"
   document_type: implementation
   category: backend
   status: approved
   version: '1.0.1'
-  last_updated: 2025-11-08T01:52:00Z
-  concept_approved: false
-  concept_reviewed_at: ''
+  last_updated: 2025-11-13T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T02:19:00Z
   owners:
-    - role: loot_system_owner
-      contact: economy@necp.game
+    - role: backend_lead
+      contact: backend@necp.game
   tags:
-    - loot
-    - smart-loot
-    - boss-rewards
+    - loot-system
+    - backend
+    - java
   topics:
     - loot-rolls
-    - party-distribution
-    - duplicate-control
+    - smart-loot
+    - boss-rewards
   related_systems:
-    - economy-service
+    - loot-service
+    - inventory-service
     - party-service
-    - achievement-service
   related_documents:
-    - id: implementation-loot-system-index
+    - id: implementation-backend-loot-system-part1
+      relation: precedes
+    - id: implementation-backend-inventory-system
       relation: references
-    - id: implementation-loot-system-part1
-      relation: complements
-  source: shared/docs/knowledge/implementation/backend/loot-system/part2-advanced-loot.md
+  source: "shared/docs/knowledge/implementation/backend/loot-system/part2-advanced-loot.md"
   visibility: internal
   audience:
-    - economy
     - backend
-    - qa
+    - gameplay
+    - systems
   risk_level: medium
 review:
   chain:
-    - role: loot_system_owner
+    - role: backend_architect
       reviewer: ''
       reviewed_at: ''
       status: pending
   next_actions: []
 summary:
-  problem: "Базовой генерации лута недостаточно — требуются механики партийных роллов, умного распределения и контроля повторов."
-  goal: "Описать продвинутые алгоритмы smart loot, boss loot и анти-дубликаты, включая схемы БД и сервисный код."
-  essence: "Документ охватывает таблицу `loot_rolls`, сервисы smart loot, boss loot, систему роллов и проверки на уникальные легендарки."
+  problem: "Нужно формализовать продвинутые механики лута: roll-систему, smart loot и гарантии боссов."
+  goal: "Задать схемы БД, алгоритмы распределения, API и меры защиты от дубликатов."
+  essence: "Документ описывает реализацию roll-таблиц, умного лута, гарантированных наград боссов и оптимизации сервиса."
   key_points:
-    - "`loot_rolls` хранит партийные броски, победителя и TTL на завершение."
-    - "`SmartLootService` повышает релевантность предметов по классу/специализации."
-    - "Boss loot гарантирует награды каждому участнику и генерирует общий лут с роллами."
-    - "Anti-duplicate контролирует выдачу легендарных предметов и синхронизируется с банком."
+    - "SQL-схемы для loot_rolls и связанные индексы."
+    - "Алгоритмы Smart Loot и Bad Luck Protection на Java."
+    - "Гарантированные награды боссов и party/solo сценарии."
+    - "REST API и фоновые задачи оптимизации."
 content:
   sections:
-    - id: loot-rolls
-      title: Таблица и процесс роллов
+    - id: roll-schema
+      title: "Roll Tables Schema"
       body: |
-        SQL-схема `loot_rolls` описывает хранение бросков, победителя и статусов. Процесс включает TTL в 60 секунд и индексы
-        для мониторинга активных роллов.
-      mechanics_links: []
+        Приведена SQL-схема таблицы `loot_rolls` с полями для контекста партии, результатов бросков, статусов и таймеров.
+        Индексы покрывают дропы, партии и истечения, что поддерживает своевременную очистку и высокую производительность.
+      mechanics_links:
+        - implementation/backend/loot-system/part1-loot-generation.yaml
       assets: []
     - id: smart-loot
-      title: Smart Loot
+      title: "Smart Loot Algorithm"
       body: |
-        `SmartLootService` анализирует шаблоны предметов и характеристики персонажа, повышая шанс релевантных предметов и
-        модифицируя итоговый список дропа.
-      mechanics_links: []
+        Java-сервис `SmartLootService` анализирует класс и специализацию персонажа, повышая релевантность предметов.
+        Алгоритм позволяет добавлять дополнительные экземпляры, изменять количество и подстраивать набор лута под
+        потребности класса.
+      mechanics_links:
+        - mechanics/gameplay/classes/class-archetypes.yaml
       assets: []
     - id: boss-loot
-      title: Boss Loot
+      title: "Guaranteed Boss Loot"
       body: |
-        Описаны гарантированные награды для party/solo, генерация shared лута, интеграция с `createPartyLoot` и проверка
-        достижений после победы.
-      mechanics_links: []
+        Метод `createBossLoot` обеспечивает гарантированные награды для всех участников партии и создаёт общий лут с
+        roll-системой. Поддерживаются solo и party сценарии, публикация достижений и журналирование.
+      mechanics_links:
+        - mechanics/world/dungeons/dungeon-bosses-catalog.yaml
       assets: []
-    - id: duplicate-control
-      title: Anti-Duplicate система
+    - id: duplicate-protection
+      title: "Anti-Duplicate System"
       body: |
-        `LootDuplicateChecker` проверяет легендарные предметы в инвентаре и банке, блокируя выдачу дублей, а также вызывает
-        дополнительные сценарии компенсации.
-      mechanics_links: []
+        `LootDuplicateChecker` проверяет наличие легендарных предметов и активирует Bad Luck Protection, гарантируя
+        легендарный дроп раз в 7 дней. Механизм анализирует инвентарь и банк персонажа.
+      mechanics_links:
+        - implementation/backend/loot-system/part1-loot-generation.yaml
+      assets: []
+    - id: api
+      title: "API Endpoints"
+      body: |
+        REST-контуры охватывают управление дропами (`GET /loot/drops/nearby`, `POST /loot/pickup`, `GET /loot/history`),
+        работу с roll'ами (`POST /loot/rolls/{rollId}/submit`, `GET /loot/rolls/active`) и настройки Auto-Loot.
+      mechanics_links:
+        - implementation/backend/loot-system/part2-advanced-loot.yaml
+      assets: []
+    - id: performance
+      title: "Оптимизация"
+      body: |
+        Периодический job очищает просроченные дропы, а кеширование таблиц лута снижает нагрузку. Эти меры поддерживают
+        стабильную работу сервиса и быстрые ответы API.
+      mechanics_links:
+        - implementation/backend/loot-system/part2-advanced-loot.yaml
       assets: []
 appendix:
   glossary: []
@@ -92,9 +113,9 @@ implementation:
   blockers: []
 history:
   - version: '1.0.1'
-    date: 2025-11-07
-    author: loot_system_owner
-    changes: Добавлены smart loot, boss loot и механизм анти-дубликатов.
+    date: 2025-11-13
+    author: backend_team
+    changes: 'Конвертация "Loot System — Part 2" из MD в YAML.'
 validation:
   checksum: ''
   schema_version: '1.0'
