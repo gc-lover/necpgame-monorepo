@@ -1,0 +1,132 @@
+metadata:
+  id: narrative-coherence-performance-part1-database
+  title: Performance Tuning — Part 1 (Database)
+  document_type: canon
+  category: narrative-coherence
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-07T00:52:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - performance
+    - database
+    - narrative-coherence
+  topics:
+    - backend-optimization
+    - quest-runtime
+  related_systems:
+    - quest-service
+    - narrative-service
+    - data-platform
+  related_documents:
+    - id: narrative-coherence-performance-part2-application
+      relation: continues
+    - id: narrative-coherence-performance-part3-advanced
+      relation: continues
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part1-database.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - platform
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужен консистентный чеклист по базовым оптимизациям БД, обслуживающей сюжетные квесты и ветвления.
+  goal: Задать целевые latency для ключевых операций и описать обязательные настройки индексов, партиционирования и пула соединений.
+  essence: Руководство фиксирует базы оптимизации PostgreSQL для квестового пайплайна с ориентирами на скорость получения и записи данных.
+  key_points:
+    - Целевые SLA для чтения и записи квестовых данных.
+    - Обязательные индексы и партиционирование для событийных таблиц.
+    - Настройки пула соединений для устойчивых пиковых нагрузок.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Первая часть цикла Performance Tuning описывает фундаментальные требования к базе данных квестового домена.
+        Документ служит стартовой точкой перед оптимизацией приложения и инфраструктуры и определяет метрики,
+        которых должна придерживаться команда данных и бэкенда.
+      mechanics_links: []
+      assets: []
+    - id: latency-targets
+      title: Целевые метрики
+      body: |
+        Основные операции должны укладываться в следующие показатели при нагрузке production-уровня:
+
+        | Операция            | Цель    |
+        |---------------------|---------|
+        | Получение списка квестов | < 100ms |
+        | Детали квеста           | < 50ms  |
+        | Обработка выбора        | < 200ms |
+      mechanics_links:
+        - mechanics/performance/latency-benchmarks.yaml
+      assets: []
+    - id: database-optimization
+      title: Оптимизация базы
+      body: |
+        ### Индексы
+
+        ```
+        CREATE INDEX idx_quests_era_level ON quests(era, min_level, max_level);
+        CREATE INDEX idx_player_flags_character_key ON player_flags(character_id, flag_key);
+        CREATE INDEX idx_quests_tags_gin ON quests USING GIN(tags);
+        ```
+
+        ### Партиционирование
+
+        ```
+        CREATE TABLE player_quest_choices_2025_01 PARTITION OF player_quest_choices
+            FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+        ```
+
+        ### Пул соединений
+
+        ```
+        spring:
+          datasource:
+            hikari:
+              maximum-pool-size: 200
+              minimum-idle: 20
+        ```
+      mechanics_links:
+        - services/backend/quest/database-schema.yaml
+      assets: []
+    - id: navigation
+      title: Навигация по серии
+      body: |
+        Продолжение цикла описано в документах Part 2 (Application) и Part 3 (Advanced). Настоящая часть служит базой,
+        которую необходимо внедрить перед переходом к оптимизации сервисов и инфраструктуры.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: internal
+      value: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part2-application.md
+    - type: internal
+      value: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part3-advanced.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Конвертировано руководство Performance Tuning Part 1 из Markdown в YAML и закреплены целевые показатели БД.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
