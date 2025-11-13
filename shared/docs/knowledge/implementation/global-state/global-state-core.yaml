@@ -1,44 +1,43 @@
 metadata:
-  id: implementation-global-state-core-architecture
-  title: 'Global State Core — Архитектура'
+  id: global-state-core
+  title: Global State Core Architecture
   document_type: implementation
-  category: global-state
+  category: systems
   status: approved
   version: '1.0.0'
   last_updated: 2025-11-07T06:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-07T06:00:00Z
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: ai_brain_manager
+      contact: brain@necp.game
   tags:
     - global-state
     - event-sourcing
-    - backend
+    - architecture
   topics:
-    - state-management
+    - backend_platform
     - persistence
-    - telemetry
   related_systems:
+    - state-service
+    - analytics-service
     - event-bus
-    - global-state-service
-    - analytics-pipeline
   related_documents:
-    - id: implementation-global-state-events
-      relation: references
-    - id: implementation-global-state-management
-      relation: references
-    - id: implementation-global-state-sync
-      relation: references
-    - id: implementation-global-state-operations
-      relation: references
+    - id: global-state-events
+      relation: expands
+    - id: global-state-management
+      relation: expands
+    - id: global-state-sync
+      relation: expands
+    - id: global-state-operations
+      relation: expands
   source: shared/docs/knowledge/implementation/global-state/global-state-core.md
   visibility: internal
   audience:
-    - concept
     - backend
+    - platform
     - analytics
-  risk_level: high
+  risk_level: critical
 review:
   chain:
     - role: concept_director
@@ -47,83 +46,115 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: 'Глобальные события игры требуют централизованного учёта и воспроизведения, чего не обеспечивает традиционный CRUD.'
-  goal: 'Сформировать устойчивую архитектуру Global State на основе Event Sourcing с полнотой истории и контролем конкуренции.'
-  essence: 'Микросервисное ядро, в котором события через шину попадают в Event Store и пересобирают состояние мира, игроков и экономики.'
+  problem: Требуется единая система отслеживания состояния мира с полной историей событий.
+  goal: Определить архитектуру Global State Core на базе Event Sourcing с описанием схем и процессов.
+  essence: Архитектура строится вокруг Event Store, менеджера глобального состояния и механизмов реконструкции и снапшотов.
   key_points:
-    - 'Используется event bus и выделенный Event Store в PostgreSQL для долговременного хранения.'
-    - 'State Store и snapshots обеспечивают быстрые чтения и быстрый rollback состояния.'
-    - 'Иерархия ключей и политики snapshot регулируют масштабируемость и аудит.'
+    - Event Sourcing фиксирует каждое изменение через `game_events`.
+    - Состояние хранится в `global_state` с версионностью и ссылками на события.
+    - Снапшоты ускоряют реконструкцию и обеспечивают контроль версий.
 content:
   sections:
-    - id: architecture
-      title: 'Контур системы'
+    - id: introduction
+      title: 'Краткое описание'
       body: |
-        Поток начинается на клиенте и через API Gateway поступает в специализированные сервисы (квесты, бой, экономика, социальные механики).
-        Каждый сервис публикует события в шину (Kafka или RabbitMQ), откуда их считывают Event Store Writer, Global State Manager и аналитические конвейеры.
-        Хранилище использует PostgreSQL и кэш Redis; архитектура рассчитана на поддержание целостного представления мира и игровых сессий.
-      mechanics_links: []
+        Global State Core агрегирует игровые события через Event Sourcing. Система служит источником правды для состояния игрока, мира и экономики, поддерживая аудит, откаты и аналитику.
+      mechanics_links:
+        - services/backend/global-state/overview.yaml
+      assets: []
+    - id: architecture
+      title: 'Архитектура'
+      body: |
+        Клиент взаимодействует через WebSocket и API Gateway. Бэкенд-сервисы публикуют события в шину (Kafka или RabbitMQ), после чего Event Store Writer сохраняет их в PostgreSQL. Global State Manager и аналитика используют данные для реконструкции и метрик, кешируя активные состояния в Redis.
+      mechanics_links:
+        - services/backend/global-state/architecture-diagram.png
       assets: []
     - id: event_sourcing
-      title: 'Event Sourcing как основной паттерн'
+      title: 'Паттерн Event Sourcing'
       body: |
-        В отличие от CRUD, система фиксирует каждое изменение как событие, что позволяет воспроизводить историю и проводить аудит.
-        Event Store хранит версию, корреляцию, контекст игрока и сервера, а также JSONB полезную нагрузку и состояние обработки.
-        Повторное воспроизведение событий даёт возможность синхронизировать кластеры, строить анализ ретроспективы и откатывать ошибки.
-      mechanics_links: []
+        Отказ от CRUD в пользу хранения последовательности событий. Каждое событие отражает изменение состояния, а итоговые данные реконструируются через replay. Это обеспечивает полную историю и гибкие проверки соответствия.
+      mechanics_links:
+        - mechanics/backend/event-sourcing-guidelines.yaml
       assets: []
-    - id: persistence
-      title: 'Схемы хранения'
+    - id: event_store_schema
+      title: 'Схема Event Store'
       body: |
-        Таблица game_events индексируется по типу события, агрегату и времени, что ускоряет выборку и мониторинг необработанных записей.
-        State Store поддерживает текущую проекцию состояния с уникальностью по server_id и ключу, отслеживая владельцев, регионы и версии.
-        Snapshots фиксируют агрегированное состояние каждые 1000 событий, каждый час и при ключевых триггерах (например, смена лиги) для ускорения восстановления.
-      mechanics_links: []
+        Таблица `game_events` хранит идентификаторы, тип, агрегат, метаданные, полезную нагрузку, контекст и статус обработки. Индексы обеспечивают выборки по агрегату, типу и времени, а поля `correlation_id` и `causation_id` фиксируют цепочки действий.
+        ```sql
+        CREATE TABLE game_events (
+            id BIGSERIAL PRIMARY KEY,
+            event_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+            event_type VARCHAR(100) NOT NULL,
+            aggregate_type VARCHAR(50) NOT NULL,
+            aggregate_id VARCHAR(200) NOT NULL,
+            event_version INTEGER NOT NULL DEFAULT 1,
+            correlation_id UUID,
+            causation_id UUID,
+            event_data JSONB NOT NULL,
+            metadata JSONB,
+            server_id VARCHAR(100) NOT NULL,
+            player_id UUID,
+            session_id UUID,
+            event_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            processed_at TIMESTAMP,
+            state_changes JSONB,
+            affected_players JSONB,
+            is_processed BOOLEAN DEFAULT FALSE,
+            processing_error TEXT,
+            retry_count INTEGER DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        ```
+      mechanics_links:
+        - services/backend/global-state/database-schema.yaml
       assets: []
-    - id: state_model
-      title: 'Модель ключей и домены'
+    - id: state_store_schema
+      title: 'Схема Global State'
       body: |
-        Ключи состоят из категории, сущности и атрибутов: player.{playerId}.level, world.territory.{zone}.controller, economy.item.{itemId}.price.
-        Иерархия покрывает игроков, мир, экономику и специальные сервисы, позволяя хранить дополнительные метаданные и связи с событиями.
-        Такая структура обеспечивает унифицированный доступ к данным и гибкость для новых подсистем без миграции схемы.
-      mechanics_links: []
+        Таблица `global_state` содержит актуальные значения ключей состояния, типы, владельцев, регион, версию и ссылку на событие, которое изменило запись. Индексирование поддерживает быстрый доступ по категории, ключу и владельцу.
+      mechanics_links:
+        - services/backend/global-state/database-schema.yaml
       assets: []
     - id: snapshots
-      title: 'Снапшоты и восстановление'
+      title: 'Снапшоты'
       body: |
-        Таблица state_snapshots хранит JSON-проекции, версию, ссылку на последнее событие и метрики создания.
-        Снапшоты формируются каждые 1000 событий, каждый час и при ключевых игровых триггерах (например, смена лиги), ускоряя откат и анализ.
-      mechanics_links: []
+        Таблица `state_snapshots` хранит агрегированные состояния для ускорения восстановления. Снапшоты создаются каждые 1000 событий, каждый час и при смене лиги. Метаданные фиксируют размер, длительность создания и последний обработанный event.
+      mechanics_links:
+        - services/backend/global-state/snapshot-strategy.yaml
       assets: []
-    - id: data_flow
-      title: 'Поток данных'
+    - id: key_hierarchy
+      title: 'Иерархия ключей состояния'
       body: |
-        Event Store Writer записывает события, Global State Manager обновляет проекции, Analytics фиксирует state_changes и affected_players,
-        а шина событий транслирует изменения подписчикам. Такой поток поддерживает консистентность между сервисами и наблюдаемость.
-      mechanics_links: []
+        Ключи формируются по схеме `category.entity.attribute`, что унифицирует доступ к данным игрока, мира и экономики. Примеры включают `player.{playerId}.level`, `world.territory.watson.controller` и `economy.item.mantisBlades.price`.
+      mechanics_links:
+        - mechanics/world/state-keys.yaml
       assets: []
-    - id: integration
-      title: 'Интеграции и зависимые артефакты'
+    - id: integrations
+      title: 'Связанные документы'
       body: |
-        Документ связан с серией микрофич: глобальные события, управление состоянием, синхронизация и операционные процессы.
-        Эти материалы описывают типы событий, правила репликации, инструменты DevOps и playbooks для обработки ошибок.
-        Вместе набор формирует полную методологию Global State, согласованную с архитектурой MMORPG/шутера.
-      mechanics_links: []
+        Дополнительные микрофичи описывают типы событий, управление состоянием, синхронизацию и операции. Они расширяют архитектуру и используют схему Event Store как базу.
+      mechanics_links:
+        - services/backend/global-state/index.yaml
       assets: []
 appendix:
-  glossary: []
-  references: []
+  glossary:
+    - term: Event Sourcing
+      definition: Паттерн, при котором состояние системы выводится из последовательности неизменяемых событий.
+  references:
+    - id: global-state-system-split
+      description: Исторический документ разделения глобальной системы на микрофичи.
   decisions: []
 implementation:
-  needs_task: true
+  needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
   - version: '1.0.0'
     date: 2025-11-07
-    author: ai_brain_manager
-    changes: 'Выделена микрофича Global State Core с описанием архитектуры и схем хранения.'
+    author: AI Brain Manager
+    changes: Зафиксирована архитектура Global State Core.
 validation:
   checksum: ''
   schema_version: '1.0'
+
