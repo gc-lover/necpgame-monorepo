@@ -1,35 +1,37 @@
 metadata:
-  id: narrative-coherence-dev-guide-step-by-step-part3-testing
-  title: "Step-by-Step Backend Setup: Part 3 — Testing & Deploy"
-  document_type: implementation
-  category: backend
+  id: narrative-coherence-step-by-step-part3-testing
+  title: Step-by-Step Backend Setup — Part 3 (Testing & Deploy)
+  document_type: canon
+  category: narrative-coherence
   status: draft
   version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  last_updated: 2025-11-07T00:48:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - backend
+    - onboarding
     - testing
     - deployment
   topics:
-    - quality-assurance
     - configuration
+    - qa
   related_systems:
     - narrative-service
+    - quest-service
   related_documents:
-    - id: narrative-coherence-dev-guide-step-by-step-part1-setup
-      relation: precedes
-    - id: narrative-coherence-dev-guide-step-by-step-part2-code
-      relation: precedes
-  source: "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part3-testing.md"
+    - id: narrative-coherence-step-by-step-part1-setup
+      relation: references
+    - id: narrative-coherence-step-by-step-part2-code
+      relation: references
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part3-testing.md
   visibility: internal
   audience:
     - backend
     - qa
+    - platform
   risk_level: medium
 review:
   chain:
@@ -39,38 +41,41 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Нужно зафиксировать процедуру конфигурации, тестирования и итогового контроля narrative-бэкенда."
-  goal: "Определить шаги по настройке application.yml, запуску тестов и сверке чеклиста готовности."
-  essence: "Документ завершает трёхчастное руководство и переводит команду к готовому квестовому API."
+  problem: После реализации кода необходимо обеспечить корректную конфигурацию и проверку API перед развёртыванием.
+  goal: Дать инструкции по настройке `application.yml`, запуску сервиса и проверке ключевых маршрутов API.
+  essence: Документ завершает пошаговую серию, приводя сервис к состоянию готовности и подтверждая чеклист итогов.
   key_points:
-    - "Формализация параметров application.yml для PostgreSQL, Redis и JPA."
-    - "Инструкции по запуску сервиса и проверке REST-эндпоинтов."
-    - "Финальный чеклист, подтверждающий готовность инфраструктуры и кода."
+    - Конфигурация datasource, Redis и Hibernate в `application.yml`.
+    - Процедура запуска Spring Boot и тестирование основных эндпоинтов.
+    - Финальный чеклист готовности нарративного сервиса.
 content:
   sections:
-    - id: introduction
-      title: "Введение"
+    - id: navigation
+      title: Навигация
       body: |
-        Третий этап завершает настройку narrative-сервиса. Он фиксирует конфигурацию приложения, ручное тестирование API и финальный чеклист для перехода к интеграции.
+        Part 3 завершает серию Step-by-Step, ссылаясь на подготовку в Part 1 и реализацию кода в Part 2.
       mechanics_links: []
       assets: []
-    - id: step-10-configuration
-      title: "Шаг 10 — Конфигурация"
+    - id: configuration
+      title: Конфигурация приложения
       body: |
-        Обновите application.yml, указав параметры подключения к PostgreSQL и Redis, а также режим ddl-auto: validate. Убедитесь, что параметры пула Hikari соответствуют рабочим нагрузкам.
-      mechanics_links: []
+        Пример `application.yml` задаёт параметры подключения к PostgreSQL и Redis, а также включает `ddl-auto: validate` для проверки схемы.
+      mechanics_links:
+        - services/backend/narrative/configuration-guide.yaml
       assets: []
-    - id: step-11-testing
-      title: "Шаг 11 — Тестирование API"
+    - id: testing
+      title: Тестирование API
       body: |
-        Запустите приложение командой ./mvnw spring-boot:run. Проверьте доступные квесты, детали и прохождение выбора через curl-запросы к эндпоинтам /api/v1/narrative/quests/available, /api/v1/narrative/quests/{questId} и /api/v1/narrative/quests/{questId}/choice.
-      mechanics_links: []
+        Раздел описывает запуск `./mvnw spring-boot:run` и проверку эндпоинтов доступных квестов, деталей и обработку выбора через `curl`.
+      mechanics_links:
+        - services/backend/narrative/testing-playbook.yaml
       assets: []
     - id: final-checklist
-      title: "Финальный чеклист"
+      title: Финальный чеклист
       body: |
-        Подтвердите, что инфраструктура (PostgreSQL, Redis), миграции, JSON-данные, зависимости, сущности, репозитории, сервисы и контроллеры приведены в актуальное состояние. Зафиксируйте успешный прогон smoke-тестов API.
-      mechanics_links: []
+        Контрольный список охватывает запуск PostgreSQL, применение миграций, экспорт JSON, добавление зависимостей, создание сущностей и репозиториев, настройку Redis и успешное тестирование API.
+      mechanics_links:
+        - mechanics/process/backend-readiness-checklist.yaml
       assets: []
 appendix:
   glossary: []
@@ -78,14 +83,13 @@ appendix:
   decisions: []
 implementation:
   needs_task: false
-  queue_reference:
-    - shared/trackers/queues/concept/queued.yaml
+  queue_reference: []
   blockers: []
 history:
   - version: '1.0.0'
-    date: 2025-11-13
+    date: 2025-11-07
     author: concept_director
-    changes: "Конвертация Part 3 пошагового руководства из MD в YAML."
+    changes: Конвертировано руководство Step-by-Step Part 3 в YAML с фиксацией конфигурации и проверок.
 validation:
   checksum: ''
   schema_version: '1.0'
