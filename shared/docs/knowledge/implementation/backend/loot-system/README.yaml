@@ -1,74 +1,79 @@
 metadata:
-  id: implementation-loot-system-index
+  id: implementation-backend-loot-system-readme
   title: "Loot System — навигация"
   document_type: implementation
   category: backend
   status: approved
   version: '1.0.2'
-  last_updated: 2025-11-07T00:00:00Z
+  last_updated: 2025-11-13T00:00:00Z
   concept_approved: true
-  concept_reviewed_at: 2025-11-07T00:00:00Z
+  concept_reviewed_at: 2025-11-07T02:20:00Z
   owners:
-    - role: loot_system_owner
-      contact: economy@necp.game
+    - role: backend_lead
+      contact: backend@necp.game
   tags:
-    - loot
-    - economy
-    - drops
+    - loot-system
+    - backend
+    - architecture
   topics:
-    - loot-generation
-    - smart-loot
-    - boss-rewards
+    - loot-service
+    - economy-integration
   related_systems:
     - economy-service
     - gameplay-service
+    - character-service
     - inventory-service
   related_documents:
-    - id: implementation-loot-system-part1
+    - id: implementation-backend-loot-system-part1
       relation: references
-    - id: implementation-loot-system-part2
+    - id: implementation-backend-loot-system-part2
       relation: references
-  source: shared/docs/knowledge/implementation/backend/loot-system/README.md
+  source: "shared/docs/knowledge/implementation/backend/loot-system/README.md"
   visibility: internal
   audience:
-    - economy
     - backend
-    - live-ops
+    - systems
+    - gameplay
   risk_level: medium
 review:
   chain:
-    - role: loot_system_owner
+    - role: backend_architect
       reviewer: ''
-      reviewed_at: 2025-11-07T00:00:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: "После разделения документации нужно быстро находить описание генерации, продвинутого лута и взаимодействий с другими сервисами."
-  goal: "Предоставить индекс с ключевыми параметрами микросервиса, событиями и ссылками на части про генерацию и продвинутые механики."
-  essence: "README фиксирует economy-service как ответственный сервис, перечисляет подписки/публикации событий и структуру из двух частей."
+  problem: "Нужно навигационное описание системы лута и её интеграций."
+  goal: "Свести архитектуру микросервисов, события и связи между частями документации."
+  essence: "Документ описывает микросервис loot system, маршруты API, события и ссылки на подробные части."
   key_points:
-    - "Loot-сервис реагирует на `combat:enemy-killed`, `raid:boss-defeated` и публикует `loot:*` события."
-    - "Документ направляет к `part1-loot-generation` (алгоритм, таблицы) и `part2-advanced-loot` (smart loot, boss loot, anti-duplicate)."
-    - "История изменений показывает переход на модульную структуру и актуализацию от 11-07."
+    - "Микросервис economy-service с маршрутом `/api/v1/economy/loot/*`."
+    - "Подписки и публикации событий Event Bus."
+    - "Структура документации: Part 1 и Part 2."
 content:
   sections:
     - id: architecture
-      title: Архитектура и события
+      title: "Микросервисная архитектура"
       body: |
-        Описаны связи economy-service с gameplay-, character- и inventory-сервисами, маршруты API и event bus интеграции.
+        Loot system реализована в рамках economy-service (порт 8085) с маршрутом API Gateway `/api/v1/economy/loot/*`.
+        Сервис подписывается на `combat:enemy-killed`, `raid:boss-defeated` и публикует `loot:generated`, `loot:picked-up`, `legendary:dropped`.
+        Взаимодействует с gameplay-service, character-service и inventory-service.
+      mechanics_links: []
+      assets: []
+    - id: description
+      title: "Описание"
+      body: |
+        Система покрывает генерацию лута, rarity, boss loot, smart loot и защиту от дубликатов.
       mechanics_links: []
       assets: []
     - id: structure
-      title: Структура документации
+      title: "Структура документации"
       body: |
-        README выступает индексом для двух частей: генерация лута и продвинутые механики, включая smart loot и boss loot.
-      mechanics_links: []
-      assets: []
-    - id: history
-      title: История изменений
-      body: |
-        Отражает разбиение монолита (v1.0.1) и актуализацию ссылок/маршрутов (v1.0.2).
-      mechanics_links: []
+        - Part 1: `part1-loot-generation.yaml` — таблицы лута и алгоритмы.
+        - Part 2: `part2-advanced-loot.yaml` — smart loot, boss loot, anti-duplicate.
+      mechanics_links:
+        - implementation/backend/loot-system/part1-loot-generation.yaml
+        - implementation/backend/loot-system/part2-advanced-loot.yaml
       assets: []
 appendix:
   glossary: []
@@ -81,9 +86,9 @@ implementation:
   blockers: []
 history:
   - version: '1.0.2'
-    date: 2025-11-07
-    author: loot_system_owner
-    changes: Обновлены события и структура после разделения документа.
+    date: 2025-11-13
+    author: backend_team
+    changes: "Конвертация навигации Loot System из MD в YAML."
 validation:
   checksum: ''
   schema_version: '1.0'
