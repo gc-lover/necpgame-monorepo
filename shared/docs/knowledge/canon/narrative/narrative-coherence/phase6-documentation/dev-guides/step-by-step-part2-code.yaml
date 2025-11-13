@@ -1,8 +1,8 @@
 metadata:
-  id: canon-step-by-step-backend-setup-part2
-  title: 'Step-by-Step Backend Setup — Part 2: Backend Code'
-  document_type: canon
-  category: narrative-coherence
+  id: narrative-coherence-dev-guide-step-by-step-part2-code
+  title: "Step-by-Step Backend Setup: Part 2 — Backend Code"
+  document_type: implementation
+  category: backend
   status: draft
   version: '1.0.0'
   last_updated: 2025-11-13T00:00:00Z
@@ -12,27 +12,22 @@ metadata:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - narrative
     - backend
-    - implementation-guide
+    - narrative-coherence
+    - implementation
   topics:
-    - data-modeling
-    - service-architecture
+    - domain-model
+    - service-layer
   related_systems:
     - narrative-service
-    - quest-service
   related_documents:
-    - id: canon-step-by-step-backend-setup-part1
-      relation: references
-    - id: canon-step-by-step-backend-setup-part3
+    - id: narrative-coherence-dev-guide-step-by-step-part1-setup
+      relation: precedes
+    - id: narrative-coherence-dev-guide-step-by-step-part3-testing
       relation: continues
-    - id: canon-backend-integration-part2-services
-      relation: references
-  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part2-code.md
+  source: "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part2-code.md"
   visibility: internal
   audience:
-    - concept
-    - narrative
     - backend
   risk_level: medium
 review:
@@ -43,42 +38,44 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: После подготовки окружения требуется единый алгоритм реализации кодовой базы narrative backend для работы с квестовым графом.
-  goal: Описать последовательность создания сущностей, репозиториев, сервисов и контроллеров, обеспечивающих API доступа к квестам.
-  essence: Документ связывает структуры данных с REST-слоями и указывает контрольные точки по завершении каждого блока разработки.
+  problem: "Необходимо быстро собрать слой кода narrative-сервиса после подготовки инфраструктуры."
+  goal: "Предоставить пошаговые инструкции по созданию сущностей, репозиториев, сервисов и контроллеров."
+  essence: "Документ описывает реализации слоя данных и API, опираясь на единый стандарт narrative-coherence."
   key_points:
-    - Сущности покрывают квесты, ветвления, диалоги и флаги игроков с хранением сложных структур в JSONB.
-    - Репозитории расширяют JpaRepository и добавляют выборки по эпохе, типам и состояниям прогресса.
-    - Сервисы и контроллеры формируют публичные endpoints для загрузки графа, проверки доступности и обработки решений.
+    - "Создание восьми сущностей с поддержкой JSONB и связей."
+    - "Определение репозиториев с кастомными запросами по типам и эпохам."
+    - "Реализация сервисов графа квестов и REST-контроллеров."
 content:
   sections:
-    - id: entities
-      title: 'Сущности'
+    - id: introduction
+      title: "Введение"
       body: |
-        Шаг описывает создание Quest, QuestBranch, DialogueNode, DialogueChoice, PlayerFlag, PlayerWorldState, ServerWorldState и TerritoryControl. Приводятся аннотации JPA и пример объявления JSONB полей. Все классы размещаются в каталоге narrative/entity, после чего разработчик сверяется с источником backend-integration-complete для полной реализации.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part1-entities.yaml
+        Вторая часть руководства фокусируется на реализации кода после настройки окружения. Отдельные шаги сопровождаются чекпоинтами, подтверждающими готовность каждой подсистемы.
+      mechanics_links: []
       assets: []
-    - id: repositories
-      title: 'Репозитории'
+    - id: step-6-entities
+      title: "Шаг 6 — Сущности"
       body: |
-        Инструкция фиксирует создание интерфейсов с аннотацией @Repository, примером кастомного запроса findByEra и методами поиска по типам. Отдельно подчёркнуто, что аналогичные репозитории создаются для веток, флагов и мирового состояния, а чекпойнт подтверждает наличие шести готовых интерфейсов.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part1-entities.yaml
+        Создайте Quest.java в директории entity, применив аннотацию @TypeDef с JsonBinaryType для JSONB полей. По аналогии сформируйте QuestBranch, DialogueNode, DialogueChoice, PlayerFlag, PlayerWorldState, ServerWorldState и TerritoryControl. После генерации всех классов убедитесь, что восемь сущностей готовы.
+      mechanics_links: []
       assets: []
-    - id: services
-      title: 'Сервисы'
+    - id: step-7-repositories
+      title: "Шаг 7 — Репозитории"
       body: |
-        QuestGraphService собирает и кеширует граф квестов, а также предоставляет методы loadQuestGraph, isQuestAvailable, getAvailableQuests и processChoice. Раздел указывает на необходимость адаптации логики под источник JSON и подчёркивает использование Redis как кеша. После реализации сервисов группа методов отмечается как рабочая.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part2-services.yaml
+        Определите QuestRepository, расширяющий JpaRepository, с методами findByEra и findByType. По образцу сверстайте ещё пять интерфейсов для остальных сущностей, обеспечив завершение слоя доступа к данным.
+      mechanics_links: []
       assets: []
-    - id: controllers
-      title: 'Контроллеры'
+    - id: step-8-services
+      title: "Шаг 8 — Сервисы"
       body: |
-        QuestController содержит endpoints для получения доступных квестов, детальной информации и обработки выбора игрока. Раздел связывает эндпоинты с сервисом, уточняет использование POST для принятия решения и завершает шаг контрольной точкой о готовности REST API.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part3-api.yaml
+        В QuestGraphService реализуйте методы loadQuestGraph, isQuestAvailable, getAvailableQuests и processChoice для управления графом историй. Сервисы должны опираться на JSON ресурсы и репозитории, обеспечивая бизнес-логику narrative-сценариев.
+      mechanics_links: []
+      assets: []
+    - id: step-9-controllers
+      title: "Шаг 9 — Контроллеры"
+      body: |
+        Добавьте QuestController с REST-эндпоинтами GET /api/v1/narrative/quests/available, GET /api/v1/narrative/quests/{questId} и POST /api/v1/narrative/quests/{questId}/choice. Проверьте соответствие маршрутов требованиям Pan-EuroGrid.
+      mechanics_links: []
       assets: []
 appendix:
   glossary: []
@@ -92,8 +89,8 @@ implementation:
 history:
   - version: '1.0.0'
     date: 2025-11-13
-    author: Concept Director
-    changes: 'Конвертация Step-by-Step Backend Setup Part 2 в формат YAML с фиксацией кодовых шагов.'
+    author: concept_director
+    changes: "Конвертация Part 2 пошагового руководства из MD в YAML."
 validation:
   checksum: ''
   schema_version: '1.0'
