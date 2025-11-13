@@ -1,8 +1,8 @@
 metadata:
-  id: canon-step-by-step-backend-setup-part1
-  title: 'Step-by-Step Backend Setup — Part 1: Setup & Database'
-  document_type: canon
-  category: narrative-coherence
+  id: narrative-coherence-dev-guide-step-by-step-part1-setup
+  title: "Step-by-Step Backend Setup: Part 1 — Setup & Database"
+  document_type: implementation
+  category: backend
   status: draft
   version: '1.0.0'
   last_updated: 2025-11-13T00:00:00Z
@@ -12,28 +12,25 @@ metadata:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - narrative
     - backend
-    - setup-guide
+    - setup
+    - narrative-coherence
   topics:
-    - environment-prep
-    - data-migration
+    - infrastructure
+    - database
   related_systems:
     - narrative-service
-    - quest-service
+    - backend-platform
   related_documents:
-    - id: canon-step-by-step-backend-setup-part2
+    - id: narrative-coherence-dev-guide-step-by-step-part2-code
       relation: continues
-    - id: canon-step-by-step-backend-setup-part3
+    - id: narrative-coherence-dev-guide-step-by-step-part3-testing
       relation: continues
-    - id: canon-backend-integration-part1-entities
-      relation: references
-  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part1-setup.md
+  source: "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part1-setup.md"
   visibility: internal
   audience:
-    - concept
-    - narrative
     - backend
+    - devops
   risk_level: medium
 review:
   chain:
@@ -43,56 +40,66 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Команде нужен воспроизводимый процесс подготовки инфраструктуры для narrative backend перед интеграцией квестового графа.
-  goal: Дать пошаговую инструкцию по настройке баз данных, служб кэширования, миграций и структур проектов для стартовой среды.
-  essence: Гайд описывает проверку зависимостей, создание баз данных, применение миграций и организацию исходников, чтобы разработчики начали работу без ручных донастроек.
+  problem: "Команда нуждается в пошаговом руководстве по развёртыванию окружения для narrative-сервиса."
+  goal: "Зафиксировать полный процесс подготовки БД, Redis и файлов миграций для backend-модуля."
+  essence: "Документ описывает требования, настройку инфраструктуры, загрузку миграций и подготовку структуры проекта."
   key_points:
-    - Фиксированы требования к Java, Spring Boot, PostgreSQL, Redis и Maven.
-    - Предусмотрены автоматические и ручные способы запуска миграций и проверки структуры данных.
-    - Определена каноническая структура пакетов narrative модуля в backend репозитории.
+    - "Проверка всех инфраструктурных зависимостей перед стартом."
+    - "Пошаговое применение SQL-миграций и экспорт повествовательных данных."
+    - "Подготовка зависимостей Maven и структуры пакетов для narrative-модуля."
 content:
   sections:
+    - id: introduction
+      title: "Введение"
+      body: |
+        Руководство открывает серию из трёх частей и описывает подготовку окружения для narrative-сервиса. Документ сопровождается чекпоинтами, обеспечивающими предсказуемое выполнение и контроль результата на каждом шаге.
+      mechanics_links: []
+      assets: []
     - id: prerequisites
-      title: 'Системные требования и проверка'
+      title: "Требования и проверка"
       body: |
-        Стартовый блок перечисляет версии Java 17+, Spring Boot 3.x, PostgreSQL 14+, Redis и Maven 3.8+. Для каждого инструмента указаны команды проверки, позволяющие убедиться в корректной установке до начала настройки. Этот шаг устраняет расхождения в окружении и снижает риск ошибок на миграциях.
-      mechanics_links:
-        - implementation/infrastructure/api-gateway-architecture.yaml
+        Требуются Java 17+, Spring Boot 3.x, PostgreSQL 14+, Redis и Maven 3.8+. Проверка выполняется командами:
+
+        java -version
+        psql --version
+        redis-cli ping
+        mvn -version
+      mechanics_links: []
       assets: []
-    - id: environment-setup
-      title: 'Настройка окружения'
+    - id: step-1-environment
+      title: "Шаг 1 — Подготовка окружения"
       body: |
-        Инструкция описывает создание базы данных necpgame через psql либо CLI, запуск Redis локально или через контейнер, а также быстрый контроль доступности сервисов. Результатом шага становится готовая база данных и работающий Redis, подтверждённые ping и запросами.
-      mechanics_links:
-        - implementation/infrastructure/admin-moderation-tools.yaml
+        Создайте базу данных necpgame через createdb или psql. Запустите Redis локально или через контейнер:
+
+        redis-server
+        docker run -d -p 6379:6379 redis:latest
+
+        Подтвердите соединения командами psql -d necpgame -c "SELECT version();" и redis-cli ping.
+      mechanics_links: []
       assets: []
-    - id: migrations
-      title: 'Миграции и конфигурация'
+    - id: step-2-migrations
+      title: "Шаг 2 — SQL миграции"
       body: |
-        Миграции копируются из репозитория знаний в каталог Flyway проекта BACK-JAVA. Переменные окружения задаются для Linux, macOS и Windows, после чего миграции можно применить скриптами или вручную по файлам. Контрольный список включает подсчёт таблиц через psql и подтверждает создание тринадцати объектов схемы.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase4-database/migrations/index.yaml
+        Скопируйте миграции из каталога narrative-coherence в папку db/migration/narrative. Настройте переменные окружения DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT. Примените миграции скриптом apply-all-migrations или вручную через psql, убедившись, что создано 13 таблиц.
+      mechanics_links: []
       assets: []
-    - id: data-export
-      title: 'Экспорт данных и ресурсы'
+    - id: step-3-export
+      title: "Шаг 3 — Экспорт данных"
       body: |
-        Для подготовки JSON-источников предлагается установить PyYAML или js-yaml и выполнить конвертеры из каталога export. Полученные файлы side-quests-matrix.json, quest-triggers.json, quest-blockers.json и quest-dependencies-full.json переносятся в ресурсы narrative сервиса. Чекпойнт подтверждает наличие четырёх файлов в целевой директории.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase3-event-matrix/export/index.yaml
+        Установите pyyaml или js-yaml. Запустите Python или Node скрипты convert-quest-graph в каталоге export. Проверьте наличие файлов side-quests-matrix.json, quest-triggers.json, quest-blockers.json и quest-dependencies-full.json, затем скопируйте их в resources narrative.
+      mechanics_links: []
       assets: []
-    - id: dependencies
-      title: 'Зависимости проекта'
+    - id: step-4-dependencies
+      title: "Шаг 4 — Зависимости"
       body: |
-        Раздел фиксирует обязательные зависимости pom.xml: hibernate-types для работы с JSONB, spring-data-redis и spring-websocket. После добавления пакетов выполняется mvn clean install для проверки корректной сборки. Чекпойнт заверяет наличие нужных артефактов и успешное завершение сборки.
-      mechanics_links:
-        - implementation/backend/loot-system/part2-advanced-loot.yaml
+        Добавьте в pom.xml зависимости hibernate-types-55, spring-boot-starter-data-redis и spring-boot-starter-websocket. Выполните mvn clean install, чтобы убедиться в корректности конфигурации.
+      mechanics_links: []
       assets: []
-    - id: package-structure
-      title: 'Структура исходников'
+    - id: step-5-structure
+      title: "Шаг 5 — Структура пакетов"
       body: |
-        Гайд устанавливает иерархию пакетов com.necpgame.narrative, включая директории entity, repository, service, controller, dto и config. Команды mkdir синхронизируют структуру на разных системах, а итоговый чекпойнт фиксирует готовность каркаса backend модуля.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part2-services.yaml
+        Создайте пакеты narrative/entity, narrative/repository, narrative/service, narrative/controller, narrative/dto и narrative/config в com.necpgame. Подтвердите дерево директорий перед переходом к следующей части.
+      mechanics_links: []
       assets: []
 appendix:
   glossary: []
@@ -106,8 +113,8 @@ implementation:
 history:
   - version: '1.0.0'
     date: 2025-11-13
-    author: Concept Director
-    changes: 'Конвертация Step-by-Step Backend Setup Part 1 в структурированный YAML формат.'
+    author: concept_director
+    changes: "Конвертация Part 1 пошагового руководства из MD в YAML."
 validation:
   checksum: ''
   schema_version: '1.0'
