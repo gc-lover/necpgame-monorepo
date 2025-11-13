@@ -1,0 +1,137 @@
+metadata:
+  id: narrative-coherence-performance-part3-advanced
+  title: Performance Tuning — Part 3 (Advanced)
+  document_type: canon
+  category: narrative-coherence
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-07T00:53:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - performance
+    - scaling
+    - monitoring
+  topics:
+    - distributed-architecture
+    - observability
+  related_systems:
+    - quest-service
+    - analytics-service
+    - infrastructure-platform
+  related_documents:
+    - id: narrative-coherence-performance-part1-database
+      relation: references
+    - id: narrative-coherence-performance-part2-application
+      relation: references
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part3-advanced.md
+  visibility: internal
+  audience:
+    - platform
+    - backend
+    - operations
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Масштабирование квестовых сервисов требует дополнительной изоляции чтений, шардинга и наблюдаемости.
+  goal: Описать advanced-практики, которые закрепляют SLA при росте одновременных игроков и запросов.
+  essence: Финальная часть концентрируется на репликах, шардинге и мониторинге, связывая архитектуру с целевыми бенчмарками.
+  key_points:
+    - Использование read-replicas для разгрузки чтений.
+    - Хеш-базированный шардинг персонажей.
+    - Метрики и бенчмарки для контроля производительности.
+content:
+  sections:
+    - id: introduction
+      title: Введение
+      body: |
+        Третья часть цикла Performance Tuning собирает продвинутые техники для распределённой среды.
+        Документ дополняет настройки БД и приложений, описанные в Part 1 и Part 2, и готовит сервис к экстремальным нагрузкам.
+      mechanics_links: []
+      assets: []
+    - id: read-replicas
+      title: Чтение с реплик
+      body: |
+        ```
+        @Transactional(readOnly = true)
+        public List<Quest> getAvailableQuests(UUID characterId) {
+            // Должно выполняться на реплике
+        }
+        ```
+
+        Реплики разгружают мастера и позволяют масштабировать чтение квестов без влияния на запись прогресса.
+      mechanics_links:
+        - infrastructure/database/read-replicas.yaml
+      assets: []
+    - id: sharding
+      title: Шардинг
+      body: |
+        ```
+        public String getShardId(UUID characterId) {
+            int hash = Math.abs(characterId.hashCode());
+            return "shard-" + (hash % TOTAL_SHARDS);
+        }
+        ```
+
+        Подход основан на стабильном хеше идентификатора персонажа и гарантирует равномерное распределение нагрузки.
+      mechanics_links:
+        - infrastructure/database/sharding-strategy.yaml
+      assets: []
+    - id: monitoring
+      title: Мониторинг и метрики
+      body: |
+        ```
+        @Component
+        public class QuestMetrics {
+            private final Counter questsCompleted;
+
+            public void recordCompleted(Quest quest) {
+                questsCompleted.increment();
+            }
+        }
+        ```
+
+        Метрики фиксируют количество завершённых квестов и помогают отслеживать деградацию, коррелируя с нагрузкой.
+      mechanics_links:
+        - infrastructure/observability/metrics.yaml
+      assets: []
+    - id: benchmarks
+      title: Бенчмарки
+      body: |
+        Целевые показатели для продвинутых сценариев:
+        - Concurrent users: 1 000 000+
+        - Requests per second: 50 000+
+        - Response time: < 100ms
+      mechanics_links:
+        - mechanics/performance/scaling-benchmarks.yaml
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - type: internal
+      value: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part1-database.md
+    - type: internal
+      value: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part2-application.md
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Конвертировано руководство Performance Tuning Part 3 из Markdown в YAML с акцентом на масштабирование.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
