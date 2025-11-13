@@ -1,8 +1,8 @@
 metadata:
-  id: canon-step-by-step-backend-setup-part3
-  title: 'Step-by-Step Backend Setup — Part 3: Testing & Deploy'
-  document_type: canon
-  category: narrative-coherence
+  id: narrative-coherence-dev-guide-step-by-step-part3-testing
+  title: "Step-by-Step Backend Setup: Part 3 — Testing & Deploy"
+  document_type: implementation
+  category: backend
   status: draft
   version: '1.0.0'
   last_updated: 2025-11-13T00:00:00Z
@@ -12,28 +12,24 @@ metadata:
     - role: concept_director
       contact: concept@necp.game
   tags:
-    - narrative
     - backend
-    - qa
-  topics:
-    - configuration
     - testing
+    - deployment
+  topics:
+    - quality-assurance
+    - configuration
   related_systems:
     - narrative-service
-    - quest-service
   related_documents:
-    - id: canon-step-by-step-backend-setup-part1
-      relation: references
-    - id: canon-step-by-step-backend-setup-part2
-      relation: references
-    - id: canon-backend-integration-part3-api
-      relation: references
-  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part3-testing.md
+    - id: narrative-coherence-dev-guide-step-by-step-part1-setup
+      relation: precedes
+    - id: narrative-coherence-dev-guide-step-by-step-part2-code
+      relation: precedes
+  source: "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/step-by-step-part3-testing.md"
   visibility: internal
   audience:
-    - concept
-    - narrative
     - backend
+    - qa
   risk_level: medium
 review:
   chain:
@@ -43,35 +39,38 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: После реализации кода нужно обеспечить единый набор шагов для конфигурирования, тестирования API и финальной проверки готовности narrative backend.
-  goal: Сформировать чеклист по настройке application.yml, запуску сервиса и валидации REST эндпоинтов перед передачей на интеграцию.
-  essence: Документ завершает серию гайдлайнов и описывает проверку конфигурации, ручное тестирование и итоговый контрольный список.
+  problem: "Нужно зафиксировать процедуру конфигурации, тестирования и итогового контроля narrative-бэкенда."
+  goal: "Определить шаги по настройке application.yml, запуску тестов и сверке чеклиста готовности."
+  essence: "Документ завершает трёхчастное руководство и переводит команду к готовому квестовому API."
   key_points:
-    - Конфигурация application.yml фиксирует параметры PostgreSQL, Redis и стратегию hibernate.ddl-auto.
-    - Предложены curl сценарии для проверки доступности ключевых endpoints narrative сервиса.
-    - Итоговый чеклист охватывает миграции, данные, сервисные слои и успешное тестирование API.
+    - "Формализация параметров application.yml для PostgreSQL, Redis и JPA."
+    - "Инструкции по запуску сервиса и проверке REST-эндпоинтов."
+    - "Финальный чеклист, подтверждающий готовность инфраструктуры и кода."
 content:
   sections:
-    - id: configuration
-      title: 'Конфигурация приложения'
+    - id: introduction
+      title: "Введение"
       body: |
-        Указывается структура application.yml с настройкой источника данных, параметрами пула и конфигурацией Redis. Рекомендовано хранить пароль в переменной окружения DB_PASSWORD. Чекпойнт подтверждает корректность файла, что обеспечивает стабильный старт сервиса.
-      mechanics_links:
-        - implementation/infrastructure/api-gateway-architecture.yaml
+        Третий этап завершает настройку narrative-сервиса. Он фиксирует конфигурацию приложения, ручное тестирование API и финальный чеклист для перехода к интеграции.
+      mechanics_links: []
       assets: []
-    - id: manual-testing
-      title: 'Ручное тестирование API'
+    - id: step-10-configuration
+      title: "Шаг 10 — Конфигурация"
       body: |
-        Шаг описывает запуск приложения через mvnw spring-boot:run и проверку трёх endpoints: выдача доступных квестов, получение деталей и отправка решения. Примеры curl команд позволяют быстро убедиться в работе контроллера и корректности взаимодействия с сервисом.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part3-api.yaml
+        Обновите application.yml, указав параметры подключения к PostgreSQL и Redis, а также режим ddl-auto: validate. Убедитесь, что параметры пула Hikari соответствуют рабочим нагрузкам.
+      mechanics_links: []
+      assets: []
+    - id: step-11-testing
+      title: "Шаг 11 — Тестирование API"
+      body: |
+        Запустите приложение командой ./mvnw spring-boot:run. Проверьте доступные квесты, детали и прохождение выбора через curl-запросы к эндпоинтам /api/v1/narrative/quests/available, /api/v1/narrative/quests/{questId} и /api/v1/narrative/quests/{questId}/choice.
+      mechanics_links: []
       assets: []
     - id: final-checklist
-      title: 'Финальный чеклист'
+      title: "Финальный чеклист"
       body: |
-        Итоговый список объединяет требования ко всем шагам серии: активные PostgreSQL и Redis, применённые миграции, экспортированные JSON, добавленные зависимости, реализованные сущности, репозитории, сервисы и контроллеры, успешное тестирование API. Выполнение пунктов означает готовность narrative backend к передаче в общую интеграцию.
-      mechanics_links:
-        - canon/narrative/narrative-coherence/phase6-documentation/dev-guides/backend-integration-part2-services.yaml
+        Подтвердите, что инфраструктура (PostgreSQL, Redis), миграции, JSON-данные, зависимости, сущности, репозитории, сервисы и контроллеры приведены в актуальное состояние. Зафиксируйте успешный прогон smoke-тестов API.
+      mechanics_links: []
       assets: []
 appendix:
   glossary: []
@@ -85,8 +84,8 @@ implementation:
 history:
   - version: '1.0.0'
     date: 2025-11-13
-    author: Concept Director
-    changes: 'Конвертация Step-by-Step Backend Setup Part 3 в YAML с финальным чеклистом.'
+    author: concept_director
+    changes: "Конвертация Part 3 пошагового руководства из MD в YAML."
 validation:
   checksum: ''
   schema_version: '1.0'
