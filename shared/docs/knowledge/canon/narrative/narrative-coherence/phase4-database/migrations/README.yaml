@@ -1,0 +1,165 @@
+metadata:
+  id: narrative-coherence-quest-sql-migrations
+  title: SQL Migrations for Quest System
+  document_type: canon
+  category: narrative-coherence
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-07T00:28:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-07T00:28:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - migrations
+    - sql
+    - narrative
+  topics:
+    - database
+    - quest-system
+  related_systems:
+    - narrative-service
+    - world-state-service
+  related_documents:
+    - id: narrative-coherence-quest-branches
+      relation: references
+    - id: narrative-coherence-dialogue-system
+      relation: references
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase4-database/migrations/README.md
+  visibility: internal
+  audience:
+    - backend
+    - devops
+    - concept
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-07T00:28:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Нужно консолидировать набор миграций для запуска квестового графа и world state в production.
+  goal: Перечислить SQL-скрипты, способы их применения, отката и проверки результатов.
+  essence: Документ описывает пять основных миграций, команды для Linux/Windows и процедуры валидации схемы.
+  key_points:
+    - В комплект входит пять миграций, расширяющих таблицы квестов и создающих world state.
+    - Предоставлены инструкции для автоматического и ручного применения.
+    - Добавлены шаги rollback и SQL проверки таблиц и индексов.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Набор миграций формирует базу данных для квестовой системы, диалогов, трекинга игрока и world state. Документ
+        служит источником ссылок при деплое и обновлениях.
+      mechanics_links: []
+      assets: []
+    - id: migrations-list
+      title: Список миграций
+      body: |
+        1. `001-expand-quests-table.sql` — расширяет таблицу `quests`.
+        2. `002-create-quest-branches.sql` — создаёт `quest_branches`.
+        3. `003-create-dialogue-system.sql` — добавляет узлы и выборы диалогов.
+        4. `004-create-player-systems.sql` — создаёт таблицы выбора игрока и флагов.
+        5. `005-create-world-state-system.sql` — формирует трёхуровневый world state.
+
+        Всего: 5 миграций, более 24 таблиц.
+      mechanics_links:
+        - services/backend/database/migration-index.yaml
+      assets: []
+    - id: apply
+      title: Как применить
+      body: |
+        ### Linux/Mac
+        ```
+        export DB_NAME=necpgame
+        export DB_USER=postgres
+        export DB_PASSWORD=your_password
+        export DB_HOST=localhost
+        export DB_PORT=5432
+        chmod +x apply-all-migrations.sh
+        ./apply-all-migrations.sh
+        ```
+
+        ### Windows
+        ```
+        $env:DB_NAME = "necpgame"
+        $env:DB_USER = "postgres"
+        $env:DB_PASSWORD = "your_password"
+        $env:DB_HOST = "localhost"
+        $env:DB_PORT = "5432"
+        .\apply-all-migrations.ps1
+        ```
+
+        ### Вручную
+        ```
+        psql -d necpgame -U postgres -f 001-expand-quests-table.sql
+        psql -d necpgame -U postgres -f 002-create-quest-branches.sql
+        psql -d necpgame -U postgres -f 003-create-dialogue-system.sql
+        psql -d necpgame -U postgres -f 004-create-player-systems.sql
+        psql -d necpgame -U postgres -f 005-create-world-state-system.sql
+        ```
+      mechanics_links: []
+      assets: []
+    - id: rollback
+      title: Rollback
+      body: |
+        Выполняется в обратном порядке:
+        ```
+        psql -d necpgame -f rollback/005-rollback-world-state.sql
+        psql -d necpgame -f rollback/004-rollback-player-systems.sql
+        psql -d necpgame -f rollback/003-rollback-dialogue.sql
+        psql -d necpgame -f rollback/002-rollback-branches.sql
+        psql -d necpgame -f rollback/001-rollback-expand-quests.sql
+        ```
+      mechanics_links:
+        - services/backend/database/migration-rollback.yaml
+      assets: []
+    - id: verification
+      title: Проверка
+      body: |
+        После применения миграций:
+        ```
+        \dt quest*
+        \dt player*
+        \dt server*
+        \dt dialogue*
+        \dt territory*
+        \di quest*
+        SELECT * FROM quest_branches LIMIT 5;
+        SELECT * FROM server_world_state;
+        SELECT * FROM territory_control;
+        ```
+      mechanics_links: []
+      assets: []
+    - id: created-tables
+      title: Созданные сущности
+      body: |
+        - Quest System: `quests` (расширенная), `quest_branches`, `dialogue_nodes`, `dialogue_choices`.
+        - Player Tracking: `player_quest_choices`, `player_flags`, `player_dialogue_progress`.
+        - Quest Objectives: `quest_objectives`.
+        - World State: `player_world_state`, `server_world_state`, `world_state_votes`, `faction_world_state`, `territory_control`.
+
+        Итого: 13 таблиц плюс вспомогательные функции.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Полный набор миграций оформлен и снабжён инструкциями по применению и откату.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
