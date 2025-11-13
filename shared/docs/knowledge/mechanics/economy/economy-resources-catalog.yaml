@@ -1,156 +1,154 @@
 metadata:
   id: mechanics-economy-resources-catalog
-  title: Каталог ресурсов и материалов
+  title: "Каталог ресурсов и материалов"
   document_type: mechanics
   category: economy
   status: approved
   version: '2.0.0'
-  last_updated: 2025-11-09T04:10:00Z
+  last_updated: 2025-11-13T00:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-09T04:10:00Z
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: economy_lead
+      contact: economy@necp.game
   tags:
     - resources
     - crafting
     - economy
   topics:
-    - resource_management
-    - crafting_inputs
+    - resource-management
+    - pricing
   related_systems:
     - economy-service
-    - resource-tracking-service
-    - analytics-service
+    - crafting-service
+    - world-service
   related_documents:
-    - id: mechanics-economy-production-chains
+    - id: mechanics-economy-stock-exchange-index
       relation: references
-    - id: mechanics-economy-currency-exchange
-      relation: influences
-  source: shared/docs/knowledge/mechanics/economy/economy-resources-catalog.md
+  source: "shared/docs/knowledge/mechanics/economy/economy-resources-catalog.md"
   visibility: internal
   audience:
-    - concept
     - economy
-    - crafting
+    - systems
+    - gameplay
   risk_level: medium
 review:
   chain:
-    - role: concept_director
+    - role: economy_director
       reviewer: ''
-      reviewed_at: 2025-11-09T04:10:00Z
-      status: approved
+      reviewed_at: ''
+      status: pending
   next_actions: []
 summary:
-  problem: Нужен единый каталог ресурсов с источниками, использованием и ценами для экономики и крафта.
-  goal: Структурировать сырые материалы, компоненты, данные и экзотику с привязкой к тиру, редкости и экономическим параметрам.
-  essence: Каталог описывает 20+ ресурсов, их происхождение, применение и динамику стоимости, задавая основу для рецептов и баланса.
+  problem: "Нужно централизовать сведения о ресурсах, их источниках, применении и стоимости для economy-service."
+  goal: "Описать категории ресурсов, таблицы стоимости, динамику спроса и зоны добычи."
+  essence: "Каталог содержит 20+ ресурсов с редкостью, источниками, применением, ценами и интеграцией с другими системами."
   key_points:
-    - Определена общая структура данных ресурса (идентификаторы, источники, стоимости).
-    - Сегментация по сырью, электронике, химии, данным, компонентам и экзотике.
-    - Прописаны зоны добычи и факторы спроса/предложения.
-    - Введена система тиров с диапазонами цен и доступностью.
+    - "Единый YAML-шаблон ресурса с категориями, редкостью и источниками."
+    - "Подробные блоки для металлов, электроники, биоматериалов и данных."
+    - "Определены зоны добычи и динамическое ценообразование."
+    - "Каталог готов для генерации задач на economy-service."
 content:
   sections:
-    - id: resource_schema
-      title: Структура описания ресурса
+    - id: structure
+      title: "Структура записи ресурса"
       body: |
-        Каждый ресурс содержит идентификатор, категорию, тир, редкость, источники, сценарии использования, стоимость у
-        торговцев и на рынке игроков, а также ограничения по стакам и весу.
+        Базовая карточка ресурса включает идентификатор, категорию, tier, редкость, источники, применения и показатели
+        стоимости. В схеме задаются диапазоны цен для продавцов и игроков, параметры стека и веса, что обеспечивает
+        единый формат передачи в economy-service.
       mechanics_links:
-        - mechanics/economy/economy-production-chains.yaml
+        - mechanics/economy/economy-resources-catalog.yaml
       assets: []
-    - id: raw_materials
-      title: Сырьё и металлы
+    - id: raw-materials
+      title: "Сырьевые материалы"
       body: |
-        Базовые материалы включают Scrap Metal и Steel Ingot, далее следуют Titanium Alloy и Tungsten Carbide. Описаны
-        рецепты переработки, локации добычи и ориентиры стоимости от 2 до 800 €$.
+        Категория покрывает Scrap Metal, Steel Ingot, Titanium Alloy и Tungsten Carbide. Для каждого ресурса описаны
+        источники (лута, добычи, переработки), производственные рецепты и назначение в крафте оружия, брони и имплантов.
+        Значения стоимости колеблются от 2 до 800 €$.
       mechanics_links:
-        - mechanics/economy/economy-production-chains.yaml
+        - mechanics/economy/economy-resources-catalog.yaml
       assets: []
     - id: electronics
-      title: Электронные компоненты
+      title: "Электронные компоненты"
       body: |
-        Circuit Board и Processor Chip поддерживают оружие и импланты, а Neural Matrix и Quantum Core используются в
-        легендарных кибердеках. Указаны редкость, источники (дроны, нетраннеры, лаборатории) и типичные цены.
+        Circuit Board, Processor Chip, Neural Matrix и Quantum Core формируют основу кибернетики. Указаны источники
+        (разбор дронов, нетраннеры, биолабы), редкость от common до legendary и назначение для кибердеки, smart-оружия
+        и OS-имплантов. Quantum Core уникален, ограничен стеком и стоит до 50 000 €$.
       mechanics_links:
-        - mechanics/economy/economy-production-chains.yaml
+        - mechanics/economy/economy-resources-catalog.yaml
       assets: []
-    - id: chemical_biological
-      title: Химические и биологические ресурсы
+    - id: bio-chem
+      title: "Химические и биологические материалы"
       body: |
-        Категория охватывает Synthetic Blood и Neuro-Plastics с указанием поставщиков (медклиники, биолабы) и применения
-        в медицине и био-модах.
+        Synthetic Blood и Neuro-Plastics определяют цепочки медтехники: источники включают клиники, Biotechnica и
+        чёрный рынок. Ресурсы используются для медицинских имплантов, healing-предметов и интерфейсных систем.
       mechanics_links:
-        - mechanics/economy/economy-production-chains.yaml
+        - mechanics/economy/economy-resources-catalog.yaml
       assets: []
-    - id: data_information
-      title: Данные и информация
+    - id: data-assets
+      title: "Данные и информация"
       body: |
-        Encrypted Data Shard, Corporate Blueprint и Blackmail Material предоставляют сценарии редкого лута и сюжетные
-        механики. Описаны вероятности содержимого, стоимость расшифровки и назначение.
+        Encrypted Data Shard, Corporate Blueprint и Blackmail Material описывают цифровые ресурсы. Документ фиксирует
+        вероятности выпадения, содержимое, диапазон цен (50–50 000 €$) и способы монетизации через взломы, квесты
+        или торговлю фиксёрам.
       mechanics_links:
-        - mechanics/economy/economy-currency-exchange.yaml
+        - mechanics/economy/stock-exchange/README.yaml
       assets: []
-    - id: crafting_components
-      title: Компоненты для крафта
+    - id: crafting-components
+      title: "Компоненты крафта"
       body: |
-        Weapon Parts, Armor Plates, Servo Motors и Optical Sensors составляют основу сборки вооружения и киберимплантов.
-        Приведены уровни редкости и цены по тиру.
+        Weapon Parts, Armor Plates, Servo Motor и Optical Sensor используются в рецептах вооружения и имплантов. Указаны
+        источники разборки, шансы выпадения и стоимости по редкости.
       mechanics_links:
-        - mechanics/economy/economy-production-chains.yaml
+        - mechanics/economy/economy-resources-catalog.yaml
       assets: []
-    - id: exotic_materials
-      title: Экзотические материалы
+    - id: exotic
+      title: "Экзотические материалы"
       body: |
-        Militech Spec-Ops Tech, Arasaka Nano-Assemblers и AI Fragment формируют эндгейм‑ресурсы, доступные в рейдах и
-        сюжетных линиях. Указаны ограничения по стэку и экономическая ценность.
+        Militech Spec-Ops Tech, Arasaka Nano-Assemblers и AI Fragment представляют легендарные ресурсы, связанные с рейдами,
+        боссами и сюжетными квестами. Они ограничены по стекам и применяются в легендарных рецептах и AI-системах.
       mechanics_links:
-        - mechanics/economy/economy-trading-routes.yaml
+        - mechanics/world/dungeons/dungeon-bosses-catalog.yaml
       assets: []
-    - id: tier_system
-      title: Система тиров
+    - id: tiers
+      title: "Tier-система"
       body: |
-        Таблица тиров T1–T5 связывает редкость, зоны добычи, доступность у продавцов и диапазоны цен от 1 до 500k €$.
+        Таблица классифицирует ресурсы по tier (T1–T5) с диапазонами редкости, зон, наличия у продавцов и ценой от 1 до
+        500 000 €$. Используется для балансировки прогрессии и распределения ресурсов по контенту.
       mechanics_links:
-        - mechanics/economy/economy-production-chains.yaml
-      assets: []
-    - id: supply_demand
-      title: Спрос и предложение
-      body: |
-        Описаны факторы динамического ценообразования: события, контроль фракций, производство игроков. Приведены примеры
-        изменения цены Titanium Alloy при дефиците или бонусах события.
-      mechanics_links:
-        - mechanics/economy/economy-trading-routes.yaml
+        - mechanics/economy/economy-resources-catalog.yaml
       assets: []
     - id: locations
-      title: Зоны и источники
+      title: "Зоны добычи"
       body: |
-        Watson обеспечивает металлолом и платы, Corpo Plaza — корпоративные чертежи, Badlands — руду, Pacifica —
-        контрабанду. Сегментация по блокам помогает распределять ресурсы по карте.
+        Описаны ключевые регионы: Watson, Corpo Plaza, Badlands и Pacifica с характерными ресурсами и уровнями риска.
+        Информация используется world-service для генерации событий добычи и экономических миссий.
       mechanics_links:
-        - mechanics/economy/economy-trading-routes.yaml
+        - mechanics/world/events/world-events-framework.yaml
+      assets: []
+    - id: pricing
+      title: "Динамика спроса и предложения"
+      body: |
+        Каталог фиксирует динамическое ценообразование с колебаниями ±50% в зависимости от экономики сервера, контроля
+        фракций и недавних событий. Пример с Titanium Alloy демонстрирует комбинированное влияние дефицита, спроса и
+        событий на итоговую цену.
+      mechanics_links:
+        - mechanics/economy/stock-exchange/README.yaml
       assets: []
 appendix:
   glossary: []
-  references:
-    - title: Production Chains
-      link: ./economy-production-chains.yaml
+  references: []
   decisions: []
 implementation:
   needs_task: false
   queue_reference:
-    - shared/trackers/queues/concept/queued.yaml#mechanics-economy-resources-catalog
+    - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
   - version: '2.0.0'
-    date: 2025-11-06
-    author: concept_team
-    changes: Расширен каталог до 20 ресурсов, добавлены зоны и динамическое ценообразование.
-  - version: '1.0.0'
-    date: 2025-10-15
-    author: concept_team
-    changes: Базовые категории ресурсов и стоимости.
+    date: 2025-11-13
+    author: economy_team
+    changes: "Конвертация каталога ресурсов и материалов из MD в YAML."
 validation:
   checksum: ''
   schema_version: '1.0'
