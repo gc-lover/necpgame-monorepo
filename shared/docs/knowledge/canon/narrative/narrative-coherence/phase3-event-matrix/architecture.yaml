@@ -1,0 +1,154 @@
+metadata:
+  id: narrative-coherence-event-matrix-architecture
+  title: Архитектура графа событий
+  document_type: canon
+  category: narrative-coherence
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-06T23:29:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-06T23:29:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - event-graph
+    - architecture
+    - narrative
+  topics:
+    - dynamic-content
+    - quest-graph
+  related_systems:
+    - narrative-service
+    - world-state-service
+  related_documents:
+    - id: narrative-coherence-dynamic-content-system
+      relation: references
+    - id: narrative-coherence-quest-dependencies-graph
+      relation: references
+    - id: narrative-coherence-world-state-graph
+      relation: references
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase3-event-matrix/architecture.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - narrative
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: 2025-11-06T23:29:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Необходима формализация архитектуры графа событий для генерации динамического контента и интеграции с backend.
+  goal: Описать типы узлов и связей графа, систему вероятностей и взаимодействие с глобальным состоянием мира.
+  essence: Документ фиксирует структуры данных, зависимости и механизмы генерации событий для AAA MMO.
+  key_points:
+    - Определены четыре типа узлов: quest, choice, world_state, event.
+    - Заданы типы связей REQUIRES, UNLOCKS, BLOCKS и INFLUENCES.
+    - Описаны механизмы вероятностей, весов и интеграция с глобальным состоянием.
+content:
+  sections:
+    - id: overview
+      title: Краткое описание
+      body: |
+        Архитектура графа событий управляет динамическим контентом игры, соединяя квесты, выборы, события и мировые
+        состояния. Документ служит базой для реализации backend и настройки генераторов.
+      mechanics_links: []
+      assets: []
+    - id: node-types
+      title: Типы узлов графа
+      body: |
+        ```
+        type: quest | choice | world_state | event
+        ```
+
+        Каждый тип описывает структуру данных, зависимости и последствия:
+        - Quest Node: prerequisites, unlocks, blocks, probability.
+        - Choice Node: варианты, последствия.
+        - World State Node: значение и связанные триггеры.
+        - Event Node: условия, эффекты, вероятность.
+      mechanics_links:
+        - services/backend/narrative/graph-schema.yaml
+      assets: []
+    - id: edge-types
+      title: Типы связей
+      body: |
+        Заданы четыре отношения:
+        - REQUIRES — доступ к узлу после выполнения условия.
+        - UNLOCKS — открытие новых веток.
+        - BLOCKS — блокировка контента навсегда или временно.
+        - INFLUENCES — мягкое влияние на сложность и награды.
+      mechanics_links: []
+      assets: []
+    - id: generation
+      title: Динамическая генерация
+      body: |
+        Probability System и Weight System управляют появлением событий.
+
+        ```
+        event_pool:
+          - event_id: random_ambush
+            base_probability: 0.15
+            modifiers:
+              danger_zone: +0.10
+              night_time: +0.05
+              high_reputation_gangs: -0.10
+        ```
+
+        ```
+        quest_selection:
+          - quest_id: SQ-2020-001
+            weight: 10
+            conditions:
+              level: 1-5
+              class: Solo
+        ```
+      mechanics_links:
+        - services/backend/narrative/probability-engine.yaml
+      assets: []
+    - id: world-state
+      title: Интеграция с глобальным состоянием
+      body: |
+        ```
+        world_state:
+          blackwall_integrity: 0-100
+          corporate_control: 0-100
+          faction_wars_active: boolean
+          player_chaos_score: 0-100
+        ```
+
+        Триггеры реагируют на изменения состояния, включая разблокировку инцидентов и изменение вероятностей квестов.
+      mechanics_links:
+        - services/backend/global-state/overview.yaml
+      assets: []
+    - id: references
+      title: Связанные документы
+      body: |
+        - Quest Dependencies Graph
+        - World State Graph
+        - Dynamic Content System
+      mechanics_links: []
+      assets:
+        - type: document
+          path: shared/docs/knowledge/canon/narrative/narrative-coherence/phase3-event-matrix/dynamic/content-system.md
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: concept_director
+    changes: Архитектура графа событий описана и утверждена.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
