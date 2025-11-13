@@ -1,0 +1,110 @@
+metadata:
+  id: narrative-coherence-troubleshooting-part1-common
+  title: 'Troubleshooting — Part 1: Common Problems'
+  document_type: canon
+  category: narrative-coherence
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-07T00:51:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - troubleshooting
+    - narrative-coherence
+    - support
+  topics:
+    - diagnostics
+    - backend
+  related_systems:
+    - narrative-service
+    - quest-service
+  related_documents:
+    - id: narrative-coherence-troubleshooting-part2-database
+      relation: continues
+    - id: narrative-coherence-troubleshooting-part3-advanced
+      relation: continues
+  source: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/troubleshooting-part1-common.md
+  visibility: internal
+  audience:
+    - backend
+    - support
+    - concept
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Возникают повторяющиеся ошибки при подготовке нарративного сервиса, требующие типовых инструкций по устранению.
+  goal: Систематизировать распространённые проблемы с миграциями, загрузкой графа квестов и обработкой JSONB, предоставив быстрые решения.
+  essence: Первая часть справочника концентрируется на базовой диагностике и шаговых патчах для серверной команды перед переходом к углублённым темам.
+  key_points:
+    - Гайды по устранению проблем миграций и отсутствия таблиц.
+    - Контроль наличия и загрузки JSON-данных для квестового графа.
+    - Рекомендации по флагам игрока, транзакциям и стабильности диалоговых выборов.
+content:
+  sections:
+    - id: navigation
+      title: Навигация
+      body: |
+        Part 1 фокусируется на базовых сбоях и подготовке окружения. Дополнительные сценарии рассмотрены в Part 2 (База и производительность) и Part 3 (WebSocket и расширенные случаи).
+      mechanics_links: []
+      assets: []
+    - id: migrations
+      title: Миграции не применяются
+      body: |
+        Ошибка `relation "quests" does not exist` указывает на пропущенное выполнение Flyway. Повторно примените стартовые SQL-скрипты и убедитесь, что приложению выданы права (`GRANT ALL PRIVILEGES`), чтобы создать схему.
+      mechanics_links:
+        - services/backend/database/migration-playbook.yaml
+      assets: []
+    - id: quest-graph
+      title: Граф квестов не загружается
+      body: |
+        Отсутствие файлов `quest-dependencies-full.json` устраняется повторным запуском конвертера из каталога narrative export и копированием JSON в `resources/data/narrative/`. После операции перезапустите сервис и проверьте логи загрузки.
+      mechanics_links:
+        - services/backend/narrative/data-export.yaml
+      assets: []
+    - id: jsonb-support
+      title: JSONB не сериализуется
+      body: |
+        Добавьте зависимость `hibernate-types-55` и объявите `@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)` в сущности. Поля с JSONB маркируются `@Type(type = "jsonb")`, что решает проблемы сериализации и чтения.
+      mechanics_links:
+        - services/backend/narrative/dependency-list.yaml
+      assets: []
+    - id: quest-availability
+      title: Квесты не становятся доступными
+      body: |
+        Для диагностики включите расширенный логгер и проверьте возвращаемые значения проверок флагов и блокировок. При необходимости создайте тестовые записи в `player_flags`, чтобы воспроизвести условия выдачи квеста.
+      mechanics_links:
+        - services/backend/narrative/service-logic.yaml
+      assets: []
+    - id: dialogue-choice
+      title: Выбор диалога не сохраняется
+      body: |
+        Убедитесь, что обработчик выбора квеста помечен `@Transactional`, чтобы единая транзакция охватывала обновление прогресса и флагов. Отсутствие транзакции приводит к частичному сохранению данных и расхождению состояний.
+      mechanics_links:
+        - services/backend/narrative/api-spec.yaml
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-07
+    author: concept_director
+    changes: Конвертирована часть Part 1 руководства Troubleshooting в YAML со структурированными сценариями решения.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
