@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-create-queue-item-templates
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: queue_item_templates
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: template_code
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: template_type
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: template_version
+                  type: VARCHAR(64)
+              - column:
+                  name: source_path
+                  type: VARCHAR(256)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: queue_item_templates
+            baseColumnNames: item_id
+            referencedTableName: queue_items
+            referencedColumnNames: id
+            constraintName: fk_queue_item_templates_item
+        - createIndex:
+            indexName: idx_queue_item_templates_item
+            tableName: queue_item_templates
+            columns:
+              - column:
+                  name: item_id
+        - createIndex:
+            indexName: idx_queue_item_templates_code
+            tableName: queue_item_templates
+            columns:
+              - column:
+                  name: template_code
+

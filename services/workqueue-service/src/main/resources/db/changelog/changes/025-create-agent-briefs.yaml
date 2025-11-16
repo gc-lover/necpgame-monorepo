@@ -1,0 +1,379 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-create-agent-briefs
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: agent_briefs
+            columns:
+              - column:
+                  name: segment
+                  type: VARCHAR(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: role_key
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mission
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: responsibilities
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: submission_checklist
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: handoff_notes
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: concept}
+              - column: {name: role_key, value: concept-director}
+              - column: {name: title, value: Concept Director}
+              - column: {name: mission, value: "Запускает цепочку задач и обеспечивает целостность знаний."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Собирай и обновляй знания по шаблону knowledge-entry.
+                    Проверяй структуру, ссылки и влияние на существующие pillars.
+                    Формируй handoff-план до того, как запускать ingest.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Вызови POST /api/ingest/tasks только после локальной проверки.
+                    Claim задачу сегмента concept и удерживай её в пределах TTL.
+                    Submit с минимум одним артефактом и metadata.knowledgeRefs + handoff.nextSegment=vision.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Успешный submit автоматически создаёт элемент для Vision, проверь nextItemId.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: vision}
+              - column: {name: role_key, value: vision-manager}
+              - column: {name: title, value: Vision Manager}
+              - column: {name: mission, value: "Сводит концепт в единое видение и готовит roadmap."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Сверяй поступившие материалы с pillars и structure guidelines.
+                    Уточняй риски и допущения, формируй roadmap действий.
+                    Готовь inputs и артефакты для API Task Architect.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim только очереди vision, проверяй TTL и инструкции.
+                    Приложи roadmap/knowledge ссылку и краткое summary.
+                    Metadata должна содержать knowledgeRefs и handoff.nextSegment=api.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Submit запускает handoff в сегмент api, контролируй nextSegment в ответе.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: api}
+              - column: {name: role_key, value: api-task-architect}
+              - column: {name: title, value: API Task Architect}
+              - column: {name: mission, value: "Декомпозирует видение в API-контракты и требования к реализации."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Поддерживай список эндпоинтов и контрактов в актуальном состоянии.
+                    Сверяйся с reference templates (concept-canon, structure-guidelines).
+                    Формируй требования, которые можно сразу передать Backend.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи сегмента api, следи за TTL.
+                    Приложи ссылку на спецификацию, MR или артефакт OpenAPI.
+                    В metadata фиксируй handoff.nextSegment=backend.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    После submit автоматически создаётся элемент backend, убедись что templates подтянулись.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: backend}
+              - column: {name: role_key, value: backend-implementer}
+              - column: {name: title, value: Backend Implementer}
+              - column: {name: mission, value: "Реализует серверную логику и поддерживает данные."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Реализуй утверждённые API, фиксируй миграции и конфигурации.
+                    Согласовывай зависимости с Data/Security до код-ревью.
+                    Подготавливай артефакты для фронтенда и QA.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи backend и удерживай lock в рамках TTL.
+                    Приложи ссылку на ветку, контейнер или миграцию.
+                    Metadata должна содержать handoff.nextSegment=frontend.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Submit автоматически создаёт элемент frontend, проверяй nextItemId и templates.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: frontend}
+              - column: {name: role_key, value: frontend-implementer}
+              - column: {name: title, value: Frontend Implementer}
+              - column: {name: mission, value: "Собирает пользовательский интерфейс и интегрируется с бэкендом."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Согласовывай макеты и состояния UI с Vision/UX.
+                    Интегрируйся с актуальными API и отслеживай изменения контрактов.
+                    Обновляй UX-ассеты и фиксируй особенности клиента.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи frontend, держи ссылку на сборку/preview.
+                    Приложи билд, тестовый чеклист и шаги проверки.
+                    Metadata указывает handoff.nextSegment=qa.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Submit создаёт очередь QA, убедись что артефакты доступны проверяющим.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: qa}
+              - column: {name: role_key, value: qa-agent}
+              - column: {name: title, value: QA Agent}
+              - column: {name: mission, value: "Проводит end-to-end проверки и блокирует регрессии."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Формируй сценарии и фиксацию статусов тестов.
+                    Отслеживай критичные дефекты и статусы фиксов.
+                    Подтверждай соответствие требованиям и чеклистам сегмента.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи qa и удерживай lock до завершения цикла.
+                    Приложи отчёт тестов, скриншоты или логи.
+                    Metadata фиксирует рекомендации и handoff.nextSegment=release.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    После submit автоматически создаётся элемент release для подготовки выката.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: release}
+              - column: {name: role_key, value: release-manager}
+              - column: {name: title, value: Release Manager}
+              - column: {name: mission, value: "Собирает релиз, контролирует checklist и коммуникации."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Готовь релизные ноты и подтверждай готовность окружений.
+                    Согласуй окно выката с DevOps и владельцами сегментов.
+                    Уведомляй команды и фиксируй остаточные риски.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи release.
+                    Приложи ссылку на релизный пакет/чеклист и каналы коммуникаций.
+                    Metadata описывает статус выката и каналы уведомлений.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    После submit handoff уходит в analytics для постмониторинга метрик.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: analytics}
+              - column: {name: role_key, value: analytics-agent}
+              - column: {name: title, value: Analytics Agent}
+              - column: {name: mission, value: "Собирает метрики после релиза и даёт рекомендации."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Отслеживай KPI и алерты, связанные с новым функционалом.
+                    Сверяй фактические результаты с ожиданиями Vision/Business.
+                    Делись выводами с командами и фиксируй меры реагирования.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи analytics.
+                    Приложи отчёт/дашборд и краткое резюме.
+                    Metadata описывает рекомендации и ответственных.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Handoff может направляться в community или data в зависимости от правил, проверяй ответ submit.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: community}
+              - column: {name: role_key, value: community-agent}
+              - column: {name: title, value: Community Agent}
+              - column: {name: mission, value: "Готовит внешние коммуникации и собирает обратную связь."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Формируй анонсы, FAQ и ответы игрокам.
+                    Согласуй сообщения с актуальным релизом и policy.
+                    Следи за обратной связью и эскалируй критичные сигналы.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи community.
+                    Приложи пакет коммуникаций и статус публикаций.
+                    Metadata указывает каналы и SLA ответа.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    По умолчанию цепочка завершается, дополнительные правила задаются через handoff_rules.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: security}
+              - column: {name: role_key, value: security-agent}
+              - column: {name: title, value: Security Agent}
+              - column: {name: mission, value: "Проверяет риски безопасности и контроль доступа."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Выполняй threat modeling и проверяй compliance.
+                    Контролируй доступ к данным и секретам.
+                    Рекомендуй mitigation и фиксируй блокеры.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи security.
+                    Приложи отчёт сканов/аудита и выводы.
+                    Metadata описывает блокеры и необходимые действия.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Результат может возвращаться в исходный сегмент или release, следи за правилами handoff.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: data}
+              - column: {name: role_key, value: data-balancing-agent}
+              - column: {name: title, value: Data Balancing Agent}
+              - column: {name: mission, value: "Синхронизирует модели данных и балансировку экономики."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Обновляй схемы данных и миграции.
+                    Проверяй целостность ETL и аналитических витрин.
+                    Следи за балансом экономики/прогрессии.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи data.
+                    Приложи дампы, SQL или описание расчётов.
+                    Metadata фиксирует среду и точки контроля.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Обычно handoff идёт в backend или analytics, смотри правила таблицы handoff_rules.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: ux}
+              - column: {name: role_key, value: ux-agent}
+              - column: {name: title, value: UX Agent}
+              - column: {name: mission, value: "Формирует UX-сценарии и согласует пользовательские потоки."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Согласовывай пользовательские флоу с Vision/Frontend.
+                    Поддерживай макеты и прототипы в актуальном состоянии.
+                    Контролируй accessibility и guidelines.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи ux.
+                    Приложи макеты/прототипы и исходники.
+                    Metadata задаёт целевой сегмент (обычно vision или frontend) через handoff.nextSegment.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Следующий сегмент определяется правилом handoff, убедись что metadata совпадает.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+        - insert:
+            tableName: agent_briefs
+            columns:
+              - column: {name: segment, value: refactor}
+              - column: {name: role_key, value: refactor-agent}
+              - column: {name: title, value: Refactor Agent}
+              - column: {name: mission, value: "Убирает технический долг и стабилизирует систему."}
+              - column:
+                  name: responsibilities
+                  value: |-
+                    Анализируй backlog долга и влияния на продукт.
+                    Планируй refactor PR и согласовывай риски.
+                    Обновляй документацию по инфраструктуре.
+              - column:
+                  name: submission_checklist
+                  value: |-
+                    Claim задачи refactor.
+                    Приложи ссылку на PR/дифф и описание изменений.
+                    Metadata фиксирует целевые сегменты и договорённости.
+              - column:
+                  name: handoff_notes
+                  value: |-
+                    Handoff направляется в сегмент-заказчик (backend/frontend/etc.) по правилам таблицы handoff_rules.
+              - column: {name: created_at, valueComputed: CURRENT_TIMESTAMP}
+              - column: {name: updated_at, valueComputed: CURRENT_TIMESTAMP}
+
+

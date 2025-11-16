@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.necpgame.com/workqueue/task-ingestion-request.schema.json",
+  "title": "TaskIngestionRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sourceId",
+    "segment",
+    "priority",
+    "title",
+    "summary",
+    "knowledgeRefs",
+    "templates",
+    "payload"
+  ],
+  "properties": {
+    "sourceId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Идентификатор задачи в исходной системе (уникальный)."
+    },
+    "segment": {
+      "type": "string",
+      "enum": [
+        "concept",
+        "vision",
+        "api",
+        "backend",
+        "frontend",
+        "qa",
+        "release",
+        "analytics",
+        "community",
+        "security",
+        "data",
+        "ux",
+        "refactor"
+      ],
+      "description": "Целевой сегмент пайплайна."
+    },
+    "initialStatus": {
+      "type": "string",
+      "description": "Необязательный статус (по умолчанию queued/in_progress на основе сегмента)."
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Приоритет, где 1 — критический."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 3
+    },
+    "knowledgeRefs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "templates": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "checklists": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "version": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "description": "Любые дополнительные данные: owner, context, ссылки на трекеры.",
+      "additionalProperties": true
+    },
+    "handoffPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nextSegment": {
+          "type": "string",
+          "description": "Сегмент, который получит задачу после submit."
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "status",
+              "targetSegment"
+            ],
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "targetSegment": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "legacyQueue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Путь к YAML-очереди в архиве."
+        },
+        "raw": {
+          "type": "object",
+          "description": "Исходные данные записи legacy очереди.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
+

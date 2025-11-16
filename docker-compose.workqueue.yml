@@ -1,0 +1,54 @@
+version: "3.9"
+services:
+  workqueue-db:
+    image: postgres:16
+    container_name: workqueue-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: workqueue
+      POSTGRES_USER: workqueue
+      POSTGRES_PASSWORD: workqueue
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./.data/workqueue-db:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workqueue"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    networks:
+      - workqueue-internal
+  workqueue-service:
+    build:
+      context: ./services/workqueue-service
+    container_name: workqueue-service
+    restart: unless-stopped
+    environment:
+      WORKQUEUE_DB_URL: jdbc:postgresql://workqueue-db:5432/workqueue
+      WORKQUEUE_DB_USERNAME: workqueue
+      WORKQUEUE_DB_PASSWORD: workqueue
+      SECURITY_API_ENABLED: "true"
+      WORKQUEUE_HTTP_PORT: 8090
+      WORKQUEUE_REPO_ROOT: /workspace
+      WORKQUEUE_KNOWLEDGE_IMPORT_ENABLED: "true"
+      WORKQUEUE_KNOWLEDGE_IMPORT_ROOT_PATH: knowledge
+    depends_on:
+      workqueue-db:
+        condition: service_healthy
+    ports:
+      - "8090:8090"
+    volumes:
+      - .:/workspace:ro
+    networks:
+      - workqueue-internal
+      - default
+
+networks:
+  workqueue-internal:
+    driver: bridge
+    internal: true
+
+

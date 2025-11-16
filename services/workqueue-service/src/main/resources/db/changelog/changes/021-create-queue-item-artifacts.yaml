@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-create-queue-item-artifacts
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: queue_item_artifacts
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: artifact_type
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(256)
+              - column:
+                  name: url
+                  type: VARCHAR(1024)
+              - column:
+                  name: storage_path
+                  type: VARCHAR(512)
+              - column:
+                  name: media_type
+                  type: VARCHAR(128)
+              - column:
+                  name: size_bytes
+                  type: BIGINT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: queue_item_artifacts
+            baseColumnNames: item_id
+            referencedTableName: queue_items
+            referencedColumnNames: id
+            constraintName: fk_queue_item_artifacts_item
+        - createIndex:
+            indexName: idx_queue_item_artifacts_item
+            tableName: queue_item_artifacts
+            columns:
+              - column:
+                  name: item_id
+

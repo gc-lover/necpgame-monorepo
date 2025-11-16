@@ -1,0 +1,333 @@
+scripts:
+  agent_task_cli: "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole <role> -Command <next|accept|release> [параметры]"
+  scenario_runner: "pwsh -File pipeline/scripts/run-scenario.ps1 -Role <role> [-Step <step>] [-DryRun]"
+  notes: >
+    Используй agent_task_cli для быстрых REST-операций очереди. Передача role key позволяет автоматически получить UUID агента.
+
+agent_scenarios:
+  api-task-architect:
+    queue_segment: "api"
+    agent_role_key: "api-task-architect"
+    summary: >
+      Создаёт задания для OpenAPI Executor, используя REST API очередей и готовые PowerShell скрипты.
+    steps:
+      - name: "Получить задачу"
+        rest:
+          method: "GET"
+          path: "/api/agents/<agent_uuid>/next-task"
+        cli:
+          - "curl -s http://localhost:8090/api/agents/<agent_uuid>/next-task | jq '.'"
+      - name: "Принять задачу"
+        rest:
+          method: "POST"
+          path: "/api/agents/<agent_uuid>/next-task/accept"
+          body_template:
+            itemId: "<queue_item_uuid>"
+            expectedVersion: "<version>"
+            note: "Задача в работе"
+        cli:
+          - |
+            curl -X POST http://localhost:8090/api/agents/<agent_uuid>/next-task/accept \
+                 -H "Content-Type: application/json" \
+                 -d '{"itemId":"<queue_item_uuid>","expectedVersion":<version>,"note":"Задача в работе"}'
+          - "curl -X POST http://localhost:8088/api/agents/<api_architect>/tasks/claim -H \"Content-Type: application/json\" -H \"X-Agent-Role: api-task-architect\" -d '{\"segments\":[\"api\"],\"maxPriority\":4}'"
+      - name: "Синхронизировать очередь"
+        rest:
+          method: "POST"
+          path: "/api/agents/<agent_uuid>/next-task/release"
+          body_template:
+            itemId: "<queue_item_uuid>"
+            expectedVersion: "<version>"
+            statusCode: "in_progress"
+            note: "API задача подготовлена"
+        cli:
+          - |
+            curl -X POST http://localhost:8090/api/agents/<agent_uuid>/next-task/release \
+                 -H "Content-Type: application/json" \
+                 -d '{"itemId":"<queue_item_uuid>","expectedVersion":<version>,"statusCode":"in_progress","note":"API задача подготовлена"}'
+      - name: "Закрыть шаг"
+        cli:
+          - "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/04_api_task_architect/<task-file.yaml> -TargetQueueFile shared/trackers/queues/api/in-progress.yaml -Actor \"API Task Architect\" [-SourceQueueFile shared/trackers/queues/api/queued.yaml]"
+    automation:
+      scenario_script: "pwsh -File pipeline/scripts/run-scenario.ps1 -Role api-task-architect [-Step <step>] [-DryRun]"
+
+  backend-implementer:
+    queue_segment: "backend"
+    agent_role_key: "backend-implementer"
+    summary: >
+      Реализует серверный функционал по заданию, используя REST API очередей и генераторы задач/миграций.
+    steps:
+      - name: "Запросить следующую задачу"
+        rest:
+          method: "GET"
+          path: "/api/agents/<agent_uuid>/next-task"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole backend-implementer -Command next"
+      - name: "Взять задачу"
+        rest:
+          method: "POST"
+          path: "/api/agents/<agent_uuid>/next-task/accept"
+          body_template:
+            itemId: "<queue_item_uuid>"
+            expectedVersion: "<version>"
+            note: "Backend: начало работы"
+        cli:
+          - |
+            curl -X POST http://localhost:8090/api/agents/<agent_uuid>/next-task/accept \
+                 -H "Content-Type: application/json" \
+                 -d '{"itemId":"<queue_item_uuid>","expectedVersion":<version>,"note":"Backend: начало работы"}'
+          - "curl -X POST http://localhost:8088/api/agents/<backend_agent>/tasks/claim -H \"Content-Type: application/json\" -H \"X-Agent-Role: backend-implementer\" -d '{\"segments\":[\"backend\"],\"maxPriority\":4}'"
+      - name: "Реализовать функционал"
+        cli:
+          - "pwsh -File services/backend/scripts/generate-openapi-layers.ps1 -ApiSpec <path-to-spec>"
+          - "mvn -f services/backend clean verify"
+      - name: "Сдать задачу"
+        rest:
+          method: "POST"
+          path: "/api/agents/<agent_uuid>/next-task/release"
+          body_template:
+            itemId: "<queue_item_uuid>"
+            expectedVersion: "<version>"
+            statusCode: "ready"
+            note: "Backend готов, передаю на frontend"
+        cli:
+          - |
+            curl -X POST http://localhost:8090/api/agents/<agent_uuid>/next-task/release \
+                 -H "Content-Type: application/json" \
+                 -d '{"itemId":"<queue_item_uuid>","expectedVersion":<version>,"statusCode":"ready","note":"Backend готов, передаю на frontend"}'
+          - "pwsh -File pipeline/scripts/complete-task.ps1 -TaskFile pipeline/tasks/06_backend_implementer/<task-file.yaml> -TargetQueueFile shared/trackers/queues/backend/completed.yaml -Actor \"Backend Implementer\" [-SourceQueueFile shared/trackers/queues/backend/in-progress.yaml]"
+    automation:
+      scenario_script: "pwsh -File pipeline/scripts/agent-assets/backend-implementer-scenario.ps1 -AgentId <uuid> -QueueItemId <queue_item_uuid> -ExpectedVersion <version>"
+
+  openapi-executor:
+    queue_segment: "api"
+    agent_role_key: "openapi-executor"
+    summary: >
+      Поддерживает спецификации, синхронизируя очередь `api/in-progress` и переводя задачи в review.
+    steps:
+      - name: "Получить задачу"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole openapi-executor -Command next"
+      - name: "Принять задачу"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole openapi-executor -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Начал правки спецификации\""
+      - name: "Обновить спецификацию"
+        checklist:
+          - "pipeline/checklists/api-to-openapi.yaml"
+        cli:
+          - "pwsh -File pipeline/scripts/validate-swagger.ps1 -ApiSpec <spec>"
+          - "pwsh -File pipeline/scripts/check-spec-structure.ps1 -Spec <spec>"
+      - name: "Передать Backend"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole openapi-executor -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode review -Note \"OpenAPI готово\""
+    automation:
+      scenario_script: "pwsh -File pipeline/scripts/run-scenario.ps1 -Role openapi-executor [-DryRun]"
+
+  frontend-implementer:
+    queue_segment: "frontend"
+    agent_role_key: "frontend-implementer"
+    summary: >
+      Работает с очередью фронтенда, использует Orval и проверочные скрипты.
+    steps:
+      - name: "Получить задачу"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole frontend-implementer -Command next"
+      - name: "Принять задачу"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole frontend-implementer -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Frontend: начало\""
+      - name: "Генерировать клиентов и UI"
+        cli:
+          - "pwsh -File services/frontend/scripts/generate-api-orval.ps1 -Spec <openapi_file>"
+          - "pnpm install && pnpm run lint && pnpm run test"
+      - name: "Отдать QA"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole frontend-implementer -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode ready -Note \"Фронт готов к QA\""
+    automation:
+      scenario_script: "pwsh -File pipeline/scripts/run-scenario.ps1 -Role frontend-implementer [-DryRun]"
+
+  qa-agent:
+    queue_segment: "qa"
+    agent_role_key: "qa-agent"
+    summary: >
+      Проводит чеклисты QA и оформляет планы/отчёты через REST API `qa/plans`.
+    steps:
+      - name: "Получить план"
+        rest:
+          method: "GET"
+          path: "/api/qa/plans"
+        cli:
+          - "curl -s http://localhost:8090/api/qa/plans | jq '.'"
+      - name: "Проверить детали плана"
+        rest:
+          method: "GET"
+          path: "/api/qa/plans/<plan_uuid>"
+        cli:
+          - "curl -s http://localhost:8090/api/qa/plans/<plan_uuid> | jq '.'"
+      - name: "Выполнить тесты"
+        checklist:
+          - "pipeline/checklists/frontend-to-qa.yaml"
+          - "pipeline/checklists/qa-to-release.yaml"
+        cli:
+          - "pwsh -File pipeline/scripts/run-qa-suite.ps1 -ProjectRoot services/backend"
+      - name: "Отчитаться"
+        guidance: >
+          Забери задачу через workqueue-service (claim/submit) — Activity Log обновится автоматически, `queue_item_states` отразит статус `qa_executing`.
+    automation:
+      scenario_script: "pwsh -File pipeline/scripts/run-scenario.ps1 -Role qa-agent [-DryRun]"
+
+  devops-agent:
+    queue_segment: "release"
+    agent_role_key: "devops-agent"
+    summary: >
+      Управляет релизным прогоном, шагами и валидаторами.
+    steps:
+      - name: "Просмотреть запланированные релизы"
+        rest:
+          method: "GET"
+          path: "/api/release/runs"
+        cli:
+          - "curl -s http://localhost:8090/api/release/runs | jq '.'"
+      - name: "Открыть конкретный релиз"
+        rest:
+          method: "GET"
+          path: "/api/release/runs/<run_uuid>"
+        cli:
+          - "curl -s http://localhost:8090/api/release/runs/<run_uuid> | jq '.'"
+      - name: "Выполнить шаги"
+        guidance: >
+          По каждому `steps[].actionDescription` запускать соответствующий PowerShell (deploy, smoke-tests и т.д.).
+      - name: "Зафиксировать результат"
+        guidance: >
+          После выполнения шагов обновить очередь через `/api/agents/<id>/next-task/release` со статусом `completed`.
+    automation:
+      scenario_script: "pwsh -File pipeline/scripts/run-scenario.ps1 -Role devops-agent [-Step release] [-DryRun]"
+
+  analytics-agent:
+    queue_segment: "analytics"
+    agent_role_key: "analytics-agent"
+    summary: >
+      Проверяет схемы аналитики, KPI и метрики.
+    steps:
+      - name: "Получить список схем"
+        rest:
+          method: "GET"
+          path: "/api/analytics/schemas"
+        cli:
+          - "curl -s http://localhost:8090/api/analytics/schemas | jq '.'"
+      - name: "Проанализировать схему"
+        rest:
+          method: "GET"
+          path: "/api/analytics/schemas/<schema_uuid>"
+        cli:
+          - "curl -s http://localhost:8090/api/analytics/schemas/<schema_uuid> | jq '.'"
+      - name: "Подготовить отчёт"
+        guidance: >
+          Используй `pipeline/scripts/check-analytics-schema.ps1` и обнови соответствующие трекеры/очереди.
+    automation:
+      scenario_script: "pwsh -File pipeline/scripts/run-scenario.ps1 -Role analytics-agent [-DryRun]"
+
+  refactor-agent:
+    queue_segment: "refactor"
+    agent_role_key: "refactor-agent"
+    summary: >
+      Поддерживает техдолг, инициирует refactor-задачи и чеклисты.
+    steps:
+      - name: "Получить задачу"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole refactor-agent -Command next"
+      - name: "Принять задачу"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole refactor-agent -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Refactor work started\""
+      - name: "Выполнить чек-лист"
+        checklist:
+          - "pipeline/checklists/idea-to-api.yaml"
+      - name: "Вернуть"
+        cli:
+          - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole refactor-agent -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode completed -Note \"Refactor done\""
+
+  concept-director:
+    queue_segment: "concept"
+    agent_role_key: "concept-director"
+    summary: >
+      Обрабатывает концептуальные идеи и передаёт их Vision Manager.
+    steps:
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole concept-director -Command next"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole concept-director -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Начал концепт\""
+      - "Заполни knowledge entry (templates)."
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole concept-director -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode ready -Note \"Концепт готов\""
+
+  vision-manager:
+    queue_segment: "vision"
+    agent_role_key: "vision-manager"
+    summary: >
+      Детализирует видение и готовит документацию для последующих ролей.
+    steps:
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole vision-manager -Command next"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole vision-manager -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Vision started\""
+      - "pipeline/checklists/concept-to-vision.yaml"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole vision-manager -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode ready -Note \"Vision готово\""
+
+  security-agent:
+    queue_segment: "security"
+    agent_role_key: "security-agent"
+    summary: >
+      Проводит security review, оформляет отчёты.
+    steps:
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole security-agent -Command next"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole security-agent -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Security review\""
+      - "pipeline/scripts/check-security-review.ps1 -File shared/docs/security/security-review.yaml"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole security-agent -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode completed -Note \"Security OK\""
+
+  community-agent:
+    queue_segment: "release"
+    agent_role_key: "community-agent"
+    summary: >
+      Готовит коммуникации, release notes, обновляет community-платформы.
+    steps:
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole community-agent -Command next"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole community-agent -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Comm work\""
+      - "pipeline/scripts/check-communication-pack.ps1 -Pack pipeline/templates/COMMUNICATION-PLAN.yaml"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole community-agent -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode completed -Note \"Комм план готов\""
+
+  data-balancing-agent:
+    queue_segment: "balance"
+    agent_role_key: "data-balancing-agent"
+    summary: >
+      Работает с балансными таблицами, обновляет JSONB в analytics/enum.
+    steps:
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole data-balancing-agent -Command next"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole data-balancing-agent -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Balance tuning\""
+      - "pipeline/scripts/check-balance-tables.ps1 -Directory shared/docs/balance"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole data-balancing-agent -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode completed -Note \"Баланс обновлён\""
+
+  ux-agent:
+    queue_segment: "ux"
+    agent_role_key: "ux-agent"
+    summary: >
+      Готовит UX-гайды и артефакты для фронтенда.
+    steps:
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole ux-agent -Command next"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole ux-agent -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"UX design\""
+      - "pipeline/scripts/check-ux-assets.ps1 -GuideFile services/frontend/docs/UX/<file>.md"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole ux-agent -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode completed -Note \"UX артефакты готовы\""
+
+  readiness-reviewer:
+    queue_segment: "readiness"
+    agent_role_key: "readiness-reviewer"
+    summary: >
+      Проверяет готовность документов и трекеров.
+    steps:
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole readiness-reviewer -Command next"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole readiness-reviewer -Command accept -ItemId <queue_item_uuid> -ExpectedVersion <version> -Note \"Readiness check\""
+      - "pipeline/scripts/check-readiness-entry.ps1 -File shared/docs/knowledge/ready/<file>.yaml"
+      - "pwsh -File pipeline/scripts/agent-assets/agent-task.ps1 -AgentRole readiness-reviewer -Command release -ItemId <queue_item_uuid> -ExpectedVersion <version> -StatusCode completed -Note \"Готовность подтверждена\""
+
+notes:
+  base_url: "http://localhost:8090"
+  authenticate: "API security отключена в профиле local; для prod необходимо API-ключ (security.api.enabled=true)."
+  placeholders:
+    agent_uuid: "UUID из /api/agents или базы данных"
+    queue_item_uuid: "Идентификатор задачи из REST/БД"
+    version: "Текущая версия queue item (см. summary.version)"
+*** End Patch
+
