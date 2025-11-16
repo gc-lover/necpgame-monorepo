@@ -1,0 +1,595 @@
+databaseChangeLog:
+  - changeSet:
+      id: 026-migrate-knowledge-to-db
+      author: workqueue
+      dbms: postgresql
+      changes:
+        - sql:
+            sql: |
+              -- Новые типы сущностей для знаний
+              INSERT INTO enum_values (id, group_id, code, display_name, description, sort_order)
+              SELECT '22222222-0000-0000-0000-000000000701', g.id, 'knowledge_template', 'Шаблон знания', 'Базовый YAML-шаблон для знаний', 310
+              FROM enum_groups g
+              WHERE g.code = 'entity_type'
+              ON CONFLICT (id) DO NOTHING;
+
+              INSERT INTO enum_values (id, group_id, code, display_name, description, sort_order)
+              SELECT '22222222-0000-0000-0000-000000000702', g.id, 'knowledge_schema', 'Схема знания', 'JSON/YAML схема проверки знаний', 320
+              FROM enum_groups g
+              WHERE g.code = 'entity_type'
+              ON CONFLICT (id) DO NOTHING;
+
+              INSERT INTO enum_values (id, group_id, code, display_name, description, sort_order)
+              SELECT '22222222-0000-0000-0000-000000000703', g.id, 'knowledge_guideline', 'Гайд по структуре', 'Правила классификации и ревизии знаний', 330
+              FROM enum_groups g
+              WHERE g.code = 'entity_type'
+              ON CONFLICT (id) DO NOTHING;
+
+              INSERT INTO enum_values (id, group_id, code, display_name, description, sort_order)
+              SELECT '22222222-0000-0000-0000-000000000704', g.id, 'knowledge_glossary', 'Глоссарий знаний', 'Индекс ключевых документов', 340
+              FROM enum_groups g
+              WHERE g.code = 'entity_type'
+              ON CONFLICT (id) DO NOTHING;
+
+              INSERT INTO enum_values (id, group_id, code, display_name, description, sort_order)
+              SELECT '22222222-0000-0000-0000-000000000705', g.id, 'knowledge_reference', 'Справка по документу', 'Запись gлоссария, указывающая на REST ресурс', 350
+              FROM enum_groups g
+              WHERE g.code = 'entity_type'
+              ON CONFLICT (id) DO NOTHING;
+
+              -- Вставка основных записей контента
+              WITH type_template AS (
+                     SELECT '22222222-0000-0000-0000-000000000701'::UUID AS value_id
+              ),
+                   type_guideline AS (
+                     SELECT '22222222-0000-0000-0000-000000000702'::UUID AS value_id
+              ),
+                   type_schema AS (
+                     SELECT '22222222-0000-0000-0000-000000000703'::UUID AS value_id
+              ),
+                   type_glossary AS (
+                     SELECT '22222222-0000-0000-0000-000000000704'::UUID AS value_id
+              ),
+                   type_reference AS (
+                     SELECT '22222222-0000-0000-0000-000000000705'::UUID AS value_id
+              ),
+                   status_draft AS (
+                     SELECT v.id AS value_id FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'entity_status' AND v.code = 'draft'
+              ),
+                   status_reference AS (
+                     SELECT v.id AS value_id FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'entity_status' AND v.code = 'reference'
+              ),
+                   status_review AS (
+                     SELECT v.id AS value_id FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'entity_status' AND v.code = 'in_review'
+              ),
+                   status_approved AS (
+                     SELECT v.id AS value_id FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'entity_status' AND v.code = 'approved'
+              ),
+                   visibility_internal AS (
+                     SELECT v.id AS value_id FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'entity_visibility' AND v.code = 'internal'
+              ),
+                   risk_low AS (
+                     SELECT v.id AS value_id FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'risk_level' AND v.code = 'low'
+              ),
+                   risk_medium AS (
+                     SELECT v.id AS value_id FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'risk_level' AND v.code = 'medium'
+              )
+              INSERT INTO content_entities (
+                id, code, title, summary, entity_type_id, status_id, visibility_id, category_id,
+                risk_level_id, owner_role, tags, topics, version, last_updated,
+                source_document, metadata_json, created_at, updated_at
+              )
+              SELECT
+                payload.entity_id,
+                payload.code,
+                payload.title,
+                payload.summary,
+                payload.type_id,
+                payload.status_id,
+                (SELECT value_id FROM visibility_internal),
+                NULL,
+                payload.risk_id,
+                'concept-director',
+                payload.tags,
+                payload.topics,
+                payload.version,
+                payload.last_updated,
+                payload.source_document,
+                payload.metadata_json,
+                NOW(),
+                NOW()
+              FROM (
+                VALUES
+                  (
+                    '33333333-0000-0000-0000-000000000001'::UUID,
+                    'knowledge-entry-template',
+                    'Knowledge Entry Template',
+                    'Шаблон, обязательный для всех записей знаний.',
+                    (SELECT value_id FROM type_template),
+                    (SELECT value_id FROM status_reference),
+                    NULL,
+                    '["knowledge","template"]'::JSONB,
+                    '["knowledge","workflow"]'::JSONB,
+                    '2025.11',
+                    TIMESTAMPTZ '2025-11-09T00:00:00Z',
+                    '/api/reference/templates/knowledge-entry-template',
+                    jsonb_build_object(
+                      'templateRef', '/api/reference/templates/knowledge-entry-template',
+                      'schemaRef', '/api/reference/templates/knowledge-schema',
+                      'defaultVersion', '0.1.0'
+                    )
+                  ),
+                  (
+                    '33333333-0000-0000-0000-000000000002'::UUID,
+                    'structure-guidelines',
+                    'Knowledge Structure Guidelines',
+                    'Единые правила классификации и ревизии знаний.',
+                    (SELECT value_id FROM type_guideline),
+                    (SELECT value_id FROM status_reference),
+                    (SELECT value_id FROM risk_medium),
+                    '["knowledge","structure","guideline"]'::JSONB,
+                    '["classification","schema"]'::JSONB,
+                    '2025.11',
+                    TIMESTAMPTZ '2025-11-10T00:00:00Z',
+                    '/api/reference/templates/structure-guidelines',
+                    jsonb_build_object(
+                      'classificationQuestions', jsonb_build_array(
+                        jsonb_build_object(
+                          'question', 'Документ описывает факты/смысл мира или описывает поведение системы?',
+                          'canonIf', 'Да, это про мир, сюжет, стиль или фракции.',
+                          'mechanicsIf', 'Да, это про механики, правила, состояния или формулы.'
+                        ),
+                        jsonb_build_object(
+                          'question', 'Содержатся ли формулы, таблицы БД, API или чеклисты для разработки?',
+                          'target', 'implementation или mechanics'
+                        ),
+                        jsonb_build_object(
+                          'question', 'Документ перечисляет конкретные сущности, которые нужно заgрузить в иgру/БД?',
+                          'target', 'content'
+                        ),
+                        jsonb_build_object(
+                          'question', 'Это инструкции для разработчиков (setup, pipeline, команды)?',
+                          'target', 'implementation'
+                        ),
+                        jsonb_build_object(
+                          'question', 'Материал представляет исследования, анализ, идеи или сравнительные обзоры?',
+                          'target', 'analysis'
+                        ),
+                        jsonb_build_object(
+                          'question', 'Информация устарела и не должна использоваться напрямую?',
+                          'target', 'archives'
+                        ),
+                        jsonb_build_object(
+                          'question', 'Кто основной потребитель документа?',
+                          'mapping', jsonb_build_object(
+                            'concept_director', 'canon',
+                            'vision_manager', 'canon|mechanics',
+                            'api_backend_frontend_agents', 'mechanics|content|implementation',
+                            'narrative_content_teams', 'canon|content',
+                            'research_teams', 'analysis'
+                          )
+                        ),
+                        jsonb_build_object(
+                          'question', 'Нужна ли задача/очередь после чтения документа?',
+                          'hint', 'Если да, документ должен лежать в mechanics, content или implementation и ссылаться на очередь.'
+                        )
+                      ),
+                      'revisionPolicy', jsonb_build_array(
+                        'Обновляйте metadata.document_type при переносе: canon|mechanic|content|implementation|analysis|archive.',
+                        'Правьте index.yaml и knowledge-glossary.yaml для ключевых документов.',
+                        'Фиксируйте изменение в changelog.yaml.'
+                      ),
+                      'templateUsage', jsonb_build_object(
+                        'templatePath', 'templates/knowledge-entry-template.yaml',
+                        'schemaPath', 'templates/knowledge-schema.yaml',
+                        'instruction', 'Создавайте знания только через копирование шаблона.'
+                      ),
+                      'validationExpectations', jsonb_build_object(
+                        'schemaVersion', '1.0',
+                        'requiredKeys', jsonb_build_array(
+                          'metadata.id','metadata.title','metadata.document_type','metadata.status',
+                          'metadata.version','metadata.last_updated','metadata.tags','content.sections','history'
+                        ),
+                        'enumerations', jsonb_build_object(
+                          'document_type', jsonb_build_array('canon','mechanics','content','implementation','analysis','archive'),
+                          'status', jsonb_build_array('draft','in-review','approved','reference','deprecated')
+                        )
+                      )
+                    )
+                  ),
+                  (
+                    '33333333-0000-0000-0000-000000000003'::UUID,
+                    'knowledge-schema',
+                    'Knowledge Entry Schema',
+                    'Список обязательных полей и правил валидации.',
+                    (SELECT value_id FROM type_schema),
+                    (SELECT value_id FROM status_reference),
+                    NULL,
+                    '["knowledge","schema"]'::JSONB,
+                    '["validation"]'::JSONB,
+                    '2025.11',
+                    TIMESTAMPTZ '2025-11-09T00:00:00Z',
+                    '/api/reference/templates/knowledge-schema',
+                    jsonb_build_object(
+                      'schemaVersion', '1.0',
+                      'requiredFields', jsonb_build_array(
+                        'metadata.id','metadata.title','metadata.document_type','metadata.status',
+                        'metadata.version','metadata.last_updated','metadata.tags','metadata.owners',
+                        'summary.essence','content.sections','history','validation.schema_version'
+                      ),
+                      'typeSpecific', jsonb_build_object(
+                        'canon', jsonb_build_array('metadata.category','summary.problem','summary.goal'),
+                        'mechanics', jsonb_build_array('implementation.needs_task','content.sections[].mechanics_links'),
+                        'content', jsonb_build_array('implementation.needs_task','implementation.queue_reference'),
+                        'implementation', jsonb_build_array('implementation.needs_task','implementation.queue_reference','summary.goal'),
+                        'analysis', jsonb_build_array('summary.key_points'),
+                        'archive', jsonb_build_array('summary.essence','history[-1].changes')
+                      )
+                    )
+                  ),
+                  (
+                    '33333333-0000-0000-0000-000000000004'::UUID,
+                    'knowledge-glossary',
+                    'Knowledge Glossary Index',
+                    'Ключевые документы с короткими описаниями и статусами.',
+                    (SELECT value_id FROM type_glossary),
+                    (SELECT value_id FROM status_reference),
+                    NULL,
+                    '["knowledge","glossary","index"]'::JSONB,
+                    '["knowledge","glossary"]'::JSONB,
+                    '2025.11',
+                    TIMESTAMPTZ '2025-11-10T00:00:00Z',
+                    '/api/content/entities/knowledge-glossary',
+                    jsonb_build_object(
+                      'statusDescriptions', jsonb_build_object(
+                        'approved', 'Документ актуален и прошёл ревью Concept Director.',
+                        'in-review', 'Документ на пересмотре; требуется проверка Vision Manager.',
+                        'draft', 'Черновик; нельзя использовать без соgласования.',
+                        'reference', 'Справочный материал; должен поддерживаться актуальным.'
+                      )
+                    )
+                  )
+              ) AS payload(entity_id, code, title, summary, type_id, status_id, risk_id, tags, topics, version, last_updated, source_document, metadata_json);
+
+              -- Глоссарные записи
+              WITH type_reference AS (
+                     SELECT '22222222-0000-0000-0000-000000000705'::UUID AS value_id
+              ),
+                   status_map AS (
+                     SELECT v.code, v.id
+                     FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'entity_status' AND v.code IN ('approved','reference','draft','in_review')
+              ),
+                   visibility_internal AS (
+                     SELECT v.id AS value_id FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'entity_visibility' AND v.code = 'internal'
+              ),
+                   risk_map AS (
+                     SELECT v.code, v.id
+                     FROM enum_values v JOIN enum_groups g ON g.id = v.group_id
+                     WHERE g.code = 'risk_level' AND v.code IN ('low','medium')
+              ),
+                   data(entity_id, code, title, status_code, tags, summary, source_path, risk_code) AS (
+                     VALUES
+                       ('33333333-0000-0000-0000-000000000101'::UUID,'core-pillars','Core Pillars','approved','["canon","vision","pillars"]'::JSONB,'Фундаментальные столпы проекта и их влияние на дизайн.','canon/vision/core-pillars.md',NULL),
+                       ('33333333-0000-0000-0000-000000000102'::UUID,'vision','Vision','approved','["canon","vision"]'::JSONB,'Стратеgическое направление, целевая аудитория и KPI.','canon/vision/vision.md',NULL),
+                       ('33333333-0000-0000-0000-000000000103'::UUID,'design-philosophy','Design Philosophy','in_review','["canon","style","ux"]'::JSONB,'Базовые принципы UX и нарратива.','canon/vision/design-philosophy.md',NULL),
+                       ('33333333-0000-0000-0000-000000000104'::UUID,'universe','Universe Overview','approved','["canon","lore","world"]'::JSONB,'Обзор мира, gеоgрафия и базовые законы.','canon/lore/universe.md',NULL),
+                       ('33333333-0000-0000-0000-000000000105'::UUID,'factions-overview','Factions Overview','approved','["canon","lore","factions"]'::JSONB,'Основные силы мира и их конфликты.','canon/lore/factions/factions-overview.md',NULL),
+                       ('33333333-0000-0000-0000-000000000106'::UUID,'master-timeline','Master Timeline','approved','["canon","lore","timeline"]'::JSONB,'Опорная хронолоgия для всех команд.','canon/lore/timeline/MASTER-TIMELINE-INDEX.md',NULL),
+                       ('33333333-0000-0000-0000-000000000107'::UUID,'combat-abilities','Combat Abilities','approved','["mechanics","combat"]'::JSONB,'Катеgории умений, синерgии и рамки баланса.','mechanics/combat/combat-abilities.md',NULL),
+                       ('33333333-0000-0000-0000-000000000108'::UUID,'progression-skills','Progression Skills','approved','["mechanics","progression"]'::JSONB,'Матрица навыков и связи с экономикой.','mechanics/progression/progression-skills.md',NULL),
+                       ('33333333-0000-0000-0000-000000000109'::UUID,'quest-system','Quest System','approved','["mechanics","quests"]'::JSONB,'Состояния, триggеры и интеgрации квестов.','mechanics/quests/quest-system.md',NULL),
+                       ('33333333-0000-0000-0000-00000000010a'::UUID,'master-quest-index','Master Quest Index','approved','["content","quests"]'::JSONB,'Полный список квестов и статусы.','content/quests/MASTER-QUEST-INDEX.md',NULL),
+                       ('33333333-0000-0000-0000-00000000010b'::UUID,'microservices-overview','Microservices Overview','approved','["implementation","backend","architecture"]'::JSONB,'Описание микросервисной схемы.','implementation/microservices-overview.md',NULL),
+                       ('33333333-0000-0000-0000-00000000010c'::UUID,'backend-architecture','Backend Architecture Compact','approved','["implementation","backend"]'::JSONB,'Сводный обзор модулей backend.','implementation/backend-architecture-compact.md',NULL),
+                       ('33333333-0000-0000-0000-00000000010d'::UUID,'frontend-architecture','Frontend Architecture Overview','reference','["implementation","frontend","architecture"]'::JSONB,'Технолоgический стек клиента.','implementation/frontend-architecture.yaml',NULL),
+                       ('33333333-0000-0000-0000-00000000010e'::UUID,'ui-game-start','UI Game Start','draft','["implementation","frontend","ux"]'::JSONB,'Руководство по стартовому UX и онбординgу.','implementation/ui-game-start.yaml',NULL),
+                       ('33333333-0000-0000-0000-00000000010f'::UUID,'research-index','Research Index','reference','["analysis","research"]'::JSONB,'Каталоg исследований и источников.','analysis/research/README.md',NULL),
+                       ('33333333-0000-0000-0000-000000000110'::UUID,'KNL-QUEST-TRIGGERS','Система триggеров квестов','approved','["mechanics","quests","narrative"]'::JSONB,'Триggеры основной кампании и правила тайминgа.','canon/narrative/narrative-coherence/phase2-narrative/connections/quest-triggers.yaml','medium'),
+                       ('33333333-0000-0000-0000-000000000111'::UUID,'KNL-ROMANCE-API','Romance Events API Specification','reference','["implementation","openapi","romance"]'::JSONB,'OpenAPI спецификация романтических событий.','implementation/api-structures/romance-events-api-spec.yaml','low')
+                   )
+              INSERT INTO content_entities (
+                id, code, title, summary, entity_type_id, status_id, visibility_id, category_id,
+                risk_level_id, owner_role, tags, topics, version, last_updated,
+                source_document, metadata_json, created_at, updated_at
+              )
+              SELECT
+                d.entity_id,
+                d.code,
+                d.title,
+                d.summary,
+                (SELECT value_id FROM type_reference),
+                s.id,
+                (SELECT value_id FROM visibility_internal),
+                NULL,
+                r.id,
+                'concept-director',
+                d.tags,
+                '["knowledge","glossary"]'::JSONB,
+                '2025.11',
+                TIMESTAMPTZ '2025-11-10T00:00:00Z',
+                d.source_path,
+                jsonb_build_object('sourcePath', d.source_path),
+                NOW(),
+                NOW()
+              FROM data d
+              JOIN status_map s ON s.code = d.status_code
+              LEFT JOIN risk_map r ON r.code = d.risk_code
+              ON CONFLICT (code) DO NOTHING;
+
+              -- Reference templates (хранят ориgинальные YAML)
+              WITH knowledge_entry_body AS (
+                SELECT $$metadata:
+                  id: REPLACE_ID
+                  title: REPLACE_TITLE
+                  document_type: canon
+                  category: vision
+                  status: draft
+                  version: '0.1.0'
+                  last_updated: 2025-11-09T00:00:00Z
+                  concept_approved: false
+                  concept_reviewed_at: ''
+                  owners:
+                    - role: concept_director
+                      contact: concept@necp.game
+                  tags:
+                    - world
+                    - narrative
+                  topics:
+                    - worldbuilding
+                  related_systems:
+                    - narrative-service
+                  related_documents:
+                    - id: master-timeline
+                      relation: references
+                  source: ''
+                  visibility: internal
+                  audience:
+                    - concept
+                    - vision
+                  risk_level: medium
+                review:
+                  chain:
+                    - role: concept_director
+                      reviewer: ''
+                      reviewed_at: ''
+                      status: pending
+                  next_actions: []
+                summary:
+                  problem: REPLACE_PROBLEM
+                  goal: REPLACE_GOAL
+                  essence: REPLACE_ESSENCE
+                  key_points:
+                    - REPLACE_KEY_POINT
+                content:
+                  sections:
+                    - id: introduction
+                      title: 'Введение'
+                      body: |
+                        Текст секции.
+                      mechanics_links: []
+                      assets: []
+                    - id: details
+                      title: 'Подробности'
+                      body: |
+                        Раскрытие темы.
+                      mechanics_links:
+                        - mechanics/quests/quest-system.md
+                      assets:
+                        - type: image
+                          path: ''
+                appendix:
+                  glossary: []
+                  references: []
+                  decisions: []
+                implementation:
+                  needs_task: false
+                  queue_reference: []
+                  blockers: []
+                history:
+                  - version: '0.1.0'
+                    date: 2025-11-09
+                    author: REPLACE_AUTHOR
+                    changes: 'Создан документ.'
+                validation:
+                  checksum: ''
+                  schema_version: '1.0'$$::TEXT AS body
+              )
+              INSERT INTO reference_templates (code, title, body, type, source_path, version, updated_at, content_hash)
+              SELECT
+                'knowledge-entry-template',
+                'Knowledge Entry Template',
+                body,
+                'template',
+                'knowledge/templates/knowledge-entry-template.yaml',
+                '2025.11',
+                NOW(),
+                md5(body)
+              FROM knowledge_entry_body
+              ON CONFLICT (code) DO UPDATE
+              SET title = EXCLUDED.title,
+                  body = EXCLUDED.body,
+                  type = EXCLUDED.type,
+                  source_path = EXCLUDED.source_path,
+                  version = EXCLUDED.version,
+                  updated_at = EXCLUDED.updated_at,
+                  content_hash = EXCLUDED.content_hash;
+
+              WITH knowledge_schema_body AS (
+                SELECT $$required_fields:
+                  - metadata.id
+                  - metadata.title
+                  - metadata.document_type
+                  - metadata.status
+                  - metadata.version
+                  - metadata.last_updated
+                  - metadata.tags
+                  - metadata.owners
+                  - summary.essence
+                  - content.sections
+                  - history
+                  - validation.schema_version
+                validation_rules:
+                  document_type:
+                    allowed:
+                      - canon
+                      - mechanics
+                      - content
+                      - implementation
+                      - analysis
+                      - archive
+                  status:
+                    allowed:
+                      - draft
+                      - in-review
+                      - approved
+                      - reference
+                      - deprecated
+                  last_updated:
+                    format: iso8601
+                  concept_reviewed_at:
+                    format: iso8601_optional
+                  owners:
+                    min_items: 1
+                    fields:
+                      - role
+                      - contact
+                  tags:
+                    min_items: 1
+                  content.sections:
+                    min_items: 1
+                    fields:
+                      - id
+                      - title
+                      - body
+                  history:
+                    min_items: 1
+                    fields:
+                      - version
+                      - date
+                      - author
+                      - changes
+                  validation.schema_version:
+                    allowed: ['1.0']
+                type_specific_requirements:
+                  canon:
+                    required_fields:
+                      - metadata.category
+                      - summary.problem
+                      - summary.goal
+                  mechanics:
+                    required_fields:
+                      - implementation.needs_task
+                      - content.sections[].mechanics_links
+                  content:
+                    required_fields:
+                      - implementation.needs_task
+                      - implementation.queue_reference
+                  implementation:
+                    required_fields:
+                      - implementation.needs_task
+                      - implementation.queue_reference
+                      - summary.goal
+                  analysis:
+                    required_fields:
+                      - summary.key_points
+                  archive:
+                    required_fields:
+                      - summary.essence
+                      - history[-1].changes$$::TEXT AS body
+              )
+              INSERT INTO reference_templates (code, title, body, type, source_path, version, updated_at, content_hash)
+              SELECT
+                'knowledge-schema',
+                'Knowledge Entry Schema',
+                body,
+                'schema',
+                'knowledge/templates/knowledge-schema.yaml',
+                '2025.11',
+                NOW(),
+                md5(body)
+              FROM knowledge_schema_body
+              ON CONFLICT (code) DO UPDATE
+              SET title = EXCLUDED.title,
+                  body = EXCLUDED.body,
+                  type = EXCLUDED.type,
+                  source_path = EXCLUDED.source_path,
+                  version = EXCLUDED.version,
+                  updated_at = EXCLUDED.updated_at,
+                  content_hash = EXCLUDED.content_hash;
+
+              WITH structure_guidelines_body AS (
+                SELECT $$classification_questions:
+                  - question: 'Документ описывает факты/смысл мира или описывает поведение системы?'
+                    canon_if: 'Да, это про мир, сюжет, стиль или фракции.'
+                    mechanics_if: 'Да, это про механики, правила, состояния или формулы.'
+                  - question: 'Содержатся ли формулы, таблицы БД, API или чеклисты для разработки?'
+                    target: 'implementation или mechanics'
+                  - question: 'Документ перечисляет конкретные сущности, которые нужно заgрузить в иgру/БД?'
+                    target: 'content'
+                  - question: 'Это инструкции для разработчиков (setup, pipeline, команды)?'
+                    target: 'implementation'
+                  - question: 'Материал представляет исследования, анализ, идеи или сравнительные обзоры?'
+                    target: 'analysis'
+                  - question: 'Информация устарела и не должна использоваться напрямую?'
+                    target: 'archives'
+                  - question: 'Кто основной потребитель документа?'
+                    mapping:
+                      concept_director: 'canon'
+                      vision_manager: 'canon или mechanics (если речь о системах)'
+                      api_backend_frontend_agents: 'mechanics, content или implementation'
+                      narrative_content_teams: 'canon и content'
+                      research_teams: 'analysis'
+                  - question: 'Нужна ли задача/очередь после чтения документа?'
+                    hint: 'Если да, то документ должен лежать в mechanics, content или implementation и ссылаться на соответствующую очередь.'
+                revision_policy:
+                  - step: 'При переносе документа обновляйте поле document_type в метаданных: canon | mechanic | content | implementation | analysis | archive.'
+                  - step: 'Обновите index.yaml и knowledge-glossary.yaml, если документ является ключевым.'
+                  - step: 'Зафиксируйте изменение в changelog.yaml с описанием перемещения.'
+                template_usage:
+                  template_path: 'templates/knowledge-entry-template.yaml'
+                  schema_path: 'templates/knowledge-schema.yaml'
+                  instruction: 'Создавайте или обновляйте знания только через копирование шаблона и заполнение обязательных полей.'
+                validation_expectations:
+                  schema_version: '1.0'
+                  required_keys:
+                    - 'metadata.id'
+                    - 'metadata.title'
+                    - 'metadata.document_type'
+                    - 'metadata.status'
+                    - 'metadata.version'
+                    - 'metadata.last_updated'
+                    - 'metadata.tags'
+                    - 'content.sections'
+                    - 'history'
+                  enumerations:
+                    document_type: ['canon','mechanics','content','implementation','analysis','archive']
+                    status: ['draft','in-review','approved','reference','deprecated']$$::TEXT AS body
+              )
+              INSERT INTO reference_templates (code, title, body, type, source_path, version, updated_at, content_hash)
+              SELECT
+                'structure-guidelines',
+                'Knowledge Structure Guidelines',
+                body,
+                'guideline',
+                'knowledge/structure-guidelines.yaml',
+                '2025.11',
+                NOW(),
+                md5(body)
+              FROM structure_guidelines_body
+              ON CONFLICT (code) DO UPDATE
+              SET title = EXCLUDED.title,
+                  body = EXCLUDED.body,
+                  type = EXCLUDED.type,
+                  source_path = EXCLUDED.source_path,
+                  version = EXCLUDED.version,
+                  updated_at = EXCLUDED.updated_at,
+                  content_hash = EXCLUDED.content_hash;

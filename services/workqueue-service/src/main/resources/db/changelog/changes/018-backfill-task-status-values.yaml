@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-backfill-task-status-values
+      author: workqueue
+      dbms: postgresql
+      changes:
+        - sql:
+            sql: |
+              update queue_item_states qis
+              set status_value_id = v.id
+              from enum_values v
+              join enum_groups g on g.id = v.group_id
+              where lower(v.code) = lower(qis.status_code)
+                and g.code = 'task_status';
+        - sql:
+            sql: |
+              update queue_items qi
+              set status_value_id = qs.status_value_id
+              from queue_item_states qs
+              where qi.current_state_id = qs.id
+                and qs.status_value_id is not null;
+
+

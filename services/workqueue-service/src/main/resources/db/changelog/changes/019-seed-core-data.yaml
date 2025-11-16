@@ -1,0 +1,123 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-seed-core-data
+      author: workqueue
+      dbms: postgresql
+      changes:
+        - sql:
+            sql: |
+              -- Seed agents
+              INSERT INTO agents (id, role_key, display_name, contact, active, created_at, updated_at)
+              VALUES
+                ('00000000-0000-0000-0000-000000000101', 'api-task-architect', 'API Task Architect', 'api@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-000000000102', 'openapi-executor', 'OpenAPI Executor', 'openapi@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-000000000103', 'backend-implementer', 'Backend Implementer', 'backend@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-000000000104', 'frontend-implementer', 'Frontend Implementer', 'frontend@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-000000000105', 'qa-agent', 'QA Agent', 'qa@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-000000000106', 'devops-agent', 'DevOps Agent', 'devops@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-000000000107', 'analytics-agent', 'Analytics Agent', 'analytics@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-000000000108', 'community-agent', 'Community Agent', 'community@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-000000000109', 'security-agent', 'Security Agent', 'security@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-00000000010A', 'ux-agent', 'UX Agent', 'ux@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-00000000010B', 'data-balancing-agent', 'Data & Balancing Agent', 'balance@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-00000000010C', 'readiness-reviewer', 'Readiness Reviewer', 'readiness@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-00000000010D', 'refactor-agent', 'Refactor Agent', 'refactor@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-00000000010E', 'concept-director', 'Concept Director', 'concept@necpgame.local', true, NOW(), NOW()),
+                ('00000000-0000-0000-0000-00000000010F', 'vision-manager', 'Vision Manager', 'vision@necpgame.local', true, NOW(), NOW())
+              ON CONFLICT (id) DO UPDATE
+                SET display_name = EXCLUDED.display_name,
+                    contact = EXCLUDED.contact,
+                    active = EXCLUDED.active,
+                    updated_at = EXCLUDED.updated_at;
+
+              -- Seed queues (per segment/status)
+              INSERT INTO queues (id, segment, status_code, title, description, owner_agent_id, created_at, updated_at)
+              VALUES
+                ('10000000-0000-0000-0000-000000000001', 'api', 'queued', 'API :: queued', NULL, '00000000-0000-0000-0000-000000000101', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000002', 'api', 'in_progress', 'API :: in progress', NULL, '00000000-0000-0000-0000-000000000102', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000003', 'api', 'review', 'API :: review', NULL, '00000000-0000-0000-0000-000000000103', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000101', 'backend', 'not_started', 'Backend :: not started', NULL, '00000000-0000-0000-0000-000000000103', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000102', 'backend', 'in_progress', 'Backend :: in progress', NULL, '00000000-0000-0000-0000-000000000103', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000103', 'backend', 'completed', 'Backend :: completed', NULL, '00000000-0000-0000-0000-000000000103', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000201', 'frontend', 'not_started', 'Frontend :: not started', NULL, '00000000-0000-0000-0000-000000000104', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000202', 'frontend', 'in_progress', 'Frontend :: in progress', NULL, '00000000-0000-0000-0000-000000000104', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000203', 'frontend', 'completed', 'Frontend :: completed', NULL, '00000000-0000-0000-0000-000000000104', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000301', 'qa', 'planned', 'QA :: planned', NULL, '00000000-0000-0000-0000-000000000105', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000302', 'qa', 'executing', 'QA :: executing', NULL, '00000000-0000-0000-0000-000000000105', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000303', 'qa', 'completed', 'QA :: completed', NULL, '00000000-0000-0000-0000-000000000105', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000401', 'release', 'ready', 'Release :: ready', NULL, '00000000-0000-0000-0000-000000000106', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000402', 'release', 'released', 'Release :: released', NULL, '00000000-0000-0000-0000-000000000106', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000501', 'analytics', 'not_started', 'Analytics :: not started', NULL, '00000000-0000-0000-0000-000000000107', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000601', 'refactor', 'queued', 'Refactor :: queued', NULL, '00000000-0000-0000-0000-00000000010D', NOW(), NOW())
+              ON CONFLICT (id) DO UPDATE
+                SET title = EXCLUDED.title,
+                    owner_agent_id = EXCLUDED.owner_agent_id,
+                    updated_at = EXCLUDED.updated_at;
+
+              -- Sample queue items & states
+              WITH status AS (
+                SELECT v.code, v.id
+                FROM enum_values v
+                JOIN enum_groups g ON g.id = v.group_id
+                WHERE g.code = 'task_status'
+                  AND v.code IN ('queued', 'not_started', 'planned', 'ready', 'completed')
+              )
+              INSERT INTO queue_items (id, queue_id, external_ref, title, priority, payload, created_by, assigned_to, due_at, locked_until, current_state_id, created_at, updated_at, version, status_value_id)
+              SELECT
+                  data.item_id,
+                  data.queue_id,
+                  data.external_ref,
+                  data.title,
+                  data.priority,
+                  data.payload,
+                  data.created_by,
+                  NULL,
+                  NULL,
+                  NULL,
+                  data.state_id,
+                  data.timestamp,
+                  data.timestamp,
+                  0,
+                  s.id
+              FROM (
+                VALUES
+                  ('20000000-0000-0000-0000-000000000001'::UUID, '10000000-0000-0000-0000-000000000001'::UUID, 'API-2025-001', 'Спецификация торговых лимитов', 5, NULL::TEXT, '00000000-0000-0000-0000-000000000101'::UUID, '21000000-0000-0000-0000-000000000001'::UUID, TIMESTAMPTZ '2025-11-10 09:00:00+03', 'queued'),
+                  ('20000000-0000-0000-0000-000000000101', '10000000-0000-0000-0000-000000000101', 'BE-2025-029', 'Расширение лимитов backend', 3, NULL::TEXT, '00000000-0000-0000-0000-000000000103', '21000000-0000-0000-0000-000000000101', TIMESTAMPTZ '2025-11-10 10:00:00+03', 'not_started'),
+                  ('20000000-0000-0000-0000-000000000201', '10000000-0000-0000-0000-000000000201', 'FE-2025-010', 'UI для торговых лимитов', 4, NULL::TEXT, '00000000-0000-0000-0000-000000000104', '21000000-0000-0000-0000-000000000201', TIMESTAMPTZ '2025-11-10 11:00:00+03', 'not_started'),
+                  ('20000000-0000-0000-0000-000000000301', '10000000-0000-0000-0000-000000000301', 'QA-2025-005', 'Smoke-проверка лимитов', 2, NULL::TEXT, '00000000-0000-0000-0000-000000000105', '21000000-0000-0000-0000-000000000301', TIMESTAMPTZ '2025-11-10 12:00:00+03', 'planned'),
+                  ('20000000-0000-0000-0000-000000000401', '10000000-0000-0000-0000-000000000401', 'REL-2025-001', 'Релиз торговых лимитов', 1, NULL::TEXT, '00000000-0000-0000-0000-000000000106', '21000000-0000-0000-0000-000000000401', TIMESTAMPTZ '2025-11-10 13:00:00+03', 'ready'),
+                  ('20000000-0000-0000-0000-000000000501', '10000000-0000-0000-0000-000000000501', 'AN-2025-001', 'KPI для торговых лимитов', 2, NULL::TEXT, '00000000-0000-0000-0000-000000000107', '21000000-0000-0000-0000-000000000501', TIMESTAMPTZ '2025-11-10 14:00:00+03', 'not_started')
+              ) AS data(item_id, queue_id, external_ref, title, priority, payload, created_by, state_id, timestamp, status_code)
+              JOIN status s ON s.code = data.status_code
+              ON CONFLICT (id) DO NOTHING;
+
+              -- States must match queue items
+              WITH status AS (
+                SELECT v.code, v.id
+                FROM enum_values v
+                JOIN enum_groups g ON g.id = v.group_id
+                WHERE g.code = 'task_status'
+                  AND v.code IN ('queued', 'not_started', 'planned', 'ready')
+              )
+              INSERT INTO queue_item_states (id, item_id, status_code, status_value_id, note, actor_id, metadata, created_at)
+              SELECT
+                  data.state_id,
+                  data.item_id,
+                  data.status_code,
+                  s.id,
+                  NULL,
+                  data.actor_id,
+                  NULL,
+                  data.timestamp
+              FROM (
+                VALUES
+                  ('21000000-0000-0000-0000-000000000001'::UUID, '20000000-0000-0000-0000-000000000001'::UUID, 'queued', '00000000-0000-0000-0000-000000000101'::UUID, TIMESTAMPTZ '2025-11-10 09:00:00+03'),
+                  ('21000000-0000-0000-0000-000000000101', '20000000-0000-0000-0000-000000000101'::UUID, 'not_started', '00000000-0000-0000-0000-000000000103'::UUID, TIMESTAMPTZ '2025-11-10 10:00:00+03'),
+                  ('21000000-0000-0000-0000-000000000201', '20000000-0000-0000-0000-000000000201'::UUID, 'not_started', '00000000-0000-0000-0000-000000000104'::UUID, TIMESTAMPTZ '2025-11-10 11:00:00+03'),
+                  ('21000000-0000-0000-0000-000000000301', '20000000-0000-0000-0000-000000000301'::UUID, 'planned', '00000000-0000-0000-0000-000000000105'::UUID, TIMESTAMPTZ '2025-11-10 12:00:00+03'),
+                  ('21000000-0000-0000-0000-000000000401', '20000000-0000-0000-0000-000000000401'::UUID, 'ready', '00000000-0000-0000-0000-000000000106'::UUID, TIMESTAMPTZ '2025-11-10 13:00:00+03'),
+                  ('21000000-0000-0000-0000-000000000501', '20000000-0000-0000-0000-000000000501'::UUID, 'not_started', '00000000-0000-0000-0000-000000000107'::UUID, TIMESTAMPTZ '2025-11-10 14:00:00+03')
+              ) AS data(state_id, item_id, status_code, actor_id, timestamp)
+              JOIN status s ON s.code = data.status_code
+              ON CONFLICT (id) DO NOTHING;
+

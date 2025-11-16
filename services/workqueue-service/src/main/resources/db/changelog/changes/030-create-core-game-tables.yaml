@@ -1,0 +1,989 @@
+databaseChangeLog:
+  - changeSet:
+      id: 030-create-core-game-tables
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: player_profiles
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: player_profile_bans
+            columns:
+              - column:
+                  name: player_profile_entity_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ban_code
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: player_profile_bans
+            baseColumnNames: player_profile_entity_id
+            referencedTableName: player_profiles
+            referencedColumnNames: id
+            constraintName: fk_player_profile_bans_owner
+            onDelete: CASCADE
+        - createTable:
+            tableName: player_profile_preferences
+            columns:
+              - column:
+                  name: player_profile_entity_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: preferences_KEY
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: TEXT
+        - addForeignKeyConstraint:
+            baseTableName: player_profile_preferences
+            baseColumnNames: player_profile_entity_id
+            referencedTableName: player_profiles
+            referencedColumnNames: id
+            constraintName: fk_player_profile_prefs_owner
+            onDelete: CASCADE
+        - createTable:
+            tableName: characters
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: archetype_code
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: level
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: exp
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attr_str
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attr_agi
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attr_intel
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attr_tech
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attr_cool
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_loadout_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: character_reputation
+            columns:
+              - column:
+                  name: character_entity_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: faction_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: score
+                  type: INT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: character_reputation
+            baseColumnNames: character_entity_id
+            referencedTableName: characters
+            referencedColumnNames: id
+            constraintName: fk_character_rep_owner
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_player_profiles_account
+            tableName: player_profiles
+            columns:
+              - column:
+                  name: account_name
+  - changeSet:
+      id: 031-create-equipment
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: item_templates
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: content_code
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_code
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rarity_code
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: bind_type_code
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: metadata
+                  type: TEXT
+        - addUniqueConstraint:
+            tableName: item_templates
+            columnNames: content_code
+            constraintName: uq_item_templates_content_code
+        - createTable:
+            tableName: weapon_templates
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: item_template_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: weapon_class_code
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: damage_type_code
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: dmg_min
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: dmg_max
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fire_rate
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mag_size
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reload_sec
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: accuracy
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: recoil
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: crit_chance
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: crit_mult
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: weapon_templates
+            baseColumnNames: item_template_id
+            referencedTableName: item_templates
+            referencedColumnNames: id
+            constraintName: fk_weapon_item_template
+            onDelete: CASCADE
+  - changeSet:
+      id: 032-create-armor-cyberware
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: armor_templates
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: item_template_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: armor_type_code,
+                    type: VARCHAR(64),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: armor_value,
+                    type: "NUMERIC(18,4)",
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: resist_phys,
+                    type: "NUMERIC(18,4)",
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: resist_thermal,
+                    type: "NUMERIC(18,4)",
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: resist_shock,
+                    type: "NUMERIC(18,4)",
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: resist_chem,
+                    type: "NUMERIC(18,4)",
+                    constraints: { nullable: false },
+                  }
+              - column: { name: mobility_penalty, type: "NUMERIC(18,4)" }
+        - addForeignKeyConstraint:
+            baseTableName: armor_templates
+            baseColumnNames: item_template_id
+            referencedTableName: item_templates
+            referencedColumnNames: id
+            constraintName: fk_armor_item_template
+            onDelete: CASCADE
+        - createTable:
+            tableName: cyberware
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: item_template_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: slot_code,
+                    type: VARCHAR(64),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: power_score,
+                    type: "NUMERIC(18,4)",
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: activation,
+                    type: VARCHAR(32),
+                    constraints: { nullable: false },
+                  }
+              - column: { name: cooldown_sec, type: "NUMERIC(18,4)" }
+              - column: { name: effects_json, type: TEXT }
+        - addForeignKeyConstraint:
+            baseTableName: cyberware
+            baseColumnNames: item_template_id
+            referencedTableName: item_templates
+            referencedColumnNames: id
+            constraintName: fk_cyberware_item_template
+            onDelete: CASCADE
+  - changeSet:
+      id: 033-create-inventory-loadouts
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: inventory_item_instances
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: item_template_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: durability,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: bound_to,
+                    type: VARCHAR(32),
+                    constraints: { nullable: false },
+                  }
+              - column: { name: rolls_json, type: TEXT }
+              - column: { name: mod_slots_json, type: TEXT }
+        - addForeignKeyConstraint:
+            baseTableName: inventory_item_instances
+            baseColumnNames: item_template_id
+            referencedTableName: item_templates
+            referencedColumnNames: id
+            constraintName: fk_inventory_item_template
+            onDelete: RESTRICT
+        - createTable:
+            tableName: loadouts
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column: { name: weapon_primary_id, type: UUID }
+              - column: { name: weapon_secondary_id, type: UUID }
+              - column: { name: armor_head_id, type: UUID }
+              - column: { name: armor_chest_id, type: UUID }
+              - column: { name: armor_legs_id, type: UUID }
+              - column: { name: cyberware_ids_json, type: TEXT }
+              - column: { name: consumable_ids_json, type: TEXT }
+  - changeSet:
+      id: 034-create-economy
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: wallets
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+        - createTable:
+            tableName: wallet_balances
+            columns:
+              - column:
+                  {
+                    name: wallet_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: currency_code,
+                    type: VARCHAR(32),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: amount,
+                    type: "NUMERIC(24,4)",
+                    constraints: { nullable: false },
+                  }
+        - addForeignKeyConstraint:
+            baseTableName: wallet_balances
+            baseColumnNames: wallet_id
+            referencedTableName: wallets
+            referencedColumnNames: id
+            constraintName: fk_wallet_balance_wallet
+            onDelete: CASCADE
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: type,
+                    type: VARCHAR(32),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: timestamp,
+                    type: "TIMESTAMP WITH TIME ZONE",
+                    constraints: { nullable: false },
+                  }
+        - createTable:
+            tableName: transaction_items
+            columns:
+              - column:
+                  { name: tx_id, type: UUID, constraints: { nullable: false } }
+              - column:
+                  {
+                    name: item_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  { name: qty, type: INT, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableName: transaction_items
+            baseColumnNames: tx_id
+            referencedTableName: transactions
+            referencedColumnNames: id
+            constraintName: fk_tx_items_tx
+            onDelete: CASCADE
+        - createTable:
+            tableName: transaction_costs
+            columns:
+              - column:
+                  { name: tx_id, type: UUID, constraints: { nullable: false } }
+              - column:
+                  {
+                    name: currency_code,
+                    type: VARCHAR(32),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: amount,
+                    type: "NUMERIC(24,4)",
+                    constraints: { nullable: false },
+                  }
+        - addForeignKeyConstraint:
+            baseTableName: transaction_costs
+            baseColumnNames: tx_id
+            referencedTableName: transactions
+            referencedColumnNames: id
+            constraintName: fk_tx_costs_tx
+            onDelete: CASCADE
+        - createTable:
+            tableName: vendor_offers
+            columns:
+              - column:
+                  {
+                    name: vendor_id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+        - createTable:
+            tableName: vendor_stock
+            columns:
+              - column:
+                  {
+                    name: vendor_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: item_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: price,
+                    type: "NUMERIC(24,4)",
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: rarity,
+                    type: VARCHAR(32),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: rotation_expires_at,
+                    type: "TIMESTAMP WITH TIME ZONE",
+                    constraints: { nullable: false },
+                  }
+        - addForeignKeyConstraint:
+            baseTableName: vendor_stock
+            baseColumnNames: vendor_id
+            referencedTableName: vendor_offers
+            referencedColumnNames: vendor_id
+            constraintName: fk_vendor_stock_vendor
+            onDelete: CASCADE
+        - createTable:
+            tableName: vendor_buyback
+            columns:
+              - column:
+                  {
+                    name: vendor_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: item_instance_id,
+                    type: UUID,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: price,
+                    type: "NUMERIC(24,4)",
+                    constraints: { nullable: false },
+                  }
+        - addForeignKeyConstraint:
+            baseTableName: vendor_buyback
+            baseColumnNames: vendor_id
+            referencedTableName: vendor_offers
+            referencedColumnNames: vendor_id
+            constraintName: fk_vendor_buyback_vendor
+            onDelete: CASCADE
+  - changeSet:
+      id: 035-create-loot
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: loot_tables
+            columns:
+              - column:
+                  {
+                    name: table_code,
+                    type: VARCHAR(128),
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+        - createTable:
+            tableName: loot_entries
+            columns:
+              - column:
+                  {
+                    name: table_code,
+                    type: VARCHAR(128),
+                    constraints: { nullable: false },
+                  }
+              - column: { name: item_code, type: VARCHAR(128) }
+              - column: { name: group_code, type: VARCHAR(128) }
+              - column:
+                  { name: weight, type: INT, constraints: { nullable: false } }
+              - column:
+                  { name: qty_min, type: INT, constraints: { nullable: false } }
+              - column:
+                  { name: qty_max, type: INT, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableName: loot_entries
+            baseColumnNames: table_code
+            referencedTableName: loot_tables
+            referencedColumnNames: table_code
+            constraintName: fk_loot_entries_table
+            onDelete: CASCADE
+        - createTable:
+            tableName: loot_level_buckets
+            columns:
+              - column:
+                  {
+                    name: table_code,
+                    type: VARCHAR(128),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: min_level,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: max_level,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: multiplier,
+                    type: "NUMERIC(18,4)",
+                    constraints: { nullable: false },
+                  }
+        - addForeignKeyConstraint:
+            baseTableName: loot_level_buckets
+            baseColumnNames: table_code
+            referencedTableName: loot_tables
+            referencedColumnNames: table_code
+            constraintName: fk_loot_buckets_table
+            onDelete: CASCADE
+        - createTable:
+            tableName: drop_rules
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column: { name: source_npc_id, type: UUID }
+              - column: { name: source_boss_id, type: UUID }
+              - column: { name: source_container_type, type: VARCHAR(128) }
+              - column:
+                  {
+                    name: table_code,
+                    type: VARCHAR(128),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: party_size,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: player_level,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: world_tier,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+        - addForeignKeyConstraint:
+            baseTableName: drop_rules
+            baseColumnNames: table_code
+            referencedTableName: loot_tables
+            referencedColumnNames: table_code
+            constraintName: fk_drop_rules_table
+            onDelete: RESTRICT
+  - changeSet:
+      id: 036-create-world-poi-hack
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: pois
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: type,
+                    type: VARCHAR(64),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: services_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: security_level,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+        - createTable:
+            tableName: hack_nodes
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: difficulty,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: loot_table,
+                    type: VARCHAR(128),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: alarm_risk,
+                    type: "NUMERIC(18,4)",
+                    constraints: { nullable: false },
+                  }
+  - changeSet:
+      id: 037-create-social
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: dialogue_graphs
+            columns:
+              - column:
+                  {
+                    name: code,
+                    type: VARCHAR(128),
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: nodes_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: edges_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+        - createTable:
+            tableName: factions
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: name,
+                    type: VARCHAR(128),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: alignment,
+                    type: VARCHAR(64),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: brackets_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+        - createTable:
+            tableName: parties
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: members_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: matchmaking_mmr,
+                    type: INT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: matchmaking_role,
+                    type: VARCHAR(32),
+                    constraints: { nullable: false },
+                  }
+        - createTable:
+            tableName: guilds
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: name,
+                    type: VARCHAR(128),
+                    constraints: { nullable: false },
+                  }
+              - column: { name: motto, type: VARCHAR(256) }
+              - column:
+                  {
+                    name: members_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: ranks_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: vault_currencies_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: vault_items_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+        - createTable:
+            tableName: season_passes
+            columns:
+              - column:
+                  {
+                    name: season_id,
+                    type: VARCHAR(64),
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: tiers_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: challenges_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }
+        - createTable:
+            tableName: achievements
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: code,
+                    type: VARCHAR(128),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: title,
+                    type: VARCHAR(256),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: unlocked,
+                    type: BOOLEAN,
+                    constraints: { nullable: false },
+                  }
+              - column: { name: unlocked_at, type: TIMESTAMP WITH TIME ZONE }
+              - column: { name: progress_json, type: TEXT }
+  - changeSet:
+      id: 038-create-telemetry
+      author: workqueue
+      changes:
+        - createTable:
+            tableName: telemetry_events
+            columns:
+              - column:
+                  {
+                    name: id,
+                    type: UUID,
+                    constraints: { primaryKey: true, nullable: false },
+                  }
+              - column:
+                  {
+                    name: type,
+                    type: VARCHAR(64),
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: timestamp,
+                    type: TIMESTAMP WITH TIME ZONE,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: payload_json,
+                    type: TEXT,
+                    constraints: { nullable: false },
+                  }

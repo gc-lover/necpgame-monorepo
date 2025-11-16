@@ -1,0 +1,172 @@
+manual:
+  title: "Agent Operating Manual"
+  version: "2025-11-14"
+  service_overview:
+    base_url: "http://localhost:8090"
+    health_endpoint: "GET /actuator/health"
+    security:
+      local_profile: "security.api.enabled = false (анонимный доступ для разработки)"
+      production: "security.api.enabled = true, передавай X-Agent-Role"
+    core_endpoints:
+      - "GET /api/agents — список активных агентов (uuid, role_key, контакт)"
+      - "GET /api/agents/{id} — карточка агента"
+      - "GET /api/agents/role/{roleKey} — поиск по role key"
+      - "GET /api/agents/{id}/next-task — рекомендованная задача"
+      - "POST /api/agents/{id}/next-task/accept — взять задачу (itemId, expectedVersion, note, payload)"
+      - "POST /api/agents/{id}/next-task/release — вернуть/передать задачу (statusCode, note)"
+      - "GET /api/reference/task-statuses — доступные статусы задач"
+  cli_and_scripts:
+    rest_examples:
+      claim: "curl -X POST http://localhost:8088/api/agents/<agent_uuid>/tasks/claim -H \"Content-Type: application/json\" -H \"X-Agent-Id: <agent_uuid>\" -d '{\"segments\":[\"backend\"],\"maxPriority\":4}'"
+      submit: "curl -X POST http://localhost:8088/api/agents/<agent_uuid>/tasks/<item_uuid>/submit -H \"Content-Type: application/json\" -d @submit.json"
+      ingest: "curl -X POST http://localhost:8088/api/ingest/tasks -H \"Content-Type: application/json\" -d @ingest-payload.json"
+    scenario_runner:
+      path: "pipeline/scripts/run-scenario.ps1"
+      synopsis: "Выполняет сценарии из pipeline/agents/*.yaml"
+      usage:
+        - "pwsh -File .../run-scenario.ps1 -Role backend-implementer"
+        - "pwsh -File .../run-scenario.ps1 -Role qa-agent -Step finalize -DryRun"
+    ready_made_scenarios:
+      backend: "legacy/workqueue-yaml/scripts/agent-assets/backend-implementer-scenario.ps1 (read-only)"
+      documentation: "legacy/workqueue-yaml/scripts/agent-assets/README.md (архив)"
+  agent_workflows:
+    reference: "подробные шаги с REST/CLI см. shared/docs/knowledge/implementation/agent-scenarios.yaml"
+    summary:
+      - role: "api-task-architect"
+        queue: "shared/trackers/queues/api/queued.yaml"
+        rest_flow:
+          - "GET /api/agents/<uuid>/next-task"
+          - "POST /api/agents/<uuid>/next-task/accept (in_progress)"
+          - "POST /api/agents/<uuid>/next-task/release (status=in_progress)"
+        key_scripts:
+          - "docs/agent_handbook.md#api-task-architect (claim/submit примеры)"
+          - "validate-api-task.ps1"
+      - role: "openapi-executor"
+        queue: "shared/trackers/queues/api/in-progress.yaml"
+        rest_flow:
+          - "agent-task.ps1 (...) -Command next"
+          - "agent-task.ps1 (...) -Command accept"
+          - "agent-task.ps1 (...) -Command release -StatusCode review"
+        handoff: "Backend Implementer (queues/api/review.yaml)"
+      - role: "backend-implementer"
+        queue: "shared/trackers/queues/backend/not-started.yaml"
+        rest_flow:
+          - "GET /api/agents/<uuid>/next-task"
+          - "POST /api/agents/<uuid>/next-task/accept"
+          - "POST /api/agents/<uuid>/next-task/release (status=ready)"
+        key_scripts:
+          - "services/backend/scripts/generate-openapi-layers.ps1"
+          - "pipeline/scripts/run-qa-suite.ps1"
+          - "pipeline/scripts/agent-assets/backend-implementer-scenario.ps1"
+        handoff: "Frontend Implementer"
+      - role: "frontend-implementer"
+        queue: "shared/trackers/queues/frontend/not-started.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole frontend-implementer -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode ready"
+        key_scripts:
+          - "services/frontend/scripts/generate-api-orval.ps1"
+          - "pipeline/checklists/backend-to-frontend.yaml"
+      - role: "qa-agent"
+        queue: "shared/trackers/queues/qa/planned.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole qa-agent -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode completed"
+        key_scripts:
+          - "pipeline/scripts/run-qa-suite.ps1 (backend & frontend)"
+          - "pipeline/scripts/check-defect-register.ps1"
+        handoff: "DevOps Agent"
+      - role: "devops-agent"
+        queue: "shared/trackers/queues/release/ready.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole devops-agent -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode released"
+        key_scripts:
+          - "pipeline/scripts/run-deploy-dryrun.ps1"
+          - "pipeline/scripts/check-release-notes.ps1"
+      - role: "analytics-agent"
+        queue: "shared/trackers/queues/analytics/not-started.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole analytics-agent -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode completed"
+        key_scripts:
+          - "pipeline/scripts/check-analytics-schema.ps1"
+          - "pipeline/scripts/check-dashboard-links.ps1"
+      - role: "refactor-agent"
+        queue: "shared/trackers/queues/refactor/queued.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole refactor-agent -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode completed"
+        notes: "Использует REFACTOR-AGENT-PLAYBOOK.yaml (legacy YAML сценарии доступны в archive/workqueue-yaml)"
+      - role: "concept-director"
+        queue: "shared/trackers/queues/concept/queued.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole concept-director -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode ready (для vision)"
+      - role: "vision-manager"
+        queue: "shared/trackers/queues/vision/queued.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole vision-manager -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode ready"
+      - role: "security-agent"
+        queue: "shared/trackers/queues/security/in-progress.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole security-agent -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode completed"
+      - role: "community-agent"
+        queue: "shared/trackers/queues/release/ready.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole community-agent -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode completed"
+      - role: "data-balancing-agent"
+        queue: "shared/trackers/queues/balance/not-started.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole data-balancing-agent -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode completed"
+      - role: "ux-agent"
+        queue: "shared/trackers/queues/ux/not-started.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole ux-agent -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode completed"
+      - role: "readiness-reviewer"
+        queue: "shared/trackers/queues/readiness/not-started.yaml"
+        rest_flow:
+          - "agent-task.ps1 -AgentRole readiness-reviewer -Command next"
+          - "agent-task.ps1 -Command accept"
+          - "agent-task.ps1 -Command release -StatusCode completed"
+  data_sources:
+    tasks:
+      queues: "shared/trackers/queues/*"
+      task_files: "pipeline/tasks"
+    knowledge_base: "shared/docs/knowledge/**/*"
+    migration:
+      script: "legacy/workqueue-yaml/scripts/migrate-queues-to-db.ps1"
+      usage:
+        - "pwsh -File legacy/workqueue-yaml/scripts/migrate-queues-to-db.ps1"
+        - "pwsh -File legacy/workqueue-yaml/scripts/migrate-queues-to-db.ps1 -Apply -ConnectionString postgresql://workqueue:workqueue@localhost:5442/workqueue"
+      note: >
+        Скрипт генерирует INSERT-операторы для queues/queue_items/queue_item_states. UUID создаются детерминированно,
+        поэтому скрипт можно запускать повторно; psql требуется только при использовании флага -Apply.
+  runbook:
+    start_service:
+      - "pnpm install (если фронтенд/скрипты)"
+      - "mvn -f services/workqueue-service spring-boot:run (или docker-compose.workqueue.yml)"
+    monitor:
+      - "GET /actuator/health"
+      - "GET /actuator/info"
+    troubleshooting:
+      - "Проверить, что postgres (workqueue-db) запущен"
+      - "Убедиться, что Liquibase выполнил миграции (таблица databasechangelog)"
+      - "Если REST отдаёт 401 — проверь X-Agent-Role"
+

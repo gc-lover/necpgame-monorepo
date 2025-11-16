@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: Service API
+  version: 0.1.0
+  description: >
+    Краткое описание области. Укажите ограничения и SLA.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: health
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      tags: [health]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [UP]
+components:
+  securitySchemes:
+    AgentRole:
+      type: apiKey
+      in: header
+      name: X-Agent-Role
+  schemas:
+    ApiError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        requirements:
+          type: array
+          items: { type: string }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              reason: { type: string }
+security:
+  - AgentRole: []
+
+
