@@ -1,0 +1,148 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: necpgame
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server","--appendonly","yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    command: start-dev --http-enabled=true --hostname-strict=false --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./infrastructure/docker/auth-envoy/realm-export:/opt/keycloak/data/import:ro
+
+  envoy:
+    image: envoyproxy/envoy:v1.31.0
+    depends_on:
+      - keycloak
+    ports:
+      - "9901:9901"
+      - "8443:8443"
+    volumes:
+      - ./infrastructure/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - ./infrastructure/envoy/certs:/etc/envoy/certs:ro
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ./infrastructure/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./infrastructure/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+  loki:
+    image: grafana/loki:3.0.0
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./infrastructure/observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./infrastructure/observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    depends_on:
+      - loki
+    ports:
+      - "9080:9080"
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    command: -config.file=/etc/tempo/tempo.yaml
+    volumes:
+      - ./infrastructure/observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+    ports:
+      - "3200:3200"
+
+  nexus:
+    image: sonatype/nexus3:3.68.1
+    ports:
+      - "8081:8081"
+    volumes:
+      - nexus-data:/nexus-data
+
+  realtime-gateway:
+    build:
+      context: ./services/realtime-gateway-go
+      dockerfile: Dockerfile
+    depends_on:
+      - keycloak
+    ports:
+      - "18080:18080/tcp"
+
+  ws-lobby:
+    build:
+      context: ./services/ws-lobby-go
+      dockerfile: Dockerfile
+    depends_on:
+      - keycloak
+    ports:
+      - "18081:18081"
+      - "9091:9090"
+    environment:
+      - PORT=18081
+
+  matchmaking:
+    build:
+      context: ./services/matchmaking-go
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MODE=pve8
+      - TEAM_SIZE=8
+    ports:
+      - "9092:9090"
+
+volumes:
+  pgdata:
+  redisdata:
+  nexus-data:
+
+

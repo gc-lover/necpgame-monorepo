@@ -1,0 +1,260 @@
+metadata:
+  id: implementation-networking-architecture-analysis
+  title: "Анализ сетевой архитектуры для MMORPG с киберспортивными элементами"
+  document_type: implementation
+  category: networking
+  status: draft
+  version: "1.2.0"
+  last_updated: 2025-11-18T23:50:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: tech_director
+      contact: tech@necp.game
+  tags:
+    - networking
+    - architecture
+    - tcp
+    - udp
+    - websocket
+    - quic
+    - performance
+  topics:
+    - network-architecture
+    - protocol-selection
+    - performance-optimization
+  related_systems:
+    - realtime-gateway
+    - ue5-client
+    - ue5-dedicated-server
+  related_documents:
+    - id: roadmap-v0.1-tech-demo
+      relation: references
+    - id: roadmap-v0.3-mvp-core
+      relation: references
+  visibility: internal
+  audience:
+    - backend
+    - platform
+    - tech_director
+  risk_level: high
+review:
+  chain:
+    - role: tech_director
+      reviewer: ""
+      reviewed_at: ""
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходимо определить оптимальную сетевую архитектуру для MMORPG с киберспортивными элементами, поддерживающую различные типы зон и масштабы битв.
+  goal: Создать гибридную архитектуру с динамическим переключением протоколов, оптимизированную для разных сценариев использования.
+  essence: Гибридный подход с WebSocket/TCP для MMORPG части и UDP для PvP, с динамическим переключением и масштабированием для больших битв.
+  key_points:
+    - Глобальные зоны: WebSocket (PvE) → UDP (PvP) с динамическим переключением
+    - Малые PvP зоны: UDP, 60-128 Hz, 5-20 игроков
+    - GvG 200: UDP, 60-80 Hz, spatial partitioning
+    - GvG 400: UDP, 40-60 Hz, sharding
+    - Война 2000: UDP, 20-40 Hz, мультисерверный кластер
+content:
+  sections:
+    - id: protocol_comparison
+      title: Сравнение протоколов
+      body: |
+        | Протокол | Tick Rate | Задержка | Надежность | Применение |
+        |----------|-----------|----------|------------|------------|
+        | **WebSocket (TCP)** | 30-60 Hz | 50-150 мс | Высокая | MMORPG, PvE зоны |
+        | **UDP** | 60-128 Hz | 5-50 мс | Средняя (нужна своя) | PvP, арены, боевые зоны |
+        | **QUIC** | 60-128 Hz | 10-50 мс | Высокая | Потенциально (проблемы совместимости) |
+      mechanics_links: []
+      assets: []
+    - id: zone_architecture
+      title: Архитектура по типам зон
+      body: |
+        ## Глобальные города (MMORPG зоны)
+
+        **PvE режим:**
+        - Протокол: WebSocket/TCP
+        - Tick Rate: 20-30 Hz
+        - Задержка: <100 мс
+        - Игроков: 100-500
+        - Данные: Квесты, инвентарь, чат, торговля
+
+        **PvP режим (в бою):**
+        - Протокол: UDP (динамическое переключение)
+        - Tick Rate: 40-60 Hz
+        - Задержка: <50 мс
+        - Переключение: Бесшовное (0.5-1 сек)
+        - Данные: Позиции, выстрелы, урон
+
+        ## Малые PvP зоны (5-20 игроков)
+
+        - Протокол: UDP
+        - Tick Rate: 60-128 Hz
+        - Задержка: <30 мс
+        - Архитектура: Выделенный инстанс
+        - Синхронизация: Полная (все видят всех)
+
+        ## GvG (100v100 = 200 игроков)
+
+        - Протокол: UDP
+        - Tick Rate: 60-80 Hz
+        - Задержка: <40 мс
+        - Архитектура: Выделенный сервер + Spatial Partitioning
+        - Оптимизация: Grid-based разделение на сектора
+
+        ## GvG (200v200 = 400 игроков)
+
+        - Протокол: UDP
+        - Tick Rate: 40-60 Hz
+        - Задержка: <50 мс
+        - Архитектура: Кластер серверов (2-4 сервера)
+        - Оптимизация: Sharding по секторам
+
+        ## Супер зона войны (1000v1000 = 2000 игроков)
+
+        - Протокол: UDP
+        - Tick Rate: 20-40 Hz
+        - Задержка: <60 мс
+        - Архитектура: Мультисерверный кластер (5-10 серверов)
+        - Оптимизация: Spatial sharding, LOD, агрегация событий
+      mechanics_links: []
+      assets: []
+    - id: dynamic_switching
+      title: Динамическое переключение протоколов
+      body: |
+        ## Механизм переключения
+
+        **Триггеры:**
+        - Вход в боевой режим (PvP) → WebSocket → UDP
+        - Выход из боя (PvE) → UDP → WebSocket
+
+        **Реализация:**
+        1. Оба соединения активны 1-2 секунды (overlap)
+        2. Синхронизация состояния через TCP перед переключением
+        3. Fallback на TCP при проблемах с UDP
+        4. Время переключения: 0.5-1 секунда
+
+        **Преимущества:**
+        - Оптимальная производительность для каждого режима
+        - Надежность для критичных данных (PvE)
+        - Низкая задержка для боевых действий (PvP)
+      mechanics_links: []
+      assets: []
+    - id: optimization_techniques
+      title: Техники оптимизации для масштабных битв
+      body: |
+        ## Spatial Partitioning (100-400 игроков)
+
+        - Разделение зоны на сетку (grid)
+        - Игрок видит только свой сектор + соседние
+        - Снижение трафика: 80-90%
+
+        ## Spatial Sharding (1000+ игроков)
+
+        - Разделение зоны на серверы по координатам
+        - Каждый сервер обрабатывает свой сектор
+        - Синхронизация между серверами кластера
+
+        ## LOD (Level of Detail)
+
+        - Дальние объекты: низкая детализация
+        - Меньше обновлений для дальних объектов
+        - Снижение трафика: 60-70%
+
+        ## Агрегация событий
+
+        - Группировка событий по времени (100 мс)
+        - Отправка батчами вместо отдельных пакетов
+        - Снижение трафика: 80-90%
+      mechanics_links: []
+      assets: []
+    - id: performance_metrics
+      title: Метрики производительности
+      body: |
+        | Тип зоны | Пакетов/сек | Трафик/игрок | CPU сервер | RAM сервер |
+        |----------|-------------|--------------|------------|------------|
+        | Город PvE | 20-30 | 5-10 KB/s | Низкая | Средняя |
+        | Город PvP | 40-60 | 15-25 KB/s | Средняя | Средняя |
+        | Малые PvP | 60-128 | 30-50 KB/s | Средняя | Низкая |
+        | GvG 200 | 60-80 | 25-40 KB/s | Высокая | Средняя |
+        | GvG 400 | 40-60 | 20-35 KB/s | Очень высокая | Высокая |
+        | Война 2000 | 20-40 | 15-30 KB/s | Критическая | Очень высокая |
+      mechanics_links: []
+      assets: []
+    - id: implementation_phases
+      title: Фазы реализации
+      body: |
+        ## Фаза 1: Базовая реализация
+        - WebSocket для глобальных зон (PvE)
+        - UDP для малых PvP зон (5-20 игроков)
+        - Простое переключение протоколов
+
+        ## Фаза 2: Масштабирование
+        - Spatial partitioning для GvG 200
+        - Sharding для GvG 400
+        - Оптимизация трафика
+
+        ## Фаза 3: Масштабные битвы
+        - Мультисерверный кластер
+        - Spatial sharding
+        - Агрегация событий
+        - LOD система
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: Spatial Partitioning
+      definition: Разделение игрового пространства на сектора для оптимизации сетевого трафика
+    - term: Spatial Sharding
+      definition: Распределение игроков по серверам на основе их позиции в мире
+    - term: LOD
+      definition: Level of Detail - система детализации объектов в зависимости от расстояния
+    - term: Head-of-line blocking
+      definition: Проблема TCP, когда потеря одного пакета блокирует доставку последующих
+  references:
+    - title: "QUIC vs TCP vs UDP для игр"
+      link: https://arxiv.org/abs/2310.09423
+    - title: "Планеты 2 - архитектура для больших битв"
+      link: https://www.planetside2.com
+  decisions:
+    - date: 2025-11-18
+      decision: Выбран гибридный подход WebSocket/UDP вместо чистого QUIC из-за проблем совместимости
+      rationale: QUIC имеет проблемы совместимости между MsQuic (UE5) и quic-go (Go сервер)
+    - date: 2025-11-18
+      decision: Реализация динамического переключения протоколов для глобальных зон
+      rationale: Позволяет использовать оптимальный протокол для каждого режима игры
+    - date: 2025-11-18
+      decision: Базовая реализация WebSocket завершена
+      rationale: Go сервер (gorilla/websocket) работает, UE5 клиент (WebSocketNetworking plugin) интегрирован, все краши и ошибки исправлены, добавлен flush для корректного закрытия соединения
+    - date: 2025-11-18
+      decision: Интеграция SendPlayerInput завершена
+      rationale: Движение (WASD), прицеливание (мышь/геймпад), стрельба (левая кнопка мыши) - все данные отправляются на сервер через WebSocket. Проверено: сервер получает PlayerInput сообщения каждые ~15-17 мс (60 сообщений/сек), задержка 10-20 мс, размер сообщений 47 байт. Интеграция в ULyraHeroComponent завершена
+    - date: 2025-11-19
+      decision: Исправлена обработка Heartbeat/Echo сообщений
+      rationale: Парсер теперь корректно обрабатывает field 10 (Heartbeat) и field 11 (Echo) без ошибок. Tick инкрементируется правильно - добавлен ClientTick счетчик в клиенте, сбрасывается при переподключении. Сервер получает последовательные значения tick (1154, 1155, 1156...)
+implementation:
+  needs_task: true
+  queue_reference:
+    - roadmap-v0.1-tech-demo
+    - roadmap-v0.3-mvp-core
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-11-18
+    author: tech_director
+    changes: Создан анализ сетевой архитектуры на основе исследования протоколов и требований проекта
+  - version: "1.1.0"
+    date: 2025-11-18
+    author: tech_director
+    changes: Отмечено завершение базовой реализации WebSocket: Go сервер и UE5 клиент работают стабильно, все краши исправлены
+  - version: "1.2.0"
+    date: 2025-11-18
+    author: tech_director
+    changes: Отмечено завершение интеграции SendPlayerInput: движение, прицеливание, стрельба - все данные отправляются на сервер в реальном времени. Проверено: сервер получает PlayerInput сообщения каждые ~15-17 мс, задержка 10-20 мс
+  - version: "1.3.0"
+    date: 2025-11-19
+    author: tech_director
+    changes: Исправлена обработка Heartbeat/Echo сообщений - парсер корректно обрабатывает field 10 и 11 без ошибок. Tick инкрементируется правильно - добавлен ClientTick счетчик, сервер получает последовательные значения. Все системы работают стабильно без ошибок в логах
+validation:
+  checksum: ""
+  schema_version: "1.0"

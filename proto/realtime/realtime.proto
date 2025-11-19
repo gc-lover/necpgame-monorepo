@@ -1,0 +1,74 @@
+syntax = "proto3";
+package necp.realtime.v1;
+
+message Heartbeat {
+  int64 client_time_ms = 1;
+}
+
+message HeartbeatAck {
+  int64 server_time_ms = 1;
+  int64 rtt_estimate_ms = 2;
+}
+
+message Echo {
+  bytes payload = 1;
+}
+
+message EchoAck {
+  bytes payload = 1;
+}
+
+message ClientMessage {
+  string token = 1;
+  oneof payload {
+    Heartbeat heartbeat = 10;
+    Echo echo = 11;
+    PlayerInput player_input = 12;
+  }
+}
+
+message PlayerInput {
+  string player_id = 1;
+  int64 tick = 2;
+  float move_x = 3;
+  float move_y = 4;
+  bool shoot = 5;
+  float aim_x = 6;
+  float aim_y = 7;
+}
+
+message EntityState {
+  string id = 1;
+  float x = 2;
+  float y = 3;
+  float vx = 4;
+  float vy = 5;
+}
+
+message GameSnapshot {
+  int64 tick = 1;
+  repeated EntityState entities = 2;
+}
+
+message GameDelta {
+  int64 base_tick = 1;
+  int64 target_tick = 2;
+  repeated EntityState changed = 3;
+}
+
+message GameState {
+  oneof state {
+    GameSnapshot snapshot = 1;
+    GameDelta delta = 2;
+  }
+}
+
+message ServerMessage {
+  oneof payload {
+    HeartbeatAck heartbeat_ack = 10;
+    EchoAck echo_ack = 11;
+    GameState game_state = 12;
+  }
+}
+
+

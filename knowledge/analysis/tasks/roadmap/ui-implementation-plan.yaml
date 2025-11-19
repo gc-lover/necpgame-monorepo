@@ -1,0 +1,258 @@
+metadata:
+  id: roadmap-ui-implementation-plan
+  title: 'План реализации UI/UX через C++ для всех версий'
+  document_type: analysis
+  category: roadmap
+  status: draft
+  version: '1.1.0'
+  last_updated: 2025-11-17T20:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: tech_director
+      contact: tech@necp.game
+  tags:
+    - roadmap
+    - ui
+    - ux
+    - cpp
+  topics:
+    - ui-implementation
+    - ue5
+  related_systems:
+    - client-ue5
+    - ui-system
+  related_documents:
+    - id: roadmap-v0.1-tech-demo
+      relation: references
+    - id: roadmap-v0.2-mvp-foundation
+      relation: references
+    - id: implementation-ui-hud-core
+      relation: references
+  visibility: internal
+  audience:
+    - frontend
+    - ui
+    - ue5
+  risk_level: medium
+review:
+  chain:
+    - role: tech_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Нужен детальный план реализации UI/UX через C++ для всех версий проекта.
+  goal: Определить что, когда и как реализовывать в UI для каждой версии, используя чистый C++ подход.
+  essence: Поэтапный план от минимального HUD для технодемки до полного интерфейса в релизе.
+  key_points:
+    - v0.1: минимальный HUD через C++ UMG виджеты
+    - v0.2: базовые экраны (логин, выбор персонажа)
+    - v0.3: игровой HUD, инвентарь, квесты
+    - v0.4: социальные экраны, романтика
+    - v1.0: полный интерфейс, полировка
+content:
+  sections:
+    - id: approach
+      title: Подход к реализации
+      body: |
+        Все UI реализуется через C++ классы с использованием UMG системы UE5.
+        Виджеты создаются программно, без Blueprint (кроме опциональных настроек).
+        Структура: базовые классы виджетов в C++, наследование для специфичных экранов.
+      mechanics_links: []
+      assets: []
+    - id: v0_1_tech_demo
+      title: v0.1 Tech Demo — Минимальный HUD
+      body: |
+        Цель: доказать работу сетевых систем, минимальный UI для демонстрации.
+        
+        Задачи:
+        1. Расширить существующий LyraHUD класс для технодемки метрик
+        2. Создать HUD Widget класс для метрик через UMG
+        3. Реализовать отображение: FPS, ping (RTT), статус подключения
+        4. Опционально: количество игроков, тик-рейт сервера
+        
+        Классы:
+        - LyraHUD.h/cpp — расширение существующего HUD класса
+        - MetricsHUDWidget.h/cpp — виджет с текстовыми элементами для метрик
+        - LyraPlayerController.h/cpp — уже существует, добавить инициализацию HUD виджета
+        
+        Время: 3-4 дня
+        
+        Зависимости: QUIC-шлюз должен быть готов для получения ping данных.
+      mechanics_links: []
+      assets: []
+    - id: v0_2_mvp_foundation
+      title: v0.2 MVP Foundation — Базовые экраны
+      body: |
+        Цель: базовые экраны для входа в игру и выбора персонажа.
+        
+        Задачи:
+        1. Экран логина (LoginScreenWidget)
+        2. Экран выбора сервера (ServerSelectionWidget)
+        3. Экран выбора персонажа (CharacterSelectionWidget)
+        4. Базовый менеджер экранов (ScreenManager)
+        
+        Классы:
+        - LoginScreenWidget.h/cpp — форма логина, авторизация
+        - ServerSelectionWidget.h/cpp — список серверов, фильтры
+        - CharacterSelectionWidget.h/cpp — карточки персонажей
+        - ScreenManager.h/cpp — управление переходами между экранами
+        - BaseScreenWidget.h/cpp — базовый класс для всех экранов
+        
+        Время: 10-12 дней
+        
+        Зависимости: Auth API, Character API должны быть готовы.
+      mechanics_links: []
+      assets: []
+    - id: v0_3_mvp_core
+      title: v0.3 MVP Core — Игровой интерфейс
+      body: |
+        Цель: полный игровой HUD и основные экраны игры.
+        
+        Задачи:
+        1. Основной игровой HUD (MainGameHUDWidget)
+        2. Экран инвентаря (InventoryWidget)
+        3. Экран квестов (QuestLogWidget)
+        4. Экран крафта (CraftingWidget)
+        5. Миникарта (MinimapWidget)
+        6. Система уведомлений (NotificationSystem)
+        
+        Классы:
+        - MainGameHUDWidget.h/cpp — основной HUD с здоровьем, оружием, мини-картой
+        - InventoryWidget.h/cpp — сетка предметов, слоты экипировки
+        - QuestLogWidget.h/cpp — список квестов, прогресс
+        - CraftingWidget.h/cpp — интерфейс крафта с blueprint'ами
+        - MinimapWidget.h/cpp — мини-карта с маркерами
+        - NotificationWidget.h/cpp — система всплывающих уведомлений
+        - HUDManager.h/cpp — управление всеми HUD элементами
+        
+        Время: 15-20 дней
+        
+        Зависимости: Inventory API, Quest API, Crafting API.
+      mechanics_links: []
+      assets: []
+    - id: v0_4_mvp_extended
+      title: v0.4 MVP Extended — Социальные экраны
+      body: |
+        Цель: социальные системы и расширенный контент.
+        
+        Задачи:
+        1. Экран гильдий (GuildWidget)
+        2. Экран друзей (FriendsWidget)
+        3. Экран чата (ChatWidget)
+        4. Экран романтики (RomanceWidget)
+        5. Экран диалогов (DialogueWidget)
+        6. Экран торговли (TradingWidget)
+        
+        Классы:
+        - GuildWidget.h/cpp — управление гильдией, участники
+        - FriendsWidget.h/cpp — список друзей, статусы
+        - ChatWidget.h/cpp — чат с каналами, приватные сообщения
+        - RomanceWidget.h/cpp — отношения с NPC, события
+        - DialogueWidget.h/cpp — диалоговое дерево, выборы
+        - TradingWidget.h/cpp — торговля между игроками
+        
+        Время: 18-22 дня
+        
+        Зависимости: Social API, Romance API, Dialogue API.
+      mechanics_links: []
+      assets: []
+    - id: v1_0_release
+      title: v1.0 Release — Полный интерфейс
+      body: |
+        Цель: финальная полировка и полный функционал UI.
+        
+        Задачи:
+        1. Настройки игры (SettingsWidget)
+        2. Экран достижений (AchievementsWidget)
+        3. Экран лидерборда (LeaderboardWidget)
+        4. Административная панель (AdminPanelWidget)
+        5. Оптимизация производительности UI
+        6. Анимации и эффекты
+        7. Локализация
+        
+        Классы:
+        - SettingsWidget.h/cpp — настройки графики, звука, управления
+        - AchievementsWidget.h/cpp — список достижений, прогресс
+        - LeaderboardWidget.h/cpp — рейтинги, фильтры
+        - AdminPanelWidget.h/cpp — инструменты модерации
+        - UIManager.h/cpp — централизованное управление всем UI
+        - LocalizationManager.h/cpp — система локализации
+        
+        Время: 12-15 дней
+        
+        Зависимости: все системы должны быть готовы.
+      mechanics_links: []
+      assets: []
+    - id: architecture
+      title: Архитектура UI системы
+      body: |
+        Структура классов:
+        
+        Базовые классы:
+        - BaseWidget.h/cpp — базовый класс для всех виджетов
+        - BaseScreenWidget.h/cpp — базовый класс для экранов
+        - BaseHUDWidget.h/cpp — базовый класс для HUD элементов
+        
+        Менеджеры:
+        - UIManager.h/cpp — централизованное управление UI
+        - ScreenManager.h/cpp — управление экранами
+        - HUDManager.h/cpp — управление HUD элементами
+        - NotificationManager.h/cpp — система уведомлений
+        
+        Утилиты:
+        - UIUtils.h/cpp — вспомогательные функции
+        - UITheme.h/cpp — темизация и стили
+        - UILocalization.h/cpp — локализация текстов
+      mechanics_links: []
+      assets: []
+    - id: dependencies
+      title: Зависимости модулей
+      body: |
+        Для работы UI в UE5 нужны следующие модули в Build.cs:
+        
+        Обязательные:
+        - UMG — система виджетов
+        - Slate — базовый UI фреймворк
+        - SlateCore — ядро UI системы
+        
+        Опциональные (для v0.3+):
+        - HTTP — для API запросов
+        - WebSockets — для realtime обновлений
+        - Json — для парсинга данных API
+        
+        Структура зависимостей:
+        ```
+        PublicDependencyModuleNames.AddRange({
+            "Core", "Engine", "UMG", "Slate", "SlateCore"
+        });
+        ```
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: UI HUD Core
+      link: ../../implementation/ui/main-game/ui-hud-core.yaml
+    - title: UI Game Start
+      link: ../../implementation/ui-game-start.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-16
+    author: tech_director
+    changes: Создан детальный план реализации UI/UX через C++ для всех версий проекта.
+  - version: '1.1.0'
+    date: 2025-11-17
+    author: tech_director
+    changes: Обновлен план после перехода на Lyra Starter Game. Обновлены упоминания классов с TechDemo* на Lyra* (LyraPlayerController, LyraHUD).
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
