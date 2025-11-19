@@ -1,0 +1,216 @@
+metadata:
+  id: roadmap-v0.2-mvp-foundation
+  title: "v0.2 MVP Foundation — Инфраструктура и базовые сервисы"
+  document_type: analysis
+  category: roadmap
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-17T18:50:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: tech_director
+      contact: tech@necp.game
+  tags:
+    - roadmap
+    - mvp
+    - foundation
+  topics:
+    - infrastructure
+    - microservices
+  related_systems:
+    - auth-service
+    - character-service
+    - api-gateway
+  related_documents:
+    - id: architecture-mvp-backend
+      relation: references
+    - id: implementation-api-mvp-endpoints
+      relation: references
+  visibility: internal
+  audience:
+    - backend
+    - devops
+    - platform
+  risk_level: high
+review:
+  chain:
+    - role: tech_director
+      reviewer: ""
+      reviewed_at: ""
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходимо создать полноценную микросервисную архитектуру для MVP.
+  goal: Реализовать все базовые сервисы, полную схему БД, аутентификацию и базовые API endpoints.
+  essence: MVP Foundation закладывает основу для всех последующих систем через микросервисную архитектуру.
+  key_points:
+    - Критично: все микросервисы, полная схема БД, аутентификация
+    - Высокий приоритет: управление персонажами, базовые API
+    - Средний приоритет: Kafka интеграция, outbox паттерн
+    - Низкий приоритет: расширенная наблюдаемость
+tasks:
+  critical:
+    - id: services-001
+      title: Создание всех микросервисов MVP
+      description: |
+        Создать структуру всех микросервисов: auth-service, character-service, gameplay-service,
+        economy-service, social-service, world-service.
+        Настроить базовую структуру проектов на Spring Boot 3.3.x.
+      priority: critical
+      dependencies: []
+      estimated_effort: 5d
+      related_documents:
+        - knowledge/implementation/architecture/mvp-backend-architecture.yaml
+    - id: db-001
+      title: Полная схема базы данных MVP
+      description: |
+        Реализовать все миграции для полной схемы mvp_core и mvp_meta.
+        Создать все таблицы: orders, crafting, world_district_state, romance и др.
+        Настроить индексы и ограничения.
+      priority: critical
+      dependencies: []
+      estimated_effort: 8d
+      related_documents:
+        - knowledge/implementation/database/schema.yaml
+        - knowledge/implementation/database/migrations.yaml
+    - id: auth-001
+      title: Полная система аутентификации
+      description: |
+        Реализовать регистрацию, вход, OAuth через Keycloak.
+        Создать JWT токены и refresh механизм.
+        Интегрировать с API Gateway.
+      priority: critical
+      dependencies: [services-001]
+      estimated_effort: 6d
+      related_documents:
+        - knowledge/implementation/backend/auth/
+        - knowledge/implementation/api-requirements/mvp-endpoints/auth-endpoints.yaml
+    - id: gateway-001
+      title: Полная конфигурация API Gateway
+      description: |
+        Настроить маршрутизацию для всех сервисов.
+        Реализовать rate limiting и базовую авторизацию.
+        Настроить CORS и безопасность.
+      priority: critical
+      dependencies: [services-001, auth-001]
+      estimated_effort: 4d
+      related_documents:
+        - knowledge/implementation/infrastructure/api-gateway-architecture.yaml
+  high:
+    - id: character-001
+      title: Система управления персонажами
+      description: |
+        Реализовать создание, редактирование, удаление персонажей.
+        Создать систему профилей и атрибутов.
+        Интегрировать с инвентарём.
+      priority: high
+      dependencies: [db-001, services-001]
+      estimated_effort: 7d
+      related_documents:
+        - knowledge/implementation/backend/player-character-mgmt/
+        - knowledge/implementation/api-requirements/mvp-endpoints/content-endpoints.yaml
+    - id: api-001
+      title: Базовые API endpoints для всех сервисов
+      description: |
+        Реализовать CRUD endpoints для основных сущностей.
+        Создать OpenAPI спецификации для всех сервисов.
+        Настроить валидацию и обработку ошибок.
+      priority: high
+      dependencies: [services-001]
+      estimated_effort: 10d
+      related_documents:
+        - knowledge/implementation/api-requirements/mvp-endpoints/
+    - id: data-001
+      title: Начальные данные MVP
+      description: |
+        Загрузить начальные данные: оружие, предметы, NPC, локации.
+        Создать сиды для справочников.
+        Валидировать целостность данных.
+      priority: high
+      dependencies: [db-001]
+      estimated_effort: 4d
+      related_documents:
+        - knowledge/implementation/database/mvp-initial-data.yaml
+        - knowledge/implementation/mvp-content-summary.yaml
+  medium:
+    - id: kafka-001
+      title: Интеграция с Kafka
+      description: |
+        Настроить Kafka кластер и Schema Registry.
+        Реализовать outbox паттерн через таблицу mvp_meta.outbox.
+        Создать базовые продюсеры и консьюмеры.
+      priority: medium
+      dependencies: [db-001, services-001]
+      estimated_effort: 6d
+      related_documents:
+        - knowledge/implementation/architecture/mvp-backend-architecture.yaml
+    - id: redis-001
+      title: Настройка Redis Cluster
+      description: |
+        Настроить Redis Cluster для кэширования и сессий.
+        Реализовать базовое кэширование для часто запрашиваемых данных.
+        Настроить TTL и стратегии инвалидации.
+      priority: medium
+      dependencies: [services-001]
+      estimated_effort: 4d
+      related_documents:
+        - knowledge/implementation/infrastructure/caching-strategy.yaml
+    - id: config-001
+      title: Централизованная конфигурация
+      description: |
+        Настроить Spring Cloud Config Server.
+        Создать конфигурации для всех окружений.
+        Реализовать динамическое обновление конфигураций.
+      priority: medium
+      dependencies: [services-001]
+      estimated_effort: 3d
+      related_documents:
+        - knowledge/implementation/infrastructure/infrastructure-index.yaml
+  low:
+    - id: observability-002
+      title: Расширенная наблюдаемость
+      description: |
+        Настроить полный стек OpenTelemetry для всех сервисов.
+        Создать дашборды для каждого сервиса.
+        Настроить алерты на критические метрики.
+      priority: low
+      dependencies: [services-001]
+      estimated_effort: 5d
+      notes: |
+        WARNING Go сервисы (realtime-gateway-go, ws-lobby-go, matchmaking-go) уже имеют метрики Prometheus и структурированное логирование.
+        WARNING Нужно добавить OpenTelemetry для Java микросервисов.
+      related_documents:
+        - knowledge/implementation/infrastructure/error-handling-logging.yaml
+        - knowledge/implementation/INFRASTRUCTURE_ANALYSIS.md
+    - id: cicd-001
+      title: Базовый CI/CD
+      description: |
+        Настроить GitHub Actions для сборки и тестирования.
+        Создать базовые pipeline'ы для деплоя.
+        Настроить артефакты и контейнеры.
+      priority: low
+      dependencies: [services-001]
+      estimated_effort: 4d
+      related_documents:
+        - knowledge/implementation/architecture/mvp-backend-architecture.yaml
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-11-16
+    author: tech_director
+    changes: Создана roadmap для MVP Foundation v0.2.
+  - version: "1.1.0"
+    date: 2025-11-17
+    author: tech_director
+    changes: Добавлено примечание в observability-002 о том, что Go сервисы уже имеют метрики Prometheus.
+validation:
+  checksum: ""
+  schema_version: "1.0"

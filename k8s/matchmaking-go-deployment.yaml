@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matchmaking-go
+  namespace: necpgame
+  labels:
+    app: matchmaking-go
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matchmaking-go
+  template:
+    metadata:
+      labels:
+        app: matchmaking-go
+        version: v1
+    spec:
+      containers:
+      - name: matchmaking-go
+        image: necpgame-matchmaking-go:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        - name: MODE
+          value: "pve8"
+        - name: TEAM_SIZE
+          value: "8"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: METRICS_ADDR
+          value: ":9090"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9090
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9090
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matchmaking-go
+  namespace: necpgame
+  labels:
+    app: matchmaking-go
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: matchmaking-go
+

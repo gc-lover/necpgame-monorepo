@@ -1,0 +1,213 @@
+metadata:
+  id: implementation-tech-stack-2025
+  title: 'Technology Stack — NECPGAME (MMORPG Looter-Shooter, Cyberpunk)'
+  document_type: implementation
+  category: architecture
+  status: draft
+  version: '0.1.0'
+  last_updated: 2025-11-16T00:00:00Z
+  owners:
+    - role: platform_guild
+      contact: platform@necp.game
+  tags:
+    - tech-stack
+    - mmo
+    - shooter
+    - realtime
+  topics:
+    - implementation
+    - backend
+    - client
+    - devops
+  related_systems:
+    - gameplay-service
+    - economy-service
+    - social-service
+    - combat-sim
+    - matchmaking
+  related_documents:
+    - id: implementation-database-schema-mvp
+      relation: references
+    - id: implementation-database-migrations-mvp
+      relation: references
+    - id: API-TECH-DOC-SUMMARY-COMPACT
+      relation: complements
+  visibility: internal
+  audience:
+    - backend
+    - client
+    - devops
+  risk_level: medium
+summary:
+  problem: Нужен согласованный стек технологий для ММОРПГ с лутер‑шутер петлёй и киберпанк‑сеттингом.
+  goal: Зафиксировать детальный стек с версиями, альтернативами и отложенными решениями для MVP и технодемки.
+  essence: Документ определяет ядро стека по бэкенду, realtime, клиенту, данным, наблюдаемости и безопасности.
+content:
+  sections:
+    - id: product-context
+      title: Контекст продукта
+      body: |
+        Игра — ММОРПГ с элементами лутинг‑шутера в киберпанк‑городе. Основные петли: добыча и апгрейд оружия,
+        контракты/рейды, прогрессия фракций/районов, социальные и романтические взаимодействия. PC first.
+        Для боёв и инстансов используется UDP/QUIC‑шлюз, для лобби и социальных систем — WebSocket.
+      mechanics_links:
+        - knowledge/implementation/database/schema.yaml
+        - knowledge/implementation/database/romance-database-schema.sql
+      assets: []
+    - id: backend
+      title: Бэкенд
+      body: |
+        Язык и фреймворки:
+        - Java 21
+        - Spring Boot 3.3.x, Spring Cloud 2024.x
+        - gRPC + Protobuf 3.21+
+        Сервисы:
+        - Gateway/API, Auth, Gameplay, World-State, Combat-Sim, Inventory/Loot, Economy/Trade, Social/Chat/Party, Romance/Relationships, Matchmaking, Notifications.
+        Хранилища:
+        - PostgreSQL 15 (схемы mvp_core/mvp_meta, JSONB, партиционирование, soft-delete).
+        - Redis 7 Cluster (кэш, сессии, билеты матчмейкинга, rate limiting).
+        - Apache Kafka 3.7 + Schema Registry (события, outbox).
+        - ClickHouse 23.x (телеметрия, аналитика).
+        - OpenSearch 2.12 (поиск/фиды).
+        - S3/MinIO (медиа, логи, реплеи).
+        Сетевые взаимодействия:
+        - Межсервисно: gRPC, мTLS, retries/backoff, idempotency keys.
+        - Асинхронно: Kafka, transactional outbox (таблица mvp_meta.outbox).
+        Конфигурация:
+        - Spring Cloud Config, флаги Unleash/Flagsmith.
+        Миграции:
+        - Liquibase (V1_0..V1_5).
+      mechanics_links:
+        - knowledge/implementation/database/migrations.yaml
+      assets: []
+    - id: realtime
+      title: Realtime и синхронизация
+      body: |
+        Протоколы:
+        - QUIC/UDP для боёв и инстансов (Armeria QUIC - высокий уровень абстракции).
+        - WebSocket (бинарный Protobuf) для лобби/чат/социальных систем.
+        Форматы:
+        - Protobuf для сериализации, строгая эволюция схем, back/forward compatibility.
+        Синхронизация:
+        - Snapshot + delta‑updates, интерес‑менеджмент (AOI), input‑replay.
+        - Тики: 20–30 TPS для MMO‑мира, 60+ TPS для инстансового Combat‑Sim.
+        Matchmaking:
+        - Open Match, быстрые локальные очереди в Redis рядом с Combat‑Sim.
+      mechanics_links: []
+      assets: []
+    - id: client
+      title: Клиент (PC first)
+      body: |
+        Движок:
+        - Unreal Engine 5.4 (Nanite, Lumen).
+        Сетевой слой:
+        - Плагин QUIC (MsQuic/Quiche) для боёв, WebSocket для лобби.
+        Сериализация:
+        - Protobuf (protobuf‑cpp 21.x).
+        QoS:
+        - RTT/packet loss пробы, адаптивная частота апдейтов и размер пачек.
+      mechanics_links: []
+      assets: []
+    - id: devops
+      title: DevOps и инфраструктура
+      body: |
+        Оркестрация:
+        - Kubernetes 1.30, Helm, ArgoCD.
+        CI/CD:
+        - GitHub Actions, артефакты в GHCR, канареечные релизы.
+        Сеть и периметр:
+        - Envoy 1.31 (HTTP/3, gRPC, rate limits, authz), Cloudflare CDN/Edge.
+        IaC:
+        - Terraform.
+      mechanics_links: []
+      assets: []
+    - id: data-observability
+      title: Данные и наблюдаемость
+      body: |
+        Наблюдаемость:
+        - OpenTelemetry 1.33, Prometheus, Grafana, Loki, Tempo/Jaeger.
+        Тестирование:
+        - Testcontainers, Gatling/k6.
+        Контракты:
+        - OpenAPI/gRPC proto‑контракты с версионированием.
+      mechanics_links: []
+      assets: []
+    - id: security-fairplay
+      title: Безопасность и честность
+      body: |
+        Авторизация:
+        - Keycloak 24 (OIDC), короткоживущие токены для gateway, мTLS межсервисно.
+        Античит:
+        - Клиентский EAC/Battleye на этапе после технодемки.
+        - Серверные эвристики: сигнатуры команд, лимиты, детект аномалий.
+        Шифрование:
+        - TLS/QUIC, секреты через Kubernetes Secrets/External Secrets.
+      mechanics_links: []
+      assets: []
+    - id: domain-mapping
+      title: Соответствие доменам БД
+      body: |
+        Экономика и крафт:
+        - Таблицы weapon_profile, ballistics_metric, crafting_blueprint, crafting_job.
+        Контракты и PvE:
+        - order, order_phase, order_application, order_review.
+        Мир и районы:
+        - world_district_state.
+        Социальные системы и романтика:
+        - romance_events, npc_romance_profiles, relationships, relationship_event_history, relationship_conflicts,
+          relationship_milestones, chemistry_scores, cultural_contexts, romance_notifications.
+      mechanics_links:
+        - knowledge/implementation/database/schema.yaml
+        - knowledge/implementation/database/romance-database-schema.sql
+      assets: []
+    - id: decisions-deferred
+      title: Отложенные решения
+      body: |
+        Логи/реплеи:
+        - Хранение в S3/MinIO, опционально архивирование в Glacier‑класс. Решение принять после первых нагрузочных тестов.
+        Масштабирование БД:
+        - Вертикально + партиционирование на MVP, шардирование — после валидации DAU/CCU.
+        Античит:
+        - Выбор провайдера к релизу технодемки.
+        Режимы PvP:
+        - Правила и нужный TPS для крупных режимов уточнить после прототипа Combat‑Sim.
+      mechanics_links: []
+      assets: []
+    - id: mvp-vs-tech-demo
+      title: Уровни — MVP и технодемка
+      body: |
+        Технодемка:
+        - QUIC‑шлюз для инстансов, базовый matchmaking, минимальный Combat‑Sim 60+ TPS.
+        - Inventory/Loot + простая экономика, базовый крафт, WebSocket‑лобби/чат.
+        - Наблюдаемость и логирование в ClickHouse, базовый античит‑мониторинг.
+        MVP:
+        - Полный набор сервисов, outbox→Kafka, сиды справочников, прогрессия фракций/районов.
+        - Расширенные индексы/партиции, масштабирование Redis Cluster, OpenSearch фиды.
+        - Социальные системы и романтика по полной схеме, нотификации и культурные модификаторы.
+      mechanics_links:
+        - knowledge/implementation/database/mvp-initial-data.yaml
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: Schema Overview
+      link: ./database/schema.yaml
+    - title: Romance DB
+      link: ./database/romance-database-schema.sql
+    - title: Migration Plan
+      link: ./database/migrations.yaml
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '0.1.0'
+    date: 2025-11-16
+    author: platform_team
+    changes: Черновик стека зафиксирован с вариантами для MVP и технодемки.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
+

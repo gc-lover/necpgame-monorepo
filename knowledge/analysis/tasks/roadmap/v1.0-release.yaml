@@ -1,0 +1,253 @@
+metadata:
+  id: roadmap-v1.0-release
+  title: 'v1.0 Release — Полный функционал и оптимизация'
+  document_type: analysis
+  category: roadmap
+  status: draft
+  version: '1.2.0'
+  last_updated: 2025-11-18T22:30:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: tech_director
+      contact: tech@necp.game
+  tags:
+    - roadmap
+    - release
+    - optimization
+  topics:
+    - performance
+    - scaling
+    - polish
+  related_systems:
+    - all
+  related_documents:
+    - id: implementation-tech-stack
+      relation: references
+  visibility: internal
+  audience:
+    - leadership
+    - tech_director
+    - all_teams
+  risk_level: medium
+review:
+  chain:
+    - role: tech_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходимо довести проект до релизного состояния с полным функционалом и оптимизацией.
+  goal: Реализовать все оставшиеся фичи, оптимизировать производительность, масштабировать систему и провести полное тестирование.
+  essence: Release версия включает все фичи, оптимизацию, масштабирование и полировку для коммерческого запуска.
+  key_points:
+    - Критично: оптимизация, масштабирование, тестирование, масштабные битвы (1000v1000)
+    - Высокий приоритет: финальный контент, балансировка
+    - Средний приоритет: дополнительные фичи, интеграции
+    - Низкий приоритет: будущие расширения
+tasks:
+  critical:
+    - id: perf-001
+      title: Оптимизация производительности
+      description: |
+        Провести профилирование всех сервисов.
+        Оптимизировать запросы к БД и кэширование.
+        Оптимизировать сетевой код и протоколы.
+        Достичь целевых метрик производительности.
+        Оптимизировать сетевой трафик для масштабных битв (LOD, агрегация событий).
+      priority: critical
+      dependencies: []
+      estimated_effort: 15d
+      notes: |
+        WARNING Профилирование для разных языков:
+        - Go сервисы (realtime-gateway, ws-lobby, matchmaking): pprof, метрики Prometheus
+        - Java микросервисы: JProfiler, JVM метрики, Spring Actuator
+        - UE5 Dedicated Server: Unreal Insights, профилирование C++
+        WARNING Сетевая оптимизация:
+        - LOD система для дальних объектов
+        - Агрегация событий (батчинг)
+        - Spatial partitioning для снижения трафика
+      related_documents:
+        - knowledge/implementation/infrastructure/caching-strategy.yaml
+        - knowledge/implementation/LANGUAGE_CHOICE_STRATEGY.md
+        - knowledge/implementation/networking/network-architecture-analysis.yaml
+    - id: scale-001
+      title: Масштабирование инфраструктуры
+      description: |
+        Настроить горизонтальное масштабирование сервисов.
+        Реализовать шардирование БД при необходимости.
+        Настроить Redis Cluster для высокой нагрузки.
+        Оптимизировать Kafka для больших объёмов.
+        Реализовать мультисерверный кластер для масштабных битв (1000v1000).
+      priority: critical
+      dependencies: [perf-001]
+      estimated_effort: 12d
+      notes: |
+        WARNING Масштабные битвы (1000v1000 = 2000 игроков):
+        - UDP, 20-40 Hz, задержка <60 мс
+        - Мультисерверный кластер (5-10 серверов)
+        - Spatial sharding, LOD, агрегация событий
+      related_documents:
+        - knowledge/implementation/infrastructure/database-architecture.yaml
+        - knowledge/implementation/networking/network-architecture-analysis.yaml
+    - id: test-001
+      title: Полное тестирование
+      description: |
+        Провести нагрузочное тестирование всех систем.
+        Реализовать E2E тесты для ключевых сценариев.
+        Провести тестирование безопасности.
+        Выполнить тестирование совместимости.
+      priority: critical
+      dependencies: []
+      estimated_effort: 20d
+      related_documents:
+        - knowledge/implementation/TECH-STACK.yaml
+    - id: anticheat-002
+      title: Полная система античита
+      description: |
+        Интегрировать клиентский античит (EAC/Battleye).
+        Усилить серверные проверки.
+        Реализовать систему банов и модерации.
+        Настроить мониторинг читеров.
+      priority: critical
+      dependencies: []
+      estimated_effort: 10d
+      related_documents:
+        - knowledge/implementation/infrastructure/anti-cheat-system.yaml
+  high:
+    - id: content-002
+      title: Финальный контент
+      description: |
+        Завершить все квестовые линии.
+        Добавить финальные события и рейды.
+        Реализовать все романтические сюжеты.
+        Добавить финальные локации.
+      priority: high
+      dependencies: []
+      estimated_effort: 25d
+      related_documents:
+        - knowledge/content/quests/
+    - id: balance-001
+      title: Балансировка игры
+      description: |
+        Сбалансировать боевую систему.
+        Настроить экономику и цены.
+        Сбалансировать прогрессию.
+        Провести итерации баланса на основе данных.
+      priority: high
+      dependencies: []
+      estimated_effort: 15d
+      related_documents:
+        - knowledge/implementation/analytics/faction-analytics-balance.yaml
+    - id: ui-001
+      title: Финальная полировка UI/UX
+      description: |
+        Завершить все экраны интерфейса.
+        Оптимизировать производительность UI.
+        Реализовать все анимации и эффекты.
+        Провести юзабилити-тестирование.
+      priority: high
+      dependencies: []
+      estimated_effort: 12d
+      related_documents:
+        - knowledge/implementation/ui/
+    - id: client-002
+      title: Оптимизация клиента UE5
+      description: |
+        Оптимизировать рендеринг и производительность.
+        Реализовать все визуальные эффекты.
+        Оптимизировать сетевой код клиента.
+        Провести тестирование на различных конфигурациях.
+      priority: high
+      dependencies: []
+      estimated_effort: 15d
+      related_documents:
+        - knowledge/implementation/UE5-INTEGRATION.md
+  medium:
+    - id: league-001
+      title: Система лиг
+      description: |
+        Реализовать систему сезонов и лиг.
+        Создать систему рейтингов и наград.
+        Интегрировать с PvP и рейдами.
+        Реализовать прогрессию лиг.
+      priority: medium
+      dependencies: []
+      estimated_effort: 12d
+      related_documents:
+        - knowledge/mechanics/meta/league-system-mechanics.yaml
+    - id: analytics-001
+      title: Расширенная аналитика
+      description: |
+        Настроить полный стек аналитики.
+        Реализовать дашборды для всех метрик.
+        Интегрировать с бизнес-метриками.
+        Настроить алерты и мониторинг.
+      priority: medium
+      dependencies: []
+      estimated_effort: 8d
+      related_documents:
+        - knowledge/implementation/analytics/
+    - id: admin-001
+      title: Административные инструменты
+      description: |
+        Реализовать панель администратора.
+        Создать инструменты модерации.
+        Реализовать систему поддержки.
+        Настроить инструменты для контент-команды.
+      priority: medium
+      dependencies: []
+      estimated_effort: 10d
+      related_documents:
+        - knowledge/implementation/infrastructure/admin-moderation-tools.yaml
+        - knowledge/implementation/backend/admin/
+        - knowledge/implementation/backend/support/
+  low:
+    - id: future-001
+      title: Подготовка к будущим расширениям
+      description: |
+        Документировать архитектуру для расширений.
+        Создать плагинную систему где возможно.
+        Подготовить инфраструктуру для контент-обновлений.
+        Спланировать roadmap пост-релиза.
+      priority: low
+      dependencies: []
+      estimated_effort: 5d
+      related_documents: []
+    - id: polish-001
+      title: Финальная полировка
+      description: |
+        Исправить все известные баги.
+        Оптимизировать все системы.
+        Улучшить документацию.
+        Подготовить релизные материалы.
+      priority: low
+      dependencies: [test-001]
+      estimated_effort: 10d
+      related_documents: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-16
+    author: tech_director
+    changes: Создана roadmap для Release v1.0.
+  - version: '1.1.0'
+    date: 2025-11-17
+    author: tech_director
+    changes: Добавлено примечание в perf-001 о профилировании для разных языков (Go, Java, UE5).
+  - version: '1.2.0'
+    date: 2025-11-18
+    author: tech_director
+    changes: Обновлены задачи perf-001 и scale-001 с учетом оптимизации для масштабных битв (1000v1000). Добавлены ссылки на network-architecture-analysis.yaml. Добавлены техники оптимизации: LOD, агрегация событий, spatial partitioning.
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

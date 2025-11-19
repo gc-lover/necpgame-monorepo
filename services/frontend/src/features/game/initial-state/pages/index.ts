@@ -1,2 +1,0 @@
-export { InitialStatePage } from './InitialStatePage'
-
