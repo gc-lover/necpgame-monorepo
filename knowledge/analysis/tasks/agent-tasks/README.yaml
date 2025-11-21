@@ -1,0 +1,201 @@
+metadata:
+  id: agent-tasks-readme
+  title: "Формат задач для Cursor Background Agents"
+  document_type: documentation
+  category: tasks
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-22T00:00:00Z
+  owners:
+    - role: tech_director
+      contact: tech@necp.game
+  tags:
+    - agent-tasks
+    - automation
+    - cursor
+  visibility: internal
+  audience:
+    - tech_director
+    - developers
+summary:
+  problem: Необходимо создать структуру задач для автоматической работы Cursor Background Agents
+  goal: Определить формат задач, который агенты смогут читать, выполнять и ревьюить
+  essence: YAML-формат задач с четкими инструкциями для агентов по реализации функционала
+content:
+  sections:
+    - id: format_overview
+      title: Формат задач для агентов
+      body: |
+        Задачи для агентов хранятся в формате YAML в директории `knowledge/analysis/tasks/agent-tasks/`.
+        Каждая задача содержит:
+        - Метаданные: id, title, priority, status, owner
+        - Описание: что нужно сделать, почему, как
+        - Требования: зависимости, связанные документы, пути к коду
+        - Инструкции для агента: пошаговые шаги, критерии приемки
+        - Автоматическое ревью: чеклисты, правила проверки
+        
+    - id: task_structure
+      title: Структура файла задачи
+      body: |
+        Каждый файл задачи должен содержать:
+        
+        ```yaml
+        metadata:
+          id: unique-task-id
+          title: Название задачи
+          priority: critical|high|medium|low
+          status: pending|in-progress|review|completed|blocked
+          assignee: agent|cursor-agent|human
+          created_at: ISO-8601 date
+          updated_at: ISO-8601 date
+          
+        task:
+          description: |
+            Детальное описание задачи
+          context: |
+            Контекст: почему эта задача важна,
+            связь с другими задачами и системами
+          requirements:
+            - Требование 1
+            - Требование 2
+            
+        implementation:
+          steps:
+            - step: 1
+              action: Что нужно сделать
+              files: []
+              code_paths: []
+              validation: Как проверить выполнение
+              
+        dependencies:
+          tasks: []
+          documents: []
+          code_files: []
+          
+        acceptance_criteria:
+          - Критерий 1
+          - Критерий 2
+          
+        review:
+          automated_checks:
+            - Проверка SOLID принципов
+            - Проверка стиля кода
+            - Проверка тестов
+          human_review_required: false
+          
+        related_content:
+          features: []
+          game_content: []
+          
+        notes: |
+          Дополнительные заметки
+        ```
+        
+    - id: agent_instructions
+      title: Инструкции для агентов
+      body: |
+        Агенты должны:
+        1. Читать задачи из `knowledge/analysis/tasks/agent-tasks/` ИЛИ напрямую из существующих YAML файлов:
+           - Roadmap: knowledge/analysis/tasks/roadmap/*.yaml
+           - Активные: knowledge/analysis/tasks/active/CURRENT-WORK/active/*.yaml
+           - Контент: knowledge/content/quests/*.yaml
+           - Механики: knowledge/mechanics/*/*.yaml
+        2. Загружать связанные документы из related_documents
+        3. Следовать SOLID принципам из `.cursor/rules/SOLID.mdc`
+        4. Соблюдать стиль кода из `.cursor/rules/UE5-CPP-STYLE.mdc`
+        5. Проверять код по чеклисту из `.cursor/rules/CODE-REVIEW-CHECKLIST.mdc`
+        6. Обновлять статус задачи после выполнения (в roadmap или agent-tasks файле)
+        7. Создавать коммиты с понятными сообщениями
+        8. Автоматически выполнять ревью перед коммитом
+        
+    - id: task_types
+      title: Типы задач
+      body: |
+        Задачи могут быть:
+        - Реализация фичи: создание нового функционала
+        - Рефакторинг: улучшение существующего кода
+        - Исправление бага: устранение ошибок
+        - Добавление контента: создание игрового контента
+        - Документация: написание или обновление документации
+        - Тестирование: создание тестов
+        
+    - id: review_process
+      title: Процесс автоматического ревью
+      body: |
+        Агенты должны автоматически:
+        1. Проверить код по чеклисту CODE-REVIEW-CHECKLIST.mdc
+        2. Проверить соответствие SOLID принципам
+        3. Проверить стиль кода
+        4. Проверить наличие тестов
+        5. Проверить отсутствие TODO и комментариев
+        6. Проверить размер классов (максимум 400 строк)
+        7. Обновить статус задачи
+        8. Создать отчет о ревью
+        
+    - id: content_loading
+      title: Загрузка контента для игры
+      body: |
+        Для задач, связанных с игровым контентом:
+        - Использовать структуру из `knowledge/canon/`
+        - Использовать структуру из `knowledge/content/`
+        - Связывать задачи с соответствующими YAML файлами
+        - Проверять валидность контента перед внедрением
+        
+    - id: existing_yaml_integration
+      title: Интеграция с существующими YAML файлами
+      body: |
+        В проекте уже есть структурированные YAML файлы с задачами и контентом:
+        
+        **Roadmap задачи (knowledge/analysis/tasks/roadmap/):**
+        - v0.1-tech-demo.yaml, v0.2-mvp-foundation.yaml и т.д.
+        - Содержат секцию `tasks` с приоритетами и зависимостями
+        - Агенты могут напрямую читать эти файлы и преобразовывать задачи
+        
+        **Активные задачи (knowledge/analysis/tasks/active/):**
+        - CURRENT-WORK/active/*.yaml
+        - TODO.yaml
+        - Содержат metadata, summary, content, review
+        
+        **Игровой контент (knowledge/content/):**
+        - quests/*.yaml - квесты в структурированном формате
+        - Каждый квест имеет stages, dialogues, encounters
+        
+        **Механики (knowledge/mechanics/):**
+        - combat/*.yaml - боевые механики
+        - economy/*.yaml - экономические системы
+        - Каждая механика имеет metadata, summary, content
+        
+        **REST API система (knowledge/implementation/):**
+        - agent-operating-manual.yaml - руководство по REST API
+        - agent-scenarios.yaml - сценарии работы агентов
+        - Поддерживает работу с очередями через workqueue-service
+        
+        Агенты могут загружать задачи из этих файлов без необходимости создания новых.
+        См. INTEGRATION-GUIDE.yaml для деталей по интеграции.
+        
+    - id: loading_existing_tasks
+      title: Загрузка существующих задач
+      body: |
+        **1. Из roadmap файлов:**
+        - Сканировать knowledge/analysis/tasks/roadmap/*.yaml
+        - Извлекать задачи со статусом pending или in-progress
+        - Фильтровать по приоритету (critical, high, medium, low)
+        - Использовать related_documents для контекста
+        
+        **2. Из активных задач:**
+        - Читать knowledge/analysis/tasks/active/CURRENT-WORK/active/*.yaml
+        - Использовать metadata для идентификации
+        - Читать summary для понимания задачи
+        - Проверять implementation.needs_task
+        
+        **3. Из контента квестов:**
+        - Читать knowledge/content/quests/*.yaml
+        - Использовать структуру квеста (stages, dialogues, encounters)
+        - Создавать задачи для реализации квеста
+        
+        **4. Из механик:**
+        - Читать knowledge/mechanics/*/*.yaml
+        - Использовать summary для понимания требований
+        - Создавать задачи для реализации механики
+        
+        См. CURSOR-AGENTS-SYNTAX.md для примеров загрузки.

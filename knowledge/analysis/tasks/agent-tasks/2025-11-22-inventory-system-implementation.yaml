@@ -1,0 +1,176 @@
+metadata:
+  id: agent-task-inventory-system-impl
+  title: "Реализация базовой системы инвентаря"
+  priority: high
+  status: in-progress
+  assignee: cursor-agent
+  created_at: 2025-11-22T00:00:00Z
+  updated_at: 2025-11-22T00:00:00Z
+  tags:
+    - feature
+    - inventory
+    - economy
+    - v0.1
+
+task:
+  description: |
+    Реализовать базовую систему инвентаря для хранения и управления предметами игроков.
+    Система должна:
+    - Работать через интерфейсы (SOLID: DIP, ISP)
+    - Интегрироваться с существующей системой Lyra (ULyraInventoryManagerComponent)
+    - Поддерживать добавление, удаление, поиск предметов
+    - Быть потокобезопасной для multiplayer
+    - Соблюдать максимальный размер класса 400 строк
+    
+  context: |
+    В проекте уже есть базовая система инвентаря от Lyra (ULyraInventoryManagerComponent).
+    Необходимо создать расширенную систему с интерфейсами для гибкости и тестируемости.
+    Инвентарь является базовой системой для экономики игры, необходим для:
+    - Хранения оружия, боеприпасов, расходников
+    - Интеграции с системами крафта и торговли
+    - Работы с системами экипировки
+    
+  requirements:
+    - SOLID принципы (SRP, DIP, ISP)
+    - Максимум 400 строк на класс
+    - Без комментариев и TODO
+    - Интерфейсы для всех зависимостей
+    - Потокобезопасность для multiplayer (FCriticalSection)
+    - Интеграция с существующей системой Lyra
+
+implementation:
+  steps:
+    - step: 1
+      action: "Создать интерфейс IInventoryItem"
+      files:
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/IInventoryItem.h
+      code_paths:
+        - Inventory interface
+      validation: |
+        - Интерфейс содержит только методы для работы с предметом
+        - Нет зависимостей от конкретных классов
+        - Методы чисто виртуальные
+        - Соответствует ISP (Interface Segregation Principle)
+        - Не превышает 50 строк
+        
+    - step: 2
+      action: "Создать интерфейс IInventoryManager"
+      files:
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/IInventoryManager.h
+      code_paths:
+        - Inventory manager interface
+      validation: |
+        - Интерфейс содержит только методы для работы с инвентарем
+        - Нет зависимостей от конкретных классов
+        - Использует IInventoryItem вместо конкретных классов
+        - Соответствует ISP и DIP
+        - Не превышает 50 строк
+        
+    - step: 3
+      action: "Реализовать класс UNECPInventoryItem"
+      files:
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/UNECPInventoryItem.h
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/UNECPInventoryItem.cpp
+      code_paths:
+        - Inventory item implementation
+      validation: |
+        - Класс реализует IInventoryItem
+        - Размер класса не превышает 400 строк
+        - Интегрируется с ULyraInventoryItemInstance
+        - Нет комментариев и TODO
+        - Соблюдены SOLID принципы
+        
+    - step: 4
+      action: "Реализовать класс UNECPInventoryComponent"
+      files:
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/UNECPInventoryComponent.h
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/UNECPInventoryComponent.cpp
+      code_paths:
+        - Inventory component implementation
+      validation: |
+        - Класс реализует IInventoryManager
+        - Размер класса не превышает 400 строк
+        - Интегрируется с ULyraInventoryManagerComponent
+        - Потокобезопасность через FCriticalSection
+        - Использует IInventoryItem вместо конкретных классов
+        - Нет комментариев и TODO
+        - Соблюдены SOLID принципы (особенно SRP, DIP)
+        
+    - step: 5
+      action: "Интегрировать в игрового персонажа"
+      files:
+        - client/UE5/NECPGAME/Source/LyraGame/Character/LyraCharacter.h
+        - client/UE5/NECPGAME/Source/LyraGame/Character/LyraCharacter.cpp
+      code_paths:
+        - Character integration
+      validation: |
+        - Компонент добавлен как UPROPERTY
+        - Используется интерфейс IInventoryManager, а не конкретный класс
+        - Инициализация в BeginPlay или конструкторе
+        - Без комментариев и TODO
+
+dependencies:
+  tasks:
+    - id: roadmap-v0.1-tech-demo
+      relation: depends_on
+      description: Базовая инфраструктура должна быть готова
+  documents:
+    - knowledge/mechanics/economy/economy-overview.yaml
+    - knowledge/mechanics/combat/combat-loadouts-system.yaml
+    - knowledge/analysis/tasks/roadmap/v0.1-tech-demo.yaml
+  code_files:
+    - client/UE5/NECPGAME/Source/LyraGame/Inventory/LyraInventoryManagerComponent.h
+    - client/UE5/NECPGAME/Source/LyraGame/Inventory/LyraInventoryItemDefinition.h
+    - client/UE5/NECPGAME/Source/LyraGame/Inventory/LyraInventoryItemInstance.h
+
+acceptance_criteria:
+  - Инвентарь работает через интерфейс IInventoryManager
+  - Все классы не превышают 400 строк
+  - Нет комментариев и TODO в коде
+  - Соблюдены все SOLID принципы
+  - Код прошел автоматическое ревью по чеклисту
+  - Потокобезопасность реализована через FCriticalSection
+  - Интерфейсы используются вместо конкретных классов
+  - Интеграция с существующей системой Lyra работает
+
+review:
+  automated_checks:
+    - SOLID: проверить SRP, OCP, LSP, ISP, DIP
+    - Code style: проверить UE5-CPP-STYLE.mdc
+    - Checklist: проверить CODE-REVIEW-CHECKLIST.mdc
+    - Class size: максимум 400 строк на класс
+    - Dependencies: только интерфейсы, никаких конкретных классов
+    - Thread safety: проверка FCriticalSection
+    - Comments: нет комментариев и TODO
+    - Naming: PascalCase для публичных, camelCase для приватных
+  human_review_required: false
+  review_notes: |
+    Агент должен:
+    1. Выполнить все автоматические проверки
+    2. Исправить найденные проблемы
+    3. Обновить статус задачи
+    4. Создать коммит с описанием изменений
+
+related_content:
+  features:
+    - inventory-system
+    - item-management
+    - economy-core
+  game_content:
+    - knowledge/mechanics/economy/economy-overview.yaml
+    - knowledge/mechanics/combat/combat-loadouts-system.yaml
+
+related_systems:
+  - economy
+  - combat
+  - character-progression
+  - crafting
+
+notes: |
+  Это реализация базовой системы инвентаря для v0.1 Tech Demo.
+  
+  Важно учесть:
+  - Интеграция с существующей системой Lyra
+  - Возможность расширения для артефактов и специальных предметов
+  - Интеграция с системой сохранений (будет в v0.2)
+  - Репликация для multiplayer (через Lyra систему)
