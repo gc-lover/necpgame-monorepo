@@ -1,0 +1,151 @@
+metadata:
+  id: agent-task-inventory-system
+  title: "Реализация системы инвентаря"
+  priority: high
+  status: pending
+  assignee: cursor-agent
+  created_at: 2025-11-22T00:00:00Z
+  updated_at: 2025-11-22T00:00:00Z
+  tags:
+    - feature
+    - inventory
+    - economy
+
+task:
+  description: |
+    Реализовать систему инвентаря для хранения предметов игроков.
+    Система должна поддерживать:
+    - Добавление и удаление предметов
+    - Проверку свободного места
+    - Сортировку предметов
+    - Сохранение состояния
+    - Работа через интерфейс (не прямая зависимость)
+    
+  context: |
+    Инвентарь является базовой системой для экономики игры.
+    Необходим для хранения оружия, боеприпасов, расходников.
+    Интегрируется с системами крафта и торговли.
+    
+  requirements:
+    - SOLID принципы (особенно SRP, DIP, ISP)
+    - Максимум 400 строк на класс
+    - Без комментариев и TODO
+    - Интерфейсы для всех зависимостей
+    - Потокобезопасность для multiplayer
+
+implementation:
+  steps:
+    - step: 1
+      action: "Создать интерфейс IInventory"
+      files:
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/IInventory.h
+      code_paths:
+        - Inventory interface
+      validation: |
+        - Интерфейс содержит только методы для работы с инвентарем
+        - Нет зависимостей от конкретных классов
+        - Методы чисто виртуальные
+        - Соответствует ISP (Interface Segregation Principle)
+        
+    - step: 2
+      action: "Создать интерфейс IItem"
+      files:
+        - client/UE5/NECPGAME/Source/NECPGAME/Items/IItem.h
+      code_paths:
+        - Item interface
+      validation: |
+        - Интерфейс содержит только базовые методы предмета
+        - Нет зависимостей от инвентаря
+        - Минимальный интерфейс (ISP)
+        
+    - step: 3
+      action: "Реализовать класс UInventoryComponent"
+      files:
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/UInventoryComponent.h
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/UInventoryComponent.cpp
+      code_paths:
+        - Inventory implementation
+      validation: |
+        - Класс реализует IInventory
+        - Размер класса не превышает 400 строк
+        - Использует IItem, а не конкретные классы
+        - Потокобезопасность через FCriticalSection
+        - Соблюдены SOLID принципы
+        
+    - step: 4
+      action: "Создать класс UInventoryItem"
+      files:
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/UInventoryItem.h
+        - client/UE5/NECPGAME/Source/NECPGAME/Inventory/UInventoryItem.cpp
+      code_paths:
+        - Inventory item implementation
+      validation: |
+        - Класс реализует IItem
+        - Размер класса не превышает 400 строк
+        - Не зависит от инвентаря
+        - UPROPERTY для репликации
+
+dependencies:
+  tasks:
+    - id: roadmap-v0.2-mvp-foundation
+      relation: depends_on
+      description: Инфраструктура должна быть готова
+  documents:
+    - knowledge/implementation/backend/inventory-system.yaml
+    - knowledge/mechanics/economy/inventory.yaml
+    - knowledge/implementation/architecture/mvp-backend-architecture.yaml
+  code_files:
+    - client/UE5/NECPGAME/Source/NECPGAME/Items/
+
+acceptance_criteria:
+  - Инвентарь работает через интерфейс IInventory
+  - Все классы не превышают 400 строк
+  - Нет комментариев и TODO в коде
+  - Соблюдены все SOLID принципы
+  - Код прошел автоматическое ревью по чеклисту
+  - Потокобезопасность реализована
+  - Интерфейсы используются вместо конкретных классов
+
+review:
+  automated_checks:
+    - SOLID: проверить SRP, OCP, LSP, ISP, DIP
+    - Code style: проверить UE5-CPP-STYLE.mdc
+    - Checklist: проверить CODE-REVIEW-CHECKLIST.mdc
+    - Class size: максимум 400 строк на класс
+    - Dependencies: только интерфейсы, никаких конкретных классов
+    - Thread safety: проверка FCriticalSection
+    - Comments: нет комментариев и TODO
+    - Naming: PascalCase для публичных, camelCase для приватных
+  human_review_required: false
+  review_notes: |
+    Агент должен:
+    1. Выполнить все автоматические проверки
+    2. Исправить найденные проблемы
+    3. Обновить статус задачи
+    4. Создать коммит с описанием изменений
+
+related_content:
+  features:
+    - inventory-system
+    - item-management
+    - equipment-system
+  game_content:
+    - knowledge/content/items/weapons.yaml
+    - knowledge/content/items/consumables.yaml
+    - knowledge/content/items/armor.yaml
+
+related_systems:
+  - economy
+  - combat
+  - character-progression
+  - crafting
+
+notes: |
+  Это пример задачи для демонстрации формата.
+  Реальная реализация может отличаться в зависимости от требований.
+  
+  Важно учесть:
+  - Возможность расширения для артефактов
+  - Интеграцию с системой сохранений
+  - Репликацию для multiplayer
+

@@ -9,7 +9,10 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameModes/LyraGameMode.h"
+#include "Inventory/NECPInventoryComponent.h"
+#include "Inventory/IInventoryManager.h"
 #include "LyraCharacterMovementComponent.h"
+#include "UObject/ScriptInterface.h"
 #include "LyraGameplayTags.h"
 #include "LyraLogChannels.h"
 #include "Net/RealtimeWebSocketConnection.h"
@@ -87,6 +90,9 @@ ALyraCharacter::ALyraCharacter(const FObjectInitializer &ObjectInitializer)
   CameraComponent =
       CreateDefaultSubobject<ULyraCameraComponent>(TEXT("CameraComponent"));
   CameraComponent->SetRelativeLocation(FVector(-300.0f, 0.0f, 75.0f));
+
+  InventoryComponent =
+      CreateDefaultSubobject<UNECPInventoryComponent>(TEXT("InventoryComponent"));
 
   bUseControllerRotationPitch = false;
   bUseControllerRotationYaw = true;
@@ -247,6 +253,16 @@ UAbilitySystemComponent *ALyraCharacter::GetAbilitySystemComponent() const {
   }
 
   return PawnExtComponent->GetLyraAbilitySystemComponent();
+}
+
+TScriptInterface<IInventoryManager> ALyraCharacter::GetInventoryManager() const
+{
+	if (InventoryComponent == nullptr)
+	{
+		return TScriptInterface<IInventoryManager>();
+	}
+
+	return TScriptInterface<IInventoryManager>(InventoryComponent);
 }
 
 void ALyraCharacter::OnAbilitySystemInitialized() {

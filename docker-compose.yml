@@ -146,6 +146,64 @@ services:
       - "9092:9090"
     restart: unless-stopped
 
+  inventory-service:
+    build:
+      context: ./services/inventory-service-go
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - ADDR=0.0.0.0:8085
+      - METRICS_ADDR=:9090
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=info
+    ports:
+      - "8085:8085"
+      - "9094:9090"
+    restart: unless-stopped
+
+  movement-service:
+    build:
+      context: ./services/movement-service-go
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - realtime-gateway
+    environment:
+      - ADDR=0.0.0.0:8086
+      - METRICS_ADDR=:9091
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+      - REDIS_URL=redis://redis:6379/1
+      - GATEWAY_URL=ws://realtime-gateway:18080/client
+      - UPDATE_INTERVAL=5s
+      - LOG_LEVEL=info
+    ports:
+      - "8086:8086"
+      - "9095:9091"
+    restart: unless-stopped
+
+  character-service:
+    build:
+      context: ./services/character-service-go
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - ADDR=0.0.0.0:8087
+      - METRICS_ADDR=:9092
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+      - REDIS_URL=redis://redis:6379/2
+      - KEYCLOAK_URL=http://keycloak:8080
+      - LOG_LEVEL=info
+    ports:
+      - "8087:8087"
+      - "9096:9092"
+    restart: unless-stopped
+
 volumes:
   pgdata:
   redisdata:
