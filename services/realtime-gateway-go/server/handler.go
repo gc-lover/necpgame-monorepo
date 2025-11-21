@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode"
 
@@ -46,6 +47,7 @@ type GatewayHandler struct {
 	gameStateMgr     *GameStateManager
 	serverConn       *websocket.Conn
 	serverConnMu     sync.RWMutex
+	serverWriteMu    sync.Mutex
 	clientConns      map[*websocket.Conn]*ClientConnection
 	clientConnsMu    sync.RWMutex
 	clientDeltaStates map[*websocket.Conn]*ClientDeltaState
@@ -145,71 +147,78 @@ func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
 	deadline := h.getWriteDeadline()
 	var wg sync.WaitGroup
 	var successCount int64
-	var mu sync.Mutex
-	totalDeltaSize := int64(0)
+	var totalDeltaSize int64
 
-	for i := range clients {
+	h.deltaStatesMu.RLock()
+	deltaStatesSnapshot := make(map[*websocket.Conn]*ClientDeltaState, len(h.clientDeltaStates))
+	for conn, deltaState := range h.clientDeltaStates {
+		deltaStatesSnapshot[conn] = deltaState
+	}
+	h.deltaStatesMu.RUnlock()
+
+	const maxWorkers = 50
+	workerCount := clientCount
+	if workerCount > maxWorkers {
+		workerCount = maxWorkers
+	}
+
+	clientChan := make(chan clientInfo, clientCount)
+	for _, ci := range clients {
+		clientChan <- ci
+	}
+	close(clientChan)
+
+	for w := 0; w < workerCount; w++ {
 		wg.Add(1)
-		go func(idx int) {
-			ci := clients[idx]
+		go func() {
 			defer wg.Done()
-
-			h.deltaStatesMu.RLock()
-			deltaState, exists := h.clientDeltaStates[ci.conn]
-			h.deltaStatesMu.RUnlock()
-
-			if !exists {
-				return
-			}
-
-			oldState := deltaState.GetLastState()
-			delta := CalculateDelta(oldState, newState)
-			defer func() {
-				if delta != nil {
-					PutGameStateToPool(delta)
+			for ci := range clientChan {
+				deltaState, exists := deltaStatesSnapshot[ci.conn]
+				if !exists {
+					continue
 				}
-			}()
 
-			var data []byte
-			var err error
-			if delta != nil && len(delta.Entities) > 0 {
-				data, err = BuildGameStateMessage(delta)
-				if err != nil {
-					logger.WithError(err).Debug("Failed to build delta message")
-					return
-				}
-			} else if delta != nil {
-				// Дельта пустая, но Tick изменился - отправляем минимальное обновление
-				// Это важно для синхронизации времени и предотвращения рассинхронизации
-				data, err = BuildGameStateMessage(delta)
-				if err != nil {
-					logger.WithError(err).Debug("Failed to build empty delta message")
+				oldState := deltaState.GetLastState()
+				delta := CalculateDelta(oldState, newState)
+				defer func() {
+					if delta != nil {
+						PutGameStateToPool(delta)
+					}
+				}()
+
+				var data []byte
+				var err error
+				if delta != nil && len(delta.Entities) > 0 {
+					data, err = BuildGameStateMessage(delta)
+					if err != nil {
+						logger.WithError(err).Debug("Failed to build delta message")
+						continue
+					}
+				} else if delta != nil {
+					data, err = BuildGameStateMessage(delta)
+					if err != nil {
+						logger.WithError(err).Debug("Failed to build empty delta message")
+						deltaState.SetLastState(CopyGameStateData(newState))
+						continue
+					}
+				} else {
 					deltaState.SetLastState(CopyGameStateData(newState))
-					return
+					continue
 				}
-			} else {
-				// Дельта nil - это означает, что Tick не изменился, пропускаем
-				deltaState.SetLastState(CopyGameStateData(newState))
-				return
+
+				atomic.AddInt64(&totalDeltaSize, int64(len(data)))
+
+				ci.clientConn.mu.Lock()
+				ci.conn.SetWriteDeadline(deadline)
+				if err := ci.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+					logger.WithError(err).Debug("Failed to broadcast delta to client")
+				} else {
+					atomic.AddInt64(&successCount, 1)
+					deltaState.SetLastState(CopyGameStateData(newState))
+				}
+				ci.clientConn.mu.Unlock()
 			}
-
-			mu.Lock()
-			totalDeltaSize += int64(len(data))
-			mu.Unlock()
-
-			ci.clientConn.mu.Lock()
-			ci.conn.SetWriteDeadline(deadline)
-			if err := ci.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
-				logger.WithError(err).Debug("Failed to broadcast delta to client")
-			} else {
-				mu.Lock()
-				successCount++
-				mu.Unlock()
-
-				deltaState.SetLastState(CopyGameStateData(newState))
-			}
-			ci.clientConn.mu.Unlock()
-		}(i)
+		}()
 	}
 
 	wg.Wait()
@@ -219,12 +228,14 @@ func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
 	RecordGameStateBroadcasted()
 
 	avgDeltaSize := float64(0)
-	if successCount > 0 {
-		avgDeltaSize = float64(totalDeltaSize) / float64(successCount)
+	finalSuccessCount := atomic.LoadInt64(&successCount)
+	finalTotalDeltaSize := atomic.LoadInt64(&totalDeltaSize)
+	if finalSuccessCount > 0 {
+		avgDeltaSize = float64(finalTotalDeltaSize) / float64(finalSuccessCount)
 	}
 
 	logger.WithFields(map[string]interface{}{
-		"success_count": successCount,
+		"success_count": finalSuccessCount,
 		"total_clients": clientCount,
 		"duration_ms":   duration * 1000,
 		"avg_delta_size": avgDeltaSize,
@@ -286,14 +297,18 @@ func (h *GatewayHandler) BroadcastToClientsParallel(data []byte) {
 
 func (h *GatewayHandler) SendToServer(data []byte) error {
 	h.serverConnMu.RLock()
-	defer h.serverConnMu.RUnlock()
+	conn := h.serverConn
+	h.serverConnMu.RUnlock()
 	
-	if h.serverConn == nil {
+	if conn == nil {
 		return fmt.Errorf("server connection not available")
 	}
 	
-	h.serverConn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	return h.serverConn.WriteMessage(websocket.BinaryMessage, data)
+	h.serverWriteMu.Lock()
+	defer h.serverWriteMu.Unlock()
+	
+	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	return conn.WriteMessage(websocket.BinaryMessage, data)
 }
 
 func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.Conn) error {

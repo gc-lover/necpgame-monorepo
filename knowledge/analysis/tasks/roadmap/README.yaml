@@ -4,8 +4,8 @@ metadata:
   document_type: analysis
   category: roadmap
   status: draft
-  version: "1.5.0"
-  last_updated: 2025-11-20T23:30:00Z
+  version: "1.7.0"
+  last_updated: 2025-11-22T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ""
   owners:
@@ -24,6 +24,10 @@ metadata:
     - id: implementation-tech-stack
       relation: references
     - id: architecture-mvp-backend
+      relation: references
+    - id: world-zoning-architecture
+      relation: references
+    - id: esports-server-capacity
       relation: references
   visibility: internal
   audience:
@@ -112,10 +116,18 @@ content:
         - Исправлен инвертированный Pitch: взгляд вверх/вниз работает правильно
         - Исправлены все краши (EXCEPTION_ACCESS_VIOLATION): безопасная работа с делегатами через TWeakObjectPtr
         - Завершено базовое тестирование полного цикла синхронизации: PlayerInput → Server → GameState → Clients работает стабильно
-
-        ⚠️ В процессе:
-        - Оптимизация частоты обновлений и размера сообщений
-        - Дельта-компрессия для GameState
+        - Дельта-компрессия для GameState: реализована в Go Gateway (delta_compression.go), отправляются только изменения вместо полного snapshot
+        - Нагрузочное тестирование: созданы инструменты loadtest и findlimit для тестирования с 10, 50, 100+ клиентами
+        - Тест стабильности: реализован sync_test.go и документация для длительных тестов (30+ минут)
+        - Метрики производительности: реализованы метрики RTT, задержки обработки, пропускной способности в Prometheus и инструментах тестирования
+        - Оптимизация BroadcastGameStateWithDelta: реализован worker pool (50 воркеров) для ограничения concurrent goroutines и снижения contention
+        - Исправление findlimit: исправлены проблемы с подключением клиентов (отдельный контекст для подключения, правильный ticker interval, передача testCtx)
+        - Автоматическое переподключение сервера к Gateway: реализован механизм переподключения с настраиваемыми интервалами и попытками
+        - Исправление concurrent write в Gateway: добавлен serverWriteMu mutex для защиты записи в serverConn
+        - Docker restart policy: добавлена политика restart: unless-stopped для автоматического перезапуска контейнеров
+        - Исправление GameState: удалена проверка на пустой список игроков, GameState всегда отправляется для поддержания синхронизации tick
+        - Исследование зонирования мира: создана документация WORLD-ZONING-ARCHITECTURE.md с анализом spatial partitioning, grid-based систем, sector-based архитектуры
+        - Исследование количества клиентов на инстанс: создана документация ESPORTS-SERVER-CAPACITY.md с анализом для киберспорта (10-12 игроков на матч) и экшен MMORPG (50-150 при 60 Hz, 100-300 при 30-40 Hz)
 
         ❌ Не начато:
         - Инвентарь, экономика, крафт
@@ -175,6 +187,14 @@ history:
     date: 2025-11-20
     author: tech_director
     changes: Отмечено завершение базового тестирования синхронизации. Рефакторинг синхронизации движения (UWebSocketMovementSyncComponent). Исправлена обработка PlayerInput (разделение AimX/AimY и MoveX/MoveY), исправлен инвертированный Pitch, исправлены все краши (EXCEPTION_ACCESS_VIOLATION). Полный цикл синхронизации работает стабильно.
+  - version: "1.6.0"
+    date: 2025-11-21
+    author: tech_director
+    changes: Отмечено завершение оптимизации и тестирования: дельта-компрессия для GameState реализована в Go Gateway, созданы инструменты нагрузочного тестирования (loadtest, findlimit), реализован тест стабильности, добавлены метрики производительности (RTT, задержка, пропускная способность). Исправлены критические ошибки: замена TActorIterator на GetAllActorsOfClass, исправлен поиск способности оружия по SourceObject.
+  - version: "1.7.0"
+    date: 2025-11-22
+    author: tech_director
+    changes: Отмечено завершение дополнительных оптимизаций: worker pool в BroadcastGameStateWithDelta (50 воркеров для снижения contention), исправление findlimit (проблемы с подключением клиентов через отдельный контекст и правильный ticker interval), автоматическое переподключение сервера к Gateway, исправление concurrent write в Gateway (serverWriteMu mutex), Docker restart policy для автоматического перезапуска контейнеров, исправление GameState не отправлялся при 0 игроках. Добавлены исследования: зонирование мира (WORLD-ZONING-ARCHITECTURE.md с анализом spatial partitioning, grid-based систем, sector-based архитектуры), количество клиентов на инстанс (ESPORTS-SERVER-CAPACITY.md с анализом для киберспорта и экшен MMORPG).
 validation:
   checksum: ""
   schema_version: "1.0"

@@ -12,6 +12,10 @@ ULyraServerGatewayConnection::ULyraServerGatewayConnection()
 	: GatewayPort(18080)
 	, bIsConnected(false)
 	, HeartbeatInterval(5.0f)
+	, ReconnectInterval(5.0f)
+	, ReconnectAttempts(0)
+	, MaxReconnectAttempts(-1)
+	, bShouldReconnect(true)
 {
 }
 
@@ -22,10 +26,20 @@ ULyraServerGatewayConnection::~ULyraServerGatewayConnection()
 
 void ULyraServerGatewayConnection::Initialize(const FString& InGatewayAddress, int32 InGatewayPort)
 {
-	Shutdown();
+	if (WebSocket.IsValid() && bIsConnected)
+	{
+		return;
+	}
+
+	if (WebSocket.IsValid())
+	{
+		WebSocket->Close();
+		WebSocket.Reset();
+	}
 
 	GatewayAddress = InGatewayAddress;
 	GatewayPort = InGatewayPort;
+	bShouldReconnect = true;
 
 	if (!FModuleManager::Get().IsModuleLoaded("WebSockets"))
 	{
@@ -78,6 +92,8 @@ void ULyraServerGatewayConnection::Initialize(const FString& InGatewayAddress, i
 
 void ULyraServerGatewayConnection::Shutdown()
 {
+	bShouldReconnect = false;
+
 	if (WebSocket.IsValid())
 	{
 		if (bIsConnected)
@@ -98,6 +114,7 @@ void ULyraServerGatewayConnection::Shutdown()
 			if (TimerManager)
 			{
 				TimerManager->ClearTimer(HeartbeatTimerHandle);
+				TimerManager->ClearTimer(ReconnectTimerHandle);
 			}
 		}
 	}
@@ -106,6 +123,7 @@ void ULyraServerGatewayConnection::Shutdown()
 void ULyraServerGatewayConnection::OnWebSocketConnected()
 {
 	bIsConnected = true;
+	ReconnectAttempts = 0;
 
 	if (GEngine && !GIsGarbageCollecting)
 	{
@@ -115,6 +133,7 @@ void ULyraServerGatewayConnection::OnWebSocketConnected()
 			FTimerManager* TimerManager = &World->GetTimerManager();
 			if (TimerManager)
 			{
+				TimerManager->ClearTimer(ReconnectTimerHandle);
 				TimerManager->SetTimer(HeartbeatTimerHandle, this, &ULyraServerGatewayConnection::SendHeartbeat, HeartbeatInterval, true);
 			}
 		}
@@ -129,6 +148,11 @@ void ULyraServerGatewayConnection::OnWebSocketConnectionError()
 	bIsConnected = false;
 	UE_LOG(LogTemp, Error, TEXT("LyraServerGatewayConnection: Connection error"));
 	OnGatewayDisconnected.Broadcast(TEXT("Connection error"));
+
+	if (bShouldReconnect && (MaxReconnectAttempts < 0 || ReconnectAttempts < MaxReconnectAttempts))
+	{
+		AttemptReconnect();
+	}
 }
 
 void ULyraServerGatewayConnection::OnWebSocketClosed()
@@ -150,6 +174,11 @@ void ULyraServerGatewayConnection::OnWebSocketClosed()
 
 	UE_LOG(LogTemp, Warning, TEXT("LyraServerGatewayConnection: Connection closed"));
 	OnGatewayDisconnected.Broadcast(TEXT("Connection closed"));
+
+	if (bShouldReconnect && (MaxReconnectAttempts < 0 || ReconnectAttempts < MaxReconnectAttempts))
+	{
+		AttemptReconnect();
+	}
 }
 
 void ULyraServerGatewayConnection::OnWebSocketRawMessage(void* Data, int32 DataSize)
@@ -197,6 +226,48 @@ void ULyraServerGatewayConnection::SendHeartbeat()
 		TArray<uint8> HeartbeatData;
 		HeartbeatData.Add(0);
 		WebSocket->Send(HeartbeatData.GetData(), HeartbeatData.Num(), true);
+	}
+}
+
+void ULyraServerGatewayConnection::AttemptReconnect()
+{
+	if (!bShouldReconnect)
+	{
+		return;
+	}
+
+	if (MaxReconnectAttempts >= 0 && ReconnectAttempts >= MaxReconnectAttempts)
+	{
+		UE_LOG(LogTemp, Error, TEXT("LyraServerGatewayConnection: Max reconnect attempts (%d) reached, stopping reconnection"), MaxReconnectAttempts);
+		return;
+	}
+
+	ReconnectAttempts++;
+
+	if (GEngine && !GIsGarbageCollecting)
+	{
+		UWorld* World = GEngine->GetWorldFromContextObject(this, EGetWorldErrorMode::ReturnNull);
+		if (World && IsValid(World) && !World->bIsTearingDown)
+		{
+			FTimerManager* TimerManager = &World->GetTimerManager();
+			if (TimerManager)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("LyraServerGatewayConnection: Attempting to reconnect (attempt %d/%s) in %.1f seconds..."), 
+					ReconnectAttempts, 
+					MaxReconnectAttempts < 0 ? TEXT("∞") : *FString::FromInt(MaxReconnectAttempts),
+					ReconnectInterval);
+
+				FString SavedAddress = GatewayAddress;
+				int32 SavedPort = GatewayPort;
+				TWeakObjectPtr<ULyraServerGatewayConnection> WeakThis(this);
+				TimerManager->SetTimer(ReconnectTimerHandle, FTimerDelegate::CreateLambda([WeakThis, SavedAddress, SavedPort]() {
+					if (ULyraServerGatewayConnection* StrongThis = WeakThis.Get())
+					{
+						StrongThis->Initialize(SavedAddress, SavedPort);
+					}
+				}), ReconnectInterval, false);
+			}
+		}
 	}
 }
 

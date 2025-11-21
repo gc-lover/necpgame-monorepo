@@ -29,12 +29,18 @@ jobs:
             core.info(`Найденные Task ID: ${matchedIds.join(', ') || 'нет'}`);
             core.info(`Присутствует ссылка на очередь: ${hasQueuePath}`);
 
+            const errors = [];
+            
             if (matchedIds.length === 0) {
-              core.setFailed('Описание PR должно содержать идентификатор задачи (например, API-123).');
+              errors.push('Описание PR должно содержать идентификатор задачи (например, API-123).');
             }
 
             if (!hasQueuePath) {
-              core.setFailed('Описание PR должно ссылаться на очередь (shared/trackers/queues/<role>/<status>.yaml).');
+              errors.push('Описание PR должно ссылаться на очередь (shared/trackers/queues/<role>/<status>.yaml).');
+            }
+
+            if (errors.length > 0) {
+              core.setFailed(errors.join('\n'));
             }
 
 

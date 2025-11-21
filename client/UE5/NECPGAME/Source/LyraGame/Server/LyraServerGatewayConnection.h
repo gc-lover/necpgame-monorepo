@@ -53,12 +53,18 @@ private:
 
 	void ProcessServerMessage(const TArray<uint8>& Data);
 	void SendHeartbeat();
+	void AttemptReconnect();
 
 	FTimerHandle HeartbeatTimerHandle;
+	FTimerHandle ReconnectTimerHandle;
 	TSharedPtr<class IWebSocket> WebSocket;
 	FString GatewayAddress;
 	int32 GatewayPort;
 	bool bIsConnected;
 	float HeartbeatInterval;
+	float ReconnectInterval;
+	int32 ReconnectAttempts;
+	int32 MaxReconnectAttempts;
+	bool bShouldReconnect;
 };
 

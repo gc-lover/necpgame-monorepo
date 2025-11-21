@@ -67,15 +67,29 @@ func CalculateDelta(oldState, newState *GameStateData) *GameStateData {
 	delta.Tick = newState.Tick
 	delta.Entities = delta.Entities[:0]
 
-	oldEntitiesMap := make(map[string]*EntityState)
+	if len(newState.Entities) == 0 && len(oldState.Entities) == 0 {
+		if delta.Tick == oldState.Tick {
+			PutGameStateToPool(delta)
+			return nil
+		}
+		return delta
+	}
+
+	oldEntitiesMap := make(map[string]*EntityState, len(oldState.Entities))
 	for i := range oldState.Entities {
 		oldEntitiesMap[oldState.Entities[i].ID] = &oldState.Entities[i]
 	}
 
-	for _, newEntity := range newState.Entities {
+	newEntitiesMap := make(map[string]bool, len(newState.Entities))
+	delta.Entities = make([]EntityState, 0, len(newState.Entities))
+
+	for i := range newState.Entities {
+		newEntity := &newState.Entities[i]
+		newEntitiesMap[newEntity.ID] = true
 		oldEntity, exists := oldEntitiesMap[newEntity.ID]
+		
 		if !exists {
-			delta.Entities = append(delta.Entities, newEntity)
+			delta.Entities = append(delta.Entities, *newEntity)
 			continue
 		}
 
@@ -123,27 +137,16 @@ func CalculateDelta(oldState, newState *GameStateData) *GameStateData {
 	}
 
 	for oldID := range oldEntitiesMap {
-		found := false
-		for _, newEntity := range newState.Entities {
-			if newEntity.ID == oldID {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !newEntitiesMap[oldID] {
 			delta.Entities = append(delta.Entities, EntityState{ID: oldID})
 		}
 	}
 
-	// Если Tick изменился, всегда возвращаем дельту (даже пустую) для синхронизации времени
-	// Это важно для клиентов, чтобы они знали, что сервер обновился
 	if len(delta.Entities) == 0 && delta.Tick == oldState.Tick {
 		PutGameStateToPool(delta)
 		return nil
 	}
 
-	// Если Tick изменился, но entities не изменились, все равно возвращаем дельту
-	// Клиент должен получить обновление Tick для правильной синхронизации
 	return delta
 }
 
