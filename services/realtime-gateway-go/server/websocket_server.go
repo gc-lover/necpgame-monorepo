@@ -28,8 +28,8 @@ func NewWebSocketServer(addr string, handler WebSocketConnectionHandler) *WebSoc
 			CheckOrigin: func(r *http.Request) bool {
 				return true
 			},
-			ReadBufferSize:  4096,
-			WriteBufferSize: 4096,
+			ReadBufferSize:  32 * 1024,
+			WriteBufferSize: 32 * 1024,
 		},
 		handler: handler,
 	}
@@ -248,6 +248,7 @@ func (s *WebSocketServer) handleServerWebSocket(w http.ResponseWriter, r *http.R
 				}
 				
 				if messageType == websocket.BinaryMessage {
+					RecordGameStateReceived()
 					logger.WithFields(map[string]interface{}{
 						"data_len": len(data),
 						"source":   "dedicated_server",

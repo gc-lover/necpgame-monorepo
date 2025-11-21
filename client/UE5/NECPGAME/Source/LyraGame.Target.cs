@@ -30,6 +30,7 @@ public class LyraGameTarget : TargetRules
 
 		Target.bUseUnityBuild = true;
 		Target.MinFilesUsingPrecompiledHeader = 1;
+		Target.bUsePCHFiles = true;
 
 		bool bIsTest = Target.Configuration == UnrealTargetConfiguration.Test;
 		bool bIsShipping = Target.Configuration == UnrealTargetConfiguration.Shipping;

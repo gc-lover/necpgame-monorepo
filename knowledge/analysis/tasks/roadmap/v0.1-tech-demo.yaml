@@ -4,8 +4,8 @@ metadata:
   document_type: analysis
   category: roadmap
   status: draft
-  version: '1.12.0'
-  last_updated: 2025-11-20T12:00:00Z
+  version: '1.13.0'
+  last_updated: 2025-11-20T23:30:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -84,10 +84,18 @@ summary:
     - Исправлены краши при закрытии редактора: использование TWeakObjectPtr в lambda-захватах для безопасного доступа к объектам
     - Исправлена проблема с массовой перекомпиляцией: удалены лишние includes из заголовочных файлов, добавлены forward declarations для предотвращения PCH инвалидации
     - Исправлены пути включения: UObject/WeakObjectPtr.h вместо Templates/WeakObjectPtr.h
+    ✅ Завершено (синхронизация):
+    - Добавлены метрики производительности синхронизации в Go Gateway (player_input_received_total, player_input_forwarded_total, gamestate_received_total, gamestate_broadcasted_total, gamestate_broadcast_duration_seconds, active_clients, active_server_connection, message_size_bytes)
+    - Создан план тестирования базовой синхронизации (sync-testing-plan.yaml)
+    - Создана документация по тестированию синхронизации (scripts/testing/test-sync.md)
+    - Рефакторинг синхронизации движения: создан UWebSocketMovementSyncComponent для разделения ответственности (SOLID принципы)
+    - Исправлена обработка PlayerInput на сервере: корректное разделение AimX/AimY (поворот камеры) и MoveX/MoveY (движение персонажа)
+    - Исправлен инвертированный Pitch: взгляд вверх/вниз работает правильно
+    - Исправлены все краши (EXCEPTION_ACCESS_VIOLATION): использование TWeakObjectPtr в AsyncTask, безопасная работа с делегатами
+    - Завершено базовое тестирование полного цикла: PlayerInput → Server → GameState → Clients работает стабильно
     ⚠️ В процессе: 
-    - Тестирование и отладка полного цикла: PlayerInput → Server → GameState → Clients
     - Оптимизация частоты обновлений и размера сообщений
-    - Исправление ошибок компиляции после рефакторинга WebSocket
+    - Дельта-компрессия для GameState
     ⚠️ Не начато: 
     - Инвентарь, экономика, крафт, античит
     - Расширенная физика стрельбы через Chaos Physics (базовая есть в Lyra)
@@ -245,7 +253,7 @@ tasks:
         Настроить репликацию через Iris/ReplicationGraph и Network Prediction.
         Интегрировать с WebSocket-шлюзом для маршрутизации пакетов.
       priority: high
-      status: in_progress
+      status: completed
       dependencies: [network-001, client-001]
       estimated_effort: 15d
       notes: |
@@ -270,9 +278,15 @@ tasks:
         - Репликация GameState обратно клиентам через WebSocket: реализована в ALyraGameMode::UpdateAndSendGameState (60 Hz), Go Gateway рассылает всем клиентам, клиенты обновляют позиции через OnGameStateReceived
         - Полная обработка PlayerInput: сервер корректно парсит PlayerInput (исправлен парсер для поля 0), обновляет GameState через GameStateManager, рассылает клиентам
         - Исправлен парсер Protobuf на Go сервере: корректная обработка неизвестных полей, игнорирование вместо ошибок
+        ✅ Завершено (тестирование):
+        - Базовое тестирование полного цикла синхронизации: PlayerInput → Server → GameState → Clients работает стабильно
+        - Исправлена обработка PlayerInput: корректное разделение AimX/AimY (поворот камеры) и MoveX/MoveY (движение персонажа)
+        - Исправлен инвертированный Pitch: взгляд вверх/вниз работает правильно
+        - Исправлены все краши (EXCEPTION_ACCESS_VIOLATION): безопасная работа с делегатами через TWeakObjectPtr
+        - Рефакторинг синхронизации: создан UWebSocketMovementSyncComponent для разделения ответственности
         ⚠️ В процессе:
-        - Тестирование полного цикла синхронизации: PlayerInput → Server → GameState → Clients
         - Оптимизация производительности: частота обновлений, размер сообщений, батчинг
+        - Дельта-компрессия для GameState
         ⚠️ Не начато:
         - Физика стрельбы и попаданий (Chaos Physics) - базовая стрельба есть в Lyra через WeaponTrace
         - Network Prediction
@@ -589,6 +603,14 @@ history:
     date: 2025-11-20
     author: tech_director
     changes: Отмечен рефакторинг WebSocket клиента: переход с IWebSocketNetworkingModule на FWebSocketsModule::CreateWebSocket для поддержки полных URL путей (/ws, /server). Исправлены краши при закрытии редактора через использование TWeakObjectPtr в lambda-захватах. Оптимизирована компиляция: удалены лишние includes из заголовочных файлов, добавлены forward declarations для предотвращения PCH инвалидации. Исправлены пути включения WeakObjectPtr (UObject/WeakObjectPtr.h).
+  - version: '1.13.0'
+    date: 2025-11-20
+    author: tech_director
+    changes: Добавлены метрики производительности синхронизации в Go Gateway: player_input_received_total, player_input_forwarded_total, gamestate_received_total, gamestate_broadcasted_total, gamestate_broadcast_duration_seconds, active_clients, active_server_connection, message_size_bytes. Создан план тестирования базовой синхронизации (sync-testing-plan.yaml) и документация по тестированию (scripts/testing/test-sync.md). Начата работа по оптимизации базовой синхронизации.
+  - version: '1.14.0'
+    date: 2025-11-20
+    author: tech_director
+    changes: Завершено базовое тестирование синхронизации. Рефакторинг синхронизации движения: создан UWebSocketMovementSyncComponent для разделения ответственности (SOLID принципы). Исправлена обработка PlayerInput на сервере: корректное разделение AimX/AimY (поворот камеры) и MoveX/MoveY (движение персонажа). Исправлен инвертированный Pitch (взгляд вверх/вниз). Исправлены все краши (EXCEPTION_ACCESS_VIOLATION) через использование TWeakObjectPtr в AsyncTask и безопасную работу с делегатами. Полный цикл синхронизации работает стабильно.
 validation:
   checksum: ''
   schema_version: '1.0'

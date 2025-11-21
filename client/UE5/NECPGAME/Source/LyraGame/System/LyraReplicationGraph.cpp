@@ -73,6 +73,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/LevelStreaming.h"
 #include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 #include "CoreGlobals.h"
 
 #if WITH_GAMEPLAY_DEBUGGER
@@ -906,10 +907,13 @@ void ULyraReplicationGraphNode_PlayerStateFrequencyLimiter::PrepareForReplicatio
 	// We rebuild our lists of player states each frame. This is not as efficient as it could be but its the simplest way
 	// to handle players disconnecting and keeping the lists compact. If the lists were persistent we would need to defrag them as players left.
 
-	for (TActorIterator<APlayerState> It(GetWorld()); It; ++It)
+	TArray<AActor*> AllPlayerStates;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerState::StaticClass(), AllPlayerStates);
+	
+	for (AActor* Actor : AllPlayerStates)
 	{
-		APlayerState* PS = *It;
-		if (IsActorValidForReplicationGather(PS) == false)
+		APlayerState* PS = Cast<APlayerState>(Actor);
+		if (!PS || IsActorValidForReplicationGather(PS) == false)
 		{
 			continue;
 		}

@@ -10,6 +10,7 @@
 #include "Engine/Engine.h"
 #include "LyraControllerComponent_CharacterParts.h"
 #include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(LyraCosmeticDeveloperSettings)
 
@@ -64,9 +65,12 @@ void ULyraCosmeticDeveloperSettings::ReapplyLoadoutIfInPIE()
 	{
 		ServerWorld->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([=]()
 			{
-				for (TActorIterator<APlayerController> PCIterator(ServerWorld); PCIterator; ++PCIterator)
+				TArray<AActor*> AllPlayerControllers;
+				UGameplayStatics::GetAllActorsOfClass(ServerWorld, APlayerController::StaticClass(), AllPlayerControllers);
+				
+				for (AActor* Actor : AllPlayerControllers)
 				{
-					if (APlayerController* PC = *PCIterator)
+					if (APlayerController* PC = Cast<APlayerController>(Actor))
 					{
 						if (ULyraControllerComponent_CharacterParts* CosmeticComponent = PC->FindComponentByClass<ULyraControllerComponent_CharacterParts>())
 						{

@@ -3,6 +3,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "HAL/PlatformProcess.h"
+#include "HAL/CriticalSection.h"
 #include "IWebSocket.h"
 #include "Misc/ConfigCacheIni.h"
 #include "Modules/ModuleManager.h"
@@ -172,11 +173,11 @@ void URealtimeWebSocketConnection::SendPlayerInput(float MoveX, float MoveY,
   }
 
   Message.PlayerInput.Tick = ClientTick++;
-  Message.PlayerInput.MoveX = MoveX;
-  Message.PlayerInput.MoveY = MoveY;
+  Message.PlayerInput.MoveX = FProtobufCodec::QuantizeCoordinate(MoveX);
+  Message.PlayerInput.MoveY = FProtobufCodec::QuantizeCoordinate(MoveY);
   Message.PlayerInput.Shoot = Shoot;
-  Message.PlayerInput.AimX = AimX;
-  Message.PlayerInput.AimY = AimY;
+  Message.PlayerInput.AimX = FProtobufCodec::QuantizeCoordinate(AimX);
+  Message.PlayerInput.AimY = FProtobufCodec::QuantizeCoordinate(AimY);
 
   TArray<uint8> MessageData = FProtobufCodec::EncodeClientMessage(Message);
   SendProtobufMessage(MessageData);
@@ -234,22 +235,34 @@ bool URealtimeWebSocketConnection::InitializeWebSocket() {
   });
   WebSocket->OnRawMessage().AddLambda(
       [WeakThis](const void *Data, SIZE_T Size, SIZE_T BytesRemaining) {
-        UE_LOG(LogTemp, Warning,
+        UE_LOG(LogTemp, VeryVerbose,
                TEXT("WebSocketConnection: OnRawMessage called: Size=%d, "
                     "BytesRemaining=%d"),
                Size, BytesRemaining);
         if (URealtimeWebSocketConnection *StrongThis = WeakThis.Get()) {
+          if (!IsValid(StrongThis)) {
+            UE_LOG(LogTemp, VeryVerbose,
+                   TEXT("WebSocketConnection: StrongThis is not valid, ignoring message"));
+            return;
+          }
           TArray<uint8> ReceivedData;
           ReceivedData.Append(static_cast<const uint8 *>(Data), Size);
           if (BytesRemaining == 0) {
-            StrongThis->OnWebSocketDataReceived(ReceivedData);
+            TWeakObjectPtr<URealtimeWebSocketConnection> WeakThisForAsync = WeakThis;
+            AsyncTask(ENamedThreads::GameThread, [WeakThisForAsync, ReceivedData]() {
+              if (URealtimeWebSocketConnection* StrongThis = WeakThisForAsync.Get()) {
+                if (IsValid(StrongThis)) {
+                  StrongThis->OnWebSocketDataReceived(ReceivedData);
+                }
+              }
+            });
           } else {
-            UE_LOG(LogTemp, Warning,
+            UE_LOG(LogTemp, VeryVerbose,
                    TEXT("WebSocketConnection: Message chunk received, waiting "
                         "for more data..."));
           }
         } else {
-          UE_LOG(LogTemp, Warning,
+          UE_LOG(LogTemp, VeryVerbose,
                  TEXT("WebSocketConnection: WeakThis is invalid, ignoring "
                       "message"));
         }
@@ -296,7 +309,7 @@ void URealtimeWebSocketConnection::OnWebSocketConnected() {
   bIsConnected = true;
   ClientTick = 0;
 
-  UE_LOG(LogTemp, Warning,
+  UE_LOG(LogTemp, Log,
          TEXT("WebSocketConnection: ===== CONNECTED to %s:%d ===== "
               "bIsConnected=%d"),
          *ServerAddress, ServerPort, bIsConnected);
@@ -307,12 +320,12 @@ void URealtimeWebSocketConnection::OnWebSocketConnected() {
     AuthMessage.Type = FProtobufCodec::FClientMessage::EMessageType::Heartbeat;
     TArray<uint8> AuthData = FProtobufCodec::EncodeClientMessage(AuthMessage);
     SendProtobufMessage(AuthData);
-    UE_LOG(LogTemp, Warning,
+    UE_LOG(LogTemp, VeryVerbose,
            TEXT("WebSocketConnection: Auth token sent after connection"));
   }
 
   OnConnected.Broadcast(true);
-  UE_LOG(LogTemp, Warning,
+  UE_LOG(LogTemp, VeryVerbose,
          TEXT("WebSocketConnection: OnConnected delegate broadcasted"));
 
   if (UWorld *World = GEngine->GetWorldFromContextObject(
@@ -320,7 +333,7 @@ void URealtimeWebSocketConnection::OnWebSocketConnected() {
     World->GetTimerManager().SetTimer(
         HeartbeatTimerHandle, this,
         &URealtimeWebSocketConnection::SendHeartbeat, 1.0f, true);
-    UE_LOG(LogTemp, Warning,
+    UE_LOG(LogTemp, VeryVerbose,
            TEXT("WebSocketConnection: Heartbeat timer started"));
   }
 }
@@ -328,10 +341,16 @@ void URealtimeWebSocketConnection::OnWebSocketConnected() {
 void URealtimeWebSocketConnection::OnWebSocketDisconnected(
     const FString &Reason) {
   bIsConnected = false;
-  UE_LOG(
-      LogTemp, Warning,
-      TEXT("WebSocketConnection: ===== DISCONNECTED: %s ===== bIsConnected=%d"),
-      *Reason, bIsConnected);
+  const bool bNormalClose = Reason.Contains(TEXT("Successfully closed"));
+  if (bNormalClose) {
+    UE_LOG(LogTemp, Log,
+           TEXT("WebSocketConnection: ===== DISCONNECTED: %s ===== bIsConnected=%d"),
+           *Reason, bIsConnected);
+  } else {
+    UE_LOG(LogTemp, Warning,
+           TEXT("WebSocketConnection: ===== DISCONNECTED: %s ===== bIsConnected=%d"),
+           *Reason, bIsConnected);
+  }
 
   if (GEngine && !GIsGarbageCollecting) {
     UWorld *World = GEngine->GetWorldFromContextObject(
@@ -353,7 +372,7 @@ void URealtimeWebSocketConnection::OnWebSocketDisconnected(
 
 void URealtimeWebSocketConnection::OnWebSocketDataReceived(
     const TArray<uint8> &Data) {
-  UE_LOG(LogTemp, Warning,
+  UE_LOG(LogTemp, VeryVerbose,
          TEXT("WebSocketConnection: ===== DATA RECEIVED: %d bytes ===== "
               "bIsConnected=%d"),
          Data.Num(), bIsConnected);
@@ -363,60 +382,56 @@ void URealtimeWebSocketConnection::OnWebSocketDataReceived(
 void URealtimeWebSocketConnection::ProcessServerMessage(
     const TArray<uint8> &Data) {
   if (Data.Num() == 0) {
-    UE_LOG(LogTemp, Warning,
-           TEXT("WebSocketConnection: ProcessServerMessage: Empty data"));
     return;
   }
 
-  UE_LOG(LogTemp, Warning,
-         TEXT("WebSocketConnection: ProcessServerMessage: Processing %d bytes"),
-         Data.Num());
+  TWeakObjectPtr<URealtimeWebSocketConnection> WeakThis = this;
 
   FProtobufCodec::FServerMessage ServerMsg;
   if (!FProtobufCodec::DecodeServerMessage(Data, ServerMsg)) {
-    UE_LOG(
-        LogTemp, Warning,
-        TEXT("WebSocketConnection: Failed to decode server message (%d bytes)"),
-        Data.Num());
-    OnGameStateReceived.Broadcast(Data);
+    TArray<uint8> BroadcastData = Data;
+    AsyncTask(ENamedThreads::GameThread, [WeakThis, BroadcastData]() {
+      if (URealtimeWebSocketConnection* StrongThis = WeakThis.Get()) {
+        if (IsValid(StrongThis) && StrongThis->OnGameStateReceived.IsBound()) {
+          StrongThis->OnGameStateReceived.Broadcast(BroadcastData);
+        }
+      }
+    });
     return;
   }
 
-  UE_LOG(LogTemp, Warning,
-         TEXT("WebSocketConnection: Decoded message type: %d"),
-         (int32)ServerMsg.Type);
-
   if (ServerMsg.Type ==
       FProtobufCodec::FServerMessage::EMessageType::HeartbeatAck) {
-    UE_LOG(LogTemp, Warning,
-           TEXT("WebSocketConnection: HeartbeatAck received: ServerTime=%lld, "
-                "RTT=%lld"),
-           ServerMsg.HeartbeatAck.ServerTimeMs,
-           ServerMsg.HeartbeatAck.RTTEstimateMs);
-    OnHeartbeatAck.Broadcast(ServerMsg.HeartbeatAck.ServerTimeMs,
-                             ServerMsg.HeartbeatAck.RTTEstimateMs);
+    int64 ServerTime = ServerMsg.HeartbeatAck.ServerTimeMs;
+    int64 RTT = ServerMsg.HeartbeatAck.RTTEstimateMs;
+    AsyncTask(ENamedThreads::GameThread, [WeakThis, ServerTime, RTT]() {
+      if (URealtimeWebSocketConnection* StrongThis = WeakThis.Get()) {
+        if (IsValid(StrongThis) && StrongThis->OnHeartbeatAck.IsBound()) {
+          StrongThis->OnHeartbeatAck.Broadcast(ServerTime, RTT);
+        }
+      }
+    });
     LastRTT = static_cast<int32>(ServerMsg.HeartbeatAck.RTTEstimateMs);
   } else if (ServerMsg.Type ==
              FProtobufCodec::FServerMessage::EMessageType::GameState) {
-    UE_LOG(LogTemp, Warning,
-           TEXT("WebSocketConnection: ===== GAMESTATE RECEIVED: %d entities, "
-                "Tick=%lld ====="),
-           ServerMsg.GameState.Snapshot.Entities.Num(),
-           ServerMsg.GameState.Snapshot.Tick);
-
     TArray<uint8> GameStateData =
         FProtobufCodec::EncodeServerMessage(ServerMsg);
-    UE_LOG(LogTemp, Warning,
-           TEXT("WebSocketConnection: Broadcasting OnGameStateReceived with %d "
-                "bytes"),
-           GameStateData.Num());
-    OnGameStateReceived.Broadcast(GameStateData);
+    AsyncTask(ENamedThreads::GameThread, [WeakThis, GameStateData]() {
+      if (URealtimeWebSocketConnection* StrongThis = WeakThis.Get()) {
+        if (IsValid(StrongThis) && StrongThis->OnGameStateReceived.IsBound()) {
+          StrongThis->OnGameStateReceived.Broadcast(GameStateData);
+        }
+      }
+    });
   } else {
-    UE_LOG(LogTemp, Warning,
-           TEXT("WebSocketConnection: Unknown message type: %d, broadcasting "
-                "raw data"),
-           (int32)ServerMsg.Type);
-    OnGameStateReceived.Broadcast(Data);
+    TArray<uint8> BroadcastData = Data;
+    AsyncTask(ENamedThreads::GameThread, [WeakThis, BroadcastData]() {
+      if (URealtimeWebSocketConnection* StrongThis = WeakThis.Get()) {
+        if (IsValid(StrongThis) && StrongThis->OnGameStateReceived.IsBound()) {
+          StrongThis->OnGameStateReceived.Broadcast(BroadcastData);
+        }
+      }
+    });
   }
 }
 
