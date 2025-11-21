@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -68,17 +69,39 @@ func main() {
 	totalMetrics.PlayerID = "total"
 
 	var clientsWg sync.WaitGroup
+	var connectedWg sync.WaitGroup
+	connectedWg.Add(config.NumClients)
+	startTestChan := make(chan struct{})
 	clientMetrics := make([]*ClientMetrics, config.NumClients)
-
-	startTime := time.Now()
 
 	for i := 0; i < config.NumClients; i++ {
 		clientMetrics[i] = &ClientMetrics{
 			PlayerID: fmt.Sprintf("p%08x", i),
 		}
 		clientsWg.Add(1)
-		go runClient(ctx, config, clientMetrics[i], &clientsWg)
+		go runClient(ctx, config, clientMetrics[i], &clientsWg, &connectedWg, startTestChan)
 	}
+
+	// Ждем подключения всех клиентов (с таймаутом 30 секунд)
+	connectedChan := make(chan struct{})
+	go func() {
+		connectedWg.Wait()
+		close(connectedChan)
+	}()
+
+	connectionTimeout := 30 * time.Second
+	select {
+	case <-connectedChan:
+		// Все клиенты подключились
+		fmt.Printf("OK All %d clients connected, starting test...\n", config.NumClients)
+	case <-time.After(connectionTimeout):
+		// Таймаут подключения
+		fmt.Printf("WARNING  Warning: Not all clients connected within %v, starting test anyway...\n", connectionTimeout)
+	}
+
+	// Только после подключения всех клиентов начинаем измерение времени и тест
+	startTime := time.Now()
+	close(startTestChan) // Сигнализируем клиентам, что можно начинать тест
 
 	var reportWg sync.WaitGroup
 	reportWg.Add(1)
@@ -104,7 +127,7 @@ func main() {
 	finalReport(clientMetrics, time.Since(startTime))
 }
 
-func runClient(ctx context.Context, config LoadTestConfig, metrics *ClientMetrics, wg *sync.WaitGroup) {
+func runClient(ctx context.Context, config LoadTestConfig, metrics *ClientMetrics, wg *sync.WaitGroup, connectedWg *sync.WaitGroup, startTestChan <-chan struct{}) {
 	defer wg.Done()
 
 	dialer := websocket.Dialer{
@@ -114,12 +137,17 @@ func runClient(ctx context.Context, config LoadTestConfig, metrics *ClientMetric
 	conn, _, err := dialer.DialContext(ctx, config.ServerURL, nil)
 	if err != nil {
 		atomic.AddInt64(&metrics.ConnectionsFailed, 1)
+		connectedWg.Done() // Сигнализируем даже при ошибке, чтобы не блокировать тест
 		log.Printf("[%s] Failed to connect: %v", metrics.PlayerID, err)
 		return
 	}
 	defer conn.Close()
 
 	atomic.AddInt64(&metrics.Connections, 1)
+	connectedWg.Done() // Сигнализируем, что клиент подключился
+
+	// Ждем сигнала начала теста (все клиенты подключились)
+	<-startTestChan
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -135,15 +163,18 @@ func runClient(ctx context.Context, config LoadTestConfig, metrics *ClientMetric
 			case <-ctx.Done():
 				return
 			default:
-				conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-				messageType, data, err := conn.ReadMessage()
-				if err != nil {
-					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-						atomic.AddInt64(&metrics.Errors, 1)
-						errChan <- err
+			conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+			messageType, data, err := conn.ReadMessage()
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					atomic.AddInt64(&metrics.Errors, 1)
+					select {
+					case errChan <- err:
+					default:
 					}
-					return
 				}
+				return
+			}
 
 				if messageType == websocket.BinaryMessage {
 					atomic.AddInt64(&metrics.TotalBytesReceived, int64(len(data)))
@@ -165,26 +196,46 @@ func runClient(ctx context.Context, config LoadTestConfig, metrics *ClientMetric
 	defer ticker.Stop()
 
 	tick := int64(1)
+	startTime := time.Now()
 
 	for {
 		select {
 		case <-ctx.Done():
+			ticker.Stop()
 			cancel()
+			conn.SetWriteDeadline(time.Now().Add(1 * time.Second))
+			conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			readWg.Wait()
 			return
 		case err := <-errChan:
-			log.Printf("[%s] Connection error: %v", metrics.PlayerID, err)
+			if err != nil && !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				log.Printf("[%s] Connection error: %v", metrics.PlayerID, err)
+			}
+			ticker.Stop()
 			cancel()
 			readWg.Wait()
 			return
 		case <-ticker.C:
-			playerInput := buildPlayerInput(metrics.PlayerID, tick, 1.0, 0.0, false, 0.0, 0.0)
+			elapsed := time.Since(startTime).Seconds()
+			
+			// Симулируем движение по кругу для постоянных изменений
+			// Каждый клиент имеет свой offset для уникальности
+			clientOffset := float64(tick % 100) * 0.1
+			moveX := float32(math.Sin(elapsed*0.5 + clientOffset))
+			moveY := float32(math.Cos(elapsed*0.5 + clientOffset))
+			
+			// Симулируем поворот камеры
+			aimX := float32(math.Sin(elapsed*0.3 + clientOffset*2))
+			aimY := float32(math.Cos(elapsed*0.3 + clientOffset*2))
+			
+			playerInput := buildPlayerInput(metrics.PlayerID, tick, moveX, moveY, false, aimX, aimY)
 
 			conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			err := conn.WriteMessage(websocket.BinaryMessage, playerInput)
 			if err != nil {
-				atomic.AddInt64(&metrics.Errors, 1)
-				log.Printf("[%s] Failed to send PlayerInput: %v", metrics.PlayerID, err)
+				if !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+					atomic.AddInt64(&metrics.Errors, 1)
+				}
 				continue
 			}
 

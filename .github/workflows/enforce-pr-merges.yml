@@ -10,9 +10,16 @@ jobs:
   prevent-direct-push:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Ensure push comes from PR merge
         run: |
-          commit_message="${{ github.event.head_commit.message }}"
+          if [ -z "${{ github.event.head_commit.message }}" ]; then
+            commit_message=$(git log -1 --pretty=%B)
+          else
+            commit_message="${{ github.event.head_commit.message }}"
+          fi
           if [[ "$commit_message" == Merge\ pull\ request* ]]; then
             echo "Merge commit detected: $commit_message"
             exit 0

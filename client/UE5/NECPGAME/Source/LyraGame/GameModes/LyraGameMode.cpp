@@ -814,50 +814,69 @@ void ALyraGameMode::UpdateAndSendGameState() {
     return;
   }
 
+  UWorld* World = GetWorld();
+  if (!World) {
+    return;
+  }
+
+  TArray<AActor*> AllCharacters;
+  UGameplayStatics::GetAllActorsOfClass(World, ALyraCharacter::StaticClass(), AllCharacters);
+
   FProtobufCodec::FServerMessage ServerMsg;
   ServerMsg.Type = FProtobufCodec::FServerMessage::EMessageType::GameState;
 
   static int64 ServerTick = 0;
   ServerTick++;
   ServerMsg.GameState.Snapshot.Tick = ServerTick;
+  
+  const int32 EstimatedEntityCount = AllCharacters.Num();
+  ServerMsg.GameState.Snapshot.Entities.Reserve(EstimatedEntityCount);
 
-  int32 EntityIndex = 0;
-  for (FConstPlayerControllerIterator It =
-           GetWorld()->GetPlayerControllerIterator();
-       It; ++It) {
-    if (APlayerController *PC = It->Get()) {
-      if (APawn *Pawn = PC->GetPawn()) {
-        FProtobufCodec::FEntityState Entity;
-
-        if (ALyraPlayerState *LyraPS = PC->GetPlayerState<ALyraPlayerState>()) {
-          FString OriginalId = LyraPS->GetUniqueId().ToString();
-          Entity.Id = ALyraPlayerController::GenerateShortPlayerId(OriginalId);
-        } else if (APlayerState *PS = PC->GetPlayerState<APlayerState>()) {
-          FString OriginalId = PS->GetUniqueId().ToString();
-          Entity.Id = ALyraPlayerController::GenerateShortPlayerId(OriginalId);
-        } else {
-          Entity.Id = FString::Printf(TEXT("Player_%d"), EntityIndex);
-        }
-
-        FVector Location = Pawn->GetActorLocation();
-        Entity.X = FProtobufCodec::QuantizeCoordinate(Location.X);
-        Entity.Y = FProtobufCodec::QuantizeCoordinate(Location.Y);
-        Entity.Z = FProtobufCodec::QuantizeCoordinate(Location.Z);
-
-        if (UCharacterMovementComponent *MovementComp =
-                Pawn->FindComponentByClass<UCharacterMovementComponent>()) {
-          FVector Velocity = MovementComp->Velocity;
-          Entity.VX = FProtobufCodec::QuantizeCoordinate(Velocity.X);
-          Entity.VY = FProtobufCodec::QuantizeCoordinate(Velocity.Y);
-          Entity.VZ = FProtobufCodec::QuantizeCoordinate(Velocity.Z);
-        }
-
-        FRotator Rotation = Pawn->GetActorRotation();
-        Entity.Yaw = FProtobufCodec::QuantizeCoordinate(Rotation.Yaw);
-
-        ServerMsg.GameState.Snapshot.Entities.Add(Entity);
-        EntityIndex++;
+  for (AActor* Actor : AllCharacters) {
+    if (ALyraCharacter* Character = Cast<ALyraCharacter>(Actor)) {
+      if (!IsValid(Character)) {
+        continue;
       }
+
+      APawn* Pawn = Cast<APawn>(Character);
+      if (!Pawn) {
+        continue;
+      }
+
+      APlayerController* PC = Pawn->GetController<APlayerController>();
+      if (!PC) {
+        continue;
+      }
+
+      FProtobufCodec::FEntityState Entity;
+
+      if (ALyraPlayerState* LyraPS = PC->GetPlayerState<ALyraPlayerState>()) {
+        FString OriginalId = LyraPS->GetUniqueId().ToString();
+        Entity.Id = ALyraPlayerController::GenerateShortPlayerId(OriginalId);
+      } else if (APlayerState* PS = PC->GetPlayerState<APlayerState>()) {
+        FString OriginalId = PS->GetUniqueId().ToString();
+        Entity.Id = ALyraPlayerController::GenerateShortPlayerId(OriginalId);
+      } else {
+        Entity.Id = FString::Printf(TEXT("Player_%d"), ServerMsg.GameState.Snapshot.Entities.Num());
+      }
+
+      FVector Location = Pawn->GetActorLocation();
+      Entity.X = FProtobufCodec::QuantizeCoordinate(Location.X);
+      Entity.Y = FProtobufCodec::QuantizeCoordinate(Location.Y);
+      Entity.Z = FProtobufCodec::QuantizeCoordinate(Location.Z);
+
+      if (UCharacterMovementComponent* MovementComp =
+              Pawn->FindComponentByClass<UCharacterMovementComponent>()) {
+        FVector Velocity = MovementComp->Velocity;
+        Entity.VX = FProtobufCodec::QuantizeCoordinate(Velocity.X);
+        Entity.VY = FProtobufCodec::QuantizeCoordinate(Velocity.Y);
+        Entity.VZ = FProtobufCodec::QuantizeCoordinate(Velocity.Z);
+      }
+
+      FRotator Rotation = Pawn->GetActorRotation();
+      Entity.Yaw = FProtobufCodec::QuantizeCoordinate(Rotation.Yaw);
+
+      ServerMsg.GameState.Snapshot.Entities.Add(Entity);
     }
   }
 

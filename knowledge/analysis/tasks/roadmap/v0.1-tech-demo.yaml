@@ -4,8 +4,8 @@ metadata:
   document_type: analysis
   category: roadmap
   status: draft
-  version: '1.13.0'
-  last_updated: 2025-11-20T23:30:00Z
+  version: '1.16.0'
+  last_updated: 2025-11-22T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -26,6 +26,10 @@ metadata:
     - id: implementation-tech-stack
       relation: references
     - id: infrastructure-index
+      relation: references
+    - id: world-zoning-architecture
+      relation: references
+    - id: esports-server-capacity
       relation: references
   visibility: internal
   audience:
@@ -79,23 +83,35 @@ summary:
     - Репликация движения: клиенты видят движение других игроков в реальном времени через GameState
     - Оптимизация PlayerID: реализована функция GenerateShortPlayerId в UE5 (создает короткие ID формата "p" + 8 hex символов, всего 9 символов вместо ~48), обновлена валидация в Go (максимум 20 символов, проверка формата), синхронизированы все проверки длины PlayerID
     - Исправлен парсинг PlayerID: решена проблема с varint декодированием, добавлено детальное логирование, все сообщения с коротким PlayerID парсятся корректно
-    OK Завершено (последние исправления):
-    - Рефакторинг WebSocket клиента: переход с IWebSocketNetworkingModule на FWebSocketsModule для поддержки полных URL путей (/ws, /server)
-    - Исправлены краши при закрытии редактора: использование TWeakObjectPtr в lambda-захватах для безопасного доступа к объектам
-    - Исправлена проблема с массовой перекомпиляцией: удалены лишние includes из заголовочных файлов, добавлены forward declarations для предотвращения PCH инвалидации
-    - Исправлены пути включения: UObject/WeakObjectPtr.h вместо Templates/WeakObjectPtr.h
-    OK Завершено (синхронизация):
-    - Добавлены метрики производительности синхронизации в Go Gateway (player_input_received_total, player_input_forwarded_total, gamestate_received_total, gamestate_broadcasted_total, gamestate_broadcast_duration_seconds, active_clients, active_server_connection, message_size_bytes)
-    - Создан план тестирования базовой синхронизации (sync-testing-plan.yaml)
-    - Создана документация по тестированию синхронизации (scripts/testing/test-sync.md)
-    - Рефакторинг синхронизации движения: создан UWebSocketMovementSyncComponent для разделения ответственности (SOLID принципы)
-    - Исправлена обработка PlayerInput на сервере: корректное разделение AimX/AimY (поворот камеры) и MoveX/MoveY (движение персонажа)
-    - Исправлен инвертированный Pitch: взгляд вверх/вниз работает правильно
-    - Исправлены все краши (EXCEPTION_ACCESS_VIOLATION): использование TWeakObjectPtr в AsyncTask, безопасная работа с делегатами
-    - Завершено базовое тестирование полного цикла: PlayerInput → Server → GameState → Clients работает стабильно
-    WARNING В процессе: 
-    - Оптимизация частоты обновлений и размера сообщений
-    - Дельта-компрессия для GameState
+        OK Завершено (последние исправления):
+        - Рефакторинг WebSocket клиента: переход с IWebSocketNetworkingModule на FWebSocketsModule для поддержки полных URL путей (/ws, /server)
+        - Исправлены краши при закрытии редактора: использование TWeakObjectPtr в lambda-захватах для безопасного доступа к объектам
+        - Исправлена проблема с массовой перекомпиляцией: удалены лишние includes из заголовочных файлов, добавлены forward declarations для предотвращения PCH инвалидации
+        - Исправлены пути включения: UObject/WeakObjectPtr.h вместо Templates/WeakObjectPtr.h
+        OK Завершено (синхронизация):
+        - Добавлены метрики производительности синхронизации в Go Gateway (player_input_received_total, player_input_forwarded_total, gamestate_received_total, gamestate_broadcasted_total, gamestate_broadcast_duration_seconds, active_clients, active_server_connection, message_size_bytes)
+        - Создан план тестирования базовой синхронизации (sync-testing-plan.yaml)
+        - Создана документация по тестированию синхронизации (scripts/testing/test-sync.md)
+        - Рефакторинг синхронизации движения: создан UWebSocketMovementSyncComponent для разделения ответственности (SOLID принципы)
+        - Исправлена обработка PlayerInput на сервере: корректное разделение AimX/AimY (поворот камеры) и MoveX/MoveY (движение персонажа)
+        - Исправлен инвертированный Pitch: взгляд вверх/вниз работает правильно
+        - Исправлены все краши (EXCEPTION_ACCESS_VIOLATION): использование TWeakObjectPtr в AsyncTask, безопасная работа с делегатами
+        - Завершено базовое тестирование полного цикла: PlayerInput → Server → GameState → Clients работает стабильно
+        OK Завершено (оптимизация и тестирование):
+        - Дельта-компрессия для GameState: реализована в Go Gateway (server/delta_compression.go), отправляются только изменения вместо полного snapshot, используется BroadcastGameStateWithDelta
+        - Нагрузочное тестирование: созданы инструменты loadtest (cmd/loadtest/main.go) и findlimit (cmd/findlimit/main.go) для тестирования с 10, 50, 100+ клиентами, документация в scripts/testing/README-LOADTEST.md и README-FINDLIMIT.md
+        - Тест стабильности: реализован sync_test.go для базового тестирования, документация для длительных тестов (30+ минут) в scripts/testing/test-sync.md
+        - Метрики производительности: реализованы метрики RTT (messageLatency), задержки обработки (gameStateBroadcastDuration), пропускной способности в Prometheus (metrics.go) и инструментах тестирования (loadtest, findlimit)
+        - Оптимизация BroadcastGameStateWithDelta: реализован worker pool (50 воркеров) для ограничения concurrent goroutines и снижения contention, улучшена производительность при большом количестве клиентов
+        - Исправление findlimit: исправлены проблемы с подключением клиентов (отдельный контекст connectCtx с таймаутом 30 секунд, правильный ticker interval через float64, передача testCtx через канал)
+        - Автоматическое переподключение сервера к Gateway: реализован механизм переподключения в ULyraServerGatewayConnection с настраиваемыми интервалами (ReconnectInterval) и попытками (MaxReconnectAttempts)
+        - Исправление concurrent write в Gateway: добавлен serverWriteMu sync.Mutex для защиты записи в serverConn в функции SendToServer, предотвращает panic при concurrent writes
+        - Docker restart policy: добавлена политика restart: unless-stopped в docker-compose.yml для автоматического перезапуска контейнеров (realtime-gateway, ws-lobby, matchmaking, postgres, redis)
+        - Исправление GameState: удалена проверка if (AllCharacters.Num() == 0) в UpdateAndSendGameState, GameState всегда отправляется для поддержания синхронизации tick даже при отсутствии игроков
+        - Исследование зонирования мира: создана документация knowledge/analysis/optimization/WORLD-ZONING-ARCHITECTURE.md с анализом spatial partitioning, grid-based систем, sector-based архитектуры, примеры из индустрии (Black Desert Online, EVE Online, New World, Guild Wars 2)
+        - Исследование количества клиентов на инстанс: создана документация knowledge/analysis/optimization/ESPORTS-SERVER-CAPACITY.md с анализом для киберспорта (10-12 игроков на матч, 100-200 клиентов на Gateway для 10-20 матчей) и экшен MMORPG (50-150 при 60 Hz, 100-300 при 30-40 Hz, 200-450 при 20-30 Hz)
+        WARNING В процессе: 
+        - Оптимизация частоты обновлений (адаптивная частота для дальних объектов)
     WARNING Не начато: 
     - Инвентарь, экономика, крафт, античит
     - Расширенная физика стрельбы через Chaos Physics (базовая есть в Lyra)
@@ -611,6 +627,14 @@ history:
     date: 2025-11-20
     author: tech_director
     changes: Завершено базовое тестирование синхронизации. Рефакторинг синхронизации движения: создан UWebSocketMovementSyncComponent для разделения ответственности (SOLID принципы). Исправлена обработка PlayerInput на сервере: корректное разделение AimX/AimY (поворот камеры) и MoveX/MoveY (движение персонажа). Исправлен инвертированный Pitch (взгляд вверх/вниз). Исправлены все краши (EXCEPTION_ACCESS_VIOLATION) через использование TWeakObjectPtr в AsyncTask и безопасную работу с делегатами. Полный цикл синхронизации работает стабильно.
+  - version: '1.15.0'
+    date: 2025-11-21
+    author: tech_director
+    changes: Завершена оптимизация и тестирование синхронизации: дельта-компрессия для GameState реализована в Go Gateway (delta_compression.go), созданы инструменты нагрузочного тестирования (loadtest, findlimit), реализован тест стабильности (sync_test.go), добавлены метрики производительности (RTT, задержка, пропускная способность). Исправлены критические ошибки: замена TActorIterator на GetAllActorsOfClass во всех файлах, исправлен поиск способности оружия по SourceObject вместо класса.
+  - version: '1.16.0'
+    date: 2025-11-22
+    author: tech_director
+    changes: Завершена дополнительная оптимизация: реализован worker pool (50 воркеров) в BroadcastGameStateWithDelta для снижения contention, исправлены проблемы с подключением клиентов в findlimit (отдельный контекст для подключения, правильный ticker interval), реализовано автоматическое переподключение сервера к Gateway, исправлен concurrent write в Gateway (serverWriteMu mutex), добавлена Docker restart policy, исправлена проблема с GameState не отправлялся при 0 игроках. Создана документация по зонированию мира (WORLD-ZONING-ARCHITECTURE.md) и количеству клиентов на инстанс (ESPORTS-SERVER-CAPACITY.md).
 validation:
   checksum: ''
   schema_version: '1.0'
