@@ -25,6 +25,7 @@
 #include "Net/ProtobufCodec.h"
 #include "Player/LyraPlayerBotController.h"
 #include "Player/LyraPlayerController.h"
+#include "HAL/CriticalSection.h"
 #include "Player/LyraPlayerSpawningManagerComponent.h"
 #include "Player/LyraPlayerState.h"
 #include "System/LyraAssetManager.h"
@@ -646,33 +647,55 @@ void ALyraGameMode::OnPlayerInputReceived(const TArray<uint8> &InputData) {
   const FProtobufCodec::FPlayerInput &PlayerInput = ClientMsg.PlayerInput;
   FString PlayerID = PlayerInput.PlayerId;
 
-  UE_LOG(LogLyra, Log,
+  UE_LOG(LogLyra, VeryVerbose,
          TEXT("ALyraGameMode::OnPlayerInputReceived: PlayerID=%s, Tick=%lld, "
               "MoveX=%.2f, MoveY=%.2f, AimX=%.2f, AimY=%.2f, Shoot=%d"),
-         *PlayerID, PlayerInput.Tick, PlayerInput.MoveX, PlayerInput.MoveY,
-         PlayerInput.AimX, PlayerInput.AimY, PlayerInput.Shoot ? 1 : 0);
+         *PlayerID, PlayerInput.Tick,
+         FProtobufCodec::DequantizeCoordinate(PlayerInput.MoveX),
+         FProtobufCodec::DequantizeCoordinate(PlayerInput.MoveY),
+         FProtobufCodec::DequantizeCoordinate(PlayerInput.AimX),
+         FProtobufCodec::DequantizeCoordinate(PlayerInput.AimY),
+         PlayerInput.Shoot ? 1 : 0);
 
   ALyraPlayerController *LyraPC = FindPlayerControllerByID(PlayerID);
   if (!LyraPC) {
-    UE_LOG(LogLyra, Error,
-           TEXT("ALyraGameMode::OnPlayerInputReceived: No player controller "
-                "found for PlayerID=%s. Available controllers:"),
-           *PlayerID);
-    
-    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It) {
-      if (ALyraPlayerController *PC = Cast<ALyraPlayerController>(It->Get())) {
-        FString PCPlayerID = TEXT("UNKNOWN");
-        if (ALyraPlayerState *LyraPS = PC->GetPlayerState<ALyraPlayerState>()) {
-          FString OriginalId = LyraPS->GetUniqueId().ToString();
-          PCPlayerID = ALyraPlayerController::GenerateShortPlayerId(OriginalId);
-        } else if (APlayerState *PS = PC->GetPlayerState<APlayerState>()) {
-          FString OriginalId = PS->GetUniqueId().ToString();
-          PCPlayerID = ALyraPlayerController::GenerateShortPlayerId(OriginalId);
+    if (!PlayerID.IsEmpty() && PlayerID.Len() > 0 && PlayerID.Len() < 100) {
+      static TSet<FString> LoggedMissingPlayerIDs;
+      static FCriticalSection LoggedMissingPlayerIDsCS;
+      FScopeLock Lock(&LoggedMissingPlayerIDsCS);
+      
+      if (!LoggedMissingPlayerIDs.Contains(PlayerID)) {
+        LoggedMissingPlayerIDs.Add(PlayerID);
+      UE_LOG(LogLyra, Warning,
+             TEXT("ALyraGameMode::OnPlayerInputReceived: No player controller "
+                  "found for PlayerID=%s. Available controllers:"),
+             *PlayerID);
+      
+      for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It) {
+        if (ALyraPlayerController *PC = Cast<ALyraPlayerController>(It->Get())) {
+          FString PCPlayerID = TEXT("UNKNOWN");
+          if (ALyraPlayerState *LyraPS = PC->GetPlayerState<ALyraPlayerState>()) {
+            FString OriginalId = LyraPS->GetUniqueId().ToString();
+            PCPlayerID = ALyraPlayerController::GenerateShortPlayerId(OriginalId);
+          } else if (APlayerState *PS = PC->GetPlayerState<APlayerState>()) {
+            FString OriginalId = PS->GetUniqueId().ToString();
+            PCPlayerID = ALyraPlayerController::GenerateShortPlayerId(OriginalId);
+          }
+          UE_LOG(LogLyra, Warning,
+                 TEXT("  - Controller: %s, PlayerID: %s"),
+                 *PC->GetName(), *PCPlayerID);
         }
-        UE_LOG(LogLyra, Error,
-               TEXT("  - Controller: %s, PlayerID: %s"),
-               *PC->GetName(), *PCPlayerID);
       }
+      } else {
+        UE_LOG(LogLyra, VeryVerbose,
+               TEXT("ALyraGameMode::OnPlayerInputReceived: No player controller "
+                    "found for PlayerID=%s (already logged)"),
+               *PlayerID);
+      }
+    } else {
+      UE_LOG(LogLyra, VeryVerbose,
+             TEXT("ALyraGameMode::OnPlayerInputReceived: No player controller "
+                  "found for PlayerID (invalid or empty)"));
     }
     
     return;
@@ -702,7 +725,7 @@ void ALyraGameMode::OnPlayerInputReceived(const TArray<uint8> &InputData) {
       FMath::Abs(PlayerInput.AimY) > 0.01f) {
     ControlRotation.Yaw += PlayerInput.AimX * 2.0f;
     ControlRotation.Pitch = FMath::Clamp(
-        ControlRotation.Pitch - PlayerInput.AimY * 2.0f, -89.0f, 89.0f);
+        ControlRotation.Pitch + PlayerInput.AimY * 2.0f, -89.0f, 89.0f);
     LyraPC->SetControlRotation(ControlRotation);
   }
 
@@ -730,28 +753,27 @@ void ALyraGameMode::OnPlayerInputReceived(const TArray<uint8> &InputData) {
     if (ULyraAbilitySystemComponent* ASC = Character->GetLyraAbilitySystemComponent()) {
       if (ULyraEquipmentManagerComponent* EquipmentManager = Character->FindComponentByClass<ULyraEquipmentManagerComponent>()) {
         if (ULyraRangedWeaponInstance* WeaponInstance = EquipmentManager->GetFirstInstanceOfType<ULyraRangedWeaponInstance>()) {
-          FGameplayAbilitySpec* WeaponAbilitySpec = ASC->FindAbilitySpecFromClass(ULyraGameplayAbility_RangedWeapon::StaticClass());
+          FGameplayAbilitySpec* WeaponAbilitySpec = nullptr;
+          
+          for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities()) {
+            if (Spec.SourceObject == WeaponInstance) {
+              if (ULyraGameplayAbility_RangedWeapon* WeaponAbility = Cast<ULyraGameplayAbility_RangedWeapon>(Spec.Ability)) {
+                if (WeaponAbility->GetWeaponInstance() == WeaponInstance) {
+                  WeaponAbilitySpec = &Spec;
+                  break;
+                }
+              }
+            }
+          }
           
           if (WeaponAbilitySpec) {
-            if (ULyraGameplayAbility_RangedWeapon* WeaponAbility = Cast<ULyraGameplayAbility_RangedWeapon>(WeaponAbilitySpec->Ability)) {
-              if (WeaponAbility->GetWeaponInstance() == WeaponInstance) {
-                if (ASC->TryActivateAbility(WeaponAbilitySpec->Handle)) {
-                  UE_LOG(LogLyra, Log,
-                         TEXT("ALyraGameMode::OnPlayerInputReceived: Successfully activated weapon ability for PlayerID=%s"),
-                         *PlayerID);
-                } else {
-                  UE_LOG(LogLyra, Warning,
-                         TEXT("ALyraGameMode::OnPlayerInputReceived: Failed to activate weapon ability for PlayerID=%s"),
-                         *PlayerID);
-                }
-              } else {
-                UE_LOG(LogLyra, Warning,
-                       TEXT("ALyraGameMode::OnPlayerInputReceived: Weapon ability instance mismatch for PlayerID=%s"),
-                       *PlayerID);
-              }
+            if (ASC->TryActivateAbility(WeaponAbilitySpec->Handle)) {
+              UE_LOG(LogLyra, Log,
+                     TEXT("ALyraGameMode::OnPlayerInputReceived: Successfully activated weapon ability for PlayerID=%s"),
+                     *PlayerID);
             } else {
               UE_LOG(LogLyra, Warning,
-                     TEXT("ALyraGameMode::OnPlayerInputReceived: Found ability is not a ranged weapon ability for PlayerID=%s"),
+                     TEXT("ALyraGameMode::OnPlayerInputReceived: Failed to activate weapon ability for PlayerID=%s"),
                      *PlayerID);
             }
           } else {
@@ -818,20 +840,20 @@ void ALyraGameMode::UpdateAndSendGameState() {
         }
 
         FVector Location = Pawn->GetActorLocation();
-        Entity.X = Location.X;
-        Entity.Y = Location.Y;
-        Entity.Z = Location.Z;
+        Entity.X = FProtobufCodec::QuantizeCoordinate(Location.X);
+        Entity.Y = FProtobufCodec::QuantizeCoordinate(Location.Y);
+        Entity.Z = FProtobufCodec::QuantizeCoordinate(Location.Z);
 
         if (UCharacterMovementComponent *MovementComp =
                 Pawn->FindComponentByClass<UCharacterMovementComponent>()) {
           FVector Velocity = MovementComp->Velocity;
-          Entity.VX = Velocity.X;
-          Entity.VY = Velocity.Y;
-          Entity.VZ = Velocity.Z;
+          Entity.VX = FProtobufCodec::QuantizeCoordinate(Velocity.X);
+          Entity.VY = FProtobufCodec::QuantizeCoordinate(Velocity.Y);
+          Entity.VZ = FProtobufCodec::QuantizeCoordinate(Velocity.Z);
         }
 
         FRotator Rotation = Pawn->GetActorRotation();
-        Entity.Yaw = Rotation.Yaw;
+        Entity.Yaw = FProtobufCodec::QuantizeCoordinate(Rotation.Yaw);
 
         ServerMsg.GameState.Snapshot.Entities.Add(Entity);
         EntityIndex++;
@@ -845,32 +867,47 @@ void ALyraGameMode::UpdateAndSendGameState() {
 
 void ALyraGameMode::OnGatewayConnected(bool bConnected)
 {
-	UE_LOG(LogLyra, Warning, TEXT("ALyraGameMode::OnGatewayConnected: Gateway %s"), bConnected ? TEXT("CONNECTED") : TEXT("DISCONNECTED"));
+	UE_LOG(LogLyra, Log, TEXT("ALyraGameMode::OnGatewayConnected: Gateway %s"), bConnected ? TEXT("CONNECTED") : TEXT("DISCONNECTED"));
 	
 	UWorld* World = GetWorld();
 	if (!World) {
 		return;
 	}
 
-	for (TActorIterator<ALyraCharacter> It(World); It; ++It) {
-		if (ALyraCharacter* Character = *It) {
-			Character->UpdateMovementReplication();
+	TArray<AActor*> AllActors;
+	UGameplayStatics::GetAllActorsOfClass(World, ALyraCharacter::StaticClass(), AllActors);
+	
+	for (AActor* Actor : AllActors) {
+		if (ALyraCharacter* Character = Cast<ALyraCharacter>(Actor)) {
+			if (IsValid(Character)) {
+				Character->UpdateMovementReplication();
+			}
 		}
 	}
 }
 
 void ALyraGameMode::OnGatewayDisconnected(const FString& Reason)
 {
-	UE_LOG(LogLyra, Warning, TEXT("ALyraGameMode::OnGatewayDisconnected: %s"), *Reason);
+	const bool bNormalClose = Reason.Contains(TEXT("Successfully closed")) || Reason.Contains(TEXT("Disconnected"));
+	if (bNormalClose) {
+		UE_LOG(LogLyra, Log, TEXT("ALyraGameMode::OnGatewayDisconnected: %s"), *Reason);
+	} else {
+		UE_LOG(LogLyra, Warning, TEXT("ALyraGameMode::OnGatewayDisconnected: %s"), *Reason);
+	}
 	
 	UWorld* World = GetWorld();
 	if (!World) {
 		return;
 	}
 
-	for (TActorIterator<ALyraCharacter> It(World); It; ++It) {
-		if (ALyraCharacter* Character = *It) {
-			Character->UpdateMovementReplication();
+	TArray<AActor*> AllActors;
+	UGameplayStatics::GetAllActorsOfClass(World, ALyraCharacter::StaticClass(), AllActors);
+	
+	for (AActor* Actor : AllActors) {
+		if (ALyraCharacter* Character = Cast<ALyraCharacter>(Actor)) {
+			if (IsValid(Character)) {
+				Character->UpdateMovementReplication();
+			}
 		}
 	}
 }

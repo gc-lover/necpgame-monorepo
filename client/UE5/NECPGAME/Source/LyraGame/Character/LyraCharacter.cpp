@@ -135,12 +135,12 @@ void ALyraCharacter::BeginPlay() {
     }
 
     if (!bShouldReplicateMovement) {
-      UE_LOG(LogLyra, Warning,
+      UE_LOG(LogLyra, VeryVerbose,
              TEXT("ALyraCharacter::BeginPlay: WebSocket not connected, "
-                  "movement replication DISABLED for %s (Role=%d, NetMode=%d)"),
+                  "movement replication DISABLED for %s (Role=%d, NetMode=%d). This is normal during initial connection."),
              *GetName(), (int32)GetLocalRole(), (int32)World->GetNetMode());
     } else {
-      UE_LOG(LogLyra, Log,
+      UE_LOG(LogLyra, Verbose,
              TEXT("ALyraCharacter::BeginPlay: WebSocket connected, movement "
                   "replication ENABLED for %s"),
              *GetName());

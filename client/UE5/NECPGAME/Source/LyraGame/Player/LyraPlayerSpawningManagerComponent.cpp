@@ -3,6 +3,7 @@
 #include "LyraPlayerSpawningManagerComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 #include "Engine/PlayerStartPIE.h"
 #include "LyraPlayerStart.h"
 
@@ -32,9 +33,12 @@ void ULyraPlayerSpawningManagerComponent::InitializeComponent()
 	UWorld* World = GetWorld();
 	World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &ThisClass::HandleOnActorSpawned));
 
-	for (TActorIterator<ALyraPlayerStart> It(World); It; ++It)
+	TArray<AActor*> AllPlayerStarts;
+	UGameplayStatics::GetAllActorsOfClass(World, ALyraPlayerStart::StaticClass(), AllPlayerStarts);
+	
+	for (AActor* Actor : AllPlayerStarts)
 	{
-		if (ALyraPlayerStart* PlayerStart = *It)
+		if (ALyraPlayerStart* PlayerStart = Cast<ALyraPlayerStart>(Actor))
 		{
 			CachedPlayerStarts.Add(PlayerStart);
 		}
@@ -132,9 +136,12 @@ APlayerStart* ULyraPlayerSpawningManagerComponent::FindPlayFromHereStart(AContro
 	{
 		if (UWorld* World = GetWorld())
 		{
-			for (TActorIterator<APlayerStart> It(World); It; ++It)
+			TArray<AActor*> AllPlayerStarts;
+			UGameplayStatics::GetAllActorsOfClass(World, APlayerStart::StaticClass(), AllPlayerStarts);
+			
+			for (AActor* Actor : AllPlayerStarts)
 			{
-				if (APlayerStart* PlayerStart = *It)
+				if (APlayerStart* PlayerStart = Cast<APlayerStart>(Actor))
 				{
 					if (PlayerStart->IsA<APlayerStartPIE>())
 					{

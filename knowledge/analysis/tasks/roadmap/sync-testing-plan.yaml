@@ -1,0 +1,228 @@
+metadata:
+  id: sync-testing-plan
+  title: "План тестирования и оптимизации базовой синхронизации"
+  document_type: analysis
+  category: roadmap
+  status: draft
+  version: "1.1.0"
+  last_updated: 2025-11-20T23:30:00Z
+  concept_approved: false
+  concept_reviewed_at: ""
+  owners:
+    - role: tech_director
+      contact: tech@necp.game
+  tags:
+    - roadmap
+    - testing
+    - optimization
+    - synchronization
+  topics:
+    - network-synchronization
+    - performance
+  related_systems:
+    - realtime-gateway
+    - ue5-dedicated-server
+    - ue5-client
+  related_documents:
+    - id: roadmap-v0.1-tech-demo
+      relation: references
+  visibility: internal
+  audience:
+    - backend
+    - gameplay
+    - devops
+  risk_level: high
+review:
+  chain:
+    - role: tech_director
+      reviewer: ""
+      reviewed_at: ""
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходимо протестировать и оптимизировать базовую синхронизацию для стабильной работы всех последующих систем.
+  goal: Обеспечить стабильный полный цикл синхронизации PlayerInput → Server → GameState → Clients с оптимальной производительностью.
+  essence: Комплексное тестирование и оптимизация сетевой синхронизации на всех уровнях: клиент, Gateway, Dedicated Server.
+  key_points:
+    - Тестирование полного цикла синхронизации
+    - Оптимизация частоты обновлений и размера сообщений
+    - Метрики производительности
+    - Дельта-компрессия для GameState
+    - Нагрузочное тестирование
+content:
+  sections:
+    - id: current_architecture
+      title: Текущая архитектура синхронизации
+      body: |
+        Полный цикл синхронизации:
+        
+        1. **Клиент (UE5)** → WebSocket → **Go Gateway**:
+           - PlayerInput отправляется каждые ~15-17 мс (60 Hz)
+           - Размер сообщения: ~47 байт
+           - Содержит: PlayerID, Tick, MoveX, MoveY, AimX, AimY, Shoot
+        
+        2. **Go Gateway** → WebSocket → **UE5 Dedicated Server**:
+           - Gateway пересылает PlayerInput на сервер
+           - Gateway также хранит локальную копию в GameStateManager
+        
+        3. **UE5 Dedicated Server**:
+           - Обрабатывает PlayerInput в OnPlayerInputReceived
+           - Обновляет игровое состояние (позиции, вращение, стрельба)
+           - Отправляет GameState каждые ~16.67 мс (60 Hz) через UpdateAndSendGameState
+           - Содержит: Tick, массив EntityState (ID, X, Y, Z, VX, VY, VZ, Yaw)
+        
+        4. **UE5 Dedicated Server** → WebSocket → **Go Gateway**:
+           - Gateway получает GameState от сервера
+           - Рассылает всем подключенным клиентам
+        
+        5. **Go Gateway** → WebSocket → **Клиент (UE5)**:
+           - Клиент получает GameState в OnGameStateReceived
+           - Обновляет позиции других игроков (пропускает локального)
+        
+        OK Реализовано:
+        - Метрики производительности добавлены в Go Gateway
+        - Базовое тестирование полного цикла завершено
+        - Исправлена обработка PlayerInput (разделение AimX/AimY и MoveX/MoveY)
+        - Исправлен инвертированный Pitch
+        - Исправлены все краши (EXCEPTION_ACCESS_VIOLATION)
+        - Рефакторинг синхронизации (UWebSocketMovementSyncComponent)
+        
+        WARNING Осталось:
+        - Дельта-компрессия (отправляется полный snapshot)
+        - Оптимизация частоты обновлений
+        - Расширенное тестирование (нагрузочное, стабильность)
+      mechanics_links: []
+      assets: []
+    - id: testing_plan
+      title: План тестирования
+      body: |
+        Этап 1: Базовое функциональное тестирование
+        
+        1.1. Тест одиночного клиента:
+        - Подключение клиента к Gateway
+        - Отправка PlayerInput
+        - Получение GameState обратно
+        - Проверка корректности обновления позиции
+        
+        1.2. Тест множественных клиентов (2-4):
+        - Подключение нескольких клиентов
+        - Отправка PlayerInput от каждого
+        - Проверка, что все клиенты видят друг друга
+        - Проверка отсутствия десинхронизации
+        
+        1.3. Тест стабильности:
+        - Длительный тест (30+ минут)
+        - Проверка отсутствия утечек памяти
+        - Проверка стабильности соединений
+        - Проверка корректности Tick инкрементирования
+        
+        Этап 2: Производительность
+        
+        2.1. Метрики задержки:
+        - Измерить RTT (Round Trip Time) для PlayerInput → GameState
+        - Измерить задержку обработки на сервере
+        - Измерить задержку рассылки GameState
+        
+        2.2. Метрики пропускной способности:
+        - Измерить размер сообщений
+        - Измерить частоту обновлений
+        - Рассчитать общий трафик на клиента
+        
+        2.3. Нагрузочное тестирование:
+        - Тест с 10 клиентами
+        - Тест с 50 клиентами
+        - Тест с 100 клиентами
+        - Измерить деградацию производительности
+        
+        Этап 3: Оптимизация
+        
+        3.1. Оптимизация частоты обновлений:
+        - Адаптивная частота обновлений (снижение при отсутствии изменений)
+        - Приоритизация обновлений (близкие игроки обновляются чаще)
+        
+        3.2. Дельта-компрессия:
+        - Отправка только изменений вместо полного snapshot
+        - Сжатие данных
+        
+        3.3. Батчинг:
+        - Группировка нескольких обновлений в одно сообщение
+      mechanics_links: []
+      assets: []
+    - id: metrics
+      title: Метрики производительности
+      body: |
+        Метрики для мониторинга:
+        
+        Клиент (UE5):
+        - player_input_send_rate: частота отправки PlayerInput (Hz)
+        - player_input_size: размер PlayerInput сообщения (bytes)
+        - gamestate_receive_rate: частота получения GameState (Hz)
+        - gamestate_size: размер GameState сообщения (bytes)
+        - gamestate_latency: задержка получения GameState (ms)
+        - websocket_rtt: Round Trip Time WebSocket соединения (ms)
+        
+        Go Gateway:
+        - player_input_received_total: общее количество полученных PlayerInput
+        - player_input_forwarded_total: общее количество пересланных PlayerInput
+        - gamestate_received_total: общее количество полученных GameState от сервера
+        - gamestate_broadcasted_total: общее количество рассланных GameState
+        - gamestate_broadcast_duration: время рассылки GameState (ms)
+        - active_clients: количество активных клиентов
+        - active_server_connection: наличие соединения с сервером
+        
+        UE5 Dedicated Server:
+        - player_input_processed_total: общее количество обработанных PlayerInput
+        - player_input_processing_time: время обработки PlayerInput (ms)
+        - gamestate_sent_total: общее количество отправленных GameState
+        - gamestate_update_time: время обновления GameState (ms)
+        - gamestate_size: размер GameState сообщения (bytes)
+        - active_players: количество активных игроков
+      mechanics_links: []
+      assets: []
+    - id: optimization_strategy
+      title: Стратегия оптимизации
+      body: |
+        Приоритет 1: Метрики и мониторинг
+        - Добавить метрики Prometheus во все компоненты
+        - Создать дашборды в Grafana
+        - Настроить алерты на критические метрики
+        
+        Приоритет 2: Оптимизация частоты обновлений
+        - Реализовать адаптивную частоту обновлений
+        - Снизить частоту для дальних объектов
+        - Приоритизировать обновления близких игроков
+        
+        Приоритет 3: Дельта-компрессия
+        - Отправка только изменений в GameState
+        - Сжатие данных (gzip/zstd)
+        - Оптимизация размера EntityState
+        
+        Приоритет 4: Батчинг и агрегация
+        - Группировка нескольких обновлений
+        - Агрегация событий
+        - Оптимизация сетевого трафика
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references:
+    - title: v0.1 Tech Demo Roadmap
+      link: v0.1-tech-demo.yaml
+  decisions: []
+implementation:
+  needs_task: true
+  queue_reference: []
+  blockers: []
+history:
+  - version: "1.0.0"
+    date: 2025-11-20
+    author: tech_director
+    changes: Создан план тестирования и оптимизации базовой синхронизации.
+  - version: "1.1.0"
+    date: 2025-11-20
+    author: tech_director
+    changes: Отмечено завершение базового тестирования синхронизации. Исправлена обработка PlayerInput (разделение AimX/AimY и MoveX/MoveY), исправлен инвертированный Pitch, исправлены все краши. Рефакторинг синхронизации (UWebSocketMovementSyncComponent). Полный цикл синхронизации работает стабильно.
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

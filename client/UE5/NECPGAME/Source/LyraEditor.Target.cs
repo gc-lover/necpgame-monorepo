@@ -12,6 +12,7 @@ public class LyraEditorTarget : TargetRules
 
 		bUseUnityBuild = true;
 		MinFilesUsingPrecompiledHeader = 1;
+		bUsePCHFiles = true;
 
 		ExtraModuleNames.AddRange(new string[] { "LyraGame", "LyraEditor" });
 

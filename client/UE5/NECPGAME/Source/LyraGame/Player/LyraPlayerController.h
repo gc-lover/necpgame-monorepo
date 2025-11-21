@@ -6,6 +6,7 @@
 #include "CommonPlayerController.h"
 #include "Teams/LyraTeamAgentInterface.h"
 #include "Net/RealtimeWebSocketConnection.h"
+#include "Net/WebSocketMovementSyncComponent.h"
 
 #include "LyraPlayerController.generated.h"
 
@@ -166,6 +167,10 @@ protected:
 	// WebSocket Connection
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WebSocket", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<URealtimeWebSocketConnection> WebSocketConnection;
+
+	// WebSocket Movement Sync Component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WebSocket", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UWebSocketMovementSyncComponent> MovementSyncComponent;
 };
 
 

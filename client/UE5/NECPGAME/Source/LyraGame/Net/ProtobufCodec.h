@@ -16,11 +16,11 @@ public:
   struct FPlayerInput {
     FString PlayerId;
     int64 Tick = 0;
-    float MoveX = 0.0f;
-    float MoveY = 0.0f;
+    int32 MoveX = 0;
+    int32 MoveY = 0;
     bool Shoot = false;
-    float AimX = 0.0f;
-    float AimY = 0.0f;
+    int32 AimX = 0;
+    int32 AimY = 0;
   };
 
   struct FClientMessage {
@@ -33,13 +33,13 @@ public:
 
   struct FEntityState {
     FString Id;
-    float X = 0.0f;
-    float Y = 0.0f;
-    float Z = 0.0f;
-    float VX = 0.0f;
-    float VY = 0.0f;
-    float VZ = 0.0f;
-    float Yaw = 0.0f;
+    int32 X = 0;
+    int32 Y = 0;
+    int32 Z = 0;
+    int32 VX = 0;
+    int32 VY = 0;
+    int32 VZ = 0;
+    int32 Yaw = 0;
   };
 
   struct FGameSnapshot {
@@ -65,12 +65,16 @@ public:
   static bool DecodeServerMessage(const TArray<uint8> &Data,
                                   FServerMessage &OutMessage);
 
+  static int32 QuantizeCoordinate(float Value);
+  static float DequantizeCoordinate(int32 Value);
+
 private:
   static void WriteVarInt(TArray<uint8> &Buffer, uint64 Value);
   static void WriteString(TArray<uint8> &Buffer, const FString &Value);
   static void WriteFloat(TArray<uint8> &Buffer, float Value);
   static void WriteBool(TArray<uint8> &Buffer, bool Value);
   static void WriteInt64(TArray<uint8> &Buffer, int64 Value);
+  static void WriteInt32ZigZag(TArray<uint8> &Buffer, int32 Value);
 
   static bool ReadVarInt(const TArray<uint8> &Data, int32 &Offset,
                          uint64 &OutValue);
@@ -82,6 +86,8 @@ private:
                        bool &OutValue);
   static bool ReadInt64(const TArray<uint8> &Data, int32 &Offset,
                         int64 &OutValue);
+  static bool ReadInt32ZigZag(const TArray<uint8> &Data, int32 &Offset,
+                               int32 &OutValue);
   static bool ReadBytes(const TArray<uint8> &Data, int32 &Offset,
                         TArray<uint8> &OutValue);
 };

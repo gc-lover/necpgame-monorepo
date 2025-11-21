@@ -6,11 +6,14 @@ import (
 )
 
 type PlayerState struct {
-	ID      string
-	X       float32
-	Y       float32
-	VX      float32
-	VY      float32
+	ID         string
+	X          float32
+	Y          float32
+	Z          float32
+	VX         float32
+	VY         float32
+	VZ         float32
+	Yaw        float32
 	LastUpdate time.Time
 }
 
@@ -39,8 +42,11 @@ func (gsm *GameStateManager) UpdatePlayerInput(input *PlayerInputData) {
 			ID:         input.PlayerID,
 			X:          0,
 			Y:          0,
+			Z:          0,
 			VX:         0,
 			VY:         0,
+			VZ:         0,
+			Yaw:        0,
 			LastUpdate: time.Now(),
 		}
 		gsm.players[input.PlayerID] = player
@@ -49,8 +55,11 @@ func (gsm *GameStateManager) UpdatePlayerInput(input *PlayerInputData) {
 	speed := float32(5.0)
 	dt := float32(1.0 / float32(gsm.tickRate))
 
-	player.VX = input.MoveX * speed
-	player.VY = input.MoveY * speed
+	moveX := DequantizeCoordinate(input.MoveX)
+	moveY := DequantizeCoordinate(input.MoveY)
+
+	player.VX = moveX * speed
+	player.VY = moveY * speed
 
 	player.X += player.VX * dt
 	player.Y += player.VY * dt
@@ -67,11 +76,14 @@ func (gsm *GameStateManager) GetGameState() *GameStateData {
 	for _, player := range gsm.players {
 		if time.Since(player.LastUpdate) < 5*time.Second {
 			entities = append(entities, EntityState{
-				ID: player.ID,
-				X:  player.X,
-				Y:  player.Y,
-				VX: player.VX,
-				VY: player.VY,
+				ID:  player.ID,
+				X:   QuantizeCoordinate(player.X),
+				Y:   QuantizeCoordinate(player.Y),
+				Z:   QuantizeCoordinate(player.Z),
+				VX:  QuantizeCoordinate(player.VX),
+				VY:  QuantizeCoordinate(player.VY),
+				VZ:  QuantizeCoordinate(player.VZ),
+				Yaw: QuantizeCoordinate(player.Yaw),
 			})
 		}
 	}

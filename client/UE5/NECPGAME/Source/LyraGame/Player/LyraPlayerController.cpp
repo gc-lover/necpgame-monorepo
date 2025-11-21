@@ -10,6 +10,7 @@
 #include "Engine/GameInstance.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
+#include "Kismet/GameplayStatics.h"
 #include "GameModes/LyraGameState.h"
 #include "LyraCheatManager.h"
 #include "LyraGameplayTags.h"
@@ -29,8 +30,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameMapsSettings.h"
+#include "HAL/CriticalSection.h"
 #include "Net/ProtobufCodec.h"
 #include "Net/RealtimeWebSocketConnection.h"
+#include "Net/WebSocketMovementSyncComponent.h"
 #include "Tests/LyraGameplayRpcRegistrationComponent.h"
 
 #if WITH_RPC_REGISTRY
@@ -58,12 +61,16 @@ ALyraPlayerController::ALyraPlayerController(
   CheatClass = ULyraCheatManager::StaticClass();
 #endif // #if USING_CHEAT_MANAGER
 
-  // Create WebSocket Connection
   WebSocketConnection = CreateDefaultSubobject<URealtimeWebSocketConnection>(
       TEXT("WebSocketConnection"));
-  UE_LOG(
-      LogLyra, Log,
-      TEXT("ALyraPlayerController::Constructor - WebSocketConnection created"));
+
+  MovementSyncComponent =
+      CreateDefaultSubobject<UWebSocketMovementSyncComponent>(
+          TEXT("MovementSyncComponent"));
+
+  UE_LOG(LogLyra, Log,
+         TEXT("ALyraPlayerController::Constructor - WebSocketConnection and "
+              "MovementSyncComponent created"));
 }
 
 void ALyraPlayerController::PreInitializeComponents() {
@@ -107,11 +114,11 @@ void ALyraPlayerController::BeginPlay() {
         FString OriginalId = PS->GetUniqueId().ToString();
         PlayerIdToSet = GenerateShortPlayerId(OriginalId);
       }
-      
+
       if (!PlayerIdToSet.IsEmpty()) {
         WebSocketConnection->SetPlayerId(PlayerIdToSet);
       }
-      
+
       FString ServerAddress = TEXT("127.0.0.1");
       int32 ServerPort = 18080;
       FString Token = TEXT("test-token");
@@ -155,6 +162,11 @@ void ALyraPlayerController::BeginPlay() {
 }
 
 void ALyraPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+  if (WebSocketConnection) {
+    WebSocketConnection->OnGameStateReceived.RemoveAll(this);
+    WebSocketConnection->OnConnected.RemoveAll(this);
+    WebSocketConnection->OnDisconnected.RemoveAll(this);
+  }
   Super::EndPlay(EndPlayReason);
 }
 
@@ -356,6 +368,25 @@ void ALyraPlayerController::OnRep_PlayerState() {
   Super::OnRep_PlayerState();
   BroadcastOnPlayerStateChanged();
 
+  if (WebSocketConnection && IsLocalController()) {
+    FString PlayerIdToSet;
+    if (ALyraPlayerState *LyraPS = GetLyraPlayerState()) {
+      FString OriginalId = LyraPS->GetUniqueId().ToString();
+      PlayerIdToSet = GenerateShortPlayerId(OriginalId);
+    } else if (APlayerState *PS = GetPlayerState<APlayerState>()) {
+      FString OriginalId = PS->GetUniqueId().ToString();
+      PlayerIdToSet = GenerateShortPlayerId(OriginalId);
+    }
+
+    if (!PlayerIdToSet.IsEmpty()) {
+      WebSocketConnection->SetPlayerId(PlayerIdToSet);
+      UE_LOG(LogLyra, Log,
+             TEXT("ALyraPlayerController::OnRep_PlayerState - Set WebSocket "
+                  "PlayerId to: %s"),
+             *PlayerIdToSet);
+    }
+  }
+
   // When we're a client connected to a remote server, the player controller may
   // replicate later than the PlayerState and AbilitySystemComponent. However,
   // TryActivateAbilitiesOnSpawn depends on the player controller being
@@ -419,10 +450,13 @@ void ALyraPlayerController::ServerCheatAll_Implementation(const FString &Msg) {
 #if USING_CHEAT_MANAGER
   if (CheatManager) {
     UE_LOG(LogLyra, Warning, TEXT("ServerCheatAll: %s"), *Msg);
-    for (TActorIterator<ALyraPlayerController> It(GetWorld()); It; ++It) {
-      ALyraPlayerController *LyraPC = (*It);
-      if (LyraPC) {
-        LyraPC->ClientMessage(LyraPC->ConsoleCommand(Msg));
+    TArray<AActor*> AllPlayerControllers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALyraPlayerController::StaticClass(), AllPlayerControllers);
+    for (AActor* Actor : AllPlayerControllers) {
+      if (ALyraPlayerController *LyraPC = Cast<ALyraPlayerController>(Actor)) {
+        if (LyraPC) {
+          LyraPC->ClientMessage(LyraPC->ConsoleCommand(Msg));
+        }
       }
     }
   }
@@ -467,11 +501,11 @@ void ALyraPlayerController::OnPossess(APawn *InPawn) {
       FString OriginalId = PS->GetUniqueId().ToString();
       PlayerIdToSet = GenerateShortPlayerId(OriginalId);
     }
-    
+
     if (!PlayerIdToSet.IsEmpty()) {
       WebSocketConnection->SetPlayerId(PlayerIdToSet);
     }
-    
+
     if (!WebSocketConnection->IsConnected()) {
       FString ServerAddress = TEXT("127.0.0.1");
       int32 ServerPort = 18080;
@@ -687,132 +721,24 @@ void ALyraPlayerController::OnUnPossess() {
 
 void ALyraPlayerController::OnGameStateReceived(
     const TArray<uint8> &GameStateData) {
-  UE_LOG(LogLyra, Warning,
-         TEXT("ALyraPlayerController::OnGameStateReceived: ===== CALLED with "
-              "%d bytes ====="),
-         GameStateData.Num());
-
-  if (GameStateData.Num() == 0) {
-    UE_LOG(LogLyra, Warning,
-           TEXT("ALyraPlayerController::OnGameStateReceived: Empty data, "
-                "returning"));
-    return;
-  }
-
-  if (!WebSocketConnection || !WebSocketConnection->IsConnected()) {
-    UE_LOG(LogLyra, Warning,
-           TEXT("ALyraPlayerController::OnGameStateReceived: WebSocket not "
-                "connected (conn=%p, connected=%d), ignoring GameState update"),
-           WebSocketConnection.Get(),
-           WebSocketConnection ? WebSocketConnection->IsConnected() : 0);
-    return;
-  }
-
-  UE_LOG(LogLyra, Warning,
-         TEXT("ALyraPlayerController::OnGameStateReceived: WebSocket "
-              "connected, processing GameState"));
-
-  FProtobufCodec::FServerMessage ServerMsg;
-  if (!FProtobufCodec::DecodeServerMessage(GameStateData, ServerMsg)) {
-    UE_LOG(LogLyra, Warning,
-           TEXT("ALyraPlayerController::OnGameStateReceived: Failed to decode "
-                "GameState"));
-    return;
-  }
-
-  if (ServerMsg.Type !=
-      FProtobufCodec::FServerMessage::EMessageType::GameState) {
+  if (!IsValid(this)) {
     return;
   }
 
   UWorld *World = GetWorld();
-  if (!World) {
+  if (!World || !IsValid(World) || World->bIsTearingDown) {
     return;
   }
 
-  FString LocalPlayerId;
-  if (ALyraPlayerState *LyraPS = GetLyraPlayerState()) {
-    FString OriginalId = LyraPS->GetUniqueId().ToString();
-    LocalPlayerId = GenerateShortPlayerId(OriginalId);
-  } else if (APlayerState *PS = GetPlayerState<APlayerState>()) {
-    FString OriginalId = PS->GetUniqueId().ToString();
-    LocalPlayerId = GenerateShortPlayerId(OriginalId);
+  if (!MovementSyncComponent || !IsValid(MovementSyncComponent)) {
+    return;
   }
 
-  for (const FProtobufCodec::FEntityState &Entity :
-       ServerMsg.GameState.Snapshot.Entities) {
-    if (Entity.Id == LocalPlayerId) {
-      UE_LOG(LogLyra, Verbose,
-             TEXT("ALyraPlayerController::OnGameStateReceived: Skipping local player Entity.Id=%s, LocalPlayerId=%s"),
-             *Entity.Id, *LocalPlayerId);
-      continue;
-    }
-
-    bool bFoundController = false;
-    for (FConstPlayerControllerIterator It =
-             World->GetPlayerControllerIterator();
-         It; ++It) {
-      if (APlayerController *PC = It->Get()) {
-        FString PCPlayerId;
-        if (ALyraPlayerState *LyraPS = PC->GetPlayerState<ALyraPlayerState>()) {
-          FString OriginalId = LyraPS->GetUniqueId().ToString();
-          PCPlayerId = GenerateShortPlayerId(OriginalId);
-        } else if (APlayerState *PS = PC->GetPlayerState<APlayerState>()) {
-          FString OriginalId = PS->GetUniqueId().ToString();
-          PCPlayerId = GenerateShortPlayerId(OriginalId);
-        }
-
-        if (PCPlayerId == Entity.Id) {
-          bFoundController = true;
-          if (APawn *TargetPawn = PC->GetPawn()) {
-            FVector NewLocation(Entity.X, Entity.Y, Entity.Z);
-            FRotator NewRotation(0.0f, Entity.Yaw, 0.0f);
-            FVector NewVelocity(Entity.VX, Entity.VY, Entity.VZ);
-
-            if (ALyraCharacter *LyraChar = Cast<ALyraCharacter>(TargetPawn)) {
-              if (UCharacterMovementComponent *MovementComp =
-                      LyraChar->GetCharacterMovement()) {
-                const float VelocityThreshold = 1.0f;
-                const float LocationThreshold = 5.0f;
-                
-                FVector CurrentLocation = TargetPawn->GetActorLocation();
-                FVector LocationDelta = NewLocation - CurrentLocation;
-                float LocationDistance = LocationDelta.Size();
-                
-                if (LocationDistance > LocationThreshold) {
-                  MovementComp->Velocity = NewVelocity;
-                  TargetPawn->SetActorLocation(NewLocation, true);
-                } else if (NewVelocity.SizeSquared() > FMath::Square(VelocityThreshold)) {
-                  MovementComp->Velocity = NewVelocity;
-                }
-              }
-            } else {
-              TargetPawn->SetActorLocation(NewLocation, true);
-            }
-            
-            TargetPawn->SetActorRotation(NewRotation);
-          }
-          break;
-        }
-      }
-    }
-    
-    if (!bFoundController) {
-      UE_LOG(LogLyra, Warning,
-             TEXT("ALyraPlayerController::OnGameStateReceived: No controller found for Entity.Id=%s, LocalPlayerId=%s"),
-             *Entity.Id, *LocalPlayerId);
-    }
-  }
-
-  UE_LOG(LogLyra, Warning,
-         TEXT("ALyraPlayerController::OnGameStateReceived: ===== PROCESSED "
-              "GameState with %d entities, Tick=%lld ====="),
-         ServerMsg.GameState.Snapshot.Entities.Num(),
-         ServerMsg.GameState.Snapshot.Tick);
+  MovementSyncComponent->OnGameStateReceived(GameStateData);
 }
 
 void ALyraPlayerController::OnWebSocketConnected(bool bSuccess) {
-  UE_LOG(LogLyra, Warning,
+  UE_LOG(LogLyra, Log,
          TEXT("ALyraPlayerController::OnWebSocketConnected: WebSocket %s"),
          bSuccess ? TEXT("CONNECTED") : TEXT("DISCONNECTED"));
 
@@ -821,25 +747,41 @@ void ALyraPlayerController::OnWebSocketConnected(bool bSuccess) {
     return;
   }
 
-  for (TActorIterator<ALyraCharacter> It(World); It; ++It) {
-    if (ALyraCharacter *LyraChar = *It) {
-      LyraChar->UpdateMovementReplication();
+  TArray<AActor*> AllActors;
+  UGameplayStatics::GetAllActorsOfClass(World, ALyraCharacter::StaticClass(), AllActors);
+
+  for (AActor* Actor : AllActors) {
+    if (ALyraCharacter *LyraChar = Cast<ALyraCharacter>(Actor)) {
+      if (IsValid(LyraChar)) {
+        LyraChar->UpdateMovementReplication();
+      }
     }
   }
 }
 
 void ALyraPlayerController::OnWebSocketDisconnected(const FString &Reason) {
-  UE_LOG(LogLyra, Warning,
-         TEXT("ALyraPlayerController::OnWebSocketDisconnected: %s"), *Reason);
+  const bool bNormalClose = Reason.Contains(TEXT("Successfully closed"));
+  if (bNormalClose) {
+    UE_LOG(LogLyra, Log,
+           TEXT("ALyraPlayerController::OnWebSocketDisconnected: %s"), *Reason);
+  } else {
+    UE_LOG(LogLyra, Warning,
+           TEXT("ALyraPlayerController::OnWebSocketDisconnected: %s"), *Reason);
+  }
 
   UWorld *World = GetWorld();
   if (!World) {
     return;
   }
 
-  for (TActorIterator<ALyraCharacter> It(World); It; ++It) {
-    if (ALyraCharacter *LyraChar = *It) {
-      LyraChar->UpdateMovementReplication();
+  TArray<AActor*> AllActors;
+  UGameplayStatics::GetAllActorsOfClass(World, ALyraCharacter::StaticClass(), AllActors);
+
+  for (AActor* Actor : AllActors) {
+    if (ALyraCharacter *LyraChar = Cast<ALyraCharacter>(Actor)) {
+      if (IsValid(LyraChar)) {
+        LyraChar->UpdateMovementReplication();
+      }
     }
   }
 }
@@ -891,24 +833,25 @@ void ALyraReplayPlayerController::RecorderPlayerStateUpdated(
   }
 }
 
-FString ALyraPlayerController::GenerateShortPlayerId(const FString& OriginalId)
-{
-  if (OriginalId.IsEmpty())
-  {
+FString
+ALyraPlayerController::GenerateShortPlayerId(const FString &OriginalId) {
+  if (OriginalId.IsEmpty()) {
     return TEXT("player1");
   }
 
-  if (OriginalId.Len() > 50)
-  {
-    UE_LOG(LogLyra, Error, TEXT("GenerateShortPlayerId: LONG OriginalId detected! Length=%d, Value='%s' - TRACING SOURCE"), 
-      OriginalId.Len(), *OriginalId);
-    UE_LOG(LogLyra, Error, TEXT("GenerateShortPlayerId: Called from: %s"), *FString(__FUNCTION__));
+  if (OriginalId.Len() > 50) {
+    UE_LOG(LogLyra, Error,
+           TEXT("GenerateShortPlayerId: LONG OriginalId detected! Length=%d, "
+                "Value='%s' - TRACING SOURCE"),
+           OriginalId.Len(), *OriginalId);
+    UE_LOG(LogLyra, Error, TEXT("GenerateShortPlayerId: Called from: %s"),
+           *FString(__FUNCTION__));
   }
 
   uint32 Hash = GetTypeHash(OriginalId);
-  
+
   FString ShortId = FString::Printf(TEXT("p%08x"), Hash);
-  
+
   return ShortId;
 }
 

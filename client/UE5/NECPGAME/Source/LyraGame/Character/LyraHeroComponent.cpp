@@ -394,35 +394,46 @@ void ULyraHeroComponent::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 void ULyraHeroComponent::Input_Move(const FInputActionValue& InputActionValue)
 {
 	APawn* Pawn = GetPawn<APawn>();
-	AController* Controller = Pawn ? Pawn->GetController() : nullptr;
+	if (!Pawn)
+	{
+		return;
+	}
 
-	// If the player has attempted to move again then cancel auto running
+	AController* Controller = Pawn->GetController();
+	if (!Controller)
+	{
+		return;
+	}
+
+	bool bIsLocallyControlled = Pawn->IsLocallyControlled();
+	if (!bIsLocallyControlled)
+	{
+		return;
+	}
+
 	if (ALyraPlayerController* LyraController = Cast<ALyraPlayerController>(Controller))
 	{
 		LyraController->SetIsAutoRunning(false);
 	}
 	
-	if (Controller)
+	const FVector2D Value = InputActionValue.Get<FVector2D>();
+	const FRotator MovementRotation(0.0f, Controller->GetControlRotation().Yaw, 0.0f);
+
+	if (Value.X != 0.0f)
 	{
-		const FVector2D Value = InputActionValue.Get<FVector2D>();
-		const FRotator MovementRotation(0.0f, Controller->GetControlRotation().Yaw, 0.0f);
-
-		if (Value.X != 0.0f)
-		{
-			const FVector MovementDirection = MovementRotation.RotateVector(FVector::RightVector);
-			Pawn->AddMovementInput(MovementDirection, Value.X);
-		}
-
-		if (Value.Y != 0.0f)
-		{
-			const FVector MovementDirection = MovementRotation.RotateVector(FVector::ForwardVector);
-			Pawn->AddMovementInput(MovementDirection, Value.Y);
-		}
-
-		LastMoveX = Value.X;
-		LastMoveY = Value.Y;
-		SendPlayerInputToWebSocket(LastMoveX, LastMoveY, bIsShooting, LastAimX, LastAimY);
+		const FVector MovementDirection = MovementRotation.RotateVector(FVector::RightVector);
+		Pawn->AddMovementInput(MovementDirection, Value.X);
 	}
+
+	if (Value.Y != 0.0f)
+	{
+		const FVector MovementDirection = MovementRotation.RotateVector(FVector::ForwardVector);
+		Pawn->AddMovementInput(MovementDirection, Value.Y);
+	}
+
+	LastMoveX = Value.X;
+	LastMoveY = Value.Y;
+	SendPlayerInputToWebSocket(LastMoveX, LastMoveY, bIsShooting, LastAimX, LastAimY);
 }
 
 void ULyraHeroComponent::Input_LookMouse(const FInputActionValue& InputActionValue)
@@ -446,9 +457,16 @@ void ULyraHeroComponent::Input_LookMouse(const FInputActionValue& InputActionVal
 		Pawn->AddControllerPitchInput(Value.Y);
 	}
 
-	LastAimX = Value.X;
-	LastAimY = Value.Y;
-	SendPlayerInputToWebSocket(LastMoveX, LastMoveY, bIsShooting, LastAimX, LastAimY);
+	const float NewAimX = Value.X;
+	const float NewAimY = Value.Y;
+	const bool bAimChanged = (FMath::Abs(NewAimX - LastAimX) > 0.01f) || (FMath::Abs(NewAimY - LastAimY) > 0.01f);
+	
+	if (bAimChanged)
+	{
+		LastAimX = NewAimX;
+		LastAimY = NewAimY;
+		SendPlayerInputToWebSocket(LastMoveX, LastMoveY, bIsShooting, LastAimX, LastAimY);
+	}
 }
 
 void ULyraHeroComponent::Input_LookStick(const FInputActionValue& InputActionValue)
@@ -475,9 +493,16 @@ void ULyraHeroComponent::Input_LookStick(const FInputActionValue& InputActionVal
 		Pawn->AddControllerPitchInput(Value.Y * LyraHero::LookPitchRate * World->GetDeltaSeconds());
 	}
 
-	LastAimX = Value.X * LyraHero::LookYawRate * World->GetDeltaSeconds();
-	LastAimY = Value.Y * LyraHero::LookPitchRate * World->GetDeltaSeconds();
-	SendPlayerInputToWebSocket(LastMoveX, LastMoveY, bIsShooting, LastAimX, LastAimY);
+	const float NewAimX = Value.X * LyraHero::LookYawRate * World->GetDeltaSeconds();
+	const float NewAimY = Value.Y * LyraHero::LookPitchRate * World->GetDeltaSeconds();
+	const bool bAimChanged = (FMath::Abs(NewAimX - LastAimX) > 0.01f) || (FMath::Abs(NewAimY - LastAimY) > 0.01f);
+	
+	if (bAimChanged)
+	{
+		LastAimX = NewAimX;
+		LastAimY = NewAimY;
+		SendPlayerInputToWebSocket(LastMoveX, LastMoveY, bIsShooting, LastAimX, LastAimY);
+	}
 }
 
 void ULyraHeroComponent::Input_Crouch(const FInputActionValue& InputActionValue)

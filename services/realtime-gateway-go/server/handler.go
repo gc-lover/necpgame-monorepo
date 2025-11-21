@@ -31,20 +31,35 @@ func isValidPlayerID(id string) bool {
 	return true
 }
 
+type ClientConnection struct {
+	conn *websocket.Conn
+	mu   sync.Mutex
+}
+
+type clientInfo struct {
+	conn       *websocket.Conn
+	clientConn *ClientConnection
+}
+
 type GatewayHandler struct {
-	tickRate      int
-	gameStateMgr  *GameStateManager
-	serverConn    *websocket.Conn
-	serverConnMu  sync.RWMutex
-	clientConns   map[*websocket.Conn]bool
-	clientConnsMu sync.RWMutex
+	tickRate         int
+	gameStateMgr     *GameStateManager
+	serverConn       *websocket.Conn
+	serverConnMu     sync.RWMutex
+	clientConns      map[*websocket.Conn]*ClientConnection
+	clientConnsMu    sync.RWMutex
+	clientDeltaStates map[*websocket.Conn]*ClientDeltaState
+	deltaStatesMu    sync.RWMutex
+	useDeltaCompression bool
 }
 
 func NewGatewayHandler(tickRate int) *GatewayHandler {
 	return &GatewayHandler{
-		tickRate:     tickRate,
-		gameStateMgr: NewGameStateManager(tickRate),
-		clientConns:  make(map[*websocket.Conn]bool),
+		tickRate:            tickRate,
+		gameStateMgr:        NewGameStateManager(tickRate),
+		clientConns:         make(map[*websocket.Conn]*ClientConnection),
+		clientDeltaStates:   make(map[*websocket.Conn]*ClientDeltaState),
+		useDeltaCompression: true,
 	}
 }
 
@@ -52,6 +67,7 @@ func (h *GatewayHandler) SetServerConnection(conn *websocket.Conn) {
 	h.serverConnMu.Lock()
 	defer h.serverConnMu.Unlock()
 	h.serverConn = conn
+	SetActiveServerConnection(conn != nil)
 }
 
 func (h *GatewayHandler) GetServerConnection() *websocket.Conn {
@@ -62,43 +78,210 @@ func (h *GatewayHandler) GetServerConnection() *websocket.Conn {
 
 func (h *GatewayHandler) AddClientConnection(conn *websocket.Conn) {
 	h.clientConnsMu.Lock()
-	defer h.clientConnsMu.Unlock()
-	h.clientConns[conn] = true
+	h.clientConns[conn] = &ClientConnection{conn: conn}
+	h.clientConnsMu.Unlock()
+	
+	h.deltaStatesMu.Lock()
+	h.clientDeltaStates[conn] = NewClientDeltaState()
+	h.deltaStatesMu.Unlock()
+	
+	SetActiveClients(float64(len(h.clientConns)))
 }
 
 func (h *GatewayHandler) RemoveClientConnection(conn *websocket.Conn) {
 	h.clientConnsMu.Lock()
-	defer h.clientConnsMu.Unlock()
 	delete(h.clientConns, conn)
+	h.clientConnsMu.Unlock()
+	
+	h.deltaStatesMu.Lock()
+	delete(h.clientDeltaStates, conn)
+	h.deltaStatesMu.Unlock()
+	
+	SetActiveClients(float64(len(h.clientConns)))
+}
+
+func (h *GatewayHandler) getWriteDeadline() time.Time {
+	if h.tickRate > 0 {
+		return time.Now().Add(time.Duration(1000/h.tickRate) * time.Millisecond)
+	}
+	return time.Now().Add(16 * time.Millisecond)
 }
 
 func (h *GatewayHandler) BroadcastToClients(data []byte) {
+	if h.useDeltaCompression {
+		gameState, err := ParseGameStateMessage(data)
+		if err != nil {
+			logger := GetLogger()
+			logger.WithError(err).Warn("Failed to parse GameState for delta compression, falling back to full broadcast")
+			h.BroadcastToClientsParallel(data)
+			return
+		}
+		h.BroadcastGameStateWithDelta(gameState)
+	} else {
+		h.BroadcastToClientsParallel(data)
+	}
+}
+
+func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
+	startTime := time.Now()
 	h.clientConnsMu.RLock()
 	clientCount := len(h.clientConns)
+	if clientCount == 0 {
+		h.clientConnsMu.RUnlock()
+		logger := GetLogger()
+		logger.Warn("No clients connected, GameState not broadcasted")
+		return
+	}
+
+	clients := make([]clientInfo, 0, clientCount)
+	for conn, clientConn := range h.clientConns {
+		clients = append(clients, clientInfo{conn: conn, clientConn: clientConn})
+	}
+	h.clientConnsMu.RUnlock()
+
+	logger := GetLogger()
+	logger.WithField("client_count", clientCount).WithField("tick", newState.Tick).Info("Broadcasting GameState with delta compression")
+
+	deadline := h.getWriteDeadline()
+	var wg sync.WaitGroup
+	var successCount int64
+	var mu sync.Mutex
+	totalDeltaSize := int64(0)
+
+	for i := range clients {
+		wg.Add(1)
+		go func(idx int) {
+			ci := clients[idx]
+			defer wg.Done()
+
+			h.deltaStatesMu.RLock()
+			deltaState, exists := h.clientDeltaStates[ci.conn]
+			h.deltaStatesMu.RUnlock()
+
+			if !exists {
+				return
+			}
+
+			oldState := deltaState.GetLastState()
+			delta := CalculateDelta(oldState, newState)
+			defer func() {
+				if delta != nil {
+					PutGameStateToPool(delta)
+				}
+			}()
+
+			var data []byte
+			var err error
+			if delta != nil && len(delta.Entities) > 0 {
+				data, err = BuildGameStateMessage(delta)
+				if err != nil {
+					logger.WithError(err).Debug("Failed to build delta message")
+					return
+				}
+			} else if delta != nil {
+				// Дельта пустая, но Tick изменился - отправляем минимальное обновление
+				// Это важно для синхронизации времени и предотвращения рассинхронизации
+				data, err = BuildGameStateMessage(delta)
+				if err != nil {
+					logger.WithError(err).Debug("Failed to build empty delta message")
+					deltaState.SetLastState(CopyGameStateData(newState))
+					return
+				}
+			} else {
+				// Дельта nil - это означает, что Tick не изменился, пропускаем
+				deltaState.SetLastState(CopyGameStateData(newState))
+				return
+			}
+
+			mu.Lock()
+			totalDeltaSize += int64(len(data))
+			mu.Unlock()
+
+			ci.clientConn.mu.Lock()
+			ci.conn.SetWriteDeadline(deadline)
+			if err := ci.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+				logger.WithError(err).Debug("Failed to broadcast delta to client")
+			} else {
+				mu.Lock()
+				successCount++
+				mu.Unlock()
+
+				deltaState.SetLastState(CopyGameStateData(newState))
+			}
+			ci.clientConn.mu.Unlock()
+		}(i)
+	}
+
+	wg.Wait()
+
+	duration := time.Since(startTime).Seconds()
+	RecordGameStateBroadcastDuration(duration)
+	RecordGameStateBroadcasted()
+
+	avgDeltaSize := float64(0)
+	if successCount > 0 {
+		avgDeltaSize = float64(totalDeltaSize) / float64(successCount)
+	}
+
+	logger.WithFields(map[string]interface{}{
+		"success_count": successCount,
+		"total_clients": clientCount,
+		"duration_ms":   duration * 1000,
+		"avg_delta_size": avgDeltaSize,
+	}).Info("Broadcasted GameState with delta compression to clients")
+}
+
+func (h *GatewayHandler) BroadcastToClientsParallel(data []byte) {
+	startTime := time.Now()
+	h.clientConnsMu.RLock()
+	clientCount := len(h.clientConns)
+	if clientCount == 0 {
+		h.clientConnsMu.RUnlock()
+		logger := GetLogger()
+		logger.Warn("No clients connected, GameState not broadcasted")
+		return
+	}
+	
+	clients := make([]*ClientConnection, 0, clientCount)
+	for _, clientConn := range h.clientConns {
+		clients = append(clients, clientConn)
+	}
 	h.clientConnsMu.RUnlock()
 	
 	logger := GetLogger()
 	logger.WithField("client_count", clientCount).WithField("data_len", len(data)).Info("Broadcasting GameState to clients")
 	
-	if clientCount == 0 {
-		logger.Warn("No clients connected, GameState not broadcasted")
-		return
+	RecordMessageSize("gamestate", len(data))
+	
+	deadline := h.getWriteDeadline()
+	var wg sync.WaitGroup
+	var successCount int64
+	var mu sync.Mutex
+	
+	for _, clientConn := range clients {
+		wg.Add(1)
+		go func(cc *ClientConnection) {
+			defer wg.Done()
+			cc.mu.Lock()
+			defer cc.mu.Unlock()
+			cc.conn.SetWriteDeadline(deadline)
+			if err := cc.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+				logger.WithError(err).Debug("Failed to broadcast to client")
+			} else {
+				mu.Lock()
+				successCount++
+				mu.Unlock()
+			}
+		}(clientConn)
 	}
 	
-	h.clientConnsMu.RLock()
-	defer h.clientConnsMu.RUnlock()
+	wg.Wait()
 	
-	successCount := 0
-	for conn := range h.clientConns {
-		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-		if err := conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
-			logger.WithError(err).Warn("Failed to broadcast to client")
-		} else {
-			successCount++
-		}
-	}
+	duration := time.Since(startTime).Seconds()
+	RecordGameStateBroadcastDuration(duration)
+	RecordGameStateBroadcasted()
 	
-	logger.WithField("success_count", successCount).WithField("total_clients", clientCount).Info("Broadcasted GameState to clients")
+	logger.WithField("success_count", successCount).WithField("total_clients", clientCount).WithField("duration_ms", duration*1000).Info("Broadcasted GameState to clients")
 }
 
 func (h *GatewayHandler) SendToServer(data []byte) error {
@@ -223,6 +406,9 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 					}
 				}
 			} else if playerInput != nil {
+				RecordPlayerInputReceived()
+				RecordMessageSize("player_input", len(data))
+				
 				if playerID == "" {
 					playerID = playerInput.PlayerID
 				}
@@ -258,6 +444,7 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 				if err := h.SendToServer(data); err != nil {
 					logger.WithError(err).Debug("Failed to forward PlayerInput to server")
 				} else {
+					RecordPlayerInputForwarded()
 					logger.WithField("player_id", playerInput.PlayerID).Debug("Forwarded PlayerInput to server")
 				}
 			} else {

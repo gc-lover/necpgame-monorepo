@@ -1,5 +1,6 @@
 #include "Net/ProtobufCodec.h"
 #include "Misc/ByteSwap.h"
+#include "Math/UnrealMathUtility.h"
 
 void FProtobufCodec::WriteVarInt(TArray<uint8>& Buffer, uint64 Value)
 {
@@ -131,6 +132,45 @@ bool FProtobufCodec::ReadBytes(const TArray<uint8>& Data, int32& Offset, TArray<
 	return true;
 }
 
+static uint32 EncodeZigZag(int32 Value)
+{
+	return static_cast<uint32>((Value << 1) ^ (Value >> 31));
+}
+
+static int32 DecodeZigZag(uint32 Value)
+{
+	return static_cast<int32>((Value >> 1) ^ -(static_cast<int32>(Value & 1)));
+}
+
+void FProtobufCodec::WriteInt32ZigZag(TArray<uint8>& Buffer, int32 Value)
+{
+	uint32 ZigZagValue = EncodeZigZag(Value);
+	WriteVarInt(Buffer, ZigZagValue);
+}
+
+bool FProtobufCodec::ReadInt32ZigZag(const TArray<uint8>& Data, int32& Offset, int32& OutValue)
+{
+	uint64 ZigZagValue = 0;
+	if (!ReadVarInt(Data, Offset, ZigZagValue))
+	{
+		return false;
+	}
+	OutValue = DecodeZigZag(static_cast<uint32>(ZigZagValue));
+	return true;
+}
+
+constexpr float QuantizationScale = 10.0f;
+
+int32 FProtobufCodec::QuantizeCoordinate(float Value)
+{
+	return FMath::RoundToInt(Value * QuantizationScale);
+}
+
+float FProtobufCodec::DequantizeCoordinate(int32 Value)
+{
+	return static_cast<float>(Value) / QuantizationScale;
+}
+
 TArray<uint8> FProtobufCodec::EncodeClientMessage(const FClientMessage& Message)
 {
 	TArray<uint8> Buffer;
@@ -168,20 +208,20 @@ TArray<uint8> FProtobufCodec::EncodeClientMessage(const FClientMessage& Message)
 		WriteVarInt(InputBuffer, (2 << 3) | 0);
 		WriteInt64(InputBuffer, Message.PlayerInput.Tick);
 		
-		WriteVarInt(InputBuffer, (3 << 3) | 5);
-		WriteFloat(InputBuffer, Message.PlayerInput.MoveX);
+		WriteVarInt(InputBuffer, (3 << 3) | 0);
+		WriteInt32ZigZag(InputBuffer, Message.PlayerInput.MoveX);
 		
-		WriteVarInt(InputBuffer, (4 << 3) | 5);
-		WriteFloat(InputBuffer, Message.PlayerInput.MoveY);
+		WriteVarInt(InputBuffer, (4 << 3) | 0);
+		WriteInt32ZigZag(InputBuffer, Message.PlayerInput.MoveY);
 		
 		WriteVarInt(InputBuffer, (5 << 3) | 0);
 		WriteBool(InputBuffer, Message.PlayerInput.Shoot);
 		
-		WriteVarInt(InputBuffer, (6 << 3) | 5);
-		WriteFloat(InputBuffer, Message.PlayerInput.AimX);
+		WriteVarInt(InputBuffer, (6 << 3) | 0);
+		WriteInt32ZigZag(InputBuffer, Message.PlayerInput.AimX);
 		
-		WriteVarInt(InputBuffer, (7 << 3) | 5);
-		WriteFloat(InputBuffer, Message.PlayerInput.AimY);
+		WriteVarInt(InputBuffer, (7 << 3) | 0);
+		WriteInt32ZigZag(InputBuffer, Message.PlayerInput.AimY);
 		
 		WriteVarInt(Buffer, (12 << 3) | 2);
 		WriteVarInt(Buffer, InputBuffer.Num());
@@ -308,16 +348,16 @@ bool FProtobufCodec::DecodeClientMessage(const TArray<uint8>& Data, FClientMessa
 						return false;
 					}
 				}
-				else if (InputField == 3 && InputWireType == 5)
+				else if (InputField == 3 && InputWireType == 0)
 				{
-					if (!ReadFloat(Data, Offset, OutMessage.PlayerInput.MoveX))
+					if (!ReadInt32ZigZag(Data, Offset, OutMessage.PlayerInput.MoveX))
 					{
 						return false;
 					}
 				}
-				else if (InputField == 4 && InputWireType == 5)
+				else if (InputField == 4 && InputWireType == 0)
 				{
-					if (!ReadFloat(Data, Offset, OutMessage.PlayerInput.MoveY))
+					if (!ReadInt32ZigZag(Data, Offset, OutMessage.PlayerInput.MoveY))
 					{
 						return false;
 					}
@@ -329,16 +369,16 @@ bool FProtobufCodec::DecodeClientMessage(const TArray<uint8>& Data, FClientMessa
 						return false;
 					}
 				}
-				else if (InputField == 6 && InputWireType == 5)
+				else if (InputField == 6 && InputWireType == 0)
 				{
-					if (!ReadFloat(Data, Offset, OutMessage.PlayerInput.AimX))
+					if (!ReadInt32ZigZag(Data, Offset, OutMessage.PlayerInput.AimX))
 					{
 						return false;
 					}
 				}
-				else if (InputField == 7 && InputWireType == 5)
+				else if (InputField == 7 && InputWireType == 0)
 				{
-					if (!ReadFloat(Data, Offset, OutMessage.PlayerInput.AimY))
+					if (!ReadInt32ZigZag(Data, Offset, OutMessage.PlayerInput.AimY))
 					{
 						return false;
 					}
@@ -556,30 +596,51 @@ bool FProtobufCodec::DecodeServerMessage(const TArray<uint8>& Data, FServerMessa
 										return false;
 									}
 								}
-								else if (EntityField == 2 && EntityWireType == 5)
+								else if (EntityField == 2 && EntityWireType == 0)
 								{
-									if (!ReadFloat(Data, Offset, Entity.X))
+									if (!ReadInt32ZigZag(Data, Offset, Entity.X))
 									{
 										return false;
 									}
 								}
-								else if (EntityField == 3 && EntityWireType == 5)
+								else if (EntityField == 3 && EntityWireType == 0)
 								{
-									if (!ReadFloat(Data, Offset, Entity.Y))
+									if (!ReadInt32ZigZag(Data, Offset, Entity.Y))
 									{
 										return false;
 									}
 								}
-								else if (EntityField == 4 && EntityWireType == 5)
+								else if (EntityField == 4 && EntityWireType == 0)
 								{
-									if (!ReadFloat(Data, Offset, Entity.VX))
+									if (!ReadInt32ZigZag(Data, Offset, Entity.Z))
 									{
 										return false;
 									}
 								}
-								else if (EntityField == 5 && EntityWireType == 5)
+								else if (EntityField == 5 && EntityWireType == 0)
 								{
-									if (!ReadFloat(Data, Offset, Entity.VY))
+									if (!ReadInt32ZigZag(Data, Offset, Entity.VX))
+									{
+										return false;
+									}
+								}
+								else if (EntityField == 6 && EntityWireType == 0)
+								{
+									if (!ReadInt32ZigZag(Data, Offset, Entity.VY))
+									{
+										return false;
+									}
+								}
+								else if (EntityField == 7 && EntityWireType == 0)
+								{
+									if (!ReadInt32ZigZag(Data, Offset, Entity.VZ))
+									{
+										return false;
+									}
+								}
+								else if (EntityField == 8 && EntityWireType == 0)
+								{
+									if (!ReadInt32ZigZag(Data, Offset, Entity.Yaw))
 									{
 										return false;
 									}
@@ -729,17 +790,26 @@ TArray<uint8> FProtobufCodec::EncodeServerMessage(const FServerMessage& Message)
 				WriteString(EntityBuffer, Entity.Id);
 			}
 			
-			WriteVarInt(EntityBuffer, (2 << 3) | 5);
-			WriteFloat(EntityBuffer, Entity.X);
+			WriteVarInt(EntityBuffer, (2 << 3) | 0);
+			WriteInt32ZigZag(EntityBuffer, Entity.X);
 			
-			WriteVarInt(EntityBuffer, (3 << 3) | 5);
-			WriteFloat(EntityBuffer, Entity.Y);
+			WriteVarInt(EntityBuffer, (3 << 3) | 0);
+			WriteInt32ZigZag(EntityBuffer, Entity.Y);
 			
-			WriteVarInt(EntityBuffer, (4 << 3) | 5);
-			WriteFloat(EntityBuffer, Entity.VX);
+			WriteVarInt(EntityBuffer, (4 << 3) | 0);
+			WriteInt32ZigZag(EntityBuffer, Entity.Z);
 			
-			WriteVarInt(EntityBuffer, (5 << 3) | 5);
-			WriteFloat(EntityBuffer, Entity.VY);
+			WriteVarInt(EntityBuffer, (5 << 3) | 0);
+			WriteInt32ZigZag(EntityBuffer, Entity.VX);
+			
+			WriteVarInt(EntityBuffer, (6 << 3) | 0);
+			WriteInt32ZigZag(EntityBuffer, Entity.VY);
+			
+			WriteVarInt(EntityBuffer, (7 << 3) | 0);
+			WriteInt32ZigZag(EntityBuffer, Entity.VZ);
+			
+			WriteVarInt(EntityBuffer, (8 << 3) | 0);
+			WriteInt32ZigZag(EntityBuffer, Entity.Yaw);
 			
 			WriteVarInt(SnapshotBuffer, (2 << 3) | 2);
 			WriteVarInt(SnapshotBuffer, EntityBuffer.Num());

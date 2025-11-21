@@ -3,6 +3,7 @@
 #include "LyraWorldSettings.h"
 #include "GameFramework/PlayerStart.h"
 #include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/UObjectToken.h"
 #include "Logging/MessageLog.h"
 #include "LyraLogChannels.h"
@@ -38,9 +39,12 @@ void ALyraWorldSettings::CheckForErrors()
 
 	FMessageLog MapCheck("MapCheck");
 
-	for (TActorIterator<APlayerStart> PlayerStartIt(GetWorld()); PlayerStartIt; ++PlayerStartIt)
+	TArray<AActor*> AllPlayerStarts;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), AllPlayerStarts);
+	
+	for (AActor* Actor : AllPlayerStarts)
 	{
-		APlayerStart* PlayerStart = *PlayerStartIt;
+		APlayerStart* PlayerStart = Cast<APlayerStart>(Actor);
 		if (IsValid(PlayerStart) && PlayerStart->GetClass() == APlayerStart::StaticClass())
 		{
 			MapCheck.Warning()
