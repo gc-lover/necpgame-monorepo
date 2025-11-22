@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-service-go
+  namespace: necpgame
+  labels:
+    app: admin-service-go
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-service-go
+  template:
+    metadata:
+      labels:
+        app: admin-service-go
+        version: v1
+        prometheus: scrape
+    spec:
+      containers:
+      - name: admin-service-go
+        image: necpgame-admin-service-go:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8090
+          protocol: TCP
+        - name: metrics
+          containerPort: 9100
+          protocol: TCP
+        env:
+        - name: ADDR
+          value: "0.0.0.0:8090"
+        - name: METRICS_ADDR
+          value: ":9100"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: url
+        - name: KEYCLOAK_ISSUER
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: keycloak-url
+        - name: JWKS_URL
+          value: "http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs"
+        - name: AUTH_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: auth-enabled
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9100
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9100
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-service-go
+  namespace: necpgame
+  labels:
+    app: admin-service-go
+    prometheus: scrape
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8090
+    targetPort: 8090
+    protocol: TCP
+  - name: metrics
+    port: 9100
+    targetPort: 9100
+    protocol: TCP
+  selector:
+    app: admin-service-go
+
