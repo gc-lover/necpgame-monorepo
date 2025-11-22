@@ -96,8 +96,9 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidat
 
 	social.HandleFunc("/guilds", server.createGuild).Methods("POST")
 	social.HandleFunc("/guilds", server.listGuilds).Methods("GET")
-	social.HandleFunc("/guilds/{id}", server.getGuild).Methods("GET")
-	social.HandleFunc("/guilds/{id}", server.updateGuild).Methods("PUT")
+	social.HandleFunc("/guilds/invitations", server.getInvitations).Methods("GET")
+	social.HandleFunc("/guilds/invitations/{id}/accept", server.acceptInvitation).Methods("POST")
+	social.HandleFunc("/guilds/invitations/{id}/reject", server.rejectInvitation).Methods("POST")
 	social.HandleFunc("/guilds/{id}/disband", server.disbandGuild).Methods("DELETE")
 	social.HandleFunc("/guilds/{id}/members", server.getGuildMembers).Methods("GET")
 	social.HandleFunc("/guilds/{id}/members/invite", server.inviteMember).Methods("POST")
@@ -105,9 +106,8 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidat
 	social.HandleFunc("/guilds/{id}/members/{characterId}/kick", server.kickMember).Methods("DELETE")
 	social.HandleFunc("/guilds/{id}/members/{characterId}/leave", server.leaveGuild).Methods("POST")
 	social.HandleFunc("/guilds/{id}/bank", server.getGuildBank).Methods("GET")
-	social.HandleFunc("/guilds/invitations", server.getInvitations).Methods("GET")
-	social.HandleFunc("/guilds/invitations/{id}/accept", server.acceptInvitation).Methods("POST")
-	social.HandleFunc("/guilds/invitations/{id}/reject", server.rejectInvitation).Methods("POST")
+	social.HandleFunc("/guilds/{id}", server.getGuild).Methods("GET")
+	social.HandleFunc("/guilds/{id}", server.updateGuild).Methods("PUT")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
