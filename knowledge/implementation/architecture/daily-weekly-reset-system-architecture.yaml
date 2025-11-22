@@ -1,0 +1,636 @@
+metadata:
+  id: daily-weekly-reset-system-architecture
+  title: Архитектура системы Daily/Weekly Reset
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - reset
+    - backend
+    - world
+    - liveops
+  related_systems:
+    - world-service-go
+    - gameplay-service-go
+    - economy-service-go
+    - social-service-go
+  related_documents:
+    - id: backend-daily-weekly-reset-system
+      relation: extends
+  github_issue: 215
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы Daily/Weekly Reset
+    для управления ежедневными и еженедельными сбросами квестов, наград и ограничений
+    для повышения retention игроков.
+  goal: |
+    Создать архитектурную схему системы Daily/Weekly Reset с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы daily resets
+    - Системы weekly resets
+    - Системы login rewards
+    - Системы cron jobs
+    - Технического задания для реализации
+  essence: |
+    Игровая система для управления ежедневными и еженедельными сбросами квестов,
+    наград и ограничений для повышения retention игроков.
+
+architecture:
+  overview: |
+    Система Daily/Weekly Reset состоит из семи основных компонентов:
+    1. Daily Reset Manager - управление daily resets
+    2. Weekly Reset Manager - управление weekly resets
+    3. Quest Pool Manager - управление пулами квестов
+    4. Login Rewards Manager - управление логин-наградами
+    5. Reset Scheduler - планировщик сбросов
+    6. Reset Executor - выполнение сбросов
+    7. Reset Event Handler - обработка событий сбросов
+
+  components:
+    - name: Daily Reset Manager
+      location: world-service-go (модуль reset)
+      responsibility: |
+        - Управление daily resets
+        - Сброс daily квестов
+        - Сброс daily ограничений
+        - Сброс daily наград
+        - Трекинг daily прогресса
+      reset_types: |
+        - Daily quests: сброс ежедневных квестов
+        - Daily login rewards: сброс логин-наград
+        - Daily lockouts: сброс ограничений
+        - Daily challenges: сброс челленджей
+      reset_schedule: |
+        - Время сброса: 00:00 UTC
+        - Часовой пояс: UTC
+        - Обработка всех игроков
+      endpoints:
+        - POST /api/v1/world/reset/daily/execute - выполнение daily reset
+        - GET /api/v1/world/reset/daily/status - статус daily reset
+        - GET /api/v1/world/reset/daily/next - время следующего reset
+
+    - name: Weekly Reset Manager
+      location: world-service-go (модуль reset)
+      responsibility: |
+        - Управление weekly resets
+        - Сброс weekly квестов
+        - Сброс weekly ограничений
+        - Сброс weekly наград
+        - Трекинг weekly прогресса
+      reset_types: |
+        - Weekly quests: сброс еженедельных квестов
+        - Weekly challenges: сброс еженедельных челленджей
+        - Weekly lockouts: сброс еженедельных ограничений
+        - Weekly leaderboards: сброс лидербордов
+      reset_schedule: |
+        - Время сброса: понедельник 00:00 UTC
+        - Часовой пояс: UTC
+        - Обработка всех игроков
+      endpoints:
+        - POST /api/v1/world/reset/weekly/execute - выполнение weekly reset
+        - GET /api/v1/world/reset/weekly/status - статус weekly reset
+        - GET /api/v1/world/reset/weekly/next - время следующего reset
+
+    - name: Quest Pool Manager
+      location: world-service-go (модуль reset-quests)
+      responsibility: |
+        - Управление пулами квестов
+        - Ротация квестов
+        - Выдача квестов игрокам
+        - Трекинг выполнения квестов
+        - Интеграция с quest engine
+      quest_pools: |
+        - Daily quest pool: пул ежедневных квестов
+        - Weekly quest pool: пул еженедельных квестов
+        - Guild quest pool: пул гильдийных квестов
+      rotation_logic: |
+        - Случайный выбор из пула
+        - Учёт выполненных квестов
+        - Балансировка сложности
+        - Ротация каждые 24 часа (daily) или 7 дней (weekly)
+      endpoints:
+        - GET /api/v1/world/reset/quests/pool - пул квестов
+        - POST /api/v1/world/reset/quests/assign - выдача квеста игроку
+        - GET /api/v1/world/reset/quests/player/{player_id} - квесты игрока
+
+    - name: Login Rewards Manager
+      location: world-service-go (модуль reset-rewards)
+      responsibility: |
+        - Управление логин-наградами
+        - Трекинг дней логина
+        - Выдача наград
+        - Сброс при пропуске дней
+        - Интеграция с economy service
+      reward_types: |
+        - Daily login rewards: ежедневные награды
+        - Weekly login rewards: еженедельные награды
+        - Monthly login rewards: месячные награды
+        - Streak rewards: награды за серию
+      streak_logic: |
+        - Подсчёт дней подряд
+        - Сброс при пропуске дня
+        - Бонусы за длинные серии
+        - Максимальная серия: 30 дней
+      endpoints:
+        - GET /api/v1/world/reset/rewards/login/{player_id} - логин-награды игрока
+        - POST /api/v1/world/reset/rewards/login/claim - получение награды
+        - GET /api/v1/world/reset/rewards/login/streak/{player_id} - серия логинов
+
+    - name: Reset Scheduler
+      location: world-service-go (модуль reset-scheduler)
+      responsibility: |
+        - Планирование сбросов
+        - Управление cron jobs
+        - Координация сбросов
+        - Обработка ошибок
+        - Retry логика
+      scheduling: |
+        - Daily reset: каждые 24 часа в 00:00 UTC
+        - Weekly reset: каждую неделю в понедельник 00:00 UTC
+        - Login rewards: проверка при логине
+        - Retry: до 3 попыток при ошибке
+      endpoints:
+        - GET /api/v1/world/reset/schedule - расписание сбросов
+        - POST /api/v1/world/reset/schedule/update - обновление расписания
+
+    - name: Reset Executor
+      location: world-service-go (модуль reset-executor)
+      responsibility: |
+        - Выполнение сбросов
+        - Batch обработка игроков
+        - Транзакционность операций
+        - Обработка ошибок
+        - Логирование результатов
+      execution_strategy: |
+        - Batch размер: 1000 игроков
+        - Транзакции для каждого игрока
+        - Rollback при ошибке
+        - Параллельная обработка (до 10 потоков)
+      endpoints:
+        - POST /api/v1/world/reset/execute/daily - выполнение daily reset
+        - POST /api/v1/world/reset/execute/weekly - выполнение weekly reset
+        - GET /api/v1/world/reset/execute/status - статус выполнения
+
+    - name: Reset Event Handler
+      location: world-service-go (модуль reset-events)
+      responsibility: |
+        - Обработка событий сбросов
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Уведомления игроков
+      reset_events_published: |
+        - reset:daily-completed
+        - reset:weekly-completed
+        - reset:quest-assigned
+        - reset:reward-claimed
+        - reset:streak-updated
+      reset_events_consumed: |
+        - quest:completed
+        - player:login
+        - player:logout
+      endpoints:
+        - GET /api/v1/world/reset/events - события сбросов
+
+  data_flow:
+    daily_reset: |
+      1. Cron задача запускается в 00:00 UTC
+      2. Reset Scheduler координирует выполнение
+      3. Reset Executor начинает batch обработку
+      4. Daily Reset Manager сбрасывает daily квесты
+      5. Quest Pool Manager выдаёт новые квесты
+      6. Login Rewards Manager обновляет логин-награды
+      7. Состояние сохраняется в БД
+      8. Reset Event Handler публикует reset:daily-completed
+      9. Notification Service уведомляет игроков
+
+    weekly_reset: |
+      1. Cron задача запускается в понедельник 00:00 UTC
+      2. Reset Scheduler координирует выполнение
+      3. Reset Executor начинает batch обработку
+      4. Weekly Reset Manager сбрасывает weekly квесты
+      5. Quest Pool Manager выдаёт новые weekly квесты
+      6. Leaderboard System сбрасывает лидерборды
+      7. Состояние сохраняется в БД
+      8. Reset Event Handler публикует reset:weekly-completed
+      9. Notification Service уведомляет игроков
+
+    login_reward: |
+      1. Игрок входит в игру
+      2. Login Rewards Manager проверяет статус
+      3. Если награда доступна - выдаётся
+      4. Обновляется серия логинов
+      5. Economy Service получает награды
+      6. Mail Service отправляет награды (если нужно)
+      7. Reset Event Handler публикует reset:reward-claimed
+      8. Notification Service уведомляет игрока
+
+  integrations:
+    with_gameplay_service: |
+      - Получение данных о квестах
+      - Интеграция с quest engine
+      - Обновление прогресса квестов
+
+    with_economy_service: |
+      - Выдача наград
+      - Интеграция с экономической системой
+      - Обновление валюты и предметов
+
+    with_social_service: |
+      - Гильдийные квесты
+      - Интеграция с гильдиями
+      - Социальные награды
+
+    with_leaderboard_service: |
+      - Сброс лидербордов
+      - Интеграция с лидербордами
+      - Обновление рейтингов
+
+    with_mail_service: |
+      - Отправка наград через почту
+      - Уведомления о сбросах
+
+    with_notification_service: |
+      - Уведомления о сбросах
+      - Уведомления о новых квестах
+      - Уведомления о наградах
+
+    with_realtime_gateway: |
+      - Синхронизация состояния сбросов
+      - Уведомления о событиях
+      - Обновления в реальном времени
+
+  database_schema:
+    tables:
+      - name: daily_quests_pool
+        description: Пул ежедневных квестов
+        fields:
+          - id: UUID (PK)
+          - quest_id: UUID (FK quest_definitions)
+          - weight: INTEGER (default: 1)
+          - min_level: INTEGER (default: 1)
+          - max_level: INTEGER (nullable)
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - quest_id
+          - is_active, min_level
+
+      - name: player_daily_quests
+        description: Ежедневные квесты игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - quest_id: UUID (FK quest_definitions)
+          - assigned_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+          - reset_date: DATE
+          - created_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, quest_id, reset_date)
+        indexes:
+          - player_id, reset_date
+          - quest_id, reset_date
+
+      - name: weekly_quests_pool
+        description: Пул еженедельных квестов
+        fields:
+          - id: UUID (PK)
+          - quest_id: UUID (FK quest_definitions)
+          - weight: INTEGER (default: 1)
+          - min_level: INTEGER (default: 1)
+          - max_level: INTEGER (nullable)
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - quest_id
+          - is_active, min_level
+
+      - name: player_weekly_quests
+        description: Еженедельные квесты игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - quest_id: UUID (FK quest_definitions)
+          - assigned_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+          - week_start: DATE
+          - created_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, quest_id, week_start)
+        indexes:
+          - player_id, week_start
+          - quest_id, week_start
+
+      - name: reset_tracking
+        description: Трекинг сбросов
+        fields:
+          - id: UUID (PK)
+          - reset_type: ENUM (daily, weekly)
+          - reset_date: DATE
+          - status: ENUM (pending, in_progress, completed, failed)
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+          - players_processed: INTEGER (default: 0)
+          - players_total: INTEGER
+          - error_message: TEXT (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - reset_type, reset_date
+          - status, reset_date
+
+      - name: login_rewards_tracking
+        description: Трекинг логин-наград
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - reward_type: ENUM (daily, weekly, monthly)
+          - day_number: INTEGER
+          - claimed_at: TIMESTAMP
+          - reward_data: JSONB
+          - streak_days: INTEGER (default: 0)
+          - last_login_date: DATE
+          - created_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, reward_type, day_number)
+        indexes:
+          - player_id, reward_type
+          - last_login_date
+
+      - name: daily_lockouts
+        description: Ежедневные ограничения
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - lockout_type: VARCHAR(100)
+          - lockout_data: JSONB
+          - reset_date: DATE
+          - expires_at: TIMESTAMP
+          - created_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, lockout_type, reset_date)
+        indexes:
+          - player_id, reset_date
+          - expires_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в world-service-go:
+      - reset (управление сбросами)
+      - reset-quests (квесты)
+      - reset-rewards (награды)
+      - reset-scheduler (планировщик)
+      - reset-executor (выполнение)
+      - reset-events (события)
+    - Интеграция с gameplay-service для квестов
+    - Интеграция с economy-service для наград
+    - Оптимизация запросов к БД (batch, индексы)
+
+  cron_requirements:
+    - Daily reset: каждые 24 часа в 00:00 UTC
+    - Weekly reset: каждую неделю в понедельник 00:00 UTC
+    - Retry логика: до 3 попыток
+    - Мониторинг выполнения
+
+  performance_requirements:
+    - Выполнение daily reset < 30 минут
+    - Выполнение weekly reset < 1 часа
+    - Обработка 1000 игроков < 1 минуты
+    - Поддержка до 1M игроков
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через world-service
+    - Распределение нагрузки на сбросы
+    - Оптимизация запросов к БД (batch, индексы)
+    - Параллельная обработка игроков
+
+subtasks:
+  - id: daily-reset-manager-module
+    title: Реализация модуля Daily Reset Manager
+    description: |
+      Управление daily resets
+      Сброс daily квестов и ограничений
+      Трекинг daily прогресса
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: weekly-reset-manager-implementation
+    title: Реализация Weekly Reset Manager
+    description: |
+      Управление weekly resets
+      Сброс weekly квестов и ограничений
+      Трекинг weekly прогресса
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: quest-pool-manager
+    title: Реализация Quest Pool Manager
+    description: |
+      Управление пулами квестов
+      Ротация квестов
+      Выдача квестов игрокам
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: login-rewards-manager
+    title: Реализация Login Rewards Manager
+    description: |
+      Управление логин-наградами
+      Трекинг дней логина
+      Выдача наград
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: reset-scheduler
+    title: Реализация Reset Scheduler
+    description: |
+      Планирование сбросов
+      Управление cron jobs
+      Координация сбросов
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: reset-executor
+    title: Реализация Reset Executor
+    description: |
+      Выполнение сбросов
+      Batch обработка игроков
+      Транзакционность операций
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: reset-event-handler
+    title: Реализация Reset Event Handler
+    description: |
+      Обработка событий сбросов
+      Публикация событий
+      Подписка на события
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование пулов квестов
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для сбросов
+      Интеграция с существующим API world-service
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты daily resets
+      Тесты weekly resets
+      Тесты login rewards
+      Тесты интеграций
+    priority: high
+    estimated_time: 3-4 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "World Service"
+            DRM[Daily Reset Manager]
+            WRM[Weekly Reset Manager]
+            QPM[Quest Pool Manager]
+            LRM[Login Rewards Manager]
+            RS[Reset Scheduler]
+            RE[Reset Executor]
+            REH[Reset Event Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>daily_quests_pool<br/>player_daily_quests<br/>weekly_quests_pool<br/>reset_tracking<br/>login_rewards_tracking)]
+        end
+
+        subgraph "External Services"
+            GS[Gameplay Service]
+            ES[Economy Service]
+            SS[Social Service]
+            LS[Leaderboard Service]
+            MS[Mail Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Cron"
+            CRON[Cron Jobs]
+        end
+
+        CRON --> RS
+        RS --> RE
+        RE --> DRM
+        RE --> WRM
+        DRM --> QPM
+        WRM --> QPM
+        QPM --> GS
+        LRM --> ES
+        RE --> LRM
+        RE --> DB
+        REH --> NS
+        REH --> RG
+        WRM --> LS
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CRON as Cron
+        participant RS as Reset Scheduler
+        participant RE as Reset Executor
+        participant DRM as Daily Reset Manager
+        participant QPM as Quest Pool Manager
+        participant REH as Reset Event Handler
+
+        CRON->>RS: Daily reset trigger
+        RS->>RE: Execute daily reset
+        RE->>DRM: Reset daily quests
+        DRM->>QPM: Assign new quests
+        QPM->>QPM: Save to DB
+        RE->>REH: Publish reset:daily-completed
+        REH->>REH: Notify players
+    ```
+
+decisions:
+  - id: adr-reset-architecture
+    summary: |
+      Выбрана модульная архитектура внутри world-service-go для обеспечения
+      централизованного управления сбросами.
+
+  - id: adr-batch-processing
+    summary: |
+      Batch обработка игроков обеспечивает эффективное выполнение сбросов
+      для большого количества игроков.
+
+  - id: adr-quest-pools
+    summary: |
+      Система пулов квестов с ротацией обеспечивает разнообразие контента
+      и предотвращает повторение одних и тех же квестов.
+
+  - id: adr-login-rewards
+    summary: |
+      Система логин-наград с сериями мотивирует игроков возвращаться
+      ежедневно и повышает retention.
+
+  - id: adr-cron-scheduling
+    summary: |
+      Cron jobs для сбросов обеспечивают надёжное выполнение в заданное время
+      с возможностью retry при ошибках.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата расписаний и событий
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы Daily/Weekly Reset:
+      - Определены компоненты (Daily Reset Manager, Weekly Reset Manager, Quest Pool Manager, Login Rewards Manager, Reset Scheduler, Reset Executor, Reset Event Handler)
+      - Описаны типы сбросов (daily, weekly)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (daily_quests_pool, player_daily_quests, weekly_quests_pool, player_weekly_quests, reset_tracking, login_rewards_tracking, daily_lockouts)
+      - Спроектирована система daily resets
+      - Спроектирована система weekly resets
+      - Спроектирована система login rewards
+      - Спроектирована система cron jobs
+      - Создано техническое задание
+      - Разбито на подзадачи
+
