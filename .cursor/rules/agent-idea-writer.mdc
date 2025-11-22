@@ -140,13 +140,114 @@ Idea Writer отвечает за создание идей, разработк�
 - [ ] Игровая механика описана понятно
 - [ ] Все текстовые материалы готовы
 
+## Управление метками
+
+### При начале работы
+
+**ОБЯЗАТЕЛЬНО** при начале работы над задачей:
+
+1. **Проверь метки Issue через MCP GitHub:**
+   ```javascript
+   // Используй mcp_github_issue_read для получения Issue
+   const issue = await mcp_github_issue_read({
+     owner: 'gc-lover',
+     repo: 'necpgame-monorepo',
+     issue_number: 9,
+     method: 'get'
+   });
+   ```
+
+2. **Добавь свою метку, если её нет:**
+   ```javascript
+   // Используй mcp_github для добавления метки
+   await mcp_github_issue_write({
+     method: 'update',
+     owner: 'gc-lover',
+     repo: 'necpgame-monorepo',
+     issue_number: 9,
+     labels: ['agent:idea-writer', 'stage:idea', 'game-design', ...existing_labels]
+   });
+   ```
+   
+   **Метки для Idea Writer:**
+   - `agent:idea-writer` - ОБЯЗАТЕЛЬНО
+   - `stage:idea` - ОБЯЗАТЕЛЬНО
+   - `game-design` - рекомендуется
+
+3. **Обнови Project статус:**
+   - Установи `Development Stage` = `idea-writer` через MCP GitHub Project API
+
+### При завершении работы
+
+**ОБЯЗАТЕЛЬНО** при завершении работы:
+
+1. **Удали свою метку `agent:idea-writer`:**
+   ```javascript
+   // Получи текущие метки
+   const issue = await mcp_github_issue_read({...});
+   const currentLabels = issue.labels.map(l => l.name);
+   
+   // Удали agent:idea-writer
+   const newLabels = currentLabels.filter(l => l !== 'agent:idea-writer');
+   
+   // Обнови Issue
+   await mcp_github_issue_write({
+     method: 'update',
+     owner: 'gc-lover',
+     repo: 'necpgame-monorepo',
+     issue_number: 9,
+     labels: newLabels
+   });
+   ```
+
+2. **Добавь метку следующего агента:**
+   - Добавь `agent:architect`
+   - Добавь `stage:design`
+
 ## Переход к следующему этапу
 
 После завершения работы:
-1. Обнови статус Issue: `Development Stage` = `architect`
-2. Добавь метки: `agent:architect`, `stage:design`
-3. Убери метку `agent:idea-writer`
-4. Добавь комментарий: "Идея готова к архитектурной проработке"
+
+1. **Удали свою метку `agent:idea-writer`** (см. раздел "Управление метками")
+
+2. **Добавь метки следующего агента:**
+   - `agent:architect` - ОБЯЗАТЕЛЬНО
+   - `stage:design` - ОБЯЗАТЕЛЬНО
+   - Сохрани остальные метки (приоритет, категория и т.д.)
+
+3. **Обнови статус Issue через MCP GitHub:**
+   - Установи `Development Stage` = `architect` через Project API
+
+4. **Добавь комментарий в Issue:**
+   ```
+   OK Идея готова к архитектурной проработке
+   
+   Задача передана агенту @agent:architect
+   
+   [Детали выполненной работы]
+   ```
+
+5. **Используй MCP GitHub для обновления:**
+   ```javascript
+   // 1. Удали свою метку и добавь метку следующего агента
+   await mcp_github_issue_write({
+     method: 'update',
+     owner: 'gc-lover',
+     repo: 'necpgame-monorepo',
+     issue_number: 9,
+     labels: ['agent:architect', 'stage:design', ...other_labels]
+   });
+   
+   // 2. Добавь комментарий
+   await mcp_github_add_issue_comment({
+     owner: 'gc-lover',
+     repo: 'necpgame-monorepo',
+     issue_number: 9,
+     body: 'OK Идея готова к архитектурной проработке...'
+   });
+   
+   // 3. Обнови Project статус (через GraphQL API)
+   ```
 
 ## Стиль работы
 
