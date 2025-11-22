@@ -1,0 +1,530 @@
+metadata:
+  id: inventory-system-architecture
+  title: Архитектура системы инвентаря
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T20:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - inventory
+    - backend
+    - economy
+  related_systems:
+    - economy-service-go
+    - character-service-go
+    - loot-system
+    - trade-system
+  related_documents:
+    - id: backend-inventory-part1-core
+      relation: extends
+    - id: backend-inventory-part2-advanced
+      relation: extends
+  github_issue: 135
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы инвентаря
+    для управления предметами игроков, экипировкой, хранением, stacking,
+    весом и интеграцией с другими системами.
+  goal: |
+    Создать архитектурную схему системы инвентаря с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Технического задания для реализации
+  essence: |
+    Комплексная система управления инвентарём с поддержкой backpack, equipment,
+    bank/stash, stacking, веса, экипировки и интеграцией с торговлей, лутом и персонажами.
+
+architecture:
+  overview: |
+    Система инвентаря состоит из пяти основных компонентов:
+    1. Inventory Manager - управление инвентарём персонажа
+    2. Equipment Manager - управление экипировкой
+    3. Storage Manager - управление банком/стэшем
+    4. Item Stack Manager - управление стеками предметов
+    5. Weight Calculator - расчёт веса и ограничений
+
+  components:
+    - name: Inventory Manager
+      location: economy-service-go (модуль inventory)
+      responsibility: |
+        - Управление инвентарём персонажа (backpack)
+        - CRUD операции с предметами
+        - Управление слотами инвентаря
+        - Поиск свободных слотов
+        - Оптимизация размещения предметов
+        - Синхронизация с character-service
+      port: 8086 (economy-service-go)
+      endpoints:
+        - GET /api/v1/economy/inventory/{character_id} - получение инвентаря
+        - POST /api/v1/economy/inventory/{character_id}/items - добавление предмета
+        - PUT /api/v1/economy/inventory/{character_id}/items/{item_id} - обновление предмета
+        - DELETE /api/v1/economy/inventory/{character_id}/items/{item_id} - удаление предмета
+        - POST /api/v1/economy/inventory/{character_id}/items/{item_id}/move - перемещение предмета
+        - POST /api/v1/economy/inventory/{character_id}/items/{item_id}/split - разделение стека
+        - POST /api/v1/economy/inventory/{character_id}/items/{item_id}/merge - объединение стеков
+        - GET /api/v1/economy/inventory/{character_id}/free-slots - свободные слоты
+
+    - name: Equipment Manager
+      location: economy-service-go (модуль equipment)
+      responsibility: |
+        - Управление экипировкой персонажа
+        - Проверка требований для экипировки
+        - Применение статов от экипировки
+        - Управление слотами экипировки (weapon, armor, implants, etc.)
+        - Снятие экипировки
+        - Валидация совместимости предметов
+      integration: |
+        Интегрируется с character-service для применения статов
+        Синхронизирует изменения с progression system
+      endpoints:
+        - GET /api/v1/economy/inventory/{character_id}/equipment - получение экипировки
+        - POST /api/v1/economy/inventory/{character_id}/equipment/equip - экипировка предмета
+        - POST /api/v1/economy/inventory/{character_id}/equipment/unequip - снятие предмета
+        - GET /api/v1/economy/inventory/{character_id}/equipment/stats - статы от экипировки
+
+    - name: Storage Manager
+      location: economy-service-go (модуль storage)
+      responsibility: |
+        - Управление банком/стэшем персонажа
+        - Расширение хранилища
+        - Перемещение предметов между инвентарём и банком
+        - Управление несколькими хранилищами (личный банк, гильдия)
+        - Оптимизация хранения
+      endpoints:
+        - GET /api/v1/economy/inventory/{character_id}/storage - получение хранилища
+        - POST /api/v1/economy/inventory/{character_id}/storage/items - добавление в хранилище
+        - POST /api/v1/economy/inventory/{character_id}/storage/transfer - перемещение между инвентарём и хранилищем
+        - POST /api/v1/economy/inventory/{character_id}/storage/expand - расширение хранилища
+
+    - name: Item Stack Manager
+      location: economy-service-go (модуль item-stack)
+      responsibility: |
+        - Управление стеками предметов
+        - Объединение стеков одинаковых предметов
+        - Разделение стеков
+        - Проверка максимального размера стека
+        - Оптимизация размещения стеков
+      endpoints:
+        - POST /api/v1/economy/inventory/{character_id}/items/{item_id}/stack - операции со стеком
+        - GET /api/v1/economy/inventory/{character_id}/items/{item_id}/stack-info - информация о стеке
+
+    - name: Weight Calculator
+      location: economy-service-go (модуль weight)
+      responsibility: |
+        - Расчёт веса инвентаря
+        - Проверка ограничений по весу
+        - Валидация возможности подбора предмета
+        - Расчёт перегрузки
+        - Применение модификаторов веса
+      integration: |
+        Использует характеристики персонажа из character-service
+        Применяет модификаторы от экипировки и перков
+      endpoints:
+        - GET /api/v1/economy/inventory/{character_id}/weight - текущий вес
+        - GET /api/v1/economy/inventory/{character_id}/weight/limit - лимит веса
+        - POST /api/v1/economy/inventory/{character_id}/weight/validate - валидация веса
+
+  data_flow:
+    item_pickup: |
+      1. Игрок подбирает предмет (loot или trade)
+      2. Weight Calculator проверяет возможность подбора (вес, лимиты)
+      3. Item Stack Manager проверяет возможность объединения со стеком
+      4. Inventory Manager ищет свободный слот
+      5. Предмет добавляется в инвентарь
+      6. Weight Calculator обновляет вес
+      7. Character-service обновляет характеристики
+      8. Realtime Gateway синхронизирует изменения
+
+    item_equip: |
+      1. Игрок экипирует предмет
+      2. Equipment Manager проверяет требования (уровень, класс, характеристики)
+      3. Проверяется совместимость с текущей экипировкой
+      4. Предмет перемещается из инвентаря в слот экипировки
+      5. Character-service применяет статы от предмета
+      6. Equipment Manager обновляет состояние экипировки
+      7. Realtime Gateway синхронизирует изменения
+
+    item_storage: |
+      1. Игрок перемещает предмет в хранилище
+      2. Storage Manager проверяет доступность хранилища
+      3. Проверяется лимит хранилища
+      4. Предмет перемещается из инвентаря в хранилище
+      5. Weight Calculator обновляет вес инвентаря
+      6. Realtime Gateway синхронизирует изменения
+
+  integrations:
+    with_character_service: |
+      - Получение характеристик персонажа для проверки требований
+      - Применение статов от экипировки
+      - Обновление веса персонажа
+      - Синхронизация изменений
+
+    with_loot_system: |
+      - Получение предметов после боя/квестов
+      - Интеграция с системой генерации лута
+      - Валидация подбора предметов
+
+    with_trade_system: |
+      - Проверка владения предметами для торговли
+      - Блокировка предметов во время торговли
+      - Перемещение предметов после обмена
+
+    with_realtime_gateway: |
+      - Realtime синхронизация изменений инвентаря
+      - Push уведомления о новых предметах
+      - Синхронизация экипировки
+
+  database_schema:
+    tables:
+      - name: character_inventory
+        description: Инвентарь персонажа
+        fields:
+          - character_id: UUID (PK, FK)
+          - max_slots: INTEGER
+          - current_weight: FLOAT
+          - max_weight: FLOAT
+          - updated_at: TIMESTAMP
+        indexes:
+          - character_id
+
+      - name: character_items
+        description: Предметы в инвентаре
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK)
+          - item_template_id: UUID (FK item_templates)
+          - slot_index: INTEGER
+          - stack_size: INTEGER
+          - durability: INTEGER (nullable)
+          - bind_status: ENUM (unbound, bound, account_bound)
+          - modifiers: JSONB (модификаторы предмета)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - character_id, slot_index
+          - character_id, item_template_id
+
+      - name: character_equipment
+        description: Экипировка персонажа
+        fields:
+          - character_id: UUID (PK, FK)
+          - slot_type: ENUM (weapon_primary, weapon_secondary, armor_head, armor_body, armor_legs, implant_1, implant_2, etc.)
+          - item_id: UUID (FK character_items)
+          - equipped_at: TIMESTAMP
+        indexes:
+          - character_id, slot_type
+
+      - name: character_storage
+        description: Хранилище персонажа (банк/стэш)
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK)
+          - storage_type: ENUM (personal_bank, guild_bank, stash)
+          - max_slots: INTEGER
+          - current_weight: FLOAT
+          - max_weight: FLOAT
+          - updated_at: TIMESTAMP
+        indexes:
+          - character_id, storage_type
+
+      - name: storage_items
+        description: Предметы в хранилище
+        fields:
+          - id: UUID (PK)
+          - storage_id: UUID (FK character_storage)
+          - item_template_id: UUID (FK item_templates)
+          - slot_index: INTEGER
+          - stack_size: INTEGER
+          - durability: INTEGER (nullable)
+          - bind_status: ENUM
+          - modifiers: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - storage_id, slot_index
+
+      - name: item_templates
+        description: Шаблоны предметов
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - item_type: ENUM (weapon, armor, consumable, material, quest_item, etc.)
+          - rarity: ENUM (common, uncommon, rare, epic, legendary)
+          - weight: FLOAT
+          - max_stack_size: INTEGER
+          - bind_on_pickup: BOOLEAN
+          - requirements: JSONB (требования для использования)
+          - stats: JSONB (базовые статы)
+          - created_at: TIMESTAMP
+        indexes:
+          - item_type, rarity
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в economy-service-go:
+      - inventory (управление инвентарём)
+      - equipment (управление экипировкой)
+      - storage (управление хранилищем)
+      - item-stack (управление стеками)
+      - weight (расчёт веса)
+    - Интеграция с character-service для характеристик
+    - Интеграция с loot-system для получения предметов
+    - Интеграция с trade-system для торговли
+    - Оптимизация запросов к БД (batch, индексы)
+
+  performance_requirements:
+    - Получение инвентаря < 50ms
+    - Добавление предмета < 30ms
+    - Экипировка предмета < 50ms
+    - Поддержка до 1000 слотов в инвентаре
+    - Поддержка до 10000 предметов на персонажа
+    - Кэширование активных инвентарей
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через economy-service
+    - Распределение нагрузки на инвентари
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование активных инвентарей в памяти (Redis)
+
+  data_consistency:
+    - ACID транзакции для операций с предметами
+    - Оптимистичные блокировки для предотвращения конфликтов
+    - Валидация перед сохранением изменений
+    - Синхронизация с character-service
+
+subtasks:
+  - id: inventory-manager-module
+    title: Реализация модуля Inventory Manager
+    description: |
+      Создание модуля управления инвентарём
+      CRUD операции с предметами
+      Управление слотами
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: equipment-manager
+    title: Реализация Equipment Manager
+    description: |
+      Управление экипировкой
+      Проверка требований
+      Применение статов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: storage-manager
+    title: Реализация Storage Manager
+    description: |
+      Управление хранилищем
+      Перемещение предметов
+      Расширение хранилища
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: item-stack-manager
+    title: Реализация Item Stack Manager
+    description: |
+      Управление стеками предметов
+      Объединение и разделение стеков
+      Оптимизация размещения
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: weight-calculator
+    title: Реализация Weight Calculator
+    description: |
+      Расчёт веса инвентаря
+      Проверка ограничений
+      Валидация подбора предметов
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование активных инвентарей
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для инвентаря
+      Интеграция с существующим API economy-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: realtime-integration
+    title: Интеграция с Realtime Gateway
+    description: |
+      Синхронизация изменений инвентаря
+      Push уведомления
+      Оптимизация трафика
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты операций с инвентарём
+      Тесты экипировки
+      Тесты интеграций с другими сервисами
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Economy Service"
+            IM[Inventory Manager]
+            EM[Equipment Manager]
+            SM[Storage Manager]
+            ISM[Item Stack Manager]
+            WC[Weight Calculator]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>character_inventory<br/>character_items<br/>character_equipment<br/>character_storage)]
+        end
+
+        subgraph "External Services"
+            CHS[Character Service]
+            LS[Loot System]
+            TS[Trade System]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| IM
+        IM --> EM
+        IM --> SM
+        IM --> ISM
+        IM --> WC
+        IM -->|store| DB
+        EM -->|store| DB
+        SM -->|store| DB
+        IM -->|get stats| CHS
+        IM -->|apply stats| CHS
+        IM -->|receive items| LS
+        IM -->|trade items| TS
+        IM -->|sync state| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CL as Client
+        participant IM as Inventory Manager
+        participant WC as Weight Calculator
+        participant ISM as Item Stack Manager
+        participant CHS as Character Service
+        participant RG as Realtime Gateway
+
+        CL->>IM: Pickup item
+        IM->>WC: Check weight limit
+        WC->>IM: Weight OK
+        IM->>ISM: Check stack merge
+        ISM->>IM: Can merge
+        IM->>IM: Add to inventory
+        IM->>WC: Update weight
+        IM->>CHS: Update character weight
+        IM->>RG: Sync changes
+        RG->>CL: Push update
+    ```
+
+  inventory_structure: |
+    ```mermaid
+    graph LR
+        subgraph "Character Inventory"
+            B[Backpack<br/>Slots: 0-99]
+            E[Equipment<br/>Weapon, Armor, Implants]
+            S[Storage<br/>Bank, Stash]
+        end
+
+        subgraph "Item Operations"
+            A[Add Item]
+            M[Move Item]
+            R[Remove Item]
+            ST[Stack Operations]
+        end
+
+        B --> A
+        B --> M
+        B --> R
+        B --> ST
+        E --> A
+        E --> M
+        S --> A
+        S --> M
+    ```
+
+decisions:
+  - id: adr-inventory-architecture
+    summary: |
+      Выбрана модульная архитектура внутри economy-service-go для обеспечения
+      тесной интеграции с торговлей и экономикой.
+
+  - id: adr-server-side-management
+    summary: |
+      Все операции с инвентарём выполняются на сервере для защиты от читов
+      и обеспечения консистентности данных.
+
+  - id: adr-slot-based-system
+    summary: |
+      Система на основе слотов обеспечивает простоту управления и визуализации,
+      с поддержкой stacking для оптимизации пространства.
+
+  - id: adr-weight-system
+    summary: |
+      Система веса добавляет реалистичность и ограничивает количество предметов,
+      создавая стратегический выбор для игроков.
+
+  - id: adr-realtime-sync
+    summary: |
+      Realtime синхронизация через gateway обеспечивает актуальность данных
+      для всех клиентов и предотвращает конфликты.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы инвентаря:
+      - Определены компоненты (Inventory Manager, Equipment Manager, Storage Manager, Item Stack Manager, Weight Calculator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД
+      - Создано техническое задание
+      - Разбито на подзадачи
+
