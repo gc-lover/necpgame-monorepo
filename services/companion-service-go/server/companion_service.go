@@ -14,8 +14,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type CompanionRepositoryInterface interface {
+	GetCompanionType(ctx context.Context, companionTypeID string) (*models.CompanionType, error)
+	ListCompanionTypes(ctx context.Context, category *models.CompanionCategory, limit, offset int) ([]models.CompanionType, error)
+	CountCompanionTypes(ctx context.Context, category *models.CompanionCategory) (int, error)
+	CreatePlayerCompanion(ctx context.Context, companion *models.PlayerCompanion) error
+	GetPlayerCompanion(ctx context.Context, companionID uuid.UUID) (*models.PlayerCompanion, error)
+	GetActiveCompanion(ctx context.Context, characterID uuid.UUID) (*models.PlayerCompanion, error)
+	UpdatePlayerCompanion(ctx context.Context, companion *models.PlayerCompanion) error
+	ListPlayerCompanions(ctx context.Context, characterID uuid.UUID, status *models.CompanionStatus, limit, offset int) ([]models.PlayerCompanion, error)
+	CountPlayerCompanions(ctx context.Context, characterID uuid.UUID, status *models.CompanionStatus) (int, error)
+	GetCompanionAbility(ctx context.Context, playerCompanionID uuid.UUID, abilityID string) (*models.CompanionAbility, error)
+	CreateCompanionAbility(ctx context.Context, ability *models.CompanionAbility) error
+	UpdateCompanionAbility(ctx context.Context, ability *models.CompanionAbility) error
+	ListCompanionAbilities(ctx context.Context, playerCompanionID uuid.UUID) ([]models.CompanionAbility, error)
+}
+
 type CompanionService struct {
-	repo     *CompanionRepository
+	repo     CompanionRepositoryInterface
 	cache    *redis.Client
 	logger   *logrus.Logger
 	eventBus EventBus

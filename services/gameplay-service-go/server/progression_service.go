@@ -14,8 +14,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ProgressionRepositoryInterface interface {
+	GetProgression(ctx context.Context, characterID uuid.UUID) (*models.CharacterProgression, error)
+	CreateProgression(ctx context.Context, progression *models.CharacterProgression) error
+	UpdateProgression(ctx context.Context, progression *models.CharacterProgression) error
+	GetSkillExperience(ctx context.Context, characterID uuid.UUID, skillID string) (*models.SkillExperience, error)
+	CreateSkillExperience(ctx context.Context, skillExp *models.SkillExperience) error
+	UpdateSkillExperience(ctx context.Context, skillExp *models.SkillExperience) error
+	ListSkillExperience(ctx context.Context, characterID uuid.UUID, limit, offset int) ([]models.SkillExperience, error)
+	CountSkillExperience(ctx context.Context, characterID uuid.UUID) (int, error)
+}
+
 type ProgressionService struct {
-	repo   *ProgressionRepository
+	repo   ProgressionRepositoryInterface
 	db     *pgxpool.Pool
 	cache  *redis.Client
 	logger *logrus.Logger

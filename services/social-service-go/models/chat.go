@@ -62,3 +62,48 @@ type ChannelListResponse struct {
 	Total    int           `json:"total"`
 }
 
+type ChatBan struct {
+	ID          uuid.UUID   `json:"id" db:"id"`
+	CharacterID uuid.UUID   `json:"character_id" db:"character_id"`
+	ChannelID   *uuid.UUID  `json:"channel_id,omitempty" db:"channel_id"`
+	ChannelType *ChannelType `json:"channel_type,omitempty" db:"channel_type"`
+	Reason      string      `json:"reason" db:"reason"`
+	AdminID     *uuid.UUID  `json:"admin_id,omitempty" db:"admin_id"`
+	ExpiresAt   *time.Time  `json:"expires_at,omitempty" db:"expires_at"`
+	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
+	IsActive    bool        `json:"is_active" db:"is_active"`
+}
+
+type ChatReport struct {
+	ID          uuid.UUID   `json:"id" db:"id"`
+	ReporterID  uuid.UUID   `json:"reporter_id" db:"reporter_id"`
+	ReportedID  uuid.UUID   `json:"reported_id" db:"reported_id"`
+	MessageID   *uuid.UUID  `json:"message_id,omitempty" db:"message_id"`
+	ChannelID   *uuid.UUID  `json:"channel_id,omitempty" db:"channel_id"`
+	Reason      string      `json:"reason" db:"reason"`
+	Status      string      `json:"status" db:"status"`
+	AdminID     *uuid.UUID  `json:"admin_id,omitempty" db:"admin_id"`
+	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
+	ResolvedAt  *time.Time  `json:"resolved_at,omitempty" db:"resolved_at"`
+}
+
+type CreateBanRequest struct {
+	CharacterID uuid.UUID   `json:"character_id"`
+	ChannelID   *uuid.UUID  `json:"channel_id,omitempty"`
+	ChannelType *ChannelType `json:"channel_type,omitempty"`
+	Reason      string      `json:"reason"`
+	Duration    *int        `json:"duration,omitempty"`
+}
+
+type CreateReportRequest struct {
+	ReportedID  uuid.UUID   `json:"reported_id"`
+	MessageID   *uuid.UUID  `json:"message_id,omitempty"`
+	ChannelID   *uuid.UUID  `json:"channel_id,omitempty"`
+	Reason      string      `json:"reason"`
+}
+
+type BanListResponse struct {
+	Bans  []ChatBan `json:"bans"`
+	Total int       `json:"total"`
+}
+

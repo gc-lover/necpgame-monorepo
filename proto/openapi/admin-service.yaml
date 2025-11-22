@@ -1,44 +1,277 @@
 openapi: 3.0.3
 info:
   title: Admin Service API
-  description: API для админ-панели: управление игроками, экономикой, миром и событиями
-  version: 1.0.0
+  description: |
+    API для системы администрирования и модерации: управление игроками, экономикой, контентом,
+    модерацией, аналитикой, ролями и аудитом действий.
+    
+    Система поддерживает три роли:
+    - SUPER_ADMIN: полный доступ ко всем операциям
+    - ADMIN: управление игроками, экономикой, контентом
+    - MODERATOR: модерация чатов, обработка репортов, временные санкции
+  version: 2.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
 
 servers:
-  - url: http://localhost:8089/api/v1
+  - url: http://localhost:8089/api/v1/admin
     description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
+  - url: https://api.necp.game/api/v1/admin
     description: Продакшен сервер
 
 tags:
+  - name: Authentication
+    description: Аутентификация и авторизация администраторов
+  - name: Dashboard
+    description: Главная панель администрирования
   - name: Player Management
     description: Управление игроками
-  - name: Inventory & Economy
-    description: Управление инвентарем и экономикой
-  - name: World & Events
-    description: Управление миром и событиями
+  - name: Economy Management
+    description: Управление экономикой
+  - name: Content Management
+    description: Управление контентом
+  - name: Moderation
+    description: Модерация и обработка репортов
   - name: Analytics
-    description: Аналитика и поиск
+    description: Аналитика и мониторинг
+  - name: Roles & Permissions
+    description: Управление ролями и правами доступа
   - name: Audit
-    description: Аудит действий
+    description: Аудит действий администраторов
 
 paths:
-  /admin/players/search:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Вход в админ-панель
+      operationId: adminLogin
+      requestBody:
+          required: true
+        content:
+          application/json:
+          schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+            example:
+              username: admin
+              password: secure_password
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Выход из админ-панели
+      operationId: adminLogout
+      responses:
+        '200':
+          description: Успешный выход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+            type: string
+                    example: logged_out
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Информация о текущем администраторе
+      operationId: getCurrentAdmin
+      responses:
+        '200':
+          description: Информация об администраторе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: Главная панель администрирования
+      operationId: getDashboard
+      responses:
+        '200':
+          description: Данные главной панели
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /players:
     get:
       tags:
         - Player Management
-      summary: Поиск игроков
-      operationId: searchPlayers
+      summary: Список игроков
+      operationId: listPlayers
       parameters:
-        - name: query
+        - name: limit
           in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: search
+          in: query
+          schema:
+            type: string
+            description: Поиск по имени или email
+      responses:
+        '200':
+          description: Список игроков
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerProfile'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /players/{player_id}:
+    get:
+      tags:
+        - Player Management
+      summary: Профиль игрока
+      operationId: getPlayerProfile
+      parameters:
+        - name: player_id
+          in: path
           required: true
           schema:
             type: string
-            minLength: 1
+            format: uuid
+      responses:
+        '200':
+          description: Профиль игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - Player Management
+      summary: Обновление профиля игрока
+      operationId: updatePlayerProfile
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlayerRequest'
+      responses:
+        '200':
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Player Management
+      summary: Удаление игрока
+      operationId: deletePlayer
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeletePlayerRequest'
+      responses:
+        '200':
+          description: Игрок удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /players/{player_id}/sessions:
+    get:
+      tags:
+        - Player Management
+      summary: История сессий игрока
+      operationId: getPlayerSessions
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: limit
           in: query
           schema:
@@ -48,16 +281,144 @@ paths:
             default: 50
       responses:
         '200':
-          description: Результаты поиска
+          description: История сессий
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  players:
+                  sessions:
                     type: array
                     items:
-                      $ref: '#/components/schemas/PlayerInfo'
+                      $ref: '#/components/schemas/PlayerSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /players/{player_id}/transactions:
+    get:
+      tags:
+        - Player Management
+      summary: История транзакций игрока
+      operationId: getPlayerTransactions
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /players/{player_id}/inventory:
+    get:
+      tags:
+        - Player Management
+      summary: Инвентарь игрока
+      operationId: getPlayerInventory
+      parameters:
+        - name: player_id
+          in: path
+        required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Инвентарь игрока
+        content:
+          application/json:
+            schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InventoryItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /players/{player_id}/achievements:
+    get:
+      tags:
+        - Player Management
+      summary: Достижения игрока
+      operationId: getPlayerAchievements
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Достижения игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Achievement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /players/{player_id}/sanctions:
+    post:
+      tags:
+        - Player Management
+      summary: Выдача санкции игроку
+      operationId: createSanction
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+                    type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSanctionRequest'
+      responses:
+        '201':
+          description: Санкция выдана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sanction'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -65,14 +426,907 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /admin/players/{characterId}/ban:
-    post:
+  /players/{player_id}/sanctions/{sanction_id}:
+    delete:
       tags:
         - Player Management
-      summary: Забанить игрока
+      summary: Отзыв санкции
+      operationId: revokeSanction
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sanction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeSanctionRequest'
+      responses:
+        '200':
+          description: Санкция отозвана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: revoked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /economy/players/{player_id}/balance:
+    get:
+      tags:
+        - Economy Management
+      summary: Баланс игрока
+      operationId: getPlayerBalance
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Баланс игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBalance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - Economy Management
+      summary: Изменение баланса игрока
+      operationId: updatePlayerBalance
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBalanceRequest'
+      responses:
+        '200':
+          description: Баланс изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBalance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /economy/market/activity:
+    get:
+      tags:
+        - Economy Management
+      summary: Активность рынка
+      operationId: getMarketActivity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Активность рынка
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketActivity'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /economy/market/suspicious:
+    get:
+      tags:
+        - Economy Management
+      summary: Подозрительные операции
+      operationId: getSuspiciousOperations
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Подозрительные операции
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  operations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SuspiciousOperation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /economy/reports/rmt:
+    get:
+      tags:
+        - Economy Management
+      summary: Отчёты по RMT
+      operationId: getRMTReports
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Отчёты по RMT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RMTReport'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /economy/items:
+    get:
+      tags:
+        - Economy Management
+      summary: Список предметов
+      operationId: listItems
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список предметов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Economy Management
+      summary: Создание предмета
+      operationId: createItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemRequest'
+      responses:
+        '201':
+          description: Предмет создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /economy/items/{item_id}:
+    put:
+      tags:
+        - Economy Management
+      summary: Обновление предмета
+      operationId: updateItem
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemRequest'
+      responses:
+        '200':
+          description: Предмет обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Economy Management
+      summary: Удаление предмета
+      operationId: deleteItem
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предмет удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content/achievements:
+    get:
+      tags:
+        - Content Management
+      summary: Список достижений
+      operationId: listAchievements
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список достижений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AchievementDefinition'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание достижения
+      operationId: createAchievement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAchievementRequest'
+      responses:
+        '201':
+          description: Достижение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content/achievements/{achievement_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление достижения
+      operationId: updateAchievement
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAchievementRequest'
+      responses:
+        '200':
+          description: Достижение обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Content Management
+      summary: Удаление достижения
+      operationId: deleteAchievement
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Достижение удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content/daily-quests:
+    get:
+      tags:
+        - Content Management
+      summary: Список ежедневных заданий
+      operationId: listDailyQuests
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Список ежедневных заданий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailyQuest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание ежедневного задания
+      operationId: createDailyQuest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDailyQuestRequest'
+      responses:
+        '201':
+          description: Задание создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyQuest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content/daily-quests/{quest_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление ежедневного задания
+      operationId: updateDailyQuest
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDailyQuestRequest'
+      responses:
+        '200':
+          description: Задание обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyQuest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content/events:
+    get:
+      tags:
+        - Content Management
+      summary: Список глобальных событий
+      operationId: listEvents
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GlobalEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание глобального события
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content/events/{event_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление глобального события
+      operationId: updateEvent
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Событие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content/npcs/{npc_id}/dialogues:
+    get:
+      tags:
+        - Content Management
+      summary: Диалоги NPC
+      operationId: getNPCDialogues
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Диалоги NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dialogues:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NPCDialogue'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content/npcs/{npc_id}/dialogues/{dialogue_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление диалога NPC
+      operationId: updateNPCDialogue
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+                    type: string
+            format: uuid
+        - name: dialogue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDialogueRequest'
+      responses:
+        '200':
+          description: Диалог обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCDialogue'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /moderation/reports:
+    get:
+      tags:
+        - Moderation
+      summary: Список репортов
+      operationId: listReports
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending
+              - resolved
+              - rejected
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список репортов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Report'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /moderation/reports/{report_id}:
+    get:
+      tags:
+        - Moderation
+      summary: Детали репорта
+      operationId: getReportDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали репорта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /moderation/reports/{report_id}/resolve:
+    post:
+      tags:
+        - Moderation
+      summary: Разрешение репорта
+      operationId: resolveReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveReportRequest'
+      responses:
+        '200':
+          description: Репорт разрешен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /moderation/chat/messages:
+    get:
+      tags:
+        - Moderation
+      summary: Сообщения чата
+      operationId: getChatMessages
+      parameters:
+        - name: channel
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Сообщения чата
+        content:
+          application/json:
+            schema:
+              type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /moderation/chat/messages/{message_id}:
+    delete:
+      tags:
+        - Moderation
+      summary: Удаление сообщения чата
+      operationId: deleteChatMessage
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMessageRequest'
+      responses:
+        '200':
+          description: Сообщение удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /moderation/players/{player_id}/ban:
+    post:
+      tags:
+        - Moderation
+      summary: Бан игрока
       operationId: banPlayer
       parameters:
-        - name: characterId
+        - name: player_id
           in: path
           required: true
           schema:
@@ -102,19 +1356,25 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /admin/players/{characterId}/unban:
-    post:
+  /moderation/players/{player_id}/ban:
+    delete:
       tags:
-        - Player Management
-      summary: Разбанить игрока
+        - Moderation
+      summary: Разбан игрока
       operationId: unbanPlayer
       parameters:
-        - name: characterId
+        - name: player_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnbanPlayerRequest'
       responses:
         '200':
           description: Игрок разбанен
@@ -126,298 +1386,429 @@ paths:
                   status:
                     type: string
                     example: unbanned
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /admin/players/{characterId}/kick:
-    post:
-      tags:
-        - Player Management
-      summary: Выгнать игрока с сервера
-      operationId: kickPlayer
-      parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/KickPlayerRequest'
-      responses:
-        '200':
-          description: Игрок выгнан
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: kicked
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /admin/players/{characterId}/mute:
-    post:
-      tags:
-        - Player Management
-      summary: Заглушить игрока
-      operationId: mutePlayer
-      parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MutePlayerRequest'
-      responses:
-        '200':
-          description: Игрок заглушен
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: muted
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /admin/inventory/{characterId}/items:
-    post:
-      tags:
-        - Inventory & Economy
-      summary: Выдать предмет игроку
-      operationId: giveItem
-      parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GiveItemRequest'
-      responses:
-        '200':
-          description: Предмет выдан
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /admin/inventory/{characterId}/items/{itemId}:
-    delete:
-      tags:
-        - Inventory & Economy
-      summary: Удалить предмет у игрока
-      operationId: removeItem
-      parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Предмет удален
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /admin/economy/{characterId}/currency:
-    post:
-      tags:
-        - Inventory & Economy
-      summary: Изменить баланс валюты игрока
-      operationId: adjustCurrency
-      parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdjustCurrencyRequest'
-      responses:
-        '200':
-          description: Баланс изменен
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /admin/world/flags:
+  /moderation/bans:
     get:
       tags:
-        - World & Events
-      summary: Получить флаги мира
-      operationId: getWorldFlags
+        - Moderation
+      summary: Список банов
+      operationId: listBans
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
-          description: Флаги мира
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: boolean
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-    post:
-      tags:
-        - World & Events
-      summary: Установить флаги мира
-      operationId: setWorldFlags
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties:
-                type: boolean
-      responses:
-        '200':
-          description: Флаги установлены
+          description: Список банов
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  status:
-                    type: string
-                    example: success
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                  bans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ban'
+                  total:
+                    type: integer
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /admin/events:
-    post:
-      tags:
-        - World & Events
-      summary: Создать серверное событие
-      operationId: createEvent
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateEventRequest'
-      responses:
-        '201':
-          description: Событие создано
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerEvent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /admin/analytics/dashboard:
+  /analytics/players/online:
     get:
       tags:
         - Analytics
-      summary: Получить аналитику дашборда
-      operationId: getDashboardAnalytics
+      summary: Онлайн игроки
+      operationId: getOnlinePlayers
       responses:
         '200':
-          description: Аналитика дашборда
+          description: Онлайн игроки
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardAnalytics'
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OnlinePlayer'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /admin/audit/logs:
+  /analytics/matches/active:
+    get:
+      tags:
+        - Analytics
+      summary: Активные матчи
+      operationId: getActiveMatches
+      responses:
+        '200':
+          description: Активные матчи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  matches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveMatch'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /analytics/trade/operations:
+    get:
+      tags:
+        - Analytics
+      summary: Операции торговли
+      operationId: getTradeOperations
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Операции торговли
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  operations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeOperation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /analytics/servers/load:
+    get:
+      tags:
+        - Analytics
+      summary: Нагрузка серверов
+      operationId: getServerLoad
+      responses:
+        '200':
+          description: Нагрузка серверов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  servers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServerLoad'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /analytics/chat/activity:
+    get:
+      tags:
+        - Analytics
+      summary: Активность чатов
+      operationId: getChatActivity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Активность чатов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activity:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatActivity'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /analytics/anomalies:
+    get:
+      tags:
+        - Analytics
+      summary: Аномалии
+      operationId: getAnomalies
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Аномалии
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  anomalies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Anomaly'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /analytics/notifications:
+    get:
+      tags:
+        - Analytics
+      summary: Уведомления
+      operationId: getNotifications
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Уведомления
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /roles:
+    get:
+      tags:
+        - Roles & Permissions
+      summary: Список ролей
+      operationId: listRoles
+      responses:
+        '200':
+          description: Список ролей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /roles/{role_id}/permissions:
+    get:
+      tags:
+        - Roles & Permissions
+      summary: Права роли
+      operationId: getRolePermissions
+      parameters:
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Права роли
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admins:
+    get:
+      tags:
+        - Roles & Permissions
+      summary: Список администраторов
+      operationId: listAdmins
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список администраторов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admins:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUser'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Roles & Permissions
+      summary: Создание администратора
+      operationId: createAdmin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdminRequest'
+      responses:
+        '201':
+          description: Администратор создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admins/{admin_id}:
+    put:
+      tags:
+        - Roles & Permissions
+      summary: Обновление администратора
+      operationId: updateAdmin
+      parameters:
+        - name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminRequest'
+      responses:
+        '200':
+          description: Администратор обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Roles & Permissions
+      summary: Удаление администратора
+      operationId: deleteAdmin
+      parameters:
+        - name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Администратор удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /audit/logs:
     get:
       tags:
         - Audit
-      summary: Получить логи аудита
+      summary: Список логов аудита
       operationId: getAuditLogs
       parameters:
         - name: admin_id
@@ -429,6 +1820,15 @@ paths:
           in: query
           schema:
             type: string
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - player
+              - economy
+              - content
+              - moderation
         - name: limit
           in: query
           schema:
@@ -461,27 +1861,220 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /audit/logs/{log_id}:
+    get:
+      tags:
+        - Audit
+      summary: Детали лога аудита
+      operationId: getAuditLogDetails
+      parameters:
+        - name: log_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали лога
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /audit/logs/search:
+    get:
+      tags:
+        - Audit
+      summary: Поиск по логам аудита
+      operationId: searchAuditLogs
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /audit/logs/export:
+    get:
+      tags:
+        - Audit
+      summary: Экспорт логов аудита
+      operationId: exportAuditLogs
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum:
+              - json
+              - csv
+            default: json
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Экспортированные логи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: JWT токен для аутентификации администраторов
 
   schemas:
-    PlayerInfo:
+    AdminLoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 100
+        password:
+          type: string
+          minLength: 8
+          format: password
+
+    AdminLoginResponse:
       type: object
       properties:
-        character_id:
+        token:
+          type: string
+          description: JWT токен для последующих запросов
+        admin:
+          $ref: '#/components/schemas/AdminUser'
+        expires_at:
+          type: string
+          format: date-time
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+            - MODERATOR
+        is_active:
+          type: boolean
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DashboardData:
+      type: object
+      properties:
+        online_players:
+          type: integer
+        total_players:
+          type: integer
+        active_matches:
+          type: integer
+        pending_reports:
+          type: integer
+        recent_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+
+    PlayerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
           type: string
           format: uuid
         character_name:
           type: string
-        account_id:
-          type: string
-          format: uuid
         email:
           type: string
+          format: email
         level:
           type: integer
         status:
@@ -490,24 +2083,31 @@ components:
             - active
             - banned
             - muted
-
-    BanPlayerRequest:
-      type: object
-      required:
-        - reason
-        - duration_hours
-      properties:
-        reason:
+            - deleted
+        created_at:
           type: string
-          minLength: 1
-          maxLength: 500
-        duration_hours:
-          type: integer
-          minimum: 1
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
           nullable: true
-          description: null для перманентного бана
 
-    KickPlayerRequest:
+    UpdatePlayerRequest:
+      type: object
+      properties:
+        character_name:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum:
+            - active
+            - banned
+            - muted
+
+    DeletePlayerRequest:
       type: object
       required:
         - reason
@@ -517,84 +2117,429 @@ components:
           minLength: 1
           maxLength: 500
 
-    MutePlayerRequest:
-      type: object
-      required:
-        - reason
-        - duration_hours
-      properties:
-        reason:
-          type: string
-          minLength: 1
-          maxLength: 500
-        duration_hours:
-          type: integer
-          minimum: 1
-
-    GiveItemRequest:
-      type: object
-      required:
-        - item_id
-        - quantity
-      properties:
-        item_id:
-          type: string
-        quantity:
-          type: integer
-          minimum: 1
-
-    AdjustCurrencyRequest:
-      type: object
-      required:
-        - currency_type
-        - amount
-      properties:
-        currency_type:
-          type: string
-          enum:
-            - eddies
-            - credits
-            - reputation
-        amount:
-          type: integer
-          description: Может быть отрицательным для уменьшения
-
-    CreateEventRequest:
-      type: object
-      required:
-        - title
-        - description
-        - start_time
-        - end_time
-      properties:
-        title:
-          type: string
-        description:
-          type: string
-        start_time:
-          type: string
-          format: date-time
-        end_time:
-          type: string
-          format: date-time
-        event_type:
-          type: string
-          enum:
-            - double_xp
-            - double_loot
-            - special_quest
-            - world_event
-        rewards:
-          type: object
-          additionalProperties: true
-
-    ServerEvent:
+    PlayerSession:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        title:
+        player_id:
+          type: string
+          format: uuid
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: integer
+          nullable: true
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum:
+            - purchase
+            - sale
+            - reward
+            - penalty
+            - transfer
+        currency_type:
+          type: string
+        amount:
+          type: integer
+        balance_after:
+          type: integer
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        quantity:
+          type: integer
+        slot:
+          type: integer
+          nullable: true
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        achievement_id:
+          type: string
+          format: uuid
+        achievement_name:
+          type: string
+        unlocked_at:
+          type: string
+          format: date-time
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    CreateSanctionRequest:
+      type: object
+      required:
+        - sanction_type
+        - reason
+      properties:
+        sanction_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - MUTE
+            - KICK
+        duration:
+          type: integer
+          description: Длительность в секундах (NULL для постоянных)
+          nullable: true
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    Sanction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        admin_id:
+          type: string
+          format: uuid
+        sanction_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - MUTE
+            - KICK
+        duration:
+          type: integer
+          nullable: true
+        reason:
+          type: string
+        is_active:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    RevokeSanctionRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    PlayerBalance:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        currencies:
+          type: object
+          additionalProperties:
+          type: integer
+            description: Тип валюты -> баланс
+
+    UpdateBalanceRequest:
+      type: object
+      required:
+        - currency_type
+        - amount
+        - reason
+      properties:
+        currency_type:
+          type: string
+        amount:
+          type: integer
+          description: Может быть отрицательным для уменьшения
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    MarketActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+          nullable: true
+        price:
+          type: integer
+        quantity:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    SuspiciousOperation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        operation_type:
+          type: string
+        player_id:
+          type: string
+          format: uuid
+        details:
+          type: object
+          additionalProperties: true
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        detected_at:
+          type: string
+          format: date-time
+
+    RMTReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateItemRequest:
+      type: object
+      required:
+        - name
+        - item_type
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+
+    UpdateItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+
+    AchievementDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateAchievementRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+
+    UpdateAchievementRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+
+    DailyQuest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateDailyQuestRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+
+    UpdateDailyQuestRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+
+    GlobalEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
           type: string
         description:
           type: string
@@ -616,35 +2561,411 @@ components:
         created_at:
           type: string
           format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
-    DashboardAnalytics:
+    CreateEventRequest:
+      type: object
+      required:
+        - name
+        - description
+        - start_time
+        - end_time
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+
+    UpdateEventRequest:
       type: object
       properties:
-        online_players:
+        name:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - scheduled
+            - active
+            - completed
+            - cancelled
+
+    NPCDialogue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        dialogue_text:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateDialogueRequest:
+      type: object
+      properties:
+        dialogue_text:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reporter_id:
+          type: string
+          format: uuid
+        reported_player_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - resolved
+            - rejected
+        resolved_by:
+          type: string
+          format: uuid
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ResolveReportRequest:
+      type: object
+      required:
+        - status
+        - action
+      properties:
+        status:
+          type: string
+          enum:
+            - resolved
+            - rejected
+        action:
+          type: string
+          description: Действие, предпринятое модератором
+        notes:
+          type: string
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        channel:
+          type: string
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    DeleteMessageRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    BanPlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        duration:
           type: integer
-        total_players:
+          description: Длительность в секундах (NULL для постоянного бана)
+          nullable: true
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    UnbanPlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    Ban:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        admin_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        duration:
           type: integer
-        economy_stats:
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    OnlinePlayer:
           type: object
           properties:
-            total_currency:
-              type: number
-            transactions_24h:
+        player_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        level:
               type: integer
-        combat_stats:
+        server:
+          type: string
+        connected_at:
+          type: string
+          format: date-time
+
+    ActiveMatch:
           type: object
           properties:
-            pvp_matches_24h:
+        id:
+          type: string
+          format: uuid
+        match_type:
+          type: string
+        players_count:
               type: integer
-            pve_sessions_24h:
+        started_at:
+          type: string
+          format: date-time
+        server:
+          type: string
+
+    TradeOperation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        price:
               type: integer
-        performance:
+        quantity:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    ServerLoad:
           type: object
           properties:
-            avg_response_time:
+        server_id:
+          type: string
+        server_name:
+          type: string
+        cpu_usage:
               type: number
-            error_rate:
+          minimum: 0
+          maximum: 100
+        memory_usage:
               type: number
+          minimum: 0
+          maximum: 100
+        players_online:
+          type: integer
+        status:
+          type: string
+          enum:
+            - healthy
+            - warning
+            - critical
+
+    ChatActivity:
+      type: object
+      properties:
+        channel:
+          type: string
+        messages_count:
+          type: integer
+        unique_senders:
+          type: integer
+        period:
+          type: string
+
+    Anomaly:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        anomaly_type:
+          type: string
+        severity:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+        description:
+          type: string
+        detected_at:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+            - info
+            - warning
+            - error
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+            - MODERATOR
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    CreateAdminRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - role
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          format: password
+        role:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+            - MODERATOR
+
+    UpdateAdminRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+            - MODERATOR
+        is_active:
+          type: boolean
 
     AuditLog:
       type: object
@@ -657,12 +2978,21 @@ components:
           format: uuid
         action_type:
           type: string
+        target_type:
+          type: string
+          enum:
+            - player
+            - economy
+            - content
+            - moderation
         target_id:
           type: string
           format: uuid
         details:
           type: object
           additionalProperties: true
+        reason:
+          type: string
         ip_address:
           type: string
         user_agent:
@@ -675,6 +3005,10 @@ components:
       type: object
       properties:
         error:
+          type: string
+        message:
+          type: string
+        code:
           type: string
 
   responses:
@@ -715,4 +3049,3 @@ components:
 
 security:
   - BearerAuth: []
-

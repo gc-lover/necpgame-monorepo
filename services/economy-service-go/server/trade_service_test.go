@@ -12,7 +12,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 type mockTradeRepository struct {
@@ -73,49 +72,43 @@ func (m *mockTradeRepository) CleanupExpired(ctx context.Context) error {
 	return args.Error(0)
 }
 
-func setupTestService(t *testing.T) (*TradeService, *mockTradeRepository, func()) {
-	redisOpts, err := redis.ParseURL("redis://localhost:6379")
-	if err != nil {
-		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return nil, nil, nil
-	}
-	redisClient := redis.NewClient(redisOpts)
-
+func setupTestService() (*TradeService, *mockTradeRepository, *redis.Client) {
 	mockRepo := new(mockTradeRepository)
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+		DB:   1,
+	})
+
 	service := &TradeService{
 		repo:   mockRepo,
 		cache:  redisClient,
 		logger: GetLogger(),
 	}
 
-	cleanup := func() {
-		redisClient.Close()
-	}
-
-	return service, mockRepo, cleanup
+	return service, mockRepo, redisClient
 }
 
 func TestTradeService_CreateTrade_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	initiatorID := uuid.New()
 	recipientID := uuid.New()
+	zoneID := uuid.New()
+	ctx := context.Background()
+
 	req := &models.CreateTradeRequest{
 		RecipientID: recipientID,
+		ZoneID:      &zoneID,
 	}
 
-	mockRepo.On("GetActiveByCharacter", mock.Anything, initiatorID).Return([]models.TradeSession{}, nil)
-	mockRepo.On("GetActiveByCharacter", mock.Anything, recipientID).Return([]models.TradeSession{}, nil)
-	mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*models.TradeSession")).Return(nil)
+	mockRepo.On("GetActiveByCharacter", ctx, initiatorID).Return([]models.TradeSession{}, nil)
+	mockRepo.On("GetActiveByCharacter", ctx, recipientID).Return([]models.TradeSession{}, nil)
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*models.TradeSession")).Return(nil)
 
-	ctx := context.Background()
 	session, err := service.CreateTrade(ctx, initiatorID, req)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, session)
 	assert.Equal(t, initiatorID, session.InitiatorID)
 	assert.Equal(t, recipientID, session.RecipientID)
@@ -123,282 +116,636 @@ func TestTradeService_CreateTrade_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestTradeService_CreateTrade_ActiveTradeExists(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+func TestTradeService_CreateTrade_InitiatorHasActiveTrade(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	initiatorID := uuid.New()
 	recipientID := uuid.New()
+	ctx := context.Background()
+
 	req := &models.CreateTradeRequest{
 		RecipientID: recipientID,
 	}
 
-	activeSession := models.TradeSession{
-		ID:     uuid.New(),
-		Status: models.TradeStatusActive,
+	activeTrade := []models.TradeSession{
+		{
+			ID:          uuid.New(),
+			InitiatorID: initiatorID,
+			Status:      models.TradeStatusActive,
+		},
 	}
 
-	mockRepo.On("GetActiveByCharacter", mock.Anything, initiatorID).Return([]models.TradeSession{activeSession}, nil)
+	mockRepo.On("GetActiveByCharacter", ctx, initiatorID).Return(activeTrade, nil)
 
-	ctx := context.Background()
 	session, err := service.CreateTrade(ctx, initiatorID, req)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Nil(t, session)
-	mockRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_CreateTrade_RecipientHasActiveTrade(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
+	req := &models.CreateTradeRequest{
+		RecipientID: recipientID,
+	}
+
+	mockRepo.On("GetActiveByCharacter", ctx, initiatorID).Return([]models.TradeSession{}, nil)
+
+	activeTrade := []models.TradeSession{
+		{
+			ID:          uuid.New(),
+			RecipientID: recipientID,
+			Status:      models.TradeStatusActive,
+		},
+	}
+
+	mockRepo.On("GetActiveByCharacter", ctx, recipientID).Return(activeTrade, nil)
+
+	session, err := service.CreateTrade(ctx, initiatorID, req)
+
+	assert.NoError(t, err)
+	assert.Nil(t, session)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_CreateTrade_RepositoryError(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
+	req := &models.CreateTradeRequest{
+		RecipientID: recipientID,
+	}
+
+	mockRepo.On("GetActiveByCharacter", ctx, initiatorID).Return([]models.TradeSession{}, nil)
+	mockRepo.On("GetActiveByCharacter", ctx, recipientID).Return([]models.TradeSession{}, nil)
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*models.TradeSession")).Return(errors.New("database error"))
+
+	session, err := service.CreateTrade(ctx, initiatorID, req)
+
+	assert.Error(t, err)
+	assert.Nil(t, session)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTradeService_GetTrade_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
-	tradeID := uuid.New()
-	session := &models.TradeSession{
-		ID:     tradeID,
-		Status: models.TradeStatusPending,
-	}
-
-	mockRepo.On("GetByID", mock.Anything, tradeID).Return(session, nil)
-
+	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
 	ctx := context.Background()
-	result, err := service.GetTrade(ctx, tradeID)
 
-	require.NoError(t, err)
+	session := &models.TradeSession{
+		ID:            sessionID,
+		InitiatorID:   initiatorID,
+		RecipientID:   recipientID,
+		Status:        models.TradeStatusPending,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+		ExpiresAt:     time.Now().Add(5 * time.Minute),
+	}
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+
+	result, err := service.GetTrade(ctx, sessionID)
+
+	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, tradeID, result.ID)
+	assert.Equal(t, sessionID, result.ID)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_GetTrade_NotFound(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	ctx := context.Background()
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(nil, nil)
+
+	result, err := service.GetTrade(ctx, sessionID)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
 	mockRepo.AssertExpectations(t)
 }
 
 func TestTradeService_GetActiveTrades_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	characterID := uuid.New()
+	ctx := context.Background()
+
 	sessions := []models.TradeSession{
 		{
-			ID:     uuid.New(),
-			Status: models.TradeStatusActive,
+			ID:          uuid.New(),
+			InitiatorID: characterID,
+			Status:      models.TradeStatusActive,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			ExpiresAt:   time.Now().Add(5 * time.Minute),
 		},
 	}
 
-	mockRepo.On("GetActiveByCharacter", mock.Anything, characterID).Return(sessions, nil)
+	mockRepo.On("GetActiveByCharacter", ctx, characterID).Return(sessions, nil)
 
-	ctx := context.Background()
 	result, err := service.GetActiveTrades(ctx, characterID)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
 	assert.Len(t, result, 1)
 	mockRepo.AssertExpectations(t)
 }
 
 func TestTradeService_GetActiveTrades_Cache(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	characterID := uuid.New()
+	ctx := context.Background()
+
 	sessions := []models.TradeSession{
 		{
-			ID:     uuid.New(),
-			Status: models.TradeStatusActive,
+			ID:          uuid.New(),
+			InitiatorID: characterID,
+			Status:      models.TradeStatusActive,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			ExpiresAt:   time.Now().Add(5 * time.Minute),
 		},
 	}
 
 	sessionsJSON, _ := json.Marshal(sessions)
+	cacheKey := "trades:active:" + characterID.String()
+	redisClient.Set(ctx, cacheKey, sessionsJSON, 30*time.Second)
 
-	ctx := context.Background()
-	service.cache.Set(ctx, "trades:active:"+characterID.String(), sessionsJSON, 30*time.Second)
+	cachedResult, err := service.GetActiveTrades(ctx, characterID)
 
-	cached, err := service.GetActiveTrades(ctx, characterID)
-
-	require.NoError(t, err)
-	assert.Len(t, cached, 1)
-	mockRepo.AssertNotCalled(t, "GetActiveByCharacter", mock.Anything, characterID)
+	assert.NoError(t, err)
+	assert.NotNil(t, cachedResult)
+	assert.Len(t, cachedResult, 1)
+	mockRepo.AssertNotCalled(t, "GetActiveByCharacter", ctx, characterID)
 }
 
 func TestTradeService_UpdateOffer_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	sessionID := uuid.New()
-	characterID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
 	session := &models.TradeSession{
-		ID:              sessionID,
-		InitiatorID:     characterID,
-		RecipientID:     uuid.New(),
-		Status:          models.TradeStatusPending,
-		InitiatorOffer:  models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		RecipientOffer:  models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		ID:                sessionID,
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
+		Status:            models.TradeStatusPending,
+		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		InitiatorConfirmed: false,
+		RecipientConfirmed:  false,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
 	}
 
 	req := &models.UpdateTradeOfferRequest{
-		Items: []map[string]interface{}{{"item_id": "test_item"}},
+		Items:    []map[string]interface{}{{"item_id": "item_001", "quantity": 1}},
+		Currency: map[string]int{"gold": 100},
 	}
 
-	mockRepo.On("GetByID", mock.Anything, sessionID).Return(session, nil)
-	mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*models.TradeSession")).Return(nil)
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+	mockRepo.On("Update", ctx, mock.AnythingOfType("*models.TradeSession")).Return(nil)
 
+	result, err := service.UpdateOffer(ctx, sessionID, initiatorID, req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, models.TradeStatusActive, result.Status)
+	assert.Len(t, result.InitiatorOffer.Items, 1)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_UpdateOffer_Recipient(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
 	ctx := context.Background()
-	updated, err := service.UpdateOffer(ctx, sessionID, characterID, req)
 
-	require.NoError(t, err)
-	assert.NotNil(t, updated)
-	assert.Equal(t, models.TradeStatusActive, updated.Status)
+	session := &models.TradeSession{
+		ID:                sessionID,
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
+		Status:            models.TradeStatusPending,
+		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		InitiatorConfirmed: false,
+		RecipientConfirmed:  false,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
+	}
+
+	req := &models.UpdateTradeOfferRequest{
+		Items:    []map[string]interface{}{{"item_id": "item_002", "quantity": 2}},
+		Currency: map[string]int{"gold": 200},
+	}
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+	mockRepo.On("Update", ctx, mock.AnythingOfType("*models.TradeSession")).Return(nil)
+
+	result, err := service.UpdateOffer(ctx, sessionID, recipientID, req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, models.TradeStatusActive, result.Status)
+	assert.Len(t, result.RecipientOffer.Items, 1)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_UpdateOffer_NotFound(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	characterID := uuid.New()
+	ctx := context.Background()
+
+	req := &models.UpdateTradeOfferRequest{
+		Items: []map[string]interface{}{{"item_id": "item_001", "quantity": 1}},
+	}
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(nil, nil)
+
+	result, err := service.UpdateOffer(ctx, sessionID, characterID, req)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_UpdateOffer_InvalidStatus(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
+	session := &models.TradeSession{
+		ID:                sessionID,
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
+		Status:            models.TradeStatusCompleted,
+		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
+	}
+
+	req := &models.UpdateTradeOfferRequest{
+		Items: []map[string]interface{}{{"item_id": "item_001", "quantity": 1}},
+	}
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+
+	result, err := service.UpdateOffer(ctx, sessionID, initiatorID, req)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
 	mockRepo.AssertExpectations(t)
 }
 
 func TestTradeService_ConfirmTrade_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
+	session := &models.TradeSession{
+		ID:                sessionID,
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
+		Status:            models.TradeStatusActive,
+		InitiatorConfirmed: false,
+		RecipientConfirmed:  false,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
 	}
-	defer cleanup()
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+	mockRepo.On("Update", ctx, mock.AnythingOfType("*models.TradeSession")).Return(nil)
+
+	result, err := service.ConfirmTrade(ctx, sessionID, initiatorID)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.True(t, result.InitiatorConfirmed)
+	assert.False(t, result.RecipientConfirmed)
+	assert.Equal(t, models.TradeStatusActive, result.Status)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_ConfirmTrade_BothConfirmed(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
+	session := &models.TradeSession{
+		ID:                sessionID,
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
+		Status:            models.TradeStatusActive,
+		InitiatorConfirmed: true,
+		RecipientConfirmed:  false,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
+	}
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+	mockRepo.On("Update", ctx, mock.AnythingOfType("*models.TradeSession")).Return(nil)
+
+	result, err := service.ConfirmTrade(ctx, sessionID, recipientID)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.True(t, result.InitiatorConfirmed)
+	assert.True(t, result.RecipientConfirmed)
+	assert.Equal(t, models.TradeStatusConfirmed, result.Status)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_ConfirmTrade_NotFound(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	sessionID := uuid.New()
 	characterID := uuid.New()
-	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       characterID,
-		RecipientID:       uuid.New(),
-		Status:            models.TradeStatusActive,
-		InitiatorConfirmed: false,
-		RecipientConfirmed: false,
-		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-	}
-
-	mockRepo.On("GetByID", mock.Anything, sessionID).Return(session, nil)
-	mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*models.TradeSession")).Return(nil)
-
 	ctx := context.Background()
-	confirmed, err := service.ConfirmTrade(ctx, sessionID, characterID)
 
-	require.NoError(t, err)
-	assert.NotNil(t, confirmed)
-	assert.True(t, confirmed.InitiatorConfirmed)
+	mockRepo.On("GetByID", ctx, sessionID).Return(nil, nil)
+
+	result, err := service.ConfirmTrade(ctx, sessionID, characterID)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
 	mockRepo.AssertExpectations(t)
 }
 
 func TestTradeService_CompleteTrade_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
 	session := &models.TradeSession{
 		ID:                sessionID,
-		InitiatorID:       uuid.New(),
-		RecipientID:       uuid.New(),
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
 		Status:            models.TradeStatusConfirmed,
-		InitiatorConfirmed: true,
-		RecipientConfirmed: true,
 		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
 		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		InitiatorConfirmed: true,
+		RecipientConfirmed:  true,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
 	}
 
-	mockRepo.On("GetByID", mock.Anything, sessionID).Return(session, nil)
-	mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*models.TradeSession")).Return(nil)
-	mockRepo.On("CreateHistory", mock.Anything, mock.AnythingOfType("*models.TradeHistory")).Return(nil)
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+	mockRepo.On("Update", ctx, mock.AnythingOfType("*models.TradeSession")).Return(nil)
+	mockRepo.On("CreateHistory", ctx, mock.AnythingOfType("*models.TradeHistory")).Return(nil)
 
-	ctx := context.Background()
 	err := service.CompleteTrade(ctx, sessionID)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_CompleteTrade_NotFound(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	ctx := context.Background()
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(nil, nil)
+
+	err := service.CompleteTrade(ctx, sessionID)
+
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_CompleteTrade_InvalidStatus(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
+	session := &models.TradeSession{
+		ID:                sessionID,
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
+		Status:            models.TradeStatusActive,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
+	}
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+
+	err := service.CompleteTrade(ctx, sessionID)
+
+	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 }
 
 func TestTradeService_CancelTrade_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
+	session := &models.TradeSession{
+		ID:                sessionID,
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
+		Status:            models.TradeStatusActive,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
 	}
-	defer cleanup()
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+	mockRepo.On("UpdateStatus", ctx, sessionID, models.TradeStatusCancelled).Return(nil)
+
+	err := service.CancelTrade(ctx, sessionID, initiatorID)
+
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_CancelTrade_NotFound(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	sessionID := uuid.New()
 	characterID := uuid.New()
-	session := &models.TradeSession{
-		ID:     sessionID,
-		InitiatorID: characterID,
-		RecipientID: uuid.New(),
-		Status: models.TradeStatusActive,
-	}
-
-	mockRepo.On("GetByID", mock.Anything, sessionID).Return(session, nil)
-	mockRepo.On("UpdateStatus", mock.Anything, sessionID, models.TradeStatusCancelled).Return(nil)
-
 	ctx := context.Background()
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(nil, nil)
+
 	err := service.CancelTrade(ctx, sessionID, characterID)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTradeService_CancelTrade_AlreadyCompleted(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	sessionID := uuid.New()
+	initiatorID := uuid.New()
+	recipientID := uuid.New()
+	ctx := context.Background()
+
+	session := &models.TradeSession{
+		ID:                sessionID,
+		InitiatorID:       initiatorID,
+		RecipientID:       recipientID,
+		Status:            models.TradeStatusCompleted,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		ExpiresAt:         time.Now().Add(5 * time.Minute),
+	}
+
+	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
+
+	err := service.CancelTrade(ctx, sessionID, initiatorID)
+
+	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 }
 
 func TestTradeService_GetTradeHistory_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
 	characterID := uuid.New()
+	ctx := context.Background()
+
 	history := []models.TradeHistory{
 		{
-			ID:     uuid.New(),
-			Status: models.TradeStatusCompleted,
+			ID:             uuid.New(),
+			InitiatorID:    characterID,
+			RecipientID:   uuid.New(),
+			Status:         models.TradeStatusCompleted,
+			CreatedAt:      time.Now(),
+			CompletedAt:    time.Now(),
 		},
 	}
 
-	mockRepo.On("GetHistoryByCharacter", mock.Anything, characterID, 10, 0).Return(history, nil)
-	mockRepo.On("CountHistoryByCharacter", mock.Anything, characterID).Return(1, nil)
+	mockRepo.On("GetHistoryByCharacter", ctx, characterID, 10, 0).Return(history, nil)
+	mockRepo.On("CountHistoryByCharacter", ctx, characterID).Return(1, nil)
 
-	ctx := context.Background()
-	result, err := service.GetTradeHistory(ctx, characterID, 10, 0)
+	response, err := service.GetTradeHistory(ctx, characterID, 10, 0)
 
-	require.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Len(t, result.History, 1)
-	assert.Equal(t, 1, result.Total)
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, 1, response.Total)
+	assert.Len(t, response.History, 1)
 	mockRepo.AssertExpectations(t)
 }
 
-func TestTradeService_CreateTrade_DatabaseError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
-	if service == nil {
-		return
-	}
-	defer cleanup()
+func TestTradeService_GetTradeHistory_Cache(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
 
-	initiatorID := uuid.New()
-	recipientID := uuid.New()
-	req := &models.CreateTradeRequest{
-		RecipientID: recipientID,
-	}
-	expectedErr := errors.New("database error")
-
-	mockRepo.On("GetActiveByCharacter", mock.Anything, initiatorID).Return(nil, expectedErr)
-
+	characterID := uuid.New()
 	ctx := context.Background()
-	session, err := service.CreateTrade(ctx, initiatorID, req)
+
+	history := []models.TradeHistory{
+		{
+			ID:             uuid.New(),
+			InitiatorID:    characterID,
+			RecipientID:   uuid.New(),
+			Status:         models.TradeStatusCompleted,
+			CreatedAt:      time.Now(),
+			CompletedAt:    time.Now(),
+		},
+	}
+
+	response := &models.TradeHistoryListResponse{
+		History: history,
+		Total:   1,
+	}
+
+	responseJSON, _ := json.Marshal(response)
+	cacheKey := "trade_history:" + characterID.String() + ":limit:10:offset:0"
+	redisClient.FlushDB(ctx)
+	redisClient.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+
+	cachedResponse, err := service.GetTradeHistory(ctx, characterID, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cachedResponse)
+	assert.Equal(t, 1, cachedResponse.Total)
+	mockRepo.AssertNotCalled(t, "GetHistoryByCharacter", ctx, characterID, 10, 0)
+}
+
+func TestTradeService_GetTradeHistory_RepositoryError(t *testing.T) {
+	service, mockRepo, redisClient := setupTestService()
+	defer redisClient.Close()
+
+	characterID := uuid.New()
+	ctx := context.Background()
+
+	mockRepo.On("GetHistoryByCharacter", ctx, characterID, 10, 0).Return(nil, errors.New("database error"))
+
+	response, err := service.GetTradeHistory(ctx, characterID, 10, 0)
 
 	assert.Error(t, err)
-	assert.Equal(t, expectedErr, err)
-	assert.Nil(t, session)
+	assert.Nil(t, response)
 	mockRepo.AssertExpectations(t)
 }
-

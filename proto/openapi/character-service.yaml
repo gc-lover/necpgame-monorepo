@@ -1,8 +1,18 @@
 openapi: 3.0.3
 info:
   title: Character Service API
-  description: API для управления аккаунтами и персонажами
-  version: 1.0.0
+  description: |
+    API для управления аккаунтами и персонажами: создание, удаление, восстановление,
+    переключение персонажей, управление слотами, пересчёт статов и сохранение состояния.
+    
+    Система поддерживает:
+    - Создание персонажей с валидацией и выдачей стартовых ресурсов
+    - Soft delete с окном восстановления 30 дней
+    - Переключение между персонажами
+    - Управление слотами (базовые и премиальные)
+    - Пересчёт боевых статов с учётом атрибутов, экипировки и бафов
+    - Сохранение и загрузка состояния с снапшотами
+  version: 2.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
@@ -18,6 +28,12 @@ tags:
     description: Управление аккаунтами
   - name: Characters
     description: Управление персонажами
+  - name: Character Slots
+    description: Управление слотами персонажей
+  - name: Character Stats
+    description: Пересчёт и управление статами персонажей
+  - name: Character State
+    description: Сохранение и загрузка состояния персонажей
 
 paths:
   /accounts:
@@ -250,6 +266,509 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /character/characters:
+    post:
+      tags:
+        - Characters
+      summary: Создание персонажа
+      operationId: createCharacterV2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCharacterV2Request'
+      responses:
+        '201':
+          description: Персонаж создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterFull'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Имя персонажа уже занято или нет доступных слотов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /character/characters/validate-name:
+    get:
+      tags:
+        - Characters
+      summary: Проверка имени персонажа
+      operationId: validateCharacterName
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 50
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateNameResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /character/characters/available-slots:
+    get:
+      tags:
+        - Character Slots
+      summary: Доступные слоты
+      operationId: getAvailableSlots
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о доступных слотах
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableSlotsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}:
+    delete:
+      tags:
+        - Characters
+      summary: Удаление персонажа (soft delete)
+      operationId: deleteCharacterV2
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCharacterRequest'
+      responses:
+        '200':
+          description: Персонаж удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+                  can_restore_until:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}/deletion-status:
+    get:
+      tags:
+        - Characters
+      summary: Статус удаления персонажа
+      operationId: getCharacterDeletionStatus
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус удаления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}/restore:
+    post:
+      tags:
+        - Characters
+      summary: Восстановление персонажа
+      operationId: restoreCharacter
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreCharacterRequest'
+      responses:
+        '200':
+          description: Персонаж восстановлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterFull'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/deleted:
+    get:
+      tags:
+        - Characters
+      summary: Список удалённых персонажей
+      operationId: getDeletedCharacters
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список удалённых персонажей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  characters:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeletedCharacter'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}/switch:
+    post:
+      tags:
+        - Characters
+      summary: Переключение персонажа
+      operationId: switchCharacterV2
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwitchCharacterV2Request'
+      responses:
+        '200':
+          description: Переключение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwitchCharacterV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/current:
+    get:
+      tags:
+        - Characters
+      summary: Текущий персонаж
+      operationId: getCurrentCharacter
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущий персонаж
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterFull'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/slots:
+    get:
+      tags:
+        - Character Slots
+      summary: Информация о слотах
+      operationId: getCharacterSlots
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о слотах
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterSlots'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/slots/purchase:
+    post:
+      tags:
+        - Character Slots
+      summary: Покупка слота
+      operationId: purchaseCharacterSlot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseSlotRequest'
+      responses:
+        '200':
+          description: Слот куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterSlots'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /character/slots/available:
+    get:
+      tags:
+        - Character Slots
+      summary: Доступные слоты
+      operationId: getAvailableCharacterSlots
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Доступные слоты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableSlotsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}/recalculate-stats:
+    post:
+      tags:
+        - Character Stats
+      summary: Пересчёт статов
+      operationId: recalculateCharacterStats
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статы пересчитаны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}/stats:
+    get:
+      tags:
+        - Character Stats
+      summary: Текущие статы персонажа
+      operationId: getCharacterStats
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущие статы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}/save-state:
+    post:
+      tags:
+        - Character State
+      summary: Сохранение состояния персонажа
+      operationId: saveCharacterState
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveStateRequest'
+      responses:
+        '200':
+          description: Состояние сохранено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: saved
+                  saved_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}/load-state:
+    get:
+      tags:
+        - Character State
+      summary: Загрузка состояния персонажа
+      operationId: loadCharacterState
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /character/characters/{character_id}/snapshot:
+    post:
+      tags:
+        - Character State
+      summary: Создание снапшота персонажа
+      operationId: createCharacterSnapshot
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Снапшот создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  snapshot_id:
+                    type: string
+                    format: uuid
+                  created_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -407,10 +926,294 @@ components:
         success:
           type: boolean
 
+    CreateCharacterV2Request:
+      type: object
+      required:
+        - player_id
+        - name
+        - class
+        - origin
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        class:
+          type: string
+        origin:
+          type: string
+
+    CharacterFull:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        class:
+          type: string
+        origin:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+        attributes:
+          type: object
+          additionalProperties: true
+        skills:
+          type: object
+          additionalProperties: true
+        stats:
+          type: object
+          additionalProperties: true
+        current_zone:
+          type: string
+        deleted:
+          type: boolean
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+        can_restore_until:
+          type: string
+          format: date-time
+          nullable: true
+        last_played_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ValidateNameResponse:
+      type: object
+      properties:
+        available:
+          type: boolean
+        message:
+          type: string
+          nullable: true
+
+    AvailableSlotsResponse:
+      type: object
+      properties:
+        available:
+          type: integer
+        total:
+          type: integer
+        used:
+          type: integer
+
+    DeleteCharacterRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    DeletionStatus:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+        can_restore_until:
+          type: string
+          format: date-time
+          nullable: true
+        can_restore:
+          type: boolean
+
+    RestoreCharacterRequest:
+      type: object
+      properties:
+        restore_from_snapshot:
+          type: boolean
+          default: true
+
+    DeletedCharacter:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        deleted_at:
+          type: string
+          format: date-time
+        can_restore_until:
+          type: string
+          format: date-time
+        can_restore:
+          type: boolean
+
+    SwitchCharacterV2Request:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    SwitchCharacterV2Response:
+      type: object
+      properties:
+        previous_character_id:
+          type: string
+          format: uuid
+          nullable: true
+        current_character:
+          $ref: '#/components/schemas/CharacterFull'
+        last_played_at:
+          type: string
+          format: date-time
+
+    CharacterSlots:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        base_slots:
+          type: integer
+          default: 3
+        premium_slots:
+          type: integer
+          default: 0
+        total_slots:
+          type: integer
+        used_slots:
+          type: integer
+        available_slots:
+          type: integer
+        premium_slots_purchased:
+          type: integer
+
+    PurchaseSlotRequest:
+      type: object
+      required:
+        - player_id
+        - currency_type
+        - amount
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        currency_type:
+          type: string
+        amount:
+          type: integer
+
+    CharacterStats:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        base_stats:
+          type: object
+          properties:
+            health:
+              type: integer
+            max_health:
+              type: integer
+            armor:
+              type: integer
+            damage:
+              type: integer
+            attack_speed:
+              type: number
+            movement_speed:
+              type: number
+        equipment_bonuses:
+          type: object
+          additionalProperties: true
+        buff_bonuses:
+          type: object
+          additionalProperties: true
+        total_stats:
+          type: object
+          properties:
+            health:
+              type: integer
+            max_health:
+              type: integer
+            armor:
+              type: integer
+            damage:
+              type: integer
+            attack_speed:
+              type: number
+            movement_speed:
+              type: number
+        recalculated_at:
+          type: string
+          format: date-time
+
+    SaveStateRequest:
+      type: object
+      properties:
+        include_inventory:
+          type: boolean
+          default: true
+        include_quests:
+          type: boolean
+          default: true
+        include_session:
+          type: boolean
+          default: true
+
+    CharacterState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        character_data:
+          type: object
+          additionalProperties: true
+        inventory_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+        quest_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+        session_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+        saved_at:
+          type: string
+          format: date-time
+
     Error:
       type: object
       properties:
         error:
+          type: string
+        message:
+          type: string
+        code:
           type: string
 
   responses:
@@ -423,6 +1226,13 @@ components:
 
     Unauthorized:
       description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Недостаточно прав доступа
       content:
         application/json:
           schema:

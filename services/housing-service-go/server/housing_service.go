@@ -12,8 +12,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type HousingRepositoryInterface interface {
+	CreateApartment(ctx context.Context, apartment *models.Apartment) error
+	GetApartmentByID(ctx context.Context, apartmentID uuid.UUID) (*models.Apartment, error)
+	ListApartments(ctx context.Context, ownerID *uuid.UUID, ownerType *string, isPublic *bool, limit, offset int) ([]models.Apartment, int, error)
+	UpdateApartment(ctx context.Context, apartment *models.Apartment) error
+	GetFurnitureItemByID(ctx context.Context, itemID string) (*models.FurnitureItem, error)
+	ListFurnitureItems(ctx context.Context, category *models.FurnitureCategory, limit, offset int) ([]models.FurnitureItem, int, error)
+	CreatePlacedFurniture(ctx context.Context, furniture *models.PlacedFurniture) error
+	GetPlacedFurnitureByID(ctx context.Context, furnitureID uuid.UUID) (*models.PlacedFurniture, error)
+	ListPlacedFurniture(ctx context.Context, apartmentID uuid.UUID) ([]models.PlacedFurniture, error)
+	DeletePlacedFurniture(ctx context.Context, furnitureID uuid.UUID) error
+	CountPlacedFurniture(ctx context.Context, apartmentID uuid.UUID) (int, error)
+	CreateVisit(ctx context.Context, visit *models.ApartmentVisit) error
+	GetPrestigeLeaderboard(ctx context.Context, limit, offset int) ([]models.PrestigeLeaderboardEntry, int, error)
+}
+
 type HousingService struct {
-	repo   *HousingRepository
+	repo   HousingRepositoryInterface
 	redis  *redis.Client
 	logger *logrus.Logger
 }

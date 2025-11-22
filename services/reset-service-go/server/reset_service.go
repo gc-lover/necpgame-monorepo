@@ -14,8 +14,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ResetRepositoryInterface interface {
+	Create(ctx context.Context, record *models.ResetRecord) error
+	Update(ctx context.Context, record *models.ResetRecord) error
+	GetLastReset(ctx context.Context, resetType models.ResetType) (*models.ResetRecord, error)
+	List(ctx context.Context, resetType *models.ResetType, limit, offset int) ([]models.ResetRecord, error)
+	Count(ctx context.Context, resetType *models.ResetType) (int, error)
+}
+
 type ResetService struct {
-	repo      *ResetRepository
+	repo      ResetRepositoryInterface
 	cache     *redis.Client
 	cron      *cron.Cron
 	logger    *logrus.Logger
