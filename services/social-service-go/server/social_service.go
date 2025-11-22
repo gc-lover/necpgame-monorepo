@@ -16,6 +16,7 @@ import (
 type SocialService struct {
 	notificationRepo *NotificationRepository
 	chatRepo         *ChatRepository
+	mailRepo         *MailRepository
 	cache            *redis.Client
 	logger           *logrus.Logger
 }
@@ -35,10 +36,12 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 
 	notificationRepo := NewNotificationRepository(dbPool)
 	chatRepo := NewChatRepository(dbPool)
+	mailRepo := NewMailRepository(dbPool)
 
 	return &SocialService{
 		notificationRepo: notificationRepo,
 		chatRepo:         chatRepo,
+		mailRepo:         mailRepo,
 		cache:            redisClient,
 		logger:           GetLogger(),
 	}, nil
@@ -154,4 +157,177 @@ func (s *SocialService) GetChannels(ctx context.Context, channelType *models.Cha
 
 func (s *SocialService) GetChannel(ctx context.Context, channelID uuid.UUID) (*models.ChatChannel, error) {
 	return s.chatRepo.GetChannelByID(ctx, channelID)
+}
+
+func (s *SocialService) SendMail(ctx context.Context, req *models.CreateMailRequest, senderID *uuid.UUID, senderName string) (*models.MailMessage, error) {
+	now := time.Now()
+	expiresAt := (*time.Time)(nil)
+	if req.ExpiresIn != nil && *req.ExpiresIn > 0 {
+		exp := now.Add(time.Duration(*req.ExpiresIn) * 24 * time.Hour)
+		expiresAt = &exp
+	}
+
+	mail := &models.MailMessage{
+		ID:          uuid.New(),
+		SenderID:    senderID,
+		SenderName:  senderName,
+		RecipientID: req.RecipientID,
+		Type:        models.MailTypePlayer,
+		Subject:     req.Subject,
+		Content:     req.Content,
+		Attachments: req.Attachments,
+		CODAmount:   req.CODAmount,
+		Status:      models.MailStatusUnread,
+		IsRead:      false,
+		IsClaimed:    false,
+		SentAt:      now,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		ExpiresAt:   expiresAt,
+	}
+
+	if senderID == nil {
+		mail.Type = models.MailTypeSystem
+	}
+
+	err := s.mailRepo.Create(ctx, mail)
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateMailCache(ctx, req.RecipientID)
+
+	return mail, nil
+}
+
+func (s *SocialService) GetMails(ctx context.Context, recipientID uuid.UUID, limit, offset int) (*models.MailListResponse, error) {
+	cacheKey := "mails:recipient:" + recipientID.String() + ":limit:" + strconv.Itoa(limit) + ":offset:" + strconv.Itoa(offset)
+
+	cached, err := s.cache.Get(ctx, cacheKey).Result()
+	if err == nil && cached != "" {
+		var response models.MailListResponse
+		if err := json.Unmarshal([]byte(cached), &response); err == nil {
+			return &response, nil
+		}
+	}
+
+	messages, err := s.mailRepo.GetByRecipientID(ctx, recipientID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := s.mailRepo.CountByRecipientID(ctx, recipientID)
+	if err != nil {
+		return nil, err
+	}
+
+	unread, err := s.mailRepo.CountUnreadByRecipientID(ctx, recipientID)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &models.MailListResponse{
+		Messages: messages,
+		Total:    total,
+		Unread:   unread,
+	}
+
+	responseJSON, _ := json.Marshal(response)
+	s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+
+	return response, nil
+}
+
+func (s *SocialService) MarkMailAsRead(ctx context.Context, mailID uuid.UUID) error {
+	mail, err := s.mailRepo.GetByID(ctx, mailID)
+	if err != nil {
+		return err
+	}
+	if mail == nil {
+		return nil
+	}
+
+	now := time.Now()
+	err = s.mailRepo.UpdateStatus(ctx, mailID, models.MailStatusRead, &now)
+	if err != nil {
+		return err
+	}
+
+	s.invalidateMailCache(ctx, mail.RecipientID)
+	return nil
+}
+
+func (s *SocialService) ClaimAttachment(ctx context.Context, mailID uuid.UUID) (*models.ClaimAttachmentResponse, error) {
+	mail, err := s.mailRepo.GetByID(ctx, mailID)
+	if err != nil {
+		return nil, err
+	}
+	if mail == nil {
+		return &models.ClaimAttachmentResponse{Success: false}, nil
+	}
+
+	if mail.IsClaimed {
+		return &models.ClaimAttachmentResponse{Success: false}, nil
+	}
+
+	if mail.Attachments == nil || len(mail.Attachments) == 0 {
+		return &models.ClaimAttachmentResponse{Success: false}, nil
+	}
+
+	err = s.mailRepo.MarkAsClaimed(ctx, mailID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateMailCache(ctx, mail.RecipientID)
+
+	items := make(map[string]interface{})
+	currency := make(map[string]int)
+
+	if attachments, ok := mail.Attachments["items"].([]interface{}); ok {
+		items["items"] = attachments
+	}
+	if attachments, ok := mail.Attachments["currency"].(map[string]interface{}); ok {
+		for k, v := range attachments {
+			if val, ok := v.(float64); ok {
+				currency[k] = int(val)
+			}
+		}
+	}
+
+	return &models.ClaimAttachmentResponse{
+		Success:  true,
+		Items:    items,
+		Currency: currency,
+	}, nil
+}
+
+func (s *SocialService) DeleteMail(ctx context.Context, mailID uuid.UUID) error {
+	mail, err := s.mailRepo.GetByID(ctx, mailID)
+	if err != nil {
+		return err
+	}
+	if mail == nil {
+		return nil
+	}
+
+	err = s.mailRepo.Delete(ctx, mailID)
+	if err != nil {
+		return err
+	}
+
+	s.invalidateMailCache(ctx, mail.RecipientID)
+	return nil
+}
+
+func (s *SocialService) GetMail(ctx context.Context, mailID uuid.UUID) (*models.MailMessage, error) {
+	return s.mailRepo.GetByID(ctx, mailID)
+}
+
+func (s *SocialService) invalidateMailCache(ctx context.Context, recipientID uuid.UUID) {
+	pattern := "mails:recipient:" + recipientID.String() + ":*"
+	keys, _ := s.cache.Keys(ctx, pattern).Result()
+	if len(keys) > 0 {
+		s.cache.Del(ctx, keys...)
+	}
 }

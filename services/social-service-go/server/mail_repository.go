@@ -1,0 +1,230 @@
+package server
+
+import (
+	"context"
+	"encoding/json"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/necpgame/social-service-go/models"
+	"github.com/sirupsen/logrus"
+)
+
+type MailRepository struct {
+	db     *pgxpool.Pool
+	logger *logrus.Logger
+}
+
+func NewMailRepository(db *pgxpool.Pool) *MailRepository {
+	return &MailRepository{
+		db:     db,
+		logger: GetLogger(),
+	}
+}
+
+func (r *MailRepository) Create(ctx context.Context, mail *models.MailMessage) error {
+	attachmentsJSON, _ := json.Marshal(mail.Attachments)
+
+	query := `
+		INSERT INTO social.mail_messages (
+			id, sender_id, sender_name, recipient_id, type, subject, content,
+			attachments, cod_amount, status, is_read, is_claimed,
+			sent_at, read_at, expires_at, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+		)`
+
+	_, err := r.db.Exec(ctx, query,
+		mail.ID, mail.SenderID, mail.SenderName, mail.RecipientID, mail.Type,
+		mail.Subject, mail.Content, attachmentsJSON, mail.CODAmount,
+		mail.Status, mail.IsRead, mail.IsClaimed,
+		mail.SentAt, mail.ReadAt, mail.ExpiresAt, mail.CreatedAt, mail.UpdatedAt,
+	)
+
+	return err
+}
+
+func (r *MailRepository) GetByID(ctx context.Context, mailID uuid.UUID) (*models.MailMessage, error) {
+	var mail models.MailMessage
+	var attachmentsJSON []byte
+	var senderID *uuid.UUID
+
+	query := `
+		SELECT id, sender_id, sender_name, recipient_id, type, subject, content,
+			attachments, cod_amount, status, is_read, is_claimed,
+			sent_at, read_at, expires_at, created_at, updated_at
+		FROM social.mail_messages
+		WHERE id = $1 AND deleted_at IS NULL`
+
+	err := r.db.QueryRow(ctx, query, mailID).Scan(
+		&mail.ID, &senderID, &mail.SenderName, &mail.RecipientID, &mail.Type,
+		&mail.Subject, &mail.Content, &attachmentsJSON, &mail.CODAmount,
+		&mail.Status, &mail.IsRead, &mail.IsClaimed,
+		&mail.SentAt, &mail.ReadAt, &mail.ExpiresAt, &mail.CreatedAt, &mail.UpdatedAt,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	mail.SenderID = senderID
+	if len(attachmentsJSON) > 0 {
+		json.Unmarshal(attachmentsJSON, &mail.Attachments)
+	}
+
+	return &mail, nil
+}
+
+func (r *MailRepository) GetByRecipientID(ctx context.Context, recipientID uuid.UUID, limit, offset int) ([]models.MailMessage, error) {
+	query := `
+		SELECT id, sender_id, sender_name, recipient_id, type, subject, content,
+			attachments, cod_amount, status, is_read, is_claimed,
+			sent_at, read_at, expires_at, created_at, updated_at
+		FROM social.mail_messages
+		WHERE recipient_id = $1 AND deleted_at IS NULL
+		ORDER BY sent_at DESC
+		LIMIT $2 OFFSET $3`
+
+	rows, err := r.db.Query(ctx, query, recipientID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []models.MailMessage
+	for rows.Next() {
+		var mail models.MailMessage
+		var attachmentsJSON []byte
+		var senderID *uuid.UUID
+
+		err := rows.Scan(
+			&mail.ID, &senderID, &mail.SenderName, &mail.RecipientID, &mail.Type,
+			&mail.Subject, &mail.Content, &attachmentsJSON, &mail.CODAmount,
+			&mail.Status, &mail.IsRead, &mail.IsClaimed,
+			&mail.SentAt, &mail.ReadAt, &mail.ExpiresAt, &mail.CreatedAt, &mail.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		mail.SenderID = senderID
+		if len(attachmentsJSON) > 0 {
+			json.Unmarshal(attachmentsJSON, &mail.Attachments)
+		}
+
+		messages = append(messages, mail)
+	}
+
+	return messages, nil
+}
+
+func (r *MailRepository) UpdateStatus(ctx context.Context, mailID uuid.UUID, status models.MailStatus, readAt *time.Time) error {
+	query := `
+		UPDATE social.mail_messages
+		SET status = $1, is_read = $2, read_at = $3, updated_at = $4
+		WHERE id = $5 AND deleted_at IS NULL`
+
+	isRead := status == models.MailStatusRead || status == models.MailStatusClaimed
+	_, err := r.db.Exec(ctx, query, status, isRead, readAt, time.Now(), mailID)
+	return err
+}
+
+func (r *MailRepository) MarkAsClaimed(ctx context.Context, mailID uuid.UUID) error {
+	query := `
+		UPDATE social.mail_messages
+		SET status = $1, is_claimed = $2, updated_at = $3
+		WHERE id = $4 AND deleted_at IS NULL`
+
+	_, err := r.db.Exec(ctx, query, models.MailStatusClaimed, true, time.Now(), mailID)
+	return err
+}
+
+func (r *MailRepository) Delete(ctx context.Context, mailID uuid.UUID) error {
+	query := `
+		UPDATE social.mail_messages
+		SET deleted_at = $1
+		WHERE id = $2 AND deleted_at IS NULL`
+
+	_, err := r.db.Exec(ctx, query, time.Now(), mailID)
+	return err
+}
+
+func (r *MailRepository) CountByRecipientID(ctx context.Context, recipientID uuid.UUID) (int, error) {
+	var count int
+	query := `
+		SELECT COUNT(*)
+		FROM social.mail_messages
+		WHERE recipient_id = $1 AND deleted_at IS NULL`
+
+	err := r.db.QueryRow(ctx, query, recipientID).Scan(&count)
+	return count, err
+}
+
+func (r *MailRepository) CountUnreadByRecipientID(ctx context.Context, recipientID uuid.UUID) (int, error) {
+	var count int
+	query := `
+		SELECT COUNT(*)
+		FROM social.mail_messages
+		WHERE recipient_id = $1 AND status = $2 AND deleted_at IS NULL`
+
+	err := r.db.QueryRow(ctx, query, recipientID, models.MailStatusUnread).Scan(&count)
+	return count, err
+}
+
+func (r *MailRepository) GetExpiredMails(ctx context.Context, before time.Time) ([]models.MailMessage, error) {
+	query := `
+		SELECT id, sender_id, sender_name, recipient_id, type, subject, content,
+			attachments, cod_amount, status, is_read, is_claimed,
+			sent_at, read_at, expires_at, created_at, updated_at
+		FROM social.mail_messages
+		WHERE expires_at IS NOT NULL AND expires_at < $1 AND deleted_at IS NULL
+			AND status NOT IN ($2, $3)`
+
+	rows, err := r.db.Query(ctx, query, before, models.MailStatusExpired, models.MailStatusReturned)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []models.MailMessage
+	for rows.Next() {
+		var mail models.MailMessage
+		var attachmentsJSON []byte
+		var senderID *uuid.UUID
+
+		err := rows.Scan(
+			&mail.ID, &senderID, &mail.SenderName, &mail.RecipientID, &mail.Type,
+			&mail.Subject, &mail.Content, &attachmentsJSON, &mail.CODAmount,
+			&mail.Status, &mail.IsRead, &mail.IsClaimed,
+			&mail.SentAt, &mail.ReadAt, &mail.ExpiresAt, &mail.CreatedAt, &mail.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		mail.SenderID = senderID
+		if len(attachmentsJSON) > 0 {
+			json.Unmarshal(attachmentsJSON, &mail.Attachments)
+		}
+
+		messages = append(messages, mail)
+	}
+
+	return messages, nil
+}
+
+func (r *MailRepository) MarkAsExpired(ctx context.Context, mailID uuid.UUID) error {
+	query := `
+		UPDATE social.mail_messages
+		SET status = $1, updated_at = $2
+		WHERE id = $3 AND deleted_at IS NULL`
+
+	_, err := r.db.Exec(ctx, query, models.MailStatusExpired, time.Now(), mailID)
+	return err
+}
+
