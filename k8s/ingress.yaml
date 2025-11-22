@@ -1,0 +1,69 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: necpgame-ingress
+  namespace: necpgame
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.necpgame.local
+    secretName: necpgame-tls
+  rules:
+  - host: api.necpgame.local
+    http:
+      paths:
+      - path: /character
+        pathType: Prefix
+        backend:
+          service:
+            name: character-service-go
+            port:
+              number: 8087
+      - path: /inventory
+        pathType: Prefix
+        backend:
+          service:
+            name: inventory-service-go
+            port:
+              number: 8085
+      - path: /movement
+        pathType: Prefix
+        backend:
+          service:
+            name: movement-service-go
+            port:
+              number: 8086
+      - path: /social
+        pathType: Prefix
+        backend:
+          service:
+            name: social-service-go
+            port:
+              number: 8084
+      - path: /achievement
+        pathType: Prefix
+        backend:
+          service:
+            name: achievement-service-go
+            port:
+              number: 8085
+      - path: /economy
+        pathType: Prefix
+        backend:
+          service:
+            name: economy-service-go
+            port:
+              number: 8086
+      - path: /support
+        pathType: Prefix
+        backend:
+          service:
+            name: support-service-go
+            port:
+              number: 8087
+

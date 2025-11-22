@@ -1,59 +1,65 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ws-lobby-go
+  name: reset-service-go
   namespace: necpgame
   labels:
-    app: ws-lobby-go
+    app: reset-service-go
     version: v1
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: ws-lobby-go
+      app: reset-service-go
   template:
     metadata:
       labels:
-        app: ws-lobby-go
+        app: reset-service-go
         version: v1
     spec:
       containers:
-      - name: ws-lobby-go
-        image: necpgame-ws-lobby-go:latest
+      - name: reset-service-go
+        image: necpgame-reset-service-go:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - name: websocket
-          containerPort: 18081
+        - name: http
+          containerPort: 8088
           protocol: TCP
         - name: metrics
-          containerPort: 9090
+          containerPort: 9098
           protocol: TCP
         env:
-        - name: PORT
-          value: "18081"
-        - name: LOG_LEVEL
-          value: "info"
+        - name: ADDR
+          value: "0.0.0.0:8088"
         - name: METRICS_ADDR
-          value: ":9090"
-        - name: KEYCLOAK_ISSUER
-          value: "http://keycloak:8080/realms/necpgame"
+          value: ":9098"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: url
         resources:
           requests:
-            memory: "64Mi"
+            memory: "128Mi"
             cpu: "100m"
           limits:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "500m"
         livenessProbe:
           httpGet:
             path: /metrics
-            port: 9090
+            port: 9098
           initialDelaySeconds: 10
           periodSeconds: 30
         readinessProbe:
           httpGet:
             path: /metrics
-            port: 9090
+            port: 9098
           initialDelaySeconds: 5
           periodSeconds: 10
 
@@ -61,22 +67,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ws-lobby-go
+  name: reset-service-go
   namespace: necpgame
   labels:
-    app: ws-lobby-go
+    app: reset-service-go
     prometheus: scrape
 spec:
   type: ClusterIP
   ports:
-  - name: websocket
-    port: 18081
-    targetPort: 18081
+  - name: http
+    port: 8088
+    targetPort: 8088
     protocol: TCP
   - name: metrics
-    port: 9090
-    targetPort: 9090
+    port: 9098
+    targetPort: 9098
     protocol: TCP
   selector:
-    app: ws-lobby-go
+    app: reset-service-go
 
