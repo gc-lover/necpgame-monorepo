@@ -20,7 +20,7 @@ tags:
     description: Генерация и распределение лута
 
 paths:
-  /economy/trade:
+  /economy/trade/sessions:
     post:
       tags:
         - Trade
@@ -44,7 +44,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /economy/trade/{sessionId}:
+  /economy/trade/sessions/{sessionId}:
     get:
       tags:
         - Trade
@@ -99,7 +99,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /economy/trade/{sessionId}/offer:
+  /economy/trade/sessions/{sessionId}/offer:
     post:
       tags:
         - Trade
@@ -132,7 +132,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /economy/trade/{sessionId}/confirm:
+  /economy/trade/sessions/{sessionId}/confirm:
     post:
       tags:
         - Trade
@@ -165,7 +165,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /economy/trade/{sessionId}/execute:
+  /economy/trade/sessions/{sessionId}/execute:
     post:
       tags:
         - Trade
@@ -232,6 +232,199 @@ paths:
                       $ref: '#/components/schemas/TradeHistory'
                   total:
                     type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/sessions/{sessionId}/confirmation-status:
+    get:
+      tags:
+        - Trade
+      summary: Получить статус подтверждений торговой сессии
+      operationId: getTradeConfirmationStatus
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус подтверждений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeConfirmationStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/sessions/{sessionId}/audit:
+    get:
+      tags:
+        - Trade
+      summary: Получить аудит торговой сессии
+      operationId: getTradeSessionAudit
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Аудит сессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeAudit'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/history/{accountId}:
+    get:
+      tags:
+        - Trade
+      summary: Получить историю торговли для аккаунта
+      operationId: getTradeHistoryByAccount
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История торговли
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trades:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeHistory'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/validate-items:
+    post:
+      tags:
+        - Trade
+      summary: Валидировать предметы для торговли
+      operationId: validateTradeItems
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateItemsRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/validate-currency:
+    post:
+      tags:
+        - Trade
+      summary: Валидировать валюту для торговли
+      operationId: validateTradeCurrency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateCurrencyRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/validate-distance:
+    post:
+      tags:
+        - Trade
+      summary: Проверить расстояние между игроками
+      operationId: validateTradeDistance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateDistanceRequest'
+      responses:
+        '200':
+          description: Результат проверки расстояния
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistanceValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/check-fraud:
+    post:
+      tags:
+        - Trade
+      summary: Проверить на мошенничество
+      operationId: checkTradeFraud
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckFraudRequest'
+      responses:
+        '200':
+          description: Результат проверки на мошенничество
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudCheckResult'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -493,6 +686,197 @@ components:
         completed_at:
           type: string
           format: date-time
+          nullable: true
+
+    TradeConfirmationStatus:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        initiator_confirmed:
+          type: boolean
+        recipient_confirmed:
+          type: boolean
+        both_confirmed:
+          type: boolean
+        can_execute:
+          type: boolean
+
+    TradeAudit:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              event_type:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              actor_id:
+                type: string
+                format: uuid
+              details:
+                type: object
+                additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ValidateItemsRequest:
+      type: object
+      required:
+        - character_id
+        - items
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItem'
+
+    ItemValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              valid:
+                type: boolean
+              reason:
+                type: string
+                nullable: true
+              owned:
+                type: boolean
+              available:
+                type: boolean
+              bind_on_pickup:
+                type: boolean
+
+    ValidateCurrencyRequest:
+      type: object
+      required:
+        - character_id
+        - currency_amount
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        currency_amount:
+          type: integer
+          minimum: 0
+
+    CurrencyValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        has_sufficient_funds:
+          type: boolean
+        current_balance:
+          type: integer
+        requested_amount:
+          type: integer
+        reason:
+          type: string
+          nullable: true
+
+    ValidateDistanceRequest:
+      type: object
+      required:
+        - character1_id
+        - character2_id
+      properties:
+        character1_id:
+          type: string
+          format: uuid
+        character2_id:
+          type: string
+          format: uuid
+
+    DistanceValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        distance:
+          type: number
+          description: Расстояние в метрах
+        max_distance:
+          type: number
+          description: Максимальное расстояние для торговли (10 метров)
+        reason:
+          type: string
+          nullable: true
+
+    CheckFraudRequest:
+      type: object
+      required:
+        - initiator_id
+        - recipient_id
+      properties:
+        initiator_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    FraudCheckResult:
+      type: object
+      properties:
+        safe:
+          type: boolean
+        risk_level:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+        checks:
+          type: object
+          properties:
+            distance_check:
+              type: boolean
+            online_status_check:
+              type: boolean
+            active_sessions_check:
+              type: boolean
+            rate_limit_check:
+              type: boolean
+            duplicate_items_check:
+              type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+        blocked:
+          type: boolean
+        reason:
+          type: string
           nullable: true
 
     GenerateLootRequest:
