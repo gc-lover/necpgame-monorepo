@@ -1,0 +1,1211 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Service API
+  description: API для системы античита: обнаружение speed hack, валидация позиции, контроль частоты действий, reconciliation, мониторинг нарушений и управление наказаниями
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Speed Validation
+    description: Валидация скорости движения
+  - name: Position Validation
+    description: Валидация позиции игрока
+  - name: Action Rate Validation
+    description: Валидация частоты действий
+  - name: Reconciliation
+    description: Reconciliation клиент-сервер
+  - name: Violations
+    description: Управление нарушениями
+  - name: Monitoring
+    description: Мониторинг нарушений
+  - name: Penalties
+    description: Управление наказаниями
+
+paths:
+  /anti-cheat/speed/validate:
+    post:
+      tags:
+        - Speed Validation
+      summary: Валидация скорости движения
+      operationId: validateSpeed
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeedValidationRequest'
+      responses:
+        '200':
+          description: Результат валидации скорости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeedValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/speed/violations/{player_id}:
+    get:
+      tags:
+        - Speed Validation
+      summary: Получить нарушения скорости для игрока
+      operationId: getSpeedViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список нарушений скорости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeedViolationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/position/validate:
+    post:
+      tags:
+        - Position Validation
+      summary: Валидация позиции игрока
+      operationId: validatePosition
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionValidationRequest'
+      responses:
+        '200':
+          description: Результат валидации позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/position/violations/{player_id}:
+    get:
+      tags:
+        - Position Validation
+      summary: Получить нарушения позиции для игрока
+      operationId: getPositionViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список нарушений позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionViolationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/action-rate/validate:
+    post:
+      tags:
+        - Action Rate Validation
+      summary: Валидация частоты действий
+      operationId: validateActionRate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionRateValidationRequest'
+      responses:
+        '200':
+          description: Результат валидации частоты действий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionRateValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/action-rate/violations/{player_id}:
+    get:
+      tags:
+        - Action Rate Validation
+      summary: Получить нарушения частоты действий для игрока
+      operationId: getActionRateViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список нарушений частоты действий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionRateViolationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/reconciliation/compare:
+    post:
+      tags:
+        - Reconciliation
+      summary: Сравнение состояний клиент-сервер
+      operationId: compareStates
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReconciliationCompareRequest'
+      responses:
+        '200':
+          description: Результат сравнения состояний
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconciliationCompareResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/reconciliation/resolve:
+    post:
+      tags:
+        - Reconciliation
+      summary: Разрешение конфликтов состояний
+      operationId: resolveConflicts
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReconciliationResolveRequest'
+      responses:
+        '200':
+          description: Результат разрешения конфликтов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconciliationResolveResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/violations/log:
+    post:
+      tags:
+        - Violations
+      summary: Логирование нарушения
+      operationId: logViolation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogViolationRequest'
+      responses:
+        '201':
+          description: Нарушение залогировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Violation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/violations/{player_id}:
+    get:
+      tags:
+        - Violations
+      summary: Получить историю нарушений игрока
+      operationId: getPlayerViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: violation_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - SPEED_HACK
+              - POSITION_HACK
+              - ACTION_RATE_HACK
+              - RECONCILIATION_FAILURE
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История нарушений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerViolationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/monitoring/stats:
+    get:
+      tags:
+        - Monitoring
+      summary: Получить статистику нарушений
+      operationId: getViolationStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - 1h
+              - 24h
+              - 7d
+              - 30d
+            default: 24h
+      responses:
+        '200':
+          description: Статистика нарушений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/monitoring/alerts:
+    get:
+      tags:
+        - Monitoring
+      summary: Получить активные алерты
+      operationId: getActiveAlerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Активные алерты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveAlertsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/penalties/apply:
+    post:
+      tags:
+        - Penalties
+      summary: Применить наказание
+      operationId: applyPenalty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyPenaltyRequest'
+      responses:
+        '201':
+          description: Наказание применено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Penalty'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/penalties/{player_id}:
+    get:
+      tags:
+        - Penalties
+      summary: Получить наказания игрока
+      operationId: getPlayerPenalties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Наказания игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerPenaltiesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /anti-cheat/penalties/revoke:
+    post:
+      tags:
+        - Penalties
+      summary: Отменить наказание
+      operationId: revokePenalty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokePenaltyRequest'
+      responses:
+        '200':
+          description: Наказание отменено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: revoked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SpeedValidationRequest:
+      type: object
+      required:
+        - player_id
+        - current_position
+        - previous_position
+        - time_delta
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        current_position:
+          $ref: '#/components/schemas/Position'
+        previous_position:
+          $ref: '#/components/schemas/Position'
+        time_delta:
+          type: number
+          format: float
+          description: Время в секундах между позициями
+        character_class:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        buffs:
+          type: array
+          items:
+            type: string
+
+    SpeedValidationResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+        calculated_speed:
+          type: number
+          format: float
+        max_speed:
+          type: number
+          format: float
+        speed_percentage:
+          type: number
+          format: float
+          description: Процент от максимальной скорости
+        violation:
+          $ref: '#/components/schemas/SpeedViolation'
+          nullable: true
+
+    SpeedViolation:
+      type: object
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+        speed_exceeded_by:
+          type: number
+          format: float
+        threshold:
+          type: number
+          format: float
+
+    SpeedViolationsResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    PositionValidationRequest:
+      type: object
+      required:
+        - player_id
+        - current_position
+        - previous_position
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        current_position:
+          $ref: '#/components/schemas/Position'
+        previous_position:
+          $ref: '#/components/schemas/Position'
+        time_delta:
+          type: number
+          format: float
+        max_speed:
+          type: number
+          format: float
+
+    PositionValidationResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+        distance:
+          type: number
+          format: float
+        max_allowed_distance:
+          type: number
+          format: float
+        collision_detected:
+          type: boolean
+        violation:
+          $ref: '#/components/schemas/PositionViolation'
+          nullable: true
+
+    PositionViolation:
+      type: object
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - POSITION_HACK
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+        distance_exceeded:
+          type: number
+          format: float
+        teleportation_detected:
+          type: boolean
+        wall_collision:
+          type: boolean
+
+    PositionViolationsResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ActionRateValidationRequest:
+      type: object
+      required:
+        - player_id
+        - action_type
+        - action_timestamp
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum:
+            - ATTACK
+            - SKILL
+            - INTERACTION
+            - MOVEMENT
+        action_timestamp:
+          type: string
+          format: date-time
+        action_data:
+          type: object
+
+    ActionRateValidationResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+        actions_per_second:
+          type: number
+          format: float
+        max_actions_per_second:
+          type: integer
+        pattern_detected:
+          type: string
+          enum:
+            - HUMAN
+            - MACRO
+            - UNKNOWN
+        violation:
+          $ref: '#/components/schemas/ActionRateViolation'
+          nullable: true
+
+    ActionRateViolation:
+      type: object
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - ACTION_RATE_HACK
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+        actions_exceeded_by:
+          type: integer
+        threshold:
+          type: integer
+        pattern_periodicity:
+          type: number
+          format: float
+          description: Процент идеальной периодичности
+
+    ActionRateViolationsResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ReconciliationCompareRequest:
+      type: object
+      required:
+        - player_id
+        - client_state
+        - server_state
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        client_state:
+          $ref: '#/components/schemas/GameState'
+        server_state:
+          $ref: '#/components/schemas/GameState'
+        reconciliation_window:
+          type: integer
+          default: 500
+          description: Окно reconciliation в миллисекундах
+
+    ReconciliationCompareResponse:
+      type: object
+      properties:
+        states_match:
+          type: boolean
+        discrepancy_percentage:
+          type: number
+          format: float
+        discrepancies:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateDiscrepancy'
+        requires_resolution:
+          type: boolean
+
+    ReconciliationResolveRequest:
+      type: object
+      required:
+        - player_id
+        - discrepancies
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        discrepancies:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateDiscrepancy'
+        resolution_strategy:
+          type: string
+          enum:
+            - SERVER_WINS
+            - CLIENT_WINS
+            - MERGE
+          default: SERVER_WINS
+
+    ReconciliationResolveResponse:
+      type: object
+      properties:
+        resolved:
+          type: boolean
+        resolved_state:
+          $ref: '#/components/schemas/GameState'
+        corrections:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateCorrection'
+        violation_logged:
+          type: boolean
+
+    GameState:
+      type: object
+      properties:
+        position:
+          $ref: '#/components/schemas/Position'
+        health:
+          type: integer
+        mana:
+          type: integer
+        inventory:
+          type: object
+        quest_progress:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+        map_id:
+          type: string
+
+    StateDiscrepancy:
+      type: object
+      properties:
+        field:
+          type: string
+        client_value:
+          type: object
+        server_value:
+          type: object
+        discrepancy_percentage:
+          type: number
+          format: float
+
+    StateCorrection:
+      type: object
+      properties:
+        field:
+          type: string
+        old_value:
+          type: object
+        new_value:
+          type: object
+        reason:
+          type: string
+
+    LogViolationRequest:
+      type: object
+      required:
+        - player_id
+        - violation_type
+        - violation_data
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+            - POSITION_HACK
+            - ACTION_RATE_HACK
+            - RECONCILIATION_FAILURE
+        violation_data:
+          type: object
+        server_state:
+          $ref: '#/components/schemas/GameState'
+        client_state:
+          $ref: '#/components/schemas/GameState'
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          default: MEDIUM
+
+    Violation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+            - POSITION_HACK
+            - ACTION_RATE_HACK
+            - RECONCILIATION_FAILURE
+        violation_data:
+          type: object
+        server_state:
+          type: object
+        client_state:
+          type: object
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+        created_at:
+          type: string
+          format: date-time
+
+    PlayerViolationsResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ViolationStatsResponse:
+      type: object
+      properties:
+        time_range:
+          type: string
+        total_violations:
+          type: integer
+        violations_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        violations_by_severity:
+          type: object
+          additionalProperties:
+            type: integer
+        top_offenders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerViolationStats'
+        trends:
+          type: object
+
+    PlayerViolationStats:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        total_violations:
+          type: integer
+        violations_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        last_violation_at:
+          type: string
+          format: date-time
+
+    ActiveAlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        alert_type:
+          type: string
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+        message:
+          type: string
+        violation_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    ApplyPenaltyRequest:
+      type: object
+      required:
+        - player_id
+        - penalty_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        penalty_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
+        reason:
+          type: string
+        duration_seconds:
+          type: integer
+          description: Длительность для TEMPORARY_BAN в секундах
+        violation_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Связанные нарушения
+
+    Penalty:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        penalty_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
+        reason:
+          type: string
+        duration_seconds:
+          type: integer
+          nullable: true
+        applied_by:
+          type: string
+          format: uuid
+          nullable: true
+        is_active:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    PlayerPenaltiesResponse:
+      type: object
+      properties:
+        penalties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Penalty'
+        total:
+          type: integer
+
+    RevokePenaltyRequest:
+      type: object
+      required:
+        - penalty_id
+      properties:
+        penalty_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
