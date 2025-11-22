@@ -1,0 +1,541 @@
+metadata:
+  id: achievement-system-architecture
+  title: Архитектура системы достижений
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T20:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - achievements
+    - backend
+    - event-driven
+  related_systems:
+    - achievement-service-go
+    - social-service-go
+    - gameplay-service-go
+    - economy-service-go
+  related_documents:
+    - id: achievement-system
+      relation: extends
+  github_issue: 138
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы достижений
+    для мотивации игроков, отслеживания прогресса во всех игровых системах
+    и выдачи наград за выполнение целей.
+  goal: |
+    Создать архитектурную схему системы достижений с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Event-driven архитектуры
+    - Потоков данных и интеграций
+    - Технического задания для реализации
+  essence: |
+    Event-driven система достижений с подпиской на события от всех игровых сервисов,
+    отслеживанием прогресса, автоматической выдачей наград и интеграцией с уведомлениями.
+
+architecture:
+  overview: |
+    Система достижений состоит из пяти основных компонентов:
+    1. Achievement Tracker - отслеживание прогресса достижений
+    2. Event Subscriber - подписка на события от всех сервисов
+    3. Progress Calculator - расчёт прогресса достижений
+    4. Reward Distributor - распределение наград
+    5. Achievement Analytics - аналитика и метрики
+
+  components:
+    - name: Achievement Service
+      location: achievement-service-go
+      responsibility: |
+        - Управление определениями достижений
+        - Отслеживание прогресса игроков
+        - Обработка событий от всех сервисов
+        - Расчёт прогресса достижений
+        - Выдача наград при завершении
+        - Управление титулами игроков
+      port: 8085 (achievement-service-go)
+      endpoints:
+        - GET /api/v1/achievements - список всех достижений
+        - GET /api/v1/achievements/{achievement_id} - получение достижения
+        - GET /api/v1/achievements/players/{account_id} - достижения игрока
+        - GET /api/v1/achievements/players/{account_id}/progress - прогресс игрока
+        - GET /api/v1/achievements/players/{account_id}/unlocked - разблокированные достижения
+        - GET /api/v1/achievements/players/{account_id}/titles - титулы игрока
+        - POST /api/v1/achievements/players/{account_id}/titles/{title_id}/equip - экипировка титула
+
+    - name: Achievement Tracker
+      location: achievement-service-go (модуль tracker)
+      responsibility: |
+        - Отслеживание прогресса по каждому достижению
+        - Обновление прогресса на основе событий
+        - Проверка условий завершения достижений
+        - Хранение состояния прогресса в БД
+        - Оптимизация запросов к прогрессу
+      integration: |
+        Получает события от Event Subscriber
+        Обновляет прогресс в БД
+        Уведомляет Progress Calculator о изменениях
+
+    - name: Event Subscriber
+      location: achievement-service-go (модуль events)
+      responsibility: |
+        - Подписка на события от всех игровых сервисов
+        - Фильтрация релевантных событий
+        - Нормализация событий для обработки
+        - Маршрутизация событий к соответствующим трекерам
+        - Обработка дубликатов и ошибок
+      event_sources: |
+        - combat:enemy-killed
+        - combat:session-completed
+        - quest:completed
+        - quest:objective-completed
+        - trade:completed
+        - friend:added
+        - guild:joined
+        - character:level-up
+        - skill:leveled
+        - economy:item-crafted
+        - economy:item-sold
+        - exploration:location-discovered
+        - social:reputation-increased
+
+    - name: Progress Calculator
+      location: achievement-service-go (модуль progress)
+      responsibility: |
+        - Расчёт прогресса на основе событий
+        - Применение формул прогресса
+        - Обработка прогрессивных достижений
+        - Проверка условий завершения
+        - Определение момента разблокировки
+      calculation_types: |
+        - Standard: одноразовое достижение
+        - Progressive: многоуровневое достижение
+        - Recurring: повторяющееся достижение
+
+    - name: Reward Distributor
+      location: achievement-service-go (модуль rewards)
+      responsibility: |
+        - Распределение наград при разблокировке достижений
+        - Интеграция с economy-service для валюты и предметов
+        - Выдача титулов
+        - Применение баффов и бонусов
+        - Отправка уведомлений через notification-service
+        - Отправка наград через mail-service
+      reward_types: |
+        - Currency (валюта)
+        - Items (предметы)
+        - Titles (титулы)
+        - Experience (опыт)
+        - Reputation (репутация)
+        - Cosmetic (косметика)
+
+    - name: Achievement Analytics
+      location: achievement-service-go (модуль analytics)
+      responsibility: |
+        - Сбор метрик по достижениям
+        - Анализ unlock rate
+        - Корреляции с удержанием игроков
+        - A/B тестирование достижений
+        - Экспорт данных для BI
+      metrics: |
+        - Unlock rate по категориям
+        - Среднее время до разблокировки
+        - Популярность достижений
+        - Влияние на retention
+
+  data_flow:
+    event_processing: |
+      1. Игровой сервис публикует событие (например, quest:completed)
+      2. Event Subscriber получает событие из event bus
+      3. Событие фильтруется и нормализуется
+      4. Achievement Tracker обновляет прогресс для релевантных достижений
+      5. Progress Calculator пересчитывает прогресс
+      6. Проверяется условие завершения достижения
+      7. При завершении Reward Distributor выдаёт награды
+      8. Уведомления отправляются через notification-service
+
+    achievement_unlock: |
+      1. Progress Calculator определяет, что достижение завершено
+      2. Проверяется, не было ли достижение уже разблокировано
+      3. Reward Distributor получает список наград
+      4. Награды распределяются (валюта, предметы, титулы)
+      5. Событие achievement:unlocked публикуется в event bus
+      6. Notification-service отправляет уведомление игроку
+      7. Mail-service отправляет награды (если нужно)
+      8. Achievement Analytics записывает метрики
+
+  integrations:
+    with_gameplay_service: |
+      - Подписка на события квестов и боёв
+      - Получение данных о прогрессе игрока
+      - Интеграция с системой прогрессии
+
+    with_economy_service: |
+      - Выдача валюты и предметов как наград
+      - Интеграция с системой торговли
+      - Получение данных об экономических действиях
+
+    with_social_service: |
+      - Подписка на события дружбы и гильдий
+      - Интеграция с системой уведомлений
+      - Отправка уведомлений о достижениях
+
+    with_character_service: |
+      - Получение данных о персонаже
+      - Применение статов от достижений
+      - Интеграция с системой титулов
+
+    with_event_bus: |
+      - Подписка на события от всех сервисов
+      - Публикация событий achievement:unlocked
+      - Обработка событий в реальном времени
+
+  database_schema:
+    tables:
+      - name: achievement_definitions
+        description: Определения достижений
+        fields:
+          - id: UUID (PK)
+          - code: VARCHAR(100) (unique)
+          - category: ENUM (combat, exploration, economic, social, quests, progression, pvp, special)
+          - type: ENUM (standard, progressive, recurring)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - icon_url: VARCHAR(500)
+          - requirements: JSONB (условия для разблокировки)
+          - rewards: JSONB (награды)
+          - is_hidden: BOOLEAN
+          - sort_order: INTEGER
+          - created_at: TIMESTAMP
+        indexes:
+          - category, type
+          - code
+
+      - name: player_achievement_progress
+        description: Прогресс игроков по достижениям
+        fields:
+          - id: UUID (PK)
+          - account_id: UUID (FK accounts)
+          - achievement_id: UUID (FK achievement_definitions)
+          - current_progress: INTEGER
+          - target_progress: INTEGER
+          - is_unlocked: BOOLEAN
+          - unlocked_at: TIMESTAMP (nullable)
+          - progress_data: JSONB (дополнительные данные прогресса)
+          - updated_at: TIMESTAMP
+        indexes:
+          - account_id, is_unlocked
+          - achievement_id, is_unlocked
+          - account_id, achievement_id (unique)
+
+      - name: player_titles
+        description: Титулы игроков
+        fields:
+          - id: UUID (PK)
+          - account_id: UUID (FK accounts)
+          - title_id: UUID (FK achievement_definitions, где reward_type = title)
+          - is_equipped: BOOLEAN
+          - unlocked_at: TIMESTAMP
+        indexes:
+          - account_id, is_equipped
+          - account_id, title_id
+
+      - name: achievement_events_log
+        description: Лог событий достижений для аналитики
+        fields:
+          - id: UUID (PK)
+          - account_id: UUID (FK accounts)
+          - achievement_id: UUID (FK achievement_definitions)
+          - event_type: ENUM (progress_updated, unlocked, reward_distributed)
+          - event_data: JSONB
+          - created_at: TIMESTAMP
+        indexes:
+          - account_id, created_at
+          - achievement_id, created_at
+          - created_at (для аналитики)
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в achievement-service-go:
+      - tracker (отслеживание прогресса)
+      - events (подписка на события)
+      - progress (расчёт прогресса)
+      - rewards (распределение наград)
+      - analytics (аналитика)
+    - Интеграция с event bus для подписки на события
+    - Интеграция с economy-service для выдачи наград
+    - Интеграция с notification-service для уведомлений
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  event_requirements:
+    - Подписка на события от всех игровых сервисов
+    - Обработка событий в реальном времени
+    - Обработка дубликатов событий
+    - Retry механизм для failed событий
+    - Мониторинг пропущенных событий
+
+  performance_requirements:
+    - Обработка события < 50ms
+    - Расчёт прогресса < 20ms
+    - Получение достижений игрока < 100ms
+    - Поддержка до 10000 событий в секунду
+    - Кэширование определений достижений
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через achievement-service
+    - Распределение нагрузки на обработку событий
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование прогресса игроков в памяти (Redis)
+
+subtasks:
+  - id: achievement-service-module
+    title: Реализация модулей Achievement Service
+    description: |
+      Создание основных модулей сервиса
+      Интеграция с БД
+      Базовая структура
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: event-subscriber
+    title: Реализация Event Subscriber
+    description: |
+      Подписка на события от всех сервисов
+      Фильтрация и нормализация событий
+      Обработка ошибок
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: achievement-tracker
+    title: Реализация Achievement Tracker
+    description: |
+      Отслеживание прогресса
+      Обновление состояния в БД
+      Оптимизация запросов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: progress-calculator
+    title: Реализация Progress Calculator
+    description: |
+      Расчёт прогресса достижений
+      Обработка разных типов достижений
+      Проверка условий завершения
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: reward-distributor
+    title: Реализация Reward Distributor
+    description: |
+      Распределение наград
+      Интеграция с economy-service
+      Интеграция с notification-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: analytics-module
+    title: Реализация Achievement Analytics
+    description: |
+      Сбор метрик
+      Анализ данных
+      Экспорт для BI
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование определений достижений
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для достижений
+      Интеграция с существующим API achievement-service
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты обработки событий
+      Тесты расчёта прогресса
+      Тесты распределения наград
+      Тесты интеграций с другими сервисами
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Achievement Service"
+            AS[Achievement Service]
+            AT[Achievement Tracker]
+            ES[Event Subscriber]
+            PC[Progress Calculator]
+            RD[Reward Distributor]
+            AA[Achievement Analytics]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>achievement_definitions<br/>player_achievement_progress<br/>player_titles)]
+        end
+
+        subgraph "Event Bus"
+            EB[Event Bus<br/>Kafka/RabbitMQ]
+        end
+
+        subgraph "Game Services"
+            GS[Gameplay Service]
+            ES2[Economy Service]
+            SS[Social Service]
+            CS[Character Service]
+        end
+
+        subgraph "External Services"
+            NS[Notification Service]
+            MS[Mail Service]
+        end
+
+        GS -->|events| EB
+        ES2 -->|events| EB
+        SS -->|events| EB
+        CS -->|events| EB
+        EB -->|subscribe| ES
+        ES --> AT
+        AT --> PC
+        PC --> RD
+        AT -->|store| DB
+        RD -->|distribute| NS
+        RD -->|distribute| MS
+        RD -->|rewards| ES2
+        AA -->|analyze| DB
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant GS as Game Service
+        participant EB as Event Bus
+        participant ES as Event Subscriber
+        participant AT as Achievement Tracker
+        participant PC as Progress Calculator
+        participant RD as Reward Distributor
+        participant NS as Notification Service
+
+        GS->>EB: Publish event (quest:completed)
+        EB->>ES: Deliver event
+        ES->>AT: Process event
+        AT->>PC: Calculate progress
+        PC->>AT: Progress updated
+        AT->>AT: Check completion
+        AT->>RD: Achievement unlocked
+        RD->>NS: Send notification
+        RD->>RD: Distribute rewards
+    ```
+
+  event_flow: |
+    ```mermaid
+    graph LR
+        subgraph "Event Sources"
+            E1[Combat Events]
+            E2[Quest Events]
+            E3[Trade Events]
+            E4[Social Events]
+            E5[Progression Events]
+        end
+
+        subgraph "Event Processing"
+            ES[Event Subscriber]
+            AT[Achievement Tracker]
+            PC[Progress Calculator]
+        end
+
+        subgraph "Rewards"
+            RD[Reward Distributor]
+            R1[Currency]
+            R2[Items]
+            R3[Titles]
+        end
+
+        E1 --> ES
+        E2 --> ES
+        E3 --> ES
+        E4 --> ES
+        E5 --> ES
+        ES --> AT
+        AT --> PC
+        PC -->|unlocked| RD
+        RD --> R1
+        RD --> R2
+        RD --> R3
+    ```
+
+decisions:
+  - id: adr-achievement-architecture
+    summary: |
+      Выбрана event-driven архитектура для обеспечения масштабируемости и
+      слабой связанности с другими сервисами.
+
+  - id: adr-separate-service
+    summary: |
+      Отдельный achievement-service обеспечивает независимость системы достижений
+      и упрощает масштабирование.
+
+  - id: adr-event-subscription
+    summary: |
+      Подписка на события через event bus позволяет системе реагировать на
+      действия игроков в реальном времени без прямой зависимости от сервисов.
+
+  - id: adr-progress-tracking
+    summary: |
+      Хранение прогресса в БД обеспечивает персистентность и возможность
+      восстановления после сбоев.
+
+  - id: adr-reward-distribution
+    summary: |
+      Асинхронное распределение наград через интеграцию с другими сервисами
+      обеспечивает надёжность и отказоустойчивость.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы достижений:
+      - Определены компоненты (Tracker, Event Subscriber, Progress Calculator, Reward Distributor, Analytics)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектирована event-driven архитектура
+      - Определена структура БД
+      - Создано техническое задание
+      - Разбито на подзадачи
+
