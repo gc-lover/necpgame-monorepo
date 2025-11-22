@@ -12,6 +12,17 @@
 - `networkpolicy-default.yaml` - NetworkPolicy для сетевой безопасности
 - `ingress.yaml` - Ingress для внешнего доступа
 - `servicemonitor-common.yaml` - ServiceMonitor для Prometheus Operator
+- `hpa-services.yaml` - HorizontalPodAutoscaler для автомасштабирования
+- `pdb-services.yaml` - PodDisruptionBudget для высокой доступности
+- `resource-quota.yaml` - ResourceQuota и LimitRange для управления ресурсами
+
+### Observability (namespace: monitoring)
+- `monitoring-namespace.yaml` - Namespace для observability стека
+- `prometheus-deployment.yaml` - Prometheus для метрик
+- `loki-deployment.yaml` - Loki для логов
+- `grafana-deployment.yaml` - Grafana для визуализации
+- `tempo-deployment.yaml` - Tempo для трейсинга
+- `promtail-daemonset.yaml` - Promtail для сбора логов с нод
 
 ### Сервисы
 - `character-service-go-deployment.yaml` - Character Service
@@ -58,6 +69,24 @@ kubectl create secret generic jwt-secrets \
   --from-literal=secret="JWT_SECRET" \
   --from-literal=issuer="http://keycloak:8080/realms/necpgame" \
   --namespace=necpgame
+```
+
+### Развертывание observability стека (опционально)
+
+```bash
+kubectl apply -f monitoring-namespace.yaml
+kubectl apply -f prometheus-deployment.yaml
+kubectl apply -f loki-deployment.yaml
+kubectl apply -f grafana-deployment.yaml
+kubectl apply -f tempo-deployment.yaml
+kubectl apply -f promtail-daemonset.yaml
+```
+
+**Примечание:** Для Grafana нужно создать Secret с паролем:
+```bash
+kubectl create secret generic grafana-secrets \
+  --from-literal=admin-password="ВАШ_ПАРОЛЬ" \
+  --namespace=monitoring
 ```
 
 ### Развертывание инфраструктуры
