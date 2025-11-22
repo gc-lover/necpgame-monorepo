@@ -1,0 +1,840 @@
+openapi: 3.0.3
+info:
+  title: World Service API
+  description: API для управления миром: Daily/Weekly Reset, Quest Pools, Login Rewards, Reset Scheduling
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8090/api/v1/world
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/world
+    description: Продакшен сервер
+
+tags:
+  - name: Daily Reset
+    description: Управление ежедневными сбросами
+  - name: Weekly Reset
+    description: Управление еженедельными сбросами
+  - name: Quest Pools
+    description: Управление пулами квестов
+  - name: Login Rewards
+    description: Управление логин-наградами
+  - name: Reset Schedule
+    description: Управление расписанием сбросов
+  - name: Reset Execution
+    description: Выполнение сбросов
+
+paths:
+  /reset/daily/execute:
+    post:
+      tags:
+        - Daily Reset
+      summary: Выполнить daily reset
+      operationId: executeDailyReset
+      responses:
+        '200':
+          description: Daily reset выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetExecutionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/daily/status:
+    get:
+      tags:
+        - Daily Reset
+      summary: Получить статус daily reset
+      operationId: getDailyResetStatus
+      responses:
+        '200':
+          description: Статус daily reset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetStatusResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/daily/next:
+    get:
+      tags:
+        - Daily Reset
+      summary: Получить время следующего daily reset
+      operationId: getNextDailyReset
+      responses:
+        '200':
+          description: Время следующего daily reset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextResetResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/weekly/execute:
+    post:
+      tags:
+        - Weekly Reset
+      summary: Выполнить weekly reset
+      operationId: executeWeeklyReset
+      responses:
+        '200':
+          description: Weekly reset выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetExecutionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/weekly/status:
+    get:
+      tags:
+        - Weekly Reset
+      summary: Получить статус weekly reset
+      operationId: getWeeklyResetStatus
+      responses:
+        '200':
+          description: Статус weekly reset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetStatusResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/weekly/next:
+    get:
+      tags:
+        - Weekly Reset
+      summary: Получить время следующего weekly reset
+      operationId: getNextWeeklyReset
+      responses:
+        '200':
+          description: Время следующего weekly reset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextResetResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/quests/pool:
+    get:
+      tags:
+        - Quest Pools
+      summary: Получить пул квестов
+      operationId: getQuestPool
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/QuestPoolType'
+        - name: player_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Пул квестов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestPoolResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/quests/assign:
+    post:
+      tags:
+        - Quest Pools
+      summary: Выдать квест игроку
+      operationId: assignQuestToPlayer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignQuestRequest'
+      responses:
+        '200':
+          description: Квест выдан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestAssignmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/quests/player/{player_id}:
+    get:
+      tags:
+        - Quest Pools
+      summary: Получить квесты игрока
+      operationId: getPlayerQuests
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/QuestPoolType'
+      responses:
+        '200':
+          description: Квесты игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerQuestsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/rewards/login/{player_id}:
+    get:
+      tags:
+        - Login Rewards
+      summary: Получить логин-награды игрока
+      operationId: getPlayerLoginRewards
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Логин-награды игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginRewardsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/rewards/login/claim:
+    post:
+      tags:
+        - Login Rewards
+      summary: Получить логин-награду
+      operationId: claimLoginReward
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimLoginRewardRequest'
+      responses:
+        '200':
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimRewardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/rewards/login/streak/{player_id}:
+    get:
+      tags:
+        - Login Rewards
+      summary: Получить серию логинов игрока
+      operationId: getPlayerLoginStreak
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Серия логинов игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginStreakResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/schedule:
+    get:
+      tags:
+        - Reset Schedule
+      summary: Получить расписание сбросов
+      operationId: getResetSchedule
+      responses:
+        '200':
+          description: Расписание сбросов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetScheduleResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/schedule/update:
+    post:
+      tags:
+        - Reset Schedule
+      summary: Обновить расписание сбросов
+      operationId: updateResetSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduleRequest'
+      responses:
+        '200':
+          description: Расписание обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetScheduleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/execute/daily:
+    post:
+      tags:
+        - Reset Execution
+      summary: Выполнить daily reset (executor)
+      operationId: executeDailyResetBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteResetRequest'
+      responses:
+        '200':
+          description: Daily reset выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetExecutionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/execute/weekly:
+    post:
+      tags:
+        - Reset Execution
+      summary: Выполнить weekly reset (executor)
+      operationId: executeWeeklyResetBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteResetRequest'
+      responses:
+        '200':
+          description: Weekly reset выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetExecutionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/execute/status:
+    get:
+      tags:
+        - Reset Execution
+      summary: Получить статус выполнения сброса
+      operationId: getResetExecutionStatus
+      parameters:
+        - name: execution_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус выполнения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetExecutionStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reset/events:
+    get:
+      tags:
+        - Reset Execution
+      summary: Получить события сбросов
+      operationId: getResetEvents
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ResetType'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События сбросов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetEventsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    ResetType:
+      type: string
+      enum: [daily, weekly]
+      description: Тип сброса
+
+    QuestPoolType:
+      type: string
+      enum: [daily, weekly, guild]
+      description: Тип пула квестов
+
+    LoginRewardType:
+      type: string
+      enum: [daily, weekly, monthly]
+      description: Тип логин-награды
+
+    ResetStatus:
+      type: string
+      enum: [pending, in_progress, completed, failed]
+      description: Статус сброса
+
+    ResetExecutionResponse:
+      type: object
+      properties:
+        execution_id:
+          type: string
+          format: uuid
+        reset_type:
+          $ref: '#/components/schemas/ResetType'
+        status:
+          $ref: '#/components/schemas/ResetStatus'
+        started_at:
+          type: string
+          format: date-time
+        players_processed:
+          type: integer
+        players_total:
+          type: integer
+
+    ResetStatusResponse:
+      type: object
+      properties:
+        reset_type:
+          $ref: '#/components/schemas/ResetType'
+        status:
+          $ref: '#/components/schemas/ResetStatus'
+        last_reset:
+          type: string
+          format: date-time
+          nullable: true
+        next_reset:
+          type: string
+          format: date-time
+        players_processed:
+          type: integer
+        players_total:
+          type: integer
+
+    NextResetResponse:
+      type: object
+      properties:
+        reset_type:
+          $ref: '#/components/schemas/ResetType'
+        next_reset:
+          type: string
+          format: date-time
+        time_until_reset_seconds:
+          type: integer
+
+    QuestPoolResponse:
+      type: object
+      properties:
+        pool_type:
+          $ref: '#/components/schemas/QuestPoolType'
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestPoolEntry'
+        total:
+          type: integer
+
+    QuestPoolEntry:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        weight:
+          type: integer
+        min_level:
+          type: integer
+        max_level:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+
+    AssignQuestRequest:
+      type: object
+      required:
+        - player_id
+        - quest_id
+        - pool_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        pool_type:
+          $ref: '#/components/schemas/QuestPoolType'
+
+    QuestAssignmentResponse:
+      type: object
+      properties:
+        assignment_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        assigned_at:
+          type: string
+          format: date-time
+
+    PlayerQuestsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerQuest'
+        total:
+          type: integer
+
+    PlayerQuest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        pool_type:
+          $ref: '#/components/schemas/QuestPoolType'
+        assigned_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        reset_date:
+          type: string
+          format: date
+
+    LoginRewardsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        available_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoginReward'
+        claimed_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoginReward'
+        streak_days:
+          type: integer
+
+    LoginReward:
+      type: object
+      properties:
+        reward_type:
+          $ref: '#/components/schemas/LoginRewardType'
+        day_number:
+          type: integer
+        reward_data:
+          type: object
+          additionalProperties: true
+        claimed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ClaimLoginRewardRequest:
+      type: object
+      required:
+        - player_id
+        - reward_type
+        - day_number
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        reward_type:
+          $ref: '#/components/schemas/LoginRewardType'
+        day_number:
+          type: integer
+
+    ClaimRewardResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        reward_type:
+          $ref: '#/components/schemas/LoginRewardType'
+        day_number:
+          type: integer
+        reward_data:
+          type: object
+          additionalProperties: true
+        claimed_at:
+          type: string
+          format: date-time
+
+    LoginStreakResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        streak_days:
+          type: integer
+        last_login_date:
+          type: string
+          format: date
+        max_streak_days:
+          type: integer
+          default: 30
+
+    ResetScheduleResponse:
+      type: object
+      properties:
+        daily_reset:
+          type: object
+          properties:
+            time:
+              type: string
+              example: "00:00:00"
+            timezone:
+              type: string
+              example: "UTC"
+            next_reset:
+              type: string
+              format: date-time
+        weekly_reset:
+          type: object
+          properties:
+            day_of_week:
+              type: integer
+              minimum: 0
+              maximum: 6
+              example: 1
+              description: "0=Sunday, 1=Monday, ..., 6=Saturday"
+            time:
+              type: string
+              example: "00:00:00"
+            timezone:
+              type: string
+              example: "UTC"
+            next_reset:
+              type: string
+              format: date-time
+
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        daily_reset:
+          type: object
+          properties:
+            time:
+              type: string
+            timezone:
+              type: string
+        weekly_reset:
+          type: object
+          properties:
+            day_of_week:
+              type: integer
+              minimum: 0
+              maximum: 6
+            time:
+              type: string
+            timezone:
+              type: string
+
+    ExecuteResetRequest:
+      type: object
+      required:
+        - reset_type
+        - batch_size
+      properties:
+        reset_type:
+          $ref: '#/components/schemas/ResetType'
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 1000
+        max_workers:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 10
+
+    ResetExecutionStatusResponse:
+      type: object
+      properties:
+        execution_id:
+          type: string
+          format: uuid
+        reset_type:
+          $ref: '#/components/schemas/ResetType'
+        status:
+          $ref: '#/components/schemas/ResetStatus'
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        players_processed:
+          type: integer
+        players_total:
+          type: integer
+        progress_percentage:
+          type: number
+          format: float
+        error_message:
+          type: string
+          nullable: true
+
+    ResetEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [reset:daily-completed, reset:weekly-completed, reset:quest-assigned, reset:reward-claimed, reset:streak-updated]
+        reset_type:
+          $ref: '#/components/schemas/ResetType'
+          nullable: true
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ResetEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResetEvent'
+        total:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
