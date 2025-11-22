@@ -148,7 +148,8 @@ task:
   source_file: knowledge/analysis/tasks/active/CURRENT-WORK/active/2025-11-09-combat-systems-wave1-brief.yaml
   source_id: analysis-combat-systems-wave1-brief
   status: draft
-  needs_task: true
+  needs_task: false
+  github_issue: 70
   
 # Агент проверяет review:
 review:
