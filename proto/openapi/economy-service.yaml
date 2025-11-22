@@ -528,6 +528,443 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /economy/loot/tables/{tableId}:
+    get:
+      tags:
+        - Loot
+      summary: Получить loot table
+      operationId: getLootTable
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Loot table
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootTable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/apply-luck:
+    post:
+      tags:
+        - Loot
+      summary: Применить luck модификатор к луту
+      operationId: applyLuckModifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyLuckRequest'
+      responses:
+        '200':
+          description: Luck применён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/distribute:
+    post:
+      tags:
+        - Loot
+      summary: Распределить лут между игроками
+      operationId: distributeLoot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeLootRequest'
+      responses:
+        '200':
+          description: Лут распределён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootDistributionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/distribution/{distributionId}:
+    get:
+      tags:
+        - Loot
+      summary: Получить статус распределения лута
+      operationId: getLootDistribution
+      parameters:
+        - name: distributionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус распределения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootDistributionStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/rolls/create:
+    post:
+      tags:
+        - Loot
+      summary: Создать roll сессию для группы
+      operationId: createLootRollSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRollSessionRequest'
+      responses:
+        '200':
+          description: Roll сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RollSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/rolls/{rollId}:
+    get:
+      tags:
+        - Loot
+      summary: Получить статус roll сессии
+      operationId: getRollSession
+      parameters:
+        - name: rollId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус roll сессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RollSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/rolls/{rollId}/roll:
+    post:
+      tags:
+        - Loot
+      summary: Сделать бросок кубика в roll сессии
+      operationId: rollForLoot
+      parameters:
+        - name: rollId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollRequest'
+      responses:
+        '200':
+          description: Бросок выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RollResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/rolls/{rollId}/claim:
+    post:
+      tags:
+        - Loot
+      summary: Получить предмет из roll сессии
+      operationId: claimLootFromRoll
+      parameters:
+        - name: rollId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimLootRequest'
+      responses:
+        '200':
+          description: Предмет получен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/smart/generate:
+    post:
+      tags:
+        - Loot
+      summary: Сгенерировать умный лут
+      operationId: generateSmartLoot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateSmartLootRequest'
+      responses:
+        '200':
+          description: Умный лут сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/smart/history/{playerId}:
+    get:
+      tags:
+        - Loot
+      summary: Получить историю лута игрока
+      operationId: getPlayerLootHistory
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История лута игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootHistoryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/world-drops/create:
+    post:
+      tags:
+        - Loot
+      summary: Создать world drop на карте
+      operationId: createWorldDrop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorldDropRequest'
+      responses:
+        '200':
+          description: World drop создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldDrop'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/world-drops/{dropId}/pickup:
+    post:
+      tags:
+        - Loot
+      summary: Подобрать world drop
+      operationId: pickupWorldDrop
+      parameters:
+        - name: dropId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupWorldDropRequest'
+      responses:
+        '200':
+          description: World drop подобран
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickupResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/world-drops/nearby:
+    get:
+      tags:
+        - Loot
+      summary: Получить ближайшие world drops
+      operationId: getNearbyWorldDrops
+      parameters:
+        - name: x
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: y
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: z
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: radius
+          in: query
+          schema:
+            type: number
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Ближайшие world drops
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drops:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldDrop'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/boss/generate:
+    post:
+      tags:
+        - Loot
+      summary: Сгенерировать лут босса
+      operationId: generateBossLoot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateBossLootRequest'
+      responses:
+        '200':
+          description: Лут босса сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BossLootResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/boss/distribute:
+    post:
+      tags:
+        - Loot
+      summary: Распределить награды босса
+      operationId: distributeBossLoot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeBossLootRequest'
+      responses:
+        '200':
+          description: Награды босса распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BossLootDistributionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:

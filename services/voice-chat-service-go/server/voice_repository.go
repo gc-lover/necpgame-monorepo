@@ -271,4 +271,3 @@ func (r *VoiceRepository) CountParticipants(ctx context.Context, channelID uuid.
 	).Scan(&count)
 	return count, err
 }
-
