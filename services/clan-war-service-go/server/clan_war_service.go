@@ -12,8 +12,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ClanWarRepositoryInterface interface {
+	CreateWar(ctx context.Context, war *models.ClanWar) error
+	GetWarByID(ctx context.Context, warID uuid.UUID) (*models.ClanWar, error)
+	ListWars(ctx context.Context, guildID *uuid.UUID, status *models.WarStatus, limit, offset int) ([]models.ClanWar, int, error)
+	UpdateWar(ctx context.Context, war *models.ClanWar) error
+	CreateBattle(ctx context.Context, battle *models.WarBattle) error
+	GetBattleByID(ctx context.Context, battleID uuid.UUID) (*models.WarBattle, error)
+	ListBattles(ctx context.Context, warID *uuid.UUID, status *models.BattleStatus, limit, offset int) ([]models.WarBattle, int, error)
+	UpdateBattle(ctx context.Context, battle *models.WarBattle) error
+	GetTerritoryByID(ctx context.Context, territoryID uuid.UUID) (*models.Territory, error)
+	ListTerritories(ctx context.Context, ownerGuildID *uuid.UUID, limit, offset int) ([]models.Territory, int, error)
+	UpdateTerritoryOwner(ctx context.Context, territoryID, ownerGuildID uuid.UUID) error
+}
+
 type ClanWarService struct {
-	repo   *ClanWarRepository
+	repo   ClanWarRepositoryInterface
 	redis  *redis.Client
 	logger *logrus.Logger
 }
