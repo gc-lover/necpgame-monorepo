@@ -35,14 +35,40 @@
 kubectl apply -f namespace.yaml
 ```
 
+### Настройка Secrets
+
+**WARNING ВАЖНО:** Перед деплоем необходимо заполнить реальные значения в Secrets!
+
+См. `k8s/SECRETS_SETUP.md` для подробных инструкций.
+
+Рекомендуемый способ (безопасный):
+
+```bash
+kubectl create secret generic database-secrets \
+  --from-literal=url="postgresql://necpgame:ПАРОЛЬ@postgres:5432/necpgame?sslmode=disable" \
+  --from-literal=password="ПАРОЛЬ" \
+  --namespace=necpgame
+
+kubectl create secret generic redis-secrets \
+  --from-literal=url="redis://:ПАРОЛЬ@redis:6379" \
+  --from-literal=password="ПАРОЛЬ" \
+  --namespace=necpgame
+
+kubectl create secret generic jwt-secrets \
+  --from-literal=secret="JWT_SECRET" \
+  --from-literal=issuer="http://keycloak:8080/realms/necpgame" \
+  --namespace=necpgame
+```
+
 ### Развертывание инфраструктуры
 
 ```bash
 kubectl apply -f namespace.yaml
 kubectl apply -f configmap-common.yaml
-kubectl apply -f secrets-common.yaml
+# Secrets уже созданы выше через kubectl create secret
 kubectl apply -f rbac-service-account.yaml
 kubectl apply -f networkpolicy-default.yaml
+kubectl apply -f resource-quota.yaml
 kubectl apply -f servicemonitor-common.yaml
 kubectl apply -f ingress.yaml
 ```
@@ -64,10 +90,26 @@ kubectl apply -f ws-lobby-go-deployment.yaml
 kubectl apply -f matchmaking-go-deployment.yaml
 ```
 
-Или все сразу:
+### Развертывание автомасштабирования и высокой доступности
 
 ```bash
-kubectl apply -f .
+kubectl apply -f hpa-services.yaml
+kubectl apply -f pdb-services.yaml
+```
+
+Или все сразу (кроме secrets):
+
+```bash
+kubectl apply -f namespace.yaml
+kubectl apply -f configmap-common.yaml
+kubectl apply -f rbac-service-account.yaml
+kubectl apply -f networkpolicy-default.yaml
+kubectl apply -f resource-quota.yaml
+kubectl apply -f servicemonitor-common.yaml
+kubectl apply -f ingress.yaml
+kubectl apply -f *-deployment.yaml
+kubectl apply -f hpa-services.yaml
+kubectl apply -f pdb-services.yaml
 ```
 
 ### Проверка статуса
