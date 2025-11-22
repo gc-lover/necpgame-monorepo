@@ -53,6 +53,8 @@ func (s *WebSocketServer) Start(ctx context.Context) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", s.loggingMiddleware(s.handleWebSocket))
 	mux.HandleFunc("/server", s.loggingMiddleware(s.handleServerWebSocket))
+	mux.HandleFunc("/session/heartbeat", s.loggingMiddleware(s.handleHeartbeat))
+	mux.HandleFunc("/session/reconnect", s.loggingMiddleware(s.handleReconnect))
 	mux.HandleFunc("/", s.loggingMiddleware(s.handleRoot))
 
 	s.httpSrv = &http.Server{

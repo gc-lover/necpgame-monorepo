@@ -6,6 +6,63 @@ import (
 )
 
 var (
+	sessionsActive = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "sessions_active_total",
+			Help: "Number of active sessions",
+		},
+	)
+
+	sessionsCreated = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "sessions_created_total",
+			Help: "Total number of sessions created",
+		},
+	)
+
+	sessionsReconnected = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "sessions_reconnected_total",
+			Help: "Total number of sessions reconnected",
+		},
+	)
+
+	sessionsExpired = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "sessions_expired_total",
+			Help: "Total number of expired sessions",
+		},
+	)
+
+	heartbeatsTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "heartbeats_total",
+			Help: "Total number of heartbeats received",
+		},
+	)
+)
+
+func SetActiveSessions(count float64) {
+	sessionsActive.Set(count)
+}
+
+func RecordSessionCreated() {
+	sessionsCreated.Inc()
+}
+
+func RecordSessionReconnected() {
+	sessionsReconnected.Inc()
+}
+
+func RecordSessionExpired() {
+	sessionsExpired.Inc()
+}
+
+func RecordHeartbeat() {
+	heartbeatsTotal.Inc()
+}
+
+var (
 	connectionsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "websocket_connections_total",

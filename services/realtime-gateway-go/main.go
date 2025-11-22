@@ -18,9 +18,16 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:18080")
 	metricsAddr := getEnv("METRICS_ADDR", ":9090")
+	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/0")
+	serverID := getEnv("SERVER_ID", "gateway-1")
 	tickRate := 60
 
-	handler := server.NewGatewayHandler(tickRate)
+	sessionMgr, err := server.NewSessionManager(redisURL, serverID)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize session manager")
+	}
+
+	handler := server.NewGatewayHandler(tickRate, sessionMgr)
 	wsServer := server.NewWebSocketServer(addr, handler)
 
 	metricsMux := http.NewServeMux()
@@ -42,6 +49,21 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	if sessionMgr != nil {
+		go func() {
+			ticker := time.NewTicker(5 * time.Minute)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					sessionMgr.CleanupExpiredSessions(context.Background())
+				}
+			}
+		}()
+	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
