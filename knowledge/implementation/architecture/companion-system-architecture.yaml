@@ -1,0 +1,660 @@
+metadata:
+  id: companion-system-architecture
+  title: Архитектура системы компаньонов (Companion System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T02:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - companion
+    - backend
+    - gameplay
+    - combat
+  related_systems:
+    - gameplay-service-go
+    - combat-service-go
+    - inventory-service-go
+    - character-service
+  related_documents:
+    - id: backend-companion-system
+      relation: extends
+  github_issue: 314
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы компаньонов
+    для управления боевыми дронами, утилитарными помощниками, питомцами, их прогрессией
+    и способностями для улучшения геймплея.
+  goal: |
+    Создать архитектурную схему системы компаньонов с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы призыва/отзыва компаньонов
+    - Системы прогрессии компаньонов
+    - Системы способностей (активные/пассивные)
+    - Системы кастомизации
+    - Технического задания для реализации
+  essence: |
+    Система компаньонов для управления боевыми дронами, утилитарными помощниками
+    и социальными питомцами с прогрессией и способностями.
+
+architecture:
+  overview: |
+    Система компаньонов состоит из восьми основных компонентов:
+    1. Companion Manager - управление компаньонами
+    2. Companion Summon System - система призыва/отзыва
+    3. Companion Progression Manager - управление прогрессией
+    4. Companion Ability System - система способностей
+    5. Companion Customization Manager - управление кастомизацией
+    6. Companion Combat Integrator - интеграция с боем
+    7. Companion Shop Manager - управление магазином компаньонов
+    8. Companion Event Handler - обработка событий
+
+  components:
+    - name: Companion Manager
+      location: gameplay-service-go (модуль companion)
+      responsibility: |
+        - Управление компаньонами игроков
+        - Покупка компаньонов
+        - Хранение компаньонов
+        - Интеграция с inventory service
+      companion_types: |
+        - COMBAT_DRONE: боевые дроны (attack/support/recon)
+        - UTILITY: утилитарные помощники (loot collector, hacking assistant, crafting bot)
+        - SOCIAL_PET: социальные питомцы (cat, dog, drone-bird)
+      companion_categories: |
+        - ATTACK_DRONE: атакующий дрон
+        - SUPPORT_DRONE: поддерживающий дрон
+        - RECON_DRONE: разведывательный дрон
+        - LOOT_COLLECTOR: сборщик лута
+        - HACKING_ASSISTANT: помощник по взлому
+        - CRAFTING_BOT: бот для крафта
+        - CAT: кошка
+        - DOG: собака
+        - DRONE_BIRD: дрон-птица
+      endpoints:
+        - GET /api/v1/gameplay/companions/available - доступные компаньоны
+        - POST /api/v1/gameplay/companions/purchase - покупка компаньона
+        - GET /api/v1/gameplay/companions/owned/{player_id} - компаньоны игрока
+        - GET /api/v1/gameplay/companions/{companion_id} - информация о компаньоне
+
+    - name: Companion Summon System
+      location: gameplay-service-go (модуль companion-summon)
+      responsibility: |
+        - Призыв компаньона
+        - Отзыв компаньона
+        - Управление активным компаньоном
+        - Спавн/деспавн в мире
+        - Интеграция с world service
+      summon_flow: |
+        1. Игрок запрашивает призыв компаньона
+        2. Проверка владения компаньоном
+        3. Отзыв текущего активного компаньона (если есть)
+        4. Сохранение статуса призыва
+        5. Спавн компаньона в мире через world service
+        6. Применение эффектов компаньона
+      dismiss_flow: |
+        1. Игрок запрашивает отзыв компаньона
+        2. Удаление эффектов компаньона
+        3. Деспавн компаньона из мира
+        4. Обновление статуса призыва
+      endpoints:
+        - POST /api/v1/gameplay/companions/{companion_id}/summon - призыв компаньона
+        - POST /api/v1/gameplay/companions/{companion_id}/dismiss - отзыв компаньона
+        - GET /api/v1/gameplay/companions/active/{player_id} - активный компаньон
+
+    - name: Companion Progression Manager
+      location: gameplay-service-go (модуль companion-progression)
+      responsibility: |
+        - Управление прогрессией компаньонов
+        - Расчёт опыта
+        - Повышение уровня
+        - Улучшение характеристик
+        - Интеграция с progression system
+      progression_features: |
+        - Максимальный уровень: 50
+        - Опыт за действия
+        - Улучшение здоровья и урона
+        - Уведомления о повышении уровня
+      xp_sources: |
+        - Убийства врагов
+        - Помощь в бою
+        - Сбор лута
+        - Взлом
+        - Крафт
+      endpoints:
+        - POST /api/v1/gameplay/companions/{companion_id}/add-xp - добавление опыта
+        - GET /api/v1/gameplay/companions/{companion_id}/progression - прогрессия компаньона
+
+    - name: Companion Ability System
+      location: gameplay-service-go (модуль companion-abilities)
+      responsibility: |
+        - Управление способностями компаньонов
+        - Активные способности
+        - Пассивные способности
+        - Cooldown управление
+        - Применение эффектов
+      ability_types: |
+        - ACTIVE: активные способности (ATTACK_COMMAND, DEFENSIVE_MODE)
+        - PASSIVE: пассивные способности (auto-collect, combat assistance)
+      active_abilities: |
+        - ATTACK_COMMAND: команда атаки
+        - DEFENSIVE_MODE: защитный режим
+        - HEAL_COMMAND: команда лечения
+        - SCAN_COMMAND: команда сканирования
+      passive_abilities: |
+        - AUTO_COLLECT: автоматический сбор лута
+        - COMBAT_ASSISTANCE: помощь в бою
+        - HACKING_BOOST: усиление взлома
+        - CRAFTING_BOOST: усиление крафта
+      endpoints:
+        - POST /api/v1/gameplay/companions/{companion_id}/abilities/{ability_id}/use - использование способности
+        - GET /api/v1/gameplay/companions/{companion_id}/abilities - способности компаньона
+
+    - name: Companion Customization Manager
+      location: gameplay-service-go (модуль companion-customization)
+      responsibility: |
+        - Управление кастомизацией компаньонов
+        - Переименование
+        - Экипировка
+        - Визуальная кастомизация
+      customization_features: |
+        - Переименование компаньона
+        - Экипировка предметов
+        - Визуальная кастомизация
+        - Сохранение настроек
+      endpoints:
+        - POST /api/v1/gameplay/companions/{companion_id}/rename - переименование
+        - POST /api/v1/gameplay/companions/{companion_id}/equip - экипировка предмета
+        - POST /api/v1/gameplay/companions/{companion_id}/customize - кастомизация
+
+    - name: Companion Combat Integrator
+      location: gameplay-service-go (модуль companion-combat)
+      responsibility: |
+        - Интеграция компаньонов с боем
+        - Участие в бою
+        - Нанесение урона
+        - Получение урона
+        - Интеграция с combat service
+      combat_features: |
+        - Участие в бою
+        - Нанесение урона врагам
+        - Получение урона
+        - Лечение игрока
+        - Защита игрока
+      endpoints:
+        - POST /api/v1/gameplay/companions/{companion_id}/combat/attack - атака
+        - POST /api/v1/gameplay/companions/{companion_id}/combat/defend - защита
+
+    - name: Companion Shop Manager
+      location: gameplay-service-go (модуль companion-shop)
+      responsibility: |
+        - Управление магазином компаньонов
+        - Каталог компаньонов
+        - Покупка компаньонов
+        - Интеграция с economy service
+      shop_features: |
+        - Каталог компаньонов
+        - Фильтрация по типу
+        - Покупка компаньонов
+        - Просмотр деталей
+      endpoints:
+        - GET /api/v1/gameplay/companions/shop/catalog - каталог магазина
+        - GET /api/v1/gameplay/companions/shop/{companion_id} - детали компаньона
+        - POST /api/v1/gameplay/companions/shop/purchase - покупка компаньона
+
+    - name: Companion Event Handler
+      location: gameplay-service-go (модуль companion-events)
+      responsibility: |
+        - Обработка событий компаньонов
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Уведомления игроков
+      companion_events_published: |
+        - companion:purchased
+        - companion:summoned
+        - companion:dismissed
+        - companion:level-up
+        - companion:ability-used
+        - companion:customized
+      companion_events_consumed: |
+        - combat:enemy-killed
+        - loot:collected
+        - hack:completed
+        - craft:completed
+      endpoints:
+        - GET /api/v1/gameplay/companions/events/{companion_id} - события компаньона
+
+  data_flow:
+    companion_purchase: |
+      1. Игрок выбирает компаньона в магазине
+      2. Companion Shop Manager проверяет доступность
+      3. Economy Service проверяет наличие средств
+      4. Economy Service списывает валюту
+      5. Создаётся запись компаньона
+      6. Companion Event Handler публикует companion:purchased
+      7. Notification Service уведомляет игрока
+      8. Realtime Gateway синхронизирует состояние
+
+    companion_summon: |
+      1. Игрок запрашивает призыв компаньона
+      2. Companion Summon System проверяет владение
+      3. Отзывается текущий активный компаньон (если есть)
+      4. Сохраняется статус призыва
+      5. World Service спавнит компаньона в мире
+      6. Применяются эффекты компаньона
+      7. Companion Event Handler публикует companion:summoned
+      8. Realtime Gateway синхронизирует состояние
+
+    companion_progression: |
+      1. Компаньон получает опыт за действия
+      2. Companion Progression Manager проверяет уровень
+      3. Если опыт достаточен - повышается уровень
+      4. Улучшаются характеристики (здоровье, урон)
+      5. Companion Event Handler публикует companion:level-up
+      6. Notification Service уведомляет игрока
+      7. Realtime Gateway синхронизирует состояние
+
+    companion_ability_use: |
+      1. Игрок использует способность компаньона
+      2. Companion Ability System проверяет cooldown
+      3. Применяется эффект способности
+      4. Обновляется cooldown
+      5. Companion Event Handler публикует companion:ability-used
+      6. Realtime Gateway синхронизирует состояние
+
+  integrations:
+    with_combat_service: |
+      - Участие компаньонов в бою
+      - Нанесение/получение урона
+      - Интеграция с боевой системой
+
+    with_inventory_service: |
+      - Экипировка компаньонов
+      - Хранение компаньонов
+      - Интеграция с инвентарём
+
+    with_economy_service: |
+      - Покупка компаньонов
+      - Списание валюты
+      - Интеграция с экономической системой
+
+    with_world_service: |
+      - Спавн/деспавн компаньонов в мире
+      - Позиционирование компаньонов
+      - Интеграция с миром
+
+    with_character_service: |
+      - Применение бонусов компаньонов
+      - Интеграция с персонажем
+      - Обновление характеристик
+
+    with_notification_service: |
+      - Уведомления о покупках
+      - Уведомления о повышении уровня
+      - Уведомления о способностях
+
+    with_realtime_gateway: |
+      - Синхронизация состояния компаньонов
+      - Уведомления о событиях
+      - Обновления в реальном времени
+
+  database_schema:
+    tables:
+      - name: companion_types
+        description: Типы компаньонов
+        fields:
+          - id: UUID (PK)
+          - code: VARCHAR(50) (UNIQUE)
+          - name: VARCHAR(255)
+          - category: ENUM (COMBAT_DRONE, UTILITY, SOCIAL_PET)
+          - subcategory: VARCHAR(100)
+          - description: TEXT
+          - base_health: INTEGER
+          - base_damage: INTEGER
+          - base_xp: INTEGER
+          - max_level: INTEGER (default: 50)
+          - abilities: JSONB
+          - stats: JSONB
+          - cost: BIGINT
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - category, is_active
+          - code
+
+      - name: player_companions
+        description: Компаньоны игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - companion_type_id: UUID (FK companion_types)
+          - name: VARCHAR(255)
+          - level: INTEGER (default: 1)
+          - experience: INTEGER (default: 0)
+          - experience_to_next_level: INTEGER
+          - health: INTEGER
+          - damage: INTEGER
+          - is_summoned: BOOLEAN (default: false)
+          - summoned_at: TIMESTAMP (nullable)
+          - equipment: JSONB (nullable)
+          - customization: JSONB (nullable)
+          - purchased_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id, is_summoned
+          - companion_type_id
+
+      - name: companion_abilities
+        description: Способности компаньонов
+        fields:
+          - id: UUID (PK)
+          - companion_type_id: UUID (FK companion_types)
+          - ability_type: ENUM (ACTIVE, PASSIVE)
+          - code: VARCHAR(50)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - cooldown_seconds: INTEGER (nullable)
+          - effects: JSONB
+          - is_active: BOOLEAN (default: true)
+        indexes:
+          - companion_type_id, ability_type
+
+      - name: companion_ability_usage
+        description: История использования способностей
+        fields:
+          - id: UUID (PK)
+          - player_companion_id: UUID (FK player_companions)
+          - ability_id: UUID (FK companion_abilities)
+          - used_at: TIMESTAMP
+          - next_available_at: TIMESTAMP
+        indexes:
+          - player_companion_id, used_at
+          - next_available_at
+
+      - name: companion_progression_history
+        description: История прогрессии компаньонов
+        fields:
+          - id: UUID (PK)
+          - player_companion_id: UUID (FK player_companions)
+          - level: INTEGER
+          - experience_gained: INTEGER
+          - source: VARCHAR(100)
+          - leveled_up: BOOLEAN (default: false)
+          - created_at: TIMESTAMP
+        indexes:
+          - player_companion_id, created_at
+          - level
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в gameplay-service-go:
+      - companion (управление компаньонами)
+      - companion-summon (призыв/отзыв)
+      - companion-progression (прогрессия)
+      - companion-abilities (способности)
+      - companion-customization (кастомизация)
+      - companion-combat (интеграция с боем)
+      - companion-shop (магазин)
+      - companion-events (события)
+    - Интеграция с combat-service для боя
+    - Интеграция с inventory-service для экипировки
+    - Интеграция с economy-service для покупок
+    - Интеграция с world-service для спавна
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация состояния компаньонов через WebSocket
+    - Уведомления о событиях
+    - Обновления в реальном времени
+
+  performance_requirements:
+    - Покупка компаньона < 200ms
+    - Призыв компаньона < 300ms
+    - Использование способности < 100ms
+    - Добавление опыта < 50ms
+    - Загрузка компаньонов < 200ms
+    - Поддержка до 1M компаньонов
+    - Поддержка до 10K активных компаньонов одновременно
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через gameplay-service
+    - Распределение нагрузки на компаньонов
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование типов компаньонов в Redis
+    - Оптимизация спавна через world-service
+
+subtasks:
+  - id: companion-manager-module
+    title: Реализация модуля Companion Manager
+    description: |
+      Управление компаньонами
+      Покупка компаньонов
+      Хранение компаньонов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: companion-summon-system
+    title: Реализация Companion Summon System
+    description: |
+      Призыв/отзыв компаньонов
+      Управление активным компаньоном
+      Интеграция с world service
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: companion-progression-manager
+    title: Реализация Companion Progression Manager
+    description: |
+      Управление прогрессией
+      Расчёт опыта
+      Повышение уровня
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: companion-ability-system
+    title: Реализация Companion Ability System
+    description: |
+      Управление способностями
+      Активные/пассивные способности
+      Cooldown управление
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: companion-customization-manager
+    title: Реализация Companion Customization Manager
+    description: |
+      Управление кастомизацией
+      Переименование
+      Экипировка
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: companion-combat-integrator
+    title: Реализация Companion Combat Integrator
+    description: |
+      Интеграция с боем
+      Участие в бою
+      Нанесение/получение урона
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: companion-shop-manager
+    title: Реализация Companion Shop Manager
+    description: |
+      Управление магазином
+      Каталог компаньонов
+      Покупка компаньонов
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: companion-event-handler
+    title: Реализация Companion Event Handler
+    description: |
+      Обработка событий
+      Публикация событий
+      Подписка на события
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование типов компаньонов
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для компаньонов
+      Интеграция с существующим API gameplay-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты покупки компаньонов
+      Тесты призыва/отзыва
+      Тесты прогрессии
+      Тесты способностей
+      Тесты интеграций
+    priority: high
+    estimated_time: 4-5 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Gameplay Service"
+            CM[Companion Manager]
+            CSS[Companion Summon System]
+            CPM[Companion Progression Manager]
+            CAS[Companion Ability System]
+            CCM[Companion Customization Manager]
+            CCI[Companion Combat Integrator]
+            CSM[Companion Shop Manager]
+            CEH[Companion Event Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>companion_types<br/>player_companions<br/>companion_abilities<br/>companion_ability_usage<br/>companion_progression_history)]
+        end
+
+        subgraph "External Services"
+            CS[Combat Service]
+            IS[Inventory Service]
+            ES[Economy Service]
+            WS[World Service]
+            CHS[Character Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|purchase companion| CSM
+        CL -->|summon companion| CSS
+        CL -->|use ability| CAS
+        CSM --> ES
+        CSS --> WS
+        CAS --> CS
+        CCI --> CS
+        CEH --> NS
+        CEH --> RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant CSS as Companion Summon System
+        participant WS as World Service
+        participant CPM as Companion Progression Manager
+
+        P->>CSS: Summon companion
+        CSS->>CSS: Check ownership
+        CSS->>WS: Spawn companion
+        WS->>WS: Spawn entity
+        Note over CPM: XP gained
+        CPM->>CPM: Check level
+        CPM->>CPM: Level up
+    ```
+
+decisions:
+  - id: adr-companion-architecture
+    summary: |
+      Выбрана модульная архитектура внутри gameplay-service-go для обеспечения
+      тесной интеграции с геймплейными системами.
+
+  - id: adr-companion-types
+    summary: |
+      Три типа компаньонов (боевые дроны, утилитарные помощники, социальные питомцы)
+      обеспечивают разнообразие и различные функции.
+
+  - id: adr-companion-progression
+    summary: |
+      Система прогрессии до уровня 50 с улучшением характеристик мотивирует
+      игроков использовать компаньонов и развивать их.
+
+  - id: adr-companion-abilities
+    summary: |
+      Активные и пассивные способности создают глубину геймплея и дают
+      игрокам больше контроля над компаньонами.
+
+  - id: adr-companion-summon
+    summary: |
+      Система призыва/отзыва позволяет игрокам управлять активным компаньоном
+      и переключаться между ними.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата способностей и эффектов
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы компаньонов:
+      - Определены компоненты (Companion Manager, Companion Summon System, Companion Progression Manager, Companion Ability System, Companion Customization Manager, Companion Combat Integrator, Companion Shop Manager, Companion Event Handler)
+      - Описаны типы компаньонов (COMBAT_DRONE, UTILITY, SOCIAL_PET)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (companion_types, player_companions, companion_abilities, companion_ability_usage, companion_progression_history)
+      - Спроектирована система призыва/отзыва
+      - Спроектирована система прогрессии
+      - Спроектирована система способностей
+      - Спроектирована система кастомизации
+      - Создано техническое задание
+      - Разбито на подзадачи
+
