@@ -572,6 +572,327 @@ func TestTicketService_UpdateTicket_NotFound(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+func TestTicketService_CreateTicket_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	playerID := uuid.New()
+	req := &models.CreateTicketRequest{
+		Category:    models.TicketCategoryTechnical,
+		Subject:     "Test Subject",
+		Description: "Test Description",
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetNextTicketNumber", context.Background()).Return("TKT-20250101-0001", nil)
+	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.SupportTicket")).Return(expectedErr)
+
+	result, err := service.CreateTicket(context.Background(), playerID, req)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketsByPlayerID_Empty(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	playerID := uuid.New()
+
+	mockRepo.On("GetByPlayerID", context.Background(), playerID, 10, 0).Return([]models.SupportTicket{}, nil)
+	mockRepo.On("CountByPlayerID", context.Background(), playerID).Return(0, nil)
+
+	result, err := service.GetTicketsByPlayerID(context.Background(), playerID, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Tickets, 0)
+	assert.Equal(t, 0, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketsByPlayerID_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	playerID := uuid.New()
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetByPlayerID", context.Background(), playerID, 10, 0).Return(nil, expectedErr)
+
+	result, err := service.GetTicketsByPlayerID(context.Background(), playerID, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketsByAgentID_Empty(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	agentID := uuid.New()
+
+	mockRepo.On("GetByAgentID", context.Background(), agentID, 10, 0).Return([]models.SupportTicket{}, nil)
+
+	result, err := service.GetTicketsByAgentID(context.Background(), agentID, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Tickets, 0)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketsByAgentID_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	agentID := uuid.New()
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetByAgentID", context.Background(), agentID, 10, 0).Return(nil, expectedErr)
+
+	result, err := service.GetTicketsByAgentID(context.Background(), agentID, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketsByStatus_Empty(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	mockRepo.On("GetByStatus", context.Background(), models.TicketStatusOpen, 10, 0).Return([]models.SupportTicket{}, nil)
+	mockRepo.On("CountByStatus", context.Background(), models.TicketStatusOpen).Return(0, nil)
+
+	result, err := service.GetTicketsByStatus(context.Background(), models.TicketStatusOpen, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Tickets, 0)
+	assert.Equal(t, 0, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketsByStatus_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetByStatus", context.Background(), models.TicketStatusOpen, 10, 0).Return(nil, expectedErr)
+
+	result, err := service.GetTicketsByStatus(context.Background(), models.TicketStatusOpen, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_AssignTicket_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	ticketID := uuid.New()
+	agentID := uuid.New()
+
+	mockRepo.On("GetByID", context.Background(), ticketID).Return(nil, nil)
+
+	result, err := service.AssignTicket(context.Background(), ticketID, agentID)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_AssignTicket_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	ticketID := uuid.New()
+	agentID := uuid.New()
+	ticket := &models.SupportTicket{
+		ID:          ticketID,
+		PlayerID:    uuid.New(),
+		Category:    models.TicketCategoryTechnical,
+		Priority:    models.TicketPriorityNormal,
+		Status:      models.TicketStatusOpen,
+		Subject:     "Test Subject",
+		Description: "Test Description",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetByID", context.Background(), ticketID).Return(ticket, nil)
+	mockRepo.On("Update", context.Background(), mock.AnythingOfType("*models.SupportTicket")).Return(expectedErr)
+
+	result, err := service.AssignTicket(context.Background(), ticketID, agentID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_AddResponse_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	ticketID := uuid.New()
+	authorID := uuid.New()
+	req := &models.AddResponseRequest{
+		Message: "Test Response",
+	}
+
+	mockRepo.On("GetByID", context.Background(), ticketID).Return(nil, nil)
+
+	result, err := service.AddResponse(context.Background(), ticketID, authorID, false, req)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "ticket not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_AddResponse_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	ticketID := uuid.New()
+	authorID := uuid.New()
+	ticket := &models.SupportTicket{
+		ID:          ticketID,
+		PlayerID:    uuid.New(),
+		Category:    models.TicketCategoryTechnical,
+		Priority:    models.TicketPriorityNormal,
+		Status:      models.TicketStatusOpen,
+		Subject:     "Test Subject",
+		Description: "Test Description",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	req := &models.AddResponseRequest{
+		Message: "Test Response",
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetByID", context.Background(), ticketID).Return(ticket, nil)
+	mockRepo.On("CreateResponse", context.Background(), mock.AnythingOfType("*models.TicketResponse")).Return(expectedErr)
+
+	result, err := service.AddResponse(context.Background(), ticketID, authorID, false, req)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketDetail_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	ticketID := uuid.New()
+
+	mockRepo.On("GetByID", context.Background(), ticketID).Return(nil, nil)
+
+	result, err := service.GetTicketDetail(context.Background(), ticketID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "ticket not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketDetail_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	ticketID := uuid.New()
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetByID", context.Background(), ticketID).Return(nil, expectedErr)
+
+	result, err := service.GetTicketDetail(context.Background(), ticketID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_RateTicket_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	ticketID := uuid.New()
+
+	mockRepo.On("GetByID", context.Background(), ticketID).Return(nil, nil)
+
+	err := service.RateTicket(context.Background(), ticketID, 5)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "ticket not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_RateTicket_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	ticketID := uuid.New()
+	ticket := &models.SupportTicket{
+		ID:          ticketID,
+		PlayerID:    uuid.New(),
+		Category:    models.TicketCategoryTechnical,
+		Priority:    models.TicketPriorityNormal,
+		Status:      models.TicketStatusResolved,
+		Subject:     "Test Subject",
+		Description: "Test Description",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetByID", context.Background(), ticketID).Return(ticket, nil)
+	mockRepo.On("Update", context.Background(), mock.AnythingOfType("*models.SupportTicket")).Return(expectedErr)
+
+	err := service.RateTicket(context.Background(), ticketID, 5)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketByNumber_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	number := "TKT-20250101-0001"
+
+	mockRepo.On("GetByNumber", context.Background(), number).Return(nil, nil)
+
+	result, err := service.GetTicketByNumber(context.Background(), number)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestTicketService_GetTicketByNumber_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	number := "TKT-20250101-0001"
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetByNumber", context.Background(), number).Return(nil, expectedErr)
+
+	result, err := service.GetTicketByNumber(context.Background(), number)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
 func stringPtr(s string) *string {
 	return &s
 }

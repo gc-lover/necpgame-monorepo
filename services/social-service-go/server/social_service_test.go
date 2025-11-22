@@ -691,3 +691,507 @@ func TestSocialService_CreateNotification_DatabaseError(t *testing.T) {
 	assert.Nil(t, notification)
 	mockNotificationRepo.AssertExpectations(t)
 }
+
+func TestSocialService_CreateGuild_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	leaderID := uuid.New()
+	req := &models.CreateGuildRequest{
+		Name:        "Test Guild",
+		Tag:         "TEST",
+		Description: "Test description",
+	}
+
+	mockGuildRepo.On("GetByName", mock.Anything, req.Name).Return(nil, nil)
+	mockGuildRepo.On("GetByTag", mock.Anything, req.Tag).Return(nil, nil)
+	mockGuildRepo.On("Create", mock.Anything, mock.AnythingOfType("*models.Guild")).Return(nil)
+	mockGuildRepo.On("AddMember", mock.Anything, mock.AnythingOfType("*models.GuildMember")).Return(nil)
+	mockGuildRepo.On("CreateBank", mock.Anything, mock.AnythingOfType("*models.GuildBank")).Return(nil)
+
+	ctx := context.Background()
+	guild, err := service.CreateGuild(ctx, leaderID, req)
+
+	require.NoError(t, err)
+	assert.NotNil(t, guild)
+	assert.Equal(t, req.Name, guild.Name)
+	assert.Equal(t, req.Tag, guild.Tag)
+	assert.Equal(t, leaderID, guild.LeaderID)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_CreateGuild_NameExists(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	leaderID := uuid.New()
+	req := &models.CreateGuildRequest{
+		Name:        "Test Guild",
+		Tag:         "TEST",
+		Description: "Test description",
+	}
+
+	existingGuild := &models.Guild{
+		ID:   uuid.New(),
+		Name: req.Name,
+	}
+
+	mockGuildRepo.On("GetByName", mock.Anything, req.Name).Return(existingGuild, nil)
+
+	ctx := context.Background()
+	guild, err := service.CreateGuild(ctx, leaderID, req)
+
+	require.NoError(t, err)
+	assert.Nil(t, guild)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_CreateGuild_TagExists(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	leaderID := uuid.New()
+	req := &models.CreateGuildRequest{
+		Name:        "Test Guild",
+		Tag:         "TEST",
+		Description: "Test description",
+	}
+
+	existingGuild := &models.Guild{
+		ID:  uuid.New(),
+		Tag: req.Tag,
+	}
+
+	mockGuildRepo.On("GetByName", mock.Anything, req.Name).Return(nil, nil)
+	mockGuildRepo.On("GetByTag", mock.Anything, req.Tag).Return(existingGuild, nil)
+
+	ctx := context.Background()
+	guild, err := service.CreateGuild(ctx, leaderID, req)
+
+	require.NoError(t, err)
+	assert.Nil(t, guild)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_GetGuild_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	guild := &models.Guild{
+		ID:          guildID,
+		Name:        "Test Guild",
+		Tag:         "TEST",
+		LeaderID:    uuid.New(),
+		Level:       1,
+		Experience:  0,
+		MaxMembers:  20,
+		Description: "Test description",
+		Status:      models.GuildStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	members := []models.GuildMember{
+		{
+			ID:          uuid.New(),
+			GuildID:     guildID,
+			CharacterID: guild.LeaderID,
+			Rank:        models.GuildRankLeader,
+			Status:      models.GuildMemberStatusActive,
+		},
+	}
+
+	bank := &models.GuildBank{
+		ID:        uuid.New(),
+		GuildID:   guildID,
+		Currency:  make(map[string]int),
+		Items:     []map[string]interface{}{},
+		UpdatedAt: time.Now(),
+	}
+
+	mockGuildRepo.On("GetByID", mock.Anything, guildID).Return(guild, nil)
+	mockGuildRepo.On("GetMembers", mock.Anything, guildID, 100, 0).Return(members, nil)
+	mockGuildRepo.On("GetBank", mock.Anything, guildID).Return(bank, nil)
+
+	ctx := context.Background()
+	result, err := service.GetGuild(ctx, guildID)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, guild.Name, result.Guild.Name)
+	assert.Len(t, result.Members, 1)
+	assert.NotNil(t, result.Bank)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_GetGuild_NotFound(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+
+	mockGuildRepo.On("GetByID", mock.Anything, guildID).Return(nil, nil)
+
+	ctx := context.Background()
+	result, err := service.GetGuild(ctx, guildID)
+
+	require.NoError(t, err)
+	assert.Nil(t, result)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_ListGuilds_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guilds := []models.Guild{
+		{
+			ID:          uuid.New(),
+			Name:        "Test Guild 1",
+			Tag:         "TEST1",
+			LeaderID:    uuid.New(),
+			Level:       1,
+			Experience:  0,
+			MaxMembers:  20,
+			Status:      models.GuildStatusActive,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	mockGuildRepo.On("List", mock.Anything, 10, 0).Return(guilds, nil)
+	mockGuildRepo.On("Count", mock.Anything).Return(1, nil)
+
+	ctx := context.Background()
+	result, err := service.ListGuilds(ctx, 10, 0)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Guilds, 1)
+	assert.Equal(t, 1, result.Total)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_UpdateGuild_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	leaderID := uuid.New()
+	guild := &models.Guild{
+		ID:          guildID,
+		Name:        "Test Guild",
+		Tag:         "TEST",
+		LeaderID:    leaderID,
+		Level:       1,
+		Experience:  0,
+		MaxMembers:  20,
+		Description: "Test description",
+		Status:      models.GuildStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	newName := "Updated Guild"
+	newDescription := "Updated description"
+	req := &models.UpdateGuildRequest{
+		Name:        &newName,
+		Description: &newDescription,
+	}
+
+	mockGuildRepo.On("GetByID", mock.Anything, guildID).Return(guild, nil)
+	mockGuildRepo.On("Update", mock.Anything, mock.AnythingOfType("*models.Guild")).Return(nil)
+
+	ctx := context.Background()
+	updated, err := service.UpdateGuild(ctx, guildID, leaderID, req)
+
+	require.NoError(t, err)
+	assert.NotNil(t, updated)
+	assert.Equal(t, newName, updated.Name)
+	assert.Equal(t, newDescription, updated.Description)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_UpdateGuild_NotLeader(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	leaderID := uuid.New()
+	otherID := uuid.New()
+	guild := &models.Guild{
+		ID:          guildID,
+		Name:        "Test Guild",
+		Tag:         "TEST",
+		LeaderID:    leaderID,
+		Level:       1,
+		Experience:  0,
+		MaxMembers:  20,
+		Status:      models.GuildStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	newName := "Updated Guild"
+	req := &models.UpdateGuildRequest{
+		Name: &newName,
+	}
+
+	mockGuildRepo.On("GetByID", mock.Anything, guildID).Return(guild, nil)
+
+	ctx := context.Background()
+	updated, err := service.UpdateGuild(ctx, guildID, otherID, req)
+
+	require.NoError(t, err)
+	assert.Nil(t, updated)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_InviteMember_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	inviterID := uuid.New()
+	characterID := uuid.New()
+	member := &models.GuildMember{
+		ID:          uuid.New(),
+		GuildID:     guildID,
+		CharacterID: inviterID,
+		Rank:        models.GuildRankLeader,
+		Status:      models.GuildMemberStatusActive,
+	}
+
+	req := &models.InviteMemberRequest{
+		CharacterID: characterID,
+		Message:     "Join us!",
+	}
+
+	mockGuildRepo.On("GetMember", mock.Anything, guildID, inviterID).Return(member, nil)
+	mockGuildRepo.On("GetMember", mock.Anything, guildID, characterID).Return(nil, nil)
+	mockGuildRepo.On("CreateInvitation", mock.Anything, mock.AnythingOfType("*models.GuildInvitation")).Return(nil)
+
+	ctx := context.Background()
+	invitation, err := service.InviteMember(ctx, guildID, inviterID, req)
+
+	require.NoError(t, err)
+	assert.NotNil(t, invitation)
+	assert.Equal(t, characterID, invitation.CharacterID)
+	assert.Equal(t, guildID, invitation.GuildID)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_InviteMember_NotAuthorized(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	inviterID := uuid.New()
+	characterID := uuid.New()
+	member := &models.GuildMember{
+		ID:          uuid.New(),
+		GuildID:     guildID,
+		CharacterID: inviterID,
+		Rank:        models.GuildRankMember,
+		Status:      models.GuildMemberStatusActive,
+	}
+
+	req := &models.InviteMemberRequest{
+		CharacterID: characterID,
+		Message:     "Join us!",
+	}
+
+	mockGuildRepo.On("GetMember", mock.Anything, guildID, inviterID).Return(member, nil)
+
+	ctx := context.Background()
+	invitation, err := service.InviteMember(ctx, guildID, inviterID, req)
+
+	require.NoError(t, err)
+	assert.Nil(t, invitation)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_GetGuildMembers_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	members := []models.GuildMember{
+		{
+			ID:          uuid.New(),
+			GuildID:     guildID,
+			CharacterID: uuid.New(),
+			Rank:        models.GuildRankLeader,
+			Status:      models.GuildMemberStatusActive,
+		},
+	}
+
+	mockGuildRepo.On("GetMembers", mock.Anything, guildID, 10, 0).Return(members, nil)
+	mockGuildRepo.On("CountMembers", mock.Anything, guildID).Return(1, nil)
+
+	ctx := context.Background()
+	result, err := service.GetGuildMembers(ctx, guildID, 10, 0)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Members, 1)
+	assert.Equal(t, 1, result.Total)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_UpdateMemberRank_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	leaderID := uuid.New()
+	characterID := uuid.New()
+	guild := &models.Guild{
+		ID:          guildID,
+		Name:        "Test Guild",
+		Tag:         "TEST",
+		LeaderID:    leaderID,
+		Level:       1,
+		Experience:  0,
+		MaxMembers:  20,
+		Status:      models.GuildStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	mockGuildRepo.On("GetByID", mock.Anything, guildID).Return(guild, nil)
+	mockGuildRepo.On("UpdateMemberRank", mock.Anything, guildID, characterID, models.GuildRankOfficer).Return(nil)
+
+	ctx := context.Background()
+	err := service.UpdateMemberRank(ctx, guildID, leaderID, characterID, models.GuildRankOfficer)
+
+	require.NoError(t, err)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_DisbandGuild_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	leaderID := uuid.New()
+	guild := &models.Guild{
+		ID:          guildID,
+		Name:        "Test Guild",
+		Tag:         "TEST",
+		LeaderID:    leaderID,
+		Level:       1,
+		Experience:  0,
+		MaxMembers:  20,
+		Status:      models.GuildStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	mockGuildRepo.On("GetByID", mock.Anything, guildID).Return(guild, nil)
+	mockGuildRepo.On("Disband", mock.Anything, guildID).Return(nil)
+
+	ctx := context.Background()
+	err := service.DisbandGuild(ctx, guildID, leaderID)
+
+	require.NoError(t, err)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_GetGuildBank_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	guildID := uuid.New()
+	bank := &models.GuildBank{
+		ID:        uuid.New(),
+		GuildID:   guildID,
+		Currency:  make(map[string]int),
+		Items:     []map[string]interface{}{},
+		UpdatedAt: time.Now(),
+	}
+
+	mockGuildRepo.On("GetBank", mock.Anything, guildID).Return(bank, nil)
+
+	ctx := context.Background()
+	result, err := service.GetGuildBank(ctx, guildID)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, guildID, result.GuildID)
+	mockGuildRepo.AssertExpectations(t)
+}
+
+func TestSocialService_GetInvitationsByCharacter_Success(t *testing.T) {
+	service, _, _, _, mockGuildRepo, _, cleanup := setupTestService(t)
+	if service == nil {
+		return
+	}
+	defer cleanup()
+
+	characterID := uuid.New()
+	invitations := []models.GuildInvitation{
+		{
+			ID:          uuid.New(),
+			GuildID:     uuid.New(),
+			CharacterID: characterID,
+			InvitedBy:   uuid.New(),
+			Status:      "pending",
+			CreatedAt:   time.Now(),
+			ExpiresAt:   time.Now().Add(7 * 24 * time.Hour),
+		},
+	}
+
+	mockGuildRepo.On("GetInvitationsByCharacter", mock.Anything, characterID).Return(invitations, nil)
+
+	ctx := context.Background()
+	result, err := service.GetInvitationsByCharacter(ctx, characterID)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 1)
+	mockGuildRepo.AssertExpectations(t)
+}
