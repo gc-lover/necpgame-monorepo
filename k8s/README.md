@@ -118,10 +118,11 @@ kubectl apply -f economy-service-go-deployment.yaml
 kubectl apply -f support-service-go-deployment.yaml
 kubectl apply -f reset-service-go-deployment.yaml
 kubectl apply -f gameplay-service-go-deployment.yaml
-kubectl apply -f admin-service-go-deployment.yaml
-kubectl apply -f clan-war-service-go-deployment.yaml
-kubectl apply -f companion-service-go-deployment.yaml
-kubectl apply -f voice-chat-service-go-deployment.yaml
+       kubectl apply -f admin-service-go-deployment.yaml
+       kubectl apply -f clan-war-service-go-deployment.yaml
+       kubectl apply -f companion-service-go-deployment.yaml
+       kubectl apply -f voice-chat-service-go-deployment.yaml
+       kubectl apply -f housing-service-go-deployment.yaml
 kubectl apply -f realtime-gateway-go-deployment.yaml
 kubectl apply -f ws-lobby-go-deployment.yaml
 kubectl apply -f matchmaking-go-deployment.yaml
