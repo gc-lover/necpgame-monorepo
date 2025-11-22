@@ -236,6 +236,8 @@ func (s *HTTPServer) createMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	formatted := FormatMessage(req.Content)
+
 	message := &models.ChatMessage{
 		ID:          uuid.New(),
 		ChannelID:   req.ChannelID,
@@ -243,6 +245,7 @@ func (s *HTTPServer) createMessage(w http.ResponseWriter, r *http.Request) {
 		SenderID:    senderID,
 		SenderName:  r.Context().Value("username").(string),
 		Content:     req.Content,
+		Formatted:   formatted,
 		CreatedAt:   time.Now(),
 	}
 
