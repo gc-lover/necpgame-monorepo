@@ -225,10 +225,61 @@ GitHub Actions автоматически:
 2. Убедитесь, что `alwaysApply: false` (агент активируется только при упоминании)
 3. Перезапустите Cursor
 
+## Управление метками агентов
+
+### Как это работает
+
+Агенты автоматически управляют метками при работе с Issue:
+
+1. **При начале работы:**
+   - Агент добавляет свою метку `agent:{agent-name}` (например, `agent:idea-writer`)
+   - Это показывает, кто сейчас работает над задачей
+
+2. **При завершении работы:**
+   - Агент удаляет свою метку `agent:{agent-name}`
+   - Добавляет метку следующего агента (например, `agent:architect`)
+   - Это передает задачу следующему этапу
+
+### Пример workflow
+
+```
+Issue #9 создан → нет меток агента
+    ↓
+@agent-idea-writer начинает работу → добавляет метку agent:idea-writer
+    ↓
+Idea Writer завершает работу → удаляет agent:idea-writer, добавляет agent:architect
+    ↓
+Architect начинает работу → метка agent:architect уже есть
+    ↓
+Architect завершает работу → удаляет agent:architect, добавляет agent:api-designer
+    ↓
+... и так далее по цепочке
+```
+
+### Поиск задач по меткам
+
+Вы можете найти задачи для конкретного агента:
+
+```
+@agent-idea-writer Покажи все Issues с меткой agent:idea-writer
+```
+
+Агент использует MCP GitHub для поиска Issues с нужной меткой.
+
+### Важно
+
+- **Метки управляются автоматически** - агенты сами добавляют/удаляют метки
+- **Метка агента показывает текущего исполнителя** - если есть `agent:backend`, значит Backend Developer работает
+- **При переходе метка меняется автоматически** - не нужно вручную менять метки
+
+**Подробнее:** см. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`
+
 ## Полезные ссылки
 
 - Issue #9: https://github.com/gc-lover/necpgame-monorepo/issues/9
 - Правила агента: `.cursor/rules/agent-idea-writer.mdc`
+- Управление метками: `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`
+- Поиск задач: `.cursor/rules/AGENT_TASK_DISCOVERY.md`
 - Конфигурация агентов: `.cursor/agents-config.md`
 - Тестирование workflow: `.github/TESTING_WORKFLOW.md`
 
