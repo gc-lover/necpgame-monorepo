@@ -401,6 +401,372 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /social/friends/{id}:
+    get:
+      tags:
+        - Friends
+      summary: Получить информацию о друге
+      operationId: getFriend
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о друге
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/online:
+    get:
+      tags:
+        - Friends
+      summary: Получить список онлайн друзей
+      operationId: getOnlineFriends
+      responses:
+        '200':
+          description: Список онлайн друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/count:
+    get:
+      tags:
+        - Friends
+      summary: Получить количество друзей
+      operationId: getFriendsCount
+      responses:
+        '200':
+          description: Количество друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendsCountResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/requests/incoming:
+    get:
+      tags:
+        - Friends
+      summary: Получить входящие запросы на дружбу
+      operationId: getIncomingFriendRequests
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Входящие запросы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/requests/outgoing:
+    get:
+      tags:
+        - Friends
+      summary: Получить исходящие запросы на дружбу
+      operationId: getOutgoingFriendRequests
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Исходящие запросы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/requests/{id}:
+    delete:
+      tags:
+        - Friends
+      summary: Отменить запрос на дружбу
+      operationId: cancelFriendRequest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Запрос отменён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: cancelled
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/blocks:
+    get:
+      tags:
+        - Friends
+      summary: Получить список заблокированных игроков
+      operationId: getBlockedPlayers
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список заблокированных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockedPlayersResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Friends
+      summary: Заблокировать игрока
+      operationId: blockPlayer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockPlayerRequest'
+      responses:
+        '200':
+          description: Игрок заблокирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockedPlayer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/blocks/{blockedId}:
+    delete:
+      tags:
+        - Friends
+      summary: Разблокировать игрока
+      operationId: unblockPlayer
+      parameters:
+        - name: blockedId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Игрок разблокирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: unblocked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/blocks/check/{playerId}:
+    get:
+      tags:
+        - Friends
+      summary: Проверить, заблокирован ли игрок
+      operationId: checkBlockStatus
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус блокировки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockStatusResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/{friendId}/status:
+    get:
+      tags:
+        - Friends
+      summary: Получить онлайн-статус друга
+      operationId: getFriendStatus
+      parameters:
+        - name: friendId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус друга
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/status/batch:
+    get:
+      tags:
+        - Friends
+      summary: Получить статусы нескольких друзей
+      operationId: getFriendsStatusBatch
+      parameters:
+        - name: friend_ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+      responses:
+        '200':
+          description: Статусы друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendsStatusBatchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/recent:
+    get:
+      tags:
+        - Friends
+      summary: Получить последние контакты
+      operationId: getRecentContacts
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Последние контакты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecentContactsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/friends/recent/{playerId}:
+    post:
+      tags:
+        - Friends
+      summary: Добавить игрока в последние контакты
+      operationId: addToRecentContacts
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Игрок добавлен в контакты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: added
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /social/chat/channels:
     get:
       tags:
