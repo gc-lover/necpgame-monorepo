@@ -34,6 +34,10 @@
 - `support-service-go-deployment.yaml` - Support Service
 - `reset-service-go-deployment.yaml` - Reset Service
 - `gameplay-service-go-deployment.yaml` - Gameplay Service
+- `admin-service-go-deployment.yaml` - Admin Service
+- `clan-war-service-go-deployment.yaml` - Clan War Service
+- `companion-service-go-deployment.yaml` - Companion Service
+- `voice-chat-service-go-deployment.yaml` - Voice Chat Service
 - `realtime-gateway-go-deployment.yaml` - QUIC Gateway
 - `ws-lobby-go-deployment.yaml` - WebSocket Lobby
 - `matchmaking-go-deployment.yaml` - Matchmaking Service
@@ -114,6 +118,10 @@ kubectl apply -f economy-service-go-deployment.yaml
 kubectl apply -f support-service-go-deployment.yaml
 kubectl apply -f reset-service-go-deployment.yaml
 kubectl apply -f gameplay-service-go-deployment.yaml
+kubectl apply -f admin-service-go-deployment.yaml
+kubectl apply -f clan-war-service-go-deployment.yaml
+kubectl apply -f companion-service-go-deployment.yaml
+kubectl apply -f voice-chat-service-go-deployment.yaml
 kubectl apply -f realtime-gateway-go-deployment.yaml
 kubectl apply -f ws-lobby-go-deployment.yaml
 kubectl apply -f matchmaking-go-deployment.yaml
@@ -174,6 +182,10 @@ kubectl get services -n necpgame
 - support-service-go: 9097
 - reset-service-go: 9098
 - gameplay-service-go: 9093
+- admin-service-go: 9100
+- clan-war-service-go: 9092
+- companion-service-go: 9099
+- voice-chat-service-go: 9101
 - realtime-gateway-go: 9090
 - ws-lobby-go: 9090
 - matchmaking-go: 9090
