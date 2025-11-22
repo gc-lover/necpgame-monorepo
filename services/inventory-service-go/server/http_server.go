@@ -13,15 +13,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type InventoryServiceInterface interface {
+	GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error)
+	AddItem(ctx context.Context, characterID uuid.UUID, req *models.AddItemRequest) error
+	RemoveItem(ctx context.Context, characterID uuid.UUID, itemID uuid.UUID) error
+	EquipItem(ctx context.Context, characterID uuid.UUID, req *models.EquipItemRequest) error
+	UnequipItem(ctx context.Context, characterID uuid.UUID, itemID uuid.UUID) error
+}
+
 type HTTPServer struct {
 	addr             string
 	router           *mux.Router
-	inventoryService *InventoryService
+	inventoryService InventoryServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, inventoryService *InventoryService) *HTTPServer {
+func NewHTTPServer(addr string, inventoryService InventoryServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
