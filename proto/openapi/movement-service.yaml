@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: Movement Service API
+  description: API для управления позициями и движением персонажей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Movement
+    description: Управление позициями и движением
+
+paths:
+  /movement/{characterId}/position:
+    get:
+      tags:
+        - Movement
+      summary: Получить текущую позицию персонажа
+      operationId: getPosition
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Позиция персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterPosition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Movement
+      summary: Сохранить позицию персонажа
+      operationId: savePosition
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavePositionRequest'
+      responses:
+        '200':
+          description: Позиция сохранена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterPosition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /movement/{characterId}/history:
+    get:
+      tags:
+        - Movement
+      summary: Получить историю позиций персонажа
+      operationId: getPositionHistory
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: История позиций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PositionHistory'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CharacterPosition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+          description: Координата X
+        position_y:
+          type: number
+          format: float
+          description: Координата Y
+        position_z:
+          type: number
+          format: float
+          description: Координата Z
+        yaw:
+          type: number
+          format: float
+          description: Угол поворота (в радианах)
+        velocity_x:
+          type: number
+          format: float
+          nullable: true
+          description: Скорость по оси X
+        velocity_y:
+          type: number
+          format: float
+          nullable: true
+          description: Скорость по оси Y
+        velocity_z:
+          type: number
+          format: float
+          nullable: true
+          description: Скорость по оси Z
+        updated_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    PositionHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+        yaw:
+          type: number
+          format: float
+        velocity_x:
+          type: number
+          format: float
+          nullable: true
+        velocity_y:
+          type: number
+          format: float
+          nullable: true
+        velocity_z:
+          type: number
+          format: float
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    SavePositionRequest:
+      type: object
+      required:
+        - position_x
+        - position_y
+        - position_z
+        - yaw
+      properties:
+        position_x:
+          type: number
+          format: float
+          description: Координата X
+        position_y:
+          type: number
+          format: float
+          description: Координата Y
+        position_z:
+          type: number
+          format: float
+          description: Координата Z
+        yaw:
+          type: number
+          format: float
+          description: Угол поворота (в радианах)
+        velocity_x:
+          type: number
+          format: float
+          nullable: true
+          description: Скорость по оси X
+        velocity_y:
+          type: number
+          format: float
+          nullable: true
+          description: Скорость по оси Y
+        velocity_z:
+          type: number
+          format: float
+          nullable: true
+          description: Скорость по оси Z
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
