@@ -13,8 +13,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type AchievementRepositoryInterface interface {
+	Create(ctx context.Context, achievement *models.Achievement) error
+	GetByID(ctx context.Context, id uuid.UUID) (*models.Achievement, error)
+	GetByCode(ctx context.Context, code string) (*models.Achievement, error)
+	List(ctx context.Context, category *models.AchievementCategory, limit, offset int) ([]models.Achievement, error)
+	Count(ctx context.Context, category *models.AchievementCategory) (int, error)
+	CountByCategory(ctx context.Context) (map[string]int, error)
+	GetPlayerAchievement(ctx context.Context, playerID, achievementID uuid.UUID) (*models.PlayerAchievement, error)
+	CreatePlayerAchievement(ctx context.Context, pa *models.PlayerAchievement) error
+	UpdatePlayerAchievement(ctx context.Context, pa *models.PlayerAchievement) error
+	GetPlayerAchievements(ctx context.Context, playerID uuid.UUID, category *models.AchievementCategory, limit, offset int) ([]models.PlayerAchievement, error)
+	CountPlayerAchievements(ctx context.Context, playerID uuid.UUID) (int, int, error)
+	GetNearCompletion(ctx context.Context, playerID uuid.UUID, threshold float64) ([]models.PlayerAchievement, error)
+	GetRecentUnlocks(ctx context.Context, playerID uuid.UUID, limit int) ([]models.PlayerAchievement, error)
+	GetLeaderboard(ctx context.Context, period string, limit int) ([]models.LeaderboardEntry, error)
+	GetAchievementStats(ctx context.Context, achievementID uuid.UUID) (*models.AchievementStatsResponse, error)
+}
+
 type AchievementService struct {
-	repo  *AchievementRepository
+	repo  AchievementRepositoryInterface
 	cache *redis.Client
 	logger *logrus.Logger
 }
