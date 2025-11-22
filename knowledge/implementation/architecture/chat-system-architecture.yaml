@@ -1,0 +1,684 @@
+metadata:
+  id: chat-system-architecture
+  title: Архитектура системы чата (Chat System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T23:15:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - chat
+    - backend
+    - social
+    - communication
+  related_systems:
+    - social-service-go
+    - voice-chat-service-go
+    - moderation-service-go
+    - translation-service-go
+  related_documents:
+    - id: backend-chat-features
+      relation: extends
+    - id: backend-chat-channels
+      relation: extends
+    - id: backend-chat-moderation
+      relation: extends
+  github_issue: 172
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы чата
+    для текстовой коммуникации игроков с поддержкой каналов, модерации,
+    форматирования, команд и истории сообщений.
+  goal: |
+    Создать архитектурную схему системы чата с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы каналов чата
+    - Системы модерации
+    - Системы форматирования и команд
+    - Технического задания для реализации
+  essence: |
+    Игровая система чата для текстовой коммуникации с поддержкой множественных
+    каналов, модерации, форматирования, команд и интеграции с голосовым чатом.
+
+architecture:
+  overview: |
+    Система чата состоит из восьми основных компонентов:
+    1. Chat Channel Manager - управление каналами
+    2. Message Router - маршрутизация сообщений
+    3. Message Processor - обработка сообщений
+    4. Chat Moderation Engine - модерация чата
+    5. Command Handler - обработка команд
+    6. Message History Manager - управление историей
+    7. Formatting Engine - форматирование сообщений
+    8. Chat Event Handler - обработка событий
+
+  components:
+    - name: Chat Channel Manager
+      location: social-service-go (модуль chat)
+      responsibility: |
+        - Управление каналами чата
+        - Создание и удаление каналов
+        - Присоединение и выход из каналов
+        - Управление участниками каналов
+        - Определение получателей сообщений
+      channel_types: |
+        - GLOBAL: глобальный чат сервера
+        - TRADE: торговый чат
+        - NEWBIE: чат для новичков
+        - LOCAL: локальный чат (зона/инстанс)
+        - PARTY: чат группы
+        - RAID: чат рейда
+        - GUILD: чат гильдии
+        - GUILD_OFFICER: чат офицеров гильдии
+        - WHISPER: приватные сообщения
+        - SYSTEM: системные сообщения
+        - COMBAT_LOG: боевой лог
+        - RP_EMOTE: ролевые эмоции
+      endpoints:
+        - GET /api/v1/social/chat/channels - список каналов
+        - POST /api/v1/social/chat/channels/{channel_id}/join - присоединение к каналу
+        - POST /api/v1/social/chat/channels/{channel_id}/leave - выход из канала
+        - GET /api/v1/social/chat/channels/{channel_id}/members - участники канала
+
+    - name: Message Router
+      location: social-service-go (модуль chat-router)
+      responsibility: |
+        - Маршрутизация сообщений по каналам
+        - Определение получателей
+        - Фильтрация получателей
+        - Доставка сообщений
+        - Интеграция с другими сервисами
+      routing_logic: |
+        - Глобальные каналы: все игроки на сервере
+        - Локальные каналы: игроки в той же зоне/инстансе
+        - Групповые каналы: участники группы/рейда/гильдии
+        - Приватные каналы: конкретный игрок
+        - Системные каналы: все игроки или целевая группа
+      endpoints:
+        - POST /api/v1/social/chat/messages/send - отправка сообщения
+        - GET /api/v1/social/chat/messages/{channel_id} - сообщения канала
+
+    - name: Message Processor
+      location: social-service-go (модуль chat-processor)
+      responsibility: |
+        - Обработка входящих сообщений
+        - Валидация сообщений
+        - Применение модерации
+        - Применение форматирования
+        - Сохранение сообщений
+      processing_steps: |
+        1. Валидация сообщения (длина, формат)
+        2. Проверка прав доступа к каналу
+        3. Применение модерации (фильтры, спам)
+        4. Применение форматирования
+        5. Сохранение в БД и кэш
+        6. Маршрутизация получателям
+      endpoints:
+        - POST /api/v1/social/chat/messages/process - обработка сообщения
+
+    - name: Chat Moderation Engine
+      location: moderation-service-go (модуль chat-moderation)
+      responsibility: |
+        - Фильтрация запрещённых слов
+        - Детекция спама
+        - Автоматические баны
+        - Управление банами
+        - Обработка жалоб
+      moderation_features: |
+        - Profanity filter: фильтр запрещённых слов
+        - URL whitelist: разрешённые ссылки
+        - Spam detection: детекция спама (rate limit, дублирование)
+        - Auto-ban: автоматические баны за нарушения
+        - Manual ban: ручные баны администраторами
+      endpoints:
+        - POST /api/v1/social/chat/report - жалоба на сообщение
+        - POST /api/v1/social/chat/ban - выдача бана
+        - GET /api/v1/social/chat/bans - список банов
+        - DELETE /api/v1/social/chat/bans/{id} - снятие бана
+
+    - name: Command Handler
+      location: social-service-go (модуль chat-commands)
+      responsibility: |
+        - Обработка slash-команд
+        - Парсинг команд
+        - Валидация аргументов
+        - Выполнение команд
+        - Генерация ответов
+      slash_commands: |
+        - /help - справка по командам
+        - /whisper <player> <message> - приватное сообщение
+        - /reply <message> - ответ на последнее приватное сообщение
+        - /ignore <player> - игнорировать игрока
+        - /report <player> <reason> - жалоба на игрока
+        - /party <message> - сообщение в группу
+        - /raid <message> - сообщение в рейд
+        - /guild <message> - сообщение в гильдию
+        - /emote <action> - ролевая эмоция
+      endpoints:
+        - POST /api/v1/social/chat/commands/execute - выполнение команды
+
+    - name: Message History Manager
+      location: social-service-go (модуль chat-history)
+      responsibility: |
+        - Хранение истории сообщений
+        - Кэширование в Redis
+        - Пагинация истории
+        - Поиск по истории
+        - Очистка старых сообщений
+      storage_strategy: |
+        - Redis: кэш последних сообщений (TTL 24 часа)
+        - PostgreSQL: долгосрочное хранение (30 дней)
+        - Архивация старых сообщений
+      endpoints:
+        - GET /api/v1/social/chat/history/{channel_type} - история канала
+        - GET /api/v1/social/chat/history/search - поиск по истории
+
+    - name: Formatting Engine
+      location: social-service-go (модуль chat-formatting)
+      responsibility: |
+        - Форматирование сообщений
+        - Обработка markdown
+        - Обработка @mentions
+        - Обработка emoji
+        - Защита от XSS
+      formatting_features: |
+        - Bold: **text**
+        - Italic: *text*
+        - Links: [text](url) (whitelist)
+        - Emoji: :emoji_name:
+        - Mentions: @player_name
+        - XSS protection: санитизация HTML
+      endpoints:
+        - POST /api/v1/social/chat/format - форматирование сообщения
+
+    - name: Chat Event Handler
+      location: social-service-go (модуль chat-events)
+      responsibility: |
+        - Обработка событий чата
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Синхронизация через WebSocket
+      chat_events_published: |
+        - chat:message-sent
+        - chat:message-received
+        - chat:channel-joined
+        - chat:channel-left
+        - chat:user-banned
+      chat_events_consumed: |
+        - party:created
+        - party:member-joined
+        - guild:member-joined
+        - player:online
+        - player:offline
+      endpoints:
+        - GET /api/v1/social/chat/events - события чата
+
+  data_flow:
+    message_send: |
+      1. Игрок отправляет сообщение
+      2. Message Processor валидирует сообщение
+      3. Chat Moderation Engine проверяет на нарушения
+      4. Formatting Engine форматирует сообщение
+      5. Message Router определяет получателей
+      6. Message History Manager сохраняет в БД и Redis
+      7. Chat Event Handler публикует событие
+      8. Realtime Gateway доставляет сообщение получателям
+      9. Notification Service уведомляет о @mentions
+
+    channel_join: |
+      1. Игрок запрашивает присоединение к каналу
+      2. Chat Channel Manager проверяет права доступа
+      3. Игрок добавляется в канал
+      4. Chat Event Handler публикует событие
+      5. Realtime Gateway уведомляет участников
+      6. Message History Manager загружает историю
+
+    moderation_action: |
+      1. Сообщение нарушает правила
+      2. Chat Moderation Engine обнаруживает нарушение
+      3. Применяется фильтр или бан
+      4. Chat Event Handler публикует событие
+      5. Realtime Gateway уведомляет игрока
+      6. Notification Service отправляет уведомление
+
+  integrations:
+    with_voice_chat_service: |
+      - Интеграция с голосовыми каналами
+      - Синхронизация участников
+      - Управление mute/deafen
+
+    with_moderation_service: |
+      - Фильтрация сообщений
+      - Детекция спама
+      - Управление банами
+
+    with_translation_service: |
+      - Автоматический перевод сообщений
+      - Определение языка
+      - Кэширование переводов
+
+    with_party_service: |
+      - Получение участников группы
+      - Синхронизация с группой
+      - Уведомления о событиях группы
+
+    with_guild_service: |
+      - Получение участников гильдии
+      - Синхронизация с гильдией
+      - Уведомления о событиях гильдии
+
+    with_world_service: |
+      - Получение игроков в зоне
+      - Синхронизация с локацией
+      - Пространственный звук для proximity chat
+
+    with_session_service: |
+      - Получение онлайн игроков
+      - Синхронизация статуса
+      - Уведомления о входе/выходе
+
+    with_notification_service: |
+      - Уведомления о @mentions
+      - Уведомления о приватных сообщениях
+      - Уведомления о банах
+
+    with_realtime_gateway: |
+      - Доставка сообщений в реальном времени
+      - Синхронизация состояния каналов
+      - Уведомления о событиях
+
+  database_schema:
+    tables:
+      - name: chat_channels
+        description: Каналы чата
+        fields:
+          - id: UUID (PK)
+          - channel_type: ENUM (GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE)
+          - owner_id: UUID (FK accounts, nullable)
+          - name: VARCHAR(100)
+          - description: TEXT (nullable)
+          - read_permission: JSONB
+          - write_permission: JSONB
+          - cooldown_seconds: INTEGER (default: 0)
+          - max_message_length: INTEGER (default: 500)
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - channel_type, is_active
+          - owner_id
+
+      - name: chat_messages
+        description: Сообщения чата
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK chat_channels)
+          - sender_id: UUID (FK accounts)
+          - message_text: TEXT
+          - formatted_text: TEXT
+          - message_type: ENUM (text, system, emote, command)
+          - is_edited: BOOLEAN (default: false)
+          - is_deleted: BOOLEAN (default: false)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - channel_id, created_at
+          - sender_id, created_at
+          - created_at
+
+      - name: chat_channel_members
+        description: Участники каналов
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK chat_channels)
+          - player_id: UUID (FK accounts)
+          - joined_at: TIMESTAMP
+          - last_read_at: TIMESTAMP (nullable)
+        constraints: |
+          - UNIQUE(channel_id, player_id)
+        indexes:
+          - channel_id
+          - player_id
+
+      - name: chat_bans
+        description: Баны в чате
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - channel_id: UUID (FK chat_channels, nullable)
+          - ban_type: ENUM (channel, global)
+          - reason: TEXT
+          - banned_by: UUID (FK accounts, nullable)
+          - expires_at: TIMESTAMP (nullable)
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+        indexes:
+          - player_id, is_active
+          - channel_id, is_active
+          - expires_at
+
+      - name: chat_reports
+        description: Жалобы на сообщения
+        fields:
+          - id: UUID (PK)
+          - message_id: UUID (FK chat_messages)
+          - reporter_id: UUID (FK accounts)
+          - reported_player_id: UUID (FK accounts)
+          - reason: TEXT
+          - status: ENUM (pending, reviewed, resolved, dismissed)
+          - reviewed_by: UUID (FK accounts, nullable)
+          - reviewed_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - message_id
+          - reporter_id
+          - status, created_at
+
+      - name: chat_ignores
+        description: Игнорируемые игроки
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - ignored_player_id: UUID (FK accounts)
+          - created_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, ignored_player_id)
+        indexes:
+          - player_id
+          - ignored_player_id
+
+      - name: chat_message_history
+        description: История сообщений (архив)
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK chat_channels)
+          - sender_id: UUID (FK accounts)
+          - message_text: TEXT
+          - formatted_text: TEXT
+          - created_at: TIMESTAMP
+        indexes:
+          - channel_id, created_at
+          - sender_id, created_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в social-service-go:
+      - chat (управление каналами)
+      - chat-router (маршрутизация)
+      - chat-processor (обработка сообщений)
+      - chat-commands (команды)
+      - chat-history (история)
+      - chat-formatting (форматирование)
+      - chat-events (события)
+    - Интеграция с moderation-service для модерации
+    - Интеграция с voice-chat-service для голосовых каналов
+    - Интеграция с translation-service для переводов
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Доставка сообщений через WebSocket
+    - Синхронизация каналов в реальном времени
+    - Уведомления о событиях
+
+  performance_requirements:
+    - Отправка сообщения < 50ms
+    - Получение истории < 100ms
+    - Обработка команды < 30ms
+    - Поддержка до 10K сообщений в секунду
+    - Поддержка до 100K активных каналов
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через social-service
+    - Распределение нагрузки на каналы
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование каналов и истории в Redis
+
+subtasks:
+  - id: chat-channel-manager-module
+    title: Реализация модуля Chat Channel Manager
+    description: |
+      Управление каналами
+      Создание и удаление каналов
+      Присоединение и выход
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: message-router-implementation
+    title: Реализация Message Router
+    description: |
+      Маршрутизация сообщений
+      Определение получателей
+      Доставка сообщений
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: message-processor-development
+    title: Реализация Message Processor
+    description: |
+      Обработка сообщений
+      Валидация
+      Применение модерации и форматирования
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: chat-moderation-engine
+    title: Реализация Chat Moderation Engine
+    description: |
+      Фильтрация запрещённых слов
+      Детекция спама
+      Автоматические баны
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: command-handler
+    title: Реализация Command Handler
+    description: |
+      Обработка slash-команд
+      Парсинг и валидация
+      Выполнение команд
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: message-history-manager
+    title: Реализация Message History Manager
+    description: |
+      Хранение истории
+      Кэширование в Redis
+      Пагинация и поиск
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: formatting-engine
+    title: Реализация Formatting Engine
+    description: |
+      Форматирование сообщений
+      Обработка markdown
+      Защита от XSS
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: chat-event-handler
+    title: Реализация Chat Event Handler
+    description: |
+      Обработка событий чата
+      Публикация событий
+      Подписка на события
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование каналов
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для чата
+      Интеграция с существующим API social-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты каналов
+      Тесты модерации
+      Тесты команд
+      Тесты форматирования
+      Тесты интеграций
+    priority: high
+    estimated_time: 3-4 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Social Service"
+            CCM[Chat Channel Manager]
+            MR[Message Router]
+            MP[Message Processor]
+            CME[Chat Moderation Engine]
+            CH[Command Handler]
+            MHM[Message History Manager]
+            FE[Formatting Engine]
+            CEH[Chat Event Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>chat_channels<br/>chat_messages<br/>chat_channel_members<br/>chat_bans<br/>chat_reports)]
+        end
+
+        subgraph "Cache"
+            REDIS[(Redis<br/>message cache<br/>spam detection)]
+        end
+
+        subgraph "External Services"
+            MS[Moderation Service]
+            VCS[Voice Chat Service]
+            TS[Translation Service]
+            PS[Party Service]
+            GS[Guild Service]
+            WS[World Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|send message| MP
+        MP --> CME
+        CME --> MS
+        MP --> FE
+        MP --> MR
+        MR --> CCM
+        MP --> MHM
+        MHM --> DB
+        MHM --> REDIS
+        CL -->|command| CH
+        CH --> MP
+        CEH -->|events| RG
+        RG -->|push messages| CL
+        CCM --> PS
+        CCM --> GS
+        CCM --> WS
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant MP as Message Processor
+        participant CME as Chat Moderation Engine
+        participant FE as Formatting Engine
+        participant MR as Message Router
+        participant MHM as Message History Manager
+        participant RG as Realtime Gateway
+
+        P->>MP: Send message
+        MP->>CME: Check moderation
+        CME->>MP: Approved
+        MP->>FE: Format message
+        FE->>MP: Formatted
+        MP->>MR: Route message
+        MR->>MHM: Save message
+        MHM->>MHM: Store in DB and Redis
+        MR->>RG: Deliver to recipients
+        RG->>P: Push message
+    ```
+
+decisions:
+  - id: adr-chat-architecture
+    summary: |
+      Выбрана модульная архитектура внутри social-service-go для обеспечения
+      тесной интеграции с социальными системами.
+
+  - id: adr-channel-types
+    summary: |
+      Множественные типы каналов обеспечивают гибкую коммуникацию для разных
+      сценариев использования (глобальный, локальный, групповой, приватный).
+
+  - id: adr-moderation
+    summary: |
+      Многоуровневая система модерации (фильтры, спам-детекция, баны) защищает
+      игроков от токсичного поведения и обеспечивает безопасную среду.
+
+  - id: adr-formatting
+    summary: |
+      Система форматирования с защитой от XSS обеспечивает безопасное отображение
+      сообщений и улучшает читаемость.
+
+  - id: adr-history-storage
+    summary: |
+      Двухуровневое хранение (Redis для кэша, PostgreSQL для долгосрочного хранения)
+      обеспечивает быстрый доступ к истории и надёжное хранение данных.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата команд и форматирования
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы чата:
+      - Определены компоненты (Chat Channel Manager, Message Router, Message Processor, Chat Moderation Engine, Command Handler, Message History Manager, Formatting Engine, Chat Event Handler)
+      - Описаны типы каналов (GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (chat_channels, chat_messages, chat_channel_members, chat_bans, chat_reports, chat_ignores, chat_message_history)
+      - Спроектирована система каналов
+      - Спроектирована система модерации
+      - Спроектирована система форматирования и команд
+      - Создано техническое задание
+      - Разбито на подзадачи
+
