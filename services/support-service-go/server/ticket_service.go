@@ -13,8 +13,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type TicketRepositoryInterface interface {
+	Create(ctx context.Context, ticket *models.SupportTicket) error
+	GetByID(ctx context.Context, id uuid.UUID) (*models.SupportTicket, error)
+	GetByNumber(ctx context.Context, number string) (*models.SupportTicket, error)
+	GetByPlayerID(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]models.SupportTicket, error)
+	GetByAgentID(ctx context.Context, agentID uuid.UUID, limit, offset int) ([]models.SupportTicket, error)
+	GetByStatus(ctx context.Context, status models.TicketStatus, limit, offset int) ([]models.SupportTicket, error)
+	Update(ctx context.Context, ticket *models.SupportTicket) error
+	CountByPlayerID(ctx context.Context, playerID uuid.UUID) (int, error)
+	CountByStatus(ctx context.Context, status models.TicketStatus) (int, error)
+	CreateResponse(ctx context.Context, response *models.TicketResponse) error
+	GetResponsesByTicketID(ctx context.Context, ticketID uuid.UUID) ([]models.TicketResponse, error)
+	GetNextTicketNumber(ctx context.Context) (string, error)
+}
+
 type TicketService struct {
-	repo  *TicketRepository
+	repo  TicketRepositoryInterface
 	cache *redis.Client
 	logger *logrus.Logger
 }

@@ -1,8 +1,18 @@
 openapi: 3.0.3
 info:
   title: Voice Chat Service API
-  description: API для управления голосовыми каналами и WebRTC соединениями
-  version: 1.0.0
+  description: |
+    API для управления голосовыми каналами, WebRTC соединениями и голосовыми лобби.
+    
+    Система поддерживает:
+    - Управление голосовыми каналами (Party, Guild, Raid, Proximity)
+    - WebRTC соединения для голосового чата
+    - Голосовые лобби (Activity, Clan/Guild, Raid, Tournament)
+    - Подбор групп через Party Finder
+    - Управление подканалами в лобби
+    - Систему прав доступа к лобби
+    - Интеграцию с party/guild/clan системами
+  version: 2.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
@@ -30,6 +40,14 @@ tags:
     description: События голосового чата
   - name: Voice Statistics
     description: Статистика голосового чата
+  - name: Voice Lobby
+    description: Управление голосовыми лобби
+  - name: Party Finder
+    description: Подбор групп для лобби
+  - name: Lobby Subchannels
+    description: Управление подканалами в лобби
+  - name: Lobby Permissions
+    description: Управление правами доступа к лобби
 
 paths:
   /social/voice/channels:
@@ -935,6 +953,861 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /social/voice-lobby/directory:
+    get:
+      tags:
+        - Voice Lobby
+      summary: Каталог лобби
+      operationId: getLobbyDirectory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVITY
+              - CLAN_GUILD
+              - RAID
+              - TOURNAMENT
+        - name: is_private
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Каталог лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceLobby'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /social/voice-lobby/search:
+    get:
+      tags:
+        - Voice Lobby
+      summary: Поиск лобби
+      operationId: searchLobbies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lobby_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVITY
+              - CLAN_GUILD
+              - RAID
+              - TOURNAMENT
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceLobby'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /social/voice-lobby/available:
+    get:
+      tags:
+        - Voice Lobby
+      summary: Доступные лобби
+      operationId: getAvailableLobbies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: lobby_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - ACTIVITY
+              - CLAN_GUILD
+              - RAID
+              - TOURNAMENT
+      responses:
+        '200':
+          description: Доступные лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceLobby'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /social/voice-lobby:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Создание лобби
+      operationId: createLobby
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLobbyRequest'
+      responses:
+        '201':
+          description: Лобби создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLobby'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /social/voice-lobby/{lobby_id}:
+    get:
+      tags:
+        - Voice Lobby
+      summary: Информация о лобби
+      operationId: getLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о лобби
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLobbyDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - Voice Lobby
+      summary: Обновление лобби
+      operationId: updateLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLobbyRequest'
+      responses:
+        '200':
+          description: Лобби обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLobby'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Voice Lobby
+      summary: Удаление лобби
+      operationId: deleteLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лобби удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/join:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Присоединение к лобби
+      operationId: joinLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinLobbyRequest'
+      responses:
+        '200':
+          description: Присоединение успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LobbyParticipant'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/leave:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Покидание лобби
+      operationId: leaveLobby
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveLobbyRequest'
+      responses:
+        '200':
+          description: Покидание выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: left
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/party-finder/search:
+    post:
+      tags:
+        - Party Finder
+      summary: Поиск игроков для группы
+      operationId: searchPartyFinder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartyFinderSearchRequest'
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PartyFinderPlayer'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /social/voice-lobby/party-finder/create-group:
+    post:
+      tags:
+        - Party Finder
+      summary: Создание группы
+      operationId: createPartyFinderGroup
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartyFinderGroupRequest'
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  group_id:
+                    type: string
+                    format: uuid
+                  lobby_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /social/voice-lobby/party-finder/invite:
+    post:
+      tags:
+        - Party Finder
+      summary: Приглашение игрока
+      operationId: invitePartyFinderPlayer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitePartyFinderRequest'
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: invited
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/subchannels:
+    post:
+      tags:
+        - Lobby Subchannels
+      summary: Создание подканала
+      operationId: createSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubchannelRequest'
+      responses:
+        '201':
+          description: Подканал создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LobbySubchannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Lobby Subchannels
+      summary: Список подканалов
+      operationId: listSubchannels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список подканалов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subchannels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LobbySubchannel'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/subchannels/{subchannel_id}/join:
+    post:
+      tags:
+        - Lobby Subchannels
+      summary: Присоединение к подканалу
+      operationId: joinSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinSubchannelRequest'
+      responses:
+        '200':
+          description: Присоединение к подканалу выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: joined
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/subchannels/{subchannel_id}/leave:
+    post:
+      tags:
+        - Lobby Subchannels
+      summary: Покидание подканала
+      operationId: leaveSubchannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveSubchannelRequest'
+      responses:
+        '200':
+          description: Покидание подканала выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: left
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/permissions:
+    get:
+      tags:
+        - Lobby Permissions
+      summary: Права доступа к лобби
+      operationId: getLobbyPermissions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Права доступа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LobbyPermission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/permissions/{player_id}:
+    post:
+      tags:
+        - Lobby Permissions
+      summary: Назначение прав
+      operationId: setLobbyPermission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPermissionRequest'
+      responses:
+        '200':
+          description: Права назначены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LobbyPermission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/{lobby_id}/permissions/check:
+    get:
+      tags:
+        - Lobby Permissions
+      summary: Проверка прав
+      operationId: checkLobbyPermission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: permission
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - CREATE_SUBCHANNEL
+              - DELETE_SUBCHANNEL
+              - MANAGE_MEMBERS
+              - KICK_MEMBERS
+              - MUTE_MEMBERS
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  has_permission:
+                    type: boolean
+                  role:
+                    type: string
+                    enum:
+                      - OWNER
+                      - ADMIN
+                      - MODERATOR
+                      - MEMBER
+                      - GUEST
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/events/{lobby_id}:
+    get:
+      tags:
+        - Voice Events
+      summary: События лобби
+      operationId: getLobbyEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - voice-lobby:created
+              - voice-lobby:player-joined
+              - voice-lobby:player-left
+              - voice-lobby:subchannel-created
+              - voice-lobby:subchannel-deleted
+              - voice-lobby:permission-changed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LobbyEvent'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/integration/party/{party_id}:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Создание лобби для группы
+      operationId: createLobbyForParty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLobbyForPartyRequest'
+      responses:
+        '201':
+          description: Лобби создано для группы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLobby'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/voice-lobby/integration/guild/{guild_id}:
+    post:
+      tags:
+        - Voice Lobby
+      summary: Создание лобби для гильдии
+      operationId: createLobbyForGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLobbyForGuildRequest'
+      responses:
+        '201':
+          description: Лобби создано для гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLobby'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1536,10 +2409,388 @@ components:
           type: string
           format: date-time
 
+    VoiceLobby:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        lobby_type:
+          type: string
+          enum:
+            - ACTIVITY
+            - CLAN_GUILD
+            - RAID
+            - TOURNAMENT
+        owner_id:
+          type: string
+          format: uuid
+        voice_channel_id:
+          type: string
+          format: uuid
+        max_participants:
+          type: integer
+          default: 50
+        current_participants:
+          type: integer
+        is_private:
+          type: boolean
+          default: false
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    VoiceLobbyDetail:
+      type: object
+      properties:
+        lobby:
+          $ref: '#/components/schemas/VoiceLobby'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/LobbyParticipant'
+        subchannels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LobbySubchannel'
+
+    CreateLobbyRequest:
+      type: object
+      required:
+        - owner_id
+        - name
+        - lobby_type
+      properties:
+        owner_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        lobby_type:
+          type: string
+          enum:
+            - ACTIVITY
+            - CLAN_GUILD
+            - RAID
+            - TOURNAMENT
+        max_participants:
+          type: integer
+          default: 50
+        is_private:
+          type: boolean
+          default: false
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    UpdateLobbyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        max_participants:
+          type: integer
+        is_private:
+          type: boolean
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    JoinLobbyRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    LeaveLobbyRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    LobbyParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lobby_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - OWNER
+            - ADMIN
+            - MODERATOR
+            - MEMBER
+            - GUEST
+        current_subchannel_id:
+          type: string
+          format: uuid
+          nullable: true
+        joined_at:
+          type: string
+          format: date-time
+
+    PartyFinderSearchRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        criteria:
+          type: object
+          properties:
+            roles:
+              type: array
+              items:
+                type: string
+            rating_min:
+              type: integer
+            rating_max:
+              type: integer
+            activity_type:
+              type: string
+            region:
+              type: string
+            language:
+              type: string
+
+    PartyFinderPlayer:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        role:
+          type: string
+        rating:
+          type: integer
+        activity_type:
+          type: string
+        region:
+          type: string
+        language:
+          type: string
+
+    CreatePartyFinderGroupRequest:
+      type: object
+      required:
+        - player_id
+        - lobby_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        lobby_id:
+          type: string
+          format: uuid
+        criteria:
+          type: object
+          additionalProperties: true
+
+    InvitePartyFinderRequest:
+      type: object
+      required:
+        - from_player_id
+        - to_player_id
+        - lobby_id
+      properties:
+        from_player_id:
+          type: string
+          format: uuid
+        to_player_id:
+          type: string
+          format: uuid
+        lobby_id:
+          type: string
+          format: uuid
+
+    LobbySubchannel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lobby_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        voice_subchannel_id:
+          type: string
+          format: uuid
+          nullable: true
+        max_participants:
+          type: integer
+          nullable: true
+        position:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    CreateSubchannelRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        max_participants:
+          type: integer
+          nullable: true
+        position:
+          type: integer
+
+    JoinSubchannelRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    LeaveSubchannelRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    LobbyPermission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lobby_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        permission:
+          type: string
+          enum:
+            - CREATE_SUBCHANNEL
+            - DELETE_SUBCHANNEL
+            - MANAGE_MEMBERS
+            - KICK_MEMBERS
+            - MUTE_MEMBERS
+        granted:
+          type: boolean
+          default: true
+
+    SetPermissionRequest:
+      type: object
+      required:
+        - permission
+        - granted
+      properties:
+        permission:
+          type: string
+          enum:
+            - CREATE_SUBCHANNEL
+            - DELETE_SUBCHANNEL
+            - MANAGE_MEMBERS
+            - KICK_MEMBERS
+            - MUTE_MEMBERS
+        granted:
+          type: boolean
+
+    LobbyEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lobby_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - voice-lobby:created
+            - voice-lobby:player-joined
+            - voice-lobby:player-left
+            - voice-lobby:subchannel-created
+            - voice-lobby:subchannel-deleted
+            - voice-lobby:permission-changed
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    CreateLobbyForPartyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        max_participants:
+          type: integer
+          default: 50
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    CreateLobbyForGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        max_participants:
+          type: integer
+          default: 50
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+
     Error:
       type: object
       properties:
         error:
+          type: string
+        message:
+          type: string
+        code:
           type: string
 
   responses:
@@ -1566,6 +2817,13 @@ components:
 
     InternalServerError:
       description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Недостаточно прав доступа
       content:
         application/json:
           schema:

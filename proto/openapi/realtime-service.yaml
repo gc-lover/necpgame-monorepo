@@ -1,0 +1,1165 @@
+openapi: 3.0.3
+info:
+  title: Realtime Service API
+  description: |
+    API для Realtime Server: управление WebSocket соединениями, зонами, игровым циклом,
+    синхронизацией состояния, оптимизацией протокола и профилями производительности.
+    
+    Realtime Server обеспечивает realtime коммуникацию через WebSocket для синхронизации
+    состояния игры, управления зонами и оптимизации производительности для различных
+    типов контента (Esports, Siege, Extraction, Open World, Raids, Massive Warfront, Casual, Social).
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/realtime
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/realtime
+    description: Продакшен сервер
+  - url: ws://localhost:8080/ws
+    description: WebSocket локальный сервер
+  - url: wss://api.necp.game/ws
+    description: WebSocket продакшен сервер
+
+tags:
+  - name: WebSocket
+    description: |
+      WebSocket соединения и протокол.
+      
+      Основной WebSocket endpoint: `ws://localhost:8080/ws/game` или `wss://api.necp.game/ws/game`
+      
+      Протокол сообщений:
+      - Формат: MessagePack (бинарный)
+      - Типы сообщений:
+        * Client Input - инпут от клиента (position, rotation, actions)
+        * Server Update - обновление состояния от сервера (delta-компрессия)
+        * Event - realtime события (combat, movement, chat, world, social)
+        * Heartbeat - проверка соединения
+        * Subscribe/Unsubscribe - подписка на топики
+      
+      Аутентификация:
+      - При подключении требуется JWT токен в query параметре: `?token=<jwt_token>`
+      - После подключения клиент отправляет сообщение типа "auth" с токеном
+      
+      Подписки на топики:
+      - zone - обновления зоны
+      - character - обновления персонажа
+      - world - мировые события
+      - combat - боевые события
+      - chat - сообщения чата
+      - social - социальные события (party, guild, friend)
+      
+      Частота обновлений (адаптивная):
+      - Combat: 60 Hz
+      - Movement: 20 Hz
+      - Idle: 5 Hz
+      
+      Оптимизация:
+      - Delta-компрессия (только изменения)
+      - Client prediction
+      - Server reconciliation
+      - Lag compensation для боевых событий
+  - name: Connections
+    description: Управление WebSocket соединениями
+  - name: Zones
+    description: Управление зонами игры
+  - name: Game Loop
+    description: Управление игровым циклом
+  - name: Interest Management
+    description: Управление областью интереса
+  - name: State Synchronization
+    description: Синхронизация состояния игры
+  - name: Protocol
+    description: Оптимизация протокола
+  - name: Performance Profiles
+    description: Управление профилями производительности
+  - name: Events
+    description: Realtime события
+
+paths:
+  /connections/{connection_id}:
+    get:
+      tags:
+        - Connections
+      summary: Информация о соединении
+      operationId: getConnection
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о соединении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /connections/{connection_id}/subscribe:
+    post:
+      tags:
+        - Connections
+      summary: Подписка на топик
+      operationId: subscribeToTopic
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeRequest'
+      responses:
+        '200':
+          description: Подписка создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: subscribed
+                  topic:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /connections/{connection_id}/unsubscribe:
+    post:
+      tags:
+        - Connections
+      summary: Отписка от топика
+      operationId: unsubscribeFromTopic
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnsubscribeRequest'
+      responses:
+        '200':
+          description: Отписка выполнена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: unsubscribed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /zones:
+    get:
+      tags:
+        - Zones
+      summary: Список зон
+      operationId: listZones
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - maintenance
+              - full
+        - name: zone_type
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список зон
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zones:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Zone'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /zones/{zone_id}:
+    get:
+      tags:
+        - Zones
+      summary: Информация о зоне
+      operationId: getZone
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о зоне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /zones/{zone_id}/players:
+    get:
+      tags:
+        - Zones
+      summary: Игроки в зоне
+      operationId: getZonePlayers
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Игроки в зоне
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ZonePlayer'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /zones/{zone_id}/join:
+    post:
+      tags:
+        - Zones
+      summary: Присоединение к зоне
+      operationId: joinZone
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinZoneRequest'
+      responses:
+        '200':
+          description: Присоединение успешно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: joined
+                  zone:
+                    $ref: '#/components/schemas/Zone'
+                  instance_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /game-loop/stats:
+    get:
+      tags:
+        - Game Loop
+      summary: Статистика game loop
+      operationId: getGameLoopStats
+      parameters:
+        - name: instance_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика game loop
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameLoopStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /game-loop/force-tick:
+    post:
+      tags:
+        - Game Loop
+      summary: Принудительный тик
+      operationId: forceGameLoopTick
+      parameters:
+        - name: instance_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Тик выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ticked
+                  tick_time_ms:
+                    type: number
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /interest/{zone_id}/{cell_id}/players:
+    get:
+      tags:
+        - Interest Management
+      summary: Игроки в ячейке
+      operationId: getCellPlayers
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: cell_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Игроки в ячейке
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ZonePlayer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /interest/{zone_id}/update:
+    post:
+      tags:
+        - Interest Management
+      summary: Обновление области интереса
+      operationId: updateInterestArea
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInterestRequest'
+      responses:
+        '200':
+          description: Область интереса обновлена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: updated
+                  visible_players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ZonePlayer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /sync/{character_id}/state:
+    get:
+      tags:
+        - State Synchronization
+      summary: Получение состояния
+      operationId: getCharacterState
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - State Synchronization
+      summary: Синхронизация состояния
+      operationId: syncCharacterState
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncStateRequest'
+      responses:
+        '200':
+          description: Состояние синхронизировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /protocol/stats:
+    get:
+      tags:
+        - Protocol
+      summary: Статистика протокола
+      operationId: getProtocolStats
+      parameters:
+        - name: instance_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика протокола
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProtocolStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /protocol/optimize:
+    post:
+      tags:
+        - Protocol
+      summary: Оптимизация протокола
+      operationId: optimizeProtocol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptimizeProtocolRequest'
+      responses:
+        '200':
+          description: Протокол оптимизирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: optimized
+                  bandwidth_saved:
+                    type: number
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /profiles:
+    get:
+      tags:
+        - Performance Profiles
+      summary: Список профилей производительности
+      operationId: listPerformanceProfiles
+      responses:
+        '200':
+          description: Список профилей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PerformanceProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /profiles/{profile_id}:
+    get:
+      tags:
+        - Performance Profiles
+      summary: Информация о профиле
+      operationId: getPerformanceProfile
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о профиле
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /profiles/{profile_id}/apply:
+    post:
+      tags:
+        - Performance Profiles
+      summary: Применение профиля
+      operationId: applyPerformanceProfile
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyProfileRequest'
+      responses:
+        '200':
+          description: Профиль применен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: applied
+                  instance_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /events/{zone_id}:
+    get:
+      tags:
+        - Events
+      summary: События зоны
+      operationId: getZoneEvents
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - combat
+              - movement
+              - chat
+              - world
+              - social
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События зоны
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RealtimeEvent'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/publish:
+    post:
+      tags:
+        - Events
+      summary: Публикация события
+      operationId: publishEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishEventRequest'
+      responses:
+        '201':
+          description: Событие опубликовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+
+  schemas:
+    Connection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+          nullable: true
+        zone_id:
+          type: string
+          format: uuid
+          nullable: true
+        cell_x:
+          type: integer
+          nullable: true
+        cell_y:
+          type: integer
+          nullable: true
+        instance_id:
+          type: string
+          format: uuid
+          nullable: true
+        connection_state:
+          type: string
+          enum:
+            - connected
+            - disconnected
+            - reconnecting
+        last_heartbeat:
+          type: string
+          format: date-time
+        connected_at:
+          type: string
+          format: date-time
+        disconnected_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    SubscribeRequest:
+      type: object
+      required:
+        - topic
+      properties:
+        topic:
+          type: string
+          enum:
+            - zone
+            - character
+            - world
+            - combat
+            - chat
+            - social
+
+    UnsubscribeRequest:
+      type: object
+      required:
+        - topic
+      properties:
+        topic:
+          type: string
+
+    Zone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        zone_type:
+          type: string
+        min_x:
+          type: number
+        min_y:
+          type: number
+        max_x:
+          type: number
+        max_y:
+          type: number
+        max_players:
+          type: integer
+        current_players:
+          type: integer
+        status:
+          type: string
+          enum:
+            - active
+            - maintenance
+            - full
+        instance_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ZonePlayer:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        cell_x:
+          type: integer
+        cell_y:
+          type: integer
+        position:
+          $ref: '#/components/schemas/Position'
+        connected_at:
+          type: string
+          format: date-time
+
+    JoinZoneRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Position'
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+        rotation:
+          type: number
+
+    GameLoopStats:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        tick_rate:
+          type: integer
+        current_tick:
+          type: integer
+        avg_tick_time_ms:
+          type: number
+        max_tick_time_ms:
+          type: number
+        players_count:
+          type: integer
+        zones_count:
+          type: integer
+        performance_warnings:
+          type: array
+          items:
+            type: string
+
+    UpdateInterestRequest:
+      type: object
+      required:
+        - character_id
+        - position
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Position'
+
+    CharacterState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Position'
+        velocity:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        health:
+          type: integer
+        max_health:
+          type: integer
+        state:
+          type: string
+          enum:
+            - idle
+            - moving
+            - combat
+        sync_frequency:
+          type: integer
+          description: Частота синхронизации в Hz
+        last_updated:
+          type: string
+          format: date-time
+
+    SyncStateRequest:
+      type: object
+      required:
+        - position
+      properties:
+        position:
+          $ref: '#/components/schemas/Position'
+        velocity:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        input:
+          type: object
+          additionalProperties: true
+
+    ProtocolStats:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        total_messages:
+          type: integer
+        messages_per_second:
+          type: number
+        bandwidth_used:
+          type: number
+          description: В байтах в секунду
+        bandwidth_saved:
+          type: number
+          description: В байтах в секунду (благодаря оптимизации)
+        compression_ratio:
+          type: number
+        avg_message_size:
+          type: number
+
+    OptimizeProtocolRequest:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        enable_delta_compression:
+          type: boolean
+        enable_batching:
+          type: boolean
+        batch_size:
+          type: integer
+        enable_fec:
+          type: boolean
+
+    PerformanceProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          enum:
+            - esports
+            - siege
+            - extraction
+            - open_world
+            - raids
+            - massive_warfront
+            - casual
+            - social
+        tick_rate:
+          type: integer
+          description: Частота обновлений в Hz
+        max_latency_ms:
+          type: integer
+        description:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+
+    ApplyProfileRequest:
+      type: object
+      required:
+        - instance_id
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+
+    RealtimeEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - combat
+            - movement
+            - chat
+            - world
+            - social
+        zone_id:
+          type: string
+          format: uuid
+          nullable: true
+        character_id:
+          type: string
+          format: uuid
+          nullable: true
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    PublishEventRequest:
+      type: object
+      required:
+        - event_type
+        - event_data
+      properties:
+        event_type:
+          type: string
+          enum:
+            - combat
+            - movement
+            - chat
+            - world
+            - social
+        zone_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        event_data:
+          type: object
+          additionalProperties: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Недостаточно прав доступа
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+

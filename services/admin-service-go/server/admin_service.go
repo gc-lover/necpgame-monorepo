@@ -13,8 +13,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type AdminRepositoryInterface interface {
+	CreateAuditLog(ctx context.Context, log *models.AdminAuditLog) error
+	GetAuditLog(ctx context.Context, logID uuid.UUID) (*models.AdminAuditLog, error)
+	ListAuditLogs(ctx context.Context, adminID *uuid.UUID, actionType *models.AdminActionType, limit, offset int) ([]models.AdminAuditLog, error)
+	CountAuditLogs(ctx context.Context, adminID *uuid.UUID, actionType *models.AdminActionType) (int, error)
+}
+
 type AdminService struct {
-	repo     *AdminRepository
+	repo     AdminRepositoryInterface
 	cache    *redis.Client
 	logger   *logrus.Logger
 	eventBus EventBus

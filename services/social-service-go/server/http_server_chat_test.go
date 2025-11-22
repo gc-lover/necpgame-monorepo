@@ -26,6 +26,8 @@ type mockSocialService struct {
 	guildMembers     map[uuid.UUID]*models.GuildMemberListResponse
 	guildBanks       map[uuid.UUID]*models.GuildBank
 	invitations      map[uuid.UUID][]models.GuildInvitation
+	bans             map[uuid.UUID]models.ChatBan
+	reports          map[uuid.UUID]models.ChatReport
 	createErr        error
 	getErr           error
 }
@@ -748,5 +750,130 @@ func TestHTTPServer_GetChannelNotFound(t *testing.T) {
 	if w.Code != http.StatusNotFound {
 		t.Errorf("Expected status %d, got %d", http.StatusNotFound, w.Code)
 	}
+}
+
+func (m *mockSocialService) CreateBan(ctx context.Context, adminID uuid.UUID, req *models.CreateBanRequest) (*models.ChatBan, error) {
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	if m.bans == nil {
+		m.bans = make(map[uuid.UUID]models.ChatBan)
+	}
+	ban := models.ChatBan{
+		ID:          uuid.New(),
+		CharacterID: req.CharacterID,
+		ChannelID:   req.ChannelID,
+		ChannelType: req.ChannelType,
+		Reason:      req.Reason,
+		AdminID:     &adminID,
+		CreatedAt:   time.Now(),
+		IsActive:    true,
+	}
+	if req.Duration != nil && *req.Duration > 0 {
+		expiresAt := time.Now().Add(time.Duration(*req.Duration) * time.Hour)
+		ban.ExpiresAt = &expiresAt
+	}
+	m.bans[ban.ID] = ban
+	return &ban, nil
+}
+
+func (m *mockSocialService) GetBans(ctx context.Context, characterID *uuid.UUID, limit, offset int) (*models.BanListResponse, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.bans == nil {
+		m.bans = make(map[uuid.UUID]models.ChatBan)
+	}
+	bans := []models.ChatBan{}
+	for _, ban := range m.bans {
+		if characterID == nil || ban.CharacterID == *characterID {
+			bans = append(bans, ban)
+		}
+	}
+	total := len(bans)
+	if offset >= total {
+		return &models.BanListResponse{Bans: []models.ChatBan{}, Total: total}, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return &models.BanListResponse{Bans: bans[offset:end], Total: total}, nil
+}
+
+func (m *mockSocialService) RemoveBan(ctx context.Context, banID uuid.UUID) error {
+	if m.createErr != nil {
+		return m.createErr
+	}
+	if m.bans == nil {
+		m.bans = make(map[uuid.UUID]models.ChatBan)
+	}
+	if ban, exists := m.bans[banID]; exists {
+		ban.IsActive = false
+		m.bans[banID] = ban
+	}
+	return nil
+}
+
+func (m *mockSocialService) CreateReport(ctx context.Context, reporterID uuid.UUID, req *models.CreateReportRequest) (*models.ChatReport, error) {
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	if m.reports == nil {
+		m.reports = make(map[uuid.UUID]models.ChatReport)
+	}
+	report := models.ChatReport{
+		ID:         uuid.New(),
+		ReporterID: reporterID,
+		ReportedID: req.ReportedID,
+		MessageID:  req.MessageID,
+		ChannelID:  req.ChannelID,
+		Reason:     req.Reason,
+		Status:     "pending",
+		CreatedAt:  time.Now(),
+	}
+	m.reports[report.ID] = report
+	return &report, nil
+}
+
+func (m *mockSocialService) GetReports(ctx context.Context, status *string, limit, offset int) ([]models.ChatReport, int, error) {
+	if m.getErr != nil {
+		return nil, 0, m.getErr
+	}
+	if m.reports == nil {
+		m.reports = make(map[uuid.UUID]models.ChatReport)
+	}
+	reports := []models.ChatReport{}
+	for _, report := range m.reports {
+		if status == nil || report.Status == *status {
+			reports = append(reports, report)
+		}
+	}
+	total := len(reports)
+	if offset >= total {
+		return []models.ChatReport{}, total, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return reports[offset:end], total, nil
+}
+
+func (m *mockSocialService) ResolveReport(ctx context.Context, reportID uuid.UUID, adminID uuid.UUID, status string) error {
+	if m.createErr != nil {
+		return m.createErr
+	}
+	if m.reports == nil {
+		m.reports = make(map[uuid.UUID]models.ChatReport)
+	}
+	if report, exists := m.reports[reportID]; exists {
+		report.Status = status
+		report.AdminID = &adminID
+		now := time.Now()
+		report.ResolvedAt = &now
+		m.reports[reportID] = report
+	}
+	return nil
 }
 

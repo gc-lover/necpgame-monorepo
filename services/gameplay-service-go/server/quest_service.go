@@ -12,9 +12,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type QuestRepositoryInterface interface {
+	CreateQuestInstance(ctx context.Context, instance *models.QuestInstance) error
+	GetQuestInstance(ctx context.Context, instanceID uuid.UUID) (*models.QuestInstance, error)
+	GetQuestInstanceByCharacterAndQuest(ctx context.Context, characterID uuid.UUID, questID string) (*models.QuestInstance, error)
+	UpdateQuestInstance(ctx context.Context, instance *models.QuestInstance) error
+	ListQuestInstances(ctx context.Context, characterID uuid.UUID, status *models.QuestStatus, limit, offset int) ([]models.QuestInstance, error)
+	CountQuestInstances(ctx context.Context, characterID uuid.UUID, status *models.QuestStatus) (int, error)
+	CreateDialogueState(ctx context.Context, dialogueState *models.DialogueState) error
+	UpdateDialogueState(ctx context.Context, dialogueState *models.DialogueState) error
+	GetDialogueState(ctx context.Context, questInstanceID uuid.UUID) (*models.DialogueState, error)
+	CreateSkillCheckResult(ctx context.Context, result *models.SkillCheckResult) error
+}
+
+type ProgressionRepositoryInterfaceForQuest interface {
+	GetSkillExperience(ctx context.Context, characterID uuid.UUID, skillID string) (*models.SkillExperience, error)
+}
+
 type QuestService struct {
-	repo            *QuestRepository
-	progressionRepo *ProgressionRepository
+	repo            QuestRepositoryInterface
+	progressionRepo ProgressionRepositoryInterfaceForQuest
 	cache           *redis.Client
 	logger          *logrus.Logger
 	eventBus        EventBus
