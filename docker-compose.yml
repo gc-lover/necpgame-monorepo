@@ -425,6 +425,28 @@ services:
       - "9106:9101"
     restart: unless-stopped
 
+  housing-service:
+    build:
+      context: ./services/housing-service-go
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    environment:
+      - HTTP_ADDR=:8093
+      - METRICS_ADDR=:9093
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+      - REDIS_URL=redis://redis:6379/12
+      - KEYCLOAK_ISSUER=http://keycloak:8080/realms/necpgame
+      - KEYCLOAK_JWKS_URL=http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs
+      - AUTH_ENABLED=true
+      - LOG_LEVEL=info
+    ports:
+      - "8093:8093"
+      - "9107:9093"
+    restart: unless-stopped
+
 volumes:
   pgdata:
   redisdata:
