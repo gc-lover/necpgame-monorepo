@@ -110,10 +110,10 @@
 - #107 - [Canon] Narrative - Dialogues, Cutscenes, Lore
 
 ### Backend Developer (5 Issues)
-- #75 - [Backend] Player Character Management
-- #76 - [Backend] Session Management
-- #77 - [Backend] Chat System (уже имел метки)
-- #78 - [Backend] Achievement System (уже имел метки)
+- #75 - [Backend] Player Character Management (исправлено: было agent:ue5)
+- #76 - [Backend] Session Management (исправлено: было agent:network)
+- #77 - [Backend] Chat System (исправлено: было agent:ue5)
+- #78 - [Backend] Achievement System (исправлено: было agent:ue5)
 - #79 - [Backend] Core Systems
 
 ### API Designer (2 Issues)
@@ -180,4 +180,5 @@
 - Issues #8 и #9 уже имели правильные метки `agent:idea-writer`
 - Большинство Issues с префиксом `[Canon]` относятся к Idea Writer (контент, лор)
 - Issues про инфраструктуру и настройку относятся к DevOps
+- Исправлены неправильные назначения: Issues #75, #76, #77, #78 (были помечены как agent:ue5/agent:network, исправлены на agent:backend)
 
