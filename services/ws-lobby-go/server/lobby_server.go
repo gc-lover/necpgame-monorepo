@@ -83,7 +83,9 @@ func (s *LobbyServer) Stop() {
 		room.mu.Lock()
 		for client := range room.clients {
 			close(client.send)
-			client.conn.Close()
+			if client.conn != nil {
+				client.conn.Close()
+			}
 		}
 		room.mu.Unlock()
 	}
