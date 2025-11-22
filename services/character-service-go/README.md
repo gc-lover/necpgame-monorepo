@@ -1,75 +1,82 @@
 # Character Service (Go)
 
-Микросервис для управления персонажами и аккаунтами игроков.
+Микросервис для управления аккаунтами игроков и персонажами.
 
-## Назначение
+## Функциональность
 
-Этот сервис отвечает за:
-- Управление аккаунтами игроков (player_account)
-- Создание и управление персонажами (character)
-- Получение информации о персонажах
-- Валидация персонажей для других сервисов
+- Создание и управление аккаунтами игроков
+- Создание и управление персонажами
+- Интеграция с Keycloak для аутентификации
+- Кэширование в Redis
+- Метрики Prometheus
 
-## Технологии
+## API Endpoints
 
-- **Go 1.24+**
-- **PostgreSQL** - хранение аккаунтов и персонажей
-- **Redis** - кэширование
-- **Keycloak** - аутентификация (интеграция)
-- **Prometheus** - метрики
+### Accounts
+- `GET /api/v1/accounts/{accountId}` - Получить аккаунт по ID
+- `POST /api/v1/accounts` - Создать новый аккаунт (требует JWT токен)
 
-## Архитектура
+### Characters
+- `GET /api/v1/characters?account_id={accountId}` - Получить список персонажей аккаунта
+- `GET /api/v1/characters/{characterId}` - Получить персонажа по ID
+- `POST /api/v1/characters` - Создать нового персонажа (требует JWT токен)
+- `PUT /api/v1/characters/{characterId}` - Обновить персонажа (требует JWT токен)
+- `DELETE /api/v1/characters/{characterId}` - Удалить персонажа (требует JWT токен)
+- `GET /api/v1/characters/{characterId}/validate` - Проверить валидность персонажа
 
+### Health
+- `GET /health` - Проверка здоровья сервиса
+
+## Аутентификация
+
+Сервис поддерживает JWT аутентификацию через Keycloak. Для защиты endpoints необходимо:
+
+1. Получить JWT токен от Keycloak
+2. Передать токен в заголовке `Authorization: Bearer <token>`
+
+### Отключение аутентификации (для разработки)
+
+Установить переменную окружения:
+```bash
+AUTH_ENABLED=false
 ```
-client
-    ↓ JWT Token
-Keycloak (аутентификация)
-    ↓ Token validation
-character-service-go (управление персонажами)
-    ↓ PostgreSQL
-player_account, character (таблицы)
-```
 
-## API
+## Переменные окружения
 
-### REST Endpoints
-
-- `GET /api/v1/characters` - получить список персонажей по account_id
-- `GET /api/v1/characters/:characterId` - получить информацию о персонаже
-- `POST /api/v1/characters` - создать персонажа
-- `PUT /api/v1/characters/:characterId` - обновить персонажа
-- `DELETE /api/v1/characters/:characterId` - удалить персонажа
-- `GET /api/v1/accounts/:accountId` - получить информацию об аккаунте
-- `POST /api/v1/accounts` - создать аккаунт
-- `GET /health` - health check
-
-## База данных
-
-Таблицы:
-- `mvp_core.player_account` - аккаунты игроков
-- `mvp_core.character` - персонажи игроков
-
-## Интеграция
-
-Интегрируется с:
-- **Keycloak** - аутентификация и авторизация
-- **inventory-service** - валидация персонажей для инвентаря
-- **movement-service** - валидация персонажей для позиций
+- `ADDR` - Адрес HTTP сервера (по умолчанию: `0.0.0.0:8087`)
+- `METRICS_ADDR` - Адрес метрик (по умолчанию: `:9092`)
+- `DATABASE_URL` - URL подключения к PostgreSQL
+- `REDIS_URL` - URL подключения к Redis
+- `KEYCLOAK_URL` - URL Keycloak сервера (по умолчанию: `http://localhost:8080`)
+- `KEYCLOAK_REALM` - Имя realm в Keycloak (по умолчанию: `necpgame`)
+- `AUTH_ENABLED` - Включить/выключить аутентификацию (по умолчанию: `true`)
+- `LOG_LEVEL` - Уровень логирования (по умолчанию: `info`)
 
 ## Запуск
 
+### Локально
+
 ```bash
-cd services/character-service-go
-go mod download
-go run .
+go run main.go
 ```
 
-## Конфигурация
+### Docker
 
-- `ADDR` - адрес HTTP сервера (по умолчанию: `0.0.0.0:8087`)
-- `METRICS_ADDR` - адрес метрик (по умолчанию: `:9092`)
-- `DATABASE_URL` - URL подключения к PostgreSQL
-- `REDIS_URL` - URL подключения к Redis
-- `KEYCLOAK_URL` - URL для валидации JWT токенов (опционально)
-- `LOG_LEVEL` - уровень логирования (по умолчанию: `info`)
+```bash
+docker-compose up character-service
+```
 
+## Метрики
+
+Метрики доступны по адресу `http://localhost:9096/metrics` (Prometheus формат).
+
+### Доступные метрики
+
+- `character_requests_total` - Общее количество запросов
+- `character_request_duration_seconds` - Длительность обработки запросов
+
+## Зависимости
+
+- PostgreSQL - основная база данных
+- Redis - кэширование
+- Keycloak - аутентификация (опционально, если AUTH_ENABLED=false)

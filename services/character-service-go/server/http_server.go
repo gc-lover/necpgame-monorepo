@@ -19,15 +19,19 @@ type HTTPServer struct {
 	characterService *CharacterService
 	logger           *logrus.Logger
 	server           *http.Server
+	jwtValidator     *JwtValidator
+	authEnabled      bool
 }
 
-func NewHTTPServer(addr string, characterService *CharacterService) *HTTPServer {
+func NewHTTPServer(addr string, characterService *CharacterService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
 		router:           router,
 		characterService: characterService,
 		logger:           GetLogger(),
+		jwtValidator:     jwtValidator,
+		authEnabled:      authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -35,6 +39,10 @@ func NewHTTPServer(addr string, characterService *CharacterService) *HTTPServer 
 	router.Use(server.corsMiddleware)
 
 	api := router.PathPrefix("/api/v1").Subrouter()
+
+	if authEnabled {
+		api.Use(server.authMiddleware)
+	}
 
 	api.HandleFunc("/accounts/{accountId}", server.getAccount).Methods("GET")
 	api.HandleFunc("/accounts", server.createAccount).Methods("POST")
@@ -333,6 +341,34 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !s.authEnabled || s.jwtValidator == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			s.respondError(w, http.StatusUnauthorized, "authorization header required")
+			return
+		}
+
+		claims, err := s.jwtValidator.Verify(r.Context(), authHeader)
+		if err != nil {
+			s.logger.WithError(err).Warn("JWT validation failed")
+			s.respondError(w, http.StatusUnauthorized, "invalid or expired token")
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "claims", claims)
+		ctx = context.WithValue(ctx, "user_id", claims.Subject)
+		ctx = context.WithValue(ctx, "username", claims.PreferredUsername)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
