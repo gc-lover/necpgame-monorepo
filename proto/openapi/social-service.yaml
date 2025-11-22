@@ -166,6 +166,90 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /social/notifications/preferences:
+    get:
+      tags:
+        - Notifications
+      summary: Получить настройки уведомлений
+      operationId: getNotificationPreferences
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Настройки уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Notifications
+      summary: Обновить настройки уведомлений
+      operationId: updateNotificationPreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationPreferencesRequest'
+      responses:
+        '200':
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/notifications/batch/read:
+    post:
+      tags:
+        - Notifications
+      summary: Отметить несколько уведомлений как прочитанные
+      operationId: markNotificationsAsRead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchReadRequest'
+      responses:
+        '200':
+          description: Уведомления отмечены как прочитанные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+                    description: Количество обновленных уведомлений
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /social/friends/requests:
     post:
       tags:
@@ -969,6 +1053,100 @@ components:
           type: integer
         unread:
           type: integer
+
+    NotificationPreferences:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        quest_enabled:
+          type: boolean
+          default: true
+        message_enabled:
+          type: boolean
+          default: true
+        achievement_enabled:
+          type: boolean
+          default: true
+        system_enabled:
+          type: boolean
+          default: true
+        friend_enabled:
+          type: boolean
+          default: true
+        guild_enabled:
+          type: boolean
+          default: true
+        trade_enabled:
+          type: boolean
+          default: true
+        combat_enabled:
+          type: boolean
+          default: true
+        preferred_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - in_game
+              - websocket
+              - email
+          default:
+            - in_game
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateNotificationPreferencesRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        quest_enabled:
+          type: boolean
+        message_enabled:
+          type: boolean
+        achievement_enabled:
+          type: boolean
+        system_enabled:
+          type: boolean
+        friend_enabled:
+          type: boolean
+        guild_enabled:
+          type: boolean
+        trade_enabled:
+          type: boolean
+        combat_enabled:
+          type: boolean
+        preferred_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - in_game
+              - websocket
+              - email
+
+    BatchReadRequest:
+      type: object
+      required:
+        - account_id
+        - notification_ids
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        notification_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
 
     Friendship:
       type: object
