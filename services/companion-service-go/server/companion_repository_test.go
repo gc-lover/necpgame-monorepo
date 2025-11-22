@@ -623,10 +623,8 @@ func TestCompanionRepository_UpdateCompanionAbility_NotFound(t *testing.T) {
 		ID:              uuid.New(),
 		PlayerCompanionID: uuid.New(),
 		AbilityID:       "ability_001",
-		Level:           1,
-		Experience:      0,
+		IsActive:        true,
 		CooldownUntil:   nil,
-		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
 

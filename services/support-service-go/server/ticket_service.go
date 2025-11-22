@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 	"time"
 
@@ -315,7 +316,7 @@ func (s *TicketService) RateTicket(ctx context.Context, id uuid.UUID, rating int
 		return err
 	}
 	if ticket == nil {
-		return nil
+		return errors.New("ticket not found")
 	}
 
 	ticket.SatisfactionRating = &rating

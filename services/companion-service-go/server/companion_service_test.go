@@ -941,10 +941,8 @@ func TestCompanionService_UseAbility_RepositoryError(t *testing.T) {
 		ID:              uuid.New(),
 		PlayerCompanionID: companionID,
 		AbilityID:       abilityID,
-		Level:           1,
-		Experience:      0,
+		IsActive:        true,
 		CooldownUntil:   nil,
-		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
 	expectedErr := errors.New("database error")
