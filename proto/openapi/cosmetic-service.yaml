@@ -1,0 +1,422 @@
+openapi: 3.0.3
+info:
+  title: Cosmetic Service API
+  description: API для системы косметики: скины, эмоции, титулы, магазин, экипировка
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Shop
+    description: Магазин косметики
+  - name: Cosmetics
+    description: Управление косметикой
+  - name: Equipment
+    description: Экипировка косметики
+
+paths:
+  /cosmetic/shop/daily:
+    get:
+      tags:
+        - Shop
+      summary: Получить ежедневный магазин косметики
+      operationId: getDailyShop
+      responses:
+        '200':
+          description: Ежедневный магазин
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rotation_id:
+                    type: string
+                  date:
+                    type: string
+                    format: date
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CosmeticItem'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cosmetic/shop/purchase:
+    post:
+      tags:
+        - Shop
+      summary: Купить косметический предмет
+      operationId: purchaseCosmetic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseCosmeticRequest'
+      responses:
+        '200':
+          description: Предмет куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCosmetic'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cosmetic/items:
+    get:
+      tags:
+        - Cosmetics
+      summary: Получить список косметических предметов
+      operationId: getCosmeticItems
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - character_skin
+              - weapon_skin
+              - emote
+              - title
+              - name_plate
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum:
+              - common
+              - rare
+              - epic
+              - legendary
+              - exclusive
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список косметических предметов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CosmeticItem'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cosmetic/player/{characterId}:
+    get:
+      tags:
+        - Cosmetics
+      summary: Получить косметику игрока
+      operationId: getPlayerCosmetics
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Косметика игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  owned:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerCosmetic'
+                  equipped:
+                    $ref: '#/components/schemas/EquippedCosmetics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cosmetic/equip:
+    post:
+      tags:
+        - Equipment
+      summary: Экипировать косметический предмет
+      operationId: equipCosmetic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipCosmeticRequest'
+      responses:
+        '200':
+          description: Предмет экипирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquippedCosmetics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cosmetic/unequip:
+    post:
+      tags:
+        - Equipment
+      summary: Снять косметический предмет
+      operationId: unequipCosmetic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnequipCosmeticRequest'
+      responses:
+        '200':
+          description: Предмет снят
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: unequipped
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CosmeticItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          enum:
+            - character_skin
+            - weapon_skin
+            - emote
+            - title
+            - name_plate
+        rarity:
+          type: string
+          enum:
+            - common
+            - rare
+            - epic
+            - legendary
+            - exclusive
+        price:
+          type: integer
+        currency_type:
+          type: string
+          enum:
+            - eddies
+            - credits
+        is_exclusive:
+          type: boolean
+        source:
+          type: string
+          enum:
+            - shop
+            - battle_pass
+            - achievement
+            - event
+            - purchase
+        asset_path:
+          type: string
+
+    PurchaseCosmeticRequest:
+      type: object
+      required:
+        - character_id
+        - cosmetic_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        cosmetic_id:
+          type: string
+
+    PlayerCosmetic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        cosmetic_id:
+          type: string
+        source:
+          type: string
+        obtained_at:
+          type: string
+          format: date-time
+        usage_count:
+          type: integer
+          default: 0
+
+    EquippedCosmetics:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        character_skin:
+          type: string
+          nullable: true
+        weapon_skins:
+          type: object
+          additionalProperties:
+            type: string
+        title:
+          type: string
+          nullable: true
+        name_plate:
+          type: string
+          nullable: true
+        quick_emotes:
+          type: array
+          items:
+            type: string
+          maxItems: 4
+
+    EquipCosmeticRequest:
+      type: object
+      required:
+        - character_id
+        - cosmetic_id
+        - slot
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        cosmetic_id:
+          type: string
+        slot:
+          type: string
+          enum:
+            - character_skin
+            - weapon_skin
+            - title
+            - name_plate
+            - quick_emote
+        weapon_type:
+          type: string
+          nullable: true
+          description: Требуется для weapon_skin
+        emote_slot:
+          type: integer
+          minimum: 0
+          maximum: 3
+          nullable: true
+          description: Требуется для quick_emote
+
+    UnequipCosmeticRequest:
+      type: object
+      required:
+        - character_id
+        - slot
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+          enum:
+            - character_skin
+            - weapon_skin
+            - title
+            - name_plate
+            - quick_emote
+        weapon_type:
+          type: string
+          nullable: true
+        emote_slot:
+          type: integer
+          minimum: 0
+          maximum: 3
+          nullable: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
