@@ -1,0 +1,602 @@
+metadata:
+  id: cosmetic-system-architecture
+  title: Архитектура системы косметики (Cosmetic System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T02:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - cosmetic
+    - backend
+    - monetization
+    - personalization
+  related_systems:
+    - monetization-service-go
+    - inventory-service-go
+    - economy-service-go
+    - analytics-service
+  related_documents:
+    - id: backend-cosmetic-system
+      relation: extends
+  github_issue: 315
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы косметики
+    для управления персонализацией, магазином, редкостями и экипировкой
+    косметических предметов для монетизации и player engagement.
+  goal: |
+    Создать архитектурную схему системы косметики с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы покупки косметики
+    - Системы экипировки косметики
+    - Системы магазина и ротации
+    - Системы редкостей
+    - Технического задания для реализации
+  essence: |
+    Система косметики для управления персонализацией, магазином, редкостями
+    и экипировкой косметических предметов.
+
+architecture:
+  overview: |
+    Система косметики состоит из семи основных компонентов:
+    1. Cosmetic Catalog Manager - управление каталогом косметики
+    2. Cosmetic Shop Manager - управление магазином и ротацией
+    3. Cosmetic Purchase Handler - обработка покупок
+    4. Cosmetic Equip Manager - управление экипировкой
+    5. Cosmetic Rarity System - система редкостей
+    6. Cosmetic Inventory Manager - управление инвентарём косметики
+    7. Cosmetic Event Handler - обработка событий
+
+  components:
+    - name: Cosmetic Catalog Manager
+      location: monetization-service-go (модуль cosmetic)
+      responsibility: |
+        - Управление каталогом косметики
+        - Категории косметики
+        - Типы косметики
+        - Источники получения
+      cosmetic_categories: |
+        - CHARACTER_SKIN: скины персонажа
+        - WEAPON_SKIN: скины оружия
+        - EMOTE: эмоции
+        - TITLE: титулы
+        - NAME_PLATE: таблички имён
+      cosmetic_types: |
+        - SKIN: скин (персонаж/оружие)
+        - EMOTE: эмоция
+        - TITLE: титул
+        - NAME_PLATE: табличка имени
+      endpoints:
+        - GET /api/v1/monetization/cosmetic/catalog - каталог косметики
+        - GET /api/v1/monetization/cosmetic/categories - категории косметики
+        - GET /api/v1/monetization/cosmetic/{cosmetic_id} - детали косметики
+
+    - name: Cosmetic Shop Manager
+      location: monetization-service-go (модуль cosmetic-shop)
+      responsibility: |
+        - Управление магазином косметики
+        - Ежедневная ротация
+        - Подборка предметов
+        - Уведомления игроков
+      shop_rotation: |
+        - Ежедневная ротация в 00:00 UTC
+        - Подборка из разных редкостей
+        - Микс Common, Rare, Epic, Legendary
+        - Сохранение ротации в БД
+      rotation_algorithm: |
+        - Гарантированный микс редкостей
+        - Балансировка категорий
+        - Исключение недавно показанных предметов
+      endpoints:
+        - GET /api/v1/monetization/cosmetic/shop/daily - ежедневный магазин
+        - GET /api/v1/monetization/cosmetic/shop/history - история ротаций
+
+    - name: Cosmetic Purchase Handler
+      location: monetization-service-go (модуль cosmetic-purchase)
+      responsibility: |
+        - Обработка покупок косметики
+        - Проверка владения
+        - Проверка возможности покупки
+        - Списание валюты
+        - Интеграция с economy service
+      purchase_flow: |
+        1. Игрок выбирает косметику для покупки
+        2. Проверка владения
+        3. Проверка возможности покупки
+        4. Проверка наличия валюты
+        5. Списание стоимости
+        6. Добавление косметики игроку
+        7. Уведомление игрока
+        8. Запись события в аналитику
+      endpoints:
+        - POST /api/v1/monetization/cosmetic/purchase - покупка косметики
+        - GET /api/v1/monetization/cosmetic/purchase/history/{player_id} - история покупок
+
+    - name: Cosmetic Equip Manager
+      location: monetization-service-go (модуль cosmetic-equip)
+      responsibility: |
+        - Управление экипировкой косметики
+        - Управление слотами
+        - Проверка владения
+        - Обновление статистики использования
+      equip_slots: |
+        - CHARACTER_SKIN: скин персонажа
+        - WEAPON_SKIN: скин оружия
+        - TITLE: титул
+        - NAME_PLATE: табличка имени
+        - EMOTE_1-4: быстрые эмоции (4 слота)
+      equip_flow: |
+        1. Игрок выбирает косметику для экипировки
+        2. Проверка права владения
+        3. Размещение в нужном слоте
+        4. Управление эмоциями (4 слота)
+        5. Обновление статистики использования
+        6. Обновление времени изменения
+      endpoints:
+        - POST /api/v1/monetization/cosmetic/{cosmetic_id}/equip - экипировка косметики
+        - POST /api/v1/monetization/cosmetic/{cosmetic_id}/unequip - снятие косметики
+        - GET /api/v1/monetization/cosmetic/equipped/{player_id} - экипированная косметика
+
+    - name: Cosmetic Rarity System
+      location: monetization-service-go (модуль cosmetic-rarity)
+      responsibility: |
+        - Управление редкостями косметики
+        - Редкости и их эффекты
+        - Визуальные эффекты
+        - Источники получения
+      rarity_levels: |
+        - COMMON: обычная (серая)
+        - UNCOMMON: необычная (зелёная)
+        - RARE: редкая (синяя)
+        - EPIC: эпическая (фиолетовая)
+        - LEGENDARY: легендарная (оранжевая)
+        - EXOTIC: экзотическая (красная)
+      rarity_effects: |
+        - Визуальные эффекты
+        - Частицы
+        - Анимации
+        - Уникальные эффекты
+      endpoints:
+        - GET /api/v1/monetization/cosmetic/rarity/{rarity} - косметика по редкости
+
+    - name: Cosmetic Inventory Manager
+      location: monetization-service-go (модуль cosmetic-inventory)
+      responsibility: |
+        - Управление инвентарём косметики игроков
+        - Список владения
+        - Источники получения
+        - Статистика использования
+      inventory_features: |
+        - Список владения косметикой
+        - Источники получения
+        - Статистика использования
+        - Фильтрация и поиск
+      endpoints:
+        - GET /api/v1/monetization/cosmetic/inventory/{player_id} - инвентарь косметики
+        - GET /api/v1/monetization/cosmetic/inventory/{player_id}/owned - владение косметикой
+
+    - name: Cosmetic Event Handler
+      location: monetization-service-go (модуль cosmetic-events)
+      responsibility: |
+        - Обработка событий косметики
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Уведомления игроков
+      cosmetic_events_published: |
+        - cosmetic:purchased
+        - cosmetic:equipped
+        - cosmetic:unequipped
+        - cosmetic:shop-rotated
+      cosmetic_events_consumed: |
+        - achievement:unlocked
+        - battle-pass:reward-claimed
+        - quest:completed
+      endpoints:
+        - GET /api/v1/monetization/cosmetic/events/{player_id} - события косметики
+
+  data_flow:
+    cosmetic_purchase: |
+      1. Игрок выбирает косметику в магазине
+      2. Cosmetic Purchase Handler проверяет владение
+      3. Проверяется возможность покупки
+      4. Economy Service проверяет наличие валюты
+      5. Economy Service списывает стоимость
+      6. Косметика добавляется игроку
+      7. Cosmetic Event Handler публикует cosmetic:purchased
+      8. Notification Service уведомляет игрока
+      9. Analytics Service записывает событие
+      10. Realtime Gateway синхронизирует состояние
+
+    cosmetic_equip: |
+      1. Игрок выбирает косметику для экипировки
+      2. Cosmetic Equip Manager проверяет владение
+      3. Косметика размещается в нужном слоте
+      4. Обновляется статистика использования
+      5. Cosmetic Event Handler публикует cosmetic:equipped
+      6. Realtime Gateway синхронизирует состояние
+
+    shop_rotation: |
+      1. Ежедневно в 00:00 UTC запускается ротация
+      2. Cosmetic Shop Manager собирает подборку
+      3. Алгоритм гарантирует микс редкостей
+      4. Ротация сохраняется в БД
+      5. Cosmetic Event Handler публикует cosmetic:shop-rotated
+      6. Notification Service уведомляет игроков
+      7. Realtime Gateway синхронизирует состояние
+
+  integrations:
+    with_economy_service: |
+      - Покупка косметики
+      - Списание валюты
+      - Интеграция с экономической системой
+
+    with_inventory_service: |
+      - Хранение косметики
+      - Интеграция с инвентарём
+      - Управление предметами
+
+    with_analytics_service: |
+      - Запись событий покупок
+      - Статистика использования
+      - Интеграция с аналитикой
+
+    with_achievement_service: |
+      - Косметика как награда за достижения
+      - Интеграция с системой достижений
+
+    with_battle_pass_service: |
+      - Косметика как награда в Battle Pass
+      - Интеграция с Battle Pass
+
+    with_quest_service: |
+      - Косметика как награда за квесты
+      - Интеграция с системой квестов
+
+    with_notification_service: |
+      - Уведомления о покупках
+      - Уведомления о ротации магазина
+      - Уведомления о новых косметических предметах
+
+    with_realtime_gateway: |
+      - Синхронизация состояния косметики
+      - Уведомления о событиях
+      - Обновления в реальном времени
+
+  database_schema:
+    tables:
+      - name: cosmetic_items
+        description: Каталог косметических предметов
+        fields:
+          - id: UUID (PK)
+          - code: VARCHAR(50) (UNIQUE)
+          - name: VARCHAR(255)
+          - category: ENUM (CHARACTER_SKIN, WEAPON_SKIN, EMOTE, TITLE, NAME_PLATE)
+          - cosmetic_type: ENUM (SKIN, EMOTE, TITLE, NAME_PLATE)
+          - rarity: ENUM (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, EXOTIC)
+          - description: TEXT
+          - cost: BIGINT
+          - currency_type: VARCHAR(50)
+          - is_exclusive: BOOLEAN (default: false)
+          - source: VARCHAR(100)
+          - visual_effects: JSONB (nullable)
+          - assets: JSONB
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - category, rarity, is_active
+          - code
+          - rarity
+
+      - name: player_cosmetics
+        description: Косметика игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - cosmetic_item_id: UUID (FK cosmetic_items)
+          - source: VARCHAR(100)
+          - obtained_at: TIMESTAMP
+          - times_used: INTEGER (default: 0)
+          - last_used_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, cosmetic_item_id)
+        indexes:
+          - player_id
+          - cosmetic_item_id
+          - obtained_at
+
+      - name: player_equipped_cosmetics
+        description: Экипированная косметика игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts, UNIQUE)
+          - character_skin_id: UUID (FK cosmetic_items, nullable)
+          - weapon_skin_id: UUID (FK cosmetic_items, nullable)
+          - title_id: UUID (FK cosmetic_items, nullable)
+          - name_plate_id: UUID (FK cosmetic_items, nullable)
+          - emote_1_id: UUID (FK cosmetic_items, nullable)
+          - emote_2_id: UUID (FK cosmetic_items, nullable)
+          - emote_3_id: UUID (FK cosmetic_items, nullable)
+          - emote_4_id: UUID (FK cosmetic_items, nullable)
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id
+
+      - name: cosmetic_shop_rotations
+        description: История ротаций магазина косметики
+        fields:
+          - id: UUID (PK)
+          - rotation_date: DATE (UNIQUE)
+          - cosmetic_items: UUID[] (FK cosmetic_items)
+          - created_at: TIMESTAMP
+        indexes:
+          - rotation_date DESC
+
+      - name: cosmetic_purchase_history
+        description: История покупок косметики
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - cosmetic_item_id: UUID (FK cosmetic_items)
+          - cost: BIGINT
+          - currency_type: VARCHAR(50)
+          - purchased_at: TIMESTAMP
+        indexes:
+          - player_id, purchased_at
+          - cosmetic_item_id
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в monetization-service-go:
+      - cosmetic (каталог косметики)
+      - cosmetic-shop (магазин и ротация)
+      - cosmetic-purchase (покупки)
+      - cosmetic-equip (экипировка)
+      - cosmetic-rarity (редкости)
+      - cosmetic-inventory (инвентарь)
+      - cosmetic-events (события)
+    - Интеграция с economy-service для покупок
+    - Интеграция с inventory-service для хранения
+    - Интеграция с analytics-service для событий
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация состояния косметики через WebSocket
+    - Уведомления о событиях
+    - Обновления в реальном времени
+
+  performance_requirements:
+    - Покупка косметики < 200ms
+    - Экипировка косметики < 100ms
+    - Загрузка каталога < 200ms
+    - Загрузка магазина < 100ms
+    - Ротация магазина < 1s
+    - Поддержка до 100K косметических предметов
+    - Поддержка до 10M владений косметикой
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через monetization-service
+    - Распределение нагрузки на косметику
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование каталога в Redis
+    - Оптимизация ротации через scheduled jobs
+
+subtasks:
+  - id: cosmetic-catalog-manager-module
+    title: Реализация модуля Cosmetic Catalog Manager
+    description: |
+      Управление каталогом косметики
+      Категории косметики
+      Типы косметики
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: cosmetic-shop-manager
+    title: Реализация Cosmetic Shop Manager
+    description: |
+      Управление магазином
+      Ежедневная ротация
+      Подборка предметов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: cosmetic-purchase-handler
+    title: Реализация Cosmetic Purchase Handler
+    description: |
+      Обработка покупок
+      Проверка владения
+      Списание валюты
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: cosmetic-equip-manager
+    title: Реализация Cosmetic Equip Manager
+    description: |
+      Управление экипировкой
+      Управление слотами
+      Обновление статистики
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: cosmetic-rarity-system
+    title: Реализация Cosmetic Rarity System
+    description: |
+      Управление редкостями
+      Редкости и эффекты
+      Визуальные эффекты
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: cosmetic-inventory-manager
+    title: Реализация Cosmetic Inventory Manager
+    description: |
+      Управление инвентарём
+      Список владения
+      Статистика использования
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: cosmetic-event-handler
+    title: Реализация Cosmetic Event Handler
+    description: |
+      Обработка событий
+      Публикация событий
+      Подписка на события
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование каталога
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для косметики
+      Интеграция с существующим API monetization-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты покупки косметики
+      Тесты экипировки
+      Тесты ротации магазина
+      Тесты интеграций
+    priority: high
+    estimated_time: 4-5 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Monetization Service"
+            CCM[Cosmetic Catalog Manager]
+            CSM[Cosmetic Shop Manager]
+            CPH[Cosmetic Purchase Handler]
+            CEM[Cosmetic Equip Manager]
+            CRS[Cosmetic Rarity System]
+            CIM[Cosmetic Inventory Manager]
+            CEH[Cosmetic Event Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>cosmetic_items<br/>player_cosmetics<br/>player_equipped_cosmetics<br/>cosmetic_shop_rotations<br/>cosmetic_purchase_history)]
+        end
+
+        subgraph "External Services"
+            ES[Economy Service]
+            IS[Inventory Service]
+            AS[Analytics Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|purchase cosmetic| CPH
+        CL -->|equip cosmetic| CEM
+        CPH --> ES
+        CSM -->|rotate| CSM
+        CEH --> NS
+        CEH --> RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant CPH as Cosmetic Purchase Handler
+        participant ES as Economy Service
+        participant CEM as Cosmetic Equip Manager
+
+        P->>CPH: Purchase cosmetic
+        CPH->>ES: Check currency
+        ES->>CPH: Currency OK
+        CPH->>CPH: Add cosmetic
+        P->>CEM: Equip cosmetic
+        CEM->>CEM: Update slots
+    ```
+
+decisions:
+  - id: adr-cosmetic-architecture
+    summary: |
+      Выбрана модульная архитектура внутри monetization-service-go для обеспечения
+      тесной интеграции с системой монетизации.
+
+  - id: adr-cosmetic-categories
+    summary: |
+      Пять категорий косметики (character skins, weapon skins, emotes, titles, name plates)
+      обеспечивают разнообразие персонализации.
+
+  - id: adr-cosmetic-rarity
+    summary: |
+      Система редкостей (Common, Uncommon, Rare, Epic, Legendary, Exotic) создаёт
+      ценность и мотивирует игроков собирать редкие предметы.
+
+  - id: adr-shop-rotation
+    summary: |
+      Ежедневная ротация магазина с гарантированным миксом редкостей создаёт
+      FOMO и мотивирует ежедневные визиты.
+
+  - id: adr-cosmetic-equip
+    summary: |
+      Система экипировки с несколькими слотами (character skin, weapon skin, title,
+      name plate, 4 слота для эмоций) даёт игрокам полный контроль над персонализацией.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата редкостей и эффектов
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы косметики:
+      - Определены компоненты (Cosmetic Catalog Manager, Cosmetic Shop Manager, Cosmetic Purchase Handler, Cosmetic Equip Manager, Cosmetic Rarity System, Cosmetic Inventory Manager, Cosmetic Event Handler)
+      - Описаны категории косметики (CHARACTER_SKIN, WEAPON_SKIN, EMOTE, TITLE, NAME_PLATE)
+      - Описаны редкости (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, EXOTIC)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (cosmetic_items, player_cosmetics, player_equipped_cosmetics, cosmetic_shop_rotations, cosmetic_purchase_history)
+      - Спроектирована система покупки косметики
+      - Спроектирована система экипировки косметики
+      - Спроектирована система магазина и ротации
+      - Спроектирована система редкостей
+      - Создано техническое задание
+      - Разбито на подзадачи
+
