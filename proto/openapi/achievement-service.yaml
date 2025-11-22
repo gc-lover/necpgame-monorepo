@@ -166,6 +166,133 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /players/{playerId}/progress:
+    get:
+      tags:
+        - Player Achievements
+      summary: Получить прогресс игрока по достижениям
+      operationId: getPlayerProgress
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/AchievementCategory'
+      responses:
+        '200':
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProgressResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /players/{playerId}/unlocked:
+    get:
+      tags:
+        - Player Achievements
+      summary: Получить разблокированные достижения игрока
+      operationId: getPlayerUnlocked
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/AchievementCategory'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Разблокированные достижения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerUnlockedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /players/{playerId}/titles:
+    get:
+      tags:
+        - Player Achievements
+      summary: Получить титулы игрока
+      operationId: getPlayerTitles
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Титулы игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerTitlesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /players/{playerId}/titles/{titleId}/equip:
+    post:
+      tags:
+        - Player Achievements
+      summary: Экипировать титул
+      operationId: equipTitle
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: titleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Титул экипирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipTitleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /achievements/leaderboard:
     get:
       tags:
