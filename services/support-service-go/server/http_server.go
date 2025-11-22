@@ -13,17 +13,31 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type TicketServiceInterface interface {
+	CreateTicket(ctx context.Context, playerID uuid.UUID, req *models.CreateTicketRequest) (*models.SupportTicket, error)
+	GetTicket(ctx context.Context, id uuid.UUID) (*models.SupportTicket, error)
+	GetTicketByNumber(ctx context.Context, number string) (*models.SupportTicket, error)
+	GetTicketsByPlayerID(ctx context.Context, playerID uuid.UUID, limit, offset int) (*models.TicketListResponse, error)
+	GetTicketsByAgentID(ctx context.Context, agentID uuid.UUID, limit, offset int) (*models.TicketListResponse, error)
+	GetTicketsByStatus(ctx context.Context, status models.TicketStatus, limit, offset int) (*models.TicketListResponse, error)
+	UpdateTicket(ctx context.Context, id uuid.UUID, req *models.UpdateTicketRequest) (*models.SupportTicket, error)
+	AssignTicket(ctx context.Context, id uuid.UUID, agentID uuid.UUID) (*models.SupportTicket, error)
+	AddResponse(ctx context.Context, ticketID uuid.UUID, authorID uuid.UUID, isAgent bool, req *models.AddResponseRequest) (*models.TicketResponse, error)
+	GetTicketDetail(ctx context.Context, id uuid.UUID) (*models.TicketDetailResponse, error)
+	RateTicket(ctx context.Context, id uuid.UUID, rating int) error
+}
+
 type HTTPServer struct {
 	addr          string
 	router        *mux.Router
-	ticketService *TicketService
+	ticketService TicketServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
 	jwtValidator  *JwtValidator
 	authEnabled   bool
 }
 
-func NewHTTPServer(addr string, ticketService *TicketService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, ticketService TicketServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:         addr,
