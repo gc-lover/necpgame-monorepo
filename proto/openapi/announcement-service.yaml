@@ -16,10 +16,22 @@ servers:
 tags:
   - name: Announcements
     description: Управление объявлениями
+  - name: Announcement Publisher
+    description: Публикация объявлений
+  - name: Announcement Scheduler
+    description: Планирование публикаций
+  - name: Announcement Delivery
+    description: Доставка объявлений
+  - name: Announcement Targeting
+    description: Таргетинг объявлений
+  - name: Announcement Tracking
+    description: Учёт прочтений и статистика
   - name: Patch Notes
     description: Патчноуты
   - name: News Feed
     description: Новостная лента
+  - name: Announcement Events
+    description: События объявлений
 
 paths:
   /announcements:
@@ -108,9 +120,11 @@ paths:
   /announcements/{announcementId}/read:
     post:
       tags:
-        - Announcements
+        - Announcement Tracking
       summary: Отметить объявление как прочитанное
       operationId: markAnnouncementAsRead
+      security:
+        - BearerAuth: []
       parameters:
         - name: announcementId
           in: path
@@ -123,13 +137,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - character_id
-              properties:
-                character_id:
-                  type: string
-                  format: uuid
+              $ref: '#/components/schemas/MarkReadRequest'
       responses:
         '200':
           description: Объявление отмечено как прочитанное
@@ -143,6 +151,8 @@ paths:
                     example: read
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -255,6 +265,576 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /liveops/announcements:
+    post:
+      tags:
+        - Announcements
+      summary: Создать объявление (admin)
+      operationId: createAnnouncement
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnnouncementRequest'
+      responses:
+        '201':
+          description: Объявление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}:
+    put:
+      tags:
+        - Announcements
+      summary: Обновить объявление (admin)
+      operationId: updateAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAnnouncementRequest'
+      responses:
+        '200':
+          description: Объявление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Announcements
+      summary: Удалить объявление (admin)
+      operationId: deleteAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/publish:
+    post:
+      tags:
+        - Announcement Publisher
+      summary: Опубликовать объявление
+      operationId: publishAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление опубликовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/schedule:
+    post:
+      tags:
+        - Announcement Publisher
+        - Announcement Scheduler
+      summary: Запланировать публикацию объявления
+      operationId: scheduleAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleAnnouncementRequest'
+      responses:
+        '200':
+          description: Публикация запланирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/archive:
+    post:
+      tags:
+        - Announcement Publisher
+      summary: Архивировать объявление
+      operationId: archiveAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление архивировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/scheduled:
+    get:
+      tags:
+        - Announcement Scheduler
+      summary: Получить запланированные объявления
+      operationId: getScheduledAnnouncements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список запланированных объявлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcement'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/deliver:
+    post:
+      tags:
+        - Announcement Delivery
+      summary: Доставить объявление
+      operationId: deliverAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliverAnnouncementRequest'
+      responses:
+        '200':
+          description: Объявление доставлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: delivered
+                  recipients_count:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/delivery-status:
+    get:
+      tags:
+        - Announcement Delivery
+      summary: Получить статус доставки объявления
+      operationId: getDeliveryStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус доставки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/target:
+    post:
+      tags:
+        - Announcement Targeting
+      summary: Настроить таргетинг объявления
+      operationId: setAnnouncementTargeting
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTargetingRequest'
+      responses:
+        '200':
+          description: Таргетинг настроен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/audience:
+    get:
+      tags:
+        - Announcement Targeting
+      summary: Получить аудиторию объявления
+      operationId: getAnnouncementAudience
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Аудитория объявления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudienceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/click:
+    post:
+      tags:
+        - Announcement Tracking
+      summary: Отследить клик по объявлению
+      operationId: trackAnnouncementClick
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackClickRequest'
+      responses:
+        '200':
+          description: Клик зафиксирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: tracked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/stats:
+    get:
+      tags:
+        - Announcement Tracking
+      summary: Получить статистику объявления
+      operationId: getAnnouncementStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика объявления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/patch-notes:
+    post:
+      tags:
+        - Patch Notes
+      summary: Создать патчноут (admin)
+      operationId: createPatchNote
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatchNoteRequest'
+      responses:
+        '201':
+          description: Патчноут создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchNote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /liveops/announcements/events/{announcement_id}:
+    get:
+      tags:
+        - Announcement Events
+      summary: Получить события объявления
+      operationId: getAnnouncementEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -269,7 +849,7 @@ components:
         id:
           type: string
           format: uuid
-        type:
+        announcement_type:
           type: string
           enum:
             - GAME_NEWS
@@ -283,13 +863,9 @@ components:
           type: string
           enum:
             - LOW
-            - MEDIUM
+            - NORMAL
             - HIGH
             - CRITICAL
-        title:
-          type: string
-        content:
-          type: string
         display_style:
           type: string
           enum:
@@ -298,23 +874,410 @@ components:
             - MODAL
             - BANNER
             - TOAST
-        media_url:
+        status:
           type: string
+          enum:
+            - DRAFT
+            - SCHEDULED
+            - PUBLISHED
+            - ARCHIVED
+        title:
+          type: string
+        content:
+          type: string
+        scheduled_publish_at:
+          type: string
+          format: date-time
           nullable: true
-        target_audience:
-          type: object
-          additionalProperties: true
         published_at:
           type: string
           format: date-time
           nullable: true
-        expires_at:
+        archived_at:
           type: string
           format: date-time
           nullable: true
+        targeting:
+          type: object
+          additionalProperties: true
+          nullable: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+        media:
+          type: object
+          additionalProperties: true
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
         created_at:
           type: string
           format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateAnnouncementRequest:
+      type: object
+      required:
+        - announcement_type
+        - title
+        - content
+      properties:
+        announcement_type:
+          type: string
+          enum:
+            - GAME_NEWS
+            - PATCH_NOTES
+            - MAINTENANCE
+            - EVENT
+            - PROMOTION
+            - COMMUNITY
+            - EMERGENCY
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+          default: NORMAL
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+          default: NEWS_FEED
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        targeting:
+          type: object
+          additionalProperties: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+          default:
+            - NEWS_FEED
+        media:
+          type: object
+          additionalProperties: true
+
+    UpdateAnnouncementRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+        targeting:
+          type: object
+          additionalProperties: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+        media:
+          type: object
+          additionalProperties: true
+
+    ScheduleAnnouncementRequest:
+      type: object
+      required:
+        - scheduled_publish_at
+      properties:
+        scheduled_publish_at:
+          type: string
+          format: date-time
+
+    DeliverAnnouncementRequest:
+      type: object
+      properties:
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+        force:
+          type: boolean
+          default: false
+          description: Принудительная доставка даже если объявление не опубликовано
+
+    DeliveryStatusResponse:
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+        delivery_status:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelDeliveryStatus'
+        total_recipients:
+          type: integer
+        delivered_count:
+          type: integer
+        failed_count:
+          type: integer
+
+    ChannelDeliveryStatus:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+        status:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+        recipients_count:
+          type: integer
+        delivered_count:
+          type: integer
+        failed_count:
+          type: integer
+
+    SetTargetingRequest:
+      type: object
+      properties:
+        targeting:
+          type: object
+          properties:
+            region:
+              type: array
+              items:
+                type: string
+            min_level:
+              type: integer
+            max_level:
+              type: integer
+            min_activity_days:
+              type: integer
+            has_purchases:
+              type: boolean
+            languages:
+              type: array
+              items:
+                type: string
+            platforms:
+              type: array
+              items:
+                type: string
+                enum:
+                  - PC
+                  - CONSOLE
+                  - MOBILE
+          additionalProperties: true
+
+    AudienceResponse:
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+        estimated_audience_size:
+          type: integer
+        targeting_criteria:
+          type: object
+          additionalProperties: true
+        audience_breakdown:
+          type: object
+          properties:
+            by_region:
+              type: object
+              additionalProperties:
+                type: integer
+            by_level:
+              type: object
+              additionalProperties:
+                type: integer
+            by_platform:
+              type: object
+              additionalProperties:
+                type: integer
+
+    TrackClickRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        delivery_channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+
+    AnnouncementStats:
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+        total_views:
+          type: integer
+        total_reads:
+          type: integer
+        total_clicks:
+          type: integer
+        total_hides:
+          type: integer
+        read_rate:
+          type: number
+          format: float
+          description: Процент прочтений от просмотров
+        click_rate:
+          type: number
+          format: float
+          description: Процент кликов от прочтений
+        stats_by_channel:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChannelStats'
+
+    ChannelStats:
+      type: object
+      properties:
+        views:
+          type: integer
+        reads:
+          type: integer
+        clicks:
+          type: integer
+        hides:
+          type: integer
+
+    CreatePatchNoteRequest:
+      type: object
+      required:
+        - version
+        - title
+        - content
+      properties:
+        version:
+          type: string
+          maxLength: 50
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        improvements:
+          type: array
+          items:
+            type: string
+        known_issues:
+          type: array
+          items:
+            type: string
+        attachments:
+          type: array
+          items:
+            type: object
+          nullable: true
+        announcement_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    AnnouncementEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        announcement_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - announcement:created
+            - announcement:published
+            - announcement:delivered
+            - announcement:read
+            - announcement:clicked
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    AnnouncementEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnouncementEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
 
     PatchNote:
       type: object
@@ -371,10 +1334,28 @@ components:
           type: string
           format: date-time
 
+    MarkReadRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        delivery_channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+
     Error:
       type: object
       properties:
         error:
+          type: string
+        message:
           type: string
 
   responses:
