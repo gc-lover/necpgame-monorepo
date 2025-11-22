@@ -144,6 +144,335 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /gameplay/progression/experience/calculate:
+    get:
+      tags:
+        - Progression
+      summary: Рассчитать опыт
+      operationId: calculateExperience
+      parameters:
+        - name: base_xp
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: source
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [combat:enemy-killed, quest:completed, skill:used, exploration:area-discovered, achievement:unlocked]
+        - name: level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: modifiers
+          in: query
+          schema:
+            type: object
+            additionalProperties: true
+      responses:
+        '200':
+          description: Результат расчёта опыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperienceCalculationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/level/{playerId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить уровень игрока
+      operationId: getPlayerLevel
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уровень игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerLevelResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/level/check:
+    post:
+      tags:
+        - Progression
+      summary: Проверить повышение уровня
+      operationId: checkLevelUp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckLevelUpRequest'
+      responses:
+        '200':
+          description: Результат проверки повышения уровня
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LevelUpCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/level/requirements/{level}:
+    get:
+      tags:
+        - Progression
+      summary: Получить требования к уровню
+      operationId: getLevelRequirements
+      parameters:
+        - name: level
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Требования к уровню
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LevelRequirementsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/attributes/{playerId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить атрибуты игрока
+      operationId: getPlayerAttributes
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Атрибуты игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAttributesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/attributes/points/{playerId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить доступные очки атрибутов
+      operationId: getAvailableAttributePoints
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Доступные очки атрибутов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableAttributePointsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/skills/{playerId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить навыки игрока
+      operationId: getPlayerSkills
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Навыки игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSkillsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/skills/experience/add:
+    post:
+      tags:
+        - Progression
+      summary: Начислить опыт навыку
+      operationId: addSkillExperience
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSkillExperienceRequest'
+      responses:
+        '200':
+          description: Опыт навыку начислен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillExperienceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/skills/unlock:
+    post:
+      tags:
+        - Progression
+      summary: Разблокировать навык
+      operationId: unlockSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockSkillRequest'
+      responses:
+        '200':
+          description: Навык разблокирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillUnlockResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/skills/tree/{playerId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить дерево навыков игрока
+      operationId: getSkillTree
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Дерево навыков игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillTreeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/events/{playerId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить события прогрессии игрока
+      operationId: getProgressionEvents
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События прогрессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressionEventsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/validate:
+    post:
+      tags:
+        - Progression
+      summary: Валидировать прогрессию
+      operationId: validateProgression
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateProgressionRequest'
+      responses:
+        '200':
+          description: Результат валидации прогрессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressionValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /gameplay/quests:
     get:
       tags:
@@ -1978,6 +2307,329 @@ components:
           type: integer
           minimum: 1
           description: Количество очков
+
+    ExperienceCalculationResponse:
+      type: object
+      properties:
+        base_xp:
+          type: integer
+        modifiers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        final_xp:
+          type: integer
+        calculation_details:
+          type: object
+          additionalProperties: true
+
+    PlayerLevelResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+
+    CheckLevelUpRequest:
+      type: object
+      required:
+        - player_id
+        - current_experience
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        current_experience:
+          type: integer
+          minimum: 0
+        new_experience:
+          type: integer
+          minimum: 0
+
+    LevelUpCheckResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        level_up_available:
+          type: boolean
+        current_level:
+          type: integer
+        new_level:
+          type: integer
+          nullable: true
+        attribute_points_gained:
+          type: integer
+          nullable: true
+        skill_points_gained:
+          type: integer
+          nullable: true
+
+    LevelRequirementsResponse:
+      type: object
+      properties:
+        level:
+          type: integer
+        experience_required:
+          type: integer
+        cumulative_experience:
+          type: integer
+        attribute_points_reward:
+          type: integer
+        skill_points_reward:
+          type: integer
+
+    PlayerAttributesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          additionalProperties:
+            type: integer
+        available_points:
+          type: integer
+        max_values:
+          type: object
+          additionalProperties:
+            type: integer
+
+    AvailableAttributePointsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        available_points:
+          type: integer
+        total_points_earned:
+          type: integer
+        total_points_spent:
+          type: integer
+
+    PlayerSkillsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              skill_id:
+                type: string
+                format: uuid
+              level:
+                type: integer
+              experience:
+                type: integer
+              experience_to_next_level:
+                type: integer
+              is_unlocked:
+                type: boolean
+        total:
+          type: integer
+
+    AddSkillExperienceRequest:
+      type: object
+      required:
+        - player_id
+        - skill_id
+        - experience_amount
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        experience_amount:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum: [skill_use, quest_reward, achievement]
+
+    SkillExperienceResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+        experience:
+          type: integer
+        experience_to_next_level:
+          type: integer
+        level_up:
+          type: boolean
+
+    UnlockSkillRequest:
+      type: object
+      required:
+        - player_id
+        - skill_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+
+    SkillUnlockResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        unlocked:
+          type: boolean
+        requirements_met:
+          type: boolean
+        message:
+          type: string
+          nullable: true
+
+    SkillTreeResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skill_tree:
+          type: object
+          properties:
+            nodes:
+              type: array
+              items:
+                type: object
+                properties:
+                  skill_id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  level:
+                    type: integer
+                  is_unlocked:
+                    type: boolean
+                  prerequisites:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+            edges:
+              type: array
+              items:
+                type: object
+                properties:
+                  from:
+                    type: string
+                    format: uuid
+                  to:
+                    type: string
+                    format: uuid
+
+    ProgressionEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [character:level-up, character:attribute-distributed, character:skill-unlocked, character:experience-gained]
+        player_id:
+          type: string
+          format: uuid
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ProgressionEventsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgressionEvent'
+        total:
+          type: integer
+
+    ValidateProgressionRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        validation_type:
+          type: string
+          enum: [full, level, attributes, skills]
+          default: full
+
+    ProgressionValidationResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        valid:
+          type: boolean
+        validation_checks:
+          type: array
+          items:
+            type: object
+            properties:
+              check_name:
+                type: string
+              passed:
+                type: boolean
+              message:
+                type: string
+                nullable: true
+        issues:
+          type: array
+          items:
+            type: object
+            properties:
+              issue_type:
+                type: string
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              description:
+                type: string
 
     Quest:
       type: object
