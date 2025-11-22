@@ -614,3 +614,316 @@ func TestHousingService_UpdateApartmentSettings_NotFound(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+func TestHousingService_GetApartment_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(nil, nil)
+
+	result, err := service.GetApartment(context.Background(), apartmentID)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_ListApartments_Empty(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	mockRepo.On("ListApartments", context.Background(), (*uuid.UUID)(nil), (*string)(nil), (*bool)(nil), 10, 0).Return([]models.Apartment{}, 0, nil)
+
+	result, total, err := service.ListApartments(context.Background(), nil, nil, nil, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+	assert.Equal(t, 0, total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_ListApartments_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	expectedErr := errors.New("database error")
+	mockRepo.On("ListApartments", context.Background(), (*uuid.UUID)(nil), (*string)(nil), (*bool)(nil), 10, 0).Return(nil, 0, expectedErr)
+
+	result, total, err := service.ListApartments(context.Background(), nil, nil, nil, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, 0, total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_GetApartmentDetail_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(nil, nil)
+
+	result, err := service.GetApartmentDetail(context.Background(), apartmentID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "apartment not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_GetApartmentDetail_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(nil, expectedErr)
+
+	result, err := service.GetApartmentDetail(context.Background(), apartmentID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_PlaceFurniture_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+	characterID := uuid.New()
+	req := &models.PlaceFurnitureRequest{
+		CharacterID:    characterID,
+		FurnitureItemID: "furniture_001",
+		Position:       map[string]interface{}{"x": 0, "y": 0, "z": 0},
+		Rotation:       map[string]interface{}{"x": 0, "y": 0, "z": 0},
+		Scale:          map[string]interface{}{"x": 1, "y": 1, "z": 1},
+	}
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(nil, nil)
+
+	result, err := service.PlaceFurniture(context.Background(), apartmentID, req)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "apartment not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_PlaceFurniture_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+	characterID := uuid.New()
+	apartment := &models.Apartment{
+		ID:            apartmentID,
+		OwnerID:       characterID,
+		ApartmentType: models.ApartmentTypeStudio,
+		FurnitureSlots: 20,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+	req := &models.PlaceFurnitureRequest{
+		CharacterID:    characterID,
+		FurnitureItemID: "furniture_001",
+		Position:       map[string]interface{}{"x": 0, "y": 0, "z": 0},
+		Rotation:       map[string]interface{}{"x": 0, "y": 0, "z": 0},
+		Scale:          map[string]interface{}{"x": 1, "y": 1, "z": 1},
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(apartment, nil)
+	mockRepo.On("CountPlacedFurniture", context.Background(), apartmentID).Return(0, nil)
+	mockRepo.On("CreatePlacedFurniture", context.Background(), mock.AnythingOfType("*models.PlacedFurniture")).Return(expectedErr)
+
+	result, err := service.PlaceFurniture(context.Background(), apartmentID, req)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_RemoveFurniture_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+	furnitureID := uuid.New()
+	characterID := uuid.New()
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(nil, nil)
+
+	err := service.RemoveFurniture(context.Background(), apartmentID, furnitureID, characterID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "apartment not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_RemoveFurniture_FurnitureNotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+	furnitureID := uuid.New()
+	characterID := uuid.New()
+	apartment := &models.Apartment{
+		ID:            apartmentID,
+		OwnerID:       characterID,
+		ApartmentType: models.ApartmentTypeStudio,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(apartment, nil)
+	mockRepo.On("GetPlacedFurnitureByID", context.Background(), furnitureID).Return(nil, nil)
+
+	err := service.RemoveFurniture(context.Background(), apartmentID, furnitureID, characterID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "furniture not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_RemoveFurniture_Unauthorized(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+	furnitureID := uuid.New()
+	ownerID := uuid.New()
+	characterID := uuid.New()
+	apartment := &models.Apartment{
+		ID:            apartmentID,
+		OwnerID:       ownerID,
+		ApartmentType: models.ApartmentTypeStudio,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(apartment, nil)
+
+	err := service.RemoveFurniture(context.Background(), apartmentID, furnitureID, characterID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unauthorized")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_GetFurnitureItem_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	itemID := "nonexistent"
+
+	mockRepo.On("GetFurnitureItemByID", context.Background(), itemID).Return(nil, nil)
+
+	result, err := service.GetFurnitureItem(context.Background(), itemID)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_GetFurnitureItem_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	itemID := "furniture_001"
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetFurnitureItemByID", context.Background(), itemID).Return(nil, expectedErr)
+
+	result, err := service.GetFurnitureItem(context.Background(), itemID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_ListFurnitureItems_Empty(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	mockRepo.On("ListFurnitureItems", context.Background(), (*models.FurnitureCategory)(nil), 10, 0).Return([]models.FurnitureItem{}, 0, nil)
+
+	result, total, err := service.ListFurnitureItems(context.Background(), nil, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+	assert.Equal(t, 0, total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_ListFurnitureItems_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	expectedErr := errors.New("database error")
+	mockRepo.On("ListFurnitureItems", context.Background(), (*models.FurnitureCategory)(nil), 10, 0).Return(nil, 0, expectedErr)
+
+	result, total, err := service.ListFurnitureItems(context.Background(), nil, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, 0, total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_VisitApartment_NotFound(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	apartmentID := uuid.New()
+	characterID := uuid.New()
+	req := &models.VisitApartmentRequest{
+		CharacterID: characterID,
+		ApartmentID: apartmentID,
+	}
+
+	mockRepo.On("GetApartmentByID", context.Background(), apartmentID).Return(nil, nil)
+
+	err := service.VisitApartment(context.Background(), req)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "apartment not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_GetPrestigeLeaderboard_Empty(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	mockRepo.On("GetPrestigeLeaderboard", context.Background(), 10, 0).Return([]models.PrestigeLeaderboardEntry{}, 0, nil)
+
+	result, total, err := service.GetPrestigeLeaderboard(context.Background(), 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 0)
+	assert.Equal(t, 0, total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestHousingService_GetPrestigeLeaderboard_RepositoryError(t *testing.T) {
+	service, mockRepo, cleanup := setupTestService(t)
+	defer cleanup()
+
+	expectedErr := errors.New("database error")
+	mockRepo.On("GetPrestigeLeaderboard", context.Background(), 10, 0).Return(nil, 0, expectedErr)
+
+	result, total, err := service.GetPrestigeLeaderboard(context.Background(), 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, 0, total)
+	mockRepo.AssertExpectations(t)
+}
+
