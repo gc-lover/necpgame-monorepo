@@ -1340,6 +1340,936 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /social/guilds:
+    post:
+      tags:
+        - Guild
+      summary: Создать гильдию
+      operationId: createGuild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '200':
+          description: Гильдия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Guild
+      summary: Поиск гильдий
+      operationId: searchGuilds
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список гильдий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}:
+    get:
+      tags:
+        - Guild
+      summary: Получить информацию о гильдии
+      operationId: getGuild
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Guild
+      summary: Обновить информацию о гильдии
+      operationId: updateGuild
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRequest'
+      responses:
+        '200':
+          description: Гильдия обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Guild
+      summary: Распустить гильдию
+      operationId: disbandGuild
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Гильдия распущена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: disbanded
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/invite:
+    post:
+      tags:
+        - Guild
+      summary: Пригласить игрока в гильдию
+      operationId: inviteToGuild
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteToGuildRequest'
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildInvitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/members:
+    get:
+      tags:
+        - Guild
+      summary: Получить список участников гильдии
+      operationId: getGuildMembers
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: rank
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMembersResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Guild
+      summary: Добавить участника в гильдию
+      operationId: addGuildMember
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddGuildMemberRequest'
+      responses:
+        '200':
+          description: Участник добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMember'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/members/{memberId}:
+    delete:
+      tags:
+        - Guild
+      summary: Исключить участника из гильдии
+      operationId: removeGuildMember
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Участник исключён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: removed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/members/{memberId}/rank:
+    put:
+      tags:
+        - Guild
+      summary: Назначить ранг участнику
+      operationId: setGuildMemberRank
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetGuildMemberRankRequest'
+      responses:
+        '200':
+          description: Ранг назначен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMember'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/leader:
+    put:
+      tags:
+        - Guild
+      summary: Сменить лидера гильдии
+      operationId: transferGuildLeadership
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferGuildLeadershipRequest'
+      responses:
+        '200':
+          description: Лидер изменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/leave:
+    post:
+      tags:
+        - Guild
+      summary: Выйти из гильдии
+      operationId: leaveGuild
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Выход выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: left
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/ranks:
+    get:
+      tags:
+        - Guild
+      summary: Получить список рангов гильдии
+      operationId: getGuildRanks
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список рангов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRanksResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Guild
+      summary: Создать ранг в гильдии
+      operationId: createGuildRank
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRankRequest'
+      responses:
+        '200':
+          description: Ранг создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRank'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/ranks/{rankId}:
+    put:
+      tags:
+        - Guild
+      summary: Обновить ранг гильдии
+      operationId: updateGuildRank
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: rankId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRankRequest'
+      responses:
+        '200':
+          description: Ранг обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRank'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Guild
+      summary: Удалить ранг гильдии
+      operationId: deleteGuildRank
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: rankId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ранг удалён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/bank:
+    get:
+      tags:
+        - Guild
+      summary: Получить состояние банка гильдии
+      operationId: getGuildBank
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние банка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBank'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/bank/deposit:
+    post:
+      tags:
+        - Guild
+      summary: Внести депозит в банк гильдии
+      operationId: depositToGuildBank
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuildBankDepositRequest'
+      responses:
+        '200':
+          description: Депозит внесён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBankTransaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/bank/withdraw:
+    post:
+      tags:
+        - Guild
+      summary: Снять средства из банка гильдии
+      operationId: withdrawFromGuildBank
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuildBankWithdrawRequest'
+      responses:
+        '200':
+          description: Средства сняты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBankTransaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/bank/transactions:
+    get:
+      tags:
+        - Guild
+      summary: Получить историю транзакций банка гильдии
+      operationId: getGuildBankTransactions
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBankTransactionsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/wars:
+    get:
+      tags:
+        - Guild
+      summary: Получить список войн гильдии
+      operationId: getGuildWars
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - declared
+              - active
+              - ended
+              - cancelled
+      responses:
+        '200':
+          description: Список войн
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildWarsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/wars/declare:
+    post:
+      tags:
+        - Guild
+      summary: Объявить войну другой гильдии
+      operationId: declareGuildWar
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareGuildWarRequest'
+      responses:
+        '200':
+          description: Война объявлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildWar'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/wars/{warId}:
+    get:
+      tags:
+        - Guild
+      summary: Получить информацию о войне
+      operationId: getGuildWar
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о войне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildWar'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/wars/{warId}/end:
+    post:
+      tags:
+        - Guild
+      summary: Завершить войну
+      operationId: endGuildWar
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndGuildWarRequest'
+      responses:
+        '200':
+          description: Война завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildWar'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/territories:
+    get:
+      tags:
+        - Guild
+      summary: Получить территории гильдии
+      operationId: getGuildTerritories
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Территории гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildTerritoriesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/territories/{territoryId}/capture:
+    post:
+      tags:
+        - Guild
+      summary: Захватить территорию
+      operationId: captureTerritory
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: territoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Территория захвачена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Territory'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/territories/{territoryId}/resources:
+    get:
+      tags:
+        - Guild
+      summary: Получить ресурсы территории
+      operationId: getTerritoryResources
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: territoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ресурсы территории
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerritoryResources'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/progression:
+    get:
+      tags:
+        - Guild
+      summary: Получить прогрессию гильдии
+      operationId: getGuildProgression
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Прогрессия гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildProgression'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/guilds/{guildId}/perks:
+    get:
+      tags:
+        - Guild
+      summary: Получить перки гильдии
+      operationId: getGuildPerks
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Перки гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildPerksResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -2107,6 +3037,554 @@ components:
         synced_at:
           type: string
           format: date-time
+
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - tag
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        tag:
+          type: string
+          minLength: 2
+          maxLength: 5
+        description:
+          type: string
+          maxLength: 500
+        emblem:
+          type: string
+          format: uri
+
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+        emblem:
+          type: string
+          format: uri
+
+    Guild:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        tag:
+          type: string
+        description:
+          type: string
+        emblem:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum:
+            - active
+            - disbanded
+            - suspended
+        leader_id:
+          type: string
+          format: uuid
+        member_count:
+          type: integer
+        max_members:
+          type: integer
+        level:
+          type: integer
+        experience:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    GuildListResponse:
+      type: object
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guild'
+        total:
+          type: integer
+
+    InviteToGuildRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          maxLength: 200
+
+    GuildInvitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        inviter_id:
+          type: string
+          format: uuid
+        invitee_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - declined
+            - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    AddGuildMemberRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        rank_id:
+          type: string
+          format: uuid
+
+    GuildMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        rank_id:
+          type: string
+          format: uuid
+        rank_name:
+          type: string
+        joined_at:
+          type: string
+          format: date-time
+        last_active_at:
+          type: string
+          format: date-time
+
+    GuildMembersResponse:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+        total:
+          type: integer
+
+    SetGuildMemberRankRequest:
+      type: object
+      required:
+        - rank_id
+      properties:
+        rank_id:
+          type: string
+          format: uuid
+
+    TransferGuildLeadershipRequest:
+      type: object
+      required:
+        - new_leader_id
+      properties:
+        new_leader_id:
+          type: string
+          format: uuid
+
+    CreateGuildRankRequest:
+      type: object
+      required:
+        - name
+        - permissions
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - invite_members
+              - kick_members
+              - manage_ranks
+              - manage_bank
+              - declare_war
+              - manage_territory
+              - view_logs
+        order:
+          type: integer
+          minimum: 0
+
+    UpdateGuildRankRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - invite_members
+              - kick_members
+              - manage_ranks
+              - manage_bank
+              - declare_war
+              - manage_territory
+              - view_logs
+        order:
+          type: integer
+          minimum: 0
+
+    GuildRank:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        order:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    GuildRanksResponse:
+      type: object
+      properties:
+        ranks:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildRank'
+        total:
+          type: integer
+
+    GuildBank:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        currency:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        updated_at:
+          type: string
+          format: date-time
+
+    GuildBankDepositRequest:
+      type: object
+      required:
+        - currency
+      properties:
+        currency:
+          type: integer
+          minimum: 1
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+
+    GuildBankWithdrawRequest:
+      type: object
+      required:
+        - currency
+      properties:
+        currency:
+          type: integer
+          minimum: 1
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+
+    GuildBankTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - deposit
+            - withdraw
+        currency:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+
+    GuildBankTransactionsResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildBankTransaction'
+        total:
+          type: integer
+
+    DeclareGuildWarRequest:
+      type: object
+      required:
+        - target_guild_id
+      properties:
+        target_guild_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 500
+
+    EndGuildWarRequest:
+      type: object
+      required:
+        - winner_guild_id
+      properties:
+        winner_guild_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 500
+
+    GuildWar:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        attacker_guild_id:
+          type: string
+          format: uuid
+        defender_guild_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - declared
+            - active
+            - ended
+            - cancelled
+        winner_guild_id:
+          type: string
+          format: uuid
+          nullable: true
+        declared_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    GuildWarsResponse:
+      type: object
+      properties:
+        wars:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildWar'
+        total:
+          type: integer
+
+    Territory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        owner_guild_id:
+          type: string
+          format: uuid
+          nullable: true
+        captured_at:
+          type: string
+          format: date-time
+          nullable: true
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+
+    GuildTerritoriesResponse:
+      type: object
+      properties:
+        territories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Territory'
+        total:
+          type: integer
+
+    TerritoryResources:
+      type: object
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        resources:
+          type: array
+          items:
+            type: object
+            properties:
+              resource_type:
+                type: string
+              quantity:
+                type: integer
+              generation_rate:
+                type: number
+        last_updated:
+          type: string
+          format: date-time
+
+    GuildProgression:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+        experience:
+          type: integer
+        experience_to_next_level:
+          type: integer
+        max_members:
+          type: integer
+        unlocked_perks:
+          type: array
+          items:
+            type: string
+
+    GuildPerksResponse:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        perks:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildPerk'
+        total:
+          type: integer
+
+    GuildPerk:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        level_required:
+          type: integer
+        unlocked:
+          type: boolean
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
 
     Error:
       type: object
