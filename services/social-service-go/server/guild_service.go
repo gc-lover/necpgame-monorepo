@@ -321,6 +321,10 @@ func (s *SocialService) GetGuildBank(ctx context.Context, guildID uuid.UUID) (*m
 	return s.guildRepo.GetBank(ctx, guildID)
 }
 
+func (s *SocialService) GetInvitationsByCharacter(ctx context.Context, characterID uuid.UUID) ([]models.GuildInvitation, error) {
+	return s.guildRepo.GetInvitationsByCharacter(ctx, characterID)
+}
+
 func (s *SocialService) invalidateGuildCache(ctx context.Context, guildID uuid.UUID) {
 	pattern := "guild:" + guildID.String()
 	s.cache.Del(ctx, pattern)
