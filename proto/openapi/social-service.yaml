@@ -3420,6 +3420,159 @@ components:
           additionalProperties:
             type: integer
 
+    UnreadMailCountResponse:
+      type: object
+      properties:
+        unread_count:
+          type: integer
+        total_count:
+          type: integer
+
+    MailAttachmentsResponse:
+      type: object
+      properties:
+        mail_id:
+          type: string
+          format: uuid
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+        has_cod:
+          type: boolean
+        cod_amount:
+          type: integer
+          nullable: true
+
+    MailAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - item
+            - currency
+            - quest_reward
+            - achievement_reward
+        item_id:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: integer
+        currency:
+          type: integer
+          nullable: true
+        claimed:
+          type: boolean
+
+    ExtendMailRequest:
+      type: object
+      required:
+        - days
+      properties:
+        days:
+          type: integer
+          minimum: 1
+          maximum: 30
+          description: Количество дней для продления
+
+    SendSystemMailRequest:
+      type: object
+      required:
+        - recipient_id
+        - type
+        - title
+        - content
+      properties:
+        recipient_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - quest_reward
+            - achievement_reward
+            - event_reward
+            - maintenance_notification
+        title:
+          type: string
+        content:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+        expires_in_days:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 30
+
+    BroadcastSystemMailRequest:
+      type: object
+      required:
+        - type
+        - title
+        - content
+      properties:
+        type:
+          type: string
+          enum:
+            - quest_reward
+            - achievement_reward
+            - event_reward
+            - maintenance_notification
+        title:
+          type: string
+        content:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+        recipient_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        filter_criteria:
+          type: object
+          properties:
+            min_level:
+              type: integer
+            max_level:
+              type: integer
+            character_class:
+              type: string
+        expires_in_days:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 30
+
+    BroadcastResult:
+      type: object
+      properties:
+        total_sent:
+          type: integer
+        total_failed:
+          type: integer
+        failed_recipients:
+          type: array
+          items:
+            type: string
+            format: uuid
+        broadcast_id:
+          type: string
+          format: uuid
+        sent_at:
+          type: string
+          format: date-time
+
     Party:
       type: object
       properties:
