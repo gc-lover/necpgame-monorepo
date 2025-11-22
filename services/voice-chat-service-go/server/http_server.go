@@ -13,17 +13,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type VoiceServiceInterface interface {
+	CreateChannel(ctx context.Context, req *models.CreateChannelRequest) (*models.VoiceChannel, error)
+	GetChannel(ctx context.Context, channelID uuid.UUID) (*models.VoiceChannel, error)
+	ListChannels(ctx context.Context, channelType *models.VoiceChannelType, ownerID *uuid.UUID, limit, offset int) (*models.ChannelListResponse, error)
+	JoinChannel(ctx context.Context, req *models.JoinChannelRequest) (*models.WebRTCTokenResponse, error)
+	LeaveChannel(ctx context.Context, req *models.LeaveChannelRequest) error
+	UpdateParticipantStatus(ctx context.Context, req *models.UpdateParticipantStatusRequest) error
+	UpdateParticipantPosition(ctx context.Context, req *models.UpdateParticipantPositionRequest) error
+	GetChannelParticipants(ctx context.Context, channelID uuid.UUID) (*models.ParticipantListResponse, error)
+	GetChannelDetail(ctx context.Context, channelID uuid.UUID) (*models.ChannelDetailResponse, error)
+}
+
 type HTTPServer struct {
 	addr         string
 	router       *mux.Router
-	voiceService *VoiceService
+	voiceService VoiceServiceInterface
 	logger       *logrus.Logger
 	server       *http.Server
 	jwtValidator *JwtValidator
 	authEnabled  bool
 }
 
-func NewHTTPServer(addr string, voiceService *VoiceService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, voiceService VoiceServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:         addr,
