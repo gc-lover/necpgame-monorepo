@@ -1,0 +1,625 @@
+metadata:
+  id: voice-chat-system-architecture
+  title: Архитектура системы голосового чата (Voice Chat System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T00:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - voice-chat
+    - backend
+    - social
+    - communication
+    - realtime
+  related_systems:
+    - voice-chat-service-go
+    - social-service-go
+    - world-service-go
+  related_documents:
+    - id: voice-chat-system
+      relation: extends
+  github_issue: 265
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы голосового чата
+    для WebRTC-коммуникации с поддержкой party, guild, raid и proximity каналов
+    с маршрутизацией, настройками качества и управлением каналами.
+  goal: |
+    Создать архитектурную схему системы голосового чата с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы WebRTC соединений
+    - Системы каналов (party, guild, raid, proximity)
+    - Системы управления участниками
+    - Системы пространственного звука
+    - Технического задания для реализации
+  essence: |
+    Игровая система голосового чата для WebRTC-коммуникации с поддержкой различных
+    типов каналов и пространственного звука.
+
+architecture:
+  overview: |
+    Система голосового чата состоит из восьми основных компонентов:
+    1. Voice Channel Manager - управление голосовыми каналами
+    2. WebRTC Connection Manager - управление WebRTC соединениями
+    3. Audio Mixer - микширование аудио
+    4. Participant Manager - управление участниками
+    5. Proximity Voice Handler - обработка proximity каналов
+    6. Quality Manager - управление качеством звука
+    7. Voice Event Handler - обработка событий
+    8. Voice Statistics Collector - сбор статистики
+
+  components:
+    - name: Voice Channel Manager
+      location: voice-chat-service-go (модуль voice)
+      responsibility: |
+        - Управление голосовыми каналами
+        - Создание и удаление каналов
+        - Присоединение и выход из каналов
+        - Управление разрешениями каналов
+        - Интеграция с социальными системами
+      channel_types: |
+        - PARTY: канал группы (2-5 игроков)
+        - GUILD: канал гильдии (до 100 игроков)
+        - RAID: канал рейда (10-25 игроков с сабканалами)
+        - PROXIMITY: proximity канал (20 метров, 3D звук)
+      channel_features: |
+        - Лимиты участников
+        - Разрешения (mute, deaf, speaking)
+        - Настройки качества
+        - Автоматическое управление
+      endpoints:
+        - GET /api/v1/social/voice/channels - список каналов
+        - POST /api/v1/social/voice/channels/create - создание канала
+        - POST /api/v1/social/voice/channels/{channel_id}/join - присоединение к каналу
+        - POST /api/v1/social/voice/channels/{channel_id}/leave - выход из канала
+
+    - name: WebRTC Connection Manager
+      location: voice-chat-service-go (модуль voice-webrtc)
+      responsibility: |
+        - Управление WebRTC соединениями
+        - Установка соединений
+        - Выдача токенов WebRTC
+        - Управление сигналингом
+        - Обработка переподключений
+      webrtc_providers: |
+        - Agora: внешний провайдер
+        - Twilio: внешний провайдер
+        - Self-hosted: собственный сервер
+      connection_lifecycle: |
+        - INITIATING: инициализация соединения
+        - CONNECTING: подключение
+        - CONNECTED: подключено
+        - DISCONNECTED: отключено
+        - RECONNECTING: переподключение
+      endpoints:
+        - POST /api/v1/social/voice/webrtc/token - получение токена WebRTC
+        - POST /api/v1/social/voice/webrtc/connect - подключение
+        - POST /api/v1/social/voice/webrtc/disconnect - отключение
+
+    - name: Audio Mixer
+      location: voice-chat-service-go (модуль voice-mixer)
+      responsibility: |
+        - Микширование аудио потоков
+        - Маршрутизация аудио к участникам
+        - Обработка аудио эффектов
+        - Управление громкостью
+        - Оптимизация качества
+      mixing_strategy: |
+        - Смешивание всех потоков
+        - Применение эффектов (эхо, реверберация)
+        - Управление громкостью по участникам
+        - Адаптивное качество
+      endpoints:
+        - POST /api/v1/social/voice/mixer/configure - настройка микшера
+        - GET /api/v1/social/voice/mixer/status - статус микшера
+
+    - name: Participant Manager
+      location: voice-chat-service-go (модуль voice-participants)
+      responsibility: |
+        - Управление участниками каналов
+        - Управление состоянием участников (mute, deaf, speaking)
+        - Синхронизация участников
+        - Управление разрешениями
+      participant_states: |
+        - MUTED: участник заглушен
+        - DEAFENED: участник оглушён
+        - SPEAKING: участник говорит
+        - IDLE: участник неактивен
+      permission_management: |
+        - Mute участников
+        - Deafen участников
+        - Kick участников
+        - Transfer ownership
+      endpoints:
+        - GET /api/v1/social/voice/channels/{channel_id}/participants - участники канала
+        - POST /api/v1/social/voice/participants/{participant_id}/mute - заглушить участника
+        - POST /api/v1/social/voice/participants/{participant_id}/deafen - оглушить участника
+        - POST /api/v1/social/voice/participants/{participant_id}/kick - исключить участника
+
+    - name: Proximity Voice Handler
+      location: voice-chat-service-go (модуль voice-proximity)
+      responsibility: |
+        - Обработка proximity каналов
+        - Динамическое обновление участников
+        - Пространственный звук (3D)
+        - Расчёт расстояний
+        - Интеграция с world service
+      proximity_logic: |
+        - Радиус proximity: 20 метров
+        - 3D позиционирование звука
+        - Динамическое добавление/удаление участников
+        - Учёт препятствий (стены, объекты)
+      spatial_audio: |
+        - 3D позиционирование
+        - Attenuation по расстоянию
+        - Directional audio
+        - Occlusion (заглушение через препятствия)
+      endpoints:
+        - POST /api/v1/social/voice/proximity/update - обновление позиции
+        - GET /api/v1/social/voice/proximity/nearby/{player_id} - ближайшие игроки
+
+    - name: Quality Manager
+      location: voice-chat-service-go (модуль voice-quality)
+      responsibility: |
+        - Управление качеством звука
+        - Адаптивное качество
+        - Пресеты качества
+        - Мониторинг качества
+        - Автоматическое понижение качества при перегрузке
+      quality_presets: |
+        - HIGH: высокое качество (48kHz, stereo)
+        - MEDIUM: среднее качество (24kHz, mono)
+        - LOW: низкое качество (16kHz, mono)
+        - ADAPTIVE: адаптивное качество
+      adaptive_quality: |
+        - Мониторинг задержки
+        - Мониторинг потери пакетов
+        - Автоматическое понижение качества
+        - Восстановление качества
+      endpoints:
+        - GET /api/v1/social/voice/quality/presets - пресеты качества
+        - POST /api/v1/social/voice/quality/set - установка качества
+        - GET /api/v1/social/voice/quality/status - статус качества
+
+    - name: Voice Event Handler
+      location: voice-chat-service-go (модуль voice-events)
+      responsibility: |
+        - Обработка событий голосового чата
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Уведомления игроков
+      voice_events_published: |
+        - voice:channel-joined
+        - voice:channel-left
+        - voice:participant-joined
+        - voice:participant-left
+        - voice:participant-muted
+        - voice:participant-speaking
+      voice_events_consumed: |
+        - party:created
+        - party:member-joined
+        - guild:member-joined
+        - player:position-updated
+      endpoints:
+        - GET /api/v1/social/voice/events/{channel_id} - события канала
+
+    - name: Voice Statistics Collector
+      location: voice-chat-service-go (модуль voice-stats)
+      responsibility: |
+        - Сбор статистики голосового чата
+        - Метрики качества
+        - Метрики использования
+        - Интеграция с observability
+      statistics_metrics: |
+        - Количество активных каналов
+        - Количество участников
+        - Среднее качество звука
+        - Задержка аудио
+        - Потеря пакетов
+      endpoints:
+        - GET /api/v1/social/voice/stats/channels - статистика каналов
+        - GET /api/v1/social/voice/stats/participants - статистика участников
+        - GET /api/v1/social/voice/stats/quality - статистика качества
+
+  data_flow:
+    channel_join: |
+      1. Игрок запрашивает присоединение к каналу
+      2. Voice Channel Manager проверяет права доступа
+      3. Проверяется лимит участников
+      4. WebRTC Connection Manager выдаёт токен
+      5. Устанавливается WebRTC соединение
+      6. Participant Manager добавляет участника
+      7. Audio Mixer настраивает маршрутизацию
+      8. Voice Event Handler публикует событие
+      9. Realtime Gateway уведомляет участников
+
+    proximity_update: |
+      1. Игрок перемещается в мире
+      2. World Service обновляет позицию
+      3. Proximity Voice Handler получает обновление
+      4. Расчитываются расстояния до других игроков
+      5. Обновляется список участников proximity канала
+      6. Применяется 3D позиционирование звука
+      7. Audio Mixer обновляет маршрутизацию
+      8. Realtime Gateway синхронизирует изменения
+
+    quality_adaptation: |
+      1. Quality Manager мониторит качество соединения
+      2. Обнаруживается высокая задержка или потеря пакетов
+      3. Качество автоматически понижается
+      4. WebRTC Connection Manager обновляет настройки
+      5. Audio Mixer адаптирует обработку
+      6. Статистика обновляется
+      7. При улучшении качества - восстанавливается
+
+  integrations:
+    with_social_service: |
+      - Получение участников групп
+      - Получение участников гильдий
+      - Синхронизация с социальными системами
+
+    with_world_service: |
+      - Получение позиций игроков
+      - Обновление позиций для proximity
+      - Проверка препятствий для spatial audio
+
+    with_party_service: |
+      - Получение участников группы
+      - Синхронизация с группой
+      - Уведомления о событиях группы
+
+    with_guild_service: |
+      - Получение участников гильдии
+      - Синхронизация с гильдией
+      - Уведомления о событиях гильдии
+
+    with_notification_service: |
+      - Уведомления о присоединении к каналу
+      - Уведомления о событиях канала
+
+    with_realtime_gateway: |
+      - Синхронизация состояния каналов
+      - Уведомления о событиях
+      - Обновления в реальном времени
+
+    with_observability: |
+      - Отправка метрик в Prometheus
+      - Логирование в Loki
+      - Трейсинг в Tempo
+
+  database_schema:
+    tables:
+      - name: voice_channels
+        description: Голосовые каналы
+        fields:
+          - id: UUID (PK)
+          - channel_type: ENUM (PARTY, GUILD, RAID, PROXIMITY)
+          - owner_id: UUID (FK accounts, nullable)
+          - name: VARCHAR(255)
+          - max_participants: INTEGER
+          - quality_preset: ENUM (HIGH, MEDIUM, LOW, ADAPTIVE)
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - channel_type, is_active
+          - owner_id
+
+      - name: voice_participants
+        description: Участники голосовых каналов
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK voice_channels)
+          - player_id: UUID (FK accounts)
+          - webrtc_token: VARCHAR(255)
+          - is_muted: BOOLEAN (default: false)
+          - is_deafened: BOOLEAN (default: false)
+          - is_speaking: BOOLEAN (default: false)
+          - position_x: FLOAT (nullable)
+          - position_y: FLOAT (nullable)
+          - position_z: FLOAT (nullable)
+          - joined_at: TIMESTAMP
+          - last_activity_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(channel_id, player_id)
+        indexes:
+          - channel_id
+          - player_id
+          - is_speaking
+
+      - name: voice_statistics
+        description: Статистика голосового чата
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK voice_channels)
+          - participant_id: UUID (FK voice_participants)
+          - audio_latency_ms: INTEGER
+          - packet_loss_percent: FLOAT
+          - quality_score: FLOAT
+          - recorded_at: TIMESTAMP
+        indexes:
+          - channel_id, recorded_at
+          - participant_id, recorded_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в voice-chat-service-go:
+      - voice (управление каналами)
+      - voice-webrtc (WebRTC соединения)
+      - voice-mixer (микширование аудио)
+      - voice-participants (участники)
+      - voice-proximity (proximity каналы)
+      - voice-quality (качество звука)
+      - voice-events (события)
+      - voice-stats (статистика)
+    - Интеграция с WebRTC провайдерами (Agora, Twilio)
+    - Интеграция с social-service для участников
+    - Интеграция с world-service для позиций
+    - Оптимизация производительности (низкая задержка)
+
+  realtime_requirements:
+    - Минимальная задержка аудио (< 100ms)
+    - Высокое качество звука
+    - Синхронизация состояния в реальном времени
+
+  performance_requirements:
+    - Установка соединения < 500ms
+    - Задержка аудио < 100ms
+    - Поддержка до 10K активных каналов
+    - Поддержка до 100K участников одновременно
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через voice-chat-service
+    - Распределение нагрузки на каналы
+    - Оптимизация использования ресурсов
+    - Кэширование состояния каналов в Redis
+
+subtasks:
+  - id: voice-channel-manager-module
+    title: Реализация модуля Voice Channel Manager
+    description: |
+      Управление голосовыми каналами
+      Создание и удаление каналов
+      Присоединение и выход
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: webrtc-connection-manager-implementation
+    title: Реализация WebRTC Connection Manager
+    description: |
+      Управление WebRTC соединениями
+      Выдача токенов
+      Управление сигналингом
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: audio-mixer-development
+    title: Реализация Audio Mixer
+    description: |
+      Микширование аудио потоков
+      Маршрутизация аудио
+      Обработка эффектов
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: participant-manager
+    title: Реализация Participant Manager
+    description: |
+      Управление участниками
+      Управление состоянием
+      Управление разрешениями
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: proximity-voice-handler
+    title: Реализация Proximity Voice Handler
+    description: |
+      Обработка proximity каналов
+      Пространственный звук
+      Динамическое обновление участников
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: quality-manager
+    title: Реализация Quality Manager
+    description: |
+      Управление качеством звука
+      Адаптивное качество
+      Мониторинг качества
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: voice-event-handler
+    title: Реализация Voice Event Handler
+    description: |
+      Обработка событий голосового чата
+      Публикация событий
+      Подписка на события
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: voice-statistics-collector
+    title: Реализация Voice Statistics Collector
+    description: |
+      Сбор статистики
+      Метрики качества
+      Интеграция с observability
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование каналов
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для голосового чата
+      Интеграция с существующим API social-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты каналов
+      Тесты WebRTC соединений
+      Тесты proximity
+      Тесты качества
+      Тесты интеграций
+    priority: high
+    estimated_time: 4-5 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Voice Chat Service"
+            VCM[Voice Channel Manager]
+            WRCM[WebRTC Connection Manager]
+            AM[Audio Mixer]
+            PM[Participant Manager]
+            PVH[Proximity Voice Handler]
+            QM[Quality Manager]
+            VEH[Voice Event Handler]
+            VSC[Voice Statistics Collector]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>voice_channels<br/>voice_participants<br/>voice_statistics)]
+        end
+
+        subgraph "WebRTC Providers"
+            AGORA[Agora]
+            TWILIO[Twilio]
+            SELF[Self-hosted]
+        end
+
+        subgraph "External Services"
+            SS[Social Service]
+            WS[World Service]
+            PS[Party Service]
+            GS[Guild Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+            OBS[Observability]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|join channel| VCM
+        VCM --> WRCM
+        WRCM --> AGORA
+        WRCM --> TWILIO
+        WRCM --> SELF
+        VCM --> PM
+        PM --> AM
+        PVH --> WS
+        PVH --> AM
+        QM --> AM
+        VEH --> NS
+        VEH --> RG
+        VSC --> OBS
+        VCM --> SS
+        VCM --> PS
+        VCM --> GS
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant VCM as Voice Channel Manager
+        participant WRCM as WebRTC Connection Manager
+        participant PM as Participant Manager
+        participant AM as Audio Mixer
+
+        P->>VCM: Join channel
+        VCM->>WRCM: Get WebRTC token
+        WRCM->>P: Return token
+        P->>WRCM: Establish connection
+        WRCM->>PM: Add participant
+        PM->>AM: Configure routing
+        AM->>AM: Mix audio
+        AM->>P: Stream audio
+    ```
+
+decisions:
+  - id: adr-voice-chat-architecture
+    summary: |
+      Выбрана модульная архитектура внутри voice-chat-service-go для обеспечения
+      тесной интеграции с социальными системами.
+
+  - id: adr-webrtc-providers
+    summary: |
+      Поддержка нескольких WebRTC провайдеров (Agora, Twilio, self-hosted) обеспечивает
+      гибкость и возможность выбора оптимального решения.
+
+  - id: adr-channel-types
+    summary: |
+      Различные типы каналов (party, guild, raid, proximity) обеспечивают гибкую
+      коммуникацию для разных сценариев использования.
+
+  - id: adr-proximity-voice
+    summary: |
+      Proximity каналы с 3D позиционированием звука создают атмосферное общение
+      и улучшают игровой опыт.
+
+  - id: adr-adaptive-quality
+    summary: |
+      Адаптивное качество звука обеспечивает оптимальный баланс между качеством
+      и производительностью при различных условиях сети.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата WebRTC токенов и событий
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы голосового чата:
+      - Определены компоненты (Voice Channel Manager, WebRTC Connection Manager, Audio Mixer, Participant Manager, Proximity Voice Handler, Quality Manager, Voice Event Handler, Voice Statistics Collector)
+      - Описаны типы каналов (PARTY, GUILD, RAID, PROXIMITY)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (voice_channels, voice_participants, voice_statistics)
+      - Спроектирована система WebRTC соединений
+      - Спроектирована система каналов
+      - Спроектирована система управления участниками
+      - Спроектирована система пространственного звука
+      - Создано техническое задание
+      - Разбито на подзадачи
+
