@@ -13,17 +13,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type TradeServiceInterface interface {
+	CreateTrade(ctx context.Context, initiatorID uuid.UUID, req *models.CreateTradeRequest) (*models.TradeSession, error)
+	GetTrade(ctx context.Context, id uuid.UUID) (*models.TradeSession, error)
+	GetActiveTrades(ctx context.Context, characterID uuid.UUID) ([]models.TradeSession, error)
+	UpdateOffer(ctx context.Context, sessionID, characterID uuid.UUID, req *models.UpdateTradeOfferRequest) (*models.TradeSession, error)
+	ConfirmTrade(ctx context.Context, sessionID, characterID uuid.UUID) (*models.TradeSession, error)
+	CompleteTrade(ctx context.Context, sessionID uuid.UUID) error
+	CancelTrade(ctx context.Context, sessionID, characterID uuid.UUID) error
+	GetTradeHistory(ctx context.Context, characterID uuid.UUID, limit, offset int) (*models.TradeHistoryListResponse, error)
+}
+
 type HTTPServer struct {
 	addr          string
 	router        *mux.Router
-	tradeService  *TradeService
+	tradeService  TradeServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
 	jwtValidator  *JwtValidator
 	authEnabled   bool
 }
 
-func NewHTTPServer(addr string, tradeService *TradeService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:         addr,
@@ -48,12 +59,12 @@ func NewHTTPServer(addr string, tradeService *TradeService, jwtValidator *JwtVal
 
 	economy.HandleFunc("/trade", server.createTrade).Methods("POST")
 	economy.HandleFunc("/trade", server.getActiveTrades).Methods("GET")
+	economy.HandleFunc("/trade/history", server.getTradeHistory).Methods("GET")
 	economy.HandleFunc("/trade/{id}", server.getTrade).Methods("GET")
 	economy.HandleFunc("/trade/{id}/offer", server.updateOffer).Methods("PUT")
 	economy.HandleFunc("/trade/{id}/confirm", server.confirmTrade).Methods("POST")
 	economy.HandleFunc("/trade/{id}/complete", server.completeTrade).Methods("POST")
 	economy.HandleFunc("/trade/{id}/cancel", server.cancelTrade).Methods("POST")
-	economy.HandleFunc("/trade/history", server.getTradeHistory).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
