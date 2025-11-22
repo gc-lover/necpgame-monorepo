@@ -1445,12 +1445,14 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /social/mail:
+  /social/mail/send:
     post:
       tags:
         - Mail
       summary: Отправить письмо
       operationId: sendMail
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -1467,15 +1469,17 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /social/mail/inbox:
     get:
       tags:
         - Mail
-      summary: Получить список писем
-      operationId: getMails
+      summary: Получить входящие письма
+      operationId: getInbox
+      security:
+        - BearerAuth: []
       parameters:
-        - name: recipient_id
+        - name: player_id
           in: query
-          required: true
           schema:
             type: string
             format: uuid
@@ -1502,14 +1506,16 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /social/mail/{id}:
+  /social/mail/{mail_id}:
     get:
       tags:
         - Mail
       summary: Получить письмо
       operationId: getMail
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: mail_id
           in: path
           required: true
           schema:
@@ -1530,8 +1536,10 @@ paths:
         - Mail
       summary: Удалить письмо
       operationId: deleteMail
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: mail_id
           in: path
           required: true
           schema:
@@ -1551,14 +1559,16 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /social/mail/{id}/read:
+  /social/mail/{mail_id}/read:
     put:
       tags:
         - Mail
       summary: Отметить письмо как прочитанное
       operationId: markMailAsRead
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: mail_id
           in: path
           required: true
           schema:
@@ -1578,14 +1588,16 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /social/mail/{id}/claim:
+  /social/mail/{mail_id}/attachments/claim:
     post:
       tags:
         - Mail
       summary: Получить вложения из письма
       operationId: claimAttachment
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: mail_id
           in: path
           required: true
           schema:
@@ -1609,6 +1621,8 @@ paths:
         - Mail
       summary: Получить количество непрочитанных писем
       operationId: getUnreadMailCount
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Количество непрочитанных писем
@@ -1619,14 +1633,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /social/mail/{id}/attachments:
+  /social/mail/{mail_id}/attachments:
     get:
       tags:
         - Mail
       summary: Получить список вложений письма
       operationId: getMailAttachments
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: mail_id
           in: path
           required: true
           schema:
@@ -1644,14 +1660,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /social/mail/{id}/cod/pay:
+  /social/mail/{mail_id}/cod/pay:
     post:
       tags:
         - Mail
       summary: Оплатить COD письмо
       operationId: payMailCOD
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: mail_id
           in: path
           required: true
           schema:
@@ -1671,14 +1689,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /social/mail/{id}/cod/decline:
+  /social/mail/{mail_id}/cod/decline:
     post:
       tags:
         - Mail
       summary: Отказаться от COD письма
       operationId: declineMailCOD
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: mail_id
           in: path
           required: true
           schema:
@@ -1708,6 +1728,8 @@ paths:
         - Mail
       summary: Получить истекающие письма
       operationId: getExpiringMails
+      security:
+        - BearerAuth: []
       parameters:
         - name: days
           in: query
@@ -1739,14 +1761,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /social/mail/{id}/extend:
+  /social/mail/{mail_id}/extend:
     post:
       tags:
         - Mail
       summary: Продлить срок действия письма
       operationId: extendMailExpiration
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: mail_id
           in: path
           required: true
           schema:
@@ -1778,6 +1802,8 @@ paths:
         - Mail
       summary: Отправить системное письмо
       operationId: sendSystemMail
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -1802,6 +1828,8 @@ paths:
         - Mail
       summary: Массовая рассылка системных писем
       operationId: broadcastSystemMail
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
