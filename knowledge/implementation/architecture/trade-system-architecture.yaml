@@ -1,0 +1,518 @@
+metadata:
+  id: trade-system-architecture
+  title: Архитектура системы P2P торговли
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T19:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - trade
+    - backend
+    - economy
+    - security
+  related_systems:
+    - economy-service-go
+    - inventory-service-go
+    - movement-service-go
+    - social-service-go
+  related_documents:
+    - id: trade-system
+      relation: extends
+  github_issue: 131
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы P2P торговли
+    для обеспечения безопасного обмена предметами и валютой между игроками
+    с защитой от мошенничества и аудитом всех операций.
+  goal: |
+    Создать архитектурную схему системы торговли с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Антифрод механизмов
+    - Технического задания для реализации
+  essence: |
+    Безопасная система P2P торговли с двойным подтверждением, проверкой владения предметами,
+    контролем расстояния, таймаутами и полным аудитом всех операций.
+
+architecture:
+  overview: |
+    Система P2P торговли состоит из пяти основных компонентов:
+    1. Trade Session Manager - управление торговыми сессиями
+    2. Item Validator - проверка владения и доступности предметов
+    3. Trade Confirmation Handler - обработка подтверждений обмена
+    4. Anti-Fraud System - защита от мошенничества
+    5. Trade Audit Logger - аудит всех операций
+
+  components:
+    - name: Trade Session Manager
+      location: economy-service-go (модуль trade)
+      responsibility: |
+        - Создание и управление торговыми сессиями
+        - Управление участниками торговли (инициатор, получатель)
+        - Отслеживание статуса сессии (created, active, confirmed, completed, cancelled)
+        - Управление таймаутами (5 минут по умолчанию)
+        - Проверка расстояния между игроками
+        - Синхронизация состояния через realtime-gateway
+      port: 8086 (economy-service-go)
+      endpoints:
+        - POST /api/v1/economy/trade/sessions - создание торговой сессии
+        - GET /api/v1/economy/trade/sessions/{session_id} - получение сессии
+        - PUT /api/v1/economy/trade/sessions/{session_id}/offer - добавление предложения
+        - PUT /api/v1/economy/trade/sessions/{session_id}/confirm - подтверждение обмена
+        - POST /api/v1/economy/trade/sessions/{session_id}/execute - выполнение обмена
+        - DELETE /api/v1/economy/trade/sessions/{session_id} - отмена сессии
+
+    - name: Item Validator
+      location: economy-service-go (модуль trade-validation)
+      responsibility: |
+        - Проверка владения предметами участниками
+        - Валидация доступности предметов для торговли (bind-on-pickup, locked)
+        - Проверка наличия предметов в инвентаре
+        - Блокировка предметов во время торговли
+        - Проверка валюты и её наличия
+      integration: |
+        Интегрируется с inventory-service для проверки владения
+        Использует circuit breaker для защиты от недоступности сервисов
+      endpoints:
+        - POST /api/v1/economy/trade/validate-items - валидация предметов
+        - POST /api/v1/economy/trade/validate-currency - валидация валюты
+
+    - name: Trade Confirmation Handler
+      location: economy-service-go (модуль trade-confirmation)
+      responsibility: |
+        - Обработка подтверждений от обеих сторон
+        - Управление состоянием подтверждений (pending, confirmed, rejected)
+        - Блокировка предложений после подтверждения
+        - Проверка двойного подтверждения перед выполнением
+        - Уведомление участников о статусе подтверждения
+      endpoints:
+        - POST /api/v1/economy/trade/sessions/{session_id}/confirm - подтверждение
+        - GET /api/v1/economy/trade/sessions/{session_id}/confirmation-status - статус подтверждений
+
+    - name: Anti-Fraud System
+      location: economy-service-go (модуль trade-security)
+      responsibility: |
+        - Проверка расстояния между игроками (максимум для торговли)
+        - Проверка онлайн статуса участников
+        - Ограничение количества активных торговых сессий
+        - Обнаружение подозрительных паттернов
+        - Rate limiting для предотвращения спама
+        - Валидация предметов на дубликаты и читы
+      security_checks: |
+        - Максимальное расстояние для торговли: 10 метров
+        - Максимум активных сессий на игрока: 3
+        - Минимальный интервал между сессиями: 30 секунд
+        - Проверка на дубликаты предметов
+      endpoints:
+        - POST /api/v1/economy/trade/validate-distance - проверка расстояния
+        - POST /api/v1/economy/trade/check-fraud - проверка на мошенничество
+
+    - name: Trade Audit Logger
+      location: economy-service-go (модуль trade-audit)
+      responsibility: |
+        - Логирование всех торговых операций
+        - Сохранение истории торговли
+        - Аудит для расследований
+        - Статистика торговли
+        - Экспорт данных для анализа
+      endpoints:
+        - GET /api/v1/economy/trade/history/{account_id} - история торговли
+        - GET /api/v1/economy/trade/sessions/{session_id}/audit - аудит сессии
+
+  data_flow:
+    trade_initiation: |
+      1. Инициатор запрашивает создание торговой сессии с получателем
+      2. Trade Session Manager проверяет онлайн статус получателя
+      3. Anti-Fraud System проверяет расстояние между игроками
+      4. Проверяется количество активных сессий у обоих участников
+      5. Создаётся сессия с таймаутом 5 минут
+      6. Trade Audit Logger записывает событие создания
+      7. Realtime Gateway уведомляет получателя о запросе
+
+    trade_offer: |
+      1. Участник добавляет предметы/валюту в предложение
+      2. Item Validator проверяет владение и доступность предметов
+      3. Предметы блокируются в инвентаре
+      4. Обновляется состояние сессии
+      5. Realtime Gateway синхронизирует состояние с другим участником
+      6. Trade Audit Logger записывает изменение предложения
+
+    trade_confirmation: |
+      1. Участник подтверждает обмен
+      2. Trade Confirmation Handler обновляет статус подтверждения
+      3. Проверяется наличие подтверждения от обеих сторон
+      4. При двойном подтверждении запускается выполнение обмена
+      5. Realtime Gateway уведомляет участников о подтверждении
+
+    trade_execution: |
+      1. Trade Session Manager проверяет двойное подтверждение
+      2. Item Validator финальная проверка владения предметами
+      3. Выполняется атомарный обмен предметов и валюты
+      4. Интеграция с inventory-service для перемещения предметов
+      5. Trade Audit Logger записывает завершённую сделку
+      6. Публикуются события trade:completed
+      7. Realtime Gateway уведомляет участников о завершении
+
+  integrations:
+    with_inventory_service: |
+      - Проверка владения предметами
+      - Блокировка предметов во время торговли
+      - Перемещение предметов после обмена
+      - Использование circuit breaker для защиты
+
+    with_movement_service: |
+      - Получение позиций игроков
+      - Проверка расстояния между участниками
+      - Валидация возможности торговли
+
+    with_social_service: |
+      - Проверка онлайн статуса игроков
+      - Уведомления о торговых запросах
+      - Интеграция с системой друзей (опционально)
+
+    with_realtime_gateway: |
+      - Realtime синхронизация состояния торговли
+      - Push уведомления о событиях
+      - Синхронизация предложений в реальном времени
+
+  database_schema:
+    tables:
+      - name: trade_sessions
+        description: Торговые сессии
+        fields:
+          - id: UUID (PK)
+          - initiator_id: UUID (FK accounts)
+          - recipient_id: UUID (FK accounts)
+          - status: ENUM (created, active, confirmed, completed, cancelled, expired)
+          - initiator_offer: JSONB (предметы и валюта инициатора)
+          - recipient_offer: JSONB (предметы и валюта получателя)
+          - initiator_confirmed: BOOLEAN
+          - recipient_confirmed: BOOLEAN
+          - location: JSONB (координаты создания)
+          - distance: FLOAT (расстояние между игроками)
+          - expires_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+        indexes:
+          - initiator_id, status
+          - recipient_id, status
+          - status, expires_at
+
+      - name: trade_history
+        description: История завершённых торговых операций
+        fields:
+          - id: UUID (PK)
+          - session_id: UUID (FK trade_sessions)
+          - initiator_id: UUID (FK accounts)
+          - recipient_id: UUID (FK accounts)
+          - initiator_items: JSONB (предметы, отданные инициатором)
+          - recipient_items: JSONB (предметы, отданные получателем)
+          - initiator_currency: JSONB (валюта инициатора)
+          - recipient_currency: JSONB (валюта получателя)
+          - location: JSONB (координаты обмена)
+          - distance: FLOAT
+          - completed_at: TIMESTAMP
+          - fraud_flags: JSONB (флаги подозрительности)
+        indexes:
+          - initiator_id, completed_at
+          - recipient_id, completed_at
+          - completed_at
+
+      - name: trade_blocks
+        description: Блокировки предметов во время торговли
+        fields:
+          - id: UUID (PK)
+          - session_id: UUID (FK trade_sessions)
+          - account_id: UUID (FK accounts)
+          - item_id: UUID (FK items)
+          - item_instance_id: UUID (nullable)
+          - blocked_at: TIMESTAMP
+          - released_at: TIMESTAMP (nullable)
+        indexes:
+          - session_id
+          - account_id, item_id
+          - released_at (для очистки)
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в economy-service-go:
+      - trade (управление сессиями)
+      - trade-validation (валидация предметов)
+      - trade-confirmation (подтверждения)
+      - trade-security (антифрод)
+      - trade-audit (аудит)
+    - Интеграция с inventory-service для проверки владения
+    - Интеграция с movement-service для проверки расстояния
+    - Реализация circuit breaker для защиты от недоступности сервисов
+    - Атомарные транзакции для выполнения обмена
+
+  security_requirements:
+    - Все проверки на сервере (валидация владения, расстояния)
+    - Атомарность операций обмена
+    - Защита от дубликатов предметов
+    - Rate limiting для предотвращения спама
+    - Полный аудит всех операций
+    - Обнаружение подозрительных паттернов
+
+  performance_requirements:
+    - Создание сессии < 100ms
+    - Добавление предложения < 50ms
+    - Подтверждение < 50ms
+    - Выполнение обмена < 200ms
+    - Поддержка до 1000 одновременных торговых сессий
+    - Кэширование активных сессий
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через economy-service
+    - Распределение нагрузки на торговые сессии
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование активных сессий в памяти (Redis)
+
+subtasks:
+  - id: trade-session-module
+    title: Реализация модуля Trade Session Manager
+    description: |
+      Создание модуля управления торговыми сессиями
+      CRUD операции для сессий
+      Управление таймаутами
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: item-validator
+    title: Реализация Item Validator
+    description: |
+      Проверка владения предметами
+      Валидация доступности для торговли
+      Блокировка предметов
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: confirmation-handler
+    title: Реализация Trade Confirmation Handler
+    description: |
+      Обработка подтверждений
+      Управление состоянием подтверждений
+      Проверка двойного подтверждения
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: anti-fraud-system
+    title: Реализация Anti-Fraud System
+    description: |
+      Проверка расстояния
+      Проверка онлайн статуса
+      Обнаружение подозрительных паттернов
+      Rate limiting
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: audit-logger
+    title: Реализация Trade Audit Logger
+    description: |
+      Логирование операций
+      Сохранение истории
+      Экспорт данных
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: realtime-integration
+    title: Интеграция с Realtime Gateway
+    description: |
+      Синхронизация состояния торговли
+      Push уведомления
+      Оптимизация трафика
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование активных сессий
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для торговли
+      Интеграция с существующим API economy-service
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты торговых сессий
+      Тесты антифрод механизмов
+      Тесты интеграций с другими сервисами
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Economy Service"
+            TSM[Trade Session Manager]
+            IV[Item Validator]
+            TCH[Trade Confirmation Handler]
+            AFS[Anti-Fraud System]
+            TAL[Trade Audit Logger]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>trade_sessions<br/>trade_history<br/>trade_blocks)]
+        end
+
+        subgraph "External Services"
+            IS[Inventory Service]
+            MS[Movement Service]
+            SS[Social Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| TSM
+        TSM --> TCH
+        TSM --> IV
+        TSM --> AFS
+        TSM -->|store| DB
+        TCH -->|store| DB
+        TAL -->|store| DB
+        IV -->|validate| IS
+        AFS -->|check distance| MS
+        AFS -->|check online| SS
+        TSM -->|sync state| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant I as Initiator
+        participant TSM as Trade Session Manager
+        participant IV as Item Validator
+        participant AFS as Anti-Fraud System
+        participant R as Recipient
+        participant IS as Inventory Service
+
+        I->>TSM: Create trade session
+        TSM->>AFS: Check distance & online
+        AFS->>TSM: Validation result
+        TSM->>TSM: Create session
+        TSM->>R: Notify trade request
+        
+        I->>TSM: Add offer (items)
+        TSM->>IV: Validate items
+        IV->>IS: Check ownership
+        IS->>IV: Ownership confirmed
+        IV->>TSM: Validation result
+        TSM->>TSM: Block items
+        TSM->>R: Sync offer
+        
+        R->>TSM: Confirm trade
+        I->>TSM: Confirm trade
+        TSM->>TSM: Check both confirmed
+        TSM->>IS: Execute trade
+        IS->>TSM: Trade completed
+        TSM->>I: Notify completion
+        TSM->>R: Notify completion
+    ```
+
+  trade_flow: |
+    ```mermaid
+    graph LR
+        subgraph "Trade Phases"
+            P1[Initiation<br/>Create session]
+            P2[Offering<br/>Add items/currency]
+            P3[Confirmation<br/>Both confirm]
+            P4[Execution<br/>Exchange items]
+        end
+
+        subgraph "Validations"
+            V1[Distance Check]
+            V2[Online Check]
+            V3[Ownership Check]
+            V4[Item Availability]
+        end
+
+        P1 --> V1
+        P1 --> V2
+        P1 --> P2
+        P2 --> V3
+        P2 --> V4
+        P2 --> P3
+        P3 -->|both confirmed| P4
+        P4 -->|complete| End
+    ```
+
+decisions:
+  - id: adr-trade-architecture
+    summary: |
+      Выбрана модульная архитектура внутри economy-service-go для обеспечения
+      тесной интеграции с inventory и минимизации задержек при проверках.
+
+  - id: adr-server-side-validation
+    summary: |
+      Все проверки (владение, расстояние, онлайн статус) выполняются на сервере
+      для защиты от читов и обеспечения безопасности торговли.
+
+  - id: adr-double-confirmation
+    summary: |
+      Система двойного подтверждения обеспечивает согласие обеих сторон перед
+      выполнением обмена и предотвращает случайные сделки.
+
+  - id: adr-atomic-exchange
+    summary: |
+      Атомарные транзакции гарантируют, что обмен выполняется полностью или
+      не выполняется вообще, предотвращая потерю предметов.
+
+  - id: adr-comprehensive-audit
+    summary: |
+      Полный аудит всех торговых операций необходим для расследований мошенничества
+      и обеспечения прозрачности системы.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы P2P торговли:
+      - Определены компоненты (Session Manager, Item Validator, Confirmation Handler, Anti-Fraud System, Audit Logger)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД
+      - Спроектированы антифрод механизмы
+      - Создано техническое задание
+      - Разбито на подзадачи
+
