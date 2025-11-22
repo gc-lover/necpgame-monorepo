@@ -1,0 +1,621 @@
+metadata:
+  id: guild-system-architecture
+  title: Архитектура системы гильдий (Guild System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T21:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - guild
+    - backend
+    - social
+  related_systems:
+    - social-service-go
+    - economy-service-go
+    - world-service-go
+    - character-service-go
+  related_documents:
+    - id: guild-system-backend
+      relation: extends
+  github_issue: 141
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы гильдий
+    для управления участниками, рангами, правами, банком, войнами, территорией
+    и прогрессией гильдий.
+  goal: |
+    Создать архитектурную схему системы гильдий с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы управления рангами и правами
+    - Системы банка гильдии
+    - Системы гильдейских войн
+    - Технического задания для реализации
+  essence: |
+    Социальная система управления гильдиями с поддержкой участников, рангов, прав,
+    банка, войн, территории и прогрессии. Интегрируется с экономикой, миром и
+    другими социальными системами.
+
+architecture:
+  overview: |
+    Система гильдий состоит из семи основных компонентов:
+    1. Guild Manager - управление гильдиями
+    2. Member Manager - управление участниками
+    3. Rank & Permission Manager - управление рангами и правами
+    4. Guild Bank Manager - управление банком гильдии
+    5. Guild War Manager - управление войнами
+    6. Guild Territory Manager - управление территорией
+    7. Guild Progression Manager - прогрессия гильдии
+
+  components:
+    - name: Guild Manager
+      location: social-service-go (модуль guild)
+      responsibility: |
+        - Создание и управление гильдиями
+        - Управление информацией о гильдии (название, описание, тег, эмблема)
+        - Управление статусом гильдии (active, disbanded, suspended)
+        - Интеграция с другими модулями
+      port: 8084 (social-service-go)
+      endpoints:
+        - POST /api/v1/social/guilds - создание гильдии
+        - GET /api/v1/social/guilds/{guild_id} - получение гильдии
+        - PUT /api/v1/social/guilds/{guild_id} - обновление гильдии
+        - DELETE /api/v1/social/guilds/{guild_id} - роспуск гильдии
+        - GET /api/v1/social/guilds/search - поиск гильдий
+
+    - name: Member Manager
+      location: social-service-go (модуль guild-members)
+      responsibility: |
+        - Управление участниками гильдии
+        - Приглашения и принятие участников
+        - Исключение участников
+        - Управление лидером гильдии
+        - Проверка лимитов участников
+      endpoints:
+        - POST /api/v1/social/guilds/{guild_id}/invite - приглашение игрока
+        - POST /api/v1/social/guilds/{guild_id}/members - добавление участника
+        - DELETE /api/v1/social/guilds/{guild_id}/members/{member_id} - исключение участника
+        - PUT /api/v1/social/guilds/{guild_id}/leader - смена лидера
+        - GET /api/v1/social/guilds/{guild_id}/members - список участников
+        - POST /api/v1/social/guilds/{guild_id}/leave - выход из гильдии
+
+    - name: Rank & Permission Manager
+      location: social-service-go (модуль guild-ranks)
+      responsibility: |
+        - Управление рангами в гильдии
+        - Определение прав для каждого ранга
+        - Назначение рангов участникам
+        - Проверка прав при действиях
+      rank_system: |
+        - Leader: полные права
+        - Officer: управление участниками, банком
+        - Member: базовые права
+        - Recruit: ограниченные права
+      permissions: |
+        - invite_members: приглашение участников
+        - kick_members: исключение участников
+        - manage_ranks: управление рангами
+        - manage_bank: управление банком
+        - declare_war: объявление войны
+        - manage_territory: управление территорией
+        - view_logs: просмотр логов
+      endpoints:
+        - GET /api/v1/social/guilds/{guild_id}/ranks - список рангов
+        - POST /api/v1/social/guilds/{guild_id}/ranks - создание ранга
+        - PUT /api/v1/social/guilds/{guild_id}/ranks/{rank_id} - обновление ранга
+        - DELETE /api/v1/social/guilds/{guild_id}/ranks/{rank_id} - удаление ранга
+        - PUT /api/v1/social/guilds/{guild_id}/members/{member_id}/rank - назначение ранга
+
+    - name: Guild Bank Manager
+      location: social-service-go (модуль guild-bank)
+      responsibility: |
+        - Управление банком гильдии
+        - Депозиты и снятия средств
+        - Управление предметами в банке
+        - Логирование транзакций
+        - Интеграция с economy-service
+      bank_features: |
+        - Хранение валюты
+        - Хранение предметов
+        - Ограничения на снятие (требуют разрешения)
+        - История транзакций
+      endpoints:
+        - GET /api/v1/social/guilds/{guild_id}/bank - состояние банка
+        - POST /api/v1/social/guilds/{guild_id}/bank/deposit - депозит
+        - POST /api/v1/social/guilds/{guild_id}/bank/withdraw - снятие
+        - GET /api/v1/social/guilds/{guild_id}/bank/transactions - история транзакций
+
+    - name: Guild War Manager
+      location: social-service-go (модуль guild-wars)
+      responsibility: |
+        - Управление гильдейскими войнами
+        - Объявление войны
+        - Управление статусом войны
+        - Интеграция с world-service для боевых действий
+        - Определение победителя
+      war_states: |
+        - declared: война объявлена
+        - active: война активна
+        - ended: война завершена
+        - cancelled: война отменена
+      endpoints:
+        - POST /api/v1/social/guilds/{guild_id}/wars/declare - объявление войны
+        - GET /api/v1/social/guilds/{guild_id}/wars - список войн
+        - GET /api/v1/social/guilds/{guild_id}/wars/{war_id} - информация о войне
+        - POST /api/v1/social/guilds/{guild_id}/wars/{war_id}/end - завершение войны
+
+    - name: Guild Territory Manager
+      location: social-service-go (модуль guild-territory)
+      responsibility: |
+        - Управление территорией гильдии
+        - Захват территорий
+        - Защита территорий
+        - Интеграция с world-service
+        - Управление ресурсами территорий
+      territory_features: |
+        - Захват территорий
+        - Защита территорий
+        - Ресурсы территорий
+        - Налоги с территорий
+      endpoints:
+        - GET /api/v1/social/guilds/{guild_id}/territories - территории гильдии
+        - POST /api/v1/social/guilds/{guild_id}/territories/{territory_id}/capture - захват территории
+        - GET /api/v1/social/guilds/{guild_id}/territories/{territory_id}/resources - ресурсы территории
+
+    - name: Guild Progression Manager
+      location: social-service-go (модуль guild-progression)
+      responsibility: |
+        - Управление прогрессией гильдии
+        - Уровни гильдии
+        - Перки гильдии
+        - Опыт гильдии
+        - Награды за уровни
+      progression_features: |
+        - Уровни гильдии (1-50)
+        - Опыт за действия участников
+        - Перки при достижении уровней
+        - Увеличение лимита участников
+      endpoints:
+        - GET /api/v1/social/guilds/{guild_id}/progression - прогрессия гильдии
+        - GET /api/v1/social/guilds/{guild_id}/perks - перки гильдии
+
+  data_flow:
+    guild_creation: |
+      1. Игрок создаёт гильдию
+      2. Guild Manager создаёт гильдию в БД
+      3. Игрок становится лидером
+      4. Создаются базовые ранги
+      5. Realtime Gateway уведомляет клиентов
+      6. Событие guild:created публикуется в event bus
+
+    member_invitation: |
+      1. Лидер/офицер отправляет приглашение
+      2. Member Manager проверяет права и лимиты
+      3. Создаётся приглашение
+      4. Notification Service уведомляет игрока
+      5. Игрок принимает приглашение
+      6. Member Manager добавляет участника
+      7. Realtime Gateway синхронизирует изменения
+
+    bank_transaction: |
+      1. Участник делает депозит/снятие
+      2. Rank & Permission Manager проверяет права
+      3. Guild Bank Manager обрабатывает транзакцию
+      4. Economy Service обновляет баланс
+      5. Транзакция логируется
+      6. Realtime Gateway уведомляет участников
+
+    war_declaration: |
+      1. Лидер объявляет войну
+      2. Rank & Permission Manager проверяет права
+      3. Guild War Manager создаёт войну
+      4. World Service получает уведомление
+      5. Событие guild:war-started публикуется
+      6. Realtime Gateway уведомляет обе гильдии
+
+  integrations:
+    with_economy_service: |
+      - Управление банком гильдии
+      - Транзакции валюты и предметов
+      - Интеграция с системой торговли
+
+    with_world_service: |
+      - Управление территориями
+      - Гильдейские войны
+      - Захват и защита территорий
+
+    with_character_service: |
+      - Данные участников
+      - Статистика участников
+      - Вклад в прогрессию гильдии
+
+    with_social_service: |
+      - Интеграция с системой друзей
+      - Уведомления о событиях гильдии
+      - История гильдии
+
+    with_realtime_gateway: |
+      - Realtime синхронизация состояния гильдии
+      - Push уведомления о событиях
+      - Синхронизация участников
+
+  database_schema:
+    tables:
+      - name: guilds
+        description: Гильдии
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255) (unique)
+          - tag: VARCHAR(10) (unique)
+          - description: TEXT
+          - leader_id: UUID (FK accounts)
+          - level: INTEGER (default: 1)
+          - experience: BIGINT (default: 0)
+          - max_members: INTEGER (default: 50)
+          - bank_balance: DECIMAL(20,2) (default: 0)
+          - emblem_url: VARCHAR(500)
+          - status: ENUM (active, disbanded, suspended)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - name, tag
+          - leader_id
+          - status
+
+      - name: guild_members
+        description: Участники гильдий
+        fields:
+          - id: UUID (PK)
+          - guild_id: UUID (FK guilds)
+          - account_id: UUID (FK accounts)
+          - rank_id: UUID (FK guild_ranks)
+          - contribution: BIGINT (default: 0)
+          - joined_at: TIMESTAMP
+          - last_active_at: TIMESTAMP
+        indexes:
+          - guild_id, account_id (unique)
+          - account_id
+          - guild_id, rank_id
+
+      - name: guild_ranks
+        description: Ранги в гильдиях
+        fields:
+          - id: UUID (PK)
+          - guild_id: UUID (FK guilds)
+          - name: VARCHAR(100)
+          - order: INTEGER
+          - permissions: JSONB
+          - created_at: TIMESTAMP
+        indexes:
+          - guild_id, order
+          - guild_id, name
+
+      - name: guild_bank_items
+        description: Предметы в банке гильдии
+        fields:
+          - id: UUID (PK)
+          - guild_id: UUID (FK guilds)
+          - item_id: UUID (FK items)
+          - quantity: INTEGER
+          - deposited_by: UUID (FK accounts)
+          - deposited_at: TIMESTAMP
+        indexes:
+          - guild_id
+          - item_id
+
+      - name: guild_bank_transactions
+        description: Транзакции банка гильдии
+        fields:
+          - id: UUID (PK)
+          - guild_id: UUID (FK guilds)
+          - type: ENUM (deposit, withdraw)
+          - amount: DECIMAL(20,2)
+          - currency_type: VARCHAR(50)
+          - performed_by: UUID (FK accounts)
+          - description: TEXT
+          - created_at: TIMESTAMP
+        indexes:
+          - guild_id, created_at
+          - performed_by
+
+      - name: guild_wars
+        description: Гильдейские войны
+        fields:
+          - id: UUID (PK)
+          - attacker_guild_id: UUID (FK guilds)
+          - defender_guild_id: UUID (FK guilds)
+          - status: ENUM (declared, active, ended, cancelled)
+          - declared_by: UUID (FK accounts)
+          - started_at: TIMESTAMP
+          - ended_at: TIMESTAMP (nullable)
+          - winner_guild_id: UUID (FK guilds, nullable)
+        indexes:
+          - attacker_guild_id, status
+          - defender_guild_id, status
+          - status
+
+      - name: guild_territories
+        description: Территории гильдий
+        fields:
+          - id: UUID (PK)
+          - guild_id: UUID (FK guilds)
+          - territory_id: UUID (FK territories)
+          - captured_at: TIMESTAMP
+          - tax_rate: DECIMAL(5,2)
+          - resources: JSONB
+        indexes:
+          - guild_id
+          - territory_id
+
+      - name: guild_perks
+        description: Перки гильдий
+        fields:
+          - id: UUID (PK)
+          - guild_id: UUID (FK guilds)
+          - perk_id: UUID (FK perk_definitions)
+          - unlocked_at: TIMESTAMP
+        indexes:
+          - guild_id
+          - perk_id
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в social-service-go:
+      - guild (управление гильдиями)
+      - guild-members (участники)
+      - guild-ranks (ранги и права)
+      - guild-bank (банк)
+      - guild-wars (войны)
+      - guild-territory (территория)
+      - guild-progression (прогрессия)
+    - Интеграция с economy-service для банка
+    - Интеграция с world-service для войн и территории
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация состояния гильдии через WebSocket
+    - Push уведомления о событиях гильдии
+    - Обновление списка участников в реальном времени
+    - Синхронизация банка и войн
+
+  performance_requirements:
+    - Создание гильдии < 100ms
+    - Добавление участника < 50ms
+    - Банковская транзакция < 50ms
+    - Поддержка до 10K активных гильдий
+    - Поддержка до 100 участников в гильдии
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через social-service
+    - Распределение нагрузки на гильдии
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование активных гильдий
+
+subtasks:
+  - id: guild-manager-module
+    title: Реализация модуля Guild Manager
+    description: |
+      Создание модуля управления гильдиями
+      CRUD операции для гильдий
+      Управление информацией о гильдии
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: member-manager-implementation
+    title: Реализация Member Manager
+    description: |
+      Управление участниками
+      Приглашения и принятие
+      Исключение участников
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: rank-permission-manager
+    title: Реализация Rank & Permission Manager
+    description: |
+      Управление рангами
+      Система прав
+      Проверка прав
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: guild-bank-manager
+    title: Реализация Guild Bank Manager
+    description: |
+      Управление банком гильдии
+      Депозиты и снятия
+      Интеграция с economy-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: guild-war-manager
+    title: Реализация Guild War Manager
+    description: |
+      Управление войнами
+      Объявление и завершение войн
+      Интеграция с world-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: guild-territory-manager
+    title: Реализация Guild Territory Manager
+    description: |
+      Управление территорией
+      Захват и защита
+      Интеграция с world-service
+    priority: medium
+    estimated_time: 3-4 дня
+
+  - id: guild-progression-manager
+    title: Реализация Guild Progression Manager
+    description: |
+      Управление прогрессией
+      Уровни и перки
+      Опыт гильдии
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование активных гильдий
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для гильдий
+      Интеграция с существующим API social-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты управления гильдиями
+      Тесты банка и войн
+      Тесты интеграций с другими сервисами
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Social Service"
+            GM[Guild Manager]
+            MM[Member Manager]
+            RPM[Rank & Permission Manager]
+            GBM[Guild Bank Manager]
+            GWM[Guild War Manager]
+            GTM[Guild Territory Manager]
+            GPM[Guild Progression Manager]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>guilds<br/>guild_members<br/>guild_ranks<br/>guild_bank_items<br/>guild_wars<br/>guild_territories)]
+        end
+
+        subgraph "External Services"
+            ES[Economy Service]
+            WS[World Service]
+            CS[Character Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| GM
+        GM --> MM
+        GM --> RPM
+        GM --> GBM
+        GM --> GWM
+        GM --> GTM
+        GM --> GPM
+        GM -->|store| DB
+        MM -->|store| DB
+        RPM -->|store| DB
+        GBM -->|transactions| ES
+        GWM -->|wars| WS
+        GTM -->|territories| WS
+        MM -->|notify| NS
+        GM -->|sync state| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant L as Leader
+        participant GM as Guild Manager
+        participant MM as Member Manager
+        participant GBM as Guild Bank Manager
+        participant ES as Economy Service
+        participant RG as Realtime Gateway
+
+        L->>GM: Create guild
+        GM->>GM: Store guild
+        L->>MM: Invite member
+        MM->>MM: Add member
+        MM->>RG: Notify members
+        
+        L->>GBM: Deposit to bank
+        GBM->>ES: Process transaction
+        ES->>GBM: Transaction complete
+        GBM->>RG: Notify members
+    ```
+
+decisions:
+  - id: adr-guild-architecture
+    summary: |
+      Выбрана модульная архитектура внутри social-service-go для обеспечения
+      тесной интеграции с социальными системами и друзьями.
+
+  - id: adr-rank-system
+    summary: |
+      Гибкая система рангов с настраиваемыми правами обеспечивает контроль
+      доступа и управление гильдией на разных уровнях.
+
+  - id: adr-guild-bank
+    summary: |
+      Интеграция банка гильдии с economy-service обеспечивает безопасные
+      транзакции и единую экономическую систему.
+
+  - id: adr-guild-wars
+    summary: |
+      Интеграция гильдейских войн с world-service обеспечивает координацию
+      боевых действий и управление территориями.
+
+  - id: adr-guild-progression
+    summary: |
+      Система прогрессии гильдии мотивирует участников к активности и
+      обеспечивает долгосрочную вовлечённость.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение системы прав и разрешений
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы гильдий:
+      - Определены компоненты (Guild Manager, Member Manager, Rank & Permission Manager, Guild Bank Manager, Guild War Manager, Guild Territory Manager, Guild Progression Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (guilds, guild_members, guild_ranks, guild_bank_items, guild_bank_transactions, guild_wars, guild_territories, guild_perks)
+      - Спроектирована система управления рангами и правами
+      - Спроектирована система банка гильдии
+      - Спроектирована система гильдейских войн
+      - Создано техническое задание
+      - Разбито на подзадачи
+
