@@ -23,18 +23,25 @@ var (
 		[]string{"method", "path"},
 	)
 
-	ApartmentsTotal = promauto.NewCounterVec(
+	ApartmentsCreatedTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "housing_service_apartments_total",
-			Help: "Total number of apartment operations",
+			Name: "housing_service_apartments_created_total",
+			Help: "Total number of apartments created",
 		},
-		[]string{"operation"},
+		[]string{"type"},
 	)
 
 	FurniturePlacedTotal = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "housing_service_furniture_placed_total",
 			Help: "Total number of furniture items placed",
+		},
+	)
+
+	ApartmentVisitsTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "housing_service_apartment_visits_total",
+			Help: "Total number of apartment visits",
 		},
 	)
 )
@@ -47,11 +54,15 @@ func RecordRequestDuration(method, path string, duration float64) {
 	RequestDuration.WithLabelValues(method, path).Observe(duration)
 }
 
-func RecordApartmentOperation(operation string) {
-	ApartmentsTotal.WithLabelValues(operation).Inc()
+func RecordApartmentCreated(apartmentType string) {
+	ApartmentsCreatedTotal.WithLabelValues(apartmentType).Inc()
 }
 
 func RecordFurniturePlaced() {
 	FurniturePlacedTotal.Inc()
+}
+
+func RecordApartmentVisit() {
+	ApartmentVisitsTotal.Inc()
 }
 
