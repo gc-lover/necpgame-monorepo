@@ -1,0 +1,600 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Service API
+  description: API для игрового процесса: прогрессия персонажей, квесты, диалоги
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Progression
+    description: Система прогрессии персонажей
+  - name: Quests
+    description: Система квестов и заданий
+
+paths:
+  /gameplay/progression/{characterId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить информацию о прогрессе персонажа
+      operationId: getCharacterProgression
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о прогрессе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/{characterId}/experience:
+    post:
+      tags:
+        - Progression
+      summary: Начислить опыт персонажу
+      operationId: addExperience
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddExperienceRequest'
+      responses:
+        '200':
+          description: Опыт начислен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/{characterId}/attributes:
+    post:
+      tags:
+        - Progression
+      summary: Распределить очки атрибутов
+      operationId: distributeAttributePoints
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeAttributePointsRequest'
+      responses:
+        '200':
+          description: Очки распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/progression/{characterId}/skills:
+    post:
+      tags:
+        - Progression
+      summary: Распределить очки навыков
+      operationId: distributeSkillPoints
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeSkillPointsRequest'
+      responses:
+        '200':
+          description: Очки распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests:
+    get:
+      tags:
+        - Quests
+      summary: Получить список доступных квестов
+      operationId: getAvailableQuests
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список доступных квестов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Quest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/start:
+    post:
+      tags:
+        - Quests
+      summary: Начать выполнение квеста
+      operationId: startQuest
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartQuestRequest'
+      responses:
+        '200':
+          description: Квест начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/instances/{instanceId}:
+    get:
+      tags:
+        - Quests
+      summary: Получить информацию о квесте
+      operationId: getQuestInstance
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о квесте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/instances/{instanceId}/dialogue:
+    post:
+      tags:
+        - Quests
+      summary: Выбрать вариант диалога
+      operationId: selectDialogueOption
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DialogueOptionRequest'
+      responses:
+        '200':
+          description: Вариант диалога выбран
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/instances/{instanceId}/skill-check:
+    post:
+      tags:
+        - Quests
+      summary: Выполнить проверку навыка
+      operationId: performSkillCheck
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillCheckRequest'
+      responses:
+        '200':
+          description: Проверка навыка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillCheckResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/instances/{instanceId}/complete:
+    post:
+      tags:
+        - Quests
+      summary: Завершить квест
+      operationId: completeQuest
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Квест завершен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestCompletionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CharacterProgression:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        available_attribute_points:
+          type: integer
+          minimum: 0
+        available_skill_points:
+          type: integer
+          minimum: 0
+        attributes:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillProgress'
+
+    SkillProgress:
+      type: object
+      properties:
+        skill_id:
+          type: string
+        skill_name:
+          type: string
+        level:
+          type: integer
+          minimum: 0
+        experience:
+          type: integer
+          minimum: 0
+
+    AddExperienceRequest:
+      type: object
+      required:
+        - amount
+        - source
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+          description: Количество опыта
+        source:
+          type: string
+          enum:
+            - combat
+            - quest
+            - skill_use
+            - exploration
+          description: Источник опыта
+
+    DistributeAttributePointsRequest:
+      type: object
+      required:
+        - attribute
+        - points
+      properties:
+        attribute:
+          type: string
+          description: Название атрибута
+        points:
+          type: integer
+          minimum: 1
+          description: Количество очков
+
+    DistributeSkillPointsRequest:
+      type: object
+      required:
+        - skill_id
+        - points
+      properties:
+        skill_id:
+          type: string
+          description: ID навыка
+        points:
+          type: integer
+          minimum: 1
+          description: Количество очков
+
+    Quest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        quest_type:
+          type: string
+          enum:
+            - main
+            - side
+            - faction
+            - world
+        requirements:
+          type: object
+          properties:
+            level:
+              type: integer
+              minimum: 1
+            completed_quests:
+              type: array
+              items:
+                type: string
+                format: uuid
+
+    QuestInstance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - failed
+            - abandoned
+        current_node:
+          type: string
+        dialogue_state:
+          type: object
+          additionalProperties: true
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+        started_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    QuestObjective:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - failed
+
+    StartQuestRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    DialogueOptionRequest:
+      type: object
+      required:
+        - option_id
+      properties:
+        option_id:
+          type: string
+          description: ID выбранного варианта диалога
+
+    SkillCheckRequest:
+      type: object
+      required:
+        - skill_id
+        - difficulty
+      properties:
+        skill_id:
+          type: string
+          description: ID навыка для проверки
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Сложность проверки
+
+    SkillCheckResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        skill_level:
+          type: integer
+        roll:
+          type: integer
+        difficulty:
+          type: integer
+        message:
+          type: string
+
+    QuestCompletionResult:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - completed
+            - failed
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
