@@ -13,8 +13,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type TradeRepositoryInterface interface {
+	Create(ctx context.Context, session *models.TradeSession) error
+	GetByID(ctx context.Context, id uuid.UUID) (*models.TradeSession, error)
+	GetActiveByCharacter(ctx context.Context, characterID uuid.UUID) ([]models.TradeSession, error)
+	Update(ctx context.Context, session *models.TradeSession) error
+	UpdateStatus(ctx context.Context, id uuid.UUID, status models.TradeStatus) error
+	CreateHistory(ctx context.Context, history *models.TradeHistory) error
+	GetHistoryByCharacter(ctx context.Context, characterID uuid.UUID, limit, offset int) ([]models.TradeHistory, error)
+	CountHistoryByCharacter(ctx context.Context, characterID uuid.UUID) (int, error)
+	CleanupExpired(ctx context.Context) error
+}
+
 type TradeService struct {
-	repo  *TradeRepository
+	repo  TradeRepositoryInterface
 	cache *redis.Client
 	logger *logrus.Logger
 }
