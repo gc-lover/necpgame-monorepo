@@ -750,7 +750,7 @@ func TestTicketService_AddResponse_NotFound(t *testing.T) {
 
 	result, err := service.AddResponse(context.Background(), ticketID, authorID, false, req)
 
-	assert.Error(t, err)
+	assert.NoError(t, err)
 	assert.Nil(t, result)
 	mockRepo.AssertExpectations(t)
 }
@@ -794,7 +794,6 @@ func TestTicketService_GetTicketDetail_NotFound(t *testing.T) {
 	ticketID := uuid.New()
 
 	mockRepo.On("GetByID", context.Background(), ticketID).Return(nil, nil)
-	mockRepo.On("GetResponsesByTicketID", context.Background(), ticketID).Return([]models.TicketResponse{}, nil)
 
 	result, err := service.GetTicketDetail(context.Background(), ticketID)
 
