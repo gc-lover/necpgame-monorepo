@@ -308,11 +308,88 @@ func (m *mockGuildRepository) UpdateBank(ctx context.Context, bank *models.Guild
 	return args.Error(0)
 }
 
-func setupTestService(t *testing.T) (*SocialService, *mockNotificationRepository, *mockChatRepository, *mockMailRepository, *mockGuildRepository, func()) {
+type mockModerationService struct {
+	mock.Mock
+}
+
+func (m *mockModerationService) CheckBan(ctx context.Context, characterID uuid.UUID, channelID *uuid.UUID) (*models.ChatBan, error) {
+	args := m.Called(ctx, characterID, channelID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.ChatBan), args.Error(1)
+}
+
+func (m *mockModerationService) FilterMessage(ctx context.Context, content string) (string, bool, error) {
+	args := m.Called(ctx, content)
+	return args.String(0), args.Bool(1), args.Error(2)
+}
+
+func (m *mockModerationService) DetectSpam(ctx context.Context, characterID uuid.UUID, content string) (bool, error) {
+	args := m.Called(ctx, characterID, content)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *mockModerationService) AutoBanIfSpam(ctx context.Context, characterID uuid.UUID, channelID *uuid.UUID) (*models.ChatBan, error) {
+	args := m.Called(ctx, characterID, channelID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.ChatBan), args.Error(1)
+}
+
+func (m *mockModerationService) AutoBanIfSevereViolation(ctx context.Context, characterID uuid.UUID, channelID *uuid.UUID, violationCount int) (*models.ChatBan, error) {
+	args := m.Called(ctx, characterID, channelID, violationCount)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.ChatBan), args.Error(1)
+}
+
+func (m *mockModerationService) CreateBan(ctx context.Context, adminID uuid.UUID, req *models.CreateBanRequest) (*models.ChatBan, error) {
+	args := m.Called(ctx, adminID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.ChatBan), args.Error(1)
+}
+
+func (m *mockModerationService) GetBans(ctx context.Context, characterID *uuid.UUID, limit, offset int) (*models.BanListResponse, error) {
+	args := m.Called(ctx, characterID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.BanListResponse), args.Error(1)
+}
+
+func (m *mockModerationService) RemoveBan(ctx context.Context, banID uuid.UUID) error {
+	args := m.Called(ctx, banID)
+	return args.Error(0)
+}
+
+func (m *mockModerationService) CreateReport(ctx context.Context, reporterID uuid.UUID, req *models.CreateReportRequest) (*models.ChatReport, error) {
+	args := m.Called(ctx, reporterID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.ChatReport), args.Error(1)
+}
+
+func (m *mockModerationService) GetReports(ctx context.Context, status *string, limit, offset int) ([]models.ChatReport, int, error) {
+	args := m.Called(ctx, status, limit, offset)
+	return args.Get(0).([]models.ChatReport), args.Int(1), args.Error(2)
+}
+
+func (m *mockModerationService) ResolveReport(ctx context.Context, reportID uuid.UUID, adminID uuid.UUID, status string) error {
+	args := m.Called(ctx, reportID, adminID, status)
+	return args.Error(0)
+}
+
+func setupTestService(t *testing.T) (*SocialService, *mockNotificationRepository, *mockChatRepository, *mockMailRepository, *mockGuildRepository, *mockModerationService, func()) {
 	redisOpts, err := redis.ParseURL("redis://localhost:6379")
 	if err != nil {
 		t.Skipf("Skipping test due to Redis connection: %v", err)
-		return nil, nil, nil, nil, nil, nil
+		return nil, nil, nil, nil, nil, nil, nil
 	}
 	redisClient := redis.NewClient(redisOpts)
 
@@ -320,12 +397,14 @@ func setupTestService(t *testing.T) (*SocialService, *mockNotificationRepository
 	mockChatRepo := new(mockChatRepository)
 	mockMailRepo := new(mockMailRepository)
 	mockGuildRepo := new(mockGuildRepository)
+	mockModerationService := new(mockModerationService)
 
 	service := &SocialService{
 		notificationRepo: mockNotificationRepo,
 		chatRepo:         mockChatRepo,
 		mailRepo:         mockMailRepo,
 		guildRepo:        mockGuildRepo,
+		moderationService: mockModerationService,
 		cache:            redisClient,
 		logger:           GetLogger(),
 	}
@@ -334,11 +413,11 @@ func setupTestService(t *testing.T) (*SocialService, *mockNotificationRepository
 		redisClient.Close()
 	}
 
-	return service, mockNotificationRepo, mockChatRepo, mockMailRepo, mockGuildRepo, cleanup
+	return service, mockNotificationRepo, mockChatRepo, mockMailRepo, mockGuildRepo, mockModerationService, cleanup
 }
 
 func TestSocialService_CreateNotification_Success(t *testing.T) {
-	service, mockNotificationRepo, _, _, _, cleanup := setupTestService(t)
+	service, mockNotificationRepo, _, _, _, _, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
@@ -378,7 +457,7 @@ func TestSocialService_CreateNotification_Success(t *testing.T) {
 }
 
 func TestSocialService_GetNotifications_Success(t *testing.T) {
-	service, mockNotificationRepo, _, _, _, cleanup := setupTestService(t)
+	service, mockNotificationRepo, _, _, _, _, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
@@ -410,7 +489,7 @@ func TestSocialService_GetNotifications_Success(t *testing.T) {
 }
 
 func TestSocialService_GetNotifications_Cache(t *testing.T) {
-	service, mockNotificationRepo, _, _, _, cleanup := setupTestService(t)
+	service, mockNotificationRepo, _, _, _, _, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
@@ -443,7 +522,7 @@ func TestSocialService_GetNotifications_Cache(t *testing.T) {
 }
 
 func TestSocialService_UpdateNotificationStatus_Success(t *testing.T) {
-	service, mockNotificationRepo, _, _, _, cleanup := setupTestService(t)
+	service, mockNotificationRepo, _, _, _, _, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
@@ -470,7 +549,7 @@ func TestSocialService_UpdateNotificationStatus_Success(t *testing.T) {
 }
 
 func TestSocialService_CreateMessage_Success(t *testing.T) {
-	service, _, mockChatRepo, _, _, cleanup := setupTestService(t)
+	service, _, mockChatRepo, _, _, mockModerationService, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
@@ -486,6 +565,9 @@ func TestSocialService_CreateMessage_Success(t *testing.T) {
 		CreatedAt:   time.Now(),
 	}
 
+	mockModerationService.On("CheckBan", mock.Anything, message.SenderID, &message.ChannelID).Return(nil, nil)
+	mockModerationService.On("DetectSpam", mock.Anything, message.SenderID, message.Content).Return(false, nil)
+	mockModerationService.On("FilterMessage", mock.Anything, message.Content).Return(message.Content, false, nil)
 	mockChatRepo.On("CreateMessage", mock.Anything, message).Return(message, nil)
 
 	ctx := context.Background()
@@ -495,10 +577,11 @@ func TestSocialService_CreateMessage_Success(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, message.Content, result.Content)
 	mockChatRepo.AssertExpectations(t)
+	mockModerationService.AssertExpectations(t)
 }
 
 func TestSocialService_SendMail_Success(t *testing.T) {
-	service, _, _, mockMailRepo, _, cleanup := setupTestService(t)
+	service, _, _, mockMailRepo, _, _, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
@@ -525,7 +608,7 @@ func TestSocialService_SendMail_Success(t *testing.T) {
 }
 
 func TestSocialService_GetMails_Success(t *testing.T) {
-	service, _, _, mockMailRepo, _, cleanup := setupTestService(t)
+	service, _, _, mockMailRepo, _, _, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
@@ -557,7 +640,7 @@ func TestSocialService_GetMails_Success(t *testing.T) {
 }
 
 func TestSocialService_MarkMailAsRead_Success(t *testing.T) {
-	service, _, _, mockMailRepo, _, cleanup := setupTestService(t)
+	service, _, _, mockMailRepo, _, _, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
@@ -582,7 +665,7 @@ func TestSocialService_MarkMailAsRead_Success(t *testing.T) {
 }
 
 func TestSocialService_CreateNotification_DatabaseError(t *testing.T) {
-	service, mockNotificationRepo, _, _, _, cleanup := setupTestService(t)
+	service, mockNotificationRepo, _, _, _, _, cleanup := setupTestService(t)
 	if service == nil {
 		return
 	}
