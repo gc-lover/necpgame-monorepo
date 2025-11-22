@@ -1,0 +1,550 @@
+metadata:
+  id: admin-moderation-system-architecture
+  title: Архитектура системы администрирования и модерации (Admin & Moderation Tools)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T23:50:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - admin
+    - moderation
+    - backend
+    - infrastructure
+    - operations
+  related_systems:
+    - admin-api
+    - character-service
+    - economy-service-go
+    - gameplay-service-go
+    - social-service-go
+    - analytics-service
+  related_documents:
+    - id: implementation-infrastructure-admin-moderation-tools
+      relation: extends
+  github_issue: 403
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+    - operations
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы администрирования
+    и модерации для управления игроками, экономикой, контентом и модерации через
+    единую админ-панель с контролем доступа и аудитом действий.
+  goal: |
+    Создать архитектурную схему системы администрирования и модерации с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы ролей и доступов
+    - Системы управления игроками
+    - Системы управления экономикой
+    - Системы управления контентом
+    - Системы модерации
+    - Системы аналитики
+    - Системы аудита действий
+    - Технического задания для реализации
+  essence: |
+    Инфраструктурная система администрирования и модерации для оперативного управления
+    игроками, экономикой, контентом и модерации через единую админ-панель.
+
+architecture:
+  overview: |
+    Система администрирования и модерации состоит из восьми основных компонентов:
+    1. Admin Panel Service - основной сервис админ-панели
+    2. Player Management Module - управление игроками
+    3. Economy Management Module - управление экономикой
+    4. Content Management Module - управление контентом
+    5. Moderation Module - модерация
+    6. Analytics Dashboard Module - аналитическая панель
+    7. Role & Permission Manager - управление ролями и доступами
+    8. Audit Log Manager - управление аудитом действий
+
+  components:
+    - name: Admin Panel Service
+      location: admin-api (основной сервис)
+      responsibility: |
+        - Единая точка входа для админ-панели
+        - Аутентификация и авторизация администраторов
+        - Маршрутизация запросов к модулям
+        - Управление сессиями администраторов
+        - Интеграция с другими сервисами
+      endpoints:
+        - POST /api/v1/admin/auth/login - вход в админ-панель
+        - POST /api/v1/admin/auth/logout - выход из админ-панели
+        - GET /api/v1/admin/auth/me - информация о текущем администраторе
+        - GET /api/v1/admin/dashboard - главная панель
+
+    - name: Player Management Module
+      location: admin-api (модуль player-management)
+      responsibility: |
+        - Управление профилями игроков
+        - Просмотр истории входов
+        - Просмотр истории транзакций
+        - Редактирование параметров игроков
+        - Выдача/отзыв санкций
+        - Удаление учётных записей
+        - Просмотр инвентаря игроков
+        - Просмотр достижений игроков
+      endpoints:
+        - GET /api/v1/admin/players - список игроков
+        - GET /api/v1/admin/players/{player_id} - профиль игрока
+        - PUT /api/v1/admin/players/{player_id} - обновление профиля
+        - DELETE /api/v1/admin/players/{player_id} - удаление игрока
+        - GET /api/v1/admin/players/{player_id}/sessions - история сессий
+        - GET /api/v1/admin/players/{player_id}/transactions - история транзакций
+        - GET /api/v1/admin/players/{player_id}/inventory - инвентарь
+        - GET /api/v1/admin/players/{player_id}/achievements - достижения
+        - POST /api/v1/admin/players/{player_id}/sanctions - выдача санкции
+        - DELETE /api/v1/admin/players/{player_id}/sanctions/{sanction_id} - отзыв санкции
+
+    - name: Economy Management Module
+      location: admin-api (модуль economy-management)
+      responsibility: |
+        - Управление балансом игроков
+        - Управление инвентарём игроков
+        - Отслеживание активности рынка
+        - Мониторинг подозрительных операций
+        - Формирование отчётов по RMT
+        - Управление предметами
+        - Управление валютами
+      endpoints:
+        - GET /api/v1/admin/economy/players/{player_id}/balance - баланс игрока
+        - PUT /api/v1/admin/economy/players/{player_id}/balance - изменение баланса
+        - GET /api/v1/admin/economy/market/activity - активность рынка
+        - GET /api/v1/admin/economy/market/suspicious - подозрительные операции
+        - GET /api/v1/admin/economy/reports/rmt - отчёты по RMT
+        - GET /api/v1/admin/economy/items - список предметов
+        - POST /api/v1/admin/economy/items - создание предмета
+        - PUT /api/v1/admin/economy/items/{item_id} - обновление предмета
+        - DELETE /api/v1/admin/economy/items/{item_id} - удаление предмета
+
+    - name: Content Management Module
+      location: admin-api (модуль content-management)
+      responsibility: |
+        - Управление достижениями
+        - Управление ежедневными заданиями
+        - Управление глобальными событиями
+        - Горячие правки диалогов NPC
+        - Управление квестами
+        - Управление NPC
+      endpoints:
+        - GET /api/v1/admin/content/achievements - список достижений
+        - POST /api/v1/admin/content/achievements - создание достижения
+        - PUT /api/v1/admin/content/achievements/{achievement_id} - обновление достижения
+        - DELETE /api/v1/admin/content/achievements/{achievement_id} - удаление достижения
+        - GET /api/v1/admin/content/daily-quests - ежедневные задания
+        - POST /api/v1/admin/content/daily-quests - создание ежедневного задания
+        - PUT /api/v1/admin/content/daily-quests/{quest_id} - обновление задания
+        - GET /api/v1/admin/content/events - глобальные события
+        - POST /api/v1/admin/content/events - создание события
+        - PUT /api/v1/admin/content/events/{event_id} - обновление события
+        - GET /api/v1/admin/content/npcs/{npc_id}/dialogues - диалоги NPC
+        - PUT /api/v1/admin/content/npcs/{npc_id}/dialogues/{dialogue_id} - обновление диалога
+
+    - name: Moderation Module
+      location: admin-api (модуль moderation)
+      responsibility: |
+        - Модерация чатов
+        - Обработка репортов
+        - Выдача временных санкций (до 7 дней)
+        - Блокировка игроков
+        - Разблокировка игроков
+        - Управление банами
+      endpoints:
+        - GET /api/v1/admin/moderation/reports - список репортов
+        - GET /api/v1/admin/moderation/reports/{report_id} - детали репорта
+        - POST /api/v1/admin/moderation/reports/{report_id}/resolve - разрешение репорта
+        - GET /api/v1/admin/moderation/chat/messages - сообщения чата
+        - DELETE /api/v1/admin/moderation/chat/messages/{message_id} - удаление сообщения
+        - POST /api/v1/admin/moderation/players/{player_id}/ban - бан игрока
+        - DELETE /api/v1/admin/moderation/players/{player_id}/ban - разбан игрока
+        - GET /api/v1/admin/moderation/bans - список банов
+
+    - name: Analytics Dashboard Module
+      location: admin-api (модуль analytics-dashboard)
+      responsibility: |
+        - Отображение онлайн игроков
+        - Отображение активных матчей
+        - Отображение операций торговли
+        - Отображение нагрузки серверов
+        - Отображение активности чатов
+        - Выделение аномалий
+        - Уведомления о проблемах
+      endpoints:
+        - GET /api/v1/admin/analytics/players/online - онлайн игроки
+        - GET /api/v1/admin/analytics/matches/active - активные матчи
+        - GET /api/v1/admin/analytics/trade/operations - операции торговли
+        - GET /api/v1/admin/analytics/servers/load - нагрузка серверов
+        - GET /api/v1/admin/analytics/chat/activity - активность чатов
+        - GET /api/v1/admin/analytics/anomalies - аномалии
+        - GET /api/v1/admin/analytics/notifications - уведомления
+
+    - name: Role & Permission Manager
+      location: admin-api (модуль role-permission)
+      responsibility: |
+        - Управление ролями (Super Admin, Admin, Moderator)
+        - Управление правами доступа
+        - Проверка прав доступа
+        - Управление администраторами
+      roles:
+        - SUPER_ADMIN: |
+            - Доступ к конфигурации серверов
+            - Доступ к БД
+            - Все административные операции
+            - Управление администраторами
+        - ADMIN: |
+            - Управление игроками
+            - Управление экономикой
+            - Управление игровыми заданиями
+            - Просмотр аналитики
+        - MODERATOR: |
+            - Модерация чатов
+            - Обработка репортов
+            - Временные санкции до 7 дней
+            - Просмотр базовой аналитики
+      endpoints:
+        - GET /api/v1/admin/roles - список ролей
+        - GET /api/v1/admin/roles/{role_id}/permissions - права роли
+        - GET /api/v1/admin/admins - список администраторов
+        - POST /api/v1/admin/admins - создание администратора
+        - PUT /api/v1/admin/admins/{admin_id} - обновление администратора
+        - DELETE /api/v1/admin/admins/{admin_id} - удаление администратора
+
+    - name: Audit Log Manager
+      location: admin-api (модуль audit-log)
+      responsibility: |
+        - Логирование всех действий администраторов
+        - Логирование всех действий модераторов
+        - Хранение детальной информации о действиях
+        - Поиск по логам
+        - Экспорт логов
+        - Анализ логов
+      log_fields: |
+        - Тип операции
+        - Целевой пользователь
+        - Детали операции
+        - Причина операции
+        - Время операции
+        - IP адрес
+        - User-Agent
+      endpoints:
+        - GET /api/v1/admin/audit/logs - список логов
+        - GET /api/v1/admin/audit/logs/{log_id} - детали лога
+        - GET /api/v1/admin/audit/logs/search - поиск по логам
+        - GET /api/v1/admin/audit/logs/export - экспорт логов
+
+  integrations:
+    - service: character-service
+      purpose: |
+        - Получение профилей игроков
+        - Обновление параметров игроков
+        - Получение инвентаря игроков
+        - Получение достижений игроков
+      events:
+        - character:updated
+        - character:deleted
+
+    - service: economy-service-go
+      purpose: |
+        - Получение баланса игроков
+        - Изменение баланса игроков
+        - Получение истории транзакций
+        - Мониторинг рынка
+      events:
+        - economy:balance-updated
+        - economy:transaction-completed
+        - economy:suspicious-activity
+
+    - service: gameplay-service-go
+      purpose: |
+        - Управление квестами
+        - Управление достижениями
+        - Управление ежедневными заданиями
+        - Управление глобальными событиями
+      events:
+        - quest:updated
+        - achievement:updated
+        - event:started
+        - event:ended
+
+    - service: social-service-go
+      purpose: |
+        - Модерация чатов
+        - Получение сообщений чата
+        - Обработка репортов
+        - Управление банами
+      events:
+        - chat:message-deleted
+        - chat:player-banned
+        - report:resolved
+
+    - service: analytics-service
+      purpose: |
+        - Получение метрик онлайн игроков
+        - Получение метрик активных матчей
+        - Получение метрик операций торговли
+        - Получение метрик нагрузки серверов
+        - Получение метрик активности чатов
+        - Обнаружение аномалий
+
+    - service: session-service-go
+      purpose: |
+        - Получение истории сессий игроков
+        - Управление сессиями администраторов
+
+  database_schema:
+    tables:
+      - name: admin_users
+        description: Администраторы и модераторы
+        columns:
+          - name: id
+            type: UUID
+            description: Уникальный идентификатор
+          - name: username
+            type: VARCHAR(100)
+            description: Имя пользователя
+          - name: email
+            type: VARCHAR(255)
+            description: Email
+          - name: password_hash
+            type: VARCHAR(255)
+            description: Хеш пароля
+          - name: role
+            type: ENUM('SUPER_ADMIN', 'ADMIN', 'MODERATOR')
+            description: Роль
+          - name: is_active
+            type: BOOLEAN
+            description: Активен ли администратор
+          - name: last_login_at
+            type: TIMESTAMP
+            description: Время последнего входа
+          - name: created_at
+            type: TIMESTAMP
+            description: Время создания
+          - name: updated_at
+            type: TIMESTAMP
+            description: Время обновления
+        indexes:
+          - columns: [username]
+            unique: true
+          - columns: [email]
+            unique: true
+          - columns: [role]
+
+      - name: admin_actions_log
+        description: Журнал действий администраторов
+        columns:
+          - name: id
+            type: UUID
+            description: Уникальный идентификатор
+          - name: admin_id
+            type: UUID
+            description: ID администратора
+            foreign_key: admin_users(id)
+          - name: action_type
+            type: VARCHAR(100)
+            description: Тип действия
+          - name: target_type
+            type: VARCHAR(50)
+            description: Тип цели (player, economy, content, moderation)
+          - name: target_id
+            type: UUID
+            description: ID цели
+          - name: details
+            type: JSONB
+            description: Детали действия
+          - name: reason
+            type: TEXT
+            description: Причина действия
+          - name: ip_address
+            type: VARCHAR(45)
+            description: IP адрес
+          - name: user_agent
+            type: TEXT
+            description: User-Agent
+          - name: created_at
+            type: TIMESTAMP
+            description: Время действия
+        indexes:
+          - columns: [admin_id]
+          - columns: [action_type]
+          - columns: [target_type, target_id]
+          - columns: [created_at]
+
+      - name: admin_sanctions
+        description: Санкции, выданные администраторами
+        columns:
+          - name: id
+            type: UUID
+            description: Уникальный идентификатор
+          - name: player_id
+            type: UUID
+            description: ID игрока
+          - name: admin_id
+            type: UUID
+            description: ID администратора
+            foreign_key: admin_users(id)
+          - name: sanction_type
+            type: ENUM('WARNING', 'TEMPORARY_BAN', 'PERMANENT_BAN', 'MUTE', 'KICK')
+            description: Тип санкции
+          - name: duration
+            type: INTEGER
+            description: Длительность в секундах (NULL для постоянных)
+          - name: reason
+            type: TEXT
+            description: Причина санкции
+          - name: is_active
+            type: BOOLEAN
+            description: Активна ли санкция
+          - name: expires_at
+            type: TIMESTAMP
+            description: Время истечения (NULL для постоянных)
+          - name: created_at
+            type: TIMESTAMP
+            description: Время создания
+        indexes:
+          - columns: [player_id]
+          - columns: [admin_id]
+          - columns: [is_active]
+          - columns: [expires_at]
+
+  data_flow:
+    - step: 1
+      description: |
+        Администратор входит в админ-панель через Admin Panel Service
+      flow: |
+        Admin Panel → Auth Service → Session Service
+      events:
+        - admin:logged-in
+
+    - step: 2
+      description: |
+        Администратор запрашивает список игроков
+      flow: |
+        Admin Panel → Player Management Module → Character Service → Response
+      events:
+        - admin:players-requested
+
+    - step: 3
+      description: |
+        Администратор изменяет баланс игрока
+      flow: |
+        Admin Panel → Economy Management Module → Economy Service → 
+        Transaction Log → Audit Log → Notification Service
+      events:
+        - admin:economy-balance-updated
+        - economy:balance-updated
+        - admin:action-logged
+
+    - step: 4
+      description: |
+        Модератор обрабатывает репорт
+      flow: |
+        Admin Panel → Moderation Module → Social Service → 
+        Sanction Service → Audit Log → Notification Service
+      events:
+        - admin:report-resolved
+        - moderation:sanction-applied
+        - admin:action-logged
+
+    - step: 5
+      description: |
+        Администратор обновляет диалог NPC
+      flow: |
+        Admin Panel → Content Management Module → Gameplay Service → 
+        Cache Invalidation → Audit Log
+      events:
+        - admin:content-dialogue-updated
+        - content:npc-dialogue-updated
+        - admin:action-logged
+
+  technical_tasks:
+    - id: admin-001
+      title: Создать Admin Panel Service
+      description: |
+        Создать основной сервис админ-панели с аутентификацией и авторизацией
+      assignee: backend
+      priority: P1
+      estimated_hours: 40
+
+    - id: admin-002
+      title: Реализовать Player Management Module
+      description: |
+        Реализовать модуль управления игроками с интеграцией Character Service
+      assignee: backend
+      priority: P1
+      estimated_hours: 60
+
+    - id: admin-003
+      title: Реализовать Economy Management Module
+      description: |
+        Реализовать модуль управления экономикой с интеграцией Economy Service
+      assignee: backend
+      priority: P1
+      estimated_hours: 60
+
+    - id: admin-004
+      title: Реализовать Content Management Module
+      description: |
+        Реализовать модуль управления контентом с интеграцией Gameplay Service
+      assignee: backend
+      priority: P1
+      estimated_hours: 50
+
+    - id: admin-005
+      title: Реализовать Moderation Module
+      description: |
+        Реализовать модуль модерации с интеграцией Social Service
+      assignee: backend
+      priority: P1
+      estimated_hours: 50
+
+    - id: admin-006
+      title: Реализовать Analytics Dashboard Module
+      description: |
+        Реализовать модуль аналитической панели с интеграцией Analytics Service
+      assignee: backend
+      priority: P2
+      estimated_hours: 40
+
+    - id: admin-007
+      title: Реализовать Role & Permission Manager
+      description: |
+        Реализовать систему управления ролями и правами доступа
+      assignee: backend
+      priority: P1
+      estimated_hours: 30
+
+    - id: admin-008
+      title: Реализовать Audit Log Manager
+      description: |
+        Реализовать систему логирования действий администраторов
+      assignee: backend
+      priority: P1
+      estimated_hours: 30
+
+    - id: admin-009
+      title: Создать OpenAPI спецификацию
+      description: |
+        Создать OpenAPI спецификацию для всех endpoints админ-панели
+      assignee: api-designer
+      priority: P1
+      estimated_hours: 20
+
+    - id: admin-010
+      title: Создать миграции БД
+      description: |
+        Создать Liquibase миграции для таблиц админ-панели
+      assignee: devops
+      priority: P1
+      estimated_hours: 10
+
