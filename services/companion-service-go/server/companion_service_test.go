@@ -446,7 +446,7 @@ func TestCompanionService_RenameCompanion_Success(t *testing.T) {
 }
 
 func TestCompanionService_AddExperience_Success(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestService(t)
 	defer cleanup()
 
 	characterID := uuid.New()
@@ -463,6 +463,7 @@ func TestCompanionService_AddExperience_Success(t *testing.T) {
 
 	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(companion, nil)
 	mockRepo.On("UpdatePlayerCompanion", context.Background(), mock.AnythingOfType("*models.PlayerCompanion")).Return(nil)
+	mockEventBus.On("PublishEvent", context.Background(), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil).Maybe()
 
 	err := service.AddExperience(context.Background(), characterID, companionID, 100, "combat")
 
@@ -620,6 +621,342 @@ func TestCompanionService_PurchaseCompanion_RepositoryError(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_ListCompanionTypes_Empty(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	mockRepo.On("ListCompanionTypes", context.Background(), (*models.CompanionCategory)(nil), 10, 0).Return([]models.CompanionType{}, nil)
+	mockRepo.On("CountCompanionTypes", context.Background(), (*models.CompanionCategory)(nil)).Return(0, nil)
+
+	result, err := service.ListCompanionTypes(context.Background(), nil, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Types, 0)
+	assert.Equal(t, 0, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_ListCompanionTypes_RepositoryError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	expectedErr := errors.New("database error")
+	mockRepo.On("ListCompanionTypes", context.Background(), (*models.CompanionCategory)(nil), 10, 0).Return(nil, expectedErr)
+
+	result, err := service.ListCompanionTypes(context.Background(), nil, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_ListPlayerCompanions_Empty(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("ListPlayerCompanions", context.Background(), characterID, (*models.CompanionStatus)(nil), 10, 0).Return([]models.PlayerCompanion{}, nil)
+	mockRepo.On("CountPlayerCompanions", context.Background(), characterID, (*models.CompanionStatus)(nil)).Return(0, nil)
+
+	result, err := service.ListPlayerCompanions(context.Background(), characterID, nil, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Companions, 0)
+	assert.Equal(t, 0, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_ListPlayerCompanions_RepositoryError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("ListPlayerCompanions", context.Background(), characterID, (*models.CompanionStatus)(nil), 10, 0).Return(nil, expectedErr)
+
+	result, err := service.ListPlayerCompanions(context.Background(), characterID, nil, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_GetCompanionDetail_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	companionID := uuid.New()
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(nil, nil)
+
+	result, err := service.GetCompanionDetail(context.Background(), companionID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "companion not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_GetCompanionDetail_RepositoryError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	companionID := uuid.New()
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(nil, expectedErr)
+
+	result, err := service.GetCompanionDetail(context.Background(), companionID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_SummonCompanion_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(nil, nil)
+
+	err := service.SummonCompanion(context.Background(), characterID, companionID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "companion not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_SummonCompanion_RepositoryError(t *testing.T) {
+	service, mockRepo, mockEventBus, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+	companion := &models.PlayerCompanion{
+		ID:            companionID,
+		CharacterID:   characterID,
+		CompanionTypeID: "combat_drone_001",
+		Level:         1,
+		Experience:    0,
+		Status:        models.CompanionStatusOwned,
+		Stats:         map[string]interface{}{"health": 100.0, "damage": 50.0},
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(companion, nil)
+	mockRepo.On("GetActiveCompanion", context.Background(), characterID).Return(nil, nil)
+	mockRepo.On("UpdatePlayerCompanion", context.Background(), mock.AnythingOfType("*models.PlayerCompanion")).Return(expectedErr)
+	mockEventBus.On("PublishEvent", context.Background(), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil).Maybe()
+
+	err := service.SummonCompanion(context.Background(), characterID, companionID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_DismissCompanion_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(nil, nil)
+
+	err := service.DismissCompanion(context.Background(), characterID, companionID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "companion not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_DismissCompanion_RepositoryError(t *testing.T) {
+	service, mockRepo, mockEventBus, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+	companion := &models.PlayerCompanion{
+		ID:            companionID,
+		CharacterID:   characterID,
+		CompanionTypeID: "combat_drone_001",
+		Level:         1,
+		Experience:    0,
+		Status:        models.CompanionStatusSummoned,
+		Stats:         map[string]interface{}{"health": 100.0, "damage": 50.0},
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(companion, nil)
+	mockRepo.On("UpdatePlayerCompanion", context.Background(), mock.AnythingOfType("*models.PlayerCompanion")).Return(expectedErr)
+	mockEventBus.On("PublishEvent", context.Background(), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil).Maybe()
+
+	err := service.DismissCompanion(context.Background(), characterID, companionID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_RenameCompanion_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+	customName := "New Name"
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(nil, nil)
+
+	err := service.RenameCompanion(context.Background(), characterID, companionID, customName)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "companion not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_RenameCompanion_RepositoryError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+	customName := "New Name"
+	companion := &models.PlayerCompanion{
+		ID:            companionID,
+		CharacterID:   characterID,
+		CompanionTypeID: "combat_drone_001",
+		Level:         1,
+		Experience:    0,
+		Status:        models.CompanionStatusOwned,
+		Stats:         map[string]interface{}{"health": 100.0, "damage": 50.0},
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(companion, nil)
+	mockRepo.On("UpdatePlayerCompanion", context.Background(), mock.AnythingOfType("*models.PlayerCompanion")).Return(expectedErr)
+
+	err := service.RenameCompanion(context.Background(), characterID, companionID, customName)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_AddExperience_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(nil, nil)
+
+	err := service.AddExperience(context.Background(), characterID, companionID, 100, "combat")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "companion not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_AddExperience_RepositoryError(t *testing.T) {
+	service, mockRepo, mockEventBus, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+	companion := &models.PlayerCompanion{
+		ID:            companionID,
+		CharacterID:   characterID,
+		CompanionTypeID: "combat_drone_001",
+		Level:         1,
+		Experience:    0,
+		Status:        models.CompanionStatusOwned,
+		Stats:         map[string]interface{}{"health": 100.0, "damage": 50.0},
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(companion, nil)
+	mockRepo.On("UpdatePlayerCompanion", context.Background(), mock.AnythingOfType("*models.PlayerCompanion")).Return(expectedErr)
+	mockEventBus.On("PublishEvent", context.Background(), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil).Maybe()
+
+	err := service.AddExperience(context.Background(), characterID, companionID, 100, "combat")
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_UseAbility_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+	abilityID := "ability_001"
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(nil, nil)
+
+	err := service.UseAbility(context.Background(), characterID, companionID, abilityID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "companion not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCompanionService_UseAbility_RepositoryError(t *testing.T) {
+	service, mockRepo, mockEventBus, cleanup := setupTestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	companionID := uuid.New()
+	abilityID := "ability_001"
+	companion := &models.PlayerCompanion{
+		ID:            companionID,
+		CharacterID:   characterID,
+		CompanionTypeID: "combat_drone_001",
+		Level:         1,
+		Experience:    0,
+		Status:        models.CompanionStatusSummoned,
+		Stats:         map[string]interface{}{"health": 100.0, "damage": 50.0},
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	ability := &models.CompanionAbility{
+		ID:              uuid.New(),
+		PlayerCompanionID: companionID,
+		AbilityID:       abilityID,
+		Level:           1,
+		Experience:      0,
+		CooldownUntil:   nil,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+	expectedErr := errors.New("database error")
+
+	mockRepo.On("GetPlayerCompanion", context.Background(), companionID).Return(companion, nil)
+	mockRepo.On("GetCompanionAbility", context.Background(), companionID, abilityID).Return(ability, nil)
+	mockRepo.On("UpdateCompanionAbility", context.Background(), mock.AnythingOfType("*models.CompanionAbility")).Return(expectedErr)
+	mockEventBus.On("PublishEvent", context.Background(), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil).Maybe()
+
+	err := service.UseAbility(context.Background(), characterID, companionID, abilityID)
+
+	assert.Error(t, err)
 	mockRepo.AssertExpectations(t)
 }
 
