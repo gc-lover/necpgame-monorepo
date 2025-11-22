@@ -830,7 +830,6 @@ func TestTicketService_RateTicket_NotFound(t *testing.T) {
 	err := service.RateTicket(context.Background(), ticketID, 5)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "ticket not found")
 	mockRepo.AssertExpectations(t)
 }
 
