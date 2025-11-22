@@ -1,0 +1,447 @@
+openapi: 3.0.3
+info:
+  title: Character Service API
+  description: API для управления аккаунтами и персонажами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Accounts
+    description: Управление аккаунтами
+  - name: Characters
+    description: Управление персонажами
+
+paths:
+  /accounts:
+    post:
+      tags:
+        - Accounts
+      summary: Создать аккаунт
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '201':
+          description: Аккаунт создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Аккаунт с таким nickname уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /accounts/{accountId}:
+    get:
+      tags:
+        - Accounts
+      summary: Получить аккаунт
+      operationId: getAccount
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Аккаунт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAccount'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /characters:
+    get:
+      tags:
+        - Characters
+      summary: Получить список персонажей
+      operationId: getCharacters
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список персонажей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    post:
+      tags:
+        - Characters
+      summary: Создать персонажа
+      operationId: createCharacter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCharacterRequest'
+      responses:
+        '201':
+          description: Персонаж создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /characters/{characterId}:
+    get:
+      tags:
+        - Characters
+      summary: Получить персонажа
+      operationId: getCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Персонаж
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Characters
+      summary: Обновить персонажа
+      operationId: updateCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCharacterRequest'
+      responses:
+        '200':
+          description: Персонаж обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Characters
+      summary: Удалить персонажа
+      operationId: deleteCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Персонаж удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /characters/{characterId}/validate:
+    get:
+      tags:
+        - Characters
+      summary: Валидировать персонажа
+      operationId: validateCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /characters/switch:
+    post:
+      tags:
+        - Characters
+      summary: Переключиться на другого персонажа
+      operationId: switchCharacter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwitchCharacterRequest'
+      responses:
+        '200':
+          description: Переключение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwitchCharacterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PlayerAccount:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+          nullable: true
+        nickname:
+          type: string
+        origin_code:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateAccountRequest:
+      type: object
+      required:
+        - nickname
+      properties:
+        external_id:
+          type: string
+          nullable: true
+        nickname:
+          type: string
+          minLength: 3
+          maxLength: 50
+        origin_code:
+          type: string
+          nullable: true
+
+    Character:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        class_code:
+          type: string
+          nullable: true
+        faction_code:
+          type: string
+          nullable: true
+        level:
+          type: integer
+          minimum: 1
+          default: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateCharacterRequest:
+      type: object
+      required:
+        - account_id
+        - name
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        class_code:
+          type: string
+          nullable: true
+        faction_code:
+          type: string
+          nullable: true
+        level:
+          type: integer
+          minimum: 1
+          default: 1
+
+    UpdateCharacterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        class_code:
+          type: string
+          nullable: true
+        faction_code:
+          type: string
+          nullable: true
+        level:
+          type: integer
+          minimum: 1
+
+    CharacterListResponse:
+      type: object
+      properties:
+        characters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Character'
+        total:
+          type: integer
+
+    SwitchCharacterRequest:
+      type: object
+      required:
+        - account_id
+        - character_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+
+    SwitchCharacterResponse:
+      type: object
+      properties:
+        previous_character_id:
+          type: string
+          format: uuid
+          nullable: true
+        current_character:
+          $ref: '#/components/schemas/Character'
+        success:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
