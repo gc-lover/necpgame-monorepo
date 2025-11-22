@@ -56,6 +56,13 @@ func NewHTTPServer(addr string, socialService *SocialService, jwtValidator *JwtV
 	social.HandleFunc("/chat/messages", server.createMessage).Methods("POST")
 	social.HandleFunc("/chat/messages/{channelId}", server.getMessages).Methods("GET")
 
+	social.HandleFunc("/mail", server.sendMail).Methods("POST")
+	social.HandleFunc("/mail", server.getMails).Methods("GET")
+	social.HandleFunc("/mail/{id}", server.getMail).Methods("GET")
+	social.HandleFunc("/mail/{id}/read", server.markMailAsRead).Methods("PUT")
+	social.HandleFunc("/mail/{id}/claim", server.claimAttachment).Methods("POST")
+	social.HandleFunc("/mail/{id}", server.deleteMail).Methods("DELETE")
+
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
 	return server
@@ -447,4 +454,163 @@ type statusRecorder struct {
 func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
+}
+
+func (s *HTTPServer) sendMail(w http.ResponseWriter, r *http.Request) {
+	var req models.CreateMailRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.Subject == "" {
+		s.respondError(w, http.StatusBadRequest, "subject is required")
+		return
+	}
+
+	var senderID *uuid.UUID
+	senderName := "System"
+	if userIDStr := r.Context().Value("user_id"); userIDStr != nil {
+		if userID, err := uuid.Parse(userIDStr.(string)); err == nil {
+			senderID = &userID
+		}
+	}
+	if username := r.Context().Value("username"); username != nil {
+		senderName = username.(string)
+	}
+
+	mail, err := s.socialService.SendMail(r.Context(), &req, senderID, senderName)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to send mail")
+		s.respondError(w, http.StatusInternalServerError, "failed to send mail")
+		return
+	}
+
+	s.respondJSON(w, http.StatusCreated, mail)
+}
+
+func (s *HTTPServer) getMails(w http.ResponseWriter, r *http.Request) {
+	recipientIDStr := r.URL.Query().Get("recipient_id")
+	if recipientIDStr == "" {
+		s.respondError(w, http.StatusBadRequest, "recipient_id query parameter is required")
+		return
+	}
+
+	recipientID, err := uuid.Parse(recipientIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid recipient_id")
+		return
+	}
+
+	limit := 50
+	offset := 0
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
+	response, err := s.socialService.GetMails(r.Context(), recipientID, limit, offset)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get mails")
+		s.respondError(w, http.StatusInternalServerError, "failed to get mails")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getMail(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	mailIDStr := vars["id"]
+
+	mailID, err := uuid.Parse(mailIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid mail id")
+		return
+	}
+
+	mail, err := s.socialService.GetMails(r.Context(), mailID, 1, 0)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get mail")
+		s.respondError(w, http.StatusInternalServerError, "failed to get mail")
+		return
+	}
+
+	if mail == nil || len(mail.Messages) == 0 {
+		s.respondError(w, http.StatusNotFound, "mail not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, mail.Messages[0])
+}
+
+func (s *HTTPServer) markMailAsRead(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	mailIDStr := vars["id"]
+
+	mailID, err := uuid.Parse(mailIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid mail id")
+		return
+	}
+
+	err = s.socialService.MarkMailAsRead(r.Context(), mailID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to mark mail as read")
+		s.respondError(w, http.StatusInternalServerError, "failed to mark mail as read")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+}
+
+func (s *HTTPServer) claimAttachment(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	mailIDStr := vars["id"]
+
+	mailID, err := uuid.Parse(mailIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid mail id")
+		return
+	}
+
+	response, err := s.socialService.ClaimAttachment(r.Context(), mailID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to claim attachment")
+		s.respondError(w, http.StatusInternalServerError, "failed to claim attachment")
+		return
+	}
+
+	if !response.Success {
+		s.respondError(w, http.StatusBadRequest, "cannot claim attachment")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) deleteMail(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	mailIDStr := vars["id"]
+
+	mailID, err := uuid.Parse(mailIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid mail id")
+		return
+	}
+
+	err = s.socialService.DeleteMail(r.Context(), mailID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to delete mail")
+		s.respondError(w, http.StatusInternalServerError, "failed to delete mail")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
 }
