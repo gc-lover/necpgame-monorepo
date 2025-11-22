@@ -1,0 +1,988 @@
+openapi: 3.0.3
+info:
+  title: Maintenance Service API
+  description: API для системы режима обслуживания: управление плановым и экстренным обслуживанием, graceful shutdown, блокировка подключений и уведомления
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8097/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Maintenance Windows
+    description: Управление окнами обслуживания
+  - name: Maintenance Status
+    description: Управление статусом обслуживания
+  - name: Maintenance Scheduler
+    description: Планирование обслуживания
+  - name: Graceful Shutdown
+    description: Координация graceful shutdown
+  - name: Maintenance Notifications
+    description: Управление уведомлениями об обслуживании
+  - name: Maintenance Events
+    description: События обслуживания
+  - name: Maintenance Admin
+    description: Административный API для управления обслуживанием
+
+paths:
+  /infrastructure/maintenance/windows:
+    post:
+      tags:
+        - Maintenance Windows
+      summary: Создать окно обслуживания
+      operationId: createMaintenanceWindow
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMaintenanceWindowRequest'
+      responses:
+        '201':
+          description: Окно обслуживания создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Maintenance Windows
+      summary: Получить список окон обслуживания
+      operationId: listMaintenanceWindows
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: maintenance_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - SCHEDULED
+              - EMERGENCY
+              - HOT_FIX
+              - ROLLBACK
+              - UPGRADE
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - PLANNED
+              - NOTIFIED
+              - STARTING
+              - ACTIVE
+              - COMPLETING
+              - COMPLETED
+              - CANCELLED
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список окон обслуживания
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindowsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/windows/{window_id}:
+    get:
+      tags:
+        - Maintenance Windows
+      summary: Получить информацию об окне обслуживания
+      operationId: getMaintenanceWindow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация об окне обслуживания
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindow'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Maintenance Windows
+      summary: Обновить окно обслуживания
+      operationId: updateMaintenanceWindow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMaintenanceWindowRequest'
+      responses:
+        '200':
+          description: Окно обслуживания обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Maintenance Windows
+      summary: Отменить окно обслуживания
+      operationId: cancelMaintenanceWindow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Окно обслуживания отменено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: cancelled
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/status:
+    get:
+      tags:
+        - Maintenance Status
+      summary: Получить текущий статус обслуживания
+      operationId: getMaintenanceStatus
+      responses:
+        '200':
+          description: Текущий статус обслуживания
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceStatus'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Maintenance Status
+      summary: Обновить статус обслуживания
+      operationId: updateMaintenanceStatus
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMaintenanceStatusRequest'
+      responses:
+        '200':
+          description: Статус обслуживания обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/schedule:
+    post:
+      tags:
+        - Maintenance Scheduler
+      summary: Запланировать обслуживание
+      operationId: scheduleMaintenance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleMaintenanceRequest'
+      responses:
+        '201':
+          description: Обслуживание запланировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/schedule/next:
+    get:
+      tags:
+        - Maintenance Scheduler
+      summary: Получить следующее запланированное обслуживание
+      operationId: getNextMaintenance
+      responses:
+        '200':
+          description: Следующее обслуживание
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindow'
+                nullable: true
+        '404':
+          description: Нет запланированного обслуживания
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/shutdown/start:
+    post:
+      tags:
+        - Graceful Shutdown
+      summary: Начать graceful shutdown
+      operationId: startGracefulShutdown
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartGracefulShutdownRequest'
+      responses:
+        '200':
+          description: Graceful shutdown начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GracefulShutdownStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/shutdown/status:
+    get:
+      tags:
+        - Graceful Shutdown
+      summary: Получить статус graceful shutdown
+      operationId: getGracefulShutdownStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Статус graceful shutdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GracefulShutdownStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/notify:
+    post:
+      tags:
+        - Maintenance Notifications
+      summary: Отправить уведомление об обслуживании
+      operationId: sendMaintenanceNotification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMaintenanceNotificationRequest'
+      responses:
+        '200':
+          description: Уведомление отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: sent
+                  recipients_count:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/notifications/{window_id}:
+    get:
+      tags:
+        - Maintenance Notifications
+      summary: Получить уведомления для окна обслуживания
+      operationId: getMaintenanceNotifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceNotificationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /infrastructure/maintenance/events/{window_id}:
+    get:
+      tags:
+        - Maintenance Events
+      summary: Получить события для окна обслуживания
+      operationId: getMaintenanceEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: window_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/maintenance/windows:
+    post:
+      tags:
+        - Maintenance Admin
+      summary: Создать окно обслуживания (admin)
+      operationId: adminCreateMaintenanceWindow
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMaintenanceWindowRequest'
+      responses:
+        '201':
+          description: Окно обслуживания создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав администратора
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/maintenance/start:
+    post:
+      tags:
+        - Maintenance Admin
+      summary: Принудительно запустить обслуживание (admin)
+      operationId: adminStartMaintenance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminStartMaintenanceRequest'
+      responses:
+        '200':
+          description: Обслуживание запущено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав администратора
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/maintenance/stop:
+    post:
+      tags:
+        - Maintenance Admin
+      summary: Принудительно остановить обслуживание (admin)
+      operationId: adminStopMaintenance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminStopMaintenanceRequest'
+      responses:
+        '200':
+          description: Обслуживание остановлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: stopped
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав администратора
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateMaintenanceWindowRequest:
+      type: object
+      required:
+        - maintenance_type
+        - scheduled_start
+        - scheduled_end
+        - title
+      properties:
+        maintenance_type:
+          type: string
+          enum:
+            - SCHEDULED
+            - EMERGENCY
+            - HOT_FIX
+            - ROLLBACK
+            - UPGRADE
+        scheduled_start:
+          type: string
+          format: date-time
+        scheduled_end:
+          type: string
+          format: date-time
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        impact:
+          type: string
+          maxLength: 100
+        affected_services:
+          type: array
+          items:
+            type: string
+
+    UpdateMaintenanceWindowRequest:
+      type: object
+      properties:
+        scheduled_start:
+          type: string
+          format: date-time
+        scheduled_end:
+          type: string
+          format: date-time
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        impact:
+          type: string
+          maxLength: 100
+        affected_services:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum:
+            - PLANNED
+            - NOTIFIED
+            - STARTING
+            - ACTIVE
+            - COMPLETING
+            - COMPLETED
+            - CANCELLED
+
+    MaintenanceWindow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        maintenance_type:
+          type: string
+          enum:
+            - SCHEDULED
+            - EMERGENCY
+            - HOT_FIX
+            - ROLLBACK
+            - UPGRADE
+        status:
+          type: string
+          enum:
+            - PLANNED
+            - NOTIFIED
+            - STARTING
+            - ACTIVE
+            - COMPLETING
+            - COMPLETED
+            - CANCELLED
+        scheduled_start:
+          type: string
+          format: date-time
+        scheduled_end:
+          type: string
+          format: date-time
+        actual_start:
+          type: string
+          format: date-time
+          nullable: true
+        actual_end:
+          type: string
+          format: date-time
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+        impact:
+          type: string
+        affected_services:
+          type: array
+          items:
+            type: string
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MaintenanceWindowsResponse:
+      type: object
+      properties:
+        windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceWindow'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    MaintenanceStatus:
+      type: object
+      properties:
+        is_maintenance_mode:
+          type: boolean
+        current_window_id:
+          type: string
+          format: uuid
+          nullable: true
+        block_new_connections:
+          type: boolean
+        allow_admin_access:
+          type: boolean
+        maintenance_message:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateMaintenanceStatusRequest:
+      type: object
+      properties:
+        is_maintenance_mode:
+          type: boolean
+        block_new_connections:
+          type: boolean
+        allow_admin_access:
+          type: boolean
+        maintenance_message:
+          type: string
+
+    ScheduleMaintenanceRequest:
+      type: object
+      required:
+        - window_id
+      properties:
+        window_id:
+          type: string
+          format: uuid
+
+    StartGracefulShutdownRequest:
+      type: object
+      required:
+        - window_id
+      properties:
+        window_id:
+          type: string
+          format: uuid
+        timeout_seconds:
+          type: integer
+          default: 300
+          description: Таймаут для graceful shutdown в секундах
+
+    GracefulShutdownStatus:
+      type: object
+      properties:
+        is_shutting_down:
+          type: boolean
+        window_id:
+          type: string
+          format: uuid
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        services_notified:
+          type: integer
+        services_shutdown:
+          type: integer
+        total_services:
+          type: integer
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+
+    SendMaintenanceNotificationRequest:
+      type: object
+      required:
+        - window_id
+        - notification_type
+      properties:
+        window_id:
+          type: string
+          format: uuid
+        notification_type:
+          type: string
+          enum:
+            - SCHEDULED_24H
+            - SCHEDULED_1H
+            - STARTING
+            - STARTED
+            - COMPLETED
+
+    MaintenanceNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        maintenance_window_id:
+          type: string
+          format: uuid
+        notification_type:
+          type: string
+          enum:
+            - SCHEDULED_24H
+            - SCHEDULED_1H
+            - STARTING
+            - STARTED
+            - COMPLETED
+        sent_at:
+          type: string
+          format: date-time
+        recipients_count:
+          type: integer
+
+    MaintenanceNotificationsResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceNotification'
+        total:
+          type: integer
+
+    MaintenanceEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        maintenance_window_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - window-created
+            - window-scheduled
+            - window-starting
+            - window-started
+            - window-completing
+            - window-completed
+            - window-cancelled
+        event_data:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    MaintenanceEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    AdminStartMaintenanceRequest:
+      type: object
+      required:
+        - window_id
+      properties:
+        window_id:
+          type: string
+          format: uuid
+        force:
+          type: boolean
+          default: false
+          description: Принудительный запуск без graceful shutdown
+
+    AdminStopMaintenanceRequest:
+      type: object
+      required:
+        - window_id
+      properties:
+        window_id:
+          type: string
+          format: uuid
+        force:
+          type: boolean
+          default: false
+          description: Принудительная остановка
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
