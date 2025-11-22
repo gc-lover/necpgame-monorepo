@@ -10,6 +10,7 @@ import (
 
 	"github.com/necpgame/gameplay-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -27,7 +28,17 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize progression service")
 	}
 
-	httpServer := server.NewHTTPServer(addr, progressionService)
+	redisOpts, _ := redis.ParseURL(redisURL)
+	redisClient := redis.NewClient(redisOpts)
+	eventBus := server.NewRedisEventBus(redisClient)
+
+	progressionRepo := server.NewProgressionRepository(progressionService.GetDBPool())
+	questService, err := server.NewQuestService(dbURL, redisURL, progressionRepo, eventBus)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize quest service")
+	}
+
+	httpServer := server.NewHTTPServer(addr, progressionService, questService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

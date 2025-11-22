@@ -16,6 +16,7 @@ import (
 
 type ProgressionService struct {
 	repo   *ProgressionRepository
+	db     *pgxpool.Pool
 	cache  *redis.Client
 	logger *logrus.Logger
 	eventBus EventBus
@@ -65,10 +66,15 @@ func NewProgressionService(dbURL, redisURL string) (*ProgressionService, error) 
 
 	return &ProgressionService{
 		repo:     repo,
+		db:       dbPool,
 		cache:    redisClient,
 		logger:   GetLogger(),
 		eventBus: eventBus,
 	}, nil
+}
+
+func (s *ProgressionService) GetDBPool() *pgxpool.Pool {
+	return s.db
 }
 
 func (s *ProgressionService) GetProgression(ctx context.Context, characterID uuid.UUID) (*models.CharacterProgression, error) {
