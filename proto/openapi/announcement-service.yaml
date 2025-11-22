@@ -1,0 +1,411 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service API
+  description: API для системы объявлений: новости, патчноуты, события, уведомления
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Announcements
+    description: Управление объявлениями
+  - name: Patch Notes
+    description: Патчноуты
+  - name: News Feed
+    description: Новостная лента
+
+paths:
+  /announcements:
+    get:
+      tags:
+        - Announcements
+      summary: Получить список объявлений
+      operationId: getAnnouncements
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - GAME_NEWS
+              - PATCH_NOTES
+              - MAINTENANCE
+              - EVENT
+              - PROMOTION
+              - COMMUNITY
+              - EMERGENCY
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список объявлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcement'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /announcements/{announcementId}:
+    get:
+      tags:
+        - Announcements
+      summary: Получить объявление
+      operationId: getAnnouncement
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /announcements/{announcementId}/read:
+    post:
+      tags:
+        - Announcements
+      summary: Отметить объявление как прочитанное
+      operationId: markAnnouncementAsRead
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - character_id
+              properties:
+                character_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Объявление отмечено как прочитанное
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: read
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /announcements/patch-notes:
+    get:
+      tags:
+        - Patch Notes
+      summary: Получить патчноуты
+      operationId: getPatchNotes
+      parameters:
+        - name: version
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список патчноутов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patch_notes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PatchNote'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /announcements/patch-notes/{version}:
+    get:
+      tags:
+        - Patch Notes
+      summary: Получить патчноут по версии
+      operationId: getPatchNoteByVersion
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Патчноут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchNote'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /announcements/news-feed:
+    get:
+      tags:
+        - News Feed
+      summary: Получить новостную ленту
+      operationId: getNewsFeed
+      parameters:
+        - name: character_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Новостная лента
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feed:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NewsFeedItem'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - GAME_NEWS
+            - PATCH_NOTES
+            - MAINTENANCE
+            - EVENT
+            - PROMOTION
+            - COMMUNITY
+            - EMERGENCY
+        priority:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+        title:
+          type: string
+        content:
+          type: string
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+        media_url:
+          type: string
+          nullable: true
+        target_audience:
+          type: object
+          additionalProperties: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    PatchNote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: string
+        title:
+          type: string
+        improvements:
+          type: array
+          items:
+            type: string
+        bug_fixes:
+          type: array
+          items:
+            type: string
+        known_issues:
+          type: array
+          items:
+            type: string
+        attachments:
+          type: array
+          items:
+            type: object
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    NewsFeedItem:
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        preview:
+          type: string
+        media_url:
+          type: string
+          nullable: true
+        is_read:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+

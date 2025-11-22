@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: Referral Service API
+  description: API для реферальной системы: коды, регистрация, награды, milestone бонусы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referrals
+    description: Управление рефералами
+  - name: Codes
+    description: Реферальные коды
+  - name: Leaderboard
+    description: Лидерборд рефералов
+
+paths:
+  /referral/code:
+    get:
+      tags:
+        - Codes
+      summary: Получить реферальный код игрока
+      operationId: getReferralCode
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Реферальный код
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralCode'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Codes
+      summary: Создать реферальный код
+      operationId: createReferralCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReferralCodeRequest'
+      responses:
+        '201':
+          description: Реферальный код создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralCode'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /referral/register:
+    post:
+      tags:
+        - Referrals
+      summary: Зарегистрироваться по реферальному коду
+      operationId: registerWithCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterWithCodeRequest'
+      responses:
+        '201':
+          description: Регистрация по коду успешна
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Referral'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /referral/stats:
+    get:
+      tags:
+        - Referrals
+      summary: Получить статистику рефералов
+      operationId: getReferralStats
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика рефералов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralStats'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /referral/referrals:
+    get:
+      tags:
+        - Referrals
+      summary: Получить список рефералов
+      operationId: getReferrals
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending
+              - active
+              - completed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список рефералов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  referrals:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Referral'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /referral/leaderboard:
+    get:
+      tags:
+        - Leaderboard
+      summary: Получить лидерборд рефералов
+      operationId: getReferralLeaderboard
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Лидерборд рефералов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReferralLeaderboardEntry'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ReferralCode:
+      type: object
+      properties:
+        code:
+          type: string
+        character_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+
+    CreateReferralCodeRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    RegisterWithCodeRequest:
+      type: object
+      required:
+        - character_id
+        - referral_code
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        referral_code:
+          type: string
+
+    Referral:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        referrer_id:
+          type: string
+          format: uuid
+        referred_id:
+          type: string
+          format: uuid
+        referral_code:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - active
+            - completed
+        welcome_reward_claimed:
+          type: boolean
+        milestone_reward_claimed:
+          type: boolean
+        milestone_level:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ReferralStats:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        completed_referrals:
+          type: integer
+        current_milestone:
+          type: integer
+          nullable: true
+        next_milestone:
+          type: integer
+          nullable: true
+        milestone_rewards_claimed:
+          type: array
+          items:
+            type: integer
+
+    ReferralLeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        character_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+

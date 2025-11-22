@@ -1,0 +1,430 @@
+openapi: 3.0.3
+info:
+  title: Battle Pass Service API
+  description: API для системы боевого пропуска: сезоны, прогрессия, награды, еженедельные испытания
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8093/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Battle Pass
+    description: Управление боевым пропуском
+  - name: Challenges
+    description: Еженедельные испытания
+  - name: Rewards
+    description: Награды боевого пропуска
+
+paths:
+  /battle-pass/current:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить текущий сезон боевого пропуска
+      operationId: getCurrentBattlePass
+      responses:
+        '200':
+          description: Текущий сезон
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattlePassSeason'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/progress:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить прогресс игрока
+      operationId: getPlayerProgress
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBattlePassProgress'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/progress/xp:
+    post:
+      tags:
+        - Battle Pass
+      summary: Начислить опыт боевого пропуска
+      operationId: awardBattlePassXP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AwardXPRequest'
+      responses:
+        '200':
+          description: Опыт начислен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBattlePassProgress'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/premium:
+    post:
+      tags:
+        - Battle Pass
+      summary: Купить премиум боевой пропуск
+      operationId: purchasePremium
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchasePremiumRequest'
+      responses:
+        '200':
+          description: Премиум куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBattlePassProgress'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/rewards:
+    get:
+      tags:
+        - Rewards
+      summary: Получить награды сезона
+      operationId: getSeasonRewards
+      parameters:
+        - name: season_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список наград
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BattlePassReward'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/rewards/claim:
+    post:
+      tags:
+        - Rewards
+      summary: Получить награду
+      operationId: claimReward
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRewardRequest'
+      responses:
+        '200':
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimRewardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/challenges/weekly:
+    get:
+      tags:
+        - Challenges
+      summary: Получить еженедельные испытания
+      operationId: getWeeklyChallenges
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список еженедельных испытаний
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challenges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeeklyChallenge'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/challenges/{challengeId}/complete:
+    post:
+      tags:
+        - Challenges
+      summary: Завершить испытание
+      operationId: completeChallenge
+      parameters:
+        - name: challengeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Испытание завершено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  xp_awarded:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    BattlePassSeason:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        max_level:
+          type: integer
+          default: 100
+        is_active:
+          type: boolean
+
+    PlayerBattlePassProgress:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        xp:
+          type: integer
+          minimum: 0
+        xp_to_next_level:
+          type: integer
+          minimum: 0
+        has_premium:
+          type: boolean
+        premium_purchased_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AwardXPRequest:
+      type: object
+      required:
+        - character_id
+        - xp_amount
+        - source
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        xp_amount:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum:
+            - quest
+            - challenge
+            - daily
+            - weekly
+            - event
+            - purchase
+
+    PurchasePremiumRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    BattlePassReward:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        track:
+          type: string
+          enum:
+            - free
+            - premium
+        reward_type:
+          type: string
+          enum:
+            - currency
+            - item
+            - cosmetic
+            - xp_boost
+            - title
+        reward_data:
+          type: object
+          additionalProperties: true
+
+    ClaimRewardRequest:
+      type: object
+      required:
+        - character_id
+        - reward_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        reward_id:
+          type: string
+          format: uuid
+
+    ClaimRewardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        reward:
+          type: object
+          additionalProperties: true
+
+    WeeklyChallenge:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        xp_reward:
+          type: integer
+        progress:
+          type: integer
+          minimum: 0
+        target:
+          type: integer
+          minimum: 1
+        is_completed:
+          type: boolean
+        week_number:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
