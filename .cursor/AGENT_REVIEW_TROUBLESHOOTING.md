@@ -86,3 +86,4 @@ git remote -v
 - Правила агентов: `.cursor/rules/agent-*.mdc`
 - Общие правила: `.cursor/rules/main.mdc`
 
+
