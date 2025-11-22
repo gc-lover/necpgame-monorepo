@@ -53,3 +53,14 @@ type CharacterListResponse struct {
 	Characters []Character `json:"characters"`
 	Total      int         `json:"total"`
 }
+
+type SwitchCharacterRequest struct {
+	AccountID   uuid.UUID `json:"account_id"`
+	CharacterID uuid.UUID `json:"character_id"`
+}
+
+type SwitchCharacterResponse struct {
+	PreviousCharacterID *uuid.UUID `json:"previous_character_id,omitempty"`
+	CurrentCharacter    *Character  `json:"current_character"`
+	Success             bool        `json:"success"`
+}
