@@ -1,0 +1,615 @@
+package server
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/necpgame/admin-service-go/models"
+	"github.com/sirupsen/logrus"
+)
+
+type HTTPServer struct {
+	addr          string
+	router        *mux.Router
+	adminService  *AdminService
+	logger        *logrus.Logger
+	server        *http.Server
+	jwtValidator  *JwtValidator
+	authEnabled   bool
+}
+
+func NewHTTPServer(addr string, adminService *AdminService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+	router := mux.NewRouter()
+	server := &HTTPServer{
+		addr:         addr,
+		router:       router,
+		adminService: adminService,
+		logger:       GetLogger(),
+		jwtValidator: jwtValidator,
+		authEnabled:  authEnabled,
+	}
+
+	router.Use(server.loggingMiddleware)
+	router.Use(server.metricsMiddleware)
+	router.Use(server.corsMiddleware)
+
+	if authEnabled {
+		router.Use(server.authMiddleware)
+		router.Use(server.permissionMiddleware)
+	}
+
+	api := router.PathPrefix("/api/v1/admin").Subrouter()
+
+	api.HandleFunc("/players/ban", server.banPlayer).Methods("POST")
+	api.HandleFunc("/players/kick", server.kickPlayer).Methods("POST")
+	api.HandleFunc("/players/mute", server.mutePlayer).Methods("POST")
+	api.HandleFunc("/players/unban", server.unbanPlayer).Methods("POST")
+	api.HandleFunc("/players/unmute", server.unmutePlayer).Methods("POST")
+	api.HandleFunc("/players/search", server.searchPlayers).Methods("POST")
+
+	api.HandleFunc("/inventory/give", server.giveItem).Methods("POST")
+	api.HandleFunc("/inventory/remove", server.removeItem).Methods("POST")
+
+	api.HandleFunc("/economy/set-currency", server.setCurrency).Methods("POST")
+	api.HandleFunc("/economy/add-currency", server.addCurrency).Methods("POST")
+
+	api.HandleFunc("/world/flags", server.setWorldFlag).Methods("POST")
+
+	api.HandleFunc("/events", server.createEvent).Methods("POST")
+
+	api.HandleFunc("/analytics", server.getAnalytics).Methods("GET")
+
+	api.HandleFunc("/audit-logs", server.getAuditLogs).Methods("GET")
+	api.HandleFunc("/audit-logs/{log_id}", server.getAuditLog).Methods("GET")
+
+	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+
+	return server
+}
+
+func (s *HTTPServer) Start(ctx context.Context) error {
+	s.server = &http.Server{
+		Addr:         s.addr,
+		Handler:      s.router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	errChan := make(chan error, 1)
+	go func() {
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+		return s.Shutdown(context.Background())
+	}
+}
+
+func (s *HTTPServer) Shutdown(ctx context.Context) error {
+	if s.server != nil {
+		return s.server.Shutdown(ctx)
+	}
+	return nil
+}
+
+func (s *HTTPServer) getAdminID(r *http.Request) (uuid.UUID, error) {
+	claims, ok := r.Context().Value("claims").(*Claims)
+	if !ok || claims == nil {
+		return uuid.Nil, fmt.Errorf("invalid claims")
+	}
+
+	adminID, err := uuid.Parse(claims.Subject)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return adminID, nil
+}
+
+func (s *HTTPServer) getIPAddress(r *http.Request) string {
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.Header.Get("X-Real-IP")
+	}
+	if ip == "" {
+		ip = strings.Split(r.RemoteAddr, ":")[0]
+	}
+	return ip
+}
+
+func (s *HTTPServer) banPlayer(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.BanPlayerRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.BanPlayer(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to ban player")
+		s.respondError(w, http.StatusInternalServerError, "failed to ban player")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) kickPlayer(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.KickPlayerRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.KickPlayer(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to kick player")
+		s.respondError(w, http.StatusInternalServerError, "failed to kick player")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) mutePlayer(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.MutePlayerRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.MutePlayer(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to mute player")
+		s.respondError(w, http.StatusInternalServerError, "failed to mute player")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) unbanPlayer(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req struct {
+		CharacterID uuid.UUID `json:"character_id"`
+		Reason      string    `json:"reason"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	details := map[string]interface{}{
+		"character_id": req.CharacterID.String(),
+		"reason":       req.Reason,
+	}
+
+	err = s.adminService.LogAction(r.Context(), adminID, models.AdminActionTypeUnban, &req.CharacterID, "character", details, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to log unban action")
+		s.respondError(w, http.StatusInternalServerError, "failed to unban player")
+		return
+	}
+
+	RecordAdminAction(string(models.AdminActionTypeUnban))
+
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+}
+
+func (s *HTTPServer) unmutePlayer(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req struct {
+		CharacterID uuid.UUID `json:"character_id"`
+		Reason      string    `json:"reason"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	details := map[string]interface{}{
+		"character_id": req.CharacterID.String(),
+		"reason":       req.Reason,
+	}
+
+	err = s.adminService.LogAction(r.Context(), adminID, models.AdminActionTypeUnmute, &req.CharacterID, "character", details, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to log unmute action")
+		s.respondError(w, http.StatusInternalServerError, "failed to unmute player")
+		return
+	}
+
+	RecordAdminAction(string(models.AdminActionTypeUnmute))
+
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+}
+
+func (s *HTTPServer) searchPlayers(w http.ResponseWriter, r *http.Request) {
+	var req models.SearchPlayersRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.SearchPlayers(r.Context(), &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to search players")
+		s.respondError(w, http.StatusInternalServerError, "failed to search players")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) giveItem(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.GiveItemRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.GiveItem(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to give item")
+		s.respondError(w, http.StatusInternalServerError, "failed to give item")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) removeItem(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.RemoveItemRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.RemoveItem(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to remove item")
+		s.respondError(w, http.StatusInternalServerError, "failed to remove item")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) setCurrency(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.SetCurrencyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.SetCurrency(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to set currency")
+		s.respondError(w, http.StatusInternalServerError, "failed to set currency")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) addCurrency(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.AddCurrencyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.AddCurrency(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to add currency")
+		s.respondError(w, http.StatusInternalServerError, "failed to add currency")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) setWorldFlag(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.SetWorldFlagRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.SetWorldFlag(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to set world flag")
+		s.respondError(w, http.StatusInternalServerError, "failed to set world flag")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) createEvent(w http.ResponseWriter, r *http.Request) {
+	adminID, err := s.getAdminID(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, "invalid admin credentials")
+		return
+	}
+
+	var req models.CreateEventRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.adminService.CreateEvent(r.Context(), adminID, &req, s.getIPAddress(r), r.UserAgent())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to create event")
+		s.respondError(w, http.StatusInternalServerError, "failed to create event")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getAnalytics(w http.ResponseWriter, r *http.Request) {
+	response, err := s.adminService.GetAnalytics(r.Context())
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get analytics")
+		s.respondError(w, http.StatusInternalServerError, "failed to get analytics")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getAuditLogs(w http.ResponseWriter, r *http.Request) {
+	var adminID *uuid.UUID
+	if adminIDStr := r.URL.Query().Get("admin_id"); adminIDStr != "" {
+		if id, err := uuid.Parse(adminIDStr); err == nil {
+			adminID = &id
+		}
+	}
+
+	var actionType *models.AdminActionType
+	if actionTypeStr := r.URL.Query().Get("action_type"); actionTypeStr != "" {
+		at := models.AdminActionType(actionTypeStr)
+		actionType = &at
+	}
+
+	limit := 50
+	offset := 0
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
+	response, err := s.adminService.GetAuditLogs(r.Context(), adminID, actionType, limit, offset)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get audit logs")
+		s.respondError(w, http.StatusInternalServerError, "failed to get audit logs")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getAuditLog(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	logID, err := uuid.Parse(vars["log_id"])
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid log_id")
+		return
+	}
+
+	log, err := s.adminService.repo.GetAuditLog(r.Context(), logID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get audit log")
+		s.respondError(w, http.StatusInternalServerError, "failed to get audit log")
+		return
+	}
+
+	if log == nil {
+		s.respondError(w, http.StatusNotFound, "audit log not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, log)
+}
+
+func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
+}
+
+func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(data)
+}
+
+func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {
+	s.respondJSON(w, status, map[string]string{"error": message})
+}
+
+func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(recorder, r)
+
+		duration := time.Since(start)
+		s.logger.WithFields(logrus.Fields{
+			"method":      r.Method,
+			"path":        r.URL.Path,
+			"duration_ms": duration.Milliseconds(),
+			"status":      recorder.statusCode,
+		}).Info("HTTP request")
+	})
+}
+
+func (s *HTTPServer) metricsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		recorder := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(recorder, r)
+
+		duration := time.Since(start).Seconds()
+		RecordRequest(r.Method, r.URL.Path, http.StatusText(recorder.statusCode))
+		RecordRequestDuration(r.Method, r.URL.Path, duration)
+	})
+}
+
+func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !s.authEnabled || s.jwtValidator == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			s.respondError(w, http.StatusUnauthorized, "authorization header required")
+			return
+		}
+
+		claims, err := s.jwtValidator.Verify(r.Context(), authHeader)
+		if err != nil {
+			s.logger.WithError(err).Warn("JWT validation failed")
+			s.respondError(w, http.StatusUnauthorized, "invalid or expired token")
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "claims", claims)
+		ctx = context.WithValue(ctx, "user_id", claims.Subject)
+		ctx = context.WithValue(ctx, "username", claims.PreferredUsername)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (s *HTTPServer) permissionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := r.Context().Value("claims").(*Claims)
+		if !ok || claims == nil {
+			s.respondError(w, http.StatusUnauthorized, "invalid claims")
+			return
+		}
+
+		hasAdminRole := false
+		for _, role := range claims.RealmAccess.Roles {
+			if role == "admin" || role == "moderator" {
+				hasAdminRole = true
+				break
+			}
+		}
+
+		if !hasAdminRole {
+			s.respondError(w, http.StatusForbidden, "insufficient permissions")
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (sr *statusRecorder) WriteHeader(code int) {
+	sr.statusCode = code
+	sr.ResponseWriter.WriteHeader(code)
+}
+
