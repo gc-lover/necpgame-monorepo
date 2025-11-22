@@ -1,0 +1,510 @@
+openapi: 3.0.3
+info:
+  title: Support Service API
+  description: API для системы поддержки: создание тикетов, управление обращениями, ответы агентов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Tickets
+    description: Управление тикетами поддержки
+
+paths:
+  /support/tickets:
+    post:
+      tags:
+        - Tickets
+      summary: Создать тикет поддержки
+      operationId: createTicket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTicketRequest'
+      responses:
+        '201':
+          description: Тикет создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Tickets
+      summary: Получить список тикетов
+      operationId: getTickets
+      parameters:
+        - name: character_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - open
+              - in_progress
+              - waiting_for_player
+              - resolved
+              - closed
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+              - urgent
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список тикетов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tickets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupportTicket'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /support/tickets/{ticketId}:
+    get:
+      tags:
+        - Tickets
+      summary: Получить тикет
+      operationId: getTicket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Тикет
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicket'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags:
+        - Tickets
+      summary: Обновить тикет
+      operationId: updateTicket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTicketRequest'
+      responses:
+        '200':
+          description: Тикет обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /support/tickets/{ticketId}/close:
+    post:
+      tags:
+        - Tickets
+      summary: Закрыть тикет
+      operationId: closeTicket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Тикет закрыт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /support/tickets/{ticketId}/responses:
+    post:
+      tags:
+        - Tickets
+      summary: Добавить ответ к тикету
+      operationId: addTicketResponse
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTicketResponseRequest'
+      responses:
+        '201':
+          description: Ответ добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Tickets
+      summary: Получить ответы по тикету
+      operationId: getTicketResponses
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список ответов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TicketResponse'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /support/tickets/{ticketId}/rating:
+    post:
+      tags:
+        - Tickets
+      summary: Оценить тикет
+      operationId: rateTicket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RateTicketRequest'
+      responses:
+        '200':
+          description: Оценка сохранена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateTicketRequest:
+      type: object
+      required:
+        - character_id
+        - subject
+        - message
+        - category
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 200
+        message:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        category:
+          type: string
+          enum:
+            - technical
+            - account
+            - payment
+            - gameplay
+            - bug_report
+            - suggestion
+            - other
+        priority:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - urgent
+          default: medium
+
+    UpdateTicketRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - open
+            - in_progress
+            - waiting_for_player
+            - resolved
+            - closed
+        priority:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - urgent
+        assigned_agent_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    SupportTicket:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticket_number:
+          type: string
+        character_id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+        message:
+          type: string
+        category:
+          type: string
+        priority:
+          type: string
+        status:
+          type: string
+        assigned_agent_id:
+          type: string
+          format: uuid
+          nullable: true
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateTicketResponseRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        is_internal:
+          type: boolean
+          default: false
+          description: Внутренний ответ (виден только агентам)
+
+    TicketResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticket_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        author_type:
+          type: string
+          enum:
+            - player
+            - agent
+        message:
+          type: string
+        is_internal:
+          type: boolean
+        attachments:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+
+    RateTicketRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 1000
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
