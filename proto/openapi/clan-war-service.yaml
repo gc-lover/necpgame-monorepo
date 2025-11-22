@@ -1,0 +1,637 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service API
+  description: API для системы клановых войн: объявление войн, управление территориями, бои и награды
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8092/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Wars
+    description: Управление клановыми войнами
+  - name: Battles
+    description: Бои за территории
+  - name: Territories
+    description: Управление территориями
+
+paths:
+  /clan-war/wars:
+    post:
+      tags:
+        - Wars
+      summary: Объявить клановую войну
+      operationId: declareWar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareWarRequest'
+      responses:
+        '201':
+          description: Война объявлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClanWar'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Wars
+      summary: Получить список войн
+      operationId: getWars
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - preparation
+              - active
+              - completed
+              - cancelled
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список войн
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClanWar'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /clan-war/wars/{warId}:
+    get:
+      tags:
+        - Wars
+      summary: Получить информацию о войне
+      operationId: getWar
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о войне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClanWar'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /clan-war/wars/{warId}/battles:
+    post:
+      tags:
+        - Battles
+      summary: Создать битву за территорию
+      operationId: createBattle
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBattleRequest'
+      responses:
+        '201':
+          description: Битва создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Battles
+      summary: Получить битвы войны
+      operationId: getWarBattles
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - scheduled
+              - active
+              - completed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Список битв
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  battles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WarBattle'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /clan-war/battles/{battleId}:
+    get:
+      tags:
+        - Battles
+      summary: Получить информацию о битве
+      operationId: getBattle
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о битве
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Battles
+      summary: Запустить битву
+      operationId: startBattle
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Битва запущена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /clan-war/battles/{battleId}/score:
+    post:
+      tags:
+        - Battles
+      summary: Обновить счет битвы
+      operationId: updateBattleScore
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBattleScoreRequest'
+      responses:
+        '200':
+          description: Счет обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /clan-war/wars/{warId}/resolve:
+    post:
+      tags:
+        - Wars
+      summary: Завершить войну и определить победителя
+      operationId: resolveWar
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Война завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarResolution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /clan-war/territories:
+    get:
+      tags:
+        - Territories
+      summary: Получить список территорий
+      operationId: getTerritories
+      parameters:
+        - name: owner_guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список территорий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  territories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Territory'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /clan-war/territories/{territoryId}:
+    get:
+      tags:
+        - Territories
+      summary: Получить информацию о территории
+      operationId: getTerritory
+      parameters:
+        - name: territoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о территории
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Territory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    DeclareWarRequest:
+      type: object
+      required:
+        - attacker_guild_id
+        - defender_guild_id
+      properties:
+        attacker_guild_id:
+          type: string
+          format: uuid
+        defender_guild_id:
+          type: string
+          format: uuid
+        ally_guild_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ClanWar:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        attacker_guild_id:
+          type: string
+          format: uuid
+        defender_guild_id:
+          type: string
+          format: uuid
+        ally_guild_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum:
+            - preparation
+            - active
+            - completed
+            - cancelled
+        phase:
+          type: string
+          enum:
+            - preparation
+            - active
+            - resolution
+        attacker_score:
+          type: integer
+          default: 0
+        defender_score:
+          type: integer
+          default: 0
+        winner_guild_id:
+          type: string
+          format: uuid
+          nullable: true
+        preparation_start:
+          type: string
+          format: date-time
+        active_start:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    CreateBattleRequest:
+      type: object
+      required:
+        - territory_id
+        - battle_type
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        battle_type:
+          type: string
+          enum:
+            - territory
+            - siege
+        scheduled_time:
+          type: string
+          format: date-time
+
+    WarBattle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        war_id:
+          type: string
+          format: uuid
+        territory_id:
+          type: string
+          format: uuid
+        battle_type:
+          type: string
+        status:
+          type: string
+          enum:
+            - scheduled
+            - active
+            - completed
+        attacker_score:
+          type: integer
+          default: 0
+        defender_score:
+          type: integer
+          default: 0
+        scheduled_time:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateBattleScoreRequest:
+      type: object
+      required:
+        - side
+        - points
+      properties:
+        side:
+          type: string
+          enum:
+            - attacker
+            - defender
+        points:
+          type: integer
+          minimum: 1
+
+    WarResolution:
+      type: object
+      properties:
+        war_id:
+          type: string
+          format: uuid
+        winner_guild_id:
+          type: string
+          format: uuid
+        attacker_score:
+          type: integer
+        defender_score:
+          type: integer
+        territories_transferred:
+          type: array
+          items:
+            type: string
+            format: uuid
+        rewards:
+          type: object
+          properties:
+            winner:
+              type: object
+              additionalProperties: true
+            loser:
+              type: object
+              additionalProperties: true
+        resolved_at:
+          type: string
+          format: date-time
+
+    Territory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        location:
+          type: string
+        owner_guild_id:
+          type: string
+          format: uuid
+          nullable: true
+        resources:
+          type: object
+          additionalProperties:
+            type: integer
+        defense_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        siege_difficulty:
+          type: string
+          enum:
+            - easy
+            - medium
+            - hard
+            - extreme
+        created_at:
+          type: string
+          format: date-time
+        captured_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,718 @@
+openapi: 3.0.3
+info:
+  title: Admin Service API
+  description: API для админ-панели: управление игроками, экономикой, миром и событиями
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Player Management
+    description: Управление игроками
+  - name: Inventory & Economy
+    description: Управление инвентарем и экономикой
+  - name: World & Events
+    description: Управление миром и событиями
+  - name: Analytics
+    description: Аналитика и поиск
+  - name: Audit
+    description: Аудит действий
+
+paths:
+  /admin/players/search:
+    get:
+      tags:
+        - Player Management
+      summary: Поиск игроков
+      operationId: searchPlayers
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/players/{characterId}/ban:
+    post:
+      tags:
+        - Player Management
+      summary: Забанить игрока
+      operationId: banPlayer
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanPlayerRequest'
+      responses:
+        '200':
+          description: Игрок забанен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: banned
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/players/{characterId}/unban:
+    post:
+      tags:
+        - Player Management
+      summary: Разбанить игрока
+      operationId: unbanPlayer
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Игрок разбанен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: unbanned
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/players/{characterId}/kick:
+    post:
+      tags:
+        - Player Management
+      summary: Выгнать игрока с сервера
+      operationId: kickPlayer
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KickPlayerRequest'
+      responses:
+        '200':
+          description: Игрок выгнан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: kicked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/players/{characterId}/mute:
+    post:
+      tags:
+        - Player Management
+      summary: Заглушить игрока
+      operationId: mutePlayer
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MutePlayerRequest'
+      responses:
+        '200':
+          description: Игрок заглушен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: muted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/inventory/{characterId}/items:
+    post:
+      tags:
+        - Inventory & Economy
+      summary: Выдать предмет игроку
+      operationId: giveItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiveItemRequest'
+      responses:
+        '200':
+          description: Предмет выдан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/inventory/{characterId}/items/{itemId}:
+    delete:
+      tags:
+        - Inventory & Economy
+      summary: Удалить предмет у игрока
+      operationId: removeItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предмет удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/economy/{characterId}/currency:
+    post:
+      tags:
+        - Inventory & Economy
+      summary: Изменить баланс валюты игрока
+      operationId: adjustCurrency
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdjustCurrencyRequest'
+      responses:
+        '200':
+          description: Баланс изменен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/world/flags:
+    get:
+      tags:
+        - World & Events
+      summary: Получить флаги мира
+      operationId: getWorldFlags
+      responses:
+        '200':
+          description: Флаги мира
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - World & Events
+      summary: Установить флаги мира
+      operationId: setWorldFlags
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: boolean
+      responses:
+        '200':
+          description: Флаги установлены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/events:
+    post:
+      tags:
+        - World & Events
+      summary: Создать серверное событие
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/analytics/dashboard:
+    get:
+      tags:
+        - Analytics
+      summary: Получить аналитику дашборда
+      operationId: getDashboardAnalytics
+      responses:
+        '200':
+          description: Аналитика дашборда
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardAnalytics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/audit/logs:
+    get:
+      tags:
+        - Audit
+      summary: Получить логи аудита
+      operationId: getAuditLogs
+      parameters:
+        - name: admin_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: action_type
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Логи аудита
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PlayerInfo:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        account_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        level:
+          type: integer
+        status:
+          type: string
+          enum:
+            - active
+            - banned
+            - muted
+
+    BanPlayerRequest:
+      type: object
+      required:
+        - reason
+        - duration_hours
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+        duration_hours:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: null для перманентного бана
+
+    KickPlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    MutePlayerRequest:
+      type: object
+      required:
+        - reason
+        - duration_hours
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+        duration_hours:
+          type: integer
+          minimum: 1
+
+    GiveItemRequest:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+
+    AdjustCurrencyRequest:
+      type: object
+      required:
+        - currency_type
+        - amount
+      properties:
+        currency_type:
+          type: string
+          enum:
+            - eddies
+            - credits
+            - reputation
+        amount:
+          type: integer
+          description: Может быть отрицательным для уменьшения
+
+    CreateEventRequest:
+      type: object
+      required:
+        - title
+        - description
+        - start_time
+        - end_time
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+          enum:
+            - double_xp
+            - double_loot
+            - special_quest
+            - world_event
+        rewards:
+          type: object
+          additionalProperties: true
+
+    ServerEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - scheduled
+            - active
+            - completed
+            - cancelled
+        created_at:
+          type: string
+          format: date-time
+
+    DashboardAnalytics:
+      type: object
+      properties:
+        online_players:
+          type: integer
+        total_players:
+          type: integer
+        economy_stats:
+          type: object
+          properties:
+            total_currency:
+              type: number
+            transactions_24h:
+              type: integer
+        combat_stats:
+          type: object
+          properties:
+            pvp_matches_24h:
+              type: integer
+            pve_sessions_24h:
+              type: integer
+        performance:
+          type: object
+          properties:
+            avg_response_time:
+              type: number
+            error_rate:
+              type: number
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        admin_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+        target_id:
+          type: string
+          format: uuid
+        details:
+          type: object
+          additionalProperties: true
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Недостаточно прав доступа
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,496 @@
+openapi: 3.0.3
+info:
+  title: Companion Service API
+  description: API для системы компаньонов: боевые дроны, утилитарные помощники, питомцы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companions
+    description: Управление компаньонами
+  - name: Abilities
+    description: Способности компаньонов
+
+paths:
+  /companions/types:
+    get:
+      tags:
+        - Companions
+      summary: Получить список доступных типов компаньонов
+      operationId: getCompanionTypes
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - combat
+              - utility
+              - social
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список типов компаньонов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  types:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CompanionType'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /companions/types/{typeId}:
+    get:
+      tags:
+        - Companions
+      summary: Получить информацию о типе компаньона
+      operationId: getCompanionType
+      parameters:
+        - name: typeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о типе компаньона
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanionType'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /companions:
+    get:
+      tags:
+        - Companions
+      summary: Получить компаньонов персонажа
+      operationId: getPlayerCompanions
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список компаньонов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  companions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Companions
+      summary: Купить компаньона
+      operationId: purchaseCompanion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseCompanionRequest'
+      responses:
+        '201':
+          description: Компаньон куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /companions/{companionId}:
+    get:
+      tags:
+        - Companions
+      summary: Получить информацию о компаньоне
+      operationId: getCompanion
+      parameters:
+        - name: companionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о компаньоне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags:
+        - Companions
+      summary: Обновить компаньона
+      operationId: updateCompanion
+      parameters:
+        - name: companionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCompanionRequest'
+      responses:
+        '200':
+          description: Компаньон обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /companions/{companionId}/summon:
+    post:
+      tags:
+        - Companions
+      summary: Призвать компаньона
+      operationId: summonCompanion
+      parameters:
+        - name: companionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Компаньон призван
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /companions/{companionId}/dismiss:
+    post:
+      tags:
+        - Companions
+      summary: Отозвать компаньона
+      operationId: dismissCompanion
+      parameters:
+        - name: companionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Компаньон отозван
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /companions/{companionId}/experience:
+    post:
+      tags:
+        - Companions
+      summary: Начислить опыт компаньону
+      operationId: addCompanionExperience
+      parameters:
+        - name: companionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddExperienceRequest'
+      responses:
+        '200':
+          description: Опыт начислен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /companions/{companionId}/abilities/{abilityId}/use:
+    post:
+      tags:
+        - Abilities
+      summary: Использовать способность компаньона
+      operationId: useCompanionAbility
+      parameters:
+        - name: companionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: abilityId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Способность использована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityUseResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CompanionType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          enum:
+            - combat
+            - utility
+            - social
+        description:
+          type: string
+        base_health:
+          type: integer
+        base_damage:
+          type: integer
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanionAbility'
+        price:
+          type: integer
+
+    CompanionAbility:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - active
+            - passive
+        description:
+          type: string
+        cooldown_seconds:
+          type: integer
+          nullable: true
+        effect:
+          type: object
+          additionalProperties: true
+
+    PlayerCompanion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+        name:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+          maximum: 50
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        health:
+          type: integer
+        damage:
+          type: integer
+        is_summoned:
+          type: boolean
+        equipment:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PurchaseCompanionRequest:
+      type: object
+      required:
+        - character_id
+        - companion_type_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+
+    UpdateCompanionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+
+    AddExperienceRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+
+    AbilityUseResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ability_id:
+          type: string
+        cooldown_until:
+          type: string
+          format: date-time
+          nullable: true
+        effect_applied:
+          type: object
+          additionalProperties: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
