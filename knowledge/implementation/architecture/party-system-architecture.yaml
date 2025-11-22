@@ -1,0 +1,508 @@
+metadata:
+  id: party-system-architecture
+  title: Архитектура системы групп (Party System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T21:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - party
+    - backend
+    - social
+  related_systems:
+    - social-service-go
+    - gameplay-service-go
+    - economy-service-go
+    - matchmaking-go
+  related_documents:
+    - id: backend-party-system
+      relation: extends
+  github_issue: 139
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы групп
+    для управления кооперативными группами игроков, распределением лута,
+    совместными заданиями и интеграцией с другими системами.
+  goal: |
+    Создать архитектурную схему системы групп с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы распределения лута
+    - Технического задания для реализации
+  essence: |
+    Социальная система управления группами до 5 игроков с поддержкой приглашений,
+    ролей, общих заданий, распределения лута и интеграции с матчмейкингом.
+
+architecture:
+  overview: |
+    Система групп состоит из четырёх основных компонентов:
+    1. Party Manager - управление группами и участниками
+    2. Invitation Handler - обработка приглашений
+    3. Loot Distribution Manager - распределение лута
+    4. Party Quest Coordinator - координация совместных заданий
+
+  components:
+    - name: Party Manager
+      location: social-service-go (модуль party)
+      responsibility: |
+        - Создание и управление группами
+        - Управление участниками (до 5 игроков)
+        - Назначение ролей (лидер, участник)
+        - Управление статусом группы (active, disbanded)
+        - Синхронизация состояния через realtime-gateway
+        - Интеграция с матчмейкингом
+      port: 8084 (social-service-go)
+      endpoints:
+        - POST /api/v1/social/party - создание группы
+        - GET /api/v1/social/party/{party_id} - получение группы
+        - PUT /api/v1/social/party/{party_id}/leader - смена лидера
+        - DELETE /api/v1/social/party/{party_id} - роспуск группы
+        - GET /api/v1/social/party/player/{account_id} - группа игрока
+
+    - name: Invitation Handler
+      location: social-service-go (модуль party-invitations)
+      responsibility: |
+        - Обработка приглашений в группу
+        - Управление входящими и исходящими приглашениями
+        - Проверка доступности игрока для приглашения
+        - Таймауты приглашений
+        - Уведомления о приглашениях
+      endpoints:
+        - POST /api/v1/social/party/{party_id}/invite - приглашение игрока
+        - POST /api/v1/social/party/invitations/{invitation_id}/accept - принятие приглашения
+        - POST /api/v1/social/party/invitations/{invitation_id}/decline - отклонение приглашения
+        - GET /api/v1/social/party/invitations/player/{account_id} - приглашения игрока
+
+    - name: Member Manager
+      location: social-service-go (модуль party-members)
+      responsibility: |
+        - Управление участниками группы
+        - Добавление и удаление участников
+        - Назначение ролей
+        - Проверка лимитов группы
+        - Обработка выхода участников
+      endpoints:
+        - POST /api/v1/social/party/{party_id}/members - добавление участника
+        - DELETE /api/v1/social/party/{party_id}/members/{account_id} - удаление участника
+        - PUT /api/v1/social/party/{party_id}/members/{account_id}/role - изменение роли
+        - POST /api/v1/social/party/{party_id}/leave - выход из группы
+
+    - name: Loot Distribution Manager
+      location: social-service-go (модуль party-loot)
+      responsibility: |
+        - Управление режимами распределения лута
+        - Обработка распределения лута между участниками
+        - Реализация различных режимов (free-for-all, need-before-greed, master-looter)
+        - Интеграция с economy-service для распределения предметов
+        - Логирование распределения лута
+      loot_modes: |
+        - free_for_all: каждый забирает свой лут
+        - need_before_greed: приоритет нуждающимся
+        - master_looter: лидер распределяет
+        - round_robin: по очереди
+      endpoints:
+        - GET /api/v1/social/party/{party_id}/loot-mode - текущий режим
+        - PUT /api/v1/social/party/{party_id}/loot-mode - изменение режима
+        - POST /api/v1/social/party/{party_id}/loot/distribute - распределение лута
+        - POST /api/v1/social/party/{party_id}/loot/roll - бросок кубика для лута
+
+    - name: Party Quest Coordinator
+      location: social-service-go (модуль party-quests)
+      responsibility: |
+        - Координация совместных заданий группы
+        - Синхронизация прогресса заданий
+        - Распределение наград за задания
+        - Интеграция с quest-service
+      integration: |
+        Интегрируется с gameplay-service для синхронизации прогресса квестов
+        Обеспечивает общий прогресс для всех участников группы
+      endpoints:
+        - GET /api/v1/social/party/{party_id}/quests - задания группы
+        - POST /api/v1/social/party/{party_id}/quests/{quest_id}/sync - синхронизация прогресса
+
+  data_flow:
+    party_creation: |
+      1. Игрок создаёт группу
+      2. Party Manager создаёт группу в БД
+      3. Игрок становится лидером группы
+      4. Realtime Gateway уведомляет клиентов
+      5. Событие party:created публикуется в event bus
+
+    invitation_flow: |
+      1. Лидер отправляет приглашение игроку
+      2. Invitation Handler проверяет доступность игрока
+      3. Создаётся приглашение с таймаутом
+      4. Notification-service уведомляет приглашённого
+      5. Игрок принимает/отклоняет приглашение
+      6. При принятии Member Manager добавляет участника
+      7. Realtime Gateway синхронизирует изменения
+
+    loot_distribution: |
+      1. После боя/квеста генерируется лут
+      2. Loot Distribution Manager получает информацию о луте
+      3. Применяется выбранный режим распределения
+      4. Для need-before-greed: участники делают выбор (need/greed)
+      5. Для master-looter: лидер распределяет предметы
+      6. Economy-service перемещает предметы в инвентари
+      7. Realtime Gateway уведомляет участников
+
+  integrations:
+    with_gameplay_service: |
+      - Синхронизация прогресса квестов группы
+      - Общие задания для всех участников
+      - Интеграция с боевыми сессиями
+
+    with_economy_service: |
+      - Распределение лута между участниками
+      - Перемещение предметов в инвентари
+      - Интеграция с системой торговли
+
+    with_matchmaking: |
+      - Групповая очередь в матчмейкинг
+      - Поиск матчей для всей группы
+      - Интеграция с системой рангов
+
+    with_social_service: |
+      - Интеграция с системой друзей
+      - Уведомления о приглашениях
+      - История групп
+
+    with_realtime_gateway: |
+      - Realtime синхронизация состояния группы
+      - Push уведомления о событиях
+      - Синхронизация участников
+
+  database_schema:
+    tables:
+      - name: parties
+        description: Группы игроков
+        fields:
+          - id: UUID (PK)
+          - leader_id: UUID (FK accounts)
+          - name: VARCHAR(255) (nullable)
+          - max_members: INTEGER (default: 5)
+          - loot_mode: ENUM (free_for_all, need_before_greed, master_looter, round_robin)
+          - status: ENUM (active, disbanded)
+          - settings: JSONB (дополнительные настройки)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - leader_id, status
+          - status, created_at
+
+      - name: party_members
+        description: Участники групп
+        fields:
+          - id: UUID (PK)
+          - party_id: UUID (FK parties)
+          - account_id: UUID (FK accounts)
+          - role: ENUM (leader, member)
+          - joined_at: TIMESTAMP
+          - last_active_at: TIMESTAMP
+        indexes:
+          - party_id, account_id (unique)
+          - account_id, party_id
+
+      - name: party_invitations
+        description: Приглашения в группы
+        fields:
+          - id: UUID (PK)
+          - party_id: UUID (FK parties)
+          - inviter_id: UUID (FK accounts)
+          - invitee_id: UUID (FK accounts)
+          - status: ENUM (pending, accepted, declined, expired)
+          - expires_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - responded_at: TIMESTAMP (nullable)
+        indexes:
+          - invitee_id, status
+          - party_id, status
+          - expires_at (для очистки)
+
+      - name: party_loot_logs
+        description: Логи распределения лута
+        fields:
+          - id: UUID (PK)
+          - party_id: UUID (FK parties)
+          - item_id: UUID (FK items)
+          - distributed_to: UUID (FK accounts)
+          - distribution_mode: ENUM
+          - roll_results: JSONB (результаты бросков кубика)
+          - created_at: TIMESTAMP
+        indexes:
+          - party_id, created_at
+          - distributed_to, created_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в social-service-go:
+      - party (управление группами)
+      - party-invitations (приглашения)
+      - party-members (участники)
+      - party-loot (распределение лута)
+      - party-quests (координация заданий)
+    - Интеграция с gameplay-service для квестов
+    - Интеграция с economy-service для лута
+    - Интеграция с matchmaking для групповой очереди
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация состояния группы через WebSocket
+    - Push уведомления о событиях группы
+    - Обновление списка участников в реальном времени
+    - Синхронизация прогресса заданий
+
+  performance_requirements:
+    - Создание группы < 50ms
+    - Добавление участника < 30ms
+    - Распределение лута < 100ms
+    - Поддержка до 10000 активных групп
+    - Кэширование активных групп
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через social-service
+    - Распределение нагрузки на группы
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование активных групп в памяти (Redis)
+
+subtasks:
+  - id: party-manager-module
+    title: Реализация модуля Party Manager
+    description: |
+      Создание модуля управления группами
+      CRUD операции для групп
+      Управление лидером
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: invitation-handler
+    title: Реализация Invitation Handler
+    description: |
+      Обработка приглашений
+      Управление таймаутами
+      Интеграция с уведомлениями
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: member-manager
+    title: Реализация Member Manager
+    description: |
+      Управление участниками
+      Проверка лимитов
+      Обработка выхода участников
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: loot-distribution
+    title: Реализация Loot Distribution Manager
+    description: |
+      Реализация режимов распределения лута
+      Интеграция с economy-service
+      Логирование распределения
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: quest-coordinator
+    title: Реализация Party Quest Coordinator
+    description: |
+      Координация совместных заданий
+      Синхронизация прогресса
+      Интеграция с quest-service
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: realtime-integration
+    title: Интеграция с Realtime Gateway
+    description: |
+      Синхронизация состояния группы
+      Push уведомления
+      Оптимизация трафика
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование активных групп
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для групп
+      Интеграция с существующим API social-service
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты управления группами
+      Тесты распределения лута
+      Тесты интеграций с другими сервисами
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Social Service"
+            PM[Party Manager]
+            IH[Invitation Handler]
+            MM[Member Manager]
+            LDM[Loot Distribution Manager]
+            PQC[Party Quest Coordinator]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>parties<br/>party_members<br/>party_invitations<br/>party_loot_logs)]
+        end
+
+        subgraph "External Services"
+            GS[Gameplay Service]
+            ES[Economy Service]
+            MS[Matchmaking Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| PM
+        PM --> MM
+        PM --> IH
+        PM --> LDM
+        PM --> PQC
+        PM -->|store| DB
+        MM -->|store| DB
+        IH -->|store| DB
+        LDM -->|distribute loot| ES
+        PQC -->|sync quests| GS
+        PM -->|queue| MS
+        IH -->|notify| NS
+        PM -->|sync state| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant L as Leader
+        participant PM as Party Manager
+        participant IH as Invitation Handler
+        participant P as Player
+        participant LDM as Loot Distribution Manager
+        participant ES as Economy Service
+
+        L->>PM: Create party
+        PM->>PM: Store party
+        L->>IH: Invite player
+        IH->>P: Send invitation
+        P->>IH: Accept invitation
+        IH->>PM: Add member
+        PM->>PM: Update party
+        
+        Note over LDM,ES: After combat/quest
+        LDM->>LDM: Calculate loot distribution
+        LDM->>ES: Distribute items
+        ES->>LDM: Distribution complete
+        LDM->>PM: Notify members
+    ```
+
+  party_lifecycle: |
+    ```mermaid
+    graph LR
+        subgraph "Party Lifecycle"
+            P1[Created<br/>Leader only]
+            P2[Active<br/>Members joining]
+            P3[Full<br/>5 members]
+            P4[Disbanded<br/>Leader left]
+        end
+
+        subgraph "Member Actions"
+            A1[Invite]
+            A2[Join]
+            A3[Leave]
+            A4[Kick]
+        end
+
+        P1 -->|A1, A2| P2
+        P2 -->|A2| P3
+        P2 -->|A3, A4| P1
+        P3 -->|A3, A4| P2
+        P1 -->|leader leaves| P4
+        P2 -->|leader leaves| P4
+        P3 -->|leader leaves| P4
+    ```
+
+decisions:
+  - id: adr-party-architecture
+    summary: |
+      Выбрана модульная архитектура внутри social-service-go для обеспечения
+      тесной интеграции с системой друзей и социальными функциями.
+
+  - id: adr-party-size
+    summary: |
+      Лимит в 5 участников обеспечивает баланс между кооперативным геймплеем
+      и управляемостью группы.
+
+  - id: adr-loot-modes
+    summary: |
+      Множественные режимы распределения лута обеспечивают гибкость для разных
+      стилей игры и предпочтений игроков.
+
+  - id: adr-realtime-sync
+    summary: |
+      Realtime синхронизация через gateway обеспечивает актуальность данных
+      для всех участников и предотвращает конфликты.
+
+  - id: adr-quest-sync
+    summary: |
+      Синхронизация прогресса заданий позволяет группе проходить квесты
+      совместно с общим прогрессом.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы групп:
+      - Определены компоненты (Party Manager, Invitation Handler, Member Manager, Loot Distribution Manager, Quest Coordinator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД
+      - Спроектирована система распределения лута
+      - Создано техническое задание
+      - Разбито на подзадачи
+
