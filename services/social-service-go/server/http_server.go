@@ -13,17 +13,48 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type SocialServiceInterface interface {
+	CreateMessage(ctx context.Context, message *models.ChatMessage) (*models.ChatMessage, error)
+	GetMessages(ctx context.Context, channelID uuid.UUID, limit, offset int) ([]models.ChatMessage, int, error)
+	GetChannels(ctx context.Context, channelType *models.ChannelType) ([]models.ChatChannel, error)
+	GetChannel(ctx context.Context, channelID uuid.UUID) (*models.ChatChannel, error)
+	CreateNotification(ctx context.Context, req *models.CreateNotificationRequest) (*models.Notification, error)
+	GetNotifications(ctx context.Context, accountID uuid.UUID, limit, offset int) (*models.NotificationListResponse, error)
+	GetNotification(ctx context.Context, notificationID uuid.UUID) (*models.Notification, error)
+	UpdateNotificationStatus(ctx context.Context, notificationID uuid.UUID, status models.NotificationStatus) (*models.Notification, error)
+	SendMail(ctx context.Context, req *models.CreateMailRequest, senderID *uuid.UUID, senderName string) (*models.MailMessage, error)
+	GetMails(ctx context.Context, recipientID uuid.UUID, limit, offset int) (*models.MailListResponse, error)
+	GetMail(ctx context.Context, mailID uuid.UUID) (*models.MailMessage, error)
+	MarkMailAsRead(ctx context.Context, mailID uuid.UUID) error
+	ClaimAttachment(ctx context.Context, mailID uuid.UUID) (*models.ClaimAttachmentResponse, error)
+	DeleteMail(ctx context.Context, mailID uuid.UUID) error
+	CreateGuild(ctx context.Context, leaderID uuid.UUID, req *models.CreateGuildRequest) (*models.Guild, error)
+	ListGuilds(ctx context.Context, limit, offset int) (*models.GuildListResponse, error)
+	GetGuild(ctx context.Context, guildID uuid.UUID) (*models.GuildDetailResponse, error)
+	UpdateGuild(ctx context.Context, guildID, leaderID uuid.UUID, req *models.UpdateGuildRequest) (*models.Guild, error)
+	DisbandGuild(ctx context.Context, guildID, leaderID uuid.UUID) error
+	GetGuildMembers(ctx context.Context, guildID uuid.UUID, limit, offset int) (*models.GuildMemberListResponse, error)
+	InviteMember(ctx context.Context, guildID, inviterID uuid.UUID, req *models.InviteMemberRequest) (*models.GuildInvitation, error)
+	UpdateMemberRank(ctx context.Context, guildID, leaderID, characterID uuid.UUID, rank models.GuildRank) error
+	KickMember(ctx context.Context, guildID, leaderID, characterID uuid.UUID) error
+	RemoveMember(ctx context.Context, guildID, characterID uuid.UUID) error
+	GetGuildBank(ctx context.Context, guildID uuid.UUID) (*models.GuildBank, error)
+	GetInvitationsByCharacter(ctx context.Context, characterID uuid.UUID) ([]models.GuildInvitation, error)
+	AcceptInvitation(ctx context.Context, invitationID, characterID uuid.UUID) error
+	RejectInvitation(ctx context.Context, invitationID uuid.UUID) error
+}
+
 type HTTPServer struct {
 	addr          string
 	router        *mux.Router
-	socialService *SocialService
+	socialService SocialServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
 	jwtValidator  *JwtValidator
 	authEnabled   bool
 }
 
-func NewHTTPServer(addr string, socialService *SocialService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:          addr,
