@@ -1023,6 +1023,223 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /social/mail/unread-count:
+    get:
+      tags:
+        - Mail
+      summary: Получить количество непрочитанных писем
+      operationId: getUnreadMailCount
+      responses:
+        '200':
+          description: Количество непрочитанных писем
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadMailCountResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mail/{id}/attachments:
+    get:
+      tags:
+        - Mail
+      summary: Получить список вложений письма
+      operationId: getMailAttachments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список вложений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailAttachmentsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mail/{id}/cod/pay:
+    post:
+      tags:
+        - Mail
+      summary: Оплатить COD письмо
+      operationId: payMailCOD
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: COD оплачен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimAttachmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mail/{id}/cod/decline:
+    post:
+      tags:
+        - Mail
+      summary: Отказаться от COD письма
+      operationId: declineMailCOD
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Отказ от COD выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: declined
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mail/expiring:
+    get:
+      tags:
+        - Mail
+      summary: Получить истекающие письма
+      operationId: getExpiringMails
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+            default: 3
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Истекающие письма
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mail/{id}/extend:
+    post:
+      tags:
+        - Mail
+      summary: Продлить срок действия письма
+      operationId: extendMailExpiration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtendMailRequest'
+      responses:
+        '200':
+          description: Срок продлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mail/system/send:
+    post:
+      tags:
+        - Mail
+      summary: Отправить системное письмо
+      operationId: sendSystemMail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendSystemMailRequest'
+      responses:
+        '200':
+          description: Системное письмо отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mail/system/broadcast:
+    post:
+      tags:
+        - Mail
+      summary: Массовая рассылка системных писем
+      operationId: broadcastSystemMail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastSystemMailRequest'
+      responses:
+        '200':
+          description: Рассылка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /social/party:
     post:
       tags:
