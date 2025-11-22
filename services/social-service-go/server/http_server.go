@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -288,7 +287,11 @@ func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), "claims", claims)
-		ctx = context.WithValue(ctx, "user_id", claims.Subject)
+		userID := claims.Subject
+		if userID == "" {
+			userID = claims.RegisteredClaims.Subject
+		}
+		ctx = context.WithValue(ctx, "user_id", userID)
 		ctx = context.WithValue(ctx, "username", claims.PreferredUsername)
 
 		next.ServeHTTP(w, r.WithContext(ctx))

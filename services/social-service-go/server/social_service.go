@@ -3,11 +3,12 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/social-service-go/models"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/necpgame/social-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -71,7 +72,7 @@ func (s *SocialService) CreateNotification(ctx context.Context, req *models.Crea
 }
 
 func (s *SocialService) GetNotifications(ctx context.Context, accountID uuid.UUID, limit, offset int) (*models.NotificationListResponse, error) {
-	cacheKey := "notifications:account:" + accountID.String()
+	cacheKey := "notifications:account:" + accountID.String() + ":limit:" + strconv.Itoa(limit) + ":offset:" + strconv.Itoa(offset)
 	
 	cached, err := s.cache.Get(ctx, cacheKey).Result()
 	if err == nil && cached != "" {
