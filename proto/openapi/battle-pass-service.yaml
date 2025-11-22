@@ -232,6 +232,285 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /battle-pass/season/{season_id}:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить информацию о сезоне
+      operationId: getSeasonInfo
+      parameters:
+        - name: season_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о сезоне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattlePassSeason'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/season/create:
+    post:
+      tags:
+        - Battle Pass
+      summary: Создать сезон (admin)
+      operationId: createSeason
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSeasonRequest'
+      responses:
+        '201':
+          description: Сезон создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattlePassSeason'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/progress/level/{level}:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить требования к уровню
+      operationId: getLevelRequirements
+      parameters:
+        - name: level
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Требования к уровню
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LevelRequirements'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/rewards/claimed/{player_id}:
+    get:
+      tags:
+        - Rewards
+      summary: Получить полученные награды игрока
+      operationId: getClaimedRewards
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Полученные награды
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimedRewardsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/challenges/season/{player_id}:
+    get:
+      tags:
+        - Challenges
+      summary: Получить сезонные челленджи игрока
+      operationId: getSeasonChallenges
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Сезонные челленджи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonChallengesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/premium/claim-all:
+    post:
+      tags:
+        - Battle Pass
+      summary: Получить все премиум-награды
+      operationId: claimAllPremiumRewards
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimAllPremiumRequest'
+      responses:
+        '200':
+          description: Все премиум-награды получены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimAllPremiumResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/xp/calculate:
+    post:
+      tags:
+        - Battle Pass
+      summary: Рассчитать опыт
+      operationId: calculateXP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateXPRequest'
+      responses:
+        '200':
+          description: Результат расчёта опыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateXPResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/xp/sources:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить источники опыта
+      operationId: getXPSources
+      responses:
+        '200':
+          description: Источники опыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XPSourcesResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/events/{player_id}:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить события Battle Pass игрока
+      operationId: getBattlePassEvents
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События Battle Pass
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattlePassEventsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /battle-pass/validate:
+    post:
+      tags:
+        - Battle Pass
+      summary: Валидировать Battle Pass
+      operationId: validateBattlePass
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateBattlePassRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateBattlePassResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -389,6 +668,236 @@ components:
           type: boolean
         week_number:
           type: integer
+
+    CreateSeasonRequest:
+      type: object
+      required:
+        - name
+        - start_date
+        - end_date
+        - max_level
+      properties:
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 100
+
+    LevelRequirements:
+      type: object
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        xp_required:
+          type: integer
+          minimum: 0
+        cumulative_xp:
+          type: integer
+          minimum: 0
+
+    ClaimedRewardsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        claimed_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/BattlePassReward'
+        total:
+          type: integer
+
+    SeasonChallengesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        challenges:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyChallenge'
+        total:
+          type: integer
+
+    ClaimAllPremiumRequest:
+      type: object
+      required:
+        - player_id
+        - season_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+
+    ClaimAllPremiumResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        rewards_claimed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BattlePassReward'
+        total_rewards:
+          type: integer
+
+    CalculateXPRequest:
+      type: object
+      required:
+        - base_xp
+        - source
+      properties:
+        base_xp:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum: [quest_completion, challenge_completion, daily_login, match_completion, achievement_unlock]
+        has_premium:
+          type: boolean
+          default: false
+        season_boost:
+          type: number
+          format: float
+          default: 0
+        event_boost:
+          type: number
+          format: float
+          default: 0
+
+    CalculateXPResponse:
+      type: object
+      properties:
+        base_xp:
+          type: integer
+        premium_boost:
+          type: number
+          format: float
+        season_boost:
+          type: number
+          format: float
+        event_boost:
+          type: number
+          format: float
+        final_xp:
+          type: integer
+        modifiers_applied:
+          type: array
+          items:
+            type: string
+
+    XPSourcesResponse:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+                enum: [quest_completion, challenge_completion, daily_login, match_completion, achievement_unlock]
+              base_xp:
+                type: integer
+              description:
+                type: string
+
+    BattlePassEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [battle-pass:level-up, battle-pass:reward-claimed, battle-pass:premium-purchased, battle-pass:challenge-completed, battle-pass:season-started, battle-pass:season-ended]
+        player_id:
+          type: string
+          format: uuid
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    BattlePassEventsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/BattlePassEvent'
+        total:
+          type: integer
+
+    ValidateBattlePassRequest:
+      type: object
+      required:
+        - player_id
+        - season_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        operation:
+          type: string
+          enum: [claim_reward, level_up, purchase_premium]
+
+    ValidateBattlePassResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        validation_checks:
+          type: array
+          items:
+            type: object
+            properties:
+              check_name:
+                type: string
+              passed:
+                type: boolean
+              message:
+                type: string
+                nullable: true
 
     Error:
       type: object
