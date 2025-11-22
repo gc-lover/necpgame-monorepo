@@ -1,0 +1,508 @@
+metadata:
+  id: narrative-coherence-system-architecture
+  title: Архитектура системы Narrative Coherence
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T18:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - narrative
+    - coherence
+    - backend
+    - database
+  related_systems:
+    - gameplay-service-go
+    - character-service-go
+    - social-service-go
+  related_documents:
+    - id: narrative-coherence-event-matrix-architecture
+      relation: extends
+    - id: narrative-coherence-quest-sql-migrations
+      relation: references
+    - id: narrative-coherence-player-impact-hybrid-system
+      relation: references
+  github_issue: 109
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать техническую архитектуру системы Narrative Coherence
+    для обеспечения целостности сюжета через графовую модель зависимостей квестов,
+    проверку временных линий и валидацию консистентности.
+  goal: |
+    Создать архитектурную схему системы Narrative Coherence с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Технического задания для реализации
+  essence: |
+    Event-driven система целостности сюжета с графовой моделью зависимостей квестов,
+    трехуровневой системой влияния игроков на мир (Personal, Server, Faction) и
+    автоматической валидацией временных линий и консистентности.
+
+architecture:
+  overview: |
+    Система Narrative Coherence состоит из четырёх основных компонентов:
+    1. Quest Graph Engine - обработка графа зависимостей квестов
+    2. World State Manager - управление трёхуровневым состоянием мира
+    3. Timeline Validator - проверка временных линий и консистентности
+    4. Coherence Service - центральный сервис координации
+
+  components:
+    - name: Narrative Coherence Service
+      location: gameplay-service-go (новый модуль)
+      responsibility: |
+        - Управление графом зависимостей квестов
+        - Валидация временных линий
+        - Проверка консистентности выбора игроков
+        - Координация между компонентами системы
+        - Обработка событий графа (REQUIRES, UNLOCKS, BLOCKS, INFLUENCES)
+      port: 8083 (gameplay-service-go)
+      endpoints:
+        - GET /api/v1/narrative/quest-graph - получение графа квестов
+        - GET /api/v1/narrative/quest-graph/{quest_id}/dependencies - зависимости квеста
+        - POST /api/v1/narrative/quest-graph/validate - валидация графа
+        - GET /api/v1/narrative/timeline/check - проверка временной линии
+        - POST /api/v1/narrative/timeline/validate - валидация временной линии
+        - GET /api/v1/narrative/coherence/check - проверка консистентности
+        - POST /api/v1/narrative/coherence/resolve - разрешение конфликтов
+
+    - name: World State Manager
+      location: gameplay-service-go (модуль world-state)
+      responsibility: |
+        - Управление трёхуровневым состоянием мира (Personal, Server, Faction)
+        - Разрешение конфликтов по приоритетам (Server > Faction > Personal)
+        - Синхронизация состояния между уровнями
+        - Триггеры событий на основе изменений состояния
+      integration: |
+        Использует таблицы БД:
+        - player_world_state (Personal)
+        - server_world_state (Server)
+        - faction_world_state (Faction)
+        - territory_control (территориальный контроль)
+      endpoints:
+        - GET /api/v1/world-state/personal/{account_id} - личное состояние
+        - GET /api/v1/world-state/server - серверное состояние
+        - GET /api/v1/world-state/faction/{faction_id} - фракционное состояние
+        - POST /api/v1/world-state/personal/{account_id}/update - обновление личного
+        - POST /api/v1/world-state/server/update - обновление серверного
+        - POST /api/v1/world-state/faction/{faction_id}/update - обновление фракционного
+        - POST /api/v1/world-state/resolve-conflict - разрешение конфликтов
+
+    - name: Quest Graph Engine
+      location: gameplay-service-go (модуль quest-graph)
+      responsibility: |
+        - Хранение и обработка графа зависимостей квестов
+        - Вычисление доступных квестов на основе зависимостей
+        - Обработка типов узлов (Quest, Choice, World State, Event)
+        - Обработка типов связей (REQUIRES, UNLOCKS, BLOCKS, INFLUENCES)
+        - Вероятностная и весовая системы генерации контента
+      data_structures: |
+        Граф хранится в БД:
+        - quest_branches (связи между квестами)
+        - dialogue_nodes (узлы диалогов)
+        - dialogue_choices (выборы в диалогах)
+        - player_quest_choices (выборы игроков)
+      endpoints:
+        - GET /api/v1/quest-graph/available/{account_id} - доступные квесты
+        - GET /api/v1/quest-graph/{quest_id}/prerequisites - предпосылки квеста
+        - GET /api/v1/quest-graph/{quest_id}/unlocks - что открывает квест
+        - POST /api/v1/quest-graph/{quest_id}/check-availability - проверка доступности
+        - POST /api/v1/quest-graph/calculate-probabilities - расчёт вероятностей
+
+    - name: Timeline Validator
+      location: gameplay-service-go (модуль timeline-validator)
+      responsibility: |
+        - Проверка временных линий квестов
+        - Валидация консистентности NPC lifecycle
+        - Проверка эволюции фракций
+        - Валидация location timeline
+        - Обнаружение временных конфликтов
+      validation_rules: |
+        - Проверка последовательности событий
+        - Валидация жизненного цикла NPC
+        - Проверка эволюции фракций во времени
+        - Валидация изменений локаций
+      endpoints:
+        - POST /api/v1/timeline/validate-quest/{quest_id} - валидация квеста
+        - POST /api/v1/timeline/validate-npc/{npc_id} - валидация NPC
+        - POST /api/v1/timeline/validate-faction/{faction_id} - валидация фракции
+        - POST /api/v1/timeline/validate-location/{location_id} - валидация локации
+        - GET /api/v1/timeline/conflicts - список конфликтов
+
+  data_flow:
+    quest_availability_check: |
+      1. Игрок запрашивает доступные квесты
+      2. Quest Graph Engine проверяет граф зависимостей
+      3. World State Manager проверяет состояние мира на всех уровнях
+      4. Timeline Validator проверяет временную консистентность
+      5. Coherence Service объединяет результаты и возвращает доступные квесты
+
+    quest_completion: |
+      1. Игрок завершает квест
+      2. Quest Graph Engine обновляет граф (разблокирует новые квесты)
+      3. World State Manager обновляет состояние мира
+      4. Timeline Validator проверяет временную консистентность
+      5. Coherence Service валидирует целостность и сохраняет изменения
+
+    world_state_update: |
+      1. Событие изменяет состояние мира (Personal/Server/Faction)
+      2. World State Manager проверяет приоритеты и разрешает конфликты
+      3. Обновляет соответствующие таблицы БД
+      4. Триггерит события для Quest Graph Engine
+      5. Coherence Service валидирует влияние на граф квестов
+
+    timeline_validation: |
+      1. При создании/обновлении квеста/NPC/фракции
+      2. Timeline Validator проверяет временную консистентность
+      3. Обнаруживает конфликты с существующими данными
+      4. Возвращает список конфликтов для разрешения
+      5. Coherence Service применяет исправления или блокирует изменения
+
+  integrations:
+    with_gameplay_service: |
+      - Интеграция с quest-engine для проверки доступности квестов
+      - Использование данных о прогрессе игрока
+      - Синхронизация с системой диалогов
+
+    with_character_service: |
+      - Получение данных о персонаже для проверки Personal World State
+      - Интеграция с системой репутации
+
+    with_social_service: |
+      - Интеграция с системой фракций для Faction World State
+      - Использование данных о гильдиях
+
+    with_database: |
+      - Использование миграций из phase4-database
+      - Работа с таблицами quest_branches, world_state, dialogue_nodes
+      - Оптимизация запросов к графу зависимостей
+
+  database_schema:
+    core_tables:
+      - name: quest_branches
+        description: Граф зависимостей квестов
+        key_fields:
+          - quest_id: UUID
+          - branch_type: ENUM (REQUIRES, UNLOCKS, BLOCKS, INFLUENCES)
+          - target_quest_id: UUID
+          - conditions: JSONB
+
+      - name: player_world_state
+        description: Личное состояние мира игрока
+        key_fields:
+          - account_id: UUID
+          - state_key: VARCHAR
+          - state_value: JSONB
+          - updated_at: TIMESTAMP
+
+      - name: server_world_state
+        description: Серверное состояние мира
+        key_fields:
+          - state_key: VARCHAR
+          - state_value: JSONB
+          - updated_at: TIMESTAMP
+          - updated_by: UUID (account_id)
+
+      - name: faction_world_state
+        description: Фракционное состояние мира
+        key_fields:
+          - faction_id: UUID
+          - state_key: VARCHAR
+          - state_value: JSONB
+          - updated_at: TIMESTAMP
+
+      - name: player_quest_choices
+        description: Выборы игроков в квестах
+        key_fields:
+          - account_id: UUID
+          - quest_id: UUID
+          - choice_id: UUID
+          - choice_value: JSONB
+          - created_at: TIMESTAMP
+
+      - name: dialogue_nodes
+        description: Узлы диалогов
+        key_fields:
+          - node_id: UUID
+          - quest_id: UUID
+          - npc_id: UUID
+          - dialogue_text: TEXT
+          - conditions: JSONB
+
+      - name: dialogue_choices
+        description: Выборы в диалогах
+        key_fields:
+          - choice_id: UUID
+          - node_id: UUID
+          - choice_text: TEXT
+          - consequences: JSONB
+
+    indexes:
+      - quest_branches: quest_id, target_quest_id, branch_type
+      - player_world_state: account_id, state_key
+      - server_world_state: state_key
+      - faction_world_state: faction_id, state_key
+      - player_quest_choices: account_id, quest_id
+
+  graph_algorithm:
+    quest_availability: |
+      Алгоритм определения доступных квестов:
+      1. Начать с квестов без зависимостей (prerequisites = [])
+      2. Для каждого квеста проверить:
+         - Все REQUIRES зависимости выполнены
+         - Нет BLOCKS блокировок
+         - World State условия выполнены
+         - Timeline консистентность соблюдена
+      3. Применить вероятностную и весовую системы
+      4. Вернуть отсортированный список доступных квестов
+
+    conflict_resolution: |
+      Алгоритм разрешения конфликтов World State:
+      1. Определить уровень конфликта (Personal/Server/Faction)
+      2. Применить приоритеты: Server > Faction > Personal
+      3. Для глобальных событий: Server превосходит остальные
+      4. Для персональных квестов: Personal имеет преимущество
+      5. Для территориального контроля: Faction превосходит Personal
+      6. Сохранить разрешённое состояние в БД
+
+    timeline_validation: |
+      Алгоритм валидации временной линии:
+      1. Получить все события для объекта (NPC/фракция/локация)
+      2. Отсортировать по временной метке
+      3. Проверить последовательность событий
+      4. Обнаружить конфликты (NPC мёртв, но появляется в квесте)
+      5. Вернуть список конфликтов для разрешения
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в gameplay-service-go:
+      - narrative-coherence (центральный модуль)
+      - world-state-manager (управление состоянием)
+      - quest-graph-engine (обработка графа)
+      - timeline-validator (валидация временных линий)
+    - Интеграция с существующими миграциями БД
+    - Оптимизация запросов к графу (кэширование, индексы)
+    - Реализация алгоритмов графа (BFS, DFS для зависимостей)
+    - Реализация вероятностной и весовой систем
+
+  performance_requirements:
+    - Проверка доступности квестов < 100ms
+    - Валидация временной линии < 500ms
+    - Разрешение конфликтов World State < 200ms
+    - Поддержка графа до 10000 квестов
+    - Кэширование часто используемых запросов
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через gameplay-service
+    - Распределение нагрузки на чтение графа
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование графа в памяти (Redis)
+
+  data_consistency:
+    - ACID транзакции для обновления World State
+    - Оптимистичные блокировки для разрешения конфликтов
+    - Eventual consistency для распределённых обновлений
+    - Валидация перед сохранением изменений
+
+subtasks:
+  - id: coherence-service-module
+    title: Создание модуля Narrative Coherence в gameplay-service-go
+    description: |
+      Реализация центрального модуля координации
+      Интеграция с существующими системами
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: quest-graph-engine
+    title: Реализация Quest Graph Engine
+    description: |
+      Реализация алгоритмов графа зависимостей
+      Обработка типов узлов и связей
+      Вероятностная и весовая системы
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: world-state-manager
+    title: Реализация World State Manager
+    description: |
+      Управление трёхуровневым состоянием
+      Алгоритм разрешения конфликтов
+      Интеграция с БД
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: timeline-validator
+    title: Реализация Timeline Validator
+    description: |
+      Алгоритмы валидации временных линий
+      Проверка консистентности NPC, фракций, локаций
+      Обнаружение конфликтов
+    priority: medium
+    estimated_time: 3-4 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов для графа
+      Оптимизация запросов к World State
+      Кэширование часто используемых данных
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для Narrative Coherence
+      Интеграция с существующим API gameplay-service
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты графа зависимостей
+      Тесты разрешения конфликтов
+      Тесты валидации временных линий
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Gameplay Service"
+            CS[Coherence Service]
+            QGE[Quest Graph Engine]
+            WSM[World State Manager]
+            TV[Timeline Validator]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>quest_branches<br/>world_state<br/>dialogue_nodes)]
+        end
+
+        subgraph "External Services"
+            CHS[Character Service]
+            SS[Social Service]
+            QE[Quest Engine]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| CS
+        CS --> QGE
+        CS --> WSM
+        CS --> TV
+        QGE -->|read/write| DB
+        WSM -->|read/write| DB
+        TV -->|read| DB
+        CS -->|check player| CHS
+        CS -->|check faction| SS
+        CS -->|quest data| QE
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CL as Client
+        participant CS as Coherence Service
+        participant QGE as Quest Graph Engine
+        participant WSM as World State Manager
+        participant TV as Timeline Validator
+        participant DB as Database
+
+        CL->>CS: Get available quests
+        CS->>QGE: Check quest graph
+        QGE->>DB: Load dependencies
+        CS->>WSM: Check world state
+        WSM->>DB: Load state (Personal/Server/Faction)
+        CS->>TV: Validate timeline
+        TV->>DB: Check consistency
+        CS->>CS: Combine results
+        CS->>CL: Return available quests
+    ```
+
+  world_state_flow: |
+    ```mermaid
+    graph LR
+        subgraph "World State Levels"
+            P[Personal<br/>player_world_state]
+            S[Server<br/>server_world_state]
+            F[Faction<br/>faction_world_state]
+        end
+
+        subgraph "Conflict Resolution"
+            CR[Conflict Resolver<br/>Server > Faction > Personal]
+        end
+
+        subgraph "Integration"
+            QG[Quest Graph]
+            TL[Timeline]
+        end
+
+        P --> CR
+        S --> CR
+        F --> CR
+        CR --> QG
+        CR --> TL
+    ```
+
+decisions:
+  - id: adr-narrative-coherence-architecture
+    summary: |
+      Выбрана модульная архитектура внутри gameplay-service-go для обеспечения
+      тесной интеграции с quest engine и минимизации задержек при проверке доступности квестов.
+
+  - id: adr-world-state-levels
+    summary: |
+      Трёхуровневая система World State (Personal, Server, Faction) обеспечивает
+      гибкость влияния игроков на мир с автоматическим разрешением конфликтов.
+
+  - id: adr-graph-storage
+    summary: |
+      Граф зависимостей хранится в реляционной БД (quest_branches) для обеспечения
+      ACID транзакций и простоты запросов, с кэшированием в памяти для производительности.
+
+  - id: adr-timeline-validation
+    summary: |
+      Timeline Validator работает асинхронно для проверки консистентности без
+      блокировки основных операций, с возможностью ручного разрешения конфликтов.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная техническая архитектура системы Narrative Coherence:
+      - Определены компоненты (Coherence Service, Quest Graph Engine, World State Manager, Timeline Validator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД
+      - Создано техническое задание
+      - Разбито на подзадачи
+
