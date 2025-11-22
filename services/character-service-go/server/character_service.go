@@ -185,6 +185,44 @@ func (s *CharacterService) invalidateCharacterCache(ctx context.Context, charact
 	s.cache.Del(ctx, cacheKey)
 }
 
+func (s *CharacterService) SwitchCharacter(ctx context.Context, accountID, characterID uuid.UUID) (*models.SwitchCharacterResponse, error) {
+	characters, err := s.repo.GetCharactersByAccountID(ctx, accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	var targetCharacter *models.Character
+	for i := range characters {
+		if characters[i].ID == characterID {
+			targetCharacter = &characters[i]
+			break
+		}
+	}
+
+	if targetCharacter == nil {
+		return &models.SwitchCharacterResponse{
+			Success: false,
+		}, nil
+	}
+
+	var previousCharacterID *uuid.UUID
+	for i := range characters {
+		if characters[i].ID != characterID {
+			previousCharacterID = &characters[i].ID
+			break
+		}
+	}
+
+	s.invalidateAccountCache(ctx, accountID)
+	s.invalidateCharacterCache(ctx, characterID)
+
+	return &models.SwitchCharacterResponse{
+		PreviousCharacterID: previousCharacterID,
+		CurrentCharacter:    targetCharacter,
+		Success:             true,
+	}, nil
+}
+
 func (s *CharacterService) invalidateAccountCache(ctx context.Context, accountID uuid.UUID) {
 	cacheKey := "account:" + accountID.String()
 	s.cache.Del(ctx, cacheKey)

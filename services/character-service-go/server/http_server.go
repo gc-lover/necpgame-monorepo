@@ -53,6 +53,7 @@ func NewHTTPServer(addr string, characterService *CharacterService, jwtValidator
 	api.HandleFunc("/characters/{characterId}", server.updateCharacter).Methods("PUT")
 	api.HandleFunc("/characters/{characterId}", server.deleteCharacter).Methods("DELETE")
 	api.HandleFunc("/characters/{characterId}/validate", server.validateCharacter).Methods("GET")
+	api.HandleFunc("/characters/switch", server.switchCharacter).Methods("POST")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -284,6 +285,38 @@ func (s *HTTPServer) validateCharacter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]bool{"valid": valid})
+}
+
+func (s *HTTPServer) switchCharacter(w http.ResponseWriter, r *http.Request) {
+	var req models.SwitchCharacterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.AccountID == uuid.Nil {
+		s.respondError(w, http.StatusBadRequest, "account_id is required")
+		return
+	}
+
+	if req.CharacterID == uuid.Nil {
+		s.respondError(w, http.StatusBadRequest, "character_id is required")
+		return
+	}
+
+	response, err := s.characterService.SwitchCharacter(r.Context(), req.AccountID, req.CharacterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to switch character")
+		s.respondError(w, http.StatusInternalServerError, "failed to switch character")
+		return
+	}
+
+	if !response.Success {
+		s.respondError(w, http.StatusNotFound, "character not found or does not belong to account")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
 }
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
