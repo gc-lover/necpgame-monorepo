@@ -942,6 +942,404 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /social/party/player/{accountId}:
+    get:
+      tags:
+        - Party
+      summary: Получить группу игрока
+      operationId: getPlayerParty
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Группа игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/leader:
+    put:
+      tags:
+        - Party
+      summary: Сменить лидера группы
+      operationId: transferLeadership
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferLeadershipRequest'
+      responses:
+        '200':
+          description: Лидер изменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/invitations/{invitationId}/accept:
+    post:
+      tags:
+        - Party
+      summary: Принять приглашение в группу
+      operationId: acceptPartyInvitation
+      parameters:
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Приглашение принято
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/invitations/{invitationId}/decline:
+    post:
+      tags:
+        - Party
+      summary: Отклонить приглашение в группу
+      operationId: declinePartyInvitation
+      parameters:
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Приглашение отклонено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: declined
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/invitations/player/{accountId}:
+    get:
+      tags:
+        - Party
+      summary: Получить приглашения игрока
+      operationId: getPlayerInvitations
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Приглашения игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyInvitationsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /social/party/{partyId}/members:
+    post:
+      tags:
+        - Party
+      summary: Добавить участника в группу
+      operationId: addPartyMember
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPartyMemberRequest'
+      responses:
+        '200':
+          description: Участник добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/members/{accountId}:
+    delete:
+      tags:
+        - Party
+      summary: Удалить участника из группы
+      operationId: removePartyMember
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Участник удалён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Party
+      summary: Изменить роль участника
+      operationId: changePartyMemberRole
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeMemberRoleRequest'
+      responses:
+        '200':
+          description: Роль изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/loot-mode:
+    get:
+      tags:
+        - Party
+      summary: Получить текущий режим распределения лута
+      operationId: getLootMode
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Режим распределения лута
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootModeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Party
+      summary: Изменить режим распределения лута
+      operationId: changeLootMode
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeLootModeRequest'
+      responses:
+        '200':
+          description: Режим изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/loot/distribute:
+    post:
+      tags:
+        - Party
+      summary: Распределить лут между участниками группы
+      operationId: distributeLoot
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeLootRequest'
+      responses:
+        '200':
+          description: Лут распределён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootDistributionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/loot/roll:
+    post:
+      tags:
+        - Party
+      summary: Бросок кубика для лута
+      operationId: rollForLoot
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollForLootRequest'
+      responses:
+        '200':
+          description: Результат броска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RollResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/quests:
+    get:
+      tags:
+        - Party
+      summary: Получить задания группы
+      operationId: getPartyQuests
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Задания группы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyQuestsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/quests/{questId}/sync:
+    post:
+      tags:
+        - Party
+      summary: Синхронизировать прогресс задания группы
+      operationId: syncPartyQuest
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Прогресс синхронизирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestSyncResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1461,6 +1859,254 @@ components:
         character_id:
           type: string
           format: uuid
+
+    TransferLeadershipRequest:
+      type: object
+      required:
+        - new_leader_id
+      properties:
+        new_leader_id:
+          type: string
+          format: uuid
+
+    PartyInvitationsResponse:
+      type: object
+      properties:
+        invitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInvitation'
+        total:
+          type: integer
+
+    PartyInvitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+        inviter_id:
+          type: string
+          format: uuid
+        invitee_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - declined
+            - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    AddPartyMemberRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - leader
+            - member
+          default: member
+
+    ChangeMemberRoleRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum:
+            - leader
+            - member
+
+    LootModeResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        loot_mode:
+          type: string
+          enum:
+            - free_for_all
+            - round_robin
+            - need_before_greed
+            - master_looter
+
+    ChangeLootModeRequest:
+      type: object
+      required:
+        - loot_mode
+      properties:
+        loot_mode:
+          type: string
+          enum:
+            - free_for_all
+            - round_robin
+            - need_before_greed
+            - master_looter
+
+    DistributeLootRequest:
+      type: object
+      required:
+        - item_id
+        - target_account_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        target_account_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+
+    LootDistributionResult:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        distributed_to:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        mode:
+          type: string
+        distributed_at:
+          type: string
+          format: date-time
+
+    RollForLootRequest:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        min_roll:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 1
+        max_roll:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 100
+
+    RollResult:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        roll_value:
+          type: integer
+        winner:
+          type: boolean
+        rolls:
+          type: array
+          items:
+            type: object
+            properties:
+              account_id:
+                type: string
+                format: uuid
+              roll_value:
+                type: integer
+
+    PartyQuestsResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyQuest'
+        total:
+          type: integer
+
+    PartyQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        quest_name:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - failed
+        progress:
+          type: integer
+        progress_max:
+          type: integer
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    QuestSyncResult:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        synced:
+          type: boolean
+        participants_synced:
+          type: array
+          items:
+            type: string
+            format: uuid
+        synced_at:
+          type: string
+          format: date-time
 
     Error:
       type: object
