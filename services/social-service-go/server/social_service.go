@@ -17,6 +17,7 @@ type SocialService struct {
 	notificationRepo *NotificationRepository
 	chatRepo         *ChatRepository
 	mailRepo         *MailRepository
+	guildRepo        *GuildRepository
 	cache            *redis.Client
 	logger           *logrus.Logger
 }
@@ -37,11 +38,13 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 	notificationRepo := NewNotificationRepository(dbPool)
 	chatRepo := NewChatRepository(dbPool)
 	mailRepo := NewMailRepository(dbPool)
+	guildRepo := NewGuildRepository(dbPool)
 
 	return &SocialService{
 		notificationRepo: notificationRepo,
 		chatRepo:         chatRepo,
 		mailRepo:         mailRepo,
+		guildRepo:        guildRepo,
 		cache:            redisClient,
 		logger:           GetLogger(),
 	}, nil
