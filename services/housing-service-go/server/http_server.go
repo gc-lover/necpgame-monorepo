@@ -13,17 +13,31 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type HousingServiceInterface interface {
+	PurchaseApartment(ctx context.Context, req *models.PurchaseApartmentRequest) (*models.Apartment, error)
+	GetApartment(ctx context.Context, apartmentID uuid.UUID) (*models.Apartment, error)
+	ListApartments(ctx context.Context, ownerID *uuid.UUID, ownerType *string, isPublic *bool, limit, offset int) ([]models.Apartment, int, error)
+	UpdateApartmentSettings(ctx context.Context, apartmentID uuid.UUID, req *models.UpdateApartmentSettingsRequest) error
+	PlaceFurniture(ctx context.Context, apartmentID uuid.UUID, req *models.PlaceFurnitureRequest) (*models.PlacedFurniture, error)
+	RemoveFurniture(ctx context.Context, apartmentID, furnitureID uuid.UUID, characterID uuid.UUID) error
+	GetFurnitureItem(ctx context.Context, itemID string) (*models.FurnitureItem, error)
+	ListFurnitureItems(ctx context.Context, category *models.FurnitureCategory, limit, offset int) ([]models.FurnitureItem, int, error)
+	GetApartmentDetail(ctx context.Context, apartmentID uuid.UUID) (*models.ApartmentDetailResponse, error)
+	VisitApartment(ctx context.Context, req *models.VisitApartmentRequest) error
+	GetPrestigeLeaderboard(ctx context.Context, limit, offset int) ([]models.PrestigeLeaderboardEntry, int, error)
+}
+
 type HTTPServer struct {
 	addr          string
 	router        *mux.Router
-	housingService *HousingService
+	housingService HousingServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
 	jwtValidator  *JwtValidator
 	authEnabled   bool
 }
 
-func NewHTTPServer(addr string, housingService *HousingService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, housingService HousingServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:          addr,
