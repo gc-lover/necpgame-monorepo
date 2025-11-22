@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Gameplay Service API
-  description: API для игрового процесса: прогрессия персонажей, квесты, диалоги
+  description: API для игрового процесса: прогрессия персонажей, квесты, диалоги, боевые сессии
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -18,6 +18,8 @@ tags:
     description: Система прогрессии персонажей
   - name: Quests
     description: Система квестов и заданий
+  - name: Combat
+    description: Боевые сессии
 
 paths:
   /gameplay/progression/{characterId}:
@@ -311,6 +313,115 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /gameplay/combat/start:
+    post:
+      tags:
+        - Combat
+      summary: Начать боевую сессию
+      operationId: startCombat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartCombatRequest'
+      responses:
+        '200':
+          description: Боевая сессия начата
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/{sessionId}:
+    get:
+      tags:
+        - Combat
+      summary: Получить состояние боевой сессии
+      operationId: getCombatState
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние боевой сессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/{sessionId}/attack:
+    post:
+      tags:
+        - Combat
+      summary: Выполнить атаку
+      operationId: processAttack
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttackRequest'
+      responses:
+        '200':
+          description: Атака обработана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttackResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/{sessionId}/end:
+    post:
+      tags:
+        - Combat
+      summary: Завершить боевую сессию
+      operationId: endCombat
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Боевая сессия завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -557,8 +668,168 @@ components:
               type: integer
             items:
               type: array
+            items:
+              type: object
+
+    StartCombatRequest:
+      type: object
+      required:
+        - character_id
+        - participants
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+          minItems: 2
+        combat_type:
+          type: string
+          enum:
+            - pve
+            - pvp
+            - raid
+          default: pve
+
+    CombatParticipant:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - player
+            - npc
+            - enemy
+        name:
+          type: string
+
+    CombatSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - cancelled
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipantState'
+        current_turn:
+          type: string
+          format: uuid
+        turn_order:
+          type: array
+          items:
+            type: string
+            format: uuid
+        round:
+          type: integer
+          minimum: 1
+        started_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CombatParticipantState:
+      type: object
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        health:
+          type: integer
+          minimum: 0
+        max_health:
+          type: integer
+          minimum: 1
+        status_effects:
+          type: array
+          items:
+            type: object
+
+    AttackRequest:
+      type: object
+      required:
+        - attacker_id
+        - target_id
+        - attack_type
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        attack_type:
+          type: string
+          enum:
+            - melee
+            - ranged
+            - ability
+        ability_id:
+          type: string
+          nullable: true
+
+    AttackResult:
+      type: object
+      properties:
+        damage:
+          type: integer
+          minimum: 0
+        critical:
+          type: boolean
+        status_effects_applied:
+          type: array
+          items:
+            type: object
+        target_health_after:
+          type: integer
+        turn_ended:
+          type: boolean
+        next_turn:
+          type: string
+          format: uuid
+          nullable: true
+
+    CombatResult:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        winner:
+          type: string
+          format: uuid
+          nullable: true
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: integer
+            items:
+              type: array
               items:
                 type: object
+        ended_at:
+          type: string
+          format: date-time
 
     Error:
       type: object
