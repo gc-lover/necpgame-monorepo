@@ -15,17 +15,34 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type AdminServiceInterface interface {
+	LogAction(ctx context.Context, adminID uuid.UUID, actionType models.AdminActionType, targetID *uuid.UUID, targetType string, details map[string]interface{}, ipAddress, userAgent string) error
+	BanPlayer(ctx context.Context, adminID uuid.UUID, req *models.BanPlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	KickPlayer(ctx context.Context, adminID uuid.UUID, req *models.KickPlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	MutePlayer(ctx context.Context, adminID uuid.UUID, req *models.MutePlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	GiveItem(ctx context.Context, adminID uuid.UUID, req *models.GiveItemRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	RemoveItem(ctx context.Context, adminID uuid.UUID, req *models.RemoveItemRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	SetCurrency(ctx context.Context, adminID uuid.UUID, req *models.SetCurrencyRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	AddCurrency(ctx context.Context, adminID uuid.UUID, req *models.AddCurrencyRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	SetWorldFlag(ctx context.Context, adminID uuid.UUID, req *models.SetWorldFlagRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	CreateEvent(ctx context.Context, adminID uuid.UUID, req *models.CreateEventRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error)
+	SearchPlayers(ctx context.Context, req *models.SearchPlayersRequest) (*models.PlayerSearchResponse, error)
+	GetAnalytics(ctx context.Context) (*models.AnalyticsResponse, error)
+	GetAuditLogs(ctx context.Context, adminID *uuid.UUID, actionType *models.AdminActionType, limit, offset int) (*models.AuditLogListResponse, error)
+	GetAuditLog(ctx context.Context, logID uuid.UUID) (*models.AdminAuditLog, error)
+}
+
 type HTTPServer struct {
 	addr          string
 	router        *mux.Router
-	adminService  *AdminService
+	adminService  AdminServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
 	jwtValidator  *JwtValidator
 	authEnabled   bool
 }
 
-func NewHTTPServer(addr string, adminService *AdminService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:         addr,
@@ -476,7 +493,7 @@ func (s *HTTPServer) getAuditLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log, err := s.adminService.repo.GetAuditLog(r.Context(), logID)
+	log, err := s.adminService.GetAuditLog(r.Context(), logID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get audit log")
 		s.respondError(w, http.StatusInternalServerError, "failed to get audit log")

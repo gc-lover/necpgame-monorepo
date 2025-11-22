@@ -372,6 +372,10 @@ func (s *AdminService) GetAuditLogs(ctx context.Context, adminID *uuid.UUID, act
 	}, nil
 }
 
+func (s *AdminService) GetAuditLog(ctx context.Context, logID uuid.UUID) (*models.AdminAuditLog, error) {
+	return s.repo.GetAuditLog(ctx, logID)
+}
+
 func (s *AdminService) publishPlayerBannedEvent(ctx context.Context, characterID uuid.UUID, reason string, permanent bool, duration *int64) error {
 	payload := map[string]interface{}{
 		"character_id": characterID.String(),
