@@ -13,8 +13,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type InventoryRepositoryInterface interface {
+	GetInventoryByCharacterID(ctx context.Context, characterID uuid.UUID) (*models.Inventory, error)
+	CreateInventory(ctx context.Context, characterID uuid.UUID, capacity int, maxWeight float64) (*models.Inventory, error)
+	GetInventoryItems(ctx context.Context, inventoryID uuid.UUID) ([]models.InventoryItem, error)
+	AddItem(ctx context.Context, item *models.InventoryItem) error
+	UpdateItem(ctx context.Context, item *models.InventoryItem) error
+	RemoveItem(ctx context.Context, itemID uuid.UUID) error
+	UpdateInventoryStats(ctx context.Context, inventoryID uuid.UUID, usedSlots int, weight float64) error
+	GetItemTemplate(ctx context.Context, itemID string) (*models.ItemTemplate, error)
+}
+
 type InventoryService struct {
-	repo  *InventoryRepository
+	repo  InventoryRepositoryInterface
 	cache *redis.Client
 	logger *logrus.Logger
 }
