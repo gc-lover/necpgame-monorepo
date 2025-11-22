@@ -317,21 +317,21 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /gameplay/combat/start:
+  /gameplay/combat/sessions:
     post:
       tags:
         - Combat
-      summary: Начать боевую сессию
-      operationId: startCombat
+      summary: Создать боевую сессию
+      operationId: createCombatSession
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StartCombatRequest'
+              $ref: '#/components/schemas/CreateCombatSessionRequest'
       responses:
-        '200':
-          description: Боевая сессия начата
+        '201':
+          description: Боевая сессия создана
           content:
             application/json:
               schema:
@@ -341,7 +341,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /gameplay/combat/{sessionId}:
+  /gameplay/combat/sessions/{sessionId}:
     get:
       tags:
         - Combat
@@ -366,7 +366,160 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /gameplay/combat/{sessionId}/attack:
+    put:
+      tags:
+        - Combat
+      summary: Обновить боевую сессию
+      operationId: updateCombatSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCombatSessionRequest'
+      responses:
+        '200':
+          description: Сессия обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Combat
+      summary: Отменить боевую сессию
+      operationId: cancelCombatSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Сессия отменена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/join:
+    put:
+      tags:
+        - Combat
+      summary: Присоединиться к боевой сессии
+      operationId: joinCombatSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinCombatSessionRequest'
+      responses:
+        '200':
+          description: Присоединение успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/leave:
+    put:
+      tags:
+        - Combat
+      summary: Покинуть боевую сессию
+      operationId: leaveCombatSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveCombatSessionRequest'
+      responses:
+        '200':
+          description: Выход успешен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/start:
+    post:
+      tags:
+        - Combat
+      summary: Запустить боевую сессию
+      operationId: startCombatSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Бой запущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/attack:
     post:
       tags:
         - Combat
@@ -399,7 +552,264 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /gameplay/combat/{sessionId}/end:
+  /gameplay/combat/sessions/{sessionId}/ability:
+    post:
+      tags:
+        - Combat
+      summary: Использовать способность в бою
+      operationId: useCombatAbility
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseAbilityRequest'
+      responses:
+        '200':
+          description: Способность использована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/defend:
+    post:
+      tags:
+        - Combat
+      summary: Защититься в бою
+      operationId: defendInCombat
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefendRequest'
+      responses:
+        '200':
+          description: Защита активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/item:
+    post:
+      tags:
+        - Combat
+      summary: Использовать предмет в бою
+      operationId: useCombatItem
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemRequest'
+      responses:
+        '200':
+          description: Предмет использован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/turn-order:
+    get:
+      tags:
+        - Combat
+      summary: Получить порядок ходов
+      operationId: getTurnOrder
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Порядок ходов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TurnOrder'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/current-turn:
+    get:
+      tags:
+        - Combat
+      summary: Получить текущий ход
+      operationId: getCurrentTurn
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущий ход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentTurn'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/next-turn:
+    post:
+      tags:
+        - Combat
+      summary: Перейти к следующему ходу
+      operationId: nextTurn
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Следующий ход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentTurn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/skip-turn:
+    post:
+      tags:
+        - Combat
+      summary: Пропустить ход
+      operationId: skipTurn
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkipTurnRequest'
+      responses:
+        '200':
+          description: Ход пропущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentTurn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/calculate-damage:
+    post:
+      tags:
+        - Combat
+      summary: Рассчитать урон
+      operationId: calculateDamage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateDamageRequest'
+      responses:
+        '200':
+          description: Урон рассчитан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/apply-effects:
+    post:
+      tags:
+        - Combat
+      summary: Применить эффекты
+      operationId: applyEffects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyEffectsRequest'
+      responses:
+        '200':
+          description: Эффекты применены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectsResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/sessions/{sessionId}/end:
     post:
       tags:
         - Combat
@@ -1344,6 +1754,65 @@ components:
             items:
               type: object
 
+    CreateCombatSessionRequest:
+      type: object
+      required:
+        - participants
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+          minItems: 2
+        combat_type:
+          type: string
+          enum:
+            - pve
+            - pvp
+            - raid
+          default: pve
+        settings:
+          type: object
+          additionalProperties: true
+
+    UpdateCombatSessionRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - active
+            - paused
+            - completed
+            - cancelled
+        settings:
+          type: object
+          additionalProperties: true
+
+    JoinCombatSessionRequest:
+      type: object
+      required:
+        - participant_id
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        participant_type:
+          type: string
+          enum:
+            - player
+            - npc
+            - enemy
+
+    LeaveCombatSessionRequest:
+      type: object
+      required:
+        - participant_id
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+
     StartCombatRequest:
       type: object
       required:
@@ -1503,6 +1972,211 @@ components:
         ended_at:
           type: string
           format: date-time
+
+    UseAbilityRequest:
+      type: object
+      required:
+        - attacker_id
+        - ability_id
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        ability_id:
+          type: string
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    DefendRequest:
+      type: object
+      required:
+        - defender_id
+      properties:
+        defender_id:
+          type: string
+          format: uuid
+        defense_type:
+          type: string
+          enum:
+            - block
+            - dodge
+            - parry
+
+    UseItemRequest:
+      type: object
+      required:
+        - user_id
+        - item_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    CombatActionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        action_type:
+          type: string
+        damage:
+          type: integer
+          nullable: true
+        effects_applied:
+          type: array
+          items:
+            type: object
+        turn_ended:
+          type: boolean
+        next_turn:
+          type: string
+          format: uuid
+          nullable: true
+
+    TurnOrder:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        order:
+          type: array
+          items:
+            type: object
+            properties:
+              participant_id:
+                type: string
+                format: uuid
+              initiative:
+                type: integer
+              position:
+                type: integer
+
+    CurrentTurn:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        current_participant_id:
+          type: string
+          format: uuid
+        turn_number:
+          type: integer
+        time_remaining:
+          type: integer
+          description: Время до окончания хода в секундах
+        phase:
+          type: string
+          enum:
+            - preparation
+            - combat
+            - completion
+
+    SkipTurnRequest:
+      type: object
+      required:
+        - participant_id
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+
+    CalculateDamageRequest:
+      type: object
+      required:
+        - attacker_id
+        - target_id
+        - attack_type
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        attack_type:
+          type: string
+          enum:
+            - melee
+            - ranged
+            - ability
+        ability_id:
+          type: string
+          nullable: true
+        modifiers:
+          type: object
+          additionalProperties: true
+
+    DamageCalculationResult:
+      type: object
+      properties:
+        base_damage:
+          type: integer
+        final_damage:
+          type: integer
+        critical:
+          type: boolean
+        modifiers:
+          type: object
+          additionalProperties: true
+        blocked:
+          type: boolean
+        blocked_amount:
+          type: integer
+          nullable: true
+
+    ApplyEffectsRequest:
+      type: object
+      required:
+        - target_id
+        - effects
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              duration:
+                type: integer
+              value:
+                type: integer
+              source:
+                type: string
+                format: uuid
+
+    EffectsResult:
+      type: object
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        effects_applied:
+          type: array
+          items:
+            type: object
+        effects_removed:
+          type: array
+          items:
+            type: object
+        current_status_effects:
+          type: array
+          items:
+            type: object
 
     QuestGraph:
       type: object
