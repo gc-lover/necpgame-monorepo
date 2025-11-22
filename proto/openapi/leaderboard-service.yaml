@@ -1,0 +1,470 @@
+openapi: 3.0.3
+info:
+  title: Leaderboard Service API
+  description: API для системы лидербордов: глобальные, сезонные, дружественные и гильдийные рейтинги
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Leaderboards
+    description: Управление лидербордами
+
+paths:
+  /leaderboards/global:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить глобальный лидерборд
+      operationId: getGlobalLeaderboard
+      parameters:
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - overall_power
+              - combat_score
+              - level
+              - achievements
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Глобальный лидерборд
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /leaderboards/seasonal:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить сезонный лидерборд
+      operationId: getSeasonalLeaderboard
+      parameters:
+        - name: season_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - overall_power
+              - combat_score
+              - level
+              - achievements
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Сезонный лидерборд
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /leaderboards/class:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить лидерборд по классу
+      operationId: getClassLeaderboard
+      parameters:
+        - name: class_name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - overall_power
+              - combat_score
+              - level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Лидерборд по классу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /leaderboards/guild:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить лидерборд гильдий
+      operationId: getGuildLeaderboard
+      parameters:
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - total_power
+              - member_count
+              - achievements
+              - pvp_score
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Лидерборд гильдий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildLeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /leaderboards/friends:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить лидерборд друзей
+      operationId: getFriendsLeaderboard
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - overall_power
+              - combat_score
+              - level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Лидерборд друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /leaderboards/rank:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить ранг игрока
+      operationId: getPlayerRank
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - overall_power
+              - combat_score
+              - level
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum:
+              - global
+              - seasonal
+              - class
+              - friends
+            default: global
+        - name: season_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ранг игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRank'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /leaderboards/rank/neighbors:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить соседние позиции игрока
+      operationId: getRankNeighbors
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - overall_power
+              - combat_score
+              - level
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum:
+              - global
+              - seasonal
+              - class
+              - friends
+            default: global
+        - name: range
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+      responses:
+        '200':
+          description: Соседние позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        character_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        score:
+          type: number
+          format: float
+        level:
+          type: integer
+        class_name:
+          type: string
+          nullable: true
+
+    LeaderboardResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+        total:
+          type: integer
+        metric:
+          type: string
+        scope:
+          type: string
+        season_id:
+          type: string
+          nullable: true
+
+    GuildLeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        guild_id:
+          type: string
+          format: uuid
+        guild_name:
+          type: string
+        score:
+          type: number
+          format: float
+        member_count:
+          type: integer
+
+    GuildLeaderboardResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildLeaderboardEntry'
+        total:
+          type: integer
+        metric:
+          type: string
+
+    PlayerRank:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        rank:
+          type: integer
+          minimum: 1
+        score:
+          type: number
+          format: float
+        total_players:
+          type: integer
+        metric:
+          type: string
+        scope:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+

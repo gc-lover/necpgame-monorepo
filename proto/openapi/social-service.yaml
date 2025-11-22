@@ -22,6 +22,8 @@ tags:
     description: Текстовый чат
   - name: Mail
     description: Почтовая система
+  - name: Party
+    description: Система групп
 
 paths:
   /social/notifications:
@@ -571,6 +573,291 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /social/party:
+    post:
+      tags:
+        - Party
+      summary: Создать группу
+      operationId: createParty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartyRequest'
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Party
+      summary: Получить информацию о группе
+      operationId: getParty
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о группе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}:
+    get:
+      tags:
+        - Party
+      summary: Получить группу по ID
+      operationId: getPartyById
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о группе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Party
+      summary: Распустить группу
+      operationId: disbandParty
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Группа распущена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: disbanded
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/invite:
+    post:
+      tags:
+        - Party
+      summary: Пригласить игрока в группу
+      operationId: inviteToParty
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteToPartyRequest'
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/join:
+    post:
+      tags:
+        - Party
+      summary: Присоединиться к группе
+      operationId: joinParty
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Присоединился к группе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/leave:
+    post:
+      tags:
+        - Party
+      summary: Покинуть группу
+      operationId: leaveParty
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Покинул группу
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: left
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/kick:
+    post:
+      tags:
+        - Party
+      summary: Исключить игрока из группы
+      operationId: kickFromParty
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Игрок исключен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/transfer-leadership:
+    post:
+      tags:
+        - Party
+      summary: Передать лидерство
+      operationId: transferLeadership
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лидерство передано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/party/{partyId}/loot-mode:
+    post:
+      tags:
+        - Party
+      summary: Изменить режим распределения лута
+      operationId: changeLootMode
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - loot_mode
+              properties:
+                loot_mode:
+                  type: string
+                  enum:
+                    - free_for_all
+                    - round_robin
+                    - need_before_greed
+                    - master_looter
+      responses:
+        '200':
+          description: Режим изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -923,6 +1210,79 @@ components:
           type: object
           additionalProperties:
             type: integer
+
+    Party:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        leader_id:
+          type: string
+          format: uuid
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyMember'
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 5
+        loot_mode:
+          type: string
+          enum:
+            - free_for_all
+            - round_robin
+            - need_before_greed
+            - master_looter
+          default: free_for_all
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PartyMember:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - leader
+            - member
+        joined_at:
+          type: string
+          format: date-time
+
+    CreatePartyRequest:
+      type: object
+      properties:
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 5
+        loot_mode:
+          type: string
+          enum:
+            - free_for_all
+            - round_robin
+            - need_before_greed
+            - master_looter
+
+    InviteToPartyRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
 
     Error:
       type: object
