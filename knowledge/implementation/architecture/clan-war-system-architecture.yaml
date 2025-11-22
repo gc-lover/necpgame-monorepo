@@ -1,0 +1,666 @@
+metadata:
+  id: clan-war-system-architecture
+  title: Архитектура системы клановых войн (Clan War System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T00:45:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - clan-war
+    - backend
+    - pvp
+    - territory
+  related_systems:
+    - guild-service-go
+    - world-service-go
+    - gameplay-service-go
+    - economy-service-go
+  related_documents:
+    - id: backend-clan-war-system
+      relation: extends
+  github_issue: 290
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы клановых войн
+    для управления войнами между кланами, территориями, фазами войны, сражениями
+    и наградами для endgame PvP контента.
+  goal: |
+    Создать архитектурную схему системы клановых войн с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы фаз войны
+    - Системы управления территориями
+    - Системы сражений
+    - Системы наград
+    - Технического задания для реализации
+  essence: |
+    Игровая система клановых войн для управления войнами между кланами, территориями
+    и endgame PvP контентом.
+
+architecture:
+  overview: |
+    Система клановых войн состоит из восьми основных компонентов:
+    1. War Manager - управление войнами
+    2. War Phase Controller - управление фазами войны
+    3. Territory Manager - управление территориями
+    4. Battle Manager - управление сражениями
+    5. Score Calculator - расчёт очков
+    6. Reward Distributor - распределение наград
+    7. Alliance Manager - управление союзами
+    8. War Event Handler - обработка событий войны
+
+  components:
+    - name: War Manager
+      location: world-service-go (модуль clan-war)
+      responsibility: |
+        - Управление клановыми войнами
+        - Объявление войны
+        - Завершение войны
+        - Управление участниками войны
+        - Интеграция с guild service
+      war_lifecycle: |
+        - DECLARED: война объявлена
+        - PREPARATION: фаза подготовки
+        - ACTIVE: активная фаза
+        - ENDING: завершение
+        - ENDED: война завершена
+      war_requirements: |
+        - Минимальный размер кланов
+        - Cooldown между войнами
+        - Проверка текущего состояния
+      endpoints:
+        - POST /api/v1/world/clan-war/declare - объявление войны
+        - GET /api/v1/world/clan-war/{war_id} - информация о войне
+        - GET /api/v1/world/clan-war/active - активные войны
+        - POST /api/v1/world/clan-war/{war_id}/cancel - отмена войны
+
+    - name: War Phase Controller
+      location: world-service-go (модуль clan-war-phases)
+      responsibility: |
+        - Управление фазами войны
+        - Переходы между фазами
+        - Планирование фаз
+        - Уведомления о смене фаз
+      war_phases: |
+        - PREPARATION: фаза подготовки (24 часа)
+        - ACTIVE: активная фаза (7 дней)
+        - ENDING: фаза завершения (немедленно)
+      phase_transitions: |
+        - DECLARED -> PREPARATION (автоматически через 1 час)
+        - PREPARATION -> ACTIVE (через 24 часа)
+        - ACTIVE -> ENDING (через 7 дней)
+        - ENDING -> ENDED (после подсчёта очков)
+      endpoints:
+        - GET /api/v1/world/clan-war/{war_id}/phase - текущая фаза
+        - POST /api/v1/world/clan-war/{war_id}/phase/transition - переход фазы (admin)
+
+    - name: Territory Manager
+      location: world-service-go (модуль clan-war-territory)
+      responsibility: |
+        - Управление территориями
+        - Владение территориями
+        - Защита территорий
+        - Ресурсы территорий
+        - Сложность осады
+      territory_features: |
+        - Владение кланом
+        - Ресурсы территории
+        - Уровень защиты
+        - Сложность осады
+        - Бонусы владения
+      territory_transfer: |
+        - Передача территории победителю
+        - Сброс защиты
+        - Обновление ресурсов
+      endpoints:
+        - GET /api/v1/world/clan-war/territories - список территорий
+        - GET /api/v1/world/clan-war/territories/{territory_id} - информация о территории
+        - POST /api/v1/world/clan-war/territories/{territory_id}/transfer - передача территории
+
+    - name: Battle Manager
+      location: world-service-go (модуль clan-war-battle)
+      responsibility: |
+        - Управление сражениями
+        - Создание битв за территории
+        - Запуск битв
+        - Трекинг активных битв
+        - Интеграция с PvP системой
+      battle_types: |
+        - TERRITORY_BATTLE: битва за территорию
+        - SIEGE: осада территории
+        - OPEN_WORLD_PVP: открытый мир PvP
+      battle_lifecycle: |
+        - CREATED: битва создана
+        - ACTIVE: битва активна
+        - ENDED: битва завершена
+      endpoints:
+        - POST /api/v1/world/clan-war/battles/create - создание битвы
+        - POST /api/v1/world/clan-war/battles/{battle_id}/start - запуск битвы
+        - GET /api/v1/world/clan-war/battles/active - активные битвы
+        - POST /api/v1/world/clan-war/battles/{battle_id}/end - завершение битвы
+
+    - name: Score Calculator
+      location: world-service-go (модуль clan-war-scoring)
+      responsibility: |
+        - Расчёт очков войны
+        - Начисление очков за действия
+        - Агрегация очков
+        - Определение победителя
+      score_sources: |
+        - Territory battles: очки за битвы за территории
+        - Siege events: очки за осады
+        - Kill score: очки за убийства
+        - Territory control: очки за контроль территорий
+      scoring_rules: |
+        - Взвешивание различных источников очков
+        - Бонусы за территориальный контроль
+        - Штрафы за потери
+      endpoints:
+        - GET /api/v1/world/clan-war/{war_id}/scores - очки войны
+        - POST /api/v1/world/clan-war/scores/add - начисление очков
+        - GET /api/v1/world/clan-war/{war_id}/winner - победитель войны
+
+    - name: Reward Distributor
+      location: world-service-go (модуль clan-war-rewards)
+      responsibility: |
+        - Распределение наград за войну
+        - Выдача наград победителю
+        - Выдача утешительных призов
+        - Интеграция с economy service
+      reward_types: |
+        - Winner rewards: награды победителя
+        - Loser rewards: утешительные призы
+        - Participation rewards: награды за участие
+      reward_distribution: |
+        - Награды за победу
+        - Награды за участие
+        - Награды за территориальный контроль
+      endpoints:
+        - POST /api/v1/world/clan-war/{war_id}/rewards/distribute - распределение наград
+        - GET /api/v1/world/clan-war/{war_id}/rewards - награды войны
+
+    - name: Alliance Manager
+      location: world-service-go (модуль clan-war-alliance)
+      responsibility: |
+        - Управление союзами в войне
+        - Приглашение союзников
+        - Управление союзниками
+        - Интеграция с guild service
+      alliance_features: |
+        - Приглашение союзников
+        - Управление союзниками
+        - Ограничения на союзы
+        - Бонусы за союзы
+      endpoints:
+        - POST /api/v1/world/clan-war/{war_id}/alliance/invite - приглашение союзника
+        - GET /api/v1/world/clan-war/{war_id}/alliance - союзники войны
+        - POST /api/v1/world/clan-war/{war_id}/alliance/remove - удаление союзника
+
+    - name: War Event Handler
+      location: world-service-go (модуль clan-war-events)
+      responsibility: |
+        - Обработка событий войны
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Уведомления игроков
+      war_events_published: |
+        - clan-war:declared
+        - clan-war:phase-changed
+        - clan-war:battle-started
+        - clan-war:battle-ended
+        - clan-war:territory-captured
+        - clan-war:ended
+        - clan-war:rewards-distributed
+      war_events_consumed: |
+        - combat:player-killed
+        - territory:captured
+        - guild:member-joined
+      endpoints:
+        - GET /api/v1/world/clan-war/events/{war_id} - события войны
+
+  data_flow:
+    war_declaration: |
+      1. Клан объявляет войну другому клану
+      2. War Manager проверяет требования (размер, cooldown)
+      3. Создаётся запись войны (DECLARED)
+      4. Alliance Manager обрабатывает союзников
+      5. War Phase Controller планирует фазы
+      6. War Event Handler публикует clan-war:declared
+      7. Notification Service уведомляет кланы
+      8. Realtime Gateway синхронизирует состояние
+
+    war_phase_transition: |
+      1. War Phase Controller проверяет время
+      2. Если время истекло - переход на следующую фазу
+      3. Обновляется состояние войны
+      4. Если переход в ACTIVE - запускаются битвы
+      5. Если переход в ENDING - рассчитываются очки
+      6. War Event Handler публикует clan-war:phase-changed
+      7. Notification Service уведомляет участников
+
+    territory_battle: |
+      1. Battle Manager создаёт битву за территорию
+      2. Битва запускается (ACTIVE)
+      3. Игроки вступают в PvP зону
+      4. Combat Service обрабатывает убийства
+      5. Score Calculator начисляет очки
+      6. При захвате территории - обновляется владение
+      7. War Event Handler публикует clan-war:territory-captured
+      8. Realtime Gateway синхронизирует состояние
+
+    war_resolution: |
+      1. War Phase Controller переводит войну в ENDING
+      2. Score Calculator рассчитывает итоговые очки
+      3. Определяется победитель
+      4. Territory Manager передаёт территории победителю
+      5. Reward Distributor распределяет награды
+      6. Economy Service получает награды
+      7. War Event Handler публикует clan-war:ended
+      8. Notification Service уведомляет участников
+
+  integrations:
+    with_guild_service: |
+      - Получение информации о кланах
+      - Проверка размера кланов
+      - Синхронизация с гильдиями
+      - Уведомления участников кланов
+
+    with_world_service: |
+      - Управление территориями
+      - Позиционирование PvP зон
+      - Пространственные данные
+
+    with_gameplay_service: |
+      - Получение событий о боях
+      - Интеграция с combat system
+      - Обработка убийств
+
+    with_economy_service: |
+      - Выдача наград
+      - Интеграция с экономической системой
+      - Обновление ресурсов территорий
+
+    with_notification_service: |
+      - Уведомления о войнах
+      - Уведомления о битвах
+      - Уведомления о наградах
+
+    with_realtime_gateway: |
+      - Синхронизация состояния войны
+      - Уведомления о событиях
+      - Обновления в реальном времени
+
+  database_schema:
+    tables:
+      - name: clan_wars
+        description: Клановые войны
+        fields:
+          - id: UUID (PK)
+          - attacker_clan_id: UUID (FK guilds)
+          - defender_clan_id: UUID (FK guilds)
+          - status: ENUM (DECLARED, PREPARATION, ACTIVE, ENDING, ENDED)
+          - phase: ENUM (PREPARATION, ACTIVE, ENDING)
+          - attacker_score: INTEGER (default: 0)
+          - defender_score: INTEGER (default: 0)
+          - winner_clan_id: UUID (FK guilds, nullable)
+          - allies_attacker: UUID[] (FK guilds)
+          - allies_defender: UUID[] (FK guilds)
+          - declared_at: TIMESTAMP
+          - preparation_started_at: TIMESTAMP (nullable)
+          - active_started_at: TIMESTAMP (nullable)
+          - ended_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - attacker_clan_id, status
+          - defender_clan_id, status
+          - status, active_started_at
+
+      - name: war_battles
+        description: Битвы в войне
+        fields:
+          - id: UUID (PK)
+          - war_id: UUID (FK clan_wars)
+          - battle_type: ENUM (TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP)
+          - territory_id: UUID (FK territories, nullable)
+          - status: ENUM (CREATED, ACTIVE, ENDED)
+          - attacker_score: INTEGER (default: 0)
+          - defender_score: INTEGER (default: 0)
+          - started_at: TIMESTAMP (nullable)
+          - ended_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - war_id, status
+          - territory_id, status
+          - status, started_at
+
+      - name: territories
+        description: Территории
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - owner_clan_id: UUID (FK guilds, nullable)
+          - resource_type: ENUM (ORE, ENERGY, DATA, MIXED)
+          - resource_amount: INTEGER (default: 0)
+          - defense_level: INTEGER (default: 1)
+          - siege_difficulty: INTEGER (default: 1)
+          - location_x: FLOAT
+          - location_y: FLOAT
+          - location_z: FLOAT
+          - is_active: BOOLEAN (default: true)
+          - captured_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - owner_clan_id
+          - is_active
+          - location_x, location_y, location_z
+
+      - name: war_participants
+        description: Участники войны
+        fields:
+          - id: UUID (PK)
+          - war_id: UUID (FK clan_wars)
+          - clan_id: UUID (FK guilds)
+          - role: ENUM (ATTACKER, DEFENDER, ALLY_ATTACKER, ALLY_DEFENDER)
+          - kills: INTEGER (default: 0)
+          - deaths: INTEGER (default: 0)
+          - score_contribution: INTEGER (default: 0)
+          - joined_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(war_id, clan_id)
+        indexes:
+          - war_id, clan_id
+          - clan_id
+
+      - name: war_kill_logs
+        description: Логи убийств в войне
+        fields:
+          - id: UUID (PK)
+          - war_id: UUID (FK clan_wars)
+          - battle_id: UUID (FK war_battles, nullable)
+          - killer_id: UUID (FK accounts)
+          - victim_id: UUID (FK accounts)
+          - killer_clan_id: UUID (FK guilds)
+          - victim_clan_id: UUID (FK guilds)
+          - score_awarded: INTEGER
+          - killed_at: TIMESTAMP
+        indexes:
+          - war_id, killed_at
+          - battle_id, killed_at
+          - killer_clan_id, killed_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в world-service-go:
+      - clan-war (управление войнами)
+      - clan-war-phases (фазы)
+      - clan-war-territory (территории)
+      - clan-war-battle (битвы)
+      - clan-war-scoring (очки)
+      - clan-war-rewards (награды)
+      - clan-war-alliance (союзы)
+      - clan-war-events (события)
+    - Интеграция с guild-service для кланов
+    - Интеграция с gameplay-service для боёв
+    - Интеграция с economy-service для наград
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация состояния войны через WebSocket
+    - Уведомления о событиях войны
+    - Обновления очков в реальном времени
+
+  performance_requirements:
+    - Объявление войны < 200ms
+    - Создание битвы < 100ms
+    - Начисление очков < 50ms
+    - Завершение войны < 500ms
+    - Поддержка до 100 активных войн
+    - Поддержка до 1K активных битв
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через world-service
+    - Распределение нагрузки на войны
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование активных войн в Redis
+
+subtasks:
+  - id: war-manager-module
+    title: Реализация модуля War Manager
+    description: |
+      Управление клановыми войнами
+      Объявление войны
+      Завершение войны
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: war-phase-controller-implementation
+    title: Реализация War Phase Controller
+    description: |
+      Управление фазами войны
+      Переходы между фазами
+      Планирование фаз
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: territory-manager
+    title: Реализация Territory Manager
+    description: |
+      Управление территориями
+      Владение территориями
+      Защита территорий
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: battle-manager
+    title: Реализация Battle Manager
+    description: |
+      Управление сражениями
+      Создание битв
+      Трекинг активных битв
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: score-calculator
+    title: Реализация Score Calculator
+    description: |
+      Расчёт очков войны
+      Начисление очков за действия
+      Определение победителя
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: reward-distributor
+    title: Реализация Reward Distributor
+    description: |
+      Распределение наград за войну
+      Выдача наград победителю
+      Интеграция с economy service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: alliance-manager
+    title: Реализация Alliance Manager
+    description: |
+      Управление союзами в войне
+      Приглашение союзников
+      Управление союзниками
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: war-event-handler
+    title: Реализация War Event Handler
+    description: |
+      Обработка событий войны
+      Публикация событий
+      Подписка на события
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование активных войн
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для клановых войн
+      Интеграция с существующим API world-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты объявления войны
+      Тесты фаз войны
+      Тесты битв
+      Тесты наград
+      Тесты интеграций
+    priority: high
+    estimated_time: 4-5 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "World Service"
+            WM[War Manager]
+            WPC[War Phase Controller]
+            TM[Territory Manager]
+            BM[Battle Manager]
+            SC[Score Calculator]
+            RD[Reward Distributor]
+            AM[Alliance Manager]
+            WEH[War Event Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>clan_wars<br/>war_battles<br/>territories<br/>war_participants<br/>war_kill_logs)]
+        end
+
+        subgraph "External Services"
+            GS[Guild Service]
+            WS[World Service]
+            GMS[Gameplay Service]
+            ES[Economy Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|declare war| WM
+        WM --> GS
+        WM --> WPC
+        WPC --> BM
+        BM --> TM
+        BM --> GMS
+        GMS --> SC
+        SC --> RD
+        RD --> ES
+        AM --> GS
+        WEH --> NS
+        WEH --> RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Clan
+        participant WM as War Manager
+        participant WPC as War Phase Controller
+        participant BM as Battle Manager
+        participant SC as Score Calculator
+        participant RD as Reward Distributor
+
+        C->>WM: Declare war
+        WM->>WPC: Start preparation phase
+        WPC->>WPC: Wait 24 hours
+        WPC->>BM: Start active phase
+        BM->>BM: Create battles
+        BM->>SC: Award scores
+        SC->>SC: Calculate winner
+        SC->>RD: Distribute rewards
+        RD->>RD: Send rewards
+    ```
+
+decisions:
+  - id: adr-clan-war-architecture
+    summary: |
+      Выбрана модульная архитектура внутри world-service-go для обеспечения
+      тесной интеграции с территориальной системой.
+
+  - id: adr-war-phases
+    summary: |
+      Система фаз войны (подготовка, активная фаза, завершение) обеспечивает
+      структурированный процесс и даёт игрокам время на подготовку.
+
+  - id: adr-territory-system
+    summary: |
+      Система территорий с ресурсами и защитой создаёт стратегический элемент
+      и мотивирует игроков участвовать в войнах.
+
+  - id: adr-scoring-system
+    summary: |
+      Многоуровневая система очков (битвы, осады, убийства) обеспечивает
+      справедливое определение победителя и учитывает различные типы активности.
+
+  - id: adr-alliance-system
+    summary: |
+      Система союзов позволяет кланам объединяться для крупных войн и создаёт
+      социальный элемент в PvP контенте.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата фаз и событий
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы клановых войн:
+      - Определены компоненты (War Manager, War Phase Controller, Territory Manager, Battle Manager, Score Calculator, Reward Distributor, Alliance Manager, War Event Handler)
+      - Описаны фазы войны (PREPARATION 24ч, ACTIVE 7 дней, ENDING)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (clan_wars, war_battles, territories, war_participants, war_kill_logs)
+      - Спроектирована система фаз войны
+      - Спроектирована система управления территориями
+      - Спроектирована система сражений
+      - Спроектирована система наград
+      - Создано техническое задание
+      - Разбито на подзадачи
+
