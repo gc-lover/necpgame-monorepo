@@ -416,3 +416,370 @@ func TestProgressionService_GetSkillProgression_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+func TestProgressionService_GetProgression_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(nil, nil)
+	mockRepo.On("CreateProgression", context.Background(), mock.AnythingOfType("*models.CharacterProgression")).Return(nil)
+
+	result, err := service.GetProgression(context.Background(), characterID)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, characterID, result.CharacterID)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_GetProgression_DatabaseError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(nil, assert.AnError)
+
+	result, err := service.GetProgression(context.Background(), characterID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_GetProgression_Cache(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	expectedProgression := &models.CharacterProgression{
+		CharacterID:      characterID,
+		Level:            5,
+		Experience:       1000,
+		ExperienceToNext: 2000,
+		AttributePoints:  10,
+		SkillPoints:      5,
+		Attributes:       make(map[string]int),
+		UpdatedAt:        time.Now(),
+	}
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(expectedProgression, nil).Once()
+
+	result1, err1 := service.GetProgression(context.Background(), characterID)
+	assert.NoError(t, err1)
+	assert.NotNil(t, result1)
+
+	result2, err2 := service.GetProgression(context.Background(), characterID)
+	assert.NoError(t, err2)
+	assert.NotNil(t, result2)
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AddExperience_DatabaseError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(nil, assert.AnError)
+
+	err := service.AddExperience(context.Background(), characterID, 50, "combat")
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AddExperience_UpdateError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	progression := &models.CharacterProgression{
+		CharacterID:      characterID,
+		Level:            1,
+		Experience:       0,
+		ExperienceToNext: 100,
+		AttributePoints:  0,
+		SkillPoints:      0,
+		Attributes:       make(map[string]int),
+		UpdatedAt:        time.Now(),
+	}
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(progression, nil)
+	mockRepo.On("UpdateProgression", context.Background(), mock.AnythingOfType("*models.CharacterProgression")).Return(assert.AnError)
+
+	err := service.AddExperience(context.Background(), characterID, 50, "combat")
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AddSkillExperience_DatabaseError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	skillID := "combat"
+
+	mockRepo.On("GetSkillExperience", context.Background(), characterID, skillID).Return(nil, assert.AnError)
+
+	err := service.AddSkillExperience(context.Background(), characterID, skillID, 50)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AddSkillExperience_CreateError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	skillID := "combat"
+
+	mockRepo.On("GetSkillExperience", context.Background(), characterID, skillID).Return(nil, nil)
+	mockRepo.On("CreateSkillExperience", context.Background(), mock.AnythingOfType("*models.SkillExperience")).Return(assert.AnError)
+
+	err := service.AddSkillExperience(context.Background(), characterID, skillID, 50)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AddSkillExperience_UpdateError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	skillID := "combat"
+	skillExp := &models.SkillExperience{
+		ID:          uuid.New(),
+		CharacterID: characterID,
+		SkillID:     skillID,
+		Level:       1,
+		Experience:  0,
+		UpdatedAt:   time.Now(),
+	}
+
+	mockRepo.On("GetSkillExperience", context.Background(), characterID, skillID).Return(skillExp, nil)
+	mockRepo.On("UpdateSkillExperience", context.Background(), mock.AnythingOfType("*models.SkillExperience")).Return(assert.AnError)
+
+	err := service.AddSkillExperience(context.Background(), characterID, skillID, 50)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AllocateAttributePoint_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(nil, nil)
+	mockRepo.On("CreateProgression", context.Background(), mock.AnythingOfType("*models.CharacterProgression")).Return(nil)
+
+	err := service.AllocateAttributePoint(context.Background(), characterID, "strength")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough attribute points")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AllocateAttributePoint_DatabaseError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(nil, assert.AnError)
+
+	err := service.AllocateAttributePoint(context.Background(), characterID, "strength")
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AllocateAttributePoint_UpdateError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	progression := &models.CharacterProgression{
+		CharacterID:      characterID,
+		Level:            5,
+		Experience:       1000,
+		ExperienceToNext: 2000,
+		AttributePoints:  5,
+		SkillPoints:      3,
+		Attributes:       make(map[string]int),
+		UpdatedAt:        time.Now(),
+	}
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(progression, nil)
+	mockRepo.On("UpdateProgression", context.Background(), mock.AnythingOfType("*models.CharacterProgression")).Return(assert.AnError)
+
+	err := service.AllocateAttributePoint(context.Background(), characterID, "strength")
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AllocateSkillPoint_NotFound(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	skillID := "combat"
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(nil, nil)
+	mockRepo.On("CreateProgression", context.Background(), mock.AnythingOfType("*models.CharacterProgression")).Return(nil)
+
+	err := service.AllocateSkillPoint(context.Background(), characterID, skillID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not enough skill points")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AllocateSkillPoint_DatabaseError(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	skillID := "combat"
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(nil, assert.AnError)
+
+	err := service.AllocateSkillPoint(context.Background(), characterID, skillID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_AllocateSkillPoint_SkillNotFound(t *testing.T) {
+	service, mockRepo, mockEventBus, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	skillID := "combat"
+	progression := &models.CharacterProgression{
+		CharacterID:      characterID,
+		Level:            5,
+		Experience:       1000,
+		ExperienceToNext: 2000,
+		AttributePoints:  5,
+		SkillPoints:      3,
+		Attributes:       make(map[string]int),
+		UpdatedAt:        time.Now(),
+	}
+
+	mockRepo.On("GetProgression", context.Background(), characterID).Return(progression, nil)
+	mockRepo.On("GetSkillExperience", context.Background(), characterID, skillID).Return(nil, nil)
+	mockRepo.On("UpdateProgression", context.Background(), mock.AnythingOfType("*models.CharacterProgression")).Return(nil)
+	mockRepo.On("CreateSkillExperience", context.Background(), mock.AnythingOfType("*models.SkillExperience")).Return(nil)
+	mockEventBus.On("PublishEvent", context.Background(), "character:skill-leveled", mock.Anything).Return(nil)
+
+	err := service.AllocateSkillPoint(context.Background(), characterID, skillID)
+
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+	mockEventBus.AssertExpectations(t)
+}
+
+func TestProgressionService_GetSkillProgression_EmptyList(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("ListSkillExperience", context.Background(), characterID, 10, 0).Return([]models.SkillExperience{}, nil)
+	mockRepo.On("CountSkillExperience", context.Background(), characterID).Return(0, nil)
+
+	result, err := service.GetSkillProgression(context.Background(), characterID, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Skills, 0)
+	assert.Equal(t, 0, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_GetSkillProgression_DatabaseError_List(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("ListSkillExperience", context.Background(), characterID, 10, 0).Return(nil, assert.AnError)
+
+	result, err := service.GetSkillProgression(context.Background(), characterID, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_GetSkillProgression_DatabaseError_Count(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	skills := []models.SkillExperience{
+		{
+			ID:          uuid.New(),
+			CharacterID: characterID,
+			SkillID:     "combat",
+			Level:       5,
+			Experience:  1000,
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	mockRepo.On("ListSkillExperience", context.Background(), characterID, 10, 0).Return(skills, nil)
+	mockRepo.On("CountSkillExperience", context.Background(), characterID).Return(0, assert.AnError)
+
+	result, err := service.GetSkillProgression(context.Background(), characterID, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestProgressionService_GetSkillProgression_Pagination(t *testing.T) {
+	service, mockRepo, _, cleanup := setupTestProgressionService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	skills := []models.SkillExperience{
+		{
+			ID:          uuid.New(),
+			CharacterID: characterID,
+			SkillID:     "combat",
+			Level:       5,
+			Experience:  1000,
+			UpdatedAt:   time.Now(),
+		},
+		{
+			ID:          uuid.New(),
+			CharacterID: characterID,
+			SkillID:     "stealth",
+			Level:       3,
+			Experience:  500,
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	mockRepo.On("ListSkillExperience", context.Background(), characterID, 2, 0).Return(skills, nil)
+	mockRepo.On("CountSkillExperience", context.Background(), characterID).Return(5, nil)
+
+	result, err := service.GetSkillProgression(context.Background(), characterID, 2, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Skills, 2)
+	assert.Equal(t, 5, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
