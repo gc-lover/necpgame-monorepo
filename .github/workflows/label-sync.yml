@@ -1,0 +1,71 @@
+name: Sync Labels
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/labels.json'
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  sync-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read labels.json
+        id: labels
+        run: |
+          if [ -f .github/labels.json ]; then
+            echo "labels=$(cat .github/labels.json | jq -c '.[]')" >> $GITHUB_OUTPUT
+          else
+            echo "Labels file not found"
+            exit 1
+          fi
+
+      - name: Sync Labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const labels = JSON.parse(fs.readFileSync('.github/labels.json', 'utf8'));
+            
+            const { data: existingLabels } = await github.rest.issues.listLabelsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            
+            const existingLabelNames = new Set(existingLabels.map(l => l.name));
+            
+            for (const label of labels) {
+              try {
+                if (existingLabelNames.has(label.name)) {
+                  await github.rest.issues.updateLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label.name,
+                    color: label.color,
+                    description: label.description || '',
+                  });
+                  console.log(`Updated label: ${label.name}`);
+                } else {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label.name,
+                    color: label.color,
+                    description: label.description || '',
+                  });
+                  console.log(`Created label: ${label.name}`);
+                }
+              } catch (error) {
+                console.error(`Error syncing label ${label.name}:`, error.message);
+              }
+            }
+            
+            console.log('Labels sync completed');

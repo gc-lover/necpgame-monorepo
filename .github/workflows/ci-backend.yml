@@ -1,0 +1,57 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'services/**'
+      - 'proto/**'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    paths:
+      - 'services/**'
+      - 'proto/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - character-service-go
+          - inventory-service-go
+          - movement-service-go
+          - matchmaking-go
+          - realtime-gateway-go
+          - ws-lobby-go
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      
+      - name: Run tests
+        working-directory: services/${{ matrix.service }}
+        run: go test ./...
+      
+      - name: Build
+        working-directory: services/${{ matrix.service }}
+        run: go build -o /tmp/${{ matrix.service }} ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: services
+

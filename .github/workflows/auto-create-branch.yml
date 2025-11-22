@@ -1,0 +1,188 @@
+name: Auto Create Feature Branch
+
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'ready-for-dev') || contains(github.event.issue.labels.*.name, 'stage:idea')
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      projects: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Generate Branch Name
+        id: branch_name
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          BRANCH_NAME="feature/issue-${ISSUE_NUMBER}-$(echo "${ISSUE_TITLE}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | head -c 50 | sed 's/-$//')"
+          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "Generated branch name: ${BRANCH_NAME}"
+
+      - name: Create Branch
+        run: |
+          git checkout -b ${{ steps.branch_name.outputs.branch_name }} develop || git checkout -b ${{ steps.branch_name.outputs.branch_name }} main
+          git push -u origin ${{ steps.branch_name.outputs.branch_name }}
+
+      - name: Update Issue with Branch Name
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.branch_name.outputs.branch_name }}';
+            const issueNumber = context.payload.issue.number;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `## 🌿 Ветка создана автоматически
+              
+**Ветка:** \`${branchName}\`
+
+Ветка создана для работы над этой задачей. Все агенты будут работать в этой ветке последовательно.
+
+**Использование:**
+\`\`\`bash
+git checkout ${branchName}
+\`\`\`
+
+**Формат коммитов:**
+- \`[idea-writer] Описание изменений\`
+- \`[architect] Описание изменений\`
+- \`[backend] Описание изменений\`
+- и т.д.
+
+---
+*Автоматическое создание ветки*`
+            });
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['branch-created']
+            });
+
+      - name: Update Project Branch Field
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.branch_name.outputs.branch_name }}';
+            const projectNumber = 1;
+            
+            const { data: projectV2 } = await github.graphql(`
+              query($owner: String!, $number: Int!) {
+                user(login: $owner) {
+                  projectV2(number: $number) {
+                    id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2Field {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `, {
+              owner: context.repo.owner,
+              number: projectNumber
+            });
+            
+            const projectId = projectV2.user?.projectV2?.id;
+            if (!projectId) {
+              console.log('Project not found');
+              return;
+            }
+            
+            const branchField = projectV2.user.projectV2.fields.nodes.find(f => 
+              f.name === 'Branch' || f.name === 'branch'
+            );
+            
+            if (branchField) {
+              const { data: issue } = await github.graphql(`
+                query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    issue(number: $number) {
+                      id
+                    }
+                  }
+                }
+              `, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                number: context.payload.issue.number
+              });
+              
+              const issueId = issue.repository.issue.id;
+              
+              const { data: projectItem } = await github.graphql(`
+                query($projectId: ID!) {
+                  node(id: $projectId) {
+                    ... on ProjectV2 {
+                      items(first: 100) {
+                        nodes {
+                          id
+                          content {
+                            ... on Issue {
+                              id
+                              number
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              `, { projectId });
+              
+              const item = projectItem.node.items.nodes.find(i => 
+                i.content && i.content.id === issueId
+              );
+              
+              if (item) {
+                await github.graphql(`
+                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
+                    updateProjectV2ItemFieldValue(
+                      input: {
+                        projectId: $projectId
+                        itemId: $itemId
+                        fieldId: $fieldId
+                        value: {
+                          text: $value
+                        }
+                      }
+                    ) {
+                      clientMutationId
+                    }
+                  }
+                `, {
+                  projectId,
+                  itemId: item.id,
+                  fieldId: branchField.id,
+                  value: branchName
+                });
+                
+                console.log(`Updated Branch field to: ${branchName}`);
+              }
+            } else {
+              console.log('Branch field not found in project');
+            }
+

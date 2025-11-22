@@ -1,0 +1,141 @@
+name: Agent Workflow Automation
+
+on:
+  issues:
+    types: [opened, edited, closed]
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened, closed, ready_for_review]
+
+jobs:
+  route-to-agent:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+      projects: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get Project Item
+        id: get_item
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: projects } = await github.rest.projects.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            if (projects.length === 0) {
+              core.setOutput('project_id', '');
+              return;
+            }
+
+            const project = projects[0];
+            core.setOutput('project_id', project.id);
+
+            const { data: fields } = await github.rest.projects.listColumns({
+              project_id: project.id,
+            });
+
+            return fields;
+
+      - name: Route to Idea Writer
+        if: contains(github.event.issue.labels.*.name, 'idea') || contains(github.event.issue.body, '[Idea Writer]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['agent:idea-writer', 'stage:idea']
+            });
+
+      - name: Route to Architect
+        if: contains(github.event.issue.labels.*.name, 'architecture') || contains(github.event.issue.body, '[Architect]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['agent:architect', 'stage:design']
+            });
+
+      - name: Route to API Designer
+        if: contains(github.event.issue.labels.*.name, 'api') || contains(github.event.issue.body, '[API Designer]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['agent:api-designer', 'stage:api-design']
+            });
+
+      - name: Route to Backend Developer
+        if: contains(github.event.issue.labels.*.name, 'backend') || contains(github.event.pull_request.labels.*.name, 'backend')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number || context.event.pull_request.number,
+              labels: ['agent:backend', 'stage:backend-dev']
+            });
+
+      - name: Route to Network Engineer
+        if: contains(github.event.issue.labels.*.name, 'network') || contains(github.event.issue.body, '[Network Engineer]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['agent:network', 'stage:network', 'infrastructure', 'protocol']
+            });
+
+      - name: Route to DevOps
+        if: contains(github.event.issue.labels.*.name, 'devops') || contains(github.event.issue.body, '[DevOps]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['agent:devops', 'stage:infrastructure', 'infrastructure']
+            });
+
+      - name: Route to Performance Engineer
+        if: contains(github.event.issue.labels.*.name, 'performance') || contains(github.event.issue.body, '[Performance]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['agent:performance', 'stage:performance']
+            });
+
+      - name: Route to UE5 Developer
+        if: contains(github.event.issue.labels.*.name, 'client') || contains(github.event.pull_request.labels.*.name, 'client')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number || context.event.pull_request.number,
+              labels: ['agent:ue5', 'stage:client-dev']
+            });
