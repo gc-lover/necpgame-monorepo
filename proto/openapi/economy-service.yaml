@@ -18,6 +18,8 @@ tags:
     description: P2P торговля между игроками
   - name: Loot
     description: Генерация и распределение лута
+  - name: Inventory
+    description: Управление инвентарём, экипировкой и хранилищем
 
 paths:
   /economy/trade/sessions:
@@ -965,6 +967,671 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /economy/inventory/{characterId}:
+    get:
+      tags:
+        - Inventory
+      summary: Получить инвентарь персонажа
+      operationId: getInventory
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Инвентарь персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/items:
+    post:
+      tags:
+        - Inventory
+      summary: Добавить предмет в инвентарь
+      operationId: addInventoryItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddInventoryItemRequest'
+      responses:
+        '200':
+          description: Предмет добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/items/{itemId}:
+    put:
+      tags:
+        - Inventory
+      summary: Обновить предмет в инвентаре
+      operationId: updateInventoryItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInventoryItemRequest'
+      responses:
+        '200':
+          description: Предмет обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Inventory
+      summary: Удалить предмет из инвентаря
+      operationId: deleteInventoryItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предмет удалён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/items/{itemId}/move:
+    post:
+      tags:
+        - Inventory
+      summary: Переместить предмет в инвентаре
+      operationId: moveInventoryItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveInventoryItemRequest'
+      responses:
+        '200':
+          description: Предмет перемещён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/items/{itemId}/split:
+    post:
+      tags:
+        - Inventory
+      summary: Разделить стек предметов
+      operationId: splitInventoryItemStack
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitStackRequest'
+      responses:
+        '200':
+          description: Стек разделён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitStackResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/items/{itemId}/merge:
+    post:
+      tags:
+        - Inventory
+      summary: Объединить стеки предметов
+      operationId: mergeInventoryItemStacks
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeStackRequest'
+      responses:
+        '200':
+          description: Стеки объединены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/free-slots:
+    get:
+      tags:
+        - Inventory
+      summary: Получить свободные слоты инвентаря
+      operationId: getFreeInventorySlots
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Свободные слоты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreeSlotsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/equipment:
+    get:
+      tags:
+        - Inventory
+      summary: Получить экипировку персонажа
+      operationId: getEquipment
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Экипировка персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/equipment/equip:
+    post:
+      tags:
+        - Inventory
+      summary: Экипировать предмет
+      operationId: equipItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipItemRequest'
+      responses:
+        '200':
+          description: Предмет экипирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/equipment/unequip:
+    post:
+      tags:
+        - Inventory
+      summary: Снять предмет с экипировки
+      operationId: unequipItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnequipItemRequest'
+      responses:
+        '200':
+          description: Предмет снят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/equipment/stats:
+    get:
+      tags:
+        - Inventory
+      summary: Получить статы от экипировки
+      operationId: getEquipmentStats
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статы от экипировки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/storage:
+    get:
+      tags:
+        - Inventory
+      summary: Получить хранилище персонажа
+      operationId: getStorage
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: storage_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - personal_bank
+              - guild_bank
+      responses:
+        '200':
+          description: Хранилище персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Storage'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/storage/items:
+    post:
+      tags:
+        - Inventory
+      summary: Добавить предмет в хранилище
+      operationId: addStorageItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddStorageItemRequest'
+      responses:
+        '200':
+          description: Предмет добавлен в хранилище
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/storage/transfer:
+    post:
+      tags:
+        - Inventory
+      summary: Переместить предмет между инвентарём и хранилищем
+      operationId: transferStorageItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferStorageItemRequest'
+      responses:
+        '200':
+          description: Предмет перемещён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/storage/expand:
+    post:
+      tags:
+        - Inventory
+      summary: Расширить хранилище
+      operationId: expandStorage
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpandStorageRequest'
+      responses:
+        '200':
+          description: Хранилище расширено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Storage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/items/{itemId}/stack:
+    post:
+      tags:
+        - Inventory
+      summary: Выполнить операцию со стеком предметов
+      operationId: stackInventoryItem
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StackOperationRequest'
+      responses:
+        '200':
+          description: Операция выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/items/{itemId}/stack-info:
+    get:
+      tags:
+        - Inventory
+      summary: Получить информацию о стеке предметов
+      operationId: getStackInfo
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о стеке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StackInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/weight:
+    get:
+      tags:
+        - Inventory
+      summary: Получить текущий вес инвентаря
+      operationId: getInventoryWeight
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущий вес инвентаря
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryWeight'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/weight/limit:
+    get:
+      tags:
+        - Inventory
+      summary: Получить лимит веса инвентаря
+      operationId: getInventoryWeightLimit
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лимит веса инвентаря
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryWeightLimit'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/inventory/{characterId}/weight/validate:
+    post:
+      tags:
+        - Inventory
+      summary: Валидировать вес инвентаря
+      operationId: validateInventoryWeight
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateWeightRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1907,6 +2574,427 @@ components:
             $ref: '#/components/schemas/LootItem'
         currency:
           type: integer
+
+    Inventory:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        max_slots:
+          type: integer
+        current_weight:
+          type: number
+          format: float
+        max_weight:
+          type: number
+          format: float
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+        updated_at:
+          type: string
+          format: date-time
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+          format: uuid
+        slot_index:
+          type: integer
+        quantity:
+          type: integer
+        max_stack_size:
+          type: integer
+        weight:
+          type: number
+          format: float
+        properties:
+          type: object
+          additionalProperties: true
+
+    AddInventoryItemRequest:
+      type: object
+      required:
+        - item_template_id
+        - quantity
+      properties:
+        item_template_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        slot_index:
+          type: integer
+          nullable: true
+
+    UpdateInventoryItemRequest:
+      type: object
+      properties:
+        slot_index:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        properties:
+          type: object
+          additionalProperties: true
+
+    MoveInventoryItemRequest:
+      type: object
+      required:
+        - target_slot_index
+      properties:
+        target_slot_index:
+          type: integer
+
+    SplitStackRequest:
+      type: object
+      required:
+        - quantity
+        - target_slot_index
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+        target_slot_index:
+          type: integer
+
+    SplitStackResponse:
+      type: object
+      properties:
+        original_item:
+          $ref: '#/components/schemas/InventoryItem'
+        new_item:
+          $ref: '#/components/schemas/InventoryItem'
+
+    MergeStackRequest:
+      type: object
+      required:
+        - target_item_id
+      properties:
+        target_item_id:
+          type: string
+          format: uuid
+
+    FreeSlotsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        free_slots:
+          type: array
+          items:
+            type: integer
+        total_free:
+          type: integer
+        total_slots:
+          type: integer
+
+    Equipment:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        slots:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EquipmentSlot'
+        updated_at:
+          type: string
+          format: date-time
+
+    EquipmentSlot:
+      type: object
+      properties:
+        slot_type:
+          type: string
+          enum:
+            - weapon
+            - armor_head
+            - armor_body
+            - armor_legs
+            - armor_feet
+            - implant
+            - accessory
+        item:
+          $ref: '#/components/schemas/InventoryItem'
+          nullable: true
+
+    EquipItemRequest:
+      type: object
+      required:
+        - item_id
+        - slot_type
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        slot_type:
+          type: string
+          enum:
+            - weapon
+            - armor_head
+            - armor_body
+            - armor_legs
+            - armor_feet
+            - implant
+            - accessory
+
+    UnequipItemRequest:
+      type: object
+      required:
+        - slot_type
+      properties:
+        slot_type:
+          type: string
+          enum:
+            - weapon
+            - armor_head
+            - armor_body
+            - armor_legs
+            - armor_feet
+            - implant
+            - accessory
+
+    EquipmentStats:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        stats:
+          type: object
+          additionalProperties:
+            type: integer
+        bonuses:
+          type: object
+          additionalProperties:
+            type: number
+
+    Storage:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        storage_type:
+          type: string
+          enum:
+            - personal_bank
+            - guild_bank
+        max_slots:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorageItem'
+        updated_at:
+          type: string
+          format: date-time
+
+    StorageItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+          format: uuid
+        slot_index:
+          type: integer
+        quantity:
+          type: integer
+        stored_at:
+          type: string
+          format: date-time
+
+    AddStorageItemRequest:
+      type: object
+      required:
+        - item_id
+        - storage_type
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        storage_type:
+          type: string
+          enum:
+            - personal_bank
+            - guild_bank
+        slot_index:
+          type: integer
+          nullable: true
+
+    TransferStorageItemRequest:
+      type: object
+      required:
+        - item_id
+        - direction
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        direction:
+          type: string
+          enum:
+            - to_storage
+            - from_storage
+        storage_type:
+          type: string
+          enum:
+            - personal_bank
+            - guild_bank
+        target_slot_index:
+          type: integer
+          nullable: true
+
+    TransferResult:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        direction:
+          type: string
+        source_slot:
+          type: integer
+        target_slot:
+          type: integer
+        transferred_at:
+          type: string
+          format: date-time
+
+    ExpandStorageRequest:
+      type: object
+      required:
+        - storage_type
+        - slots_to_add
+      properties:
+        storage_type:
+          type: string
+          enum:
+            - personal_bank
+            - guild_bank
+        slots_to_add:
+          type: integer
+          minimum: 1
+
+    StackOperationRequest:
+      type: object
+      required:
+        - operation
+      properties:
+        operation:
+          type: string
+          enum:
+            - split
+            - merge
+        target_item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+
+    StackInfo:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        current_quantity:
+          type: integer
+        max_stack_size:
+          type: integer
+        can_stack:
+          type: boolean
+        available_space:
+          type: integer
+
+    InventoryWeight:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_weight:
+          type: number
+          format: float
+        max_weight:
+          type: number
+          format: float
+        weight_percentage:
+          type: number
+          format: float
+        is_overloaded:
+          type: boolean
+
+    InventoryWeightLimit:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        base_limit:
+          type: number
+          format: float
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              value:
+                type: number
+        final_limit:
+          type: number
+          format: float
+
+    ValidateWeightRequest:
+      type: object
+      required:
+        - item_weight
+      properties:
+        item_weight:
+          type: number
+          format: float
+        item_quantity:
+          type: integer
+          minimum: 1
+          default: 1
+
+    WeightValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        current_weight:
+          type: number
+          format: float
+        max_weight:
+          type: number
+          format: float
+        new_weight:
+          type: number
+          format: float
+        can_add:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
 
     Error:
       type: object
