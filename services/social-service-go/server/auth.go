@@ -44,6 +44,7 @@ type JwtValidator struct {
 
 type Claims struct {
 	jwt.RegisteredClaims
+	Subject           string   `json:"sub,omitempty"`
 	PreferredUsername string   `json:"preferred_username,omitempty"`
 	Email             string   `json:"email,omitempty"`
 	RealmAccess       struct {
