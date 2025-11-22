@@ -786,14 +786,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChannelListResponse'
 
-  /social/chat/channels/{id}:
+  /social/chat/channels/{channel_id}:
     get:
       tags:
         - Chat
       summary: Получить канал
       operationId: getChannel
+      security:
+        - BearerAuth: []
       parameters:
-        - name: id
+        - name: channel_id
           in: path
           required: true
           schema:
@@ -831,14 +833,16 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /social/chat/messages/{channelId}:
+  /social/chat/messages/{channel_id}:
     get:
       tags:
         - Chat
       summary: Получить сообщения канала
       operationId: getMessages
+      security:
+        - BearerAuth: []
       parameters:
-        - name: channelId
+        - name: channel_id
           in: path
           required: true
           schema:
@@ -864,6 +868,543 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageListResponse'
+
+  /social/chat/channels/{channel_id}/join:
+    post:
+      tags:
+        - Chat
+      summary: Присоединиться к каналу
+      operationId: joinChatChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinChannelRequest'
+      responses:
+        '200':
+          description: Успешное присоединение к каналу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatChannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/channels/{channel_id}/leave:
+    post:
+      tags:
+        - Chat
+      summary: Покинуть канал
+      operationId: leaveChatChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveChannelRequest'
+      responses:
+        '200':
+          description: Успешный выход из канала
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/channels/{channel_id}/members:
+    get:
+      tags:
+        - Chat
+      summary: Получить участников канала
+      operationId: getChannelMembers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список участников канала
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelMembersResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/messages/send:
+    post:
+      tags:
+        - Chat
+      summary: Отправить сообщение
+      operationId: sendChatMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Сообщение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/messages/process:
+    post:
+      tags:
+        - Chat
+      summary: Обработать сообщение
+      operationId: processChatMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessMessageRequest'
+      responses:
+        '200':
+          description: Сообщение обработано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessedMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/report:
+    post:
+      tags:
+        - Chat
+      summary: Пожаловаться на сообщение
+      operationId: reportChatMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportMessageRequest'
+      responses:
+        '200':
+          description: Жалоба отправлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/ban:
+    post:
+      tags:
+        - Chat
+      summary: Выдать бан игроку
+      operationId: banChatUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanUserRequest'
+      responses:
+        '200':
+          description: Бан выдан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BanResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/bans:
+    get:
+      tags:
+        - Chat
+      summary: Получить список банов
+      operationId: getChatBans
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список банов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BanListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/bans/{ban_id}:
+    delete:
+      tags:
+        - Chat
+      summary: Снять бан
+      operationId: revokeChatBan
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ban_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeBanRequest'
+      responses:
+        '200':
+          description: Бан снят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokeBanResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/commands/execute:
+    post:
+      tags:
+        - Chat
+      summary: Выполнить команду чата
+      operationId: executeChatCommand
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCommandRequest'
+      responses:
+        '200':
+          description: Команда выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/history/{channel_type}:
+    get:
+      tags:
+        - Chat
+      summary: Получить историю канала
+      operationId: getChatHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - GLOBAL
+              - TRADE
+              - NEWBIE
+              - LOCAL
+              - PARTY
+              - RAID
+              - GUILD
+              - GUILD_OFFICER
+              - WHISPER
+              - SYSTEM
+              - COMBAT_LOG
+              - RP_EMOTE
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: История канала
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatHistoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/history/search:
+    get:
+      tags:
+        - Chat
+      summary: Поиск по истории чата
+      operationId: searchChatHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: channel_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - GLOBAL
+              - TRADE
+              - NEWBIE
+              - LOCAL
+              - PARTY
+              - RAID
+              - GUILD
+              - GUILD_OFFICER
+              - WHISPER
+              - SYSTEM
+              - COMBAT_LOG
+              - RP_EMOTE
+        - name: sender_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/format:
+    post:
+      tags:
+        - Chat
+      summary: Форматировать сообщение
+      operationId: formatChatMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormatMessageRequest'
+      responses:
+        '200':
+          description: Отформатированное сообщение
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormattedMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/chat/events:
+    get:
+      tags:
+        - Chat
+      summary: Получить события чата
+      operationId: getChatEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - chat:message-sent
+              - chat:message-received
+              - chat:channel-joined
+              - chat:channel-left
+              - chat:user-banned
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События чата
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /social/mail:
     post:
@@ -3225,7 +3766,7 @@ components:
 
     ChannelType:
       type: string
-      enum: [global, local, trade, newbie, party, raid, guild, guild_officer, whisper, system, combat]
+      enum: [GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE]
 
     ChatChannel:
       type: object
@@ -3233,20 +3774,43 @@ components:
         id:
           type: string
           format: uuid
-        type:
-          $ref: '#/components/schemas/ChannelType'
+        channel_type:
+          type: string
+          enum:
+            - GLOBAL
+            - TRADE
+            - NEWBIE
+            - LOCAL
+            - PARTY
+            - RAID
+            - GUILD
+            - GUILD_OFFICER
+            - WHISPER
+            - SYSTEM
+            - COMBAT_LOG
+            - RP_EMOTE
         owner_id:
           type: string
           format: uuid
           nullable: true
         name:
           type: string
+          maxLength: 100
         description:
           type: string
+          nullable: true
+        read_permission:
+          type: object
+          additionalProperties: true
+          nullable: true
+        write_permission:
+          type: object
+          additionalProperties: true
+          nullable: true
         cooldown_seconds:
           type: integer
           default: 0
-        max_length:
+        max_message_length:
           type: integer
           default: 500
         is_active:
@@ -3274,9 +3838,25 @@ components:
           type: string
         content:
           type: string
-        formatted:
+        formatted_text:
           type: string
+        message_type:
+          type: string
+          enum:
+            - text
+            - system
+            - emote
+            - command
+        is_edited:
+          type: boolean
+          default: false
+        is_deleted:
+          type: boolean
+          default: false
         created_at:
+          type: string
+          format: date-time
+        updated_at:
           type: string
           format: date-time
 
@@ -3291,7 +3871,20 @@ components:
           type: string
           format: uuid
         channel_type:
-          $ref: '#/components/schemas/ChannelType'
+          type: string
+          enum:
+            - GLOBAL
+            - TRADE
+            - NEWBIE
+            - LOCAL
+            - PARTY
+            - RAID
+            - GUILD
+            - GUILD_OFFICER
+            - WHISPER
+            - SYSTEM
+            - COMBAT_LOG
+            - RP_EMOTE
         content:
           type: string
           maxLength: 500
@@ -3316,6 +3909,325 @@ components:
           items:
             $ref: '#/components/schemas/ChatChannel'
         total:
+          type: integer
+
+    JoinChannelRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    LeaveChannelRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    ChannelMembersResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        members:
+          type: array
+          items:
+            type: string
+            format: uuid
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    SendMessageRequest:
+      type: object
+      required:
+        - channel_id
+        - channel_type
+        - content
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        channel_type:
+          type: string
+          enum:
+            - GLOBAL
+            - TRADE
+            - NEWBIE
+            - LOCAL
+            - PARTY
+            - RAID
+            - GUILD
+            - GUILD_OFFICER
+            - WHISPER
+            - SYSTEM
+            - COMBAT_LOG
+            - RP_EMOTE
+        content:
+          type: string
+          maxLength: 500
+        recipient_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    ProcessMessageRequest:
+      type: object
+      required:
+        - message_id
+      properties:
+        message_id:
+          type: string
+          format: uuid
+
+    ProcessedMessageResponse:
+      type: object
+      properties:
+        message:
+          $ref: '#/components/schemas/ChatMessage'
+        moderation_applied:
+          type: boolean
+        formatting_applied:
+          type: boolean
+
+    ReportMessageRequest:
+      type: object
+      required:
+        - message_id
+        - reason
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 500
+
+    ReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        report_id:
+          type: string
+          format: uuid
+
+    BanUserRequest:
+      type: object
+      required:
+        - player_id
+        - reason
+        - duration_hours
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 500
+        duration_hours:
+          type: integer
+          nullable: true
+
+    BanResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ban_id:
+          type: string
+          format: uuid
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    BanListResponse:
+      type: object
+      properties:
+        bans:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatBan'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ChatBan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        duration_hours:
+          type: integer
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        banned_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    RevokeBanRequest:
+      type: object
+      required:
+        - revoked_by
+      properties:
+        revoked_by:
+          type: string
+          format: uuid
+
+    RevokeBanResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ban_id:
+          type: string
+          format: uuid
+
+    ExecuteCommandRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+        args:
+          type: array
+          items:
+            type: string
+
+    CommandResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        command:
+          type: string
+        result:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+
+    ChatHistoryResponse:
+      type: object
+      properties:
+        channel_type:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ChatSearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    FormatMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        format_options:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    FormattedMessageResponse:
+      type: object
+      properties:
+        original:
+          type: string
+        formatted:
+          type: string
+        mentions:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ChatEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - chat:message-sent
+            - chat:message-received
+            - chat:channel-joined
+            - chat:channel-left
+            - chat:user-banned
+        channel_id:
+          type: string
+          format: uuid
+          nullable: true
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ChatEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
           type: integer
 
     MailMessage:
