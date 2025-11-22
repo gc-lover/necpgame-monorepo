@@ -1,0 +1,573 @@
+metadata:
+  id: voice-lobby-system-architecture
+  title: Архитектура системы голосовых лобби (Voice Lobby System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T04:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - voice-lobby
+    - backend
+    - voice-chat
+    - social
+  related_systems:
+    - voice-chat-service-go
+    - party-service-go
+    - guild-service-go
+    - clan-service-go
+  related_documents:
+    - id: backend-voice-lobby-system
+      relation: extends
+  github_issue: 338
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы голосовых лобби
+    для управления голосовыми комнатами, подбором групп, управлением подканалами
+    и интеграцией с party/guild системами для улучшения социального взаимодействия.
+  goal: |
+    Создать архитектурную схему системы голосовых лобби с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы лобби
+    - Системы Party Finder
+    - Системы управления подканалами
+    - Системы прав доступа
+    - Технического задания для реализации
+  essence: |
+    Система голосовых лобби для управления голосовыми комнатами, подбором групп,
+    управлением подканалами и интеграцией с party/guild системами.
+
+architecture:
+  overview: |
+    Система голосовых лобби состоит из семи основных компонентов:
+    1. Lobby Directory Manager - управление каталогом лобби
+    2. Lobby Manager - управление лобби
+    3. Party Finder Engine - движок подбора групп
+    4. Subchannel Controller - управление подканалами
+    5. Permission Manager - управление правами доступа
+    6. Lobby Event Handler - обработка событий
+    7. Lobby Integration Manager - интеграция с другими системами
+
+  components:
+    - name: Lobby Directory Manager
+      location: voice-chat-service-go (модуль voice-lobby)
+      responsibility: |
+        - Управление каталогом лобби
+        - Поиск лобби
+        - Фильтрация лобби
+        - Список доступных лобби
+      lobby_types: |
+        - ACTIVITY: лобби для активности
+        - CLAN_GUILD: лобби клана/гильдии
+        - RAID: лобби рейда
+        - TOURNAMENT: лобби турнира
+      endpoints:
+        - GET /api/v1/social/voice-lobby/directory - каталог лобби
+        - GET /api/v1/social/voice-lobby/search - поиск лобби
+        - GET /api/v1/social/voice-lobby/available - доступные лобби
+
+    - name: Lobby Manager
+      location: voice-chat-service-go (модуль voice-lobby-manager)
+      responsibility: |
+        - Управление лобби
+        - Создание лобби
+        - Удаление лобби
+        - Управление участниками
+        - Интеграция с voice chat
+      lobby_features: |
+        - Создание лобби
+        - Присоединение к лобби
+        - Покидание лобби
+        - Управление участниками
+        - Настройки лобби
+      endpoints:
+        - POST /api/v1/social/voice-lobby - создание лобби
+        - GET /api/v1/social/voice-lobby/{lobby_id} - информация о лобби
+        - PUT /api/v1/social/voice-lobby/{lobby_id} - обновление лобби
+        - DELETE /api/v1/social/voice-lobby/{lobby_id} - удаление лобби
+        - POST /api/v1/social/voice-lobby/{lobby_id}/join - присоединение к лобби
+        - POST /api/v1/social/voice-lobby/{lobby_id}/leave - покидание лобби
+
+    - name: Party Finder Engine
+      location: voice-chat-service-go (модуль party-finder)
+      responsibility: |
+        - Подбор групп для лобби
+        - Поиск подходящих игроков
+        - Создание групп
+        - Интеграция с matchmaking
+      party_finder_features: |
+        - Поиск игроков по критериям
+        - Создание групп
+        - Приглашение игроков
+        - Автоматический подбор
+      endpoints:
+        - POST /api/v1/social/voice-lobby/party-finder/search - поиск игроков
+        - POST /api/v1/social/voice-lobby/party-finder/create-group - создание группы
+        - POST /api/v1/social/voice-lobby/party-finder/invite - приглашение игрока
+
+    - name: Subchannel Controller
+      location: voice-chat-service-go (модуль subchannel)
+      responsibility: |
+        - Управление подканалами в лобби
+        - Создание подканалов
+        - Управление участниками подканалов
+        - Переключение между подканалами
+      subchannel_features: |
+        - Создание подканалов
+        - Удаление подканалов
+        - Переключение участников
+        - Настройки подканалов
+      endpoints:
+        - POST /api/v1/social/voice-lobby/{lobby_id}/subchannels - создание подканала
+        - GET /api/v1/social/voice-lobby/{lobby_id}/subchannels - список подканалов
+        - POST /api/v1/social/voice-lobby/{lobby_id}/subchannels/{subchannel_id}/join - присоединение к подканалу
+        - POST /api/v1/social/voice-lobby/{lobby_id}/subchannels/{subchannel_id}/leave - покидание подканала
+
+    - name: Permission Manager
+      location: voice-chat-service-go (модуль lobby-permissions)
+      responsibility: |
+        - Управление правами доступа к лобби
+        - Проверка прав участников
+        - Управление ролями
+        - Интеграция с guild/clan системами
+      permission_levels: |
+        - OWNER: владелец лобби
+        - ADMIN: администратор
+        - MODERATOR: модератор
+        - MEMBER: участник
+        - GUEST: гость
+      permissions: |
+        - CREATE_SUBCHANNEL: создание подканалов
+        - DELETE_SUBCHANNEL: удаление подканалов
+        - MANAGE_MEMBERS: управление участниками
+        - KICK_MEMBERS: исключение участников
+        - MUTE_MEMBERS: заглушение участников
+      endpoints:
+        - GET /api/v1/social/voice-lobby/{lobby_id}/permissions - права доступа
+        - POST /api/v1/social/voice-lobby/{lobby_id}/permissions/{player_id} - назначение прав
+        - GET /api/v1/social/voice-lobby/{lobby_id}/permissions/check - проверка прав
+
+    - name: Lobby Event Handler
+      location: voice-chat-service-go (модуль lobby-events)
+      responsibility: |
+        - Обработка событий лобби
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Уведомления участников
+      lobby_events_published: |
+        - voice-lobby:created
+        - voice-lobby:player-joined
+        - voice-lobby:player-left
+        - voice-lobby:subchannel-created
+        - voice-lobby:subchannel-deleted
+        - voice-lobby:permission-changed
+      endpoints:
+        - GET /api/v1/social/voice-lobby/events/{lobby_id} - события лобби
+
+    - name: Lobby Integration Manager
+      location: voice-chat-service-go (модуль lobby-integration)
+      responsibility: |
+        - Интеграция с party service
+        - Интеграция с guild service
+        - Интеграция с clan service
+        - Интеграция с voice chat service
+      integrations: |
+        - Party Service: создание лобби для группы
+        - Guild Service: создание лобби для гильдии
+        - Clan Service: создание лобби для клана
+        - Voice Chat Service: управление голосовыми каналами
+      endpoints:
+        - POST /api/v1/social/voice-lobby/integration/party/{party_id} - создание лобби для группы
+        - POST /api/v1/social/voice-lobby/integration/guild/{guild_id} - создание лобби для гильдии
+
+  data_flow:
+    lobby_creation: |
+      1. Игрок создаёт лобби через API
+      2. Lobby Manager валидирует данные
+      3. Создаётся запись лобби в БД
+      4. Permission Manager назначает права владельца
+      5. Voice Chat Service создаёт голосовой канал
+      6. Lobby Event Handler публикует voice-lobby:created
+      7. Notification Service уведомляет участников
+      8. Realtime Gateway синхронизирует состояние
+
+    player_join: |
+      1. Игрок запрашивает присоединение к лобби
+      2. Permission Manager проверяет права доступа
+      3. Lobby Manager добавляет игрока в лобби
+      4. Voice Chat Service подключает игрока к голосовому каналу
+      5. Lobby Event Handler публикует voice-lobby:player-joined
+      6. Notification Service уведомляет участников
+      7. Realtime Gateway синхронизирует состояние
+
+    subchannel_creation: |
+      1. Игрок с правами создаёт подканал
+      2. Permission Manager проверяет права
+      3. Subchannel Controller создаёт подканал
+      4. Voice Chat Service создаёт подканал в голосовом канале
+      5. Lobby Event Handler публикует voice-lobby:subchannel-created
+      6. Realtime Gateway синхронизирует состояние
+
+  integrations:
+    with_voice_chat_service: |
+      - Создание голосовых каналов
+      - Управление подканалами
+      - Подключение участников
+      - Интеграция с голосовым чатом
+
+    with_party_service: |
+      - Создание лобби для группы
+      - Синхронизация участников группы
+      - Интеграция с системой групп
+
+    with_guild_service: |
+      - Создание лобби для гильдии
+      - Синхронизация участников гильдии
+      - Интеграция с системой гильдий
+
+    with_clan_service: |
+      - Создание лобби для клана
+      - Синхронизация участников клана
+      - Интеграция с системой кланов
+
+    with_notification_service: |
+      - Уведомления о событиях лобби
+      - Уведомления о присоединении/покидании
+      - Уведомления о создании подканалов
+
+    with_realtime_gateway: |
+      - Синхронизация состояния лобби
+      - Уведомления о событиях
+      - Обновления в реальном времени
+
+  database_schema:
+    tables:
+      - name: voice_lobbies
+        description: Голосовые лобби
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - lobby_type: ENUM (ACTIVITY, CLAN_GUILD, RAID, TOURNAMENT)
+          - owner_id: UUID (FK accounts)
+          - voice_channel_id: UUID (FK voice_channels)
+          - max_participants: INTEGER (default: 50)
+          - is_private: BOOLEAN (default: false)
+          - settings: JSONB (nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - lobby_type, is_private
+          - owner_id
+          - voice_channel_id
+
+      - name: voice_lobby_participants
+        description: Участники лобби
+        fields:
+          - id: UUID (PK)
+          - lobby_id: UUID (FK voice_lobbies)
+          - player_id: UUID (FK accounts)
+          - role: ENUM (OWNER, ADMIN, MODERATOR, MEMBER, GUEST)
+          - current_subchannel_id: UUID (FK voice_lobby_subchannels, nullable)
+          - joined_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(lobby_id, player_id)
+        indexes:
+          - lobby_id, player_id
+          - player_id
+
+      - name: voice_lobby_subchannels
+        description: Подканалы лобби
+        fields:
+          - id: UUID (PK)
+          - lobby_id: UUID (FK voice_lobbies)
+          - name: VARCHAR(255)
+          - voice_subchannel_id: UUID (FK voice_channels, nullable)
+          - max_participants: INTEGER (nullable)
+          - position: INTEGER
+          - created_at: TIMESTAMP
+        indexes:
+          - lobby_id, position
+
+      - name: voice_lobby_permissions
+        description: Права доступа к лобби
+        fields:
+          - id: UUID (PK)
+          - lobby_id: UUID (FK voice_lobbies)
+          - player_id: UUID (FK accounts)
+          - permission: VARCHAR(50)
+          - granted: BOOLEAN (default: true)
+        constraints: |
+          - UNIQUE(lobby_id, player_id, permission)
+        indexes:
+          - lobby_id, player_id
+          - player_id
+
+      - name: party_finder_requests
+        description: Запросы на подбор группы
+        fields:
+          - id: UUID (PK)
+          - lobby_id: UUID (FK voice_lobbies)
+          - player_id: UUID (FK accounts)
+          - criteria: JSONB
+          - status: ENUM (PENDING, MATCHED, CANCELLED)
+          - created_at: TIMESTAMP
+          - matched_at: TIMESTAMP (nullable)
+        indexes:
+          - lobby_id, status
+          - player_id, status
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в voice-chat-service-go:
+      - voice-lobby (каталог лобби)
+      - voice-lobby-manager (управление лобби)
+      - party-finder (подбор групп)
+      - subchannel (подканалы)
+      - lobby-permissions (права доступа)
+      - lobby-events (события)
+      - lobby-integration (интеграции)
+    - Интеграция с voice-chat-service для голосовых каналов
+    - Интеграция с party-service для групп
+    - Интеграция с guild-service для гильдий
+    - Интеграция с clan-service для кланов
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация состояния лобби через WebSocket
+    - Уведомления о событиях
+    - Обновления в реальном времени
+
+  performance_requirements:
+    - Создание лобби < 300ms
+    - Присоединение к лобби < 200ms
+    - Создание подканала < 200ms
+    - Загрузка лобби < 200ms
+    - Поддержка до 10K лобби
+    - Поддержка до 100K участников
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через voice-chat-service
+    - Распределение нагрузки на лобби
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование каталога лобби в Redis
+    - Оптимизация интеграций
+
+subtasks:
+  - id: lobby-directory-manager-module
+    title: Реализация модуля Lobby Directory Manager
+    description: |
+      Управление каталогом лобби
+      Поиск лобби
+      Фильтрация лобби
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: lobby-manager
+    title: Реализация Lobby Manager
+    description: |
+      Управление лобби
+      Создание/удаление лобби
+      Управление участниками
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: party-finder-engine
+    title: Реализация Party Finder Engine
+    description: |
+      Подбор групп
+      Поиск игроков
+      Создание групп
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: subchannel-controller
+    title: Реализация Subchannel Controller
+    description: |
+      Управление подканалами
+      Создание/удаление подканалов
+      Переключение участников
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: permission-manager
+    title: Реализация Permission Manager
+    description: |
+      Управление правами доступа
+      Проверка прав
+      Управление ролями
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: lobby-event-handler
+    title: Реализация Lobby Event Handler
+    description: |
+      Обработка событий
+      Публикация событий
+      Уведомления участников
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: lobby-integration-manager
+    title: Реализация Lobby Integration Manager
+    description: |
+      Интеграция с party service
+      Интеграция с guild service
+      Интеграция с clan service
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование каталога
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для лобби
+      Интеграция с существующим API voice-chat-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты создания лобби
+      Тесты присоединения к лобби
+      Тесты подканалов
+      Тесты прав доступа
+      Тесты интеграций
+    priority: high
+    estimated_time: 4-5 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Voice Chat Service"
+            LDM[Lobby Directory Manager]
+            LM[Lobby Manager]
+            PFE[Party Finder Engine]
+            SC[Subchannel Controller]
+            PM[Permission Manager]
+            LEH[Lobby Event Handler]
+            LIM[Lobby Integration Manager]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>voice_lobbies<br/>voice_lobby_participants<br/>voice_lobby_subchannels<br/>voice_lobby_permissions<br/>party_finder_requests)]
+        end
+
+        subgraph "External Services"
+            VCS[Voice Chat Service]
+            PS[Party Service]
+            GS[Guild Service]
+            CS[Clan Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|create lobby| LM
+        LM --> VCS
+        PFE --> PS
+        LIM --> GS
+        LIM --> CS
+        LEH --> NS
+        LEH --> RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant LM as Lobby Manager
+        participant VCS as Voice Chat Service
+        participant SC as Subchannel Controller
+
+        P->>LM: Create lobby
+        LM->>VCS: Create voice channel
+        VCS->>LM: Channel created
+        P->>SC: Create subchannel
+        SC->>VCS: Create subchannel
+    ```
+
+decisions:
+  - id: adr-voice-lobby-architecture
+    summary: |
+      Выбрана модульная архитектура внутри voice-chat-service-go для обеспечения
+      тесной интеграции с голосовым чатом.
+
+  - id: adr-lobby-types
+    summary: |
+      Четыре типа лобби (ACTIVITY, CLAN_GUILD, RAID, TOURNAMENT) обеспечивают
+      гибкость в организации голосового общения для различных активностей.
+
+  - id: adr-subchannels
+    summary: |
+      Система подканалов позволяет разделять участников лобби на группы и
+      обеспечивает более структурированное общение.
+
+  - id: adr-permissions
+    summary: |
+      Система прав доступа с ролями (OWNER, ADMIN, MODERATOR, MEMBER, GUEST)
+      обеспечивает контроль над лобби и подканалами.
+
+  - id: adr-party-finder
+    summary: |
+      Party Finder интегрирован с системой лобби для упрощения подбора групп
+      и создания лобби для найденных групп.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата прав доступа и подканалов
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы голосовых лобби:
+      - Определены компоненты (Lobby Directory Manager, Lobby Manager, Party Finder Engine, Subchannel Controller, Permission Manager, Lobby Event Handler, Lobby Integration Manager)
+      - Описаны типы лобби (ACTIVITY, CLAN_GUILD, RAID, TOURNAMENT)
+      - Описаны роли (OWNER, ADMIN, MODERATOR, MEMBER, GUEST)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (voice_lobbies, voice_lobby_participants, voice_lobby_subchannels, voice_lobby_permissions, party_finder_requests)
+      - Спроектирована система лобби
+      - Спроектирована система Party Finder
+      - Спроектирована система управления подканалами
+      - Спроектирована система прав доступа
+      - Создано техническое задание
+      - Разбито на подзадачи
+
