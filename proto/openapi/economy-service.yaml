@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Economy Service API
-  description: API для экономических операций: P2P торговля, обмен предметами и валютой
+  description: API для экономических операций: P2P торговля, обмен предметами и валютой, генерация и распределение лута
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -16,6 +16,8 @@ servers:
 tags:
   - name: Trade
     description: P2P торговля между игроками
+  - name: Loot
+    description: Генерация и распределение лута
 
 paths:
   /economy/trade:
@@ -235,6 +237,104 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /economy/loot/generate:
+    post:
+      tags:
+        - Loot
+      summary: Сгенерировать лут
+      operationId: generateLoot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateLootRequest'
+      responses:
+        '200':
+          description: Лут сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/pickup:
+    post:
+      tags:
+        - Loot
+      summary: Подобрать лут
+      operationId: pickupLoot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupLootRequest'
+      responses:
+        '200':
+          description: Лут подобран
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  picked_up:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LootItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/loot/world-drops:
+    get:
+      tags:
+        - Loot
+      summary: Получить список мировых дропов
+      operationId: getWorldDrops
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список мировых дропов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drops:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldDrop'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -394,6 +494,126 @@ components:
           type: string
           format: date-time
           nullable: true
+
+    GenerateLootRequest:
+      type: object
+      required:
+        - source_type
+        - source_id
+        - character_id
+      properties:
+        source_type:
+          type: string
+          enum:
+            - enemy
+            - container
+            - boss
+            - quest
+        source_id:
+          type: string
+        character_id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+          nullable: true
+        distribution_mode:
+          type: string
+          enum:
+            - personal
+            - party_roll
+            - party_shared
+          default: personal
+
+    LootResult:
+      type: object
+      properties:
+        loot_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        currency:
+          type: integer
+          minimum: 0
+        distribution_mode:
+          type: string
+        world_drop:
+          type: boolean
+        world_drop_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    LootItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        rarity:
+          type: string
+          enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    PickupLootRequest:
+      type: object
+      required:
+        - world_drop_id
+        - character_id
+      properties:
+        world_drop_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+
+    WorldDrop:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        zone_id:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        currency:
+          type: integer
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
 
     Error:
       type: object
