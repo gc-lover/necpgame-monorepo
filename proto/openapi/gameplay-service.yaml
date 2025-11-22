@@ -317,6 +317,380 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /gameplay/quests/{questId}:
+    get:
+      tags:
+        - Quests
+      summary: Получить информацию о квесте
+      operationId: getQuestInfo
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о квесте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/player/{playerId}:
+    get:
+      tags:
+        - Quests
+      summary: Получить квесты игрока
+      operationId: getPlayerQuests
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/QuestStatus'
+      responses:
+        '200':
+          description: Квесты игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerQuestsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/cancel:
+    post:
+      tags:
+        - Quests
+      summary: Отменить квест
+      operationId: cancelQuest
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelQuestRequest'
+      responses:
+        '200':
+          description: Квест отменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/state:
+    get:
+      tags:
+        - Quests
+      summary: Получить состояние квеста
+      operationId: getQuestState
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestStateResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/state/update:
+    post:
+      tags:
+        - Quests
+      summary: Обновить состояние квеста
+      operationId: updateQuestState
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestStateRequest'
+      responses:
+        '200':
+          description: Состояние квеста обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestStateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/dialogue:
+    get:
+      tags:
+        - Quests
+      summary: Получить текущий диалог квеста
+      operationId: getQuestDialogue
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущий диалог
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDialogue'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/dialogue/history:
+    get:
+      tags:
+        - Quests
+      summary: Получить историю диалогов квеста
+      operationId: getQuestDialogueHistory
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: История диалогов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDialogueHistoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/skill-checks:
+    get:
+      tags:
+        - Quests
+      summary: Получить историю проверок навыков квеста
+      operationId: getQuestSkillChecks
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: История проверок навыков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestSkillChecksResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/conditions/check:
+    post:
+      tags:
+        - Quests
+      summary: Проверить условия квеста
+      operationId: checkQuestConditions
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckQuestConditionsRequest'
+      responses:
+        '200':
+          description: Результат проверки условий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestConditionsCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/requirements:
+    get:
+      tags:
+        - Quests
+      summary: Получить требования квеста
+      operationId: getQuestRequirements
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Требования квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestRequirementsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/rewards/distribute:
+    post:
+      tags:
+        - Quests
+      summary: Распределить награды квеста
+      operationId: distributeQuestRewards
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeQuestRewardsRequest'
+      responses:
+        '200':
+          description: Награды распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestRewardsDistributionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/rewards:
+    get:
+      tags:
+        - Quests
+      summary: Получить награды квеста
+      operationId: getQuestRewards
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награды квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestRewardsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quests/{questId}/events:
+    get:
+      tags:
+        - Quests
+      summary: Получить события квеста
+      operationId: getQuestEvents
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestEventsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /gameplay/combat/sessions:
     post:
       tags:
@@ -1753,6 +2127,324 @@ components:
               type: array
             items:
               type: object
+
+    QuestStatus:
+      type: string
+      enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+      description: Статус квеста
+
+    CancelQuestRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          nullable: true
+
+    QuestStateResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/QuestStatus'
+        current_objective:
+          type: string
+          nullable: true
+        progress:
+          type: object
+          additionalProperties:
+            type: integer
+        state_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    UpdateQuestStateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/QuestStatus'
+        state_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    QuestDialogue:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        current_node_id:
+          type: string
+          format: uuid
+        speaker:
+          type: string
+        text:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              option_id:
+                type: string
+                format: uuid
+              text:
+                type: string
+              skill_check_required:
+                type: object
+                nullable: true
+                properties:
+                  skill_type:
+                    type: string
+                  difficulty:
+                    type: integer
+
+    QuestDialogueHistoryResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        dialogue_history:
+          type: array
+          items:
+            type: object
+            properties:
+              node_id:
+                type: string
+                format: uuid
+              speaker:
+                type: string
+              text:
+                type: string
+              selected_option_id:
+                type: string
+                format: uuid
+                nullable: true
+              timestamp:
+                type: string
+                format: date-time
+        total:
+          type: integer
+
+    QuestSkillChecksResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        skill_checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillCheckResult'
+        total:
+          type: integer
+
+    CheckQuestConditionsRequest:
+      type: object
+      required:
+        - player_id
+        - condition_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        condition_type:
+          type: string
+          enum: [start, complete, objective]
+        condition_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    QuestConditionsCheckResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        condition_type:
+          type: string
+        all_conditions_met:
+          type: boolean
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              condition_id:
+                type: string
+                format: uuid
+              condition_type:
+                type: string
+              met:
+                type: boolean
+              message:
+                type: string
+                nullable: true
+
+    QuestRequirementsResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        level_requirement:
+          type: integer
+          nullable: true
+        item_requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        quest_prerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+        world_state_requirements:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    DistributeQuestRewardsRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        reward_modifiers:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    QuestRewardsDistributionResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        rewards_distributed:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: object
+              additionalProperties:
+                type: integer
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  item_id:
+                    type: string
+                    format: uuid
+                  quantity:
+                    type: integer
+            reputation:
+              type: object
+              additionalProperties:
+                type: integer
+
+    QuestRewardsResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: object
+              additionalProperties:
+                type: integer
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  item_id:
+                    type: string
+                    format: uuid
+                  quantity:
+                    type: integer
+            reputation:
+              type: object
+              additionalProperties:
+                type: integer
+
+    QuestEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [quest:started, quest:objective-completed, quest:completed, quest:failed, quest:cancelled]
+        quest_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    QuestEventsResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestEvent'
+        total:
+          type: integer
+
+    PlayerQuestsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestInstance'
+        total:
+          type: integer
 
     CreateCombatSessionRequest:
       type: object
