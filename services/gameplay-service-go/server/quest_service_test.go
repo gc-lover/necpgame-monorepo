@@ -402,3 +402,474 @@ func TestQuestService_ListQuestInstances_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+func TestQuestService_StartQuest_DatabaseError(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	questID := "quest_001"
+
+	mockRepo.On("GetQuestInstanceByCharacterAndQuest", context.Background(), characterID, questID).Return(nil, assert.AnError)
+
+	result, err := service.StartQuest(context.Background(), characterID, questID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_StartQuest_CreateError(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	questID := "quest_001"
+
+	mockRepo.On("GetQuestInstanceByCharacterAndQuest", context.Background(), characterID, questID).Return(nil, nil)
+	mockRepo.On("CreateQuestInstance", context.Background(), mock.AnythingOfType("*models.QuestInstance")).Return(assert.AnError)
+
+	result, err := service.StartQuest(context.Background(), characterID, questID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_GetQuestInstance_NotFound(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	instanceID := uuid.New()
+
+	mockRepo.On("GetQuestInstance", context.Background(), instanceID).Return(nil, nil)
+
+	result, err := service.GetQuestInstance(context.Background(), instanceID)
+
+	assert.NoError(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_GetQuestInstance_DatabaseError(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	instanceID := uuid.New()
+
+	mockRepo.On("GetQuestInstance", context.Background(), instanceID).Return(nil, assert.AnError)
+
+	result, err := service.GetQuestInstance(context.Background(), instanceID)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_UpdateDialogue_NotFound(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	nodeID := "node_001"
+	choiceID := "choice_001"
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, nil)
+
+	err := service.UpdateDialogue(context.Background(), questInstanceID, characterID, nodeID, &choiceID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_UpdateDialogue_DatabaseError(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	nodeID := "node_001"
+	choiceID := "choice_001"
+	instance := &models.QuestInstance{
+		ID:          questInstanceID,
+		CharacterID: characterID,
+		QuestID:     "quest_001",
+		Status:      models.QuestStatusInProgress,
+		CurrentNode: "start",
+		DialogueState: make(map[string]interface{}),
+		Objectives:   make(map[string]interface{}),
+		StartedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(instance, nil)
+	mockRepo.On("GetDialogueState", context.Background(), questInstanceID).Return(nil, assert.AnError)
+
+	err := service.UpdateDialogue(context.Background(), questInstanceID, characterID, nodeID, &choiceID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_PerformSkillCheck_NotFound(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	skillID := "combat"
+	requiredLevel := 5
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, nil)
+
+	passed, err := service.PerformSkillCheck(context.Background(), questInstanceID, characterID, skillID, requiredLevel)
+
+	assert.Error(t, err)
+	assert.False(t, passed)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_PerformSkillCheck_DatabaseError(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	skillID := "combat"
+	requiredLevel := 5
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, assert.AnError)
+
+	passed, err := service.PerformSkillCheck(context.Background(), questInstanceID, characterID, skillID, requiredLevel)
+
+	assert.Error(t, err)
+	assert.False(t, passed)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_PerformSkillCheck_SkillNotFound(t *testing.T) {
+	service, mockRepo, mockProgressionRepo, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	skillID := "combat"
+	requiredLevel := 5
+	instance := &models.QuestInstance{
+		ID:          questInstanceID,
+		CharacterID: characterID,
+		QuestID:     "quest_001",
+		Status:      models.QuestStatusInProgress,
+		StartedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(instance, nil)
+	mockProgressionRepo.On("GetSkillExperience", context.Background(), characterID, skillID).Return(nil, nil)
+	mockRepo.On("CreateSkillCheckResult", context.Background(), mock.AnythingOfType("*models.SkillCheckResult")).Return(nil)
+
+	passed, err := service.PerformSkillCheck(context.Background(), questInstanceID, characterID, skillID, requiredLevel)
+
+	assert.NoError(t, err)
+	assert.False(t, passed)
+	mockRepo.AssertExpectations(t)
+	mockProgressionRepo.AssertExpectations(t)
+}
+
+func TestQuestService_CompleteObjective_NotFound(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	objectiveID := "objective_001"
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, nil)
+
+	err := service.CompleteObjective(context.Background(), questInstanceID, characterID, objectiveID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_CompleteObjective_DatabaseError(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	objectiveID := "objective_001"
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, assert.AnError)
+
+	err := service.CompleteObjective(context.Background(), questInstanceID, characterID, objectiveID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_CompleteObjective_UpdateError(t *testing.T) {
+	service, mockRepo, _, mockEventBus, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	objectiveID := "objective_001"
+	instance := &models.QuestInstance{
+		ID:          questInstanceID,
+		CharacterID: characterID,
+		QuestID:     "quest_001",
+		Status:      models.QuestStatusInProgress,
+		Objectives:  make(map[string]interface{}),
+		StartedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(instance, nil)
+	mockRepo.On("UpdateQuestInstance", context.Background(), mock.AnythingOfType("*models.QuestInstance")).Return(assert.AnError)
+
+	err := service.CompleteObjective(context.Background(), questInstanceID, characterID, objectiveID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+	mockEventBus.AssertNotCalled(t, "PublishEvent", context.Background(), "quest:objective-completed", mock.Anything)
+}
+
+func TestQuestService_CompleteQuest_NotFound(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, nil)
+
+	err := service.CompleteQuest(context.Background(), questInstanceID, characterID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_CompleteQuest_DatabaseError(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, assert.AnError)
+
+	err := service.CompleteQuest(context.Background(), questInstanceID, characterID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_CompleteQuest_UpdateError(t *testing.T) {
+	service, mockRepo, _, mockEventBus, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	instance := &models.QuestInstance{
+		ID:          questInstanceID,
+		CharacterID: characterID,
+		QuestID:     "quest_001",
+		Status:      models.QuestStatusInProgress,
+		StartedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(instance, nil)
+	mockRepo.On("UpdateQuestInstance", context.Background(), mock.AnythingOfType("*models.QuestInstance")).Return(assert.AnError)
+
+	err := service.CompleteQuest(context.Background(), questInstanceID, characterID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+	mockEventBus.AssertNotCalled(t, "PublishEvent", context.Background(), "quest:completed", mock.Anything)
+}
+
+func TestQuestService_FailQuest_NotFound(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, nil)
+
+	err := service.FailQuest(context.Background(), questInstanceID, characterID)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_FailQuest_DatabaseError(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(nil, assert.AnError)
+
+	err := service.FailQuest(context.Background(), questInstanceID, characterID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_FailQuest_UpdateError(t *testing.T) {
+	service, mockRepo, _, mockEventBus, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	questInstanceID := uuid.New()
+	characterID := uuid.New()
+	instance := &models.QuestInstance{
+		ID:          questInstanceID,
+		CharacterID: characterID,
+		QuestID:     "quest_001",
+		Status:      models.QuestStatusInProgress,
+		StartedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	mockRepo.On("GetQuestInstance", context.Background(), questInstanceID).Return(instance, nil)
+	mockRepo.On("UpdateQuestInstance", context.Background(), mock.AnythingOfType("*models.QuestInstance")).Return(assert.AnError)
+
+	err := service.FailQuest(context.Background(), questInstanceID, characterID)
+
+	assert.Error(t, err)
+	mockRepo.AssertExpectations(t)
+	mockEventBus.AssertNotCalled(t, "PublishEvent", context.Background(), "quest:failed", mock.Anything)
+}
+
+func TestQuestService_ListQuestInstances_EmptyList(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("ListQuestInstances", context.Background(), characterID, (*models.QuestStatus)(nil), 10, 0).Return([]models.QuestInstance{}, nil)
+	mockRepo.On("CountQuestInstances", context.Background(), characterID, (*models.QuestStatus)(nil)).Return(0, nil)
+
+	result, err := service.ListQuestInstances(context.Background(), characterID, nil, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Quests, 0)
+	assert.Equal(t, 0, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_ListQuestInstances_WithFilters(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	status := models.QuestStatusCompleted
+	instances := []models.QuestInstance{
+		{
+			ID:          uuid.New(),
+			CharacterID: characterID,
+			QuestID:     "quest_001",
+			Status:      models.QuestStatusCompleted,
+			StartedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	mockRepo.On("ListQuestInstances", context.Background(), characterID, &status, 10, 0).Return(instances, nil)
+	mockRepo.On("CountQuestInstances", context.Background(), characterID, &status).Return(1, nil)
+
+	result, err := service.ListQuestInstances(context.Background(), characterID, &status, 10, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Quests, 1)
+	assert.Equal(t, 1, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_ListQuestInstances_Pagination(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	instances := []models.QuestInstance{
+		{
+			ID:          uuid.New(),
+			CharacterID: characterID,
+			QuestID:     "quest_001",
+			Status:      models.QuestStatusInProgress,
+			StartedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+		{
+			ID:          uuid.New(),
+			CharacterID: characterID,
+			QuestID:     "quest_002",
+			Status:      models.QuestStatusInProgress,
+			StartedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	mockRepo.On("ListQuestInstances", context.Background(), characterID, (*models.QuestStatus)(nil), 2, 0).Return(instances, nil)
+	mockRepo.On("CountQuestInstances", context.Background(), characterID, (*models.QuestStatus)(nil)).Return(5, nil)
+
+	result, err := service.ListQuestInstances(context.Background(), characterID, nil, 2, 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result.Quests, 2)
+	assert.Equal(t, 5, result.Total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_ListQuestInstances_DatabaseError_List(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+
+	mockRepo.On("ListQuestInstances", context.Background(), characterID, (*models.QuestStatus)(nil), 10, 0).Return(nil, assert.AnError)
+
+	result, err := service.ListQuestInstances(context.Background(), characterID, nil, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestQuestService_ListQuestInstances_DatabaseError_Count(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestQuestService(t)
+	defer cleanup()
+
+	characterID := uuid.New()
+	instances := []models.QuestInstance{
+		{
+			ID:          uuid.New(),
+			CharacterID: characterID,
+			QuestID:     "quest_001",
+			Status:      models.QuestStatusInProgress,
+			StartedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	mockRepo.On("ListQuestInstances", context.Background(), characterID, (*models.QuestStatus)(nil), 10, 0).Return(instances, nil)
+	mockRepo.On("CountQuestInstances", context.Background(), characterID, (*models.QuestStatus)(nil)).Return(0, assert.AnError)
+
+	result, err := service.ListQuestInstances(context.Background(), characterID, nil, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	mockRepo.AssertExpectations(t)
+}
+
