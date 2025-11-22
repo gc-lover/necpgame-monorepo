@@ -2,13 +2,11 @@ package server
 
 import (
 	"context"
-	"encoding/json"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/social-service-go/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/necpgame/social-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
