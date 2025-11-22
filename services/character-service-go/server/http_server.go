@@ -13,17 +13,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type CharacterServiceInterface interface {
+	GetAccount(ctx context.Context, accountID uuid.UUID) (*models.PlayerAccount, error)
+	CreateAccount(ctx context.Context, req *models.CreateAccountRequest) (*models.PlayerAccount, error)
+	GetCharactersByAccountID(ctx context.Context, accountID uuid.UUID) ([]models.Character, error)
+	GetCharacter(ctx context.Context, characterID uuid.UUID) (*models.Character, error)
+	CreateCharacter(ctx context.Context, req *models.CreateCharacterRequest) (*models.Character, error)
+	UpdateCharacter(ctx context.Context, characterID uuid.UUID, req *models.UpdateCharacterRequest) (*models.Character, error)
+	DeleteCharacter(ctx context.Context, characterID uuid.UUID) error
+	ValidateCharacter(ctx context.Context, characterID uuid.UUID) (bool, error)
+	SwitchCharacter(ctx context.Context, accountID, characterID uuid.UUID) (*models.SwitchCharacterResponse, error)
+}
+
 type HTTPServer struct {
 	addr             string
 	router           *mux.Router
-	characterService *CharacterService
+	characterService CharacterServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 	jwtValidator     *JwtValidator
 	authEnabled      bool
 }
 
-func NewHTTPServer(addr string, characterService *CharacterService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
