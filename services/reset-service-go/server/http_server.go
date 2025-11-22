@@ -12,15 +12,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ResetServiceInterface interface {
+	TriggerReset(ctx context.Context, resetType models.ResetType) error
+	GetResetStats(ctx context.Context) (*models.ResetStats, error)
+	GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*models.ResetListResponse, error)
+}
+
 type HTTPServer struct {
 	addr         string
 	router       *mux.Router
-	resetService *ResetService
+	resetService ResetServiceInterface
 	logger       *logrus.Logger
 	server       *http.Server
 }
 
-func NewHTTPServer(addr string, resetService *ResetService) *HTTPServer {
+func NewHTTPServer(addr string, resetService ResetServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:         addr,
