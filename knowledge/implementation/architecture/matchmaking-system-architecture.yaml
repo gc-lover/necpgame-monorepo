@@ -1,0 +1,580 @@
+metadata:
+  id: matchmaking-system-architecture
+  title: Архитектура системы матчмейкинга (Matchmaking System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T22:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - matchmaking
+    - backend
+    - gameplay
+  related_systems:
+    - matchmaking-go
+    - gameplay-service-go
+    - character-service-go
+    - party-service-go
+  related_documents:
+    - id: backend-matchmaking-queue
+      relation: extends
+    - id: backend-matchmaking-algorithm
+      relation: extends
+    - id: backend-matchmaking-rating
+      relation: extends
+  github_issue: 150
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы матчмейкинга
+    для подбора игроков в PvP, PvE и рейды с учётом рейтинга, очередей, алгоритмов
+    подбора и балансировки команд.
+  goal: |
+    Создать архитектурную схему системы матчмейкинга с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы очередей
+    - Алгоритмов подбора
+    - Системы рейтинга
+    - Технического задания для реализации
+  essence: |
+    Система матчмейкинга для подбора игроков в различные игровые режимы с учётом
+    рейтинга, ролей, балансировки команд и качества матча.
+
+architecture:
+  overview: |
+    Система матчмейкинга состоит из семи основных компонентов:
+    1. Queue Manager - управление очередями
+    2. Matchmaking Engine - алгоритмы подбора
+    3. Rating System - система рейтинга
+    4. Team Balancer - балансировка команд
+    5. Match Quality Calculator - расчёт качества матча
+    6. Anti-Smurf Detector - обнаружение смурфов
+    7. Session Creator - создание игровых сессий
+
+  components:
+    - name: Queue Manager
+      location: matchmaking-go (модуль queue)
+      responsibility: |
+        - Управление очередями матчмейкинга
+        - Добавление/удаление игроков из очереди
+        - Расширение диапазона поиска
+        - Приоритеты ожидания
+        - Интеграция с Redis для hot data
+      queue_types: |
+        - PvP: подбор для PvP матчей
+        - PvE: подбор для PvE контента
+        - Raid: подбор для рейдов
+        - Ranked: ранговые матчи
+        - Casual: казуальные матчи
+      endpoints:
+        - POST /api/v1/matchmaking/queue/join - вход в очередь
+        - DELETE /api/v1/matchmaking/queue/leave - выход из очереди
+        - GET /api/v1/matchmaking/queue/status - статус очереди
+        - GET /api/v1/matchmaking/queue/estimate - оценка времени ожидания
+
+    - name: Matchmaking Engine
+      location: matchmaking-go (модуль matching)
+      responsibility: |
+        - Алгоритмы подбора игроков
+        - Поиск кандидатов по рейтингу
+        - Проверка совместимости
+        - Формирование команд
+        - Обработка различных режимов
+      matching_algorithms: |
+        - PvP: подбор по рейтингу с балансировкой
+        - PvE: подбор с обязательными ролями
+        - Raid: подбор больших групп
+        - Party: подбор для существующих групп
+      endpoints:
+        - POST /api/v1/matchmaking/match/find - поиск матча
+        - GET /api/v1/matchmaking/match/{match_id} - информация о матче
+        - POST /api/v1/matchmaking/match/{match_id}/accept - принятие матча
+        - POST /api/v1/matchmaking/match/{match_id}/decline - отклонение матча
+
+    - name: Rating System
+      location: matchmaking-go (модуль rating)
+      responsibility: |
+        - Управление рейтингами игроков
+        - Расчёт MMR/ELO
+        - Обновление рейтинга после матча
+        - Управление сезонными рейтингами
+        - Определение лиг и тиров
+      rating_formula: |
+        - ELO формула с K-факторами
+        - Учёт силы противника
+        - Streak бонусы/штрафы
+        - Сезонные сбросы
+      rating_tiers: |
+        - Bronze, Silver, Gold, Platinum, Diamond, Master, Grandmaster
+      endpoints:
+        - GET /api/v1/matchmaking/rating/{player_id} - рейтинг игрока
+        - GET /api/v1/matchmaking/rating/leaderboard - лидерборд рейтинга
+        - POST /api/v1/matchmaking/rating/update - обновление рейтинга
+
+    - name: Team Balancer
+      location: matchmaking-go (модуль balancing)
+      responsibility: |
+        - Балансировка команд
+        - Snake draft алгоритм
+        - Распределение ролей
+        - Проверка баланса силы команд
+        - Оптимизация состава команд
+      balancing_strategies: |
+        - Snake draft: поочерёдный выбор
+        - Role-based: по ролям
+        - Rating-based: по рейтингу
+        - Skill-based: по навыкам
+      endpoints:
+        - POST /api/v1/matchmaking/balance/calculate - расчёт баланса
+        - POST /api/v1/matchmaking/balance/redistribute - перераспределение
+
+    - name: Match Quality Calculator
+      location: matchmaking-go (модуль quality)
+      responsibility: |
+        - Расчёт качества матча
+        - Match Quality Score (MQS)
+        - Учёт различных факторов
+        - Оптимизация качества подбора
+      quality_factors: |
+        - Разброс рейтинга
+        - Время ожидания
+        - Латентность игроков
+        - Баланс команд
+        - Роли и композиция
+      endpoints:
+        - GET /api/v1/matchmaking/quality/{match_id} - качество матча
+        - POST /api/v1/matchmaking/quality/calculate - расчёт качества
+
+    - name: Anti-Smurf Detector
+      location: matchmaking-go (модуль anti-smurf)
+      responsibility: |
+        - Обнаружение смурфов
+        - Анализ статистики игрока
+        - Проверка подозрительных паттернов
+        - Применение ограничений
+      detection_methods: |
+        - Анализ винрейта
+        - Проверка времени игры
+        - Сравнение с ожидаемым рейтингом
+        - Выявление аномалий
+      endpoints:
+        - POST /api/v1/matchmaking/anti-smurf/check - проверка игрока
+        - GET /api/v1/matchmaking/anti-smurf/status/{player_id} - статус проверки
+
+    - name: Session Creator
+      location: matchmaking-go (модуль session)
+      responsibility: |
+        - Создание игровых сессий
+        - Интеграция с gameplay-service
+        - Настройка параметров матча
+        - Уведомление игроков
+      session_features: |
+        - Создание игровой сессии
+        - Настройка параметров
+        - Приглашение игроков
+        - Обработка подключений
+      endpoints:
+        - POST /api/v1/matchmaking/session/create - создание сессии
+        - GET /api/v1/matchmaking/session/{session_id} - информация о сессии
+
+  data_flow:
+    queue_join: |
+      1. Игрок запрашивает вход в очередь
+      2. Queue Manager проверяет требования
+      3. Игрок добавляется в очередь (Redis)
+      4. Matchmaking Engine начинает поиск
+      5. Находятся кандидаты по рейтингу
+      6. Team Balancer балансирует команды
+      7. Match Quality Calculator оценивает качество
+      8. Создаётся матч
+      9. Session Creator создаёт игровую сессию
+      10. Игроки уведомляются
+
+    match_found: |
+      1. Matchmaking Engine находит подходящих игроков
+      2. Team Balancer балансирует команды
+      3. Match Quality Calculator рассчитывает качество
+      4. Если качество приемлемо - создаётся матч
+      5. Игроки получают уведомление
+      6. Игроки принимают/отклоняют матч
+      7. При принятии всеми - создаётся сессия
+      8. Игроки подключаются к сессии
+
+    rating_update: |
+      1. Матч завершается
+      2. Gameplay Service отправляет результаты
+      3. Rating System получает результаты
+      4. Рассчитывается изменение рейтинга
+      5. Обновляется рейтинг всех участников
+      6. Обновляются лиги и тиры
+      7. Обновляется лидерборд
+
+  integrations:
+    with_gameplay_service: |
+      - Получение результатов матчей
+      - Создание игровых сессий
+      - Интеграция с боевыми системами
+
+    with_character_service: |
+      - Получение данных персонажей
+      - Роли и классы
+      - Статистика игрока
+
+    with_party_service: |
+      - Подбор для групп
+      - Информация о составе группы
+      - Групповые очереди
+
+    with_realtime_gateway: |
+      - Уведомления о найденном матче
+      - Обновления статуса очереди
+      - Синхронизация состояния
+
+  database_schema:
+    tables:
+      - name: matchmaking_queues
+        description: Очереди матчмейкинга
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - queue_type: ENUM (pvp, pve, raid, ranked, casual)
+          - game_mode: VARCHAR(100)
+          - rating: INTEGER
+          - role: VARCHAR(50) (nullable)
+          - party_id: UUID (FK parties, nullable)
+          - status: ENUM (waiting, matched, cancelled)
+          - search_range: INTEGER (default: 100)
+          - priority: INTEGER (default: 0)
+          - joined_at: TIMESTAMP
+          - matched_at: TIMESTAMP (nullable)
+        indexes:
+          - queue_type, status, rating
+          - player_id, status
+          - status, joined_at
+
+      - name: player_ratings
+        description: Рейтинги игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - queue_type: ENUM (pvp, pve, raid)
+          - rating: INTEGER (default: 1000)
+          - peak_rating: INTEGER
+          - games_played: INTEGER (default: 0)
+          - wins: INTEGER (default: 0)
+          - losses: INTEGER (default: 0)
+          - win_streak: INTEGER (default: 0)
+          - loss_streak: INTEGER (default: 0)
+          - tier: ENUM (bronze, silver, gold, platinum, diamond, master, grandmaster)
+          - league: INTEGER
+          - season_id: UUID (FK seasons, nullable)
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id, queue_type (unique)
+          - queue_type, rating
+          - tier, league
+
+      - name: matchmaking_matches
+        description: Найденные матчи
+        fields:
+          - id: UUID (PK)
+          - queue_type: ENUM (pvp, pve, raid)
+          - game_mode: VARCHAR(100)
+          - status: ENUM (pending, accepted, rejected, started, completed)
+          - team1_players: UUID[] (массив player_id)
+          - team2_players: UUID[] (nullable, для PvP)
+          - match_quality_score: DECIMAL(5,2)
+          - created_at: TIMESTAMP
+          - started_at: TIMESTAMP (nullable)
+          - completed_at: TIMESTAMP (nullable)
+        indexes:
+          - status, created_at
+          - queue_type, status
+
+      - name: matchmaking_match_players
+        description: Игроки в матчах
+        fields:
+          - id: UUID (PK)
+          - match_id: UUID (FK matchmaking_matches)
+          - player_id: UUID (FK accounts)
+          - team: INTEGER (1 или 2)
+          - role: VARCHAR(50)
+          - accepted: BOOLEAN (default: false)
+          - accepted_at: TIMESTAMP (nullable)
+        indexes:
+          - match_id, player_id (unique)
+          - match_id, team
+
+      - name: matchmaking_sessions
+        description: Игровые сессии матчмейкинга
+        fields:
+          - id: UUID (PK)
+          - match_id: UUID (FK matchmaking_matches)
+          - session_id: UUID (FK game_sessions)
+          - status: ENUM (created, active, completed)
+          - created_at: TIMESTAMP
+        indexes:
+          - match_id
+          - session_id
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в matchmaking-go:
+      - queue (управление очередями)
+      - matching (алгоритмы подбора)
+      - rating (система рейтинга)
+      - balancing (балансировка команд)
+      - quality (качество матча)
+      - anti-smurf (обнаружение смурфов)
+      - session (создание сессий)
+    - Интеграция с Redis для hot data очередей
+    - Интеграция с PostgreSQL для персистентности
+    - Оптимизация алгоритмов подбора
+    - Оптимизация запросов к БД
+
+  realtime_requirements:
+    - Уведомления о найденном матче через WebSocket
+    - Обновления статуса очереди в реальном времени
+    - Синхронизация состояния матча
+
+  performance_requirements:
+    - Вход в очередь < 50ms
+    - Поиск матча < 200ms (первая попытка)
+    - Расчёт баланса < 100ms
+    - Обновление рейтинга < 50ms
+    - Поддержка до 10K игроков в очереди одновременно
+    - Поддержка до 1000 активных матчей
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через matchmaking-go
+    - Распределение нагрузки на очереди
+    - Оптимизация алгоритмов подбора
+    - Кэширование рейтингов в Redis
+
+subtasks:
+  - id: queue-manager-module
+    title: Реализация модуля Queue Manager
+    description: |
+      Управление очередями
+      Интеграция с Redis
+      Расширение диапазона поиска
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: matchmaking-engine-implementation
+    title: Реализация Matchmaking Engine
+    description: |
+      Алгоритмы подбора
+      Поиск кандидатов
+      Формирование команд
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: rating-system-development
+    title: Реализация Rating System
+    description: |
+      Управление рейтингами
+      Расчёт MMR/ELO
+      Обновление рейтинга
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: team-balancer-implementation
+    title: Реализация Team Balancer
+    description: |
+      Балансировка команд
+      Snake draft алгоритм
+      Распределение ролей
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: match-quality-calculator
+    title: Реализация Match Quality Calculator
+    description: |
+      Расчёт качества матча
+      Match Quality Score
+      Оптимизация качества
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: anti-smurf-detector
+    title: Реализация Anti-Smurf Detector
+    description: |
+      Обнаружение смурфов
+      Анализ статистики
+      Применение ограничений
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: session-creator-implementation
+    title: Реализация Session Creator
+    description: |
+      Создание игровых сессий
+      Интеграция с gameplay-service
+      Уведомление игроков
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование рейтингов
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для матчмейкинга
+      Интеграция с существующим API
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты очередей
+      Тесты алгоритмов подбора
+      Тесты рейтинговой системы
+      Тесты интеграций
+    priority: high
+    estimated_time: 3-4 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Matchmaking Service"
+            QM[Queue Manager]
+            ME[Matchmaking Engine]
+            RS[Rating System]
+            TB[Team Balancer]
+            MQC[Match Quality Calculator]
+            ASD[Anti-Smurf Detector]
+            SC[Session Creator]
+        end
+
+        subgraph "Storage"
+            Redis[(Redis<br/>Queues<br/>Hot Data)]
+            DB[(PostgreSQL<br/>matchmaking_queues<br/>player_ratings<br/>matchmaking_matches)]
+        end
+
+        subgraph "External Services"
+            GS[Gameplay Service]
+            CS[Character Service]
+            PS[Party Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|join queue| QM
+        QM -->|store| Redis
+        QM --> ME
+        ME --> RS
+        ME --> TB
+        ME --> MQC
+        ME --> ASD
+        ME --> SC
+        RS -->|store| DB
+        SC -->|create session| GS
+        ME -->|player data| CS
+        QM -->|party info| PS
+        SC -->|notify| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant QM as Queue Manager
+        participant ME as Matchmaking Engine
+        participant TB as Team Balancer
+        participant RS as Rating System
+        participant SC as Session Creator
+        participant GS as Gameplay Service
+
+        P->>QM: Join queue
+        QM->>QM: Add to Redis
+        QM->>ME: Start matching
+        ME->>RS: Get ratings
+        ME->>ME: Find candidates
+        ME->>TB: Balance teams
+        ME->>ME: Calculate quality
+        ME->>SC: Create match
+        SC->>GS: Create session
+        SC->>P: Notify players
+    ```
+
+decisions:
+  - id: adr-matchmaking-architecture
+    summary: |
+      Выбрана модульная архитектура внутри matchmaking-go для обеспечения
+      централизованного управления всей системой матчмейкинга.
+
+  - id: adr-redis-postgresql
+    summary: |
+      Использование Redis для hot data очередей и PostgreSQL для персистентности
+      обеспечивает баланс между производительностью и надёжностью.
+
+  - id: adr-matching-algorithms
+    summary: |
+      Различные алгоритмы подбора для разных режимов обеспечивают оптимальное
+      качество матчей для каждого типа контента.
+
+  - id: adr-rating-system
+    summary: |
+      ELO система с сезонными сбросами обеспечивает справедливый и динамичный
+      рейтинг для всех игроков.
+
+  - id: adr-team-balancing
+    summary: |
+      Snake draft алгоритм обеспечивает справедливую балансировку команд и
+      повышает качество матчей.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение алгоритмов подбора
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы матчмейкинга:
+      - Определены компоненты (Queue Manager, Matchmaking Engine, Rating System, Team Balancer, Match Quality Calculator, Anti-Smurf Detector, Session Creator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (matchmaking_queues, player_ratings, matchmaking_matches, matchmaking_match_players, matchmaking_sessions)
+      - Спроектирована система очередей
+      - Спроектированы алгоритмы подбора
+      - Спроектирована система рейтинга
+      - Создано техническое задание
+      - Разбито на подзадачи
+
