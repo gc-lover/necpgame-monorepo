@@ -1,0 +1,577 @@
+metadata:
+  id: notification-system-architecture
+  title: Архитектура системы уведомлений
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T18:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - notifications
+    - backend
+    - client
+    - realtime
+  related_systems:
+    - social-service-go
+    - realtime-gateway-go
+    - achievement-service-go
+    - gameplay-service-go
+    - economy-service-go
+  related_documents:
+    - id: notification-system
+      relation: extends
+  github_issue: 9
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - client
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную архитектуру системы уведомлений, включающую:
+    - Бекенд обработку и доставку уведомлений
+    - Клиентскую интеграцию в UE5
+    - Визуальный дизайн в стиле Cyberpunk 2077
+    - Интеграцию с существующими сервисами
+  goal: |
+    Создать архитектурную схему системы уведомлений с определением:
+    - Компонентов системы (микросервисы, клиентские модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Технического задания для реализации
+  essence: |
+    Event-driven система уведомлений с поддержкой множественных каналов доставки
+    (in-game HUD, WebSocket realtime, email), персонализацией и интеграцией
+    со всеми игровыми системами.
+
+architecture:
+  overview: |
+    Система уведомлений состоит из трёх основных компонентов:
+    1. Backend (social-service-go) - обработка, хранение и маршрутизация уведомлений
+    2. Realtime Gateway (realtime-gateway-go) - доставка через WebSocket
+    3. Client (UE5) - визуальное отображение и управление уведомлениями
+
+  components:
+    - name: Notification Backend Service
+      location: social-service-go
+      responsibility: |
+        - Приём событий от всех игровых сервисов
+        - Хранение уведомлений в БД
+        - Применение настроек персонализации
+        - Маршрутизация по каналам доставки
+        - Управление историей и статусами
+      port: 8084
+      endpoints:
+        - GET /api/v1/social/notifications - список уведомлений
+        - GET /api/v1/social/notifications/{id} - получение уведомления
+        - POST /api/v1/social/notifications - создание уведомления
+        - PUT /api/v1/social/notifications/{id}/status - обновление статуса
+        - GET /api/v1/social/notifications/preferences - настройки пользователя
+        - PUT /api/v1/social/notifications/preferences - обновление настроек
+        - DELETE /api/v1/social/notifications/{id} - удаление уведомления
+        - POST /api/v1/social/notifications/batch/read - массовое прочтение
+
+    - name: Realtime Gateway
+      location: realtime-gateway-go
+      responsibility: |
+        - Поддержка WebSocket соединений
+        - Доставка уведомлений в реальном времени
+        - Управление сессиями игроков
+        - Интеграция с social-service для получения уведомлений
+      integration: |
+        Получает уведомления от social-service через gRPC/internal API
+        и доставляет их клиентам через WebSocket соединения.
+
+    - name: Client Notification System
+      location: client/UE5
+      responsibility: |
+        - Визуальное отображение уведомлений в HUD
+        - Звуковые сигналы
+        - Управление очередью уведомлений
+        - Анимации появления/исчезновения
+        - Интеграция с настройками игры
+      modules:
+        - NotificationWidget - UI компонент для отображения
+        - NotificationManager - менеджер очереди и логики
+        - NotificationSoundManager - управление звуками
+        - NotificationSettings - настройки персонализации
+
+  data_flow:
+    event_generation: |
+      1. Игровые сервисы (achievement, quest, trade, etc.) генерируют события
+      2. События отправляются в social-service через event bus или direct API
+      3. Social-service обрабатывает событие и создаёт уведомление
+
+    notification_processing: |
+      1. Social-service проверяет настройки пользователя
+      2. Определяет каналы доставки (in-game, WebSocket, email)
+      3. Сохраняет уведомление в БД
+      4. Отправляет в соответствующие каналы
+
+    delivery_channels:
+      in_game: |
+        - Уведомление доставляется через realtime-gateway по WebSocket
+        - Клиент получает уведомление и отображает в HUD
+        - Игрок может взаимодействовать с уведомлением
+
+      websocket: |
+        - Для online игроков уведомление отправляется через realtime-gateway
+        - Поддерживается realtime доставка без задержек
+
+      email: |
+        - Для критических уведомлений или offline игроков
+        - Используется email-service (будущий сервис)
+        - Отправка асинхронная через очередь
+
+  integrations:
+    event_sources:
+      - service: achievement-service-go
+        events:
+          - achievement_unlocked
+          - achievement_progress
+      - service: gameplay-service-go
+        events:
+          - quest_started
+          - quest_completed
+          - quest_failed
+          - quest_objective_completed
+      - service: economy-service-go
+        events:
+          - trade_completed
+          - trade_request
+          - item_sold
+      - service: social-service-go
+        events:
+          - friend_request
+          - friend_accepted
+          - guild_invite
+          - message_received
+      - service: matchmaking-go
+        events:
+          - match_found
+          - match_cancelled
+      - service: realtime-gateway-go
+        events:
+          - player_joined
+          - player_left
+          - combat_event
+
+  database_schema:
+    tables:
+      - name: notifications
+        description: Основная таблица уведомлений
+        fields:
+          - id: UUID (PK)
+          - account_id: UUID (FK, indexed)
+          - type: ENUM (quest, message, achievement, system, friend, guild, trade, combat)
+          - priority: ENUM (low, medium, high, critical)
+          - title: VARCHAR(255)
+          - content: TEXT
+          - data: JSONB
+          - status: ENUM (unread, read, archived)
+          - channels: ARRAY[ENUM]
+          - created_at: TIMESTAMP
+          - read_at: TIMESTAMP (nullable)
+          - expires_at: TIMESTAMP (nullable)
+        indexes:
+          - account_id, status, created_at (DESC)
+          - account_id, type
+          - expires_at (для очистки)
+
+      - name: notification_preferences
+        description: Настройки персонализации уведомлений
+        fields:
+          - account_id: UUID (PK)
+          - quest_enabled: BOOLEAN
+          - message_enabled: BOOLEAN
+          - achievement_enabled: BOOLEAN
+          - system_enabled: BOOLEAN
+          - friend_enabled: BOOLEAN
+          - guild_enabled: BOOLEAN
+          - trade_enabled: BOOLEAN
+          - combat_enabled: BOOLEAN
+          - preferred_channels: ARRAY[ENUM]
+          - updated_at: TIMESTAMP
+
+  visual_design:
+    style: Cyberpunk 2077
+    elements:
+      - name: Notification Panel
+        description: |
+          Панель уведомлений в правом верхнем углу экрана
+          Стиль: неоновые цвета, глитч-эффекты, киберпанк шрифты
+        position: top-right
+        animation: slide-in from right, fade out
+        duration: 3-5 секунд (зависит от приоритета)
+
+      - name: Notification Types Visual
+        quest: |
+          Цвет: синий/голубой неон
+          Иконка: значок квеста
+          Звук: короткий электронный сигнал
+        message: |
+          Цвет: зелёный неон
+          Иконка: сообщение/чат
+          Звук: мягкий уведомляющий звук
+        achievement: |
+          Цвет: золотой/жёлтый неон
+          Иконка: трофей/медаль
+          Звук: триумфальный звук
+        system: |
+          Цвет: красный неон
+          Иконка: системный значок
+          Звук: предупреждающий сигнал
+        friend: |
+          Цвет: фиолетовый неон
+          Иконка: друг/контакт
+          Звук: социальный сигнал
+        guild: |
+          Цвет: оранжевый неон
+          Иконка: гильдия/группа
+          Звук: групповой сигнал
+        trade: |
+          Цвет: бирюзовый неон
+          Иконка: торговля/обмен
+          Звук: коммерческий сигнал
+        combat: |
+          Цвет: красный неон (пульсирующий)
+          Иконка: боевой/оружие
+          Звук: боевой сигнал тревоги
+
+      - name: Priority Indicators
+        low: |
+          Прозрачность: 70%
+          Размер: стандартный
+          Анимация: плавное появление
+        medium: |
+          Прозрачность: 85%
+          Размер: стандартный
+          Анимация: стандартное появление
+        high: |
+          Прозрачность: 100%
+          Размер: увеличенный
+          Анимация: пульсация
+        critical: |
+          Прозрачность: 100%
+          Размер: увеличенный
+          Анимация: пульсация + глитч-эффекты
+          Звук: принудительный (не отключается)
+
+  client_architecture:
+    ue5_modules:
+      - name: NotificationWidget
+        type: UUserWidget
+        responsibility: |
+          UI компонент для отображения одного уведомления
+          Содержит: иконку, заголовок, текст, кнопки действий
+        styling: |
+          Использует киберпанк стиль с неоновыми эффектами
+          Поддержка анимаций появления/исчезновения
+
+      - name: NotificationManager
+        type: UObject (Singleton)
+        responsibility: |
+          Управление очередью уведомлений
+          Получение уведомлений от сервера
+          Применение настроек персонализации
+          Управление жизненным циклом уведомлений
+        integration: |
+          Подключается к realtime-gateway через WebSocket
+          Синхронизируется с social-service через REST API
+
+      - name: NotificationSoundManager
+        type: UObject
+        responsibility: |
+          Воспроизведение звуков уведомлений
+          Управление громкостью и приоритетами
+          Интеграция с настройками звука игры
+
+      - name: NotificationSettings
+        type: UObject
+        responsibility: |
+          Хранение настроек уведомлений
+          Синхронизация с сервером
+          Применение настроек в реальном времени
+
+    data_structures:
+      - name: FNotificationData
+        fields:
+          - Id: FString (UUID)
+          - Type: ENotificationType
+          - Priority: ENotificationPriority
+          - Title: FString
+          - Content: FString
+          - Data: TMap<FString, FString>
+          - CreatedAt: FDateTime
+          - ExpiresAt: FDateTime (optional)
+
+      - name: FNotificationPreferences
+        fields:
+          - QuestEnabled: bool
+          - MessageEnabled: bool
+          - AchievementEnabled: bool
+          - SystemEnabled: bool
+          - FriendEnabled: bool
+          - GuildEnabled: bool
+          - TradeEnabled: bool
+          - CombatEnabled: bool
+          - PreferredChannels: TArray<EDeliveryChannel>
+
+technical_specification:
+  backend_requirements:
+    - Реализация REST API endpoints в social-service-go
+    - Интеграция с event bus для получения событий
+    - Реализация логики маршрутизации по каналам
+    - Оптимизация запросов к БД (индексы, кэширование)
+    - Реализация batch операций для массовых действий
+
+  realtime_requirements:
+    - Интеграция social-service с realtime-gateway
+    - Реализация push уведомлений через WebSocket
+    - Управление сессиями и доставкой
+    - Обработка offline игроков (queue для email)
+
+  client_requirements:
+    - Создание UI компонентов в UE5
+    - Реализация анимаций и эффектов
+    - Интеграция с WebSocket клиентом
+    - Реализация звуковой системы
+    - Создание системы настроек
+
+  performance_requirements:
+    - Доставка уведомлений < 100ms для online игроков
+    - Поддержка до 1000 уведомлений в секунду
+    - Оптимизация БД запросов (batch, индексы)
+    - Кэширование настроек пользователей
+
+  scalability_requirements:
+    - Горизонтальное масштабирование social-service
+    - Распределение нагрузки через realtime-gateway
+    - Очистка старых уведомлений (TTL)
+    - Rate limiting для предотвращения спама
+
+subtasks:
+  - id: backend-api
+    title: Реализация REST API в social-service-go
+    description: |
+      Создание всех endpoints для управления уведомлениями
+      Интеграция с существующими моделями
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: event-integration
+    title: Интеграция с event sources
+    description: |
+      Подключение всех игровых сервисов к системе уведомлений
+      Создание event handlers для каждого типа события
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: realtime-delivery
+    title: Реализация realtime доставки
+    description: |
+      Интеграция social-service с realtime-gateway
+      Реализация push уведомлений через WebSocket
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: client-ui
+    title: Создание UI компонентов в UE5
+    description: |
+      Реализация NotificationWidget
+      Создание анимаций и визуальных эффектов
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: client-manager
+    title: Реализация NotificationManager в UE5
+    description: |
+      Создание менеджера уведомлений
+      Интеграция с WebSocket
+      Реализация логики очереди
+    priority: medium
+    estimated_time: 3-4 дня
+
+  - id: client-sound
+    title: Реализация звуковой системы
+    description: |
+      Создание NotificationSoundManager
+      Интеграция звуков для каждого типа уведомления
+    priority: low
+    estimated_time: 1-2 дня
+
+  - id: client-settings
+    title: Реализация системы настроек
+    description: |
+      Создание NotificationSettings
+      UI для настройки уведомлений
+      Синхронизация с сервером
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и миграции
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Реализация TTL для старых уведомлений
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: testing
+    title: Тестирование системы
+    description: |
+      Unit тесты для backend
+      Integration тесты для realtime
+      UI тесты для клиента
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Game Services"
+            AS[Achievement Service]
+            GS[Gameplay Service]
+            ES[Economy Service]
+            SS[Social Service]
+            MS[Matchmaking Service]
+        end
+
+        subgraph "Notification System"
+            NS[Notification Backend<br/>social-service-go:8084]
+            DB[(PostgreSQL<br/>notifications)]
+        end
+
+        subgraph "Realtime Delivery"
+            RG[Realtime Gateway<br/>realtime-gateway-go]
+            WS[WebSocket Connections]
+        end
+
+        subgraph "Client"
+            CM[Notification Manager]
+            CW[Notification Widget]
+            CS[Notification Sound]
+        end
+
+        AS -->|events| NS
+        GS -->|events| NS
+        ES -->|events| NS
+        SS -->|events| NS
+        MS -->|events| NS
+
+        NS -->|store| DB
+        NS -->|push| RG
+        RG -->|deliver| WS
+        WS -->|receive| CM
+        CM -->|display| CW
+        CM -->|play| CS
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant GS as Game Service
+        participant NS as Notification Backend
+        participant DB as Database
+        participant RG as Realtime Gateway
+        participant CL as Client
+
+        GS->>NS: Event (quest_completed)
+        NS->>DB: Check user preferences
+        NS->>DB: Create notification
+        NS->>RG: Push notification
+        RG->>CL: WebSocket delivery
+        CL->>CL: Display in HUD
+        CL->>NS: Mark as read
+        NS->>DB: Update status
+    ```
+
+  integration_diagram: |
+    ```mermaid
+    graph LR
+        subgraph "Backend Services"
+            A1[Achievement]
+            A2[Quest]
+            A3[Trade]
+            A4[Social]
+        end
+
+        subgraph "Notification Core"
+            B1[Event Handler]
+            B2[Router]
+            B3[Delivery Manager]
+        end
+
+        subgraph "Delivery Channels"
+            C1[In-Game HUD]
+            C2[WebSocket]
+            C3[Email]
+        end
+
+        A1 --> B1
+        A2 --> B1
+        A3 --> B1
+        A4 --> B1
+        B1 --> B2
+        B2 --> B3
+        B3 --> C1
+        B3 --> C2
+        B3 --> C3
+    ```
+
+decisions:
+  - id: adr-notification-architecture
+    summary: |
+      Выбрана event-driven архитектура с централизованным обработчиком
+      в social-service-go для обеспечения единой точки управления
+      уведомлениями и упрощения интеграции.
+
+  - id: adr-realtime-delivery
+    summary: |
+      Использование realtime-gateway для доставки уведомлений
+      обеспечивает низкую задержку и масштабируемость системы.
+
+  - id: adr-client-architecture
+    summary: |
+      Модульная архитектура клиента (Manager, Widget, Sound, Settings)
+      обеспечивает гибкость и переиспользование компонентов.
+
+  - id: adr-visual-style
+    summary: |
+      Стиль Cyberpunk 2077 выбран для соответствия общему дизайну игры
+      и создания атмосферного опыта для игроков.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы уведомлений:
+      - Определены компоненты (Backend, Realtime, Client)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определены визуальные элементы
+      - Создано техническое задание
+      - Разбито на подзадачи
+
