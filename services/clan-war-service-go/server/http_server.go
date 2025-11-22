@@ -13,25 +13,41 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type HTTPServer struct {
-	addr          string
-	router        *mux.Router
-	clanWarService *ClanWarService
-	logger        *logrus.Logger
-	server        *http.Server
-	jwtValidator  *JwtValidator
-	authEnabled   bool
+type ClanWarServiceInterface interface {
+	DeclareWar(ctx context.Context, req *models.DeclareWarRequest) (*models.ClanWar, error)
+	GetWar(ctx context.Context, warID uuid.UUID) (*models.ClanWar, error)
+	ListWars(ctx context.Context, guildID *uuid.UUID, status *models.WarStatus, limit, offset int) ([]models.ClanWar, int, error)
+	StartWar(ctx context.Context, warID uuid.UUID) error
+	CompleteWar(ctx context.Context, warID uuid.UUID) error
+	CreateBattle(ctx context.Context, req *models.CreateBattleRequest) (*models.WarBattle, error)
+	GetBattle(ctx context.Context, battleID uuid.UUID) (*models.WarBattle, error)
+	ListBattles(ctx context.Context, warID *uuid.UUID, status *models.BattleStatus, limit, offset int) ([]models.WarBattle, int, error)
+	StartBattle(ctx context.Context, battleID uuid.UUID) error
+	UpdateBattleScore(ctx context.Context, req *models.UpdateBattleScoreRequest) error
+	CompleteBattle(ctx context.Context, battleID uuid.UUID) error
+	GetTerritory(ctx context.Context, territoryID uuid.UUID) (*models.Territory, error)
+	ListTerritories(ctx context.Context, ownerGuildID *uuid.UUID, limit, offset int) ([]models.Territory, int, error)
 }
 
-func NewHTTPServer(addr string, clanWarService *ClanWarService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+type HTTPServer struct {
+	addr           string
+	router         *mux.Router
+	clanWarService ClanWarServiceInterface
+	logger         *logrus.Logger
+	server         *http.Server
+	jwtValidator   *JwtValidator
+	authEnabled    bool
+}
+
+func NewHTTPServer(addr string, clanWarService ClanWarServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
-		addr:          addr,
-		router:        router,
+		addr:           addr,
+		router:         router,
 		clanWarService: clanWarService,
-		logger:        GetLogger(),
-		jwtValidator:  jwtValidator,
-		authEnabled:   authEnabled,
+		logger:         GetLogger(),
+		jwtValidator:   jwtValidator,
+		authEnabled:    authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -242,7 +258,7 @@ func (s *HTTPServer) listWars(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.respondJSON(w, http.StatusOK, models.WarListResponse{
-		Wars: wars,
+		Wars:  wars,
 		Total: total,
 	})
 }
@@ -477,4 +493,3 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.statusCode = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)
 }
-
