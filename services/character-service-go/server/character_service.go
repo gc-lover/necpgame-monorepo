@@ -12,8 +12,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type CharacterRepositoryInterface interface {
+	GetAccountByID(ctx context.Context, accountID uuid.UUID) (*models.PlayerAccount, error)
+	CreateAccount(ctx context.Context, req *models.CreateAccountRequest) (*models.PlayerAccount, error)
+	GetCharacterByID(ctx context.Context, characterID uuid.UUID) (*models.Character, error)
+	GetCharactersByAccountID(ctx context.Context, accountID uuid.UUID) ([]models.Character, error)
+	CreateCharacter(ctx context.Context, req *models.CreateCharacterRequest) (*models.Character, error)
+	UpdateCharacter(ctx context.Context, characterID uuid.UUID, req *models.UpdateCharacterRequest) (*models.Character, error)
+	DeleteCharacter(ctx context.Context, characterID uuid.UUID) error
+}
+
 type CharacterService struct {
-	repo  *CharacterRepository
+	repo  CharacterRepositoryInterface
 	cache *redis.Client
 	logger *logrus.Logger
 	keycloakURL string
