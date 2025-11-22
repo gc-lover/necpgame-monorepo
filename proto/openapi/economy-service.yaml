@@ -1436,6 +1436,478 @@ components:
           type: string
           format: date-time
 
+    LootTable:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootTableEntry'
+        created_at:
+          type: string
+          format: date-time
+
+    LootTableEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        drop_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        min_quantity:
+          type: integer
+          minimum: 1
+        max_quantity:
+          type: integer
+          minimum: 1
+        weight:
+          type: integer
+          minimum: 1
+
+    ApplyLuckRequest:
+      type: object
+      required:
+        - loot_result
+        - luck_modifier
+      properties:
+        loot_result:
+          $ref: '#/components/schemas/LootResult'
+        luck_modifier:
+          type: number
+          format: float
+          description: Модификатор удачи (от -1.0 до 1.0)
+
+    DistributeLootRequest:
+      type: object
+      required:
+        - loot_result
+        - distribution_mode
+        - recipients
+      properties:
+        loot_result:
+          $ref: '#/components/schemas/LootResult'
+        distribution_mode:
+          type: string
+          enum:
+            - personal
+            - party
+            - shared
+            - boss
+        recipients:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    LootDistributionResult:
+      type: object
+      properties:
+        distribution_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - distributed
+            - pending_roll
+            - failed
+        items_distributed:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistributedItem'
+        distributed_at:
+          type: string
+          format: date-time
+
+    DistributedItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+
+    LootDistributionStatus:
+      type: object
+      properties:
+        distribution_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - distributed
+            - failed
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistributedItem'
+        created_at:
+          type: string
+          format: date-time
+
+    CreateRollSessionRequest:
+      type: object
+      required:
+        - item_id
+        - party_id
+        - participants
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        timeout_seconds:
+          type: integer
+          minimum: 10
+          maximum: 300
+          default: 30
+
+    RollSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - expired
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/RollParticipant'
+        winner_id:
+          type: string
+          format: uuid
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    RollParticipant:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        roll_type:
+          type: string
+          enum:
+            - need
+            - greed
+            - pass
+        roll_value:
+          type: integer
+          minimum: 1
+          maximum: 100
+          nullable: true
+        rolled_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    RollRequest:
+      type: object
+      required:
+        - roll_type
+      properties:
+        roll_type:
+          type: string
+          enum:
+            - need
+            - greed
+            - pass
+
+    RollResult:
+      type: object
+      properties:
+        roll_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        roll_type:
+          type: string
+        roll_value:
+          type: integer
+        current_leader:
+          type: string
+          format: uuid
+          nullable: true
+        session_status:
+          type: string
+
+    ClaimLootRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+
+    ClaimResult:
+      type: object
+      properties:
+        roll_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        claimed_by:
+          type: string
+          format: uuid
+        claimed_at:
+          type: string
+          format: date-time
+
+    GenerateSmartLootRequest:
+      type: object
+      required:
+        - source_type
+        - source_id
+        - player_id
+      properties:
+        source_type:
+          type: string
+          enum:
+            - npc
+            - container
+            - quest
+            - boss
+        source_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        loot_table_id:
+          type: string
+          format: uuid
+
+    LootHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootHistoryEntry'
+        total:
+          type: integer
+
+    LootHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        source_type:
+          type: string
+        source_id:
+          type: string
+          format: uuid
+        obtained_at:
+          type: string
+          format: date-time
+
+    CreateWorldDropRequest:
+      type: object
+      required:
+        - items
+        - position
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        position:
+          $ref: '#/components/schemas/Position'
+        zone_id:
+          type: string
+          format: uuid
+        expires_in_seconds:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          default: 300
+
+    Position:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+
+    PickupWorldDropRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+
+    PickupResult:
+      type: object
+      properties:
+        drop_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        picked_up_at:
+          type: string
+          format: date-time
+
+    GenerateBossLootRequest:
+      type: object
+      required:
+        - boss_id
+        - participants
+      properties:
+        boss_id:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        is_first_kill:
+          type: boolean
+          default: false
+
+    BossLootResult:
+      type: object
+      properties:
+        boss_id:
+          type: string
+          format: uuid
+        guaranteed_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        random_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        unique_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        first_kill_bonus:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+
+    DistributeBossLootRequest:
+      type: object
+      required:
+        - boss_loot_result
+        - participants
+      properties:
+        boss_loot_result:
+          $ref: '#/components/schemas/BossLootResult'
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        distribution_mode:
+          type: string
+          enum:
+            - personal
+            - shared
+          default: personal
+
+    BossLootDistributionResult:
+      type: object
+      properties:
+        boss_id:
+          type: string
+          format: uuid
+        distribution_id:
+          type: string
+          format: uuid
+        participants_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantReward'
+        distributed_at:
+          type: string
+          format: date-time
+
+    ParticipantReward:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootItem'
+        currency:
+          type: integer
+
     Error:
       type: object
       properties:
