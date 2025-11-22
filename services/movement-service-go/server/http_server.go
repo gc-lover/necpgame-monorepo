@@ -13,15 +13,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type MovementServiceInterface interface {
+	GetPosition(ctx context.Context, characterID uuid.UUID) (*models.CharacterPosition, error)
+	SavePosition(ctx context.Context, characterID uuid.UUID, req *models.SavePositionRequest) (*models.CharacterPosition, error)
+	GetPositionHistory(ctx context.Context, characterID uuid.UUID, limit int) ([]models.PositionHistory, error)
+}
+
 type HTTPServer struct {
 	addr            string
 	router          *mux.Router
-	movementService *MovementService
+	movementService MovementServiceInterface
 	logger          *logrus.Logger
 	server          *http.Server
 }
 
-func NewHTTPServer(addr string, movementService *MovementService) *HTTPServer {
+func NewHTTPServer(addr string, movementService MovementServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:            addr,
@@ -88,6 +94,10 @@ func (s *HTTPServer) getPosition(w http.ResponseWriter, r *http.Request) {
 
 	position, err := s.movementService.GetPosition(r.Context(), characterID)
 	if err != nil {
+		if err.Error() == "position not found" {
+			s.respondError(w, http.StatusNotFound, "position not found")
+			return
+		}
 		s.logger.WithError(err).Error("Failed to get position")
 		s.respondError(w, http.StatusInternalServerError, "failed to get position")
 		return
