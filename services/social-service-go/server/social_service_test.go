@@ -400,13 +400,13 @@ func setupTestService(t *testing.T) (*SocialService, *mockNotificationRepository
 	mockModerationService := new(mockModerationService)
 
 	service := &SocialService{
-		notificationRepo: mockNotificationRepo,
-		chatRepo:         mockChatRepo,
-		mailRepo:         mockMailRepo,
-		guildRepo:        mockGuildRepo,
+		notificationRepo:  mockNotificationRepo,
+		chatRepo:          mockChatRepo,
+		mailRepo:          mockMailRepo,
+		guildRepo:         mockGuildRepo,
 		moderationService: mockModerationService,
-		cache:            redisClient,
-		logger:           GetLogger(),
+		cache:             redisClient,
+		logger:            GetLogger(),
 	}
 
 	cleanup := func() {
@@ -591,8 +591,8 @@ func TestSocialService_SendMail_Success(t *testing.T) {
 	recipientID := uuid.New()
 	req := &models.CreateMailRequest{
 		RecipientID: recipientID,
-		Subject:    "Test Mail",
-		Content:    "Test content",
+		Subject:     "Test Mail",
+		Content:     "Test content",
 	}
 
 	mockMailRepo.On("Create", mock.Anything, mock.AnythingOfType("*models.MailMessage")).Return(nil)
@@ -865,16 +865,16 @@ func TestSocialService_ListGuilds_Success(t *testing.T) {
 
 	guilds := []models.Guild{
 		{
-			ID:          uuid.New(),
-			Name:        "Test Guild 1",
-			Tag:         "TEST1",
-			LeaderID:    uuid.New(),
-			Level:       1,
-			Experience:  0,
-			MaxMembers:  20,
-			Status:      models.GuildStatusActive,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
+			ID:         uuid.New(),
+			Name:       "Test Guild 1",
+			Tag:        "TEST1",
+			LeaderID:   uuid.New(),
+			Level:      1,
+			Experience: 0,
+			MaxMembers: 20,
+			Status:     models.GuildStatusActive,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		},
 	}
 
@@ -945,16 +945,16 @@ func TestSocialService_UpdateGuild_NotLeader(t *testing.T) {
 	leaderID := uuid.New()
 	otherID := uuid.New()
 	guild := &models.Guild{
-		ID:          guildID,
-		Name:        "Test Guild",
-		Tag:         "TEST",
-		LeaderID:    leaderID,
-		Level:       1,
-		Experience:  0,
-		MaxMembers:  20,
-		Status:      models.GuildStatusActive,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:         guildID,
+		Name:       "Test Guild",
+		Tag:        "TEST",
+		LeaderID:   leaderID,
+		Level:      1,
+		Experience: 0,
+		MaxMembers: 20,
+		Status:     models.GuildStatusActive,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	newName := "Updated Guild"
@@ -1084,16 +1084,16 @@ func TestSocialService_UpdateMemberRank_Success(t *testing.T) {
 	leaderID := uuid.New()
 	characterID := uuid.New()
 	guild := &models.Guild{
-		ID:          guildID,
-		Name:        "Test Guild",
-		Tag:         "TEST",
-		LeaderID:    leaderID,
-		Level:       1,
-		Experience:  0,
-		MaxMembers:  20,
-		Status:      models.GuildStatusActive,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:         guildID,
+		Name:       "Test Guild",
+		Tag:        "TEST",
+		LeaderID:   leaderID,
+		Level:      1,
+		Experience: 0,
+		MaxMembers: 20,
+		Status:     models.GuildStatusActive,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	mockGuildRepo.On("GetByID", mock.Anything, guildID).Return(guild, nil)
@@ -1116,16 +1116,16 @@ func TestSocialService_DisbandGuild_Success(t *testing.T) {
 	guildID := uuid.New()
 	leaderID := uuid.New()
 	guild := &models.Guild{
-		ID:          guildID,
-		Name:        "Test Guild",
-		Tag:         "TEST",
-		LeaderID:    leaderID,
-		Level:       1,
-		Experience:  0,
-		MaxMembers:  20,
-		Status:      models.GuildStatusActive,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:         guildID,
+		Name:       "Test Guild",
+		Tag:        "TEST",
+		LeaderID:   leaderID,
+		Level:      1,
+		Experience: 0,
+		MaxMembers: 20,
+		Status:     models.GuildStatusActive,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	mockGuildRepo.On("GetByID", mock.Anything, guildID).Return(guild, nil)
