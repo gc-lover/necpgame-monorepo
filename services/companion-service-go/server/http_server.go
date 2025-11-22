@@ -13,15 +13,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type CompanionServiceInterface interface {
+	GetCompanionType(ctx context.Context, companionTypeID string) (*models.CompanionType, error)
+	ListCompanionTypes(ctx context.Context, category *models.CompanionCategory, limit, offset int) (*models.CompanionTypeListResponse, error)
+	PurchaseCompanion(ctx context.Context, characterID uuid.UUID, companionTypeID string) (*models.PlayerCompanion, error)
+	ListPlayerCompanions(ctx context.Context, characterID uuid.UUID, status *models.CompanionStatus, limit, offset int) (*models.PlayerCompanionListResponse, error)
+	GetCompanionDetail(ctx context.Context, companionID uuid.UUID) (*models.CompanionDetailResponse, error)
+	SummonCompanion(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID) error
+	DismissCompanion(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID) error
+	RenameCompanion(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID, customName string) error
+	AddExperience(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID, amount int64, source string) error
+	UseAbility(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID, abilityID string) error
+}
+
 type HTTPServer struct {
 	addr            string
 	router          *mux.Router
-	companionService *CompanionService
+	companionService CompanionServiceInterface
 	logger          *logrus.Logger
 	server          *http.Server
 }
 
-func NewHTTPServer(addr string, companionService *CompanionService) *HTTPServer {
+func NewHTTPServer(addr string, companionService CompanionServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:            addr,
