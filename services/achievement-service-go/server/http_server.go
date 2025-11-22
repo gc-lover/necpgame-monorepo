@@ -13,17 +13,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type AchievementServiceInterface interface {
+	CreateAchievement(ctx context.Context, achievement *models.Achievement) error
+	GetAchievement(ctx context.Context, id uuid.UUID) (*models.Achievement, error)
+	GetAchievementByCode(ctx context.Context, code string) (*models.Achievement, error)
+	ListAchievements(ctx context.Context, category *models.AchievementCategory, limit, offset int) (*models.AchievementListResponse, error)
+	TrackProgress(ctx context.Context, playerID, achievementID uuid.UUID, progress int, progressData map[string]interface{}) error
+	UnlockAchievement(ctx context.Context, playerID, achievementID uuid.UUID) error
+	GetPlayerAchievements(ctx context.Context, playerID uuid.UUID, category *models.AchievementCategory, limit, offset int) (*models.PlayerAchievementResponse, error)
+	GetLeaderboard(ctx context.Context, period string, limit int) (*models.LeaderboardResponse, error)
+	GetAchievementStats(ctx context.Context, achievementID uuid.UUID) (*models.AchievementStatsResponse, error)
+}
+
 type HTTPServer struct {
 	addr              string
 	router            *mux.Router
-	achievementService *AchievementService
+	achievementService AchievementServiceInterface
 	logger            *logrus.Logger
 	server            *http.Server
 	jwtValidator      *JwtValidator
 	authEnabled       bool
 }
 
-func NewHTTPServer(addr string, achievementService *AchievementService, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, achievementService AchievementServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:              addr,
@@ -46,15 +58,14 @@ func NewHTTPServer(addr string, achievementService *AchievementService, jwtValid
 
 	api.HandleFunc("/achievements", server.listAchievements).Methods("GET")
 	api.HandleFunc("/achievements", server.createAchievement).Methods("POST")
-	api.HandleFunc("/achievements/{id}", server.getAchievement).Methods("GET")
+	api.HandleFunc("/achievements/leaderboard", server.getLeaderboard).Methods("GET")
 	api.HandleFunc("/achievements/code/{code}", server.getAchievementByCode).Methods("GET")
+	api.HandleFunc("/achievements/{id}/stats", server.getAchievementStats).Methods("GET")
+	api.HandleFunc("/achievements/{id}", server.getAchievement).Methods("GET")
 
 	api.HandleFunc("/achievements/players/{playerId}", server.getPlayerAchievements).Methods("GET")
 	api.HandleFunc("/achievements/players/{playerId}/progress", server.trackProgress).Methods("POST")
 	api.HandleFunc("/achievements/players/{playerId}/unlock/{achievementId}", server.unlockAchievement).Methods("POST")
-
-	api.HandleFunc("/achievements/leaderboard", server.getLeaderboard).Methods("GET")
-	api.HandleFunc("/achievements/{id}/stats", server.getAchievementStats).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
