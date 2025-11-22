@@ -1,0 +1,584 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Service API
+  description: API для управления голосовыми каналами и WebRTC соединениями
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1/voice
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/voice
+    description: Продакшен сервер
+
+tags:
+  - name: Channels
+    description: Управление голосовыми каналами
+  - name: Participants
+    description: Управление участниками каналов
+
+paths:
+  /channels:
+    post:
+      tags:
+        - Channels
+      summary: Создать голосовой канал
+      operationId: createChannel
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelRequest'
+      responses:
+        '201':
+          description: Канал создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceChannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+        - Channels
+      summary: Получить список голосовых каналов
+      operationId: listChannels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/VoiceChannelType'
+          description: Тип канала
+        - name: owner_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ID владельца канала
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Количество записей на странице
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        '200':
+          description: Список каналов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /channels/{channel_id}:
+    get:
+      tags:
+        - Channels
+      summary: Получить информацию о канале
+      operationId: getChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о канале
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceChannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /channels/{channel_id}/detail:
+    get:
+      tags:
+        - Channels
+      summary: Получить детальную информацию о канале с участниками
+      operationId: getChannelDetail
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детальная информация о канале
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelDetailResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /channels/{channel_id}/join:
+    post:
+      tags:
+        - Channels
+      summary: Присоединиться к каналу
+      operationId: joinChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinChannelRequest'
+      responses:
+        '200':
+          description: Успешное присоединение к каналу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebRTCTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Канал переполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /channels/{channel_id}/leave:
+    post:
+      tags:
+        - Channels
+      summary: Покинуть канал
+      operationId: leaveChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveChannelRequest'
+      responses:
+        '200':
+          description: Успешный выход из канала
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /channels/{channel_id}/participants:
+    get:
+      tags:
+        - Participants
+      summary: Получить список участников канала
+      operationId: getChannelParticipants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /channels/{channel_id}/participants/{character_id}/status:
+    put:
+      tags:
+        - Participants
+      summary: Обновить статус участника
+      operationId: updateParticipantStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateParticipantStatusRequest'
+      responses:
+        '200':
+          description: Статус участника обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /channels/{channel_id}/participants/{character_id}/position:
+    put:
+      tags:
+        - Participants
+      summary: Обновить позицию участника
+      operationId: updateParticipantPosition
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateParticipantPositionRequest'
+      responses:
+        '200':
+          description: Позиция участника обновлена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    VoiceChannelType:
+      type: string
+      enum: [party, guild, raid, proximity]
+      description: Тип голосового канала
+
+    ParticipantStatus:
+      type: string
+      enum: [connected, muted, deafened, speaking]
+      description: Статус участника
+
+    VoiceChannel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/VoiceChannelType'
+        owner_id:
+          type: string
+          format: uuid
+        owner_type:
+          type: string
+        name:
+          type: string
+        max_members:
+          type: integer
+        quality_preset:
+          type: string
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    VoiceParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ParticipantStatus'
+        webrtc_token:
+          type: string
+        position:
+          type: object
+          additionalProperties: true
+          nullable: true
+        stats:
+          type: object
+          additionalProperties: true
+          nullable: true
+        joined_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateChannelRequest:
+      type: object
+      required:
+        - character_id
+        - type
+        - name
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/VoiceChannelType'
+        name:
+          type: string
+        max_members:
+          type: integer
+          default: 10
+        quality_preset:
+          type: string
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    JoinChannelRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    LeaveChannelRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    UpdateParticipantStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/ParticipantStatus'
+
+    UpdateParticipantPositionRequest:
+      type: object
+      required:
+        - position
+      properties:
+        position:
+          type: object
+          additionalProperties: true
+
+    ChannelListResponse:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceChannel'
+        total:
+          type: integer
+
+    ParticipantListResponse:
+      type: object
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+        total:
+          type: integer
+
+    ChannelDetailResponse:
+      type: object
+      properties:
+        channel:
+          $ref: '#/components/schemas/VoiceChannel'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+
+    WebRTCTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        server_url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
