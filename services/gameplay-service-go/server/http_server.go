@@ -13,16 +13,36 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ProgressionServiceInterface interface {
+	GetProgression(ctx context.Context, characterID uuid.UUID) (*models.CharacterProgression, error)
+	AddExperience(ctx context.Context, characterID uuid.UUID, amount int64, source string) error
+	AddSkillExperience(ctx context.Context, characterID uuid.UUID, skillID string, amount int64) error
+	AllocateAttributePoint(ctx context.Context, characterID uuid.UUID, attribute string) error
+	AllocateSkillPoint(ctx context.Context, characterID uuid.UUID, skillID string) error
+	GetSkillProgression(ctx context.Context, characterID uuid.UUID, limit, offset int) (*models.SkillProgressionResponse, error)
+}
+
+type QuestServiceInterface interface {
+	StartQuest(ctx context.Context, characterID uuid.UUID, questID string) (*models.QuestInstance, error)
+	GetQuestInstance(ctx context.Context, instanceID uuid.UUID) (*models.QuestInstance, error)
+	UpdateDialogue(ctx context.Context, questInstanceID uuid.UUID, characterID uuid.UUID, nodeID string, choiceID *string) error
+	PerformSkillCheck(ctx context.Context, questInstanceID uuid.UUID, characterID uuid.UUID, skillID string, requiredLevel int) (bool, error)
+	CompleteObjective(ctx context.Context, questInstanceID uuid.UUID, characterID uuid.UUID, objectiveID string) error
+	CompleteQuest(ctx context.Context, questInstanceID uuid.UUID, characterID uuid.UUID) error
+	FailQuest(ctx context.Context, questInstanceID uuid.UUID, characterID uuid.UUID) error
+	ListQuestInstances(ctx context.Context, characterID uuid.UUID, status *models.QuestStatus, limit, offset int) (*models.QuestListResponse, error)
+}
+
 type HTTPServer struct {
 	addr             string
 	router           *mux.Router
-	progressionService *ProgressionService
-	questService     *QuestService
+	progressionService ProgressionServiceInterface
+	questService     QuestServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, progressionService *ProgressionService, questService *QuestService) *HTTPServer {
+func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
