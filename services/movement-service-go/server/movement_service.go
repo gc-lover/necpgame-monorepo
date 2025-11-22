@@ -14,8 +14,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type MovementRepositoryInterface interface {
+	GetPositionByCharacterID(ctx context.Context, characterID uuid.UUID) (*models.CharacterPosition, error)
+	SavePosition(ctx context.Context, characterID uuid.UUID, req *models.SavePositionRequest) (*models.CharacterPosition, error)
+	GetPositionHistory(ctx context.Context, characterID uuid.UUID, limit int) ([]models.PositionHistory, error)
+}
+
 type MovementService struct {
-	repo           *MovementRepository
+	repo           MovementRepositoryInterface
 	cache          *redis.Client
 	logger         *logrus.Logger
 	gatewayURL     string
