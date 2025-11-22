@@ -14,11 +14,20 @@ import (
 )
 
 type mockSocialService struct {
-	messages      map[uuid.UUID][]models.ChatMessage
-	channels      map[uuid.UUID]*models.ChatChannel
-	channelList   []models.ChatChannel
-	createErr     error
-	getErr        error
+	messages         map[uuid.UUID][]models.ChatMessage
+	channels         map[uuid.UUID]*models.ChatChannel
+	channelList      []models.ChatChannel
+	notifications    map[uuid.UUID]*models.Notification
+	notificationList map[uuid.UUID][]models.Notification
+	mails            map[uuid.UUID]*models.MailMessage
+	mailList         map[uuid.UUID][]models.MailMessage
+	guilds           map[uuid.UUID]*models.Guild
+	guildList        []models.Guild
+	guildMembers     map[uuid.UUID]*models.GuildMemberListResponse
+	guildBanks       map[uuid.UUID]*models.GuildBank
+	invitations      map[uuid.UUID][]models.GuildInvitation
+	createErr        error
+	getErr           error
 }
 
 func (m *mockSocialService) CreateMessage(ctx context.Context, message *models.ChatMessage) (*models.ChatMessage, error) {
@@ -75,98 +84,431 @@ func (m *mockSocialService) GetChannel(ctx context.Context, channelID uuid.UUID)
 }
 
 func (m *mockSocialService) CreateNotification(ctx context.Context, req *models.CreateNotificationRequest) (*models.Notification, error) {
-	return nil, nil
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	if m.notifications == nil {
+		m.notifications = make(map[uuid.UUID]*models.Notification)
+	}
+	notification := &models.Notification{
+		ID:        uuid.New(),
+		AccountID: req.AccountID,
+		Type:      req.Type,
+		Priority:  req.Priority,
+		Title:     req.Title,
+		Content:   req.Content,
+		Data:      req.Data,
+		Status:    models.NotificationStatusUnread,
+		Channels:  req.Channels,
+		CreatedAt: time.Now(),
+		ExpiresAt: req.ExpiresAt,
+	}
+	m.notifications[notification.ID] = notification
+	return notification, nil
 }
 
 func (m *mockSocialService) GetNotifications(ctx context.Context, accountID uuid.UUID, limit, offset int) (*models.NotificationListResponse, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.notificationList == nil {
+		m.notificationList = make(map[uuid.UUID][]models.Notification)
+	}
+	notifications := m.notificationList[accountID]
+	if notifications == nil {
+		notifications = []models.Notification{}
+	}
+	total := len(notifications)
+	unread := 0
+	for _, n := range notifications {
+		if n.Status == models.NotificationStatusUnread {
+			unread++
+		}
+	}
+	if offset >= total {
+		return &models.NotificationListResponse{
+			Notifications: []models.Notification{},
+			Total:         total,
+			Unread:        unread,
+		}, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return &models.NotificationListResponse{
+		Notifications: notifications[offset:end],
+		Total:         total,
+		Unread:        unread,
+	}, nil
 }
 
 func (m *mockSocialService) GetNotification(ctx context.Context, notificationID uuid.UUID) (*models.Notification, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.notifications == nil {
+		return nil, nil
+	}
+	return m.notifications[notificationID], nil
 }
 
 func (m *mockSocialService) UpdateNotificationStatus(ctx context.Context, notificationID uuid.UUID, status models.NotificationStatus) (*models.Notification, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.notifications == nil {
+		return nil, nil
+	}
+	notification := m.notifications[notificationID]
+	if notification == nil {
+		return nil, nil
+	}
+	notification.Status = status
+	if status == models.NotificationStatusRead {
+		now := time.Now()
+		notification.ReadAt = &now
+	}
+	return notification, nil
 }
 
 func (m *mockSocialService) SendMail(ctx context.Context, req *models.CreateMailRequest, senderID *uuid.UUID, senderName string) (*models.MailMessage, error) {
-	return nil, nil
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	if m.mails == nil {
+		m.mails = make(map[uuid.UUID]*models.MailMessage)
+	}
+	mail := &models.MailMessage{
+		ID:          uuid.New(),
+		SenderID:    senderID,
+		SenderName:  senderName,
+		RecipientID: req.RecipientID,
+		Type:        models.MailTypePlayer,
+		Subject:     req.Subject,
+		Content:     req.Content,
+		Attachments: req.Attachments,
+		CODAmount:   req.CODAmount,
+		Status:      models.MailStatusUnread,
+		IsRead:      false,
+		IsClaimed:   false,
+		SentAt:      time.Now(),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	if req.ExpiresIn != nil {
+		expiresAt := time.Now().Add(time.Duration(*req.ExpiresIn) * time.Hour * 24)
+		mail.ExpiresAt = &expiresAt
+	}
+	m.mails[mail.ID] = mail
+	return mail, nil
 }
 
 func (m *mockSocialService) GetMails(ctx context.Context, recipientID uuid.UUID, limit, offset int) (*models.MailListResponse, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.mailList == nil {
+		m.mailList = make(map[uuid.UUID][]models.MailMessage)
+	}
+	mails := m.mailList[recipientID]
+	if mails == nil {
+		mails = []models.MailMessage{}
+	}
+	total := len(mails)
+	unread := 0
+	for _, mail := range mails {
+		if !mail.IsRead {
+			unread++
+		}
+	}
+	if offset >= total {
+		return &models.MailListResponse{
+			Messages: []models.MailMessage{},
+			Total:    total,
+			Unread:   unread,
+		}, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return &models.MailListResponse{
+		Messages: mails[offset:end],
+		Total:    total,
+		Unread:   unread,
+	}, nil
 }
 
 func (m *mockSocialService) GetMail(ctx context.Context, mailID uuid.UUID) (*models.MailMessage, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.mails == nil {
+		return nil, nil
+	}
+	return m.mails[mailID], nil
 }
 
 func (m *mockSocialService) MarkMailAsRead(ctx context.Context, mailID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
+	if m.mails == nil {
+		return nil
+	}
+	mail := m.mails[mailID]
+	if mail != nil {
+		mail.IsRead = true
+		now := time.Now()
+		mail.ReadAt = &now
+		mail.Status = models.MailStatusRead
+	}
 	return nil
 }
 
 func (m *mockSocialService) ClaimAttachment(ctx context.Context, mailID uuid.UUID) (*models.ClaimAttachmentResponse, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.mails == nil {
+		return nil, nil
+	}
+	mail := m.mails[mailID]
+	if mail == nil || mail.IsClaimed {
+		return &models.ClaimAttachmentResponse{Success: false}, nil
+	}
+	mail.IsClaimed = true
+	mail.Status = models.MailStatusClaimed
+	return &models.ClaimAttachmentResponse{
+		Success:  true,
+		Items:    mail.Attachments,
+		Currency: make(map[string]int),
+	}, nil
 }
 
 func (m *mockSocialService) DeleteMail(ctx context.Context, mailID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
+	if m.mails == nil {
+		return nil
+	}
+	delete(m.mails, mailID)
 	return nil
 }
 
 func (m *mockSocialService) CreateGuild(ctx context.Context, leaderID uuid.UUID, req *models.CreateGuildRequest) (*models.Guild, error) {
-	return nil, nil
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	if m.guilds == nil {
+		m.guilds = make(map[uuid.UUID]*models.Guild)
+	}
+	guild := &models.Guild{
+		ID:          uuid.New(),
+		Name:        req.Name,
+		Tag:         req.Tag,
+		LeaderID:    leaderID,
+		Level:       1,
+		Experience:  0,
+		MaxMembers:  50,
+		Description: req.Description,
+		Status:      models.GuildStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	m.guilds[guild.ID] = guild
+	return guild, nil
 }
 
 func (m *mockSocialService) ListGuilds(ctx context.Context, limit, offset int) (*models.GuildListResponse, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.guildList == nil {
+		m.guildList = []models.Guild{}
+	}
+	total := len(m.guildList)
+	if offset >= total {
+		return &models.GuildListResponse{
+			Guilds: []models.Guild{},
+			Total:  total,
+		}, nil
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	return &models.GuildListResponse{
+		Guilds: m.guildList[offset:end],
+		Total:  total,
+	}, nil
 }
 
 func (m *mockSocialService) GetGuild(ctx context.Context, guildID uuid.UUID) (*models.GuildDetailResponse, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.guilds == nil {
+		return nil, nil
+	}
+	guild := m.guilds[guildID]
+	if guild == nil {
+		return nil, nil
+	}
+	return &models.GuildDetailResponse{
+		Guild: *guild,
+	}, nil
 }
 
 func (m *mockSocialService) UpdateGuild(ctx context.Context, guildID, leaderID uuid.UUID, req *models.UpdateGuildRequest) (*models.Guild, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.guilds == nil {
+		return nil, nil
+	}
+	guild := m.guilds[guildID]
+	if guild == nil || guild.LeaderID != leaderID {
+		return nil, nil
+	}
+	if req.Name != nil {
+		guild.Name = *req.Name
+	}
+	if req.Description != nil {
+		guild.Description = *req.Description
+	}
+	guild.UpdatedAt = time.Now()
+	return guild, nil
 }
 
 func (m *mockSocialService) DisbandGuild(ctx context.Context, guildID, leaderID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
+	if m.guilds == nil {
+		return nil
+	}
+	guild := m.guilds[guildID]
+	if guild == nil || guild.LeaderID != leaderID {
+		return nil
+	}
+	guild.Status = models.GuildStatusDisbanded
 	return nil
 }
 
 func (m *mockSocialService) GetGuildMembers(ctx context.Context, guildID uuid.UUID, limit, offset int) (*models.GuildMemberListResponse, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.guildMembers == nil {
+		m.guildMembers = make(map[uuid.UUID]*models.GuildMemberListResponse)
+	}
+	response := m.guildMembers[guildID]
+	if response == nil {
+		response = &models.GuildMemberListResponse{
+			Members: []models.GuildMember{},
+			Total:   0,
+		}
+	}
+	return response, nil
 }
 
 func (m *mockSocialService) InviteMember(ctx context.Context, guildID, inviterID uuid.UUID, req *models.InviteMemberRequest) (*models.GuildInvitation, error) {
-	return nil, nil
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	if m.guilds == nil {
+		return nil, nil
+	}
+	guild := m.guilds[guildID]
+	if guild == nil {
+		return nil, nil
+	}
+	invitation := &models.GuildInvitation{
+		ID:          uuid.New(),
+		GuildID:     guildID,
+		CharacterID: req.CharacterID,
+		InvitedBy:   inviterID,
+		Message:     req.Message,
+		Status:      "pending",
+		CreatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(7 * 24 * time.Hour),
+	}
+	return invitation, nil
 }
 
 func (m *mockSocialService) UpdateMemberRank(ctx context.Context, guildID, leaderID, characterID uuid.UUID, rank models.GuildRank) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
+	if m.guilds == nil {
+		return nil
+	}
+	guild := m.guilds[guildID]
+	if guild == nil || guild.LeaderID != leaderID {
+		return nil
+	}
 	return nil
 }
 
 func (m *mockSocialService) KickMember(ctx context.Context, guildID, leaderID, characterID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
+	if m.guilds == nil {
+		return nil
+	}
+	guild := m.guilds[guildID]
+	if guild == nil || guild.LeaderID != leaderID {
+		return nil
+	}
 	return nil
 }
 
 func (m *mockSocialService) RemoveMember(ctx context.Context, guildID, characterID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
 	return nil
 }
 
 func (m *mockSocialService) GetGuildBank(ctx context.Context, guildID uuid.UUID) (*models.GuildBank, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.guildBanks == nil {
+		m.guildBanks = make(map[uuid.UUID]*models.GuildBank)
+	}
+	bank := m.guildBanks[guildID]
+	if bank == nil {
+		return nil, nil
+	}
+	return bank, nil
 }
 
 func (m *mockSocialService) GetInvitationsByCharacter(ctx context.Context, characterID uuid.UUID) ([]models.GuildInvitation, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.invitations == nil {
+		m.invitations = make(map[uuid.UUID][]models.GuildInvitation)
+	}
+	return m.invitations[characterID], nil
 }
 
 func (m *mockSocialService) AcceptInvitation(ctx context.Context, invitationID, characterID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
 	return nil
 }
 
 func (m *mockSocialService) RejectInvitation(ctx context.Context, invitationID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
 	return nil
 }
 
