@@ -1,0 +1,625 @@
+metadata:
+  id: realtime-server-system-architecture
+  title: Архитектура Realtime Server (Realtime Gateway System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T05:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - realtime-server
+    - backend
+    - infrastructure
+    - websocket
+  related_systems:
+    - realtime-gateway-go
+    - world-service-go
+    - gameplay-service-go
+    - social-service-go
+  related_documents:
+    - id: backend-realtime-server-overview
+      relation: extends
+    - id: backend-realtime-server-part1-architecture-zones
+      relation: extends
+    - id: backend-realtime-server-part2-protocol-optimization
+      relation: extends
+    - id: backend-realtime-server-part3-performance-profiles
+      relation: extends
+  github_issue: 390
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - infrastructure
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Realtime Server для
+    обеспечения realtime коммуникации через WebSocket, синхронизации состояния игры,
+    управления зонами и оптимизации производительности для различных типов контента.
+  goal: |
+    Создать архитектурную схему Realtime Server с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы зон (zones)
+    - Оптимизации протокола
+    - Профилей производительности
+    - Технического задания для реализации
+  essence: |
+    Realtime Server для обеспечения realtime коммуникации через WebSocket,
+    синхронизации состояния игры, управления зонами и оптимизации производительности.
+
+architecture:
+  overview: |
+    Realtime Server состоит из восьми основных компонентов:
+    1. WebSocket Connection Manager - управление WebSocket соединениями
+    2. Zone Manager - управление зонами и инстансами
+    3. Game Loop Manager - управление игровым циклом
+    4. Interest Management Engine - управление областью интереса
+    5. State Synchronization Manager - синхронизация состояния
+    6. Protocol Optimization Engine - оптимизация протокола
+    7. Performance Profile Manager - управление профилями производительности
+    8. Realtime Event Handler - обработка realtime событий
+
+  components:
+    - name: WebSocket Connection Manager
+      location: realtime-gateway-go (модуль websocket-manager)
+      responsibility: |
+        - Управление WebSocket соединениями
+        - Обработка подключений и отключений
+        - Маршрутизация сообщений
+        - Управление подписками на топики
+      connection_features: |
+        - Подключение через WebSocket (ws://localhost:8080/ws/game)
+        - Аутентификация соединений
+        - Управление подписками на топики
+        - Heartbeat для проверки соединения
+        - Graceful disconnect
+      endpoints:
+        - WS /ws/game - основной WebSocket endpoint
+        - GET /api/v1/realtime/connections/{connection_id} - информация о соединении
+        - POST /api/v1/realtime/connections/{connection_id}/subscribe - подписка на топик
+        - POST /api/v1/realtime/connections/{connection_id}/unsubscribe - отписка от топика
+
+    - name: Zone Manager
+      location: realtime-gateway-go (модуль zone-manager)
+      responsibility: |
+        - Управление зонами (Watson, Westbrook и т.д.)
+        - Распределение зон по инстансам
+        - Управление лимитами игроков в зонах
+        - Мониторинг состояния зон
+      zone_features: |
+        - Определение зон в БД (таблица zones)
+        - Распределение зон по инстансам (1-5 зон на инстанс)
+        - Лимиты игроков в зонах
+        - Статусы зон (active, maintenance, full)
+        - Координаты зон
+      endpoints:
+        - GET /api/v1/realtime/zones - список зон
+        - GET /api/v1/realtime/zones/{zone_id} - информация о зоне
+        - GET /api/v1/realtime/zones/{zone_id}/players - игроки в зоне
+        - POST /api/v1/realtime/zones/{zone_id}/join - присоединение к зоне
+
+    - name: Game Loop Manager
+      location: realtime-gateway-go (модуль game-loop)
+      responsibility: |
+        - Управление игровым циклом
+        - Обработка инпута
+        - Обновление состояния
+        - Физика и AI
+        - Рассылка обновлений клиентам
+      game_loop_features: |
+        - Тикрейт до 20 раз в секунду (20 Hz)
+        - Обработка инпута от клиентов
+        - Обновление состояния игры
+        - Физика и AI
+        - Рассылка обновлений клиентам
+        - Проверки производительности (предупреждение при >50ms на тик)
+      endpoints:
+        - GET /api/v1/realtime/game-loop/stats - статистика game loop
+        - POST /api/v1/realtime/game-loop/force-tick - принудительный тик
+
+    - name: Interest Management Engine
+      location: realtime-gateway-go (модуль interest-management)
+      responsibility: |
+        - Управление областью интереса (interest management)
+        - Разделение зон на ячейки (100x100 м)
+        - Определение видимых игроков
+        - Минимизация трафика
+      interest_features: |
+        - Разделение зон на ячейки (100x100 м)
+        - Игрок видит свою ячейку и 8 соседних
+        - Фильтрация обновлений по близости
+        - Приоритезация обновлений (близость, боевой статус, party)
+        - Максимум 50 обновлений за тик
+      endpoints:
+        - GET /api/v1/realtime/interest/{zone_id}/{cell_id}/players - игроки в ячейке
+        - POST /api/v1/realtime/interest/{zone_id}/update - обновление области интереса
+
+    - name: State Synchronization Manager
+      location: realtime-gateway-go (модуль state-sync)
+      responsibility: |
+        - Синхронизация состояния игрока
+        - Адаптивная частота обновлений
+        - Delta-компрессия
+        - Client prediction и server reconciliation
+      sync_features: |
+        - Адаптивная частота обновлений:
+          - Combat: 60 Hz
+          - Movement: 20 Hz
+          - Idle: 5 Hz
+        - Delta-компрессия (только изменения)
+        - Client prediction
+        - Server reconciliation
+        - Lag compensation для боевых событий
+      endpoints:
+        - POST /api/v1/realtime/sync/{character_id}/state - синхронизация состояния
+        - GET /api/v1/realtime/sync/{character_id}/state - получение состояния
+
+    - name: Protocol Optimization Engine
+      location: realtime-gateway-go (модуль protocol-optimization)
+      responsibility: |
+        - Оптимизация протокола
+        - Сериализация (MessagePack)
+        - Bandwidth optimization
+        - QoS управление
+      protocol_features: |
+        - WebSocket (TCP) для универсальной совместимости
+        - MessagePack для сериализации
+        - Delta-компрессия
+        - Приоритезация обновлений
+        - Network shaping
+        - Batching сообщений
+        - FEC (Forward Error Correction)
+      endpoints:
+        - GET /api/v1/realtime/protocol/stats - статистика протокола
+        - POST /api/v1/realtime/protocol/optimize - оптимизация протокола
+
+    - name: Performance Profile Manager
+      location: realtime-gateway-go (модуль performance-profiles)
+      responsibility: |
+        - Управление профилями производительности
+        - Конфигурация для различных типов контента
+        - Автоскейлинг
+        - Мониторинг производительности
+      performance_profiles: |
+        - Esports: 60 Hz, низкая задержка
+        - Siege: 30 Hz, средняя задержка
+        - Extraction: 20 Hz, средняя задержка
+        - Open World: 20 Hz, высокая задержка
+        - Raids: 20 Hz, средняя задержка
+        - Massive Warfront: 10 Hz, высокая задержка
+        - Casual: 10 Hz, высокая задержка
+        - Social: 5 Hz, очень высокая задержка
+      endpoints:
+        - GET /api/v1/realtime/profiles - список профилей
+        - GET /api/v1/realtime/profiles/{profile_id} - информация о профиле
+        - POST /api/v1/realtime/profiles/{profile_id}/apply - применение профиля
+
+    - name: Realtime Event Handler
+      location: realtime-gateway-go (модуль event-handler)
+      responsibility: |
+        - Обработка realtime событий
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Маршрутизация событий клиентам
+      event_types: |
+        - Combat events (damage, kills, deaths)
+        - Movement events (position, rotation)
+        - Chat events (messages, commands)
+        - World events (spawns, despawns, updates)
+        - Social events (party, guild, friend)
+      endpoints:
+        - GET /api/v1/realtime/events/{zone_id} - события зоны
+        - POST /api/v1/realtime/events/publish - публикация события
+
+  data_flow:
+    client_connection: |
+      1. Клиент подключается через WebSocket
+      2. WebSocket Connection Manager аутентифицирует соединение
+      3. Создаётся сессия соединения
+      4. Клиент подписывается на топики (zone, character, world)
+      5. Zone Manager определяет зону для клиента
+      6. Interest Management Engine добавляет клиента в ячейку
+      7. State Synchronization Manager начинает синхронизацию
+      8. Realtime Gateway отправляет начальное состояние
+
+    state_synchronization: |
+      1. Клиент отправляет инпут через WebSocket
+      2. Game Loop Manager обрабатывает инпут
+      3. State Synchronization Manager обновляет состояние
+      4. Interest Management Engine определяет видимых игроков
+      5. Protocol Optimization Engine оптимизирует обновления
+      6. Realtime Gateway отправляет обновления клиентам
+      7. Клиент применяет client prediction
+      8. Server reconciliation корректирует состояние
+
+    zone_management: |
+      1. Zone Manager получает запрос на присоединение к зоне
+      2. Проверяются лимиты игроков в зоне
+      3. Определяется инстанс для зоны
+      4. Игрок добавляется в зону
+      5. Interest Management Engine добавляет игрока в ячейку
+      6. State Synchronization Manager начинает синхронизацию
+      7. Realtime Gateway уведомляет других игроков
+
+  integrations:
+    with_world_service: |
+      - Получение данных о зонах
+      - Синхронизация мировых событий
+      - Управление NPC и объектами
+
+    with_gameplay_service: |
+      - Обработка боевых событий
+      - Синхронизация боевого состояния
+      - Обработка квестов
+
+    with_social_service: |
+      - Синхронизация чата
+      - Синхронизация party/guild событий
+      - Синхронизация friend событий
+
+    with_character_service: |
+      - Получение данных о персонажах
+      - Синхронизация позиций
+      - Обновление статов
+
+    with_notification_service: |
+      - Push-уведомления через WebSocket
+      - Уведомления о событиях
+      - Системные уведомления
+
+    with_observability: |
+      - Метрики производительности
+      - Логирование событий
+      - Мониторинг соединений
+
+  database_schema:
+    tables:
+      - name: zones
+        description: Зоны игры
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - zone_type: VARCHAR(50)
+          - min_x: FLOAT
+          - min_y: FLOAT
+          - max_x: FLOAT
+          - max_y: FLOAT
+          - max_players: INTEGER
+          - current_players: INTEGER
+          - status: ENUM (active, maintenance, full)
+          - instance_id: UUID (nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - zone_type, status
+          - instance_id
+
+      - name: zone_cells
+        description: Ячейки зон для interest management
+        fields:
+          - id: UUID (PK)
+          - zone_id: UUID (FK zones)
+          - cell_x: INTEGER
+          - cell_y: INTEGER
+          - min_x: FLOAT
+          - min_y: FLOAT
+          - max_x: FLOAT
+          - max_y: FLOAT
+        constraints: |
+          - UNIQUE(zone_id, cell_x, cell_y)
+        indexes:
+          - zone_id, cell_x, cell_y
+
+      - name: game_instances
+        description: Инстансы game server
+        fields:
+          - id: UUID (PK)
+          - instance_type: VARCHAR(50)
+          - status: ENUM (active, starting, stopping, stopped)
+          - zones: UUID[] (array of zone IDs)
+          - current_players: INTEGER
+          - max_players: INTEGER
+          - tick_rate: INTEGER
+          - performance_profile: VARCHAR(50)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - status, instance_type
+          - performance_profile
+
+      - name: player_connections
+        description: WebSocket соединения игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - character_id: UUID (FK characters, nullable)
+          - zone_id: UUID (FK zones, nullable)
+          - cell_x: INTEGER (nullable)
+          - cell_y: INTEGER (nullable)
+          - instance_id: UUID (FK game_instances, nullable)
+          - connection_state: ENUM (connected, disconnected, reconnecting)
+          - last_heartbeat: TIMESTAMP
+          - connected_at: TIMESTAMP
+          - disconnected_at: TIMESTAMP (nullable)
+        indexes:
+          - player_id, connection_state
+          - zone_id, cell_x, cell_y
+          - instance_id
+
+      - name: realtime_events
+        description: Лог realtime событий
+        fields:
+          - id: UUID (PK)
+          - event_type: VARCHAR(50)
+          - zone_id: UUID (FK zones, nullable)
+          - character_id: UUID (FK characters, nullable)
+          - event_data: JSONB
+          - created_at: TIMESTAMP
+        indexes:
+          - event_type, created_at
+          - zone_id, created_at
+          - character_id, created_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в realtime-gateway-go:
+      - websocket-manager (управление WebSocket соединениями)
+      - zone-manager (управление зонами)
+      - game-loop (игровой цикл)
+      - interest-management (область интереса)
+      - state-sync (синхронизация состояния)
+      - protocol-optimization (оптимизация протокола)
+      - performance-profiles (профили производительности)
+      - event-handler (обработка событий)
+    - Интеграция с world-service для зон
+    - Интеграция с gameplay-service для боевых событий
+    - Интеграция с social-service для чата
+    - Интеграция с character-service для персонажей
+    - Оптимизация производительности (тикрейт, bandwidth)
+
+  realtime_requirements:
+    - WebSocket соединения для realtime коммуникации
+    - Адаптивная частота обновлений
+    - Client prediction и server reconciliation
+    - Lag compensation для боевых событий
+    - Delta-компрессия для оптимизации трафика
+
+  performance_requirements:
+    - Тикрейт: 5-60 Hz (в зависимости от профиля)
+    - Задержка: <50ms на тик
+    - Bandwidth: оптимизация через delta-компрессию
+    - Поддержка до 10K одновременных соединений на инстанс
+    - Поддержка до 100K игроков в зоне (Massive Warfront)
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Автоскейлинг на основе нагрузки
+    - Распределение зон по инстансам
+    - Edge-ноды для снижения задержки
+    - Live-migration зон между инстансами
+
+subtasks:
+  - id: websocket-connection-manager-module
+    title: Реализация модуля WebSocket Connection Manager
+    description: |
+      Управление WebSocket соединениями
+      Обработка подключений и отключений
+      Маршрутизация сообщений
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: zone-manager
+    title: Реализация Zone Manager
+    description: |
+      Управление зонами
+      Распределение зон по инстансам
+      Управление лимитами игроков
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: game-loop-manager
+    title: Реализация Game Loop Manager
+    description: |
+      Управление игровым циклом
+      Обработка инпута
+      Обновление состояния
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: interest-management-engine
+    title: Реализация Interest Management Engine
+    description: |
+      Управление областью интереса
+      Разделение зон на ячейки
+      Определение видимых игроков
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: state-synchronization-manager
+    title: Реализация State Synchronization Manager
+    description: |
+      Синхронизация состояния игрока
+      Адаптивная частота обновлений
+      Client prediction и reconciliation
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: protocol-optimization-engine
+    title: Реализация Protocol Optimization Engine
+    description: |
+      Оптимизация протокола
+      Сериализация (MessagePack)
+      Bandwidth optimization
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: performance-profile-manager
+    title: Реализация Performance Profile Manager
+    description: |
+      Управление профилями производительности
+      Конфигурация для различных типов контента
+      Автоскейлинг
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: realtime-event-handler
+    title: Реализация Realtime Event Handler
+    description: |
+      Обработка realtime событий
+      Публикация событий в event bus
+      Маршрутизация событий клиентам
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование состояния зон
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для realtime server
+      Интеграция с существующим API realtime-gateway
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты WebSocket соединений
+      Тесты синхронизации состояния
+      Тесты зон и interest management
+      Тесты производительности
+      Тесты интеграций
+    priority: high
+    estimated_time: 6-7 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Realtime Gateway"
+            WCM[WebSocket Connection Manager]
+            ZM[Zone Manager]
+            GLM[Game Loop Manager]
+            IME[Interest Management Engine]
+            SSM[State Synchronization Manager]
+            POE[Protocol Optimization Engine]
+            PPM[Performance Profile Manager]
+            REH[Realtime Event Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>zones<br/>zone_cells<br/>game_instances<br/>player_connections<br/>realtime_events)]
+        end
+
+        subgraph "External Services"
+            WS[World Service]
+            GS[Gameplay Service]
+            SS[Social Service]
+            CS[Character Service]
+            NS[Notification Service]
+            OBS[Observability]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|WebSocket| WCM
+        WCM --> ZM
+        ZM --> GLM
+        GLM --> IME
+        IME --> SSM
+        SSM --> POE
+        POE -->|push updates| CL
+        REH --> WS
+        REH --> GS
+        REH --> SS
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant WCM as WebSocket Connection Manager
+        participant GLM as Game Loop Manager
+        participant SSM as State Synchronization Manager
+
+        C->>WCM: Connect WebSocket
+        WCM->>GLM: Register client
+        C->>WCM: Send input
+        WCM->>GLM: Process input
+        GLM->>SSM: Update state
+        SSM->>C: Push updates
+    ```
+
+decisions:
+  - id: adr-realtime-server-architecture
+    summary: |
+      Выбрана модульная архитектура внутри realtime-gateway-go для обеспечения
+      централизованного управления realtime коммуникацией.
+
+  - id: adr-websocket-protocol
+    summary: |
+      Использован WebSocket (TCP) вместо UDP для универсальной совместимости
+      с браузерами и надёжной доставки сообщений.
+
+  - id: adr-interest-management
+    summary: |
+      Система interest management с ячейками 100x100 м минимизирует трафик
+      и обеспечивает эффективную синхронизацию состояния.
+
+  - id: adr-adaptive-sync
+    summary: |
+      Адаптивная частота обновлений (combat 60 Hz, movement 20 Hz, idle 5 Hz)
+      оптимизирует производительность и bandwidth.
+
+  - id: adr-performance-profiles
+    summary: |
+      Профили производительности для различных типов контента обеспечивают
+      оптимальную конфигурацию для каждого режима игры.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация WebSocket протокола
+  - Создание схем сообщений
+  - Определение формата данных зон и соединений
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура Realtime Server:
+      - Определены компоненты (WebSocket Connection Manager, Zone Manager, Game Loop Manager, Interest Management Engine, State Synchronization Manager, Protocol Optimization Engine, Performance Profile Manager, Realtime Event Handler)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (zones, zone_cells, game_instances, player_connections, realtime_events)
+      - Спроектирована система зон
+      - Спроектирована оптимизация протокола
+      - Спроектированы профили производительности
+      - Создано техническое задание
+      - Разбито на подзадачи
+
