@@ -37,6 +37,19 @@ type PlayerSession struct {
 	DisconnectCount int         `json:"disconnect_count"`
 }
 
+type SessionManagerInterface interface {
+	CreateSession(ctx context.Context, playerID, ipAddress, userAgent string, characterID *uuid.UUID) (*PlayerSession, error)
+	GetSessionByToken(ctx context.Context, token string) (*PlayerSession, error)
+	GetSessionByPlayerID(ctx context.Context, playerID string) (*PlayerSession, error)
+	UpdateHeartbeat(ctx context.Context, token string) error
+	ReconnectSession(ctx context.Context, reconnectToken, ipAddress, userAgent string) (*PlayerSession, error)
+	CloseSession(ctx context.Context, token string) error
+	DisconnectSession(ctx context.Context, token string) error
+	GetActiveSessionsCount(ctx context.Context) (int, error)
+	CleanupExpiredSessions(ctx context.Context) error
+	SaveSession(ctx context.Context, session *PlayerSession) error
+}
+
 type SessionManager struct {
 	redis      *redis.Client
 	logger     *logrus.Logger

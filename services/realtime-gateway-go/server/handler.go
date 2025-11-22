@@ -45,7 +45,7 @@ type clientInfo struct {
 type GatewayHandler struct {
 	tickRate         int
 	gameStateMgr     *GameStateManager
-	sessionMgr       *SessionManager
+	sessionMgr       SessionManagerInterface
 	serverConn       *websocket.Conn
 	serverConnMu     sync.RWMutex
 	serverWriteMu    sync.Mutex
@@ -58,7 +58,7 @@ type GatewayHandler struct {
 	sessionTokensMu  sync.RWMutex
 }
 
-func NewGatewayHandler(tickRate int, sessionMgr *SessionManager) *GatewayHandler {
+func NewGatewayHandler(tickRate int, sessionMgr SessionManagerInterface) *GatewayHandler {
 	return &GatewayHandler{
 		tickRate:            tickRate,
 		gameStateMgr:        NewGameStateManager(tickRate),
