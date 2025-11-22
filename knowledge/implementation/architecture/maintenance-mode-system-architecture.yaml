@@ -1,0 +1,558 @@
+metadata:
+  id: maintenance-mode-system-architecture
+  title: Архитектура системы режима обслуживания (Maintenance Mode System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T03:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - maintenance
+    - backend
+    - infrastructure
+    - operations
+  related_systems:
+    - infrastructure-service-go
+    - notification-service
+    - all-services
+  related_documents:
+    - id: backend-maintenance-mode-system
+      relation: extends
+  github_issue: 316
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы режима обслуживания
+    для управления плановым и экстренным обслуживанием серверов, graceful shutdown
+    и уведомлениями игроков для обеспечения надёжности платформы.
+  goal: |
+    Создать архитектурную схему системы режима обслуживания с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы планового обслуживания
+    - Системы экстренного обслуживания
+    - Системы graceful shutdown
+    - Системы уведомлений
+    - Технического задания для реализации
+  essence: |
+    Система режима обслуживания для управления плановыми и экстренными остановками,
+    обеспечения уведомлений и блокировки новых соединений во время обслуживания.
+
+architecture:
+  overview: |
+    Система режима обслуживания состоит из восьми основных компонентов:
+    1. Maintenance Window Manager - управление окнами обслуживания
+    2. Maintenance Status Manager - управление статусом обслуживания
+    3. Maintenance Scheduler - планировщик обслуживания
+    4. Graceful Shutdown Coordinator - координатор graceful shutdown
+    5. Connection Blocker - блокировка подключений
+    6. Maintenance Notification Manager - управление уведомлениями
+    7. Maintenance Event Handler - обработка событий
+    8. Maintenance Admin API - административный API
+
+  components:
+    - name: Maintenance Window Manager
+      location: infrastructure-service-go (модуль maintenance)
+      responsibility: |
+        - Управление окнами обслуживания
+        - Создание окон обслуживания
+        - Планирование обслуживания
+        - Управление расписанием
+      maintenance_types: |
+        - SCHEDULED: плановое обслуживание
+        - EMERGENCY: экстренное обслуживание
+        - HOT_FIX: хотфикс
+        - ROLLBACK: откат
+        - UPGRADE: обновление
+      window_statuses: |
+        - PLANNED: запланировано
+        - NOTIFIED: уведомления отправлены
+        - STARTING: начинается
+        - ACTIVE: активно
+        - COMPLETING: завершается
+        - COMPLETED: завершено
+        - CANCELLED: отменено
+      endpoints:
+        - POST /api/v1/infrastructure/maintenance/windows - создание окна обслуживания
+        - GET /api/v1/infrastructure/maintenance/windows - список окон обслуживания
+        - GET /api/v1/infrastructure/maintenance/windows/{window_id} - информация об окне
+        - PUT /api/v1/infrastructure/maintenance/windows/{window_id} - обновление окна
+        - DELETE /api/v1/infrastructure/maintenance/windows/{window_id} - отмена окна
+
+    - name: Maintenance Status Manager
+      location: infrastructure-service-go (модуль maintenance-status)
+      responsibility: |
+        - Управление статусом обслуживания
+        - Текущий статус системы
+        - Переходы между статусами
+        - Сохранение состояния
+      status_management: |
+        - Проверка текущего статуса
+        - Обновление статуса
+        - Переходы между статусами
+        - Сохранение в БД
+      endpoints:
+        - GET /api/v1/infrastructure/maintenance/status - текущий статус
+        - POST /api/v1/infrastructure/maintenance/status - обновление статуса
+
+    - name: Maintenance Scheduler
+      location: infrastructure-service-go (модуль maintenance-scheduler)
+      responsibility: |
+        - Планирование обслуживания
+        - Автоматический запуск обслуживания
+        - Отсчёт времени до обслуживания
+        - Интеграция с cron/scheduler
+      scheduling_features: |
+        - Планирование по расписанию
+        - Автоматический запуск
+        - Отсчёт времени
+        - Уведомления перед началом
+      endpoints:
+        - POST /api/v1/infrastructure/maintenance/schedule - планирование обслуживания
+        - GET /api/v1/infrastructure/maintenance/schedule/next - следующее обслуживание
+
+    - name: Graceful Shutdown Coordinator
+      location: infrastructure-service-go (модуль maintenance-shutdown)
+      responsibility: |
+        - Координация graceful shutdown
+        - Уведомление сервисов о shutdown
+        - Ожидание завершения операций
+        - Завершение работы сервисов
+      shutdown_flow: |
+        1. Уведомление всех сервисов о начале shutdown
+        2. Ожидание завершения активных операций
+        3. Блокировка новых операций
+        4. Завершение работы сервисов
+        5. Переход в режим обслуживания
+      endpoints:
+        - POST /api/v1/infrastructure/maintenance/shutdown/start - начало graceful shutdown
+        - GET /api/v1/infrastructure/maintenance/shutdown/status - статус shutdown
+
+    - name: Connection Blocker
+      location: infrastructure-service-go (модуль maintenance-blocker)
+      responsibility: |
+        - Блокировка новых подключений
+        - Middleware для проверки статуса
+        - Возврат статуса 503
+        - Исключения для администраторов
+      blocking_features: |
+        - Middleware для всех запросов
+        - Проверка статуса обслуживания
+        - Возврат 503 для неадминских пользователей
+        - Доступ администраторов
+      middleware_behavior: |
+        - Перехват всех HTTP запросов
+        - Проверка статуса maintenance
+        - Возврат 503 Service Unavailable
+        - Исключения для admin API
+
+    - name: Maintenance Notification Manager
+      location: infrastructure-service-go (модуль maintenance-notifications)
+      responsibility: |
+        - Управление уведомлениями об обслуживании
+        - Автоматические уведомления
+        - Уведомления перед началом
+        - Уведомления о завершении
+        - Интеграция с notification service
+      notification_timing: |
+        - За 24 часа до обслуживания
+        - За 1 час до обслуживания
+        - При начале обслуживания
+        - При завершении обслуживания
+      endpoints:
+        - POST /api/v1/infrastructure/maintenance/notify - отправка уведомления
+        - GET /api/v1/infrastructure/maintenance/notifications/{window_id} - уведомления окна
+
+    - name: Maintenance Event Handler
+      location: infrastructure-service-go (модуль maintenance-events)
+      responsibility: |
+        - Обработка событий обслуживания
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Интеграция с observability
+      maintenance_events_published: |
+        - maintenance:window-created
+        - maintenance:window-scheduled
+        - maintenance:window-starting
+        - maintenance:window-started
+        - maintenance:window-completing
+        - maintenance:window-completed
+        - maintenance:window-cancelled
+      endpoints:
+        - GET /api/v1/infrastructure/maintenance/events/{window_id} - события окна
+
+    - name: Maintenance Admin API
+      location: infrastructure-service-go (модуль maintenance-admin)
+      responsibility: |
+        - Административный API для управления обслуживанием
+        - Создание окон обслуживания
+        - Управление статусом
+        - Мониторинг обслуживания
+        - Доступ только для администраторов
+      admin_features: |
+        - Полный доступ к управлению обслуживанием
+        - Создание/обновление/удаление окон
+        - Принудительный запуск обслуживания
+        - Мониторинг статуса
+      endpoints:
+        - POST /api/v1/admin/maintenance/windows - создание окна (admin)
+        - POST /api/v1/admin/maintenance/start - принудительный запуск (admin)
+        - POST /api/v1/admin/maintenance/stop - принудительная остановка (admin)
+
+  data_flow:
+    scheduled_maintenance: |
+      1. Администратор создаёт окно обслуживания
+      2. Maintenance Window Manager сохраняет окно в БД
+      3. Maintenance Scheduler планирует обслуживание
+      4. За 24 часа - Maintenance Notification Manager отправляет уведомления
+      5. За 1 час - отправляются напоминания
+      6. При начале - Graceful Shutdown Coordinator запускает shutdown
+      7. Connection Blocker блокирует новые подключения
+      8. После завершения - система выходит из режима обслуживания
+      9. Maintenance Event Handler публикует события
+      10. Notification Service уведомляет игроков о завершении
+
+    emergency_maintenance: |
+      1. Администратор создаёт экстренное окно обслуживания
+      2. Maintenance Window Manager сохраняет окно
+      3. Graceful Shutdown Coordinator запускает shutdown немедленно
+      4. Connection Blocker блокирует новые подключения
+      5. Maintenance Notification Manager отправляет экстренные уведомления
+      6. После завершения - система выходит из режима обслуживания
+      7. Maintenance Event Handler публикует события
+
+    graceful_shutdown: |
+      1. Graceful Shutdown Coordinator уведомляет все сервисы
+      2. Сервисы завершают активные операции
+      3. Новые операции блокируются
+      4. Сервисы завершают работу
+      5. Система переходит в режим обслуживания
+
+  integrations:
+    with_all_services: |
+      - Уведомление о начале shutdown
+      - Координация graceful shutdown
+      - Блокировка операций
+
+    with_notification_service: |
+      - Уведомления игроков об обслуживании
+      - Уведомления перед началом
+      - Уведомления о завершении
+
+    with_observability: |
+      - Логирование событий обслуживания
+      - Метрики времени обслуживания
+      - Трейсинг операций
+
+    with_admin_api: |
+      - Административный доступ к управлению
+      - Создание окон обслуживания
+      - Мониторинг статуса
+
+  database_schema:
+    tables:
+      - name: maintenance_windows
+        description: Окна обслуживания
+        fields:
+          - id: UUID (PK)
+          - maintenance_type: ENUM (SCHEDULED, EMERGENCY, HOT_FIX, ROLLBACK, UPGRADE)
+          - status: ENUM (PLANNED, NOTIFIED, STARTING, ACTIVE, COMPLETING, COMPLETED, CANCELLED)
+          - scheduled_start: TIMESTAMP
+          - scheduled_end: TIMESTAMP
+          - actual_start: TIMESTAMP (nullable)
+          - actual_end: TIMESTAMP (nullable)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - impact: VARCHAR(100)
+          - affected_services: VARCHAR[] (nullable)
+          - created_by: UUID (FK accounts)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - status, scheduled_start
+          - maintenance_type, status
+          - scheduled_start
+
+      - name: maintenance_status
+        description: Текущий статус обслуживания системы
+        fields:
+          - id: UUID (PK)
+          - is_maintenance_mode: BOOLEAN (default: false)
+          - current_window_id: UUID (FK maintenance_windows, nullable)
+          - block_new_connections: BOOLEAN (default: false)
+          - allow_admin_access: BOOLEAN (default: true)
+          - maintenance_message: TEXT (nullable)
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(id) - только одна запись статуса
+        indexes:
+          - is_maintenance_mode
+
+      - name: maintenance_notifications
+        description: История уведомлений об обслуживании
+        fields:
+          - id: UUID (PK)
+          - maintenance_window_id: UUID (FK maintenance_windows)
+          - notification_type: ENUM (SCHEDULED_24H, SCHEDULED_1H, STARTING, STARTED, COMPLETED)
+          - sent_at: TIMESTAMP
+          - recipients_count: INTEGER
+        indexes:
+          - maintenance_window_id, sent_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в infrastructure-service-go:
+      - maintenance (управление окнами)
+      - maintenance-status (статус)
+      - maintenance-scheduler (планировщик)
+      - maintenance-shutdown (graceful shutdown)
+      - maintenance-blocker (блокировка)
+      - maintenance-notifications (уведомления)
+      - maintenance-events (события)
+      - maintenance-admin (admin API)
+    - Middleware для блокировки подключений
+    - Интеграция с notification service
+    - Интеграция с observability
+    - Graceful shutdown для всех сервисов
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  infrastructure_requirements:
+    - Graceful shutdown для всех сервисов
+    - Middleware для проверки статуса
+    - Health checks во время обслуживания
+    - Мониторинг времени обслуживания
+
+  performance_requirements:
+    - Создание окна обслуживания < 100ms
+    - Обновление статуса < 50ms
+    - Проверка статуса в middleware < 1ms
+    - Graceful shutdown < 5 минут
+    - Поддержка до 1000 окон обслуживания в год
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через infrastructure-service
+    - Распределение статуса через Redis
+    - Кэширование статуса обслуживания
+    - Оптимизация middleware для минимальной задержки
+
+subtasks:
+  - id: maintenance-window-manager-module
+    title: Реализация модуля Maintenance Window Manager
+    description: |
+      Управление окнами обслуживания
+      Создание окон обслуживания
+      Управление расписанием
+    priority: critical
+    estimated_time: 3-4 дня
+
+  - id: maintenance-status-manager
+    title: Реализация Maintenance Status Manager
+    description: |
+      Управление статусом обслуживания
+      Переходы между статусами
+      Сохранение состояния
+    priority: critical
+    estimated_time: 2-3 дня
+
+  - id: maintenance-scheduler
+    title: Реализация Maintenance Scheduler
+    description: |
+      Планирование обслуживания
+      Автоматический запуск
+      Отсчёт времени
+    priority: critical
+    estimated_time: 3-4 дня
+
+  - id: graceful-shutdown-coordinator
+    title: Реализация Graceful Shutdown Coordinator
+    description: |
+      Координация graceful shutdown
+      Уведомление сервисов
+      Ожидание завершения операций
+    priority: critical
+    estimated_time: 4-5 дней
+
+  - id: connection-blocker
+    title: Реализация Connection Blocker
+    description: |
+      Блокировка новых подключений
+      Middleware для проверки статуса
+      Возврат статуса 503
+    priority: critical
+    estimated_time: 2-3 дня
+
+  - id: maintenance-notification-manager
+    title: Реализация Maintenance Notification Manager
+    description: |
+      Управление уведомлениями
+      Автоматические уведомления
+      Интеграция с notification service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: maintenance-event-handler
+    title: Реализация Maintenance Event Handler
+    description: |
+      Обработка событий обслуживания
+      Публикация событий
+      Интеграция с observability
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: maintenance-admin-api
+    title: Реализация Maintenance Admin API
+    description: |
+      Административный API
+      Управление обслуживанием
+      Мониторинг статуса
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование статуса
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты планового обслуживания
+      Тесты экстренного обслуживания
+      Тесты graceful shutdown
+      Тесты блокировки подключений
+      Тесты интеграций
+    priority: critical
+    estimated_time: 5-6 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Infrastructure Service"
+            MWM[Maintenance Window Manager]
+            MSM[Maintenance Status Manager]
+            MS[Maintenance Scheduler]
+            GSC[Graceful Shutdown Coordinator]
+            CB[Connection Blocker]
+            MNM[Maintenance Notification Manager]
+            MEH[Maintenance Event Handler]
+            MAA[Maintenance Admin API]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>maintenance_windows<br/>maintenance_status<br/>maintenance_notifications)]
+        end
+
+        subgraph "External Services"
+            NS[Notification Service]
+            OBS[Observability]
+            ALL[All Services]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|check status| CB
+        CB -->|503 if maintenance| CL
+        MAA -->|manage| MWM
+        MS -->|schedule| MWM
+        GSC -->|notify| ALL
+        MNM --> NS
+        MEH --> OBS
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant A as Admin
+        participant MWM as Maintenance Window Manager
+        participant MS as Maintenance Scheduler
+        participant GSC as Graceful Shutdown Coordinator
+        participant CB as Connection Blocker
+
+        A->>MWM: Create maintenance window
+        MWM->>MWM: Save window
+        MS->>MS: Schedule maintenance
+        Note over MS: 24h before
+        MS->>MNM: Send notifications
+        Note over MS: Start time
+        MS->>GSC: Start graceful shutdown
+        GSC->>ALL: Notify services
+        GSC->>CB: Block connections
+        CB->>CB: Return 503
+    ```
+
+decisions:
+  - id: adr-maintenance-architecture
+    summary: |
+      Выбрана модульная архитектура внутри infrastructure-service-go для обеспечения
+      централизованного управления обслуживанием.
+
+  - id: adr-maintenance-types
+    summary: |
+      Пять типов обслуживания (SCHEDULED, EMERGENCY, HOT_FIX, ROLLBACK, UPGRADE)
+      обеспечивают гибкость в управлении различными сценариями.
+
+  - id: adr-graceful-shutdown
+    summary: |
+      Graceful shutdown обеспечивает корректное завершение операций и предотвращает
+      потерю данных во время обслуживания.
+
+  - id: adr-connection-blocking
+    summary: |
+      Middleware для блокировки подключений с возвратом 503 обеспечивает
+      информативность для клиентов и предотвращает новые операции.
+
+  - id: adr-admin-access
+    summary: |
+      Исключения для администраторов позволяют управлять обслуживанием даже
+      во время активного режима обслуживания.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата graceful shutdown
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы режима обслуживания:
+      - Определены компоненты (Maintenance Window Manager, Maintenance Status Manager, Maintenance Scheduler, Graceful Shutdown Coordinator, Connection Blocker, Maintenance Notification Manager, Maintenance Event Handler, Maintenance Admin API)
+      - Описаны типы обслуживания (SCHEDULED, EMERGENCY, HOT_FIX, ROLLBACK, UPGRADE)
+      - Описаны статусы окон (PLANNED, NOTIFIED, STARTING, ACTIVE, COMPLETING, COMPLETED, CANCELLED)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (maintenance_windows, maintenance_status, maintenance_notifications)
+      - Спроектирована система планового обслуживания
+      - Спроектирована система экстренного обслуживания
+      - Спроектирована система graceful shutdown
+      - Спроектирована система уведомлений
+      - Создано техническое задание
+      - Разбито на подзадачи
+
