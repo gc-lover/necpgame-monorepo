@@ -107,6 +107,31 @@ kubectl get services -n necpgame
 - ws-lobby-go: 9090
 - matchmaking-go: 9090
 
+### Автомасштабирование
+
+- **HPA (HorizontalPodAutoscaler)**: Автоматическое масштабирование на основе CPU/Memory
+  - character-service-go: 1-5 реплик
+  - realtime-gateway-go: 2-10 реплик
+  - ws-lobby-go: 2-10 реплик
+
+### Высокая доступность
+
+- **PDB (PodDisruptionBudget)**: Гарантирует минимальное количество доступных подов при обновлениях
+  - character-service-go: minAvailable 1
+  - realtime-gateway-go: minAvailable 1
+  - ws-lobby-go: minAvailable 1
+
+### Управление ресурсами
+
+- **ResourceQuota**: Ограничивает общее использование ресурсов в namespace
+  - CPU: 10 requests, 20 limits
+  - Memory: 20Gi requests, 40Gi limits
+- **LimitRange**: Устанавливает дефолтные лимиты для контейнеров
+  - Default: 500m CPU, 512Mi Memory
+  - DefaultRequest: 100m CPU, 128Mi Memory
+  - Max: 2 CPU, 4Gi Memory
+  - Min: 50m CPU, 64Mi Memory
+
 ### Безопасность
 
 - **RBAC**: ServiceAccount с минимальными правами доступа
