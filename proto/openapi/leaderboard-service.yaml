@@ -337,6 +337,302 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /world/leaderboards:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить список лидербордов
+      operationId: listLeaderboards
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - global
+              - class
+              - seasonal
+              - friend
+              - guild
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список лидербордов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /world/leaderboards/{leaderboardId}:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить лидерборд
+      operationId: getLeaderboard
+      parameters:
+        - name: leaderboardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лидерборд
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /world/leaderboards/{leaderboardId}/top:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить топ игроков лидерборда
+      operationId: getLeaderboardTop
+      parameters:
+        - name: leaderboardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Топ игроков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /world/leaderboards/{leaderboardId}/rank/{playerId}:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить позицию игрока в лидерборде
+      operationId: getPlayerRank
+      parameters:
+        - name: leaderboardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Позиция игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRank'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /world/leaderboards/{leaderboardId}/around/{playerId}:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить соседние позиции игрока
+      operationId: getRankAround
+      parameters:
+        - name: leaderboardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: range
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+      responses:
+        '200':
+          description: Соседние позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /world/leaderboards/seasons:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить список сезонов лидербордов
+      operationId: listSeasons
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - upcoming
+              - completed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список сезонов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /world/leaderboards/seasons/{seasonId}:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить данные сезона
+      operationId: getSeason
+      parameters:
+        - name: seasonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Данные сезона
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Season'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /world/leaderboards/seasons/{seasonId}/reset:
+    post:
+      tags:
+        - Leaderboards
+      summary: Сбросить сезон лидерборда
+      operationId: resetSeason
+      parameters:
+        - name: seasonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Сезон сброшен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonResetResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /world/leaderboards/seasons/{seasonId}/rewards:
+    get:
+      tags:
+        - Leaderboards
+      summary: Получить награды сезона
+      operationId: getSeasonRewards
+      parameters:
+        - name: seasonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: playerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награды сезона
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonRewardsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -429,6 +725,221 @@ components:
           type: string
         scope:
           type: string
+
+    LeaderboardListResponse:
+      type: object
+      properties:
+        leaderboards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardInfo'
+        total:
+          type: integer
+
+    LeaderboardInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - global
+            - class
+            - seasonal
+            - friend
+            - guild
+        scope:
+          type: string
+        metric:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - archived
+
+    LeaderboardDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+            - global
+            - class
+            - seasonal
+            - friend
+            - guild
+        scope:
+          type: string
+        metric:
+          type: string
+        status:
+          type: string
+        total_players:
+          type: integer
+        season_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SeasonListResponse:
+      type: object
+      properties:
+        seasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/Season'
+        total:
+          type: integer
+
+    Season:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - upcoming
+            - completed
+            - archived
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        reset_date:
+          type: string
+          format: date-time
+          nullable: true
+        leaderboard_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        rewards_distributed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    SeasonResetResult:
+      type: object
+      properties:
+        season_id:
+          type: string
+          format: uuid
+        reset_status:
+          type: string
+          enum:
+            - success
+            - failed
+        leaderboards_reset:
+          type: integer
+        snapshots_created:
+          type: integer
+        rewards_distributed:
+          type: boolean
+        reset_at:
+          type: string
+          format: date-time
+        message:
+          type: string
+
+    SeasonRewardsResponse:
+      type: object
+      properties:
+        season_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonReward'
+        total_rewards:
+          type: integer
+
+    SeasonReward:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        leaderboard_id:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum:
+            - diamond
+            - platinum
+            - gold
+            - silver
+            - bronze
+        rank_min:
+          type: integer
+        rank_max:
+          type: integer
+        rewards:
+          type: object
+          properties:
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  item_id:
+                    type: string
+                  quantity:
+                    type: integer
+            titles:
+              type: array
+              items:
+                type: string
+        distributed:
+          type: boolean
+        distributed_at:
+          type: string
+          format: date-time
+          nullable: true
 
     Error:
       type: object
