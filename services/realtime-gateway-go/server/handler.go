@@ -45,6 +45,7 @@ type clientInfo struct {
 type GatewayHandler struct {
 	tickRate         int
 	gameStateMgr     *GameStateManager
+	sessionMgr       *SessionManager
 	serverConn       *websocket.Conn
 	serverConnMu     sync.RWMutex
 	serverWriteMu    sync.Mutex
@@ -53,15 +54,19 @@ type GatewayHandler struct {
 	clientDeltaStates map[*websocket.Conn]*ClientDeltaState
 	deltaStatesMu    sync.RWMutex
 	useDeltaCompression bool
+	sessionTokens    map[*websocket.Conn]string
+	sessionTokensMu  sync.RWMutex
 }
 
-func NewGatewayHandler(tickRate int) *GatewayHandler {
+func NewGatewayHandler(tickRate int, sessionMgr *SessionManager) *GatewayHandler {
 	return &GatewayHandler{
 		tickRate:            tickRate,
 		gameStateMgr:        NewGameStateManager(tickRate),
+		sessionMgr:          sessionMgr,
 		clientConns:         make(map[*websocket.Conn]*ClientConnection),
 		clientDeltaStates:   make(map[*websocket.Conn]*ClientDeltaState),
 		useDeltaCompression: true,
+		sessionTokens:       make(map[*websocket.Conn]string),
 	}
 }
 
@@ -313,13 +318,21 @@ func (h *GatewayHandler) SendToServer(data []byte) error {
 
 func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.Conn) error {
 	var playerID string
+	var sessionToken string
+	
 	h.AddClientConnection(conn)
 	defer func() {
 		logger := GetLogger()
 		if playerID != "" {
 			h.gameStateMgr.RemovePlayer(playerID)
 		}
+		if sessionToken != "" && h.sessionMgr != nil {
+			h.sessionMgr.DisconnectSession(ctx, sessionToken)
+		}
 		h.RemoveClientConnection(conn)
+		h.sessionTokensMu.Lock()
+		delete(h.sessionTokens, conn)
+		h.sessionTokensMu.Unlock()
 		logger.Info("Closing WebSocket connection")
 		conn.Close()
 	}()
@@ -335,8 +348,30 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		if sessionToken != "" && h.sessionMgr != nil {
+			h.sessionMgr.UpdateHeartbeat(ctx, sessionToken)
+		}
 		return nil
 	})
+
+	heartbeatTicker := time.NewTicker(30 * time.Second)
+	defer heartbeatTicker.Stop()
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-heartbeatTicker.C:
+				if conn != nil {
+					conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+					if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+						return
+					}
+				}
+			}
+		}
+	}()
 	
 	for {
 		select {
@@ -426,6 +461,28 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 				
 				if playerID == "" {
 					playerID = playerInput.PlayerID
+					
+					if h.sessionMgr != nil {
+						ipAddress := conn.RemoteAddr().String()
+						userAgent := ""
+						
+						existingSession, _ := h.sessionMgr.GetSessionByPlayerID(ctx, playerID)
+						if existingSession != nil && existingSession.Status == SessionStatusActive {
+							h.sessionMgr.DisconnectSession(ctx, existingSession.Token)
+						}
+						
+						newSession, err := h.sessionMgr.CreateSession(ctx, playerID, ipAddress, userAgent, nil)
+						if err == nil && newSession != nil {
+							sessionToken = newSession.Token
+							h.sessionTokensMu.Lock()
+							h.sessionTokens[conn] = sessionToken
+							h.sessionTokensMu.Unlock()
+						}
+					}
+				}
+				
+				if sessionToken != "" && h.sessionMgr != nil {
+					h.sessionMgr.UpdateHeartbeat(ctx, sessionToken)
 				}
 				
 				if len(playerInput.PlayerID) > 20 || !isValidPlayerID(playerInput.PlayerID) {
