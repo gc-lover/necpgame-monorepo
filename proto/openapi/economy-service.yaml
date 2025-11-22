@@ -1,0 +1,435 @@
+openapi: 3.0.3
+info:
+  title: Economy Service API
+  description: API для экономических операций: P2P торговля, обмен предметами и валютой
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Trade
+    description: P2P торговля между игроками
+
+paths:
+  /economy/trade:
+    post:
+      tags:
+        - Trade
+      summary: Создать сессию торговли
+      operationId: createTradeSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTradeSessionRequest'
+      responses:
+        '200':
+          description: Сессия торговли создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/{sessionId}:
+    get:
+      tags:
+        - Trade
+      summary: Получить информацию о сессии торговли
+      operationId: getTradeSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о сессии торговли
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Trade
+      summary: Отменить сессию торговли
+      operationId: cancelTradeSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Сессия торговли отменена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: cancelled
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/{sessionId}/offer:
+    post:
+      tags:
+        - Trade
+      summary: Добавить предложение в сессию торговли
+      operationId: addTradeOffer
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TradeOfferRequest'
+      responses:
+        '200':
+          description: Предложение добавлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/{sessionId}/confirm:
+    post:
+      tags:
+        - Trade
+      summary: Подтвердить предложение в сессии торговли
+      operationId: confirmTradeOffer
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmTradeRequest'
+      responses:
+        '200':
+          description: Предложение подтверждено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/{sessionId}/execute:
+    post:
+      tags:
+        - Trade
+      summary: Выполнить обмен (после двойного подтверждения)
+      operationId: executeTrade
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Обмен выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeExecutionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /economy/trade/history:
+    get:
+      tags:
+        - Trade
+      summary: Получить историю торговли
+      operationId: getTradeHistory
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История торговли
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trades:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeHistory'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateTradeSessionRequest:
+      type: object
+      required:
+        - target_character_id
+      properties:
+        target_character_id:
+          type: string
+          format: uuid
+          description: ID персонажа, с которым начинается торговля
+
+    TradeSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - active
+            - confirmed
+            - completed
+            - cancelled
+            - expired
+        initiator_offer:
+          $ref: '#/components/schemas/TradeOffer'
+        target_offer:
+          $ref: '#/components/schemas/TradeOffer'
+        initiator_confirmed:
+          type: boolean
+          default: false
+        target_confirmed:
+          type: boolean
+          default: false
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TradeOffer:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItem'
+        currency:
+          type: integer
+          minimum: 0
+          description: Количество валюты
+
+    TradeItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: ID предмета в инвентаре
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество предметов
+
+    TradeOfferRequest:
+      type: object
+      required:
+        - items
+        - currency
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItem'
+        currency:
+          type: integer
+          minimum: 0
+
+    ConfirmTradeRequest:
+      type: object
+      required:
+        - confirmed
+      properties:
+        confirmed:
+          type: boolean
+          description: Подтверждение предложения
+
+    TradeExecutionResult:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - completed
+            - failed
+        message:
+          type: string
+        executed_at:
+          type: string
+          format: date-time
+
+    TradeHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        initiator_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItem'
+        target_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItem'
+        initiator_currency:
+          type: integer
+        target_currency:
+          type: integer
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
