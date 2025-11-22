@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: achievement-service-go
+  namespace: necpgame
+  labels:
+    app: achievement-service-go
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: achievement-service-go
+  template:
+    metadata:
+      labels:
+        app: achievement-service-go
+        version: v1
+    spec:
+      containers:
+      - name: achievement-service-go
+        image: necpgame-achievement-service-go:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8085
+          protocol: TCP
+        - name: metrics
+          containerPort: 9095
+          protocol: TCP
+        env:
+        - name: ADDR
+          value: "0.0.0.0:8085"
+        - name: METRICS_ADDR
+          value: ":9095"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: url
+        - name: KEYCLOAK_URL
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: keycloak-url
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: keycloak-realm
+        - name: AUTH_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: auth-enabled
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9095
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9095
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: achievement-service-go
+  namespace: necpgame
+  labels:
+    app: achievement-service-go
+    prometheus: scrape
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8085
+    targetPort: 8085
+    protocol: TCP
+  - name: metrics
+    port: 9095
+    targetPort: 9095
+    protocol: TCP
+  selector:
+    app: achievement-service-go
+

@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: economy-service-go
+  namespace: necpgame
+  labels:
+    app: economy-service-go
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: economy-service-go
+  template:
+    metadata:
+      labels:
+        app: economy-service-go
+        version: v1
+    spec:
+      containers:
+      - name: economy-service-go
+        image: necpgame-economy-service-go:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8086
+          protocol: TCP
+        - name: metrics
+          containerPort: 9096
+          protocol: TCP
+        env:
+        - name: ADDR
+          value: "0.0.0.0:8086"
+        - name: METRICS_ADDR
+          value: ":9096"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: url
+        - name: KEYCLOAK_URL
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: keycloak-url
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: keycloak-realm
+        - name: AUTH_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: auth-enabled
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9096
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9096
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: economy-service-go
+  namespace: necpgame
+  labels:
+    app: economy-service-go
+    prometheus: scrape
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8086
+    targetPort: 8086
+    protocol: TCP
+  - name: metrics
+    port: 9096
+    targetPort: 9096
+    protocol: TCP
+  selector:
+    app: economy-service-go
+
