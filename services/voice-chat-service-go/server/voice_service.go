@@ -13,8 +13,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type VoiceRepositoryInterface interface {
+	CreateChannel(ctx context.Context, channel *models.VoiceChannel) error
+	GetChannel(ctx context.Context, channelID uuid.UUID) (*models.VoiceChannel, error)
+	ListChannels(ctx context.Context, channelType *models.VoiceChannelType, ownerID *uuid.UUID, limit, offset int) ([]models.VoiceChannel, error)
+	AddParticipant(ctx context.Context, participant *models.VoiceParticipant) error
+	RemoveParticipant(ctx context.Context, channelID, characterID uuid.UUID) error
+	GetParticipant(ctx context.Context, channelID, characterID uuid.UUID) (*models.VoiceParticipant, error)
+	ListParticipants(ctx context.Context, channelID uuid.UUID) ([]models.VoiceParticipant, error)
+	UpdateParticipantStatus(ctx context.Context, channelID, characterID uuid.UUID, status models.ParticipantStatus) error
+	UpdateParticipantPosition(ctx context.Context, channelID, characterID uuid.UUID, position map[string]interface{}) error
+	CountParticipants(ctx context.Context, channelID uuid.UUID) (int, error)
+}
+
 type VoiceService struct {
-	repo       *VoiceRepository
+	repo       VoiceRepositoryInterface
 	cache      *redis.Client
 	logger     *logrus.Logger
 	webrtcURL  string
