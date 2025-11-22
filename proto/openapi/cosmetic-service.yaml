@@ -13,92 +13,37 @@ servers:
   - url: https://api.necp.game/api/v1
     description: Продакшен сервер
 
-tags:
-  - name: Shop
-    description: Магазин косметики
-  - name: Cosmetics
-    description: Управление косметикой
-  - name: Equipment
-    description: Экипировка косметики
-
 paths:
-  /cosmetic/shop/daily:
+  /monetization/cosmetic/catalog:
     get:
       tags:
-        - Shop
-      summary: Получить ежедневный магазин косметики
-      operationId: getDailyShop
-      responses:
-        '200':
-          description: Ежедневный магазин
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  rotation_id:
-                    type: string
-                  date:
-                    type: string
-                    format: date
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CosmeticItem'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /cosmetic/shop/purchase:
-    post:
-      tags:
-        - Shop
-      summary: Купить косметический предмет
-      operationId: purchaseCosmetic
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PurchaseCosmeticRequest'
-      responses:
-        '200':
-          description: Предмет куплен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerCosmetic'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /cosmetic/items:
-    get:
-      tags:
-        - Cosmetics
-      summary: Получить список косметических предметов
-      operationId: getCosmeticItems
+        - Catalog
+      summary: Получить каталог косметики
+      operationId: getCosmeticCatalog
+      security:
+        - BearerAuth: []
       parameters:
         - name: category
           in: query
           schema:
             type: string
             enum:
-              - character_skin
-              - weapon_skin
-              - emote
-              - title
-              - name_plate
+              - CHARACTER_SKIN
+              - WEAPON_SKIN
+              - EMOTE
+              - TITLE
+              - NAME_PLATE
         - name: rarity
           in: query
           schema:
             type: string
             enum:
-              - common
-              - rare
-              - epic
-              - legendary
-              - exclusive
+              - COMMON
+              - UNCOMMON
+              - RARE
+              - EPIC
+              - LEGENDARY
+              - EXOTIC
         - name: limit
           in: query
           schema:
@@ -114,29 +59,46 @@ paths:
             default: 0
       responses:
         '200':
-          description: Список косметических предметов
+          description: Каталог косметики
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CosmeticItem'
-                  total:
-                    type: integer
+                $ref: '#/components/schemas/CosmeticCatalogResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /cosmetic/player/{characterId}:
+  /monetization/cosmetic/categories:
     get:
       tags:
-        - Cosmetics
-      summary: Получить косметику игрока
-      operationId: getPlayerCosmetics
+        - Catalog
+      summary: Получить категории косметики
+      operationId: getCosmeticCategories
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Категории косметики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CosmeticCategoriesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/{cosmetic_id}:
+    get:
+      tags:
+        - Catalog
+      summary: Получить детали косметики
+      operationId: getCosmeticDetails
+      security:
+        - BearerAuth: []
       parameters:
-        - name: characterId
+        - name: cosmetic_id
           in: path
           required: true
           schema:
@@ -144,29 +106,159 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Косметика игрока
+          description: Детали косметики
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  owned:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/PlayerCosmetic'
-                  equipped:
-                    $ref: '#/components/schemas/EquippedCosmetics'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: '#/components/schemas/CosmeticItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /cosmetic/equip:
+  /monetization/cosmetic/shop/daily:
+    get:
+      tags:
+        - Shop
+      summary: Получить ежедневный магазин косметики
+      operationId: getDailyShop
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ежедневный магазин
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyShopResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/shop/history:
+    get:
+      tags:
+        - Shop
+      summary: Получить историю ротаций магазина
+      operationId: getShopHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История ротаций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopHistoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/purchase:
+    post:
+      tags:
+        - Purchase
+      summary: Купить косметический предмет
+      operationId: purchaseCosmetic
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseCosmeticRequest'
+      responses:
+        '200':
+          description: Предмет куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCosmetic'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/purchase/history/{player_id}:
+    get:
+      tags:
+        - Purchase
+      summary: Получить историю покупок косметики игрока
+      operationId: getPurchaseHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История покупок
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseHistoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/{cosmetic_id}/equip:
     post:
       tags:
         - Equipment
       summary: Экипировать косметический предмет
       operationId: equipCosmetic
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cosmetic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -182,17 +274,28 @@ paths:
                 $ref: '#/components/schemas/EquippedCosmetics'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /cosmetic/unequip:
+  /monetization/cosmetic/{cosmetic_id}/unequip:
     post:
       tags:
         - Equipment
       summary: Снять косметический предмет
       operationId: unequipCosmetic
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cosmetic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -212,10 +315,261 @@ paths:
                     example: unequipped
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/equipped/{player_id}:
+    get:
+      tags:
+        - Equipment
+      summary: Получить экипированную косметику игрока
+      operationId: getEquippedCosmetics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Экипированная косметика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquippedCosmetics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/rarity/{rarity}:
+    get:
+      tags:
+        - Rarity
+      summary: Получить косметику по редкости
+      operationId: getCosmeticsByRarity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rarity
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - COMMON
+              - UNCOMMON
+              - RARE
+              - EPIC
+              - LEGENDARY
+              - EXOTIC
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - CHARACTER_SKIN
+              - WEAPON_SKIN
+              - EMOTE
+              - TITLE
+              - NAME_PLATE
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Косметика по редкости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CosmeticCatalogResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/inventory/{player_id}:
+    get:
+      tags:
+        - Inventory
+      summary: Получить инвентарь косметики игрока
+      operationId: getCosmeticInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - CHARACTER_SKIN
+              - WEAPON_SKIN
+              - EMOTE
+              - TITLE
+              - NAME_PLATE
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum:
+              - COMMON
+              - UNCOMMON
+              - RARE
+              - EPIC
+              - LEGENDARY
+              - EXOTIC
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Инвентарь косметики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CosmeticInventoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/inventory/{player_id}/owned:
+    get:
+      tags:
+        - Inventory
+      summary: Проверить владение косметикой
+      operationId: checkCosmeticOwnership
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: cosmetic_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус владения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnershipStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/events/{player_id}:
+    get:
+      tags:
+        - Events
+      summary: Получить события косметики игрока
+      operationId: getCosmeticEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - cosmetic:purchased
+              - cosmetic:equipped
+              - cosmetic:unequipped
+              - cosmetic:shop-rotated
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События косметики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CosmeticEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+tags:
+  - name: Catalog
+    description: Каталог косметики
+  - name: Shop
+    description: Магазин косметики
+  - name: Purchase
+    description: Покупка косметики
+  - name: Equipment
+    description: Экипировка косметики
+  - name: Inventory
+    description: Инвентарь косметики
+  - name: Rarity
+    description: Редкости косметики
+  - name: Events
+    description: События косметики
+
 
 components:
   securitySchemes:
@@ -230,55 +584,79 @@ components:
       properties:
         id:
           type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 50
         name:
           type: string
+          maxLength: 255
         category:
           type: string
           enum:
-            - character_skin
-            - weapon_skin
-            - emote
-            - title
-            - name_plate
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - EMOTE
+            - TITLE
+            - NAME_PLATE
+        cosmetic_type:
+          type: string
+          enum:
+            - SKIN
+            - EMOTE
+            - TITLE
+            - NAME_PLATE
         rarity:
           type: string
           enum:
-            - common
-            - rare
-            - epic
-            - legendary
-            - exclusive
-        price:
+            - COMMON
+            - UNCOMMON
+            - RARE
+            - EPIC
+            - LEGENDARY
+            - EXOTIC
+        description:
+          type: string
+        cost:
           type: integer
+          format: int64
         currency_type:
           type: string
-          enum:
-            - eddies
-            - credits
         is_exclusive:
           type: boolean
+          default: false
         source:
           type: string
-          enum:
-            - shop
-            - battle_pass
-            - achievement
-            - event
-            - purchase
-        asset_path:
+          maxLength: 100
+        visual_effects:
+          type: object
+          additionalProperties: true
+          nullable: true
+        assets:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+          default: true
+        created_at:
           type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     PurchaseCosmeticRequest:
       type: object
       required:
-        - character_id
+        - player_id
         - cosmetic_id
       properties:
-        character_id:
+        player_id:
           type: string
           format: uuid
         cosmetic_id:
           type: string
+          format: uuid
 
     PlayerCosmetic:
       type: object
@@ -286,106 +664,330 @@ components:
         id:
           type: string
           format: uuid
-        character_id:
+        player_id:
           type: string
           format: uuid
-        cosmetic_id:
+        cosmetic_item_id:
           type: string
+          format: uuid
+        cosmetic_item:
+          $ref: '#/components/schemas/CosmeticItem'
         source:
           type: string
+          maxLength: 100
         obtained_at:
           type: string
           format: date-time
-        usage_count:
+        times_used:
           type: integer
           default: 0
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
 
     EquippedCosmetics:
       type: object
       properties:
-        character_id:
+        player_id:
           type: string
           format: uuid
-        character_skin:
+        character_skin_id:
           type: string
+          format: uuid
           nullable: true
-        weapon_skins:
-          type: object
-          additionalProperties:
-            type: string
-        title:
+        character_skin:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        weapon_skin_id:
           type: string
+          format: uuid
+          nullable: true
+        weapon_skin:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        title_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        name_plate_id:
+          type: string
+          format: uuid
           nullable: true
         name_plate:
-          type: string
+          $ref: '#/components/schemas/CosmeticItem'
           nullable: true
-        quick_emotes:
-          type: array
-          items:
-            type: string
-          maxItems: 4
+        emote_1_id:
+          type: string
+          format: uuid
+          nullable: true
+        emote_1:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        emote_2_id:
+          type: string
+          format: uuid
+          nullable: true
+        emote_2:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        emote_3_id:
+          type: string
+          format: uuid
+          nullable: true
+        emote_3:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        emote_4_id:
+          type: string
+          format: uuid
+          nullable: true
+        emote_4:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
 
     EquipCosmeticRequest:
       type: object
       required:
-        - character_id
-        - cosmetic_id
+        - player_id
         - slot
       properties:
-        character_id:
+        player_id:
           type: string
           format: uuid
-        cosmetic_id:
-          type: string
         slot:
           type: string
           enum:
-            - character_skin
-            - weapon_skin
-            - title
-            - name_plate
-            - quick_emote
-        weapon_type:
-          type: string
-          nullable: true
-          description: Требуется для weapon_skin
-        emote_slot:
-          type: integer
-          minimum: 0
-          maximum: 3
-          nullable: true
-          description: Требуется для quick_emote
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - TITLE
+            - NAME_PLATE
+            - EMOTE_1
+            - EMOTE_2
+            - EMOTE_3
+            - EMOTE_4
 
     UnequipCosmeticRequest:
       type: object
       required:
-        - character_id
+        - player_id
         - slot
       properties:
-        character_id:
+        player_id:
           type: string
           format: uuid
         slot:
           type: string
           enum:
-            - character_skin
-            - weapon_skin
-            - title
-            - name_plate
-            - quick_emote
-        weapon_type:
-          type: string
-          nullable: true
-        emote_slot:
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - TITLE
+            - NAME_PLATE
+            - EMOTE_1
+            - EMOTE_2
+            - EMOTE_3
+            - EMOTE_4
+
+    CosmeticCatalogResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CosmeticItem'
+        total:
           type: integer
-          minimum: 0
-          maximum: 3
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    CosmeticCategoriesResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+                enum:
+                  - CHARACTER_SKIN
+                  - WEAPON_SKIN
+                  - EMOTE
+                  - TITLE
+                  - NAME_PLATE
+              count:
+                type: integer
+
+    DailyShopResponse:
+      type: object
+      properties:
+        rotation_id:
+          type: string
+          format: uuid
+        rotation_date:
+          type: string
+          format: date
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CosmeticItem'
+        next_rotation_at:
+          type: string
+          format: date-time
+
+    ShopHistoryResponse:
+      type: object
+      properties:
+        rotations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              rotation_date:
+                type: string
+                format: date
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CosmeticItem'
+              created_at:
+                type: string
+                format: date-time
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    PurchaseHistoryResponse:
+      type: object
+      properties:
+        purchases:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              player_id:
+                type: string
+                format: uuid
+              cosmetic_item_id:
+                type: string
+                format: uuid
+              cosmetic_item:
+                $ref: '#/components/schemas/CosmeticItem'
+              cost:
+                type: integer
+                format: int64
+              currency_type:
+                type: string
+              purchased_at:
+                type: string
+                format: date-time
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    CosmeticInventoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        cosmetics:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerCosmetic'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    OwnershipStatusResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        cosmetic_id:
+          type: string
+          format: uuid
+        owned:
+          type: boolean
+        player_cosmetic:
+          $ref: '#/components/schemas/PlayerCosmetic'
           nullable: true
+
+    CosmeticEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - cosmetic:purchased
+            - cosmetic:equipped
+            - cosmetic:unequipped
+            - cosmetic:shop-rotated
+        cosmetic_id:
+          type: string
+          format: uuid
+          nullable: true
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    CosmeticEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CosmeticEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
 
     Error:
       type: object
       properties:
         error:
+          type: string
+        message:
           type: string
 
   responses:
