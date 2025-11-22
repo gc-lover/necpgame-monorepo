@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Gameplay Service API
-  description: API для игрового процесса: прогрессия персонажей, квесты, диалоги, боевые сессии
+  description: API для игрового процесса: прогрессия персонажей, квесты, диалоги, боевые сессии, Narrative Coherence, World State
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -20,6 +20,10 @@ tags:
     description: Система квестов и заданий
   - name: Combat
     description: Боевые сессии
+  - name: Narrative
+    description: Система Narrative Coherence для целостности сюжета
+  - name: WorldState
+    description: Управление состоянием мира
 
 paths:
   /gameplay/progression/{characterId}:
@@ -419,6 +423,675 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/narrative/quest-graph:
+    get:
+      tags:
+        - Narrative
+      summary: Получить граф квестов
+      operationId: getQuestGraph
+      parameters:
+        - name: account_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Граф квестов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestGraph'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/narrative/quest-graph/{quest_id}/dependencies:
+    get:
+      tags:
+        - Narrative
+      summary: Получить зависимости квеста
+      operationId: getQuestDependencies
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Зависимости квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDependencies'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/narrative/quest-graph/validate:
+    post:
+      tags:
+        - Narrative
+      summary: Валидировать граф квестов
+      operationId: validateQuestGraph
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateQuestGraphRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/narrative/timeline/check:
+    get:
+      tags:
+        - Narrative
+      summary: Проверить временную линию
+      operationId: checkTimeline
+      parameters:
+        - name: quest_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: npc_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Результат проверки временной линии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineCheckResult'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/narrative/timeline/validate:
+    post:
+      tags:
+        - Narrative
+      summary: Валидировать временную линию
+      operationId: validateTimeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTimelineRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/narrative/coherence/check:
+    get:
+      tags:
+        - Narrative
+      summary: Проверить консистентность
+      operationId: checkCoherence
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Результат проверки консистентности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoherenceCheckResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/narrative/coherence/resolve:
+    post:
+      tags:
+        - Narrative
+      summary: Разрешить конфликты консистентности
+      operationId: resolveCoherenceConflicts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveCoherenceRequest'
+      responses:
+        '200':
+          description: Конфликты разрешены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoherenceResolveResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/world-state/personal/{account_id}:
+    get:
+      tags:
+        - WorldState
+      summary: Получить личное состояние мира
+      operationId: getPersonalWorldState
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Личное состояние мира
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/world-state/server:
+    get:
+      tags:
+        - WorldState
+      summary: Получить серверное состояние мира
+      operationId: getServerWorldState
+      responses:
+        '200':
+          description: Серверное состояние мира
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldState'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/world-state/faction/{faction_id}:
+    get:
+      tags:
+        - WorldState
+      summary: Получить фракционное состояние мира
+      operationId: getFactionWorldState
+      parameters:
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Фракционное состояние мира
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/world-state/personal/{account_id}/update:
+    post:
+      tags:
+        - WorldState
+      summary: Обновить личное состояние мира
+      operationId: updatePersonalWorldState
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorldStateRequest'
+      responses:
+        '200':
+          description: Состояние обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/world-state/server/update:
+    post:
+      tags:
+        - WorldState
+      summary: Обновить серверное состояние мира
+      operationId: updateServerWorldState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorldStateRequest'
+      responses:
+        '200':
+          description: Состояние обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/world-state/faction/{faction_id}/update:
+    post:
+      tags:
+        - WorldState
+      summary: Обновить фракционное состояние мира
+      operationId: updateFactionWorldState
+      parameters:
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorldStateRequest'
+      responses:
+        '200':
+          description: Состояние обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/world-state/resolve-conflict:
+    post:
+      tags:
+        - WorldState
+      summary: Разрешить конфликт состояний мира
+      operationId: resolveWorldStateConflict
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveConflictRequest'
+      responses:
+        '200':
+          description: Конфликт разрешен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quest-graph/available/{account_id}:
+    get:
+      tags:
+        - Narrative
+      summary: Получить доступные квесты
+      operationId: getAvailableQuests
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список доступных квестов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Quest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quest-graph/{quest_id}/prerequisites:
+    get:
+      tags:
+        - Narrative
+      summary: Получить предпосылки квеста
+      operationId: getQuestPrerequisites
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предпосылки квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestPrerequisites'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quest-graph/{quest_id}/unlocks:
+    get:
+      tags:
+        - Narrative
+      summary: Получить квесты, которые открывает данный квест
+      operationId: getQuestUnlocks
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Квесты, которые открывает данный квест
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unlocked_quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Quest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quest-graph/{quest_id}/check-availability:
+    post:
+      tags:
+        - Narrative
+      summary: Проверить доступность квеста
+      operationId: checkQuestAvailability
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckQuestAvailabilityRequest'
+      responses:
+        '200':
+          description: Результат проверки доступности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestAvailabilityResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/quest-graph/calculate-probabilities:
+    post:
+      tags:
+        - Narrative
+      summary: Рассчитать вероятности квестов
+      operationId: calculateQuestProbabilities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateProbabilitiesRequest'
+      responses:
+        '200':
+          description: Вероятности квестов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestProbabilities'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/timeline/validate-quest/{quest_id}:
+    post:
+      tags:
+        - Narrative
+      summary: Валидировать временную линию квеста
+      operationId: validateQuestTimeline
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTimelineRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/timeline/validate-npc/{npc_id}:
+    post:
+      tags:
+        - Narrative
+      summary: Валидировать временную линию NPC
+      operationId: validateNpcTimeline
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTimelineRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/timeline/validate-faction/{faction_id}:
+    post:
+      tags:
+        - Narrative
+      summary: Валидировать временную линию фракции
+      operationId: validateFactionTimeline
+      parameters:
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTimelineRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/timeline/validate-location/{location_id}:
+    post:
+      tags:
+        - Narrative
+      summary: Валидировать временную линию локации
+      operationId: validateLocationTimeline
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTimelineRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/timeline/conflicts:
+    get:
+      tags:
+        - Narrative
+      summary: Получить список временных конфликтов
+      operationId: getTimelineConflicts
+      parameters:
+        - name: quest_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: npc_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список конфликтов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineConflicts'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -830,6 +1503,402 @@ components:
         ended_at:
           type: string
           format: date-time
+
+    QuestGraph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestGraphNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestGraphEdge'
+
+    QuestGraphNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - quest
+            - choice
+            - world_state
+            - event
+        data:
+          type: object
+          additionalProperties: true
+
+    QuestGraphEdge:
+      type: object
+      properties:
+        from:
+          type: string
+          format: uuid
+        to:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - REQUIRES
+            - UNLOCKS
+            - BLOCKS
+            - INFLUENCES
+        conditions:
+          type: object
+          additionalProperties: true
+
+    QuestDependencies:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        prerequisites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+        required_by:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+        blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+        influences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+
+    QuestPrerequisites:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        prerequisites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+        world_state_requirements:
+          type: object
+          additionalProperties: true
+
+    ValidateQuestGraphRequest:
+      type: object
+      required:
+        - quest_ids
+      properties:
+        quest_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+              details:
+                type: object
+                additionalProperties: true
+        warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+
+    TimelineCheckResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineConflict'
+        timeline:
+          type: object
+          additionalProperties: true
+
+    TimelineConflict:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - quest
+            - npc
+            - faction
+            - location
+        entity_id:
+          type: string
+          format: uuid
+        conflict_type:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+
+    TimelineConflicts:
+      type: object
+      properties:
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineConflict'
+        total:
+          type: integer
+
+    ValidateTimelineRequest:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          enum:
+            - quest
+            - npc
+            - faction
+            - location
+        timeline_data:
+          type: object
+          additionalProperties: true
+
+    CoherenceCheckResult:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        coherent:
+          type: boolean
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoherenceConflict'
+        recommendations:
+          type: array
+          items:
+            type: string
+
+    CoherenceConflict:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        description:
+          type: string
+        affected_entities:
+          type: array
+          items:
+            type: string
+            format: uuid
+        resolution_options:
+          type: array
+          items:
+            type: object
+
+    ResolveCoherenceRequest:
+      type: object
+      required:
+        - account_id
+        - conflict_id
+        - resolution
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        conflict_id:
+          type: string
+          format: uuid
+        resolution:
+          type: object
+          additionalProperties: true
+
+    CoherenceResolveResult:
+      type: object
+      properties:
+        resolved:
+          type: boolean
+        updated_world_state:
+          type: object
+          additionalProperties: true
+        affected_quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+
+    WorldState:
+      type: object
+      properties:
+        level:
+          type: string
+          enum:
+            - personal
+            - server
+            - faction
+        account_id:
+          type: string
+          format: uuid
+          nullable: true
+        faction_id:
+          type: string
+          format: uuid
+          nullable: true
+        state:
+          type: object
+          additionalProperties: true
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateWorldStateRequest:
+      type: object
+      required:
+        - state
+      properties:
+        state:
+          type: object
+          additionalProperties: true
+        priority:
+          type: string
+          enum:
+            - personal
+            - server
+            - faction
+          default: personal
+
+    ResolveConflictRequest:
+      type: object
+      required:
+        - conflict_id
+        - resolution
+      properties:
+        conflict_id:
+          type: string
+          format: uuid
+        resolution:
+          type: object
+          additionalProperties: true
+        priority:
+          type: string
+          enum:
+            - personal
+            - server
+            - faction
+
+    CheckQuestAvailabilityRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        check_dependencies:
+          type: boolean
+          default: true
+        check_world_state:
+          type: boolean
+          default: true
+        check_timeline:
+          type: boolean
+          default: true
+
+    QuestAvailabilityResult:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        available:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            type: string
+        missing_prerequisites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+        world_state_blocks:
+          type: array
+          items:
+            type: string
+
+    CalculateProbabilitiesRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        quest_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        include_weights:
+          type: boolean
+          default: true
+
+    QuestProbabilities:
+      type: object
+      properties:
+        quests:
+          type: array
+          items:
+            type: object
+            properties:
+              quest_id:
+                type: string
+                format: uuid
+              probability:
+                type: number
+                minimum: 0
+                maximum: 1
+              weight:
+                type: number
+                nullable: true
+              factors:
+                type: object
+                additionalProperties: true
 
     Error:
       type: object
