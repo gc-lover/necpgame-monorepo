@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voice-chat-service-go
+  namespace: necpgame
+  labels:
+    app: voice-chat-service-go
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: voice-chat-service-go
+  template:
+    metadata:
+      labels:
+        app: voice-chat-service-go
+        version: v1
+        prometheus: scrape
+    spec:
+      containers:
+      - name: voice-chat-service-go
+        image: necpgame-voice-chat-service-go:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8091
+          protocol: TCP
+        - name: metrics
+          containerPort: 9101
+          protocol: TCP
+        env:
+        - name: ADDR
+          value: "0.0.0.0:8091"
+        - name: METRICS_ADDR
+          value: ":9101"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: url
+        - name: WEBRTC_URL
+          value: "wss://voice.necp.game"
+        - name: WEBRTC_KEY
+          value: ""
+        - name: KEYCLOAK_ISSUER
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: keycloak-url
+        - name: JWKS_URL
+          value: "http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs"
+        - name: AUTH_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: common-config
+              key: auth-enabled
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9101
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9101
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voice-chat-service-go
+  namespace: necpgame
+  labels:
+    app: voice-chat-service-go
+    prometheus: scrape
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8091
+    targetPort: 8091
+    protocol: TCP
+  - name: metrics
+    port: 9101
+    targetPort: 9101
+    protocol: TCP
+  selector:
+    app: voice-chat-service-go
+
