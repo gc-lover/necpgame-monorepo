@@ -1,0 +1,547 @@
+metadata:
+  id: progression-system-architecture
+  title: Архитектура системы прогрессии (Progression System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-22T23:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - progression
+    - backend
+    - gameplay
+  related_systems:
+    - gameplay-service-go
+    - character-service-go
+    - achievement-service-go
+  related_documents:
+    - id: progression-backend
+      relation: extends
+  github_issue: 164
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы прогрессии
+    для обработки опыта, уровней, очков атрибутов и навыков с экспоненциальными
+    формулами и распределением очков.
+  goal: |
+    Создать архитектурную схему системы прогрессии с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы расчёта опыта
+    - Системы повышения уровня
+    - Системы распределения очков
+    - Технического задания для реализации
+  essence: |
+    Игровая система прогрессии для обработки опыта, уровней, атрибутов и навыков
+    с экспоненциальными формулами и интеграцией с другими системами.
+
+architecture:
+  overview: |
+    Система прогрессии состоит из шести основных компонентов:
+    1. Experience Calculator - расчёт опыта
+    2. Level Manager - управление уровнями
+    3. Attribute Point Distributor - распределение очков атрибутов
+    4. Skill Progression Manager - прогрессия навыков
+    5. Progression Event Handler - обработка событий прогрессии
+    6. Progression Validator - валидация прогрессии
+
+  components:
+    - name: Experience Calculator
+      location: gameplay-service-go (модуль progression)
+      responsibility: |
+        - Расчёт опыта за различные действия
+        - Применение модификаторов опыта
+        - Начисление опыта персонажу
+        - Расчёт опыта для навыков
+      experience_sources: |
+        - combat:enemy-killed - опыт за убийство врагов
+        - quest:completed - опыт за квесты
+        - skill:used - опыт за использование навыков
+        - exploration:area-discovered - опыт за исследование
+        - achievement:unlocked - опыт за достижения
+      experience_formula: |
+        - Базовый опыт * модификаторы
+        - Учёт уровня врага/квеста
+        - Бонусы за группу
+        - Штрафы за разницу уровней
+      endpoints:
+        - POST /api/v1/gameplay/progression/experience/add - начисление опыта
+        - GET /api/v1/gameplay/progression/experience/calculate - расчёт опыта
+
+    - name: Level Manager
+      location: gameplay-service-go (модуль progression-level)
+      responsibility: |
+        - Управление уровнями персонажей
+        - Проверка условий повышения уровня
+        - Повышение уровня
+        - Выдача очков за уровень
+        - Расчёт требований к следующему уровню
+      level_formula: |
+        - Экспоненциальная формула: XP = base * (level ^ exponent)
+        - Увеличение требований с каждым уровнем
+        - Капы уровней
+      level_up_rewards: |
+        - Очки атрибутов
+        - Очки навыков
+        - Увеличение характеристик
+        - Разблокировка контента
+      endpoints:
+        - GET /api/v1/gameplay/progression/level/{player_id} - уровень игрока
+        - POST /api/v1/gameplay/progression/level/check - проверка повышения уровня
+        - GET /api/v1/gameplay/progression/level/requirements/{level} - требования к уровню
+
+    - name: Attribute Point Distributor
+      location: gameplay-service-go (модуль progression-attributes)
+      responsibility: |
+        - Распределение очков атрибутов
+        - Валидация распределения
+        - Проверка капов атрибутов
+        - Применение изменений атрибутов
+        - Интеграция с character-service
+      attribute_types: |
+        - Strength: сила
+        - Dexterity: ловкость
+        - Intelligence: интеллект
+        - Constitution: выносливость
+        - Charisma: харизма
+      distribution_rules: |
+        - Проверка наличия свободных очков
+        - Проверка максимальных значений
+        - Проверка минимальных значений
+        - Валидация изменений
+      endpoints:
+        - GET /api/v1/gameplay/progression/attributes/{player_id} - атрибуты игрока
+        - POST /api/v1/gameplay/progression/attributes/distribute - распределение очков
+        - GET /api/v1/gameplay/progression/attributes/points/{player_id} - доступные очки
+
+    - name: Skill Progression Manager
+      location: gameplay-service-go (модуль progression-skills)
+      responsibility: |
+        - Управление прогрессией навыков
+        - Начисление опыта навыкам
+        - Повышение уровня навыков
+        - Разблокировка новых навыков
+        - Управление деревом навыков
+      skill_progression: |
+        - Опыт за использование навыка
+        - Опыт за успешное применение
+        - Бонусы за мастерство
+        - Капы уровней навыков
+      skill_tree: |
+        - Зависимости между навыками
+        - Требования для разблокировки
+        - Ветвления навыков
+      endpoints:
+        - GET /api/v1/gameplay/progression/skills/{player_id} - навыки игрока
+        - POST /api/v1/gameplay/progression/skills/experience/add - начисление опыта навыку
+        - POST /api/v1/gameplay/progression/skills/unlock - разблокировка навыка
+        - GET /api/v1/gameplay/progression/skills/tree/{player_id} - дерево навыков
+
+    - name: Progression Event Handler
+      location: gameplay-service-go (модуль progression-events)
+      responsibility: |
+        - Обработка событий прогрессии
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Синхронизация с другими сервисами
+      progression_events_published: |
+        - character:level-up
+        - character:skill-leveled
+        - character:attribute-increased
+        - character:experience-gained
+      progression_events_consumed: |
+        - combat:enemy-killed
+        - quest:completed
+        - skill:used
+        - exploration:area-discovered
+        - achievement:unlocked
+      endpoints:
+        - GET /api/v1/gameplay/progression/events/{player_id} - события прогрессии
+
+    - name: Progression Validator
+      location: gameplay-service-go (модуль progression-validation)
+      responsibility: |
+        - Валидация прогрессии
+        - Проверка корректности данных
+        - Защита от читов
+        - Аудит изменений
+        - Восстановление после ошибок
+      validation_rules: |
+        - Проверка разумности изменений
+        - Проверка источников опыта
+        - Проверка лимитов
+        - Проверка последовательности изменений
+      endpoints:
+        - POST /api/v1/gameplay/progression/validate - валидация прогрессии
+
+  data_flow:
+    experience_gain: |
+      1. Игровое событие происходит (убийство врага, завершение квеста)
+      2. Event Bus получает событие
+      3. Progression Event Handler получает событие
+      4. Experience Calculator рассчитывает опыт
+      5. Опыт начисляется персонажу
+      6. Level Manager проверяет условия повышения уровня
+      7. Если уровень повышен - выдаются очки и публикуется событие
+      8. Character Service обновляет характеристики
+      9. Notification Service уведомляет игрока
+      10. Realtime Gateway синхронизирует изменения
+
+    level_up: |
+      1. Опыт достигает требуемого значения
+      2. Level Manager проверяет условия
+      3. Уровень повышается
+      4. Выдаются очки атрибутов и навыков
+      5. Character Service обновляет характеристики
+      6. Progression Event Handler публикует character:level-up
+      7. Achievement Service проверяет достижения
+      8. Notification Service уведомляет игрока
+      9. Realtime Gateway синхронизирует изменения
+
+    attribute_distribution: |
+      1. Игрок распределяет очки атрибутов
+      2. Attribute Point Distributor валидирует распределение
+      3. Progression Validator проверяет корректность
+      4. Очки распределяются
+      5. Character Service обновляет атрибуты
+      6. Характеристики пересчитываются
+      7. Progression Event Handler публикует character:attribute-increased
+      8. Realtime Gateway синхронизирует изменения
+
+  integrations:
+    with_character_service: |
+      - Получение данных персонажа
+      - Обновление уровня и характеристик
+      - Обновление атрибутов
+      - Синхронизация прогрессии
+
+    with_achievement_service: |
+      - Проверка достижений при повышении уровня
+      - Интеграция с системой достижений
+      - Уведомления о достижениях
+
+    with_gameplay_service: |
+      - Получение событий о действиях игрока
+      - Интеграция с боевой системой
+      - Интеграция с квестами
+
+    with_notification_service: |
+      - Уведомления о повышении уровня
+      - Уведомления о получении очков
+      - Уведомления о разблокировке навыков
+
+    with_realtime_gateway: |
+      - Синхронизация прогрессии в реальном времени
+      - Обновления опыта и уровня
+      - Уведомления о событиях
+
+  database_schema:
+    tables:
+      - name: character_progression
+        description: Прогрессия персонажей
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK characters)
+          - level: INTEGER (default: 1)
+          - experience: BIGINT (default: 0)
+          - experience_to_next_level: BIGINT
+          - attribute_points: INTEGER (default: 0)
+          - skill_points: INTEGER (default: 0)
+          - total_experience: BIGINT (default: 0)
+          - updated_at: TIMESTAMP
+        indexes:
+          - character_id (unique)
+          - level
+
+      - name: character_attributes
+        description: Атрибуты персонажей
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK characters)
+          - strength: INTEGER (default: 10)
+          - dexterity: INTEGER (default: 10)
+          - intelligence: INTEGER (default: 10)
+          - constitution: INTEGER (default: 10)
+          - charisma: INTEGER (default: 10)
+          - updated_at: TIMESTAMP
+        indexes:
+          - character_id (unique)
+
+      - name: skill_experience
+        description: Опыт навыков
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK characters)
+          - skill_id: UUID (FK skill_definitions)
+          - level: INTEGER (default: 0)
+          - experience: BIGINT (default: 0)
+          - experience_to_next_level: BIGINT
+          - is_unlocked: BOOLEAN (default: false)
+          - unlocked_at: TIMESTAMP (nullable)
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(character_id, skill_id)
+        indexes:
+          - character_id, skill_id
+          - character_id, is_unlocked
+
+      - name: progression_history
+        description: История прогрессии
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK characters)
+          - event_type: ENUM (level_up, attribute_increase, skill_level_up, experience_gain)
+          - event_data: JSONB
+          - created_at: TIMESTAMP
+        indexes:
+          - character_id, created_at
+          - event_type, created_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в gameplay-service-go:
+      - progression (расчёт опыта)
+      - progression-level (уровни)
+      - progression-attributes (атрибуты)
+      - progression-skills (навыки)
+      - progression-events (события)
+      - progression-validation (валидация)
+    - Интеграция с character-service для обновления данных
+    - Интеграция с achievement-service для достижений
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация прогрессии через WebSocket
+    - Обновления опыта и уровня в реальном времени
+    - Уведомления о повышении уровня
+
+  performance_requirements:
+    - Начисление опыта < 50ms
+    - Проверка повышения уровня < 30ms
+    - Распределение очков < 50ms
+    - Поддержка до 1M персонажей
+    - Поддержка до 100 навыков на персонажа
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через gameplay-service
+    - Распределение нагрузки на прогрессию
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование уровней и требований
+
+subtasks:
+  - id: experience-calculator-module
+    title: Реализация модуля Experience Calculator
+    description: |
+      Расчёт опыта
+      Применение модификаторов
+      Начисление опыта
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: level-manager-implementation
+    title: Реализация Level Manager
+    description: |
+      Управление уровнями
+      Проверка условий повышения
+      Выдача очков за уровень
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: attribute-point-distributor
+    title: Реализация Attribute Point Distributor
+    description: |
+      Распределение очков атрибутов
+      Валидация распределения
+      Интеграция с character-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: skill-progression-manager
+    title: Реализация Skill Progression Manager
+    description: |
+      Управление прогрессией навыков
+      Начисление опыта навыкам
+      Дерево навыков
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: progression-event-handler
+    title: Реализация Progression Event Handler
+    description: |
+      Обработка событий прогрессии
+      Публикация событий
+      Подписка на события
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: progression-validator
+    title: Реализация Progression Validator
+    description: |
+      Валидация прогрессии
+      Защита от читов
+      Аудит изменений
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование уровней
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для прогрессии
+      Интеграция с существующим API gameplay-service
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты расчёта опыта
+      Тесты повышения уровня
+      Тесты распределения очков
+      Тесты навыков
+      Тесты интеграций
+    priority: high
+    estimated_time: 3-4 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Gameplay Service"
+            EC[Experience Calculator]
+            LM[Level Manager]
+            APD[Attribute Point Distributor]
+            SPM[Skill Progression Manager]
+            PEH[Progression Event Handler]
+            PV[Progression Validator]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>character_progression<br/>character_attributes<br/>skill_experience<br/>progression_history)]
+        end
+
+        subgraph "External Services"
+            CS[Character Service]
+            AS[Achievement Service]
+            GS[Gameplay Service]
+            NS[Notification Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|distribute points| APD
+        GS -->|events| PEH
+        PEH --> EC
+        EC --> LM
+        LM --> APD
+        LM --> SPM
+        APD --> PV
+        SPM --> PV
+        EC -->|store| DB
+        LM -->|update level| CS
+        APD -->|update attributes| CS
+        SPM -->|update skills| CS
+        LM -->|check achievements| AS
+        PEH -->|notify| NS
+        PEH -->|sync state| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant E as Event
+        participant PEH as Progression Event Handler
+        participant EC as Experience Calculator
+        participant LM as Level Manager
+        participant CS as Character Service
+        participant AS as Achievement Service
+
+        E->>PEH: Game event
+        PEH->>EC: Calculate experience
+        EC->>EC: Add experience
+        EC->>LM: Check level up
+        LM->>LM: Level up
+        LM->>CS: Update level
+        LM->>AS: Check achievements
+        AS->>AS: Unlock achievements
+    ```
+
+decisions:
+  - id: adr-progression-architecture
+    summary: |
+      Выбрана модульная архитектура внутри gameplay-service-go для обеспечения
+      тесной интеграции с игровым процессом.
+
+  - id: adr-experience-formula
+    summary: |
+      Экспоненциальная формула опыта обеспечивает сбалансированную прогрессию
+      и долгосрочную мотивацию игроков.
+
+  - id: adr-attribute-system
+    summary: |
+      Система распределения очков атрибутов даёт игрокам контроль над развитием
+      персонажа и создаёт разнообразие билдов.
+
+  - id: adr-skill-progression
+    summary: |
+      Система прогрессии навыков мотивирует игроков использовать различные
+      способности и развивать персонажа в разных направлениях.
+
+  - id: adr-progression-validation
+    summary: |
+      Валидация прогрессии защищает от читов и обеспечивает целостность данных
+      игрового процесса.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формул опыта и уровней
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы прогрессии:
+      - Определены компоненты (Experience Calculator, Level Manager, Attribute Point Distributor, Skill Progression Manager, Progression Event Handler, Progression Validator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (character_progression, character_attributes, skill_experience, progression_history)
+      - Спроектирована система расчёта опыта
+      - Спроектирована система повышения уровня
+      - Спроектирована система распределения очков
+      - Создано техническое задание
+      - Разбито на подзадачи
+
