@@ -8,22 +8,34 @@ info:
     email: api@necp.game
 
 servers:
-  - url: http://localhost:8091/api/v1/voice
+  - url: http://localhost:8091/api/v1
     description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/voice
+  - url: https://api.necp.game/api/v1
     description: Продакшен сервер
 
 tags:
-  - name: Channels
+  - name: Voice Channel Manager
     description: Управление голосовыми каналами
-  - name: Participants
-    description: Управление участниками каналов
+  - name: WebRTC Connection Manager
+    description: Управление WebRTC соединениями
+  - name: Audio Mixer
+    description: Микширование аудио
+  - name: Participant Manager
+    description: Управление участниками
+  - name: Proximity Voice Handler
+    description: Обработка proximity каналов
+  - name: Quality Manager
+    description: Управление качеством звука
+  - name: Voice Events
+    description: События голосового чата
+  - name: Voice Statistics
+    description: Статистика голосового чата
 
 paths:
-  /channels:
+  /social/voice/channels:
     post:
       tags:
-        - Channels
+        - Voice Channel Manager
       summary: Создать голосовой канал
       operationId: createChannel
       security:
@@ -49,7 +61,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
     get:
       tags:
-        - Channels
+        - Voice Channel Manager
       summary: Получить список голосовых каналов
       operationId: listChannels
       security:
@@ -93,10 +105,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /channels/{channel_id}:
+  /social/voice/channels/{channel_id}:
     get:
       tags:
-        - Channels
+        - Voice Channel Manager
       summary: Получить информацию о канале
       operationId: getChannel
       security:
@@ -124,10 +136,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /channels/{channel_id}/detail:
+  /social/voice/channels/{channel_id}/detail:
     get:
       tags:
-        - Channels
+        - Voice Channel Manager
       summary: Получить детальную информацию о канале с участниками
       operationId: getChannelDetail
       security:
@@ -155,10 +167,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /channels/{channel_id}/join:
+  /social/voice/channels/{channel_id}/join:
     post:
       tags:
-        - Channels
+        - Voice Channel Manager
       summary: Присоединиться к каналу
       operationId: joinChannel
       security:
@@ -198,10 +210,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /channels/{channel_id}/leave:
+  /social/voice/channels/{channel_id}/leave:
     post:
       tags:
-        - Channels
+        - Voice Channel Manager
       summary: Покинуть канал
       operationId: leaveChannel
       security:
@@ -239,10 +251,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /channels/{channel_id}/participants:
+  /social/voice/channels/{channel_id}/participants:
     get:
       tags:
-        - Participants
+        - Participant Manager
       summary: Получить список участников канала
       operationId: getChannelParticipants
       security:
@@ -270,10 +282,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /channels/{channel_id}/participants/{character_id}/status:
+  /social/voice/channels/{channel_id}/participants/{player_id}/status:
     put:
       tags:
-        - Participants
+        - Participant Manager
       summary: Обновить статус участника
       operationId: updateParticipantStatus
       security:
@@ -285,7 +297,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: character_id
+        - name: player_id
           in: path
           required: true
           schema:
@@ -317,10 +329,10 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /channels/{channel_id}/participants/{character_id}/position:
+  /social/voice/channels/{channel_id}/participants/{player_id}/position:
     put:
       tags:
-        - Participants
+        - Participant Manager
       summary: Обновить позицию участника
       operationId: updateParticipantPosition
       security:
@@ -332,7 +344,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: character_id
+        - name: player_id
           in: path
           required: true
           schema:
@@ -364,6 +376,565 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /social/voice/channels/create:
+    post:
+      tags:
+        - Voice Channel Manager
+      summary: Создать голосовой канал
+      operationId: createVoiceChannel
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelRequest'
+      responses:
+        '201':
+          description: Канал создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceChannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/webrtc/token:
+    post:
+      tags:
+        - WebRTC Connection Manager
+      summary: Получить токен WebRTC
+      operationId: getWebRTCToken
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetWebRTCTokenRequest'
+      responses:
+        '200':
+          description: Токен WebRTC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebRTCTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/webrtc/connect:
+    post:
+      tags:
+        - WebRTC Connection Manager
+      summary: Подключиться к WebRTC
+      operationId: connectWebRTC
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectWebRTCRequest'
+      responses:
+        '200':
+          description: Подключение установлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebRTCConnectionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/webrtc/disconnect:
+    post:
+      tags:
+        - WebRTC Connection Manager
+      summary: Отключиться от WebRTC
+      operationId: disconnectWebRTC
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisconnectWebRTCRequest'
+      responses:
+        '200':
+          description: Отключение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebRTCDisconnectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/mixer/configure:
+    post:
+      tags:
+        - Audio Mixer
+      summary: Настроить микшер аудио
+      operationId: configureAudioMixer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigureMixerRequest'
+      responses:
+        '200':
+          description: Микшер настроен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MixerStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/mixer/status:
+    get:
+      tags:
+        - Audio Mixer
+      summary: Получить статус микшера
+      operationId: getMixerStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус микшера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MixerStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/participants/{participant_id}/mute:
+    post:
+      tags:
+        - Participant Manager
+      summary: Заглушить участника
+      operationId: muteParticipant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: participant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteParticipantRequest'
+      responses:
+        '200':
+          description: Участник заглушен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/participants/{participant_id}/deafen:
+    post:
+      tags:
+        - Participant Manager
+      summary: Оглушить участника
+      operationId: deafenParticipant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: participant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeafenParticipantRequest'
+      responses:
+        '200':
+          description: Участник оглушён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/participants/{participant_id}/kick:
+    post:
+      tags:
+        - Participant Manager
+      summary: Исключить участника из канала
+      operationId: kickParticipant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: participant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KickParticipantRequest'
+      responses:
+        '200':
+          description: Участник исключён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/proximity/update:
+    post:
+      tags:
+        - Proximity Voice Handler
+      summary: Обновить позицию для proximity канала
+      operationId: updateProximityPosition
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProximityPositionRequest'
+      responses:
+        '200':
+          description: Позиция обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProximityUpdateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/proximity/nearby/{player_id}:
+    get:
+      tags:
+        - Proximity Voice Handler
+      summary: Получить ближайших игроков для proximity канала
+      operationId: getNearbyPlayers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: radius
+          in: query
+          schema:
+            type: number
+            format: float
+            default: 20.0
+      responses:
+        '200':
+          description: Ближайшие игроки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NearbyPlayersResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/quality/presets:
+    get:
+      tags:
+        - Quality Manager
+      summary: Получить пресеты качества звука
+      operationId: getQualityPresets
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Пресеты качества
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityPresetsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/quality/set:
+    post:
+      tags:
+        - Quality Manager
+      summary: Установить качество звука
+      operationId: setQuality
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetQualityRequest'
+      responses:
+        '200':
+          description: Качество установлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/quality/status:
+    get:
+      tags:
+        - Quality Manager
+      summary: Получить статус качества звука
+      operationId: getQualityStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: participant_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус качества
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/events/{channel_id}:
+    get:
+      tags:
+        - Voice Events
+      summary: Получить события голосового канала
+      operationId: getVoiceEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - voice:channel-joined
+              - voice:channel-left
+              - voice:participant-joined
+              - voice:participant-left
+              - voice:participant-muted
+              - voice:participant-speaking
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События канала
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/stats/channels:
+    get:
+      tags:
+        - Voice Statistics
+      summary: Получить статистику каналов
+      operationId: getChannelStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - PARTY
+              - GUILD
+              - RAID
+              - PROXIMITY
+      responses:
+        '200':
+          description: Статистика каналов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/stats/participants:
+    get:
+      tags:
+        - Voice Statistics
+      summary: Получить статистику участников
+      operationId: getParticipantStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика участников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/voice/stats/quality:
+    get:
+      tags:
+        - Voice Statistics
+      summary: Получить статистику качества звука
+      operationId: getQualityStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: participant_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика качества
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -374,12 +945,12 @@ components:
   schemas:
     VoiceChannelType:
       type: string
-      enum: [party, guild, raid, proximity]
+      enum: [PARTY, GUILD, RAID, PROXIMITY]
       description: Тип голосового канала
 
     ParticipantStatus:
       type: string
-      enum: [connected, muted, deafened, speaking]
+      enum: [MUTED, DEAFENED, SPEAKING, IDLE]
       description: Статус участника
 
     VoiceChannel:
@@ -388,23 +959,32 @@ components:
         id:
           type: string
           format: uuid
-        type:
-          $ref: '#/components/schemas/VoiceChannelType'
+        channel_type:
+          type: string
+          enum:
+            - PARTY
+            - GUILD
+            - RAID
+            - PROXIMITY
         owner_id:
           type: string
           format: uuid
-        owner_type:
-          type: string
+          nullable: true
         name:
           type: string
-        max_members:
+          maxLength: 255
+        max_participants:
           type: integer
         quality_preset:
           type: string
-        settings:
-          type: object
-          additionalProperties: true
-          nullable: true
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+            - ADAPTIVE
+        is_active:
+          type: boolean
+          default: true
         created_at:
           type: string
           format: date-time
@@ -421,90 +1001,133 @@ components:
         channel_id:
           type: string
           format: uuid
-        character_id:
+        player_id:
           type: string
           format: uuid
-        status:
-          $ref: '#/components/schemas/ParticipantStatus'
         webrtc_token:
           type: string
-        position:
-          type: object
-          additionalProperties: true
+          maxLength: 255
+        is_muted:
+          type: boolean
+          default: false
+        is_deafened:
+          type: boolean
+          default: false
+        is_speaking:
+          type: boolean
+          default: false
+        position_x:
+          type: number
+          format: float
           nullable: true
-        stats:
-          type: object
-          additionalProperties: true
+        position_y:
+          type: number
+          format: float
+          nullable: true
+        position_z:
+          type: number
+          format: float
           nullable: true
         joined_at:
           type: string
           format: date-time
-        updated_at:
+        last_activity_at:
           type: string
           format: date-time
 
     CreateChannelRequest:
       type: object
       required:
-        - character_id
-        - type
+        - player_id
+        - channel_type
         - name
       properties:
-        character_id:
+        player_id:
           type: string
           format: uuid
-        type:
-          $ref: '#/components/schemas/VoiceChannelType'
+        channel_type:
+          type: string
+          enum:
+            - PARTY
+            - GUILD
+            - RAID
+            - PROXIMITY
         name:
           type: string
-        max_members:
+          maxLength: 255
+        max_participants:
           type: integer
-          default: 10
         quality_preset:
           type: string
-        settings:
-          type: object
-          additionalProperties: true
-          nullable: true
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+            - ADAPTIVE
 
     JoinChannelRequest:
       type: object
       required:
-        - character_id
+        - player_id
       properties:
-        character_id:
+        player_id:
           type: string
           format: uuid
-        position:
-          type: object
-          additionalProperties: true
+        position_x:
+          type: number
+          format: float
+          nullable: true
+        position_y:
+          type: number
+          format: float
+          nullable: true
+        position_z:
+          type: number
+          format: float
           nullable: true
 
     LeaveChannelRequest:
       type: object
       required:
-        - character_id
+        - player_id
       properties:
-        character_id:
+        player_id:
           type: string
           format: uuid
 
     UpdateParticipantStatusRequest:
       type: object
       required:
-        - status
+        - player_id
       properties:
-        status:
-          $ref: '#/components/schemas/ParticipantStatus'
+        player_id:
+          type: string
+          format: uuid
+        is_muted:
+          type: boolean
+        is_deafened:
+          type: boolean
 
     UpdateParticipantPositionRequest:
       type: object
       required:
-        - position
+        - player_id
+        - position_x
+        - position_y
+        - position_z
       properties:
-        position:
-          type: object
-          additionalProperties: true
+        player_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
 
     ChannelListResponse:
       type: object
@@ -544,6 +1167,372 @@ components:
         server_url:
           type: string
         expires_at:
+          type: string
+          format: date-time
+
+    GetWebRTCTokenRequest:
+      type: object
+      required:
+        - channel_id
+        - player_id
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+
+    ConnectWebRTCRequest:
+      type: object
+      required:
+        - channel_id
+        - player_id
+        - token
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        token:
+          type: string
+
+    DisconnectWebRTCRequest:
+      type: object
+      required:
+        - channel_id
+        - player_id
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+
+    WebRTCConnectionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        connection_status:
+          type: string
+          enum:
+            - INITIATING
+            - CONNECTING
+            - CONNECTED
+            - DISCONNECTED
+            - RECONNECTING
+
+    WebRTCDisconnectResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+
+    ConfigureMixerRequest:
+      type: object
+      required:
+        - channel_id
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        mixing_strategy:
+          type: string
+          enum:
+            - MIX_ALL
+            - SELECTIVE
+        audio_effects:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    MixerStatusResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        mixing_strategy:
+          type: string
+        active_streams:
+          type: integer
+        audio_latency_ms:
+          type: integer
+
+    MuteParticipantRequest:
+      type: object
+      required:
+        - channel_id
+        - muted_by
+        - is_muted
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        muted_by:
+          type: string
+          format: uuid
+        is_muted:
+          type: boolean
+
+    DeafenParticipantRequest:
+      type: object
+      required:
+        - channel_id
+        - deafened_by
+        - is_deafened
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        deafened_by:
+          type: string
+          format: uuid
+        is_deafened:
+          type: boolean
+
+    KickParticipantRequest:
+      type: object
+      required:
+        - channel_id
+        - kicked_by
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        kicked_by:
+          type: string
+          format: uuid
+
+    ParticipantResponse:
+      type: object
+      properties:
+        participant:
+          $ref: '#/components/schemas/VoiceParticipant'
+
+    UpdateProximityPositionRequest:
+      type: object
+      required:
+        - player_id
+        - position_x
+        - position_y
+        - position_z
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+
+    ProximityUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        player_id:
+          type: string
+          format: uuid
+        nearby_players:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    NearbyPlayersResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        nearby_players:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+        radius:
+          type: number
+          format: float
+
+    QualityPresetsResponse:
+      type: object
+      properties:
+        presets:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityPreset'
+
+    QualityPreset:
+      type: object
+      properties:
+        name:
+          type: string
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+            - ADAPTIVE
+        sample_rate:
+          type: integer
+        channels:
+          type: integer
+        bitrate:
+          type: integer
+
+    SetQualityRequest:
+      type: object
+      required:
+        - channel_id
+        - quality_preset
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+          nullable: true
+        quality_preset:
+          type: string
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+            - ADAPTIVE
+
+    QualityStatusResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+          nullable: true
+        quality_preset:
+          type: string
+        audio_latency_ms:
+          type: integer
+        packet_loss_percent:
+          type: number
+          format: float
+        quality_score:
+          type: number
+          format: float
+
+    VoiceEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - voice:channel-joined
+            - voice:channel-left
+            - voice:participant-joined
+            - voice:participant-left
+            - voice:participant-muted
+            - voice:participant-speaking
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    VoiceEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ChannelStatsResponse:
+      type: object
+      properties:
+        channel_type:
+          type: string
+          enum:
+            - PARTY
+            - GUILD
+            - RAID
+            - PROXIMITY
+        active_channels:
+          type: integer
+        total_participants:
+          type: integer
+        average_quality_score:
+          type: number
+          format: float
+
+    ParticipantStatsResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        total_participants:
+          type: integer
+        active_participants:
+          type: integer
+        muted_participants:
+          type: integer
+        speaking_participants:
+          type: integer
+
+    QualityStatsResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+          nullable: true
+        audio_latency_ms:
+          type: integer
+        packet_loss_percent:
+          type: number
+          format: float
+        quality_score:
+          type: number
+          format: float
+        recorded_at:
           type: string
           format: date-time
 
