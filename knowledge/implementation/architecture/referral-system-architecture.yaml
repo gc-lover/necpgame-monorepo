@@ -1,0 +1,586 @@
+metadata:
+  id: referral-system-architecture
+  title: Архитектура реферальной системы (Referral System)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T01:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - referral
+    - backend
+    - growth
+    - social
+  related_systems:
+    - growth-service-go
+    - economy-service-go
+    - character-service
+    - notification-service
+    - leaderboard-service
+  related_documents:
+    - id: backend-referral-system
+      relation: extends
+  github_issue: 312
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру реферальной системы
+    для управления реферальными кодами, наградами, milestone бонусами и лидербордом
+    для стимулирования роста игроков.
+  goal: |
+    Создать архитектурную схему реферальной системы с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Системы генерации кодов
+    - Системы регистрации по коду
+    - Системы milestone наград
+    - Системы лидерборда
+    - Технического задания для реализации
+  essence: |
+    Реферальная система для стимулирования роста через уникальные коды,
+    общие награды и milestone бонусы за активных приглашённых игроков.
+
+architecture:
+  overview: |
+    Реферальная система состоит из семи основных компонентов:
+    1. Referral Code Manager - управление реферальными кодами
+    2. Referral Registration Handler - обработка регистрации по коду
+    3. Referral Milestone Tracker - отслеживание milestone
+    4. Referral Reward Distributor - распределение наград
+    5. Referral Statistics Calculator - расчёт статистики
+    6. Referral Leaderboard Manager - управление лидербордом
+    7. Referral Event Handler - обработка событий
+
+  components:
+    - name: Referral Code Manager
+      location: growth-service-go (модуль referral)
+      responsibility: |
+        - Генерация уникальных реферальных кодов
+        - Управление кодами игроков
+        - Валидация кодов
+        - Проверка уникальности
+      code_generation: |
+        - Уникальный код для каждого игрока
+        - Формат: буквенно-цифровой (8-12 символов)
+        - Проверка на дубликаты
+        - Связь с аккаунтом игрока
+      endpoints:
+        - GET /api/v1/growth/referral/code - получение кода игрока
+        - POST /api/v1/growth/referral/code/generate - генерация нового кода
+        - GET /api/v1/growth/referral/code/{code}/validate - валидация кода
+
+    - name: Referral Registration Handler
+      location: growth-service-go (модуль referral-registration)
+      responsibility: |
+        - Обработка регистрации по реферальному коду
+        - Создание связи реферера и реферала
+        - Выдача приветственного бонуса
+        - Интеграция с auth service
+      registration_flow: |
+        1. Новый игрок регистрируется с реферальным кодом
+        2. Проверка валидности кода
+        3. Создание записи referral
+        4. Выдача приветственного бонуса новому игроку
+        5. Уведомление реферера о новом реферале
+      endpoints:
+        - POST /api/v1/growth/referral/register - регистрация по коду
+        - GET /api/v1/growth/referral/status/{player_id} - статус рефералов
+
+    - name: Referral Milestone Tracker
+      location: growth-service-go (модуль referral-milestone)
+      responsibility: |
+        - Отслеживание достижения milestone
+        - Проверка активности рефералов
+        - Обновление статусов
+        - Интеграция с progression system
+      milestones: |
+        - 5 рефералов достигли уровня 10
+        - 10 рефералов достигли уровня 10
+        - 25 рефералов достигли уровня 10
+        - 50 рефералов достигли уровня 10
+        - 100 рефералов достигли уровня 10
+      milestone_tracking: |
+        - Event listener на character:level-up
+        - Проверка достижения уровня 10
+        - Подсчёт активных рефералов
+        - Проверка milestone
+        - Выдача наград
+      endpoints:
+        - GET /api/v1/growth/referral/milestones/{player_id} - milestone игрока
+        - POST /api/v1/growth/referral/milestones/{milestone_id}/claim - получение награды
+
+    - name: Referral Reward Distributor
+      location: growth-service-go (модуль referral-rewards)
+      responsibility: |
+        - Распределение наград рефереру и рефералу
+        - Выдача приветственных бонусов
+        - Выдача milestone наград
+        - Интеграция с economy service
+      reward_types: |
+        - WELCOME_BONUS: приветственный бонус новому игроку
+        - REFERRER_BONUS: награда рефереру за активного реферала
+        - MILESTONE_BONUS: награда за достижение milestone
+      reward_distribution: |
+        - Двусторонние награды (реферер и реферал)
+        - Награды за достижение уровня 10
+        - Награды за milestone
+        - Интеграция с economy service
+      endpoints:
+        - POST /api/v1/growth/referral/rewards/distribute - распределение наград
+        - GET /api/v1/growth/referral/rewards/history/{player_id} - история наград
+
+    - name: Referral Statistics Calculator
+      location: growth-service-go (модуль referral-stats)
+      responsibility: |
+        - Расчёт статистики рефералов
+        - Подсчёт активных рефералов
+        - Подсчёт достигших уровня 10
+        - Агрегация данных для лидерборда
+      statistics: |
+        - Общее количество рефералов
+        - Количество активных рефералов
+        - Количество достигших уровня 10
+        - Текущий milestone
+        - Общая сумма наград
+      endpoints:
+        - GET /api/v1/growth/referral/stats/{player_id} - статистика игрока
+        - GET /api/v1/growth/referral/stats/public/{code} - публичная статистика
+
+    - name: Referral Leaderboard Manager
+      location: growth-service-go (модуль referral-leaderboard)
+      responsibility: |
+        - Управление лидербордом рефералов
+        - Рейтинг по количеству активных рефералов
+        - Materialized view для производительности
+        - Интеграция с leaderboard service
+      leaderboard_types: |
+        - TOP_REFERRERS: топ рефереров по количеству активных рефералов
+        - TOP_MILESTONE: топ по достигнутым milestone
+        - TOP_REWARDS: топ по полученным наградам
+      leaderboard_calculation: |
+        - Materialized view для рейтинга
+        - Обновление по расписанию
+        - Кэширование в Redis
+      endpoints:
+        - GET /api/v1/growth/referral/leaderboard - лидерборд рефералов
+        - GET /api/v1/growth/referral/leaderboard/{player_id}/position - позиция игрока
+
+    - name: Referral Event Handler
+      location: growth-service-go (модуль referral-events)
+      responsibility: |
+        - Обработка событий реферальной системы
+        - Публикация событий в event bus
+        - Подписка на события от других систем
+        - Уведомления игроков
+      referral_events_published: |
+        - referral:code-generated
+        - referral:registered
+        - referral:level-10-reached
+        - referral:milestone-achieved
+        - referral:reward-distributed
+      referral_events_consumed: |
+        - character:level-up
+        - auth:registered
+      endpoints:
+        - GET /api/v1/growth/referral/events/{player_id} - события игрока
+
+  data_flow:
+    code_generation: |
+      1. Игрок запрашивает реферальный код
+      2. Referral Code Manager проверяет наличие кода
+      3. Если кода нет - генерируется уникальный код
+      4. Код сохраняется в БД
+      5. Referral Event Handler публикует referral:code-generated
+      6. Код возвращается игроку
+
+    registration_by_code: |
+      1. Новый игрок регистрируется с реферальным кодом
+      2. Referral Registration Handler валидирует код
+      3. Создаётся запись referral
+      4. Referral Reward Distributor выдаёт приветственный бонус
+      5. Referral Event Handler публикует referral:registered
+      6. Notification Service уведомляет реферера
+      7. Realtime Gateway синхронизирует состояние
+
+    milestone_achievement: |
+      1. Реферал достигает уровня 10
+      2. Referral Event Handler получает character:level-up
+      3. Referral Milestone Tracker проверяет milestone
+      4. Referral Statistics Calculator обновляет статистику
+      5. Если milestone достигнут - Referral Reward Distributor выдаёт награды
+      6. Referral Event Handler публикует referral:milestone-achieved
+      7. Notification Service уведомляет игроков
+      8. Referral Leaderboard Manager обновляет лидерборд
+
+  integrations:
+    with_auth_service: |
+      - Регистрация по реферальному коду
+      - Валидация аккаунтов
+      - Интеграция с системой аутентификации
+
+    with_character_service: |
+      - Отслеживание уровня рефералов
+      - Проверка достижения уровня 10
+      - Интеграция с progression system
+
+    with_economy_service: |
+      - Выдача наград
+      - Списание/начисление валюты
+      - Интеграция с экономической системой
+
+    with_notification_service: |
+      - Уведомления о новых рефералах
+      - Уведомления о достижении milestone
+      - Уведомления о наградах
+
+    with_leaderboard_service: |
+      - Лидерборд рефералов
+      - Обновление рейтингов
+      - Интеграция с лидербордами
+
+    with_realtime_gateway: |
+      - Синхронизация статистики
+      - Уведомления о событиях
+      - Обновления в реальном времени
+
+  database_schema:
+    tables:
+      - name: referral_codes
+        description: Реферальные коды игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts, UNIQUE)
+          - code: VARCHAR(12) (UNIQUE)
+          - created_at: TIMESTAMP
+          - is_active: BOOLEAN (default: true)
+        indexes:
+          - player_id
+          - code
+          - is_active
+
+      - name: referrals
+        description: Связи рефереров и рефералов
+        fields:
+          - id: UUID (PK)
+          - referrer_id: UUID (FK accounts)
+          - referee_id: UUID (FK accounts, UNIQUE)
+          - referral_code_id: UUID (FK referral_codes)
+          - registered_at: TIMESTAMP
+          - status: ENUM (PENDING, ACTIVE, COMPLETED, INACTIVE)
+          - level_10_reached: BOOLEAN (default: false)
+          - level_10_reached_at: TIMESTAMP (nullable)
+          - welcome_bonus_given: BOOLEAN (default: false)
+          - referrer_bonus_given: BOOLEAN (default: false)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(referee_id)
+          - CHECK(referrer_id != referee_id)
+        indexes:
+          - referrer_id, status
+          - referee_id
+          - referral_code_id
+          - level_10_reached, status
+
+      - name: referral_milestones
+        description: Достигнутые milestone рефереров
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - milestone_type: ENUM (MILESTONE_5, MILESTONE_10, MILESTONE_25, MILESTONE_50, MILESTONE_100)
+          - milestone_value: INTEGER
+          - achieved_at: TIMESTAMP
+          - reward_claimed: BOOLEAN (default: false)
+          - reward_claimed_at: TIMESTAMP (nullable)
+        indexes:
+          - player_id, milestone_type
+          - achieved_at
+
+      - name: referral_rewards
+        description: История наград реферальной системы
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - referral_id: UUID (FK referrals, nullable)
+          - reward_type: ENUM (WELCOME_BONUS, REFERRER_BONUS, MILESTONE_BONUS)
+          - reward_amount: BIGINT
+          - currency_type: VARCHAR(50)
+          - distributed_at: TIMESTAMP
+        indexes:
+          - player_id, distributed_at
+          - referral_id
+
+      - name: referral_statistics
+        description: Статистика рефералов (materialized view)
+        fields:
+          - player_id: UUID (PK)
+          - total_referrals: INTEGER
+          - active_referrals: INTEGER
+          - level_10_referrals: INTEGER
+          - current_milestone: ENUM (NONE, MILESTONE_5, MILESTONE_10, MILESTONE_25, MILESTONE_50, MILESTONE_100)
+          - total_rewards: BIGINT
+          - last_updated: TIMESTAMP
+        indexes:
+          - total_referrals DESC
+          - level_10_referrals DESC
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в growth-service-go:
+      - referral (управление кодами)
+      - referral-registration (регистрация)
+      - referral-milestone (milestone)
+      - referral-rewards (награды)
+      - referral-stats (статистика)
+      - referral-leaderboard (лидерборд)
+      - referral-events (события)
+    - Интеграция с auth-service для регистрации
+    - Интеграция с character-service для отслеживания уровня
+    - Интеграция с economy-service для наград
+    - Materialized view для лидерборда
+    - Оптимизация запросов к БД (индексы, кэширование)
+
+  realtime_requirements:
+    - Синхронизация статистики через WebSocket
+    - Уведомления о событиях
+    - Обновления в реальном времени
+
+  performance_requirements:
+    - Генерация кода < 50ms
+    - Регистрация по коду < 200ms
+    - Проверка milestone < 100ms
+    - Выдача наград < 200ms
+    - Загрузка статистики < 100ms
+    - Загрузка лидерборда < 200ms
+    - Поддержка до 1M реферальных кодов
+    - Поддержка до 10M рефералов
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через growth-service
+    - Распределение нагрузки на коды
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование статистики в Redis
+    - Materialized view для лидерборда (обновление по расписанию)
+
+subtasks:
+  - id: referral-code-manager-module
+    title: Реализация модуля Referral Code Manager
+    description: |
+      Управление реферальными кодами
+      Генерация уникальных кодов
+      Валидация кодов
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: referral-registration-handler
+    title: Реализация Referral Registration Handler
+    description: |
+      Обработка регистрации по коду
+      Создание связи реферера и реферала
+      Выдача приветственного бонуса
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: referral-milestone-tracker
+    title: Реализация Referral Milestone Tracker
+    description: |
+      Отслеживание milestone
+      Проверка активности рефералов
+      Обновление статусов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: referral-reward-distributor
+    title: Реализация Referral Reward Distributor
+    description: |
+      Распределение наград
+      Выдача приветственных бонусов
+      Выдача milestone наград
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: referral-statistics-calculator
+    title: Реализация Referral Statistics Calculator
+    description: |
+      Расчёт статистики рефералов
+      Подсчёт активных рефералов
+      Агрегация данных
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: referral-leaderboard-manager
+    title: Реализация Referral Leaderboard Manager
+    description: |
+      Управление лидербордом
+      Materialized view для производительности
+      Интеграция с leaderboard service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: referral-event-handler
+    title: Реализация Referral Event Handler
+    description: |
+      Обработка событий реферальной системы
+      Публикация событий
+      Подписка на события
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Materialized view для лидерборда
+      Кэширование статистики
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для реферальной системы
+      Интеграция с существующим API growth-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты генерации кодов
+      Тесты регистрации по коду
+      Тесты milestone
+      Тесты наград
+      Тесты лидерборда
+      Тесты интеграций
+    priority: high
+    estimated_time: 4-5 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Growth Service"
+            RCM[Referral Code Manager]
+            RRH[Referral Registration Handler]
+            RMT[Referral Milestone Tracker]
+            RRD[Referral Reward Distributor]
+            RSC[Referral Statistics Calculator]
+            RLM[Referral Leaderboard Manager]
+            REH[Referral Event Handler]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>referral_codes<br/>referrals<br/>referral_milestones<br/>referral_rewards<br/>referral_statistics)]
+        end
+
+        subgraph "External Services"
+            AS[Auth Service]
+            CS[Character Service]
+            ES[Economy Service]
+            NS[Notification Service]
+            LS[Leaderboard Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|register with code| RRH
+        CL -->|get code| RCM
+        RRH --> AS
+        RMT --> CS
+        RRD --> ES
+        REH --> NS
+        RLM --> LS
+        REH --> RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant RRH as Referral Registration Handler
+        participant AS as Auth Service
+        participant RMT as Referral Milestone Tracker
+        participant RRD as Referral Reward Distributor
+
+        P->>RRH: Register with code
+        RRH->>AS: Validate account
+        RRH->>RRH: Create referral
+        RRH->>RRD: Give welcome bonus
+        Note over RMT: Level 10 reached
+        RMT->>RMT: Check milestone
+        RMT->>RRD: Distribute rewards
+    ```
+
+decisions:
+  - id: adr-referral-architecture
+    summary: |
+      Выбрана модульная архитектура внутри growth-service-go для обеспечения
+      тесной интеграции с системой роста игроков.
+
+  - id: adr-referral-codes
+    summary: |
+      Уникальные реферальные коды для каждого игрока обеспечивают простоту
+      использования и отслеживание рефералов.
+
+  - id: adr-milestone-system
+    summary: |
+      Система milestone (5/10/25/50/100 рефералов) мотивирует игроков
+      приглашать больше друзей и создаёт долгосрочную мотивацию.
+
+  - id: adr-bidirectional-rewards
+    summary: |
+      Двусторонние награды (реферер и реферал) создают взаимную выгоду
+      и мотивируют обе стороны участвовать в программе.
+
+  - id: adr-leaderboard
+    summary: |
+      Лидерборд рефералов создаёт соревновательный элемент и мотивирует
+      игроков активно приглашать друзей.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата milestone и наград
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура реферальной системы:
+      - Определены компоненты (Referral Code Manager, Referral Registration Handler, Referral Milestone Tracker, Referral Reward Distributor, Referral Statistics Calculator, Referral Leaderboard Manager, Referral Event Handler)
+      - Описаны milestone (5/10/25/50/100 рефералов)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (referral_codes, referrals, referral_milestones, referral_rewards, referral_statistics)
+      - Спроектирована система генерации кодов
+      - Спроектирована система регистрации по коду
+      - Спроектирована система milestone наград
+      - Спроектирована система лидерборда
+      - Создано техническое задание
+      - Разбито на подзадачи
+
