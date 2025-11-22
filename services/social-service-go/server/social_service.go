@@ -15,6 +15,7 @@ import (
 
 type SocialService struct {
 	notificationRepo *NotificationRepository
+	chatRepo         *ChatRepository
 	cache            *redis.Client
 	logger           *logrus.Logger
 }
@@ -33,9 +34,11 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 	redisClient := redis.NewClient(redisOpts)
 
 	notificationRepo := NewNotificationRepository(dbPool)
+	chatRepo := NewChatRepository(dbPool)
 
 	return &SocialService{
 		notificationRepo: notificationRepo,
+		chatRepo:         chatRepo,
 		cache:            redisClient,
 		logger:           GetLogger(),
 	}, nil
@@ -125,4 +128,30 @@ func (s *SocialService) UpdateNotificationStatus(ctx context.Context, notificati
 	}
 
 	return notification, nil
+}
+
+func (s *SocialService) CreateMessage(ctx context.Context, message *models.ChatMessage) (*models.ChatMessage, error) {
+	return s.chatRepo.CreateMessage(ctx, message)
+}
+
+func (s *SocialService) GetMessages(ctx context.Context, channelID uuid.UUID, limit, offset int) ([]models.ChatMessage, int, error) {
+	messages, err := s.chatRepo.GetMessagesByChannel(ctx, channelID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total, err := s.chatRepo.CountMessagesByChannel(ctx, channelID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return messages, total, nil
+}
+
+func (s *SocialService) GetChannels(ctx context.Context, channelType *models.ChannelType) ([]models.ChatChannel, error) {
+	return s.chatRepo.GetChannels(ctx, channelType)
+}
+
+func (s *SocialService) GetChannel(ctx context.Context, channelID uuid.UUID) (*models.ChatChannel, error) {
+	return s.chatRepo.GetChannelByID(ctx, channelID)
 }
