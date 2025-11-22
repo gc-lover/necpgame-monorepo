@@ -1,0 +1,968 @@
+openapi: 3.0.3
+info:
+  title: Social Service API
+  description: API для социальных функций: уведомления, друзья, чат, почта
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Notifications
+    description: Управление уведомлениями
+  - name: Friends
+    description: Система друзей
+  - name: Chat
+    description: Текстовый чат
+  - name: Mail
+    description: Почтовая система
+
+paths:
+  /social/notifications:
+    post:
+      tags:
+        - Notifications
+      summary: Создать уведомление
+      operationId: createNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        '201':
+          description: Уведомление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Notifications
+      summary: Получить список уведомлений
+      operationId: getNotifications
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /social/notifications/{id}:
+    get:
+      tags:
+        - Notifications
+      summary: Получить уведомление
+      operationId: getNotification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уведомление
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Notifications
+      summary: Обновить статус уведомления
+      operationId: updateNotificationStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationStatusRequest'
+      responses:
+        '200':
+          description: Статус обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Notifications
+      summary: Удалить уведомление
+      operationId: deleteNotification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уведомление удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/friends/requests:
+    post:
+      tags:
+        - Friends
+      summary: Отправить запрос на дружбу
+      operationId: sendFriendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendRequest'
+      responses:
+        '201':
+          description: Запрос отправлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Запрос уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /social/friends/requests/{id}/accept:
+    post:
+      tags:
+        - Friends
+      summary: Принять запрос на дружбу
+      operationId: acceptFriendRequest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Запрос принят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/friends/requests/{id}/reject:
+    post:
+      tags:
+        - Friends
+      summary: Отклонить запрос на дружбу
+      operationId: rejectFriendRequest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Запрос отклонен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/friends:
+    get:
+      tags:
+        - Friends
+      summary: Получить список друзей
+      operationId: getFriends
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /social/friends/{id}:
+    delete:
+      tags:
+        - Friends
+      summary: Удалить друга
+      operationId: removeFriend
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Друг удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/friends/{id}/block:
+    post:
+      tags:
+        - Friends
+      summary: Заблокировать друга
+      operationId: blockFriend
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Друг заблокирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/chat/channels:
+    get:
+      tags:
+        - Chat
+      summary: Получить список каналов
+      operationId: getChannels
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ChannelType'
+      responses:
+        '200':
+          description: Список каналов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelListResponse'
+
+  /social/chat/channels/{id}:
+    get:
+      tags:
+        - Chat
+      summary: Получить канал
+      operationId: getChannel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Канал
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatChannel'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/chat/messages:
+    post:
+      tags:
+        - Chat
+      summary: Создать сообщение
+      operationId: createMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMessageRequest'
+      responses:
+        '201':
+          description: Сообщение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /social/chat/messages/{channelId}:
+    get:
+      tags:
+        - Chat
+      summary: Получить сообщения канала
+      operationId: getMessages
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список сообщений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+
+  /social/mail:
+    post:
+      tags:
+        - Mail
+      summary: Отправить письмо
+      operationId: sendMail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMailRequest'
+      responses:
+        '201':
+          description: Письмо отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags:
+        - Mail
+      summary: Получить список писем
+      operationId: getMails
+      parameters:
+        - name: recipient_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список писем
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /social/mail/{id}:
+    get:
+      tags:
+        - Mail
+      summary: Получить письмо
+      operationId: getMail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Письмо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Mail
+      summary: Удалить письмо
+      operationId: deleteMail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Письмо удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/mail/{id}/read:
+    put:
+      tags:
+        - Mail
+      summary: Отметить письмо как прочитанное
+      operationId: markMailAsRead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Письмо отмечено как прочитанное
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /social/mail/{id}/claim:
+    post:
+      tags:
+        - Mail
+      summary: Получить вложения из письма
+      operationId: claimAttachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Вложения получены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimAttachmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [quest, message, achievement, system, friend, guild, trade, combat]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        title:
+          type: string
+          maxLength: 200
+        content:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [unread, read, archived]
+          default: unread
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, email, push]
+          default: [in_game]
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateNotificationRequest:
+      type: object
+      required:
+        - account_id
+        - type
+        - title
+        - content
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [quest, message, achievement, system, friend, guild, trade, combat]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        title:
+          type: string
+          maxLength: 200
+        content:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, email, push]
+          default: [in_game]
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateNotificationStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [read, archived]
+
+    NotificationListResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        total:
+          type: integer
+        unread:
+          type: integer
+
+    Friendship:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_a_id:
+          type: string
+          format: uuid
+        character_b_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, rejected, blocked]
+        initiator_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FriendRequest:
+      type: object
+      required:
+        - character_id
+        - target_character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        target_character_id:
+          type: string
+          format: uuid
+
+    FriendListResponse:
+      type: object
+      properties:
+        friends:
+          type: array
+          items:
+            $ref: '#/components/schemas/Friendship'
+        total:
+          type: integer
+
+    ChannelType:
+      type: string
+      enum: [global, local, trade, newbie, party, raid, guild, guild_officer, whisper, system, combat]
+
+    ChatChannel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/ChannelType'
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        description:
+          type: string
+        cooldown_seconds:
+          type: integer
+          default: 0
+        max_length:
+          type: integer
+          default: 500
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        channel_type:
+          $ref: '#/components/schemas/ChannelType'
+        sender_id:
+          type: string
+          format: uuid
+        sender_name:
+          type: string
+        content:
+          type: string
+        formatted:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMessageRequest:
+      type: object
+      required:
+        - channel_id
+        - channel_type
+        - content
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        channel_type:
+          $ref: '#/components/schemas/ChannelType'
+        content:
+          type: string
+          maxLength: 500
+
+    MessageListResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        total:
+          type: integer
+        has_more:
+          type: boolean
+
+    ChannelListResponse:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatChannel'
+        total:
+          type: integer
+
+    MailMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+          nullable: true
+        sender_name:
+          type: string
+        recipient_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [player, system, quest, auction, trade]
+        subject:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        attachments:
+          type: object
+          additionalProperties: true
+        cod_amount:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [unread, read, claimed, expired, returned]
+        is_read:
+          type: boolean
+        is_claimed:
+          type: boolean
+        sent_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMailRequest:
+      type: object
+      required:
+        - recipient_id
+        - subject
+        - content
+      properties:
+        recipient_id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        attachments:
+          type: object
+          additionalProperties: true
+        cod_amount:
+          type: integer
+          nullable: true
+        expires_in:
+          type: integer
+          description: Количество дней до истечения
+          nullable: true
+
+    MailListResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailMessage'
+        total:
+          type: integer
+        unread:
+          type: integer
+
+    ClaimAttachmentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        items:
+          type: object
+          additionalProperties: true
+        currency:
+          type: object
+          additionalProperties:
+            type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - BearerAuth: []
+
