@@ -535,19 +535,19 @@ func (s *HTTPServer) getMail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mail, err := s.socialService.GetMails(r.Context(), mailID, 1, 0)
+	mail, err := s.socialService.GetMail(r.Context(), mailID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get mail")
 		s.respondError(w, http.StatusInternalServerError, "failed to get mail")
 		return
 	}
 
-	if mail == nil || len(mail.Messages) == 0 {
+	if mail == nil {
 		s.respondError(w, http.StatusNotFound, "mail not found")
 		return
 	}
 
-	s.respondJSON(w, http.StatusOK, mail.Messages[0])
+	s.respondJSON(w, http.StatusOK, mail)
 }
 
 func (s *HTTPServer) markMailAsRead(w http.ResponseWriter, r *http.Request) {
