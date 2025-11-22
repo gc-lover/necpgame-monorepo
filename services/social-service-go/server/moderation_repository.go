@@ -17,6 +17,7 @@ type ModerationRepositoryInterface interface {
 	GetBans(ctx context.Context, characterID *uuid.UUID, limit, offset int) ([]models.ChatBan, int, error)
 	DeactivateBan(ctx context.Context, banID uuid.UUID) error
 	CreateReport(ctx context.Context, report *models.ChatReport) error
+	GetReportByID(ctx context.Context, reportID uuid.UUID) (*models.ChatReport, error)
 	GetReports(ctx context.Context, status *string, limit, offset int) ([]models.ChatReport, int, error)
 	UpdateReportStatus(ctx context.Context, reportID uuid.UUID, status string, adminID *uuid.UUID) error
 }
@@ -276,6 +277,35 @@ func (r *ModerationRepository) GetReports(ctx context.Context, status *string, l
 	}
 
 	return reports, count, nil
+}
+
+func (r *ModerationRepository) GetReportByID(ctx context.Context, reportID uuid.UUID) (*models.ChatReport, error) {
+	var report models.ChatReport
+	var messageID, channelID, adminID *uuid.UUID
+	var resolvedAt *time.Time
+
+	err := r.db.QueryRow(ctx,
+		`SELECT id, reporter_id, reported_id, message_id, channel_id, reason, status, admin_id, created_at, resolved_at
+		 FROM social.chat_reports
+		 WHERE id = $1`,
+		reportID,
+	).Scan(&report.ID, &report.ReporterID, &report.ReportedID, &messageID, &channelID,
+		&report.Reason, &report.Status, &adminID, &report.CreatedAt, &resolvedAt)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		r.logger.WithError(err).Error("Failed to get chat report by ID")
+		return nil, err
+	}
+
+	report.MessageID = messageID
+	report.ChannelID = channelID
+	report.AdminID = adminID
+	report.ResolvedAt = resolvedAt
+
+	return &report, nil
 }
 
 func (r *ModerationRepository) UpdateReportStatus(ctx context.Context, reportID uuid.UUID, status string, adminID *uuid.UUID) error {

@@ -44,6 +44,14 @@ func (m *mockModerationRepository) CreateReport(ctx context.Context, report *mod
 	return args.Error(0)
 }
 
+func (m *mockModerationRepository) GetReportByID(ctx context.Context, reportID uuid.UUID) (*models.ChatReport, error) {
+	args := m.Called(ctx, reportID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.ChatReport), args.Error(1)
+}
+
 func (m *mockModerationRepository) GetReports(ctx context.Context, status *string, limit, offset int) ([]models.ChatReport, int, error) {
 	args := m.Called(ctx, status, limit, offset)
 	return args.Get(0).([]models.ChatReport), args.Get(1).(int), args.Error(2)
@@ -225,6 +233,125 @@ func TestModerationService_CreateReport_PublishesEvent(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, report)
+	mockRepo.AssertExpectations(t)
+	mockEventBus.AssertExpectations(t)
+}
+
+func TestModerationService_GetReports_ValidatesLimit(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestModerationService(t)
+	defer cleanup()
+
+	mockRepo.On("GetReports", context.Background(), (*string)(nil), 10, 0).Return([]models.ChatReport{}, 0, nil)
+
+	_, _, err := service.GetReports(context.Background(), nil, 0, 0)
+
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestModerationService_GetReports_ValidatesMaxLimit(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestModerationService(t)
+	defer cleanup()
+
+	mockRepo.On("GetReports", context.Background(), (*string)(nil), 100, 0).Return([]models.ChatReport{}, 0, nil)
+
+	_, _, err := service.GetReports(context.Background(), nil, 200, 0)
+
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestModerationService_GetReports_ValidatesOffset(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestModerationService(t)
+	defer cleanup()
+
+	mockRepo.On("GetReports", context.Background(), (*string)(nil), 10, 0).Return([]models.ChatReport{}, 0, nil)
+
+	_, _, err := service.GetReports(context.Background(), nil, 10, -5)
+
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestModerationService_ResolveReport_ValidatesStatus(t *testing.T) {
+	service, _, _, _, cleanup := setupTestModerationService(t)
+	defer cleanup()
+
+	err := service.ResolveReport(context.Background(), uuid.New(), uuid.New(), "invalid")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid status")
+}
+
+func TestModerationService_ResolveReport_ReportNotFound(t *testing.T) {
+	service, mockRepo, _, _, cleanup := setupTestModerationService(t)
+	defer cleanup()
+
+	reportID := uuid.New()
+	adminID := uuid.New()
+
+	mockRepo.On("GetReportByID", context.Background(), reportID).Return(nil, nil)
+
+	err := service.ResolveReport(context.Background(), reportID, adminID, "resolved")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestModerationService_ResolveReport_Success(t *testing.T) {
+	service, mockRepo, mockEventBus, _, cleanup := setupTestModerationService(t)
+	defer cleanup()
+
+	reportID := uuid.New()
+	adminID := uuid.New()
+	report := &models.ChatReport{
+		ID:          reportID,
+		ReporterID:  uuid.New(),
+		ReportedID:  uuid.New(),
+		Status:      "pending",
+		CreatedAt:   time.Now(),
+	}
+
+	mockRepo.On("GetReportByID", context.Background(), reportID).Return(report, nil)
+	mockRepo.On("UpdateReportStatus", context.Background(), reportID, "resolved", &adminID).Return(nil)
+	mockEventBus.On("PublishEvent", context.Background(), "chat:report:resolved", mock.Anything).Return(nil)
+
+	err := service.ResolveReport(context.Background(), reportID, adminID, "resolved")
+
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+	mockEventBus.AssertExpectations(t)
+}
+
+func TestModerationService_ResolveReport_PublishesEvent(t *testing.T) {
+	service, mockRepo, mockEventBus, _, cleanup := setupTestModerationService(t)
+	defer cleanup()
+
+	reportID := uuid.New()
+	adminID := uuid.New()
+	channelID := uuid.New()
+	report := &models.ChatReport{
+		ID:          reportID,
+		ReporterID:  uuid.New(),
+		ReportedID:  uuid.New(),
+		ChannelID:   &channelID,
+		Status:      "pending",
+		CreatedAt:   time.Now(),
+	}
+
+	mockRepo.On("GetReportByID", context.Background(), reportID).Return(report, nil)
+	mockRepo.On("UpdateReportStatus", context.Background(), reportID, "rejected", &adminID).Return(nil)
+	mockEventBus.On("PublishEvent", context.Background(), "chat:report:resolved", mock.MatchedBy(func(payload map[string]interface{}) bool {
+		return payload["report_id"] == reportID.String() &&
+			payload["admin_id"] == adminID.String() &&
+			payload["status"] == "rejected" &&
+			payload["channel_id"] == channelID.String()
+	})).Return(nil)
+
+	err := service.ResolveReport(context.Background(), reportID, adminID, "rejected")
+
+	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 	mockEventBus.AssertExpectations(t)
 }

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"regexp"
 	"strings"
 	"time"
@@ -369,10 +370,52 @@ func (s *ModerationService) CreateReport(ctx context.Context, reporterID uuid.UU
 }
 
 func (s *ModerationService) GetReports(ctx context.Context, status *string, limit, offset int) ([]models.ChatReport, int, error) {
+	if limit < 1 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
 	return s.repo.GetReports(ctx, status, limit, offset)
 }
 
 func (s *ModerationService) ResolveReport(ctx context.Context, reportID uuid.UUID, adminID uuid.UUID, status string) error {
-	return s.repo.UpdateReportStatus(ctx, reportID, status, &adminID)
+	if status != "resolved" && status != "rejected" {
+		return errors.New("invalid status: must be 'resolved' or 'rejected'")
+	}
+
+	report, err := s.repo.GetReportByID(ctx, reportID)
+	if err != nil {
+		return err
+	}
+	if report == nil {
+		return errors.New("report not found")
+	}
+
+	err = s.repo.UpdateReportStatus(ctx, reportID, status, &adminID)
+	if err != nil {
+		return err
+	}
+
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"report_id":    reportID.String(),
+			"admin_id":     adminID.String(),
+			"status":       status,
+			"reporter_id":  report.ReporterID.String(),
+			"reported_id":  report.ReportedID.String(),
+			"timestamp":    time.Now().Format(time.RFC3339),
+		}
+		if report.ChannelID != nil {
+			payload["channel_id"] = report.ChannelID.String()
+		}
+		s.eventBus.PublishEvent(ctx, "chat:report:resolved", payload)
+	}
+
+	return nil
 }
 
