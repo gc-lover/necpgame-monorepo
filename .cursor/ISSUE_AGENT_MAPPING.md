@@ -30,11 +30,14 @@
 - REST, gRPC (если про спецификацию)
 
 ### Backend Developer (agent:backend, stage:backend-dev)
+- [Backend] в заголовке (явное указание)
 - Реализация, implementation (код)
 - Go, сервисы, services
 - Handlers, бизнес-логика
 - Миграции БД, migrations
 - Код, code (если явно про код)
+- Chat System, Achievement System, Session Management (системы бекенда)
+- Этап разработки: implementation (если про код)
 
 ### Network Engineer (agent:network, stage:network)
 - Сеть, network, Envoy
