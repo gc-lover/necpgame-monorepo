@@ -1,0 +1,706 @@
+metadata:
+  id: npc-hiring-system-architecture
+  title: Архитектура системы найма NPC
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - npc-hiring
+    - workforce-management
+  related_systems:
+    - social-service
+    - economy-service
+    - world-service
+    - npc-service
+  related_documents:
+    - id: npc-hiring-system-detailed
+      relation: implements
+  github_issue: 304
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы найма NPC, включающую:
+    - Типы найма (торговцы, фиксеры, телохранители, наемники, дипломаты, инженеры, хакеры и т.д.)
+    - Процесс найма (поиск, переговоры, контракт, запуск)
+    - Экономику найма (зарплаты, расходы, доходы, инвестиции, налоги)
+    - Управление персоналом (назначение задач, мониторинг, коммуникация)
+    - Эффективность и развитие NPC
+    - Ограничения и лимиты
+    - Продвинутые механики (цепочки найма, групповые контракты, автоматизация)
+  goal: |
+    Создать архитектурную схему системы найма NPC с определением:
+    - Компонентов для управления наймом
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы найма NPC с поддержкой типов найма,
+    процесса найма, экономики, управления персоналом и продвинутых механик.
+
+architecture:
+  overview: |
+    Архитектура системы найма NPC состоит из следующих компонентов:
+    1. NPC Hiring Manager - управление наймом NPC
+    2. NPC Discovery Service - поиск кандидатов
+    3. Contract Negotiation Manager - переговоры и контракты
+    4. Workforce Manager - управление нанятым персоналом
+    5. Task Assignment Manager - назначение задач
+    6. Performance Monitor - мониторинг эффективности
+    7. Economy Manager - управление экономикой найма
+    8. Limit Validator - проверка ограничений и лимитов
+    9. Advanced Mechanics Manager - продвинутые механики
+    10. NPC Hiring Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Обработка найма NPC:
+        - Управление наймом NPC
+        - Поиск кандидатов
+        - Переговоры и контракты
+        - Управление персоналом
+        - Назначение задач
+        - Мониторинг эффективности
+        - Управление экономикой найма
+        - Проверка ограничений
+        - Продвинутые механики
+        - Сбор телеметрии
+      components:
+        - npc-hiring-manager: управление наймом NPC
+        - npc-discovery-service: поиск кандидатов
+        - contract-negotiation-manager: переговоры и контракты
+        - workforce-manager: управление нанятым персоналом
+        - task-assignment-manager: назначение задач
+        - performance-monitor: мониторинг эффективности
+        - economy-manager: управление экономикой найма
+        - limit-validator: проверка ограничений и лимитов
+        - advanced-mechanics-manager: продвинутые механики
+        - npc-hiring-telemetry-collector: сбор телеметрии
+      endpoints:
+        - GET /api/v1/social/npc-hiring/candidates - поиск кандидатов
+        - GET /api/v1/social/npc-hiring/candidates/{npcId} - информация о кандидате
+        - POST /api/v1/social/npc-hiring/negotiate - начало переговоров
+        - POST /api/v1/social/npc-hiring/contract/create - создание контракта
+        - GET /api/v1/social/npc-hiring/contracts - список контрактов
+        - GET /api/v1/social/npc-hiring/contracts/{contractId} - информация о контракте
+        - POST /api/v1/social/npc-hiring/contracts/{contractId}/terminate - расторжение контракта
+        - GET /api/v1/social/npc-hiring/workforce - список нанятых NPC
+        - POST /api/v1/social/npc-hiring/workforce/{npcId}/assign-task - назначение задачи
+        - GET /api/v1/social/npc-hiring/workforce/{npcId}/tasks - список задач NPC
+        - POST /api/v1/social/npc-hiring/workforce/{npcId}/tasks/{taskId}/update - обновление задачи
+        - GET /api/v1/social/npc-hiring/workforce/{npcId}/performance - эффективность NPC
+        - GET /api/v1/social/npc-hiring/workforce/{npcId}/status - статус NPC
+        - POST /api/v1/social/npc-hiring/workforce/{npcId}/interact - взаимодействие с NPC
+        - GET /api/v1/social/npc-hiring/economy/payroll - расчет зарплат
+        - POST /api/v1/social/npc-hiring/economy/pay - выплата зарплаты
+        - GET /api/v1/social/npc-hiring/economy/reports - отчеты по экономике
+        - GET /api/v1/social/npc-hiring/limits - проверка лимитов найма
+        - POST /api/v1/social/npc-hiring/chain/create - создание цепочки найма
+        - POST /api/v1/social/npc-hiring/group/create - создание группового контракта
+        - POST /api/v1/social/npc-hiring/automation/configure - настройка автоматизации
+      websocket_channels:
+        - wss://api.necp.game/v1/social/npc-hiring/{characterId} - поток обновлений найма и задач
+      events_published:
+        - social.npc-hiring.candidate-found: найден кандидат
+        - social.npc-hiring.negotiation-started: начаты переговоры
+        - social.npc-hiring.contract-created: создан контракт
+        - social.npc-hiring.contract-terminated: расторгнут контракт
+        - social.npc-hiring.npc-hired: NPC нанят
+        - social.npc-hiring.task-assigned: назначена задача
+        - social.npc-hiring.task-completed: задача выполнена
+        - social.npc-hiring.performance-updated: обновлена эффективность
+        - social.npc-hiring.payroll-processed: обработана зарплата
+        - social.npc-hiring.limit-reached: достигнут лимит найма
+        - social.npc-hiring.chain-created: создана цепочка найма
+        - social.npc-hiring.group-created: создан групповой контракт
+      events_subscribed:
+        - quest.completed: завершение квеста
+        - economy.transaction: транзакция в экономике
+        - world.event: событие мира
+        - npc.interaction: взаимодействие с NPC
+        - reputation.changed: изменение репутации
+        - character.level-up: повышение уровня персонажа
+
+  hiring_types:
+    - name: merchant
+      description: "Торговец - управляет продажами, закупками и кабинетом игрока"
+      requirements:
+        - reputation: "medium"
+        - skills: ["trading", "negotiation"]
+        - capital: "required"
+      autonomy: true
+
+    - name: quest_giver
+      description: "Квестодатель - формирует и управляет квестами"
+      requirements:
+        - reputation: "medium"
+        - skills: ["social", "quest_management"]
+        - access: "quest_system"
+      autonomy: false
+
+    - name: fixer
+      description: "Фиксер - организует заказы, управляет сетью контактов"
+      requirements:
+        - reputation: "high"
+        - skills: ["networking", "negotiation"]
+        - network: "required"
+      autonomy: true
+
+    - name: bodyguard
+      description: "Телохранитель - обеспечивает защиту игрока и имущества"
+      requirements:
+        - reputation: "medium"
+        - skills: ["combat", "protection"]
+        - equipment: "required"
+      autonomy: false
+
+    - name: mercenary
+      description: "Наемник - специалист по боевым операциям и рейдам"
+      requirements:
+        - reputation: "medium"
+        - skills: ["combat", "tactics"]
+        - equipment: "required"
+      autonomy: false
+
+    - name: diplomat
+      description: "Дипломат - ведет переговоры, улучшает отношения с фракциями"
+      requirements:
+        - reputation: "high"
+        - skills: ["diplomacy", "negotiation"]
+        - faction_access: "required"
+      autonomy: true
+
+    - name: engineer
+      description: "Инженер - ремонт, модификация и создание оборудования"
+      requirements:
+        - reputation: "medium"
+        - skills: ["engineering", "crafting"]
+        - workshop: "required"
+      autonomy: true
+
+    - name: hacker
+      description: "Хакер - сетевые операции, взлом и защита"
+      requirements:
+        - reputation: "medium"
+        - skills: ["hacking", "netrunning"]
+        - equipment: "required"
+      autonomy: true
+
+  hiring_process:
+    discovery: |
+      - Поиск кандидатов через рынок труда
+      - Рекомендации от других NPC
+      - Прямой поиск по навыкам и репутации
+      - Фильтрация по требованиям и стоимости
+
+    negotiation: |
+      - Торг о зарплате и условиях
+      - Зависимость от отношений и навыков игрока
+      - Определение параметров контракта
+      - Проверка доступности NPC
+
+    contract: |
+      - Фиксация обязанностей NPC
+      - Определение обязанностей игрока
+      - Установка сроков контракта
+      - Условия расторжения и штрафы
+      - Тип оплаты (зарплата, разовые выплаты, доля от прибыли)
+
+    onboarding: |
+      - NPC приступает к задачам
+      - Выбор режима управления (прямой, автономный, гибридный)
+      - Настройка приоритетов задач
+      - Запуск мониторинга эффективности
+
+  economy_model:
+    cost_factors: |
+      - Навыки NPC
+      - Уровень отношений
+      - Тип найма
+      - Автономность
+      - Условия работы
+      - Риск заданий
+
+    payment_models: |
+      - Зарплата (регулярные выплаты)
+      - Разовые выплаты
+      - Доля от прибыли
+      - Комбинированные схемы
+
+    player_rewards: |
+      - Прямая прибыль
+      - Комиссия за операции
+      - Экономия времени
+      - Доступ к эксклюзивным активностям
+
+  management_features:
+    management_modes: |
+      - Прямой контроль (игрок управляет задачами)
+      - Автономная работа (NPC работает самостоятельно)
+      - Гибридный режим (комбинация прямого и автономного)
+
+    task_configuration: |
+      - Назначение списка задач
+      - Установка приоритетов
+      - Ограничение ресурсов
+      - Динамическое изменение задач
+
+    monitoring: |
+      - Статус NPC
+      - Прогресс заданий
+      - Эффективность работы
+      - Выявленные проблемы
+      - История работы
+
+    interaction: |
+      - Общение с NPC
+      - Обучение NPC
+      - Поощрения и критика
+      - Влияние на отношение и продуктивность
+
+  effectiveness_system:
+    skill_impact: |
+      - Навыки и специализация определяют качество выполнения задач
+      - Продвижение по рангу увеличивает эффективность
+      - Обучение открывает уникальные сценарии
+
+    relationship_levels: |
+      - 5 уровней отношений (враждебность, неприязнь, нейтрал, дружба, союз)
+      - Коэффициенты эффективности на основе отношений
+      - Поддержание доверия предотвращает саботаж
+
+    working_conditions: |
+      - Безопасность заданий
+      - Доступность ресурсов
+      - Поддержка игрока
+      - Автономность работы
+      - Влияние на устойчивость производительности
+
+  limits_system:
+    limit_structure: |
+      - Максимальное количество активных контрактов по категориям NPC
+      - Зависимость от уровня игрока
+      - Зависимость от состояния организации
+      - Зависимость от типа NPC
+
+    scaling_factors: |
+      - Рост уровня игрока
+      - Улучшение репутации
+      - Наличие специальных навыков
+      - Технологии и инфраструктура
+      - Создание клана
+
+    hiring_requirements: |
+      - Репутация с фракцией
+      - Наличие ресурсов
+      - Релевантные навыки
+      - Членство в фракциях
+      - Доступ к специализированным системам
+
+  advanced_mechanics:
+    hiring_chains: |
+      - Цепочки найма для экономии ресурсов
+      - Последовательное найм NPC
+      - Влияние на эффективность
+
+    group_contracts: |
+      - Групповые контракты для нескольких NPC
+      - Синхронизация задач
+      - Общие бонусы и штрафы
+
+    automation: |
+      - Автоматизация найма
+      - Автоматическое назначение задач
+      - Автоматическая оплата
+      - Автоматическое управление персоналом
+
+  data_flows:
+    hiring_flow: |
+      1. Игрок инициирует поиск кандидатов
+      2. NPC Discovery Service находит подходящих кандидатов
+      3. Игрок выбирает кандидата и начинает переговоры
+      4. Contract Negotiation Manager обрабатывает переговоры
+      5. Игрок и NPC согласовывают условия контракта
+      6. Contract Negotiation Manager создает контракт
+      7. NPC Hiring Manager добавляет NPC в workforce
+      8. Social Service публикует событие social.npc-hiring.npc-hired
+      9. Realtime Gateway отправляет обновление клиентам
+
+    task_assignment_flow: |
+      1. Игрок назначает задачу NPC
+      2. Task Assignment Manager получает запрос
+      3. Task Assignment Manager проверяет доступность NPC
+      4. Task Assignment Manager проверяет навыки NPC
+      5. Task Assignment Manager назначает задачу
+      6. Workforce Manager обновляет статус NPC
+      7. Social Service публикует событие social.npc-hiring.task-assigned
+      8. Realtime Gateway отправляет обновление клиентам
+
+    performance_monitoring_flow: |
+      1. NPC выполняет задачи
+      2. Performance Monitor отслеживает прогресс
+      3. Performance Monitor рассчитывает эффективность
+      4. Performance Monitor обновляет метрики
+      5. Social Service публикует событие social.npc-hiring.performance-updated
+      6. Realtime Gateway отправляет обновление клиентам
+
+    payroll_flow: |
+      1. Наступает период выплаты зарплаты
+      2. Economy Manager рассчитывает зарплаты для всех NPC
+      3. Economy Manager проверяет наличие средств у игрока
+      4. Economy Manager обрабатывает выплаты
+      5. Economy Service обновляет баланс игрока
+      6. Social Service публикует событие social.npc-hiring.payroll-processed
+      7. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: npc_hiring_contracts
+        description: Контракты найма NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - npc_id: UUID FOREIGN KEY
+          - hiring_type: VARCHAR(50)
+          - contract_type: ENUM (salary, one-time, profit-share, combined)
+          - salary_amount: DECIMAL(10,2)
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP
+          - status: ENUM (active, terminated, completed)
+          - autonomy_level: ENUM (direct, autonomous, hybrid)
+          - terms: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: npc_hiring_tasks
+        description: Задачи нанятых NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - contract_id: UUID FOREIGN KEY
+          - npc_id: UUID FOREIGN KEY
+          - task_type: VARCHAR(50)
+          - task_description: TEXT
+          - priority: INTEGER
+          - status: ENUM (pending, in-progress, completed, failed)
+          - assigned_at: TIMESTAMP
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP
+          - resources: JSONB
+
+      - name: npc_hiring_performance
+        description: Эффективность нанятых NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - contract_id: UUID FOREIGN KEY
+          - npc_id: UUID FOREIGN KEY
+          - skill_level: INTEGER
+          - relationship_level: INTEGER
+          - efficiency_score: DECIMAL(5,2)
+          - tasks_completed: INTEGER
+          - tasks_failed: INTEGER
+          - loyalty_score: DECIMAL(5,2)
+          - last_update: TIMESTAMP
+
+      - name: npc_hiring_economy
+        description: Экономика найма NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - contract_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - payment_type: ENUM (salary, one-time, profit-share)
+          - amount: DECIMAL(10,2)
+          - payment_date: TIMESTAMP
+          - status: ENUM (pending, paid, failed)
+          - transaction_id: UUID
+
+      - name: npc_hiring_limits
+        description: Лимиты найма для персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - hiring_type: VARCHAR(50)
+          - current_count: INTEGER
+          - max_count: INTEGER
+          - scaling_factors: JSONB
+          - last_update: TIMESTAMP
+
+      - name: npc_hiring_chains
+        description: Цепочки найма
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - chain_name: VARCHAR(100)
+          - npc_ids: UUID[]
+          - chain_type: VARCHAR(50)
+          - efficiency_bonus: DECIMAL(5,2)
+          - created_at: TIMESTAMP
+
+      - name: npc_hiring_groups
+        description: Групповые контракты
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - group_name: VARCHAR(100)
+          - contract_ids: UUID[]
+          - shared_bonuses: JSONB
+          - created_at: TIMESTAMP
+
+      - name: npc_hiring_automation
+        description: Настройки автоматизации
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - automation_type: VARCHAR(50)
+          - configuration: JSONB
+          - enabled: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+  integrations:
+    npc_service: |
+      - Получение информации о NPC
+      - Проверка доступности NPC
+      - Обновление статуса NPC
+      - Взаимодействие с NPC
+
+    economy_service: |
+      - Проверка баланса игрока
+      - Обработка выплат зарплат
+      - Расчет доходов от NPC
+      - Интеграция с налоговой системой
+
+    world_service: |
+      - Проверка доступа к территориям
+      - Триггеры событий на основе найма
+      - Влияние найма на мир
+
+    quest_service: |
+      - Интеграция с квестами NPC
+      - Назначение квестов нанятым NPC
+      - Оценка выполнения квестов
+
+    reputation_service: |
+      - Проверка репутации для найма
+      - Влияние найма на репутацию
+      - Обновление репутации на основе работы NPC
+
+    gameplay_service: |
+      - Получение событий игрового процесса
+      - Интеграция с системой прогрессии
+      - Модификация эффективности на основе навыков
+
+    analytics_service: |
+      - Логирование всех операций найма
+      - Сбор метрик эффективности
+      - Анализ паттернов найма
+
+    realtime_gateway: |
+      - Отправка realtime обновлений найма
+      - Синхронизация задач
+      - Уведомления о событиях найма
+
+technical_specification:
+  subtasks:
+    - id: npc-hiring-manager
+      title: Реализация менеджера найма NPC
+      description: |
+        Реализация NPC Hiring Manager с управлением наймом NPC,
+        контрактами и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: npc-discovery-service
+      title: Реализация сервиса поиска кандидатов
+      description: |
+        Реализация NPC Discovery Service с поиском кандидатов,
+        фильтрацией и рекомендациями.
+      dependencies: [npc-hiring-manager]
+      estimated_effort: 4 days
+
+    - id: contract-negotiation-manager
+      title: Реализация менеджера переговоров
+      description: |
+        Реализация Contract Negotiation Manager с обработкой переговоров,
+        созданием контрактов и управлением условиями.
+      dependencies: [npc-hiring-manager]
+      estimated_effort: 4 days
+
+    - id: workforce-manager
+      title: Реализация менеджера персонала
+      description: |
+        Реализация Workforce Manager с управлением нанятым персоналом,
+        статусами и взаимодействием.
+      dependencies: [npc-hiring-manager]
+      estimated_effort: 4 days
+
+    - id: task-assignment-manager
+      title: Реализация менеджера назначения задач
+      description: |
+        Реализация Task Assignment Manager с назначением задач,
+        управлением приоритетами и ресурсами.
+      dependencies: [workforce-manager]
+      estimated_effort: 4 days
+
+    - id: performance-monitor
+      title: Реализация монитора эффективности
+      description: |
+        Реализация Performance Monitor с отслеживанием эффективности,
+        расчетом метрик и анализом производительности.
+      dependencies: [workforce-manager]
+      estimated_effort: 4 days
+
+    - id: economy-manager
+      title: Реализация менеджера экономики найма
+      description: |
+        Реализация Economy Manager с расчетом зарплат,
+        обработкой выплат и интеграцией с Economy Service.
+      dependencies: [npc-hiring-manager]
+      estimated_effort: 4 days
+
+    - id: limit-validator
+      title: Реализация валидатора лимитов
+      description: |
+        Реализация Limit Validator с проверкой ограничений найма,
+        расчетом лимитов и валидацией требований.
+      dependencies: [npc-hiring-manager]
+      estimated_effort: 3 days
+
+    - id: advanced-mechanics-manager
+      title: Реализация менеджера продвинутых механик
+      description: |
+        Реализация Advanced Mechanics Manager с поддержкой цепочек найма,
+        групповых контрактов и автоматизации.
+      dependencies: [npc-hiring-manager, workforce-manager]
+      estimated_effort: 5 days
+
+    - id: npc-hiring-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация NPC Hiring Telemetry Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [npc-hiring-manager]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений найма,
+        задач и эффективности.
+      dependencies: [npc-hiring-manager, workforce-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы найма NPC.
+      dependencies: [npc-hiring-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для контрактов, задач, эффективности, экономики,
+        лимитов, цепочек, групп и автоматизации с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SocialService[Social Service<br/>8084]
+        
+        SocialService --> NHM[NPC Hiring Manager]
+        SocialService --> NDS[NPC Discovery Service]
+        SocialService --> CNM[Contract Negotiation Manager]
+        SocialService --> WM[Workforce Manager]
+        SocialService --> TAM[Task Assignment Manager]
+        SocialService --> PM[Performance Monitor]
+        SocialService --> EM[Economy Manager]
+        SocialService --> LV[Limit Validator]
+        SocialService --> AMM[Advanced Mechanics Manager]
+        SocialService --> NHTC[NPC Hiring Telemetry Collector]
+        
+        NHM --> NDS
+        NHM --> CNM
+        NHM --> WM
+        WM --> TAM
+        WM --> PM
+        NHM --> EM
+        NHM --> LV
+        NHM --> AMM
+        
+        SocialService --> NPCService[NPC Service]
+        SocialService --> EconomyService[Economy Service]
+        SocialService --> WorldService[World Service]
+        SocialService --> QuestService[Quest Service]
+        SocialService --> ReputationService[Reputation Service]
+        SocialService --> GameplayService[Gameplay Service]
+        SocialService --> AnalyticsService[Analytics Service]
+        
+        SocialService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SocialService --> DB[(Social DB)]
+        
+        Client --> WSNPC[WebSocket<br/>NPC Hiring]
+        WSNPC --> SocialService
+    ```
+
+  hiring_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant NDS as NPC Discovery Service
+        participant CNM as Contract Negotiation Manager
+        participant NHM as NPC Hiring Manager
+        participant WM as Workforce Manager
+        participant EB as Event Bus
+        
+        P->>NDS: Search candidates
+        NDS->>NDS: Find candidates
+        NDS->>P: Return candidates
+        P->>CNM: Start negotiation
+        CNM->>CNM: Process negotiation
+        CNM->>P: Negotiation result
+        P->>CNM: Accept contract
+        CNM->>NHM: Create contract
+        NHM->>WM: Add to workforce
+        WM->>EB: Publish social.npc-hiring.npc-hired
+    ```
+
+  task_assignment_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant TAM as Task Assignment Manager
+        participant WM as Workforce Manager
+        participant PM as Performance Monitor
+        participant EB as Event Bus
+        
+        P->>TAM: Assign task
+        TAM->>TAM: Check availability
+        TAM->>TAM: Check skills
+        TAM->>WM: Assign task
+        WM->>PM: Update performance
+        WM->>EB: Publish social.npc-hiring.task-assigned
+    ```
+
