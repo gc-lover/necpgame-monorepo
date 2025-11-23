@@ -1,0 +1,608 @@
+metadata:
+  id: quest-system-architecture
+  title: Архитектура системы квестов
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - quests
+    - gameplay
+    - narrative
+    - branching
+  related_systems:
+    - gameplay-service
+    - character-service
+    - economy-service
+    - social-service
+    - narrative-service
+    - event-service
+  related_documents:
+    - id: quest-system
+      relation: implements
+    - id: quest-engine-backend
+      relation: extends
+  github_issue: 103
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы квестов, поддерживающую:
+    - 10 типов квестов (main, side, daily, weekly, faction, guild, dynamic, event, social, player-created)
+    - Ветвление и необратимые последствия
+    - Интеграцию с фракциями, лигами и экономикой
+    - Динамические награды и проверки навыков
+    - Пользовательские квесты через доски фиксеров
+    - Интеграцию с диалогами, романсами и боевой системой
+  goal: |
+    Создать архитектурную схему системы квестов с определением:
+    - Микросервисов для обработки квестов
+    - Компонентов для ветвления и диалогов
+    - Интеграций с другими системами
+    - API endpoints (высокоуровнево)
+    - Структуры БД для хранения квестов
+    - Технического задания для реализации
+  essence: |
+    Гибридная система квестов с поддержкой статических и динамических квестов,
+    ветвления, интеграции с фракциями и лигами, пользовательских квестов.
+
+architecture:
+  overview: |
+    Система квестов состоит из следующих компонентов:
+    1. Quest Engine - основной движок обработки квестов и state machine
+    2. Quest Content Manager - управление контентом квестов
+    3. Dialogue System - система диалогов и ветвления
+    4. Quest Branch Manager - управление ветвлением и последствиями
+    5. Quest Reward Calculator - расчет динамических наград
+    6. Skill Check Engine - обработка проверок навыков
+    7. Player Quest Board - система пользовательских квестов
+    8. Quest Analytics - аналитика и логирование
+    9. Quest Event Publisher - публикация событий квестов
+
+  microservices:
+    - name: quest-engine
+      location: gameplay-service (модуль quest-engine)
+      responsibility: |
+        Основной движок обработки квестов:
+        - Управление state machine квестов
+        - Обработка старта, прогресса и завершения квестов
+        - Управление инстансами квестов для игроков
+        - Координация с другими компонентами
+        - Публикация событий квестов
+      endpoints:
+        - POST /api/v1/gameplay/quests/start - старт квеста
+        - POST /api/v1/gameplay/quests/{questId}/complete-objective - завершение цели
+        - POST /api/v1/gameplay/quests/{questId}/complete - завершение квеста
+        - POST /api/v1/gameplay/quests/{questId}/fail - провал квеста
+        - POST /api/v1/gameplay/quests/{questId}/abandon - отказ от квеста
+        - GET /api/v1/gameplay/quests/active - активные квесты игрока
+        - GET /api/v1/gameplay/quests/{questId}/state - состояние квеста
+        - GET /api/v1/gameplay/quests/available - доступные квесты
+        - POST /api/v1/gameplay/quests/{questId}/update-progress - обновление прогресса
+
+    - name: quest-content-manager
+      location: gameplay-service (модуль quest-content)
+      responsibility: |
+        Управление контентом квестов:
+        - Загрузка и кэширование определений квестов
+        - Управление версиями квестов
+        - Фильтрация доступных квестов по условиям
+        - Поддержка локализации
+        - Интеграция с контент-системой
+      endpoints:
+        - GET /api/v1/gameplay/quests/content/{questId} - получение контента квеста
+        - GET /api/v1/gameplay/quests/content/list - список всех квестов
+        - GET /api/v1/gameplay/quests/content/filter - фильтрация квестов
+        - POST /api/v1/gameplay/quests/content/reload - перезагрузка контента
+
+    - name: dialogue-system
+      location: gameplay-service (модуль dialogue)
+      responsibility: |
+        Система диалогов и ветвления:
+        - Управление диалоговыми деревьями
+        - Обработка выборов игрока
+        - Ветвление диалогов на основе условий
+        - Интеграция с NPC системой
+        - Сохранение состояния диалогов
+      endpoints:
+        - GET /api/v1/gameplay/dialogues/{dialogueId} - получение диалога
+        - POST /api/v1/gameplay/dialogues/{dialogueId}/select - выбор опции
+        - GET /api/v1/gameplay/dialogues/{dialogueId}/state - состояние диалога
+        - POST /api/v1/gameplay/dialogues/{dialogueId}/start - старт диалога
+
+    - name: quest-branch-manager
+      location: gameplay-service (модуль quest-branch)
+      responsibility: |
+        Управление ветвлением и последствиями:
+        - Отслеживание выборов игрока
+        - Применение последствий выборов
+        - Блокировка/разблокировка контента
+        - Управление необратимыми последствиями
+        - Интеграция с системой репутации
+      endpoints:
+        - POST /api/v1/gameplay/quests/branches/apply-choice - применение выбора
+        - GET /api/v1/gameplay/quests/branches/{branchId}/consequences - последствия ветки
+        - GET /api/v1/gameplay/quests/branches/player-choices - выборы игрока
+        - POST /api/v1/gameplay/quests/branches/unlock - разблокировка ветки
+
+    - name: quest-reward-calculator
+      location: gameplay-service (модуль quest-rewards)
+      responsibility: |
+        Расчет динамических наград:
+        - Расчет наград на основе экономики
+        - Учет стиля прохождения (стелс, агрессия)
+        - Интеграция с системой лиг
+        - Расчет репутации и прогресса
+        - Выдача наград через economy-service
+      endpoints:
+        - POST /api/v1/gameplay/quests/rewards/calculate - расчет наград
+        - POST /api/v1/gameplay/quests/rewards/distribute - выдача наград
+        - GET /api/v1/gameplay/quests/rewards/preview - предпросмотр наград
+
+    - name: skill-check-engine
+      location: gameplay-service (модуль skill-check)
+      responsibility: |
+        Обработка проверок навыков:
+        - Проверка навыков игрока (0.0-1.0 шкала)
+        - Учет модификаторов (импланты, укрытия, погода)
+        - Групповые проверки с ассистами
+        - Логирование результатов для аналитики
+        - Интеграция с progression-service
+      endpoints:
+        - POST /api/v1/gameplay/skill-checks/execute - выполнение проверки
+        - GET /api/v1/gameplay/skill-checks/{checkId}/result - результат проверки
+        - POST /api/v1/gameplay/skill-checks/group - групповая проверка
+
+    - name: player-quest-board
+      location: social-service (модуль quest-board)
+      responsibility: |
+        Система пользовательских квестов:
+        - Создание квестов игроками
+        - Модерация квестов
+        - Рейтинг и популярность квестов
+        - Интеграция с досками фиксеров
+        - Превращение популярных квестов в канон
+      endpoints:
+        - POST /api/v1/social/quest-board/create - создание квеста
+        - GET /api/v1/social/quest-board/list - список квестов
+        - POST /api/v1/social/quest-board/{questId}/accept - принятие квеста
+        - POST /api/v1/social/quest-board/{questId}/rate - оценка квеста
+        - GET /api/v1/social/quest-board/popular - популярные квесты
+
+    - name: quest-analytics
+      location: analytics-service (модуль quest-analytics)
+      responsibility: |
+        Аналитика и логирование квестов:
+        - Логирование прохождений квестов
+        - Статистика выборов игроков
+        - Анализ баланса наград
+        - Отслеживание популярности квестов
+        - Метрики для балансировки
+      endpoints:
+        - POST /api/v1/analytics/quests/log - логирование события
+        - GET /api/v1/analytics/quests/stats - статистика квестов
+        - GET /api/v1/analytics/quests/choices - статистика выборов
+
+    - name: quest-event-publisher
+      location: gameplay-service (модуль quest-events)
+      responsibility: |
+        Публикация событий квестов:
+        - Публикация событий в event bus
+        - Подписка на события других систем
+        - Синхронизация состояния между сервисами
+        - Интеграция с realtime-gateway для уведомлений
+      events_published:
+        - quest:started - квест начат
+        - quest:objective-completed - цель выполнена
+        - quest:completed - квест завершен
+        - quest:failed - квест провален
+        - quest:abandoned - квест брошен
+        - quest:choice-made - сделан выбор
+        - quest:branch-unlocked - ветка разблокирована
+      events_subscribed:
+        - combat:enemy-killed - убийство врага
+        - inventory:item-collected - сбор предмета
+        - social:reputation-changed - изменение репутации
+        - economy:transaction-completed - завершение транзакции
+
+  data_flows:
+    quest_start_flow: |
+      1. Клиент отправляет POST /api/v1/gameplay/quests/start
+      2. Quest Engine проверяет требования квеста через character-service
+      3. Quest Content Manager загружает определение квеста
+      4. Quest Engine создает инстанс квеста в БД
+      5. Quest Branch Manager проверяет доступность веток
+      6. Quest Engine публикует событие quest:started
+      7. Realtime Gateway отправляет уведомление клиенту
+      8. Quest Analytics логирует старт квеста
+
+    quest_progress_flow: |
+      1. Игрок выполняет действие (убийство врага, сбор предмета)
+      2. Соответствующий сервис публикует событие (combat:enemy-killed)
+      3. Quest Event Publisher получает событие
+      4. Quest Engine проверяет активные квесты игрока
+      5. Quest Engine обновляет прогресс цели
+      6. Если цель выполнена, публикуется quest:objective-completed
+      7. Если все цели выполнены, запускается quest_complete_flow
+
+    quest_complete_flow: |
+      1. Quest Engine определяет завершение всех целей
+      2. Quest Reward Calculator рассчитывает награды
+      3. Quest Engine обращается к economy-service для выдачи наград
+      4. Quest Branch Manager применяет последствия выборов
+      5. Quest Engine обновляет состояние квеста на "completed"
+      6. Quest Engine публикует событие quest:completed
+      7. Quest Analytics логирует завершение
+      8. Realtime Gateway отправляет уведомление с наградами
+
+    dialogue_flow: |
+      1. Игрок инициирует диалог с NPC
+      2. Dialogue System загружает диалоговое дерево
+      3. Dialogue System проверяет условия для опций
+      4. Клиент получает доступные опции
+      5. Игрок выбирает опцию
+      6. Dialogue System обрабатывает выбор
+      7. Если есть skill check, Skill Check Engine выполняет проверку
+      8. Dialogue System переходит к следующему узлу
+      9. Quest Branch Manager применяет последствия выбора
+      10. Состояние диалога сохраняется в БД
+
+    player_quest_creation_flow: |
+      1. Игрок создает квест через POST /api/v1/social/quest-board/create
+      2. Player Quest Board валидирует квест
+      3. Квест отправляется на модерацию
+      4. После модерации квест публикуется на доске
+      5. Другие игроки могут принимать квест
+      6. При принятии создается инстанс через Quest Engine
+      7. При достижении популярности квест может стать каноном
+
+  database_structure:
+    tables:
+      - name: quest_definitions
+        description: Определения квестов (контент)
+        columns:
+          - id: UUID PRIMARY KEY
+          - quest_type: ENUM (main, side, daily, weekly, faction, guild, dynamic, event, social, player_created)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - level_min: INTEGER
+          - level_max: INTEGER
+          - requirements: JSONB (требования для старта)
+          - objectives: JSONB (цели квеста)
+          - rewards: JSONB (базовые награды)
+          - branches: JSONB (ветвление)
+          - dialogue_id: UUID (ссылка на диалог)
+          - version: INTEGER
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: quest_instances
+        description: Инстансы квестов для игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - quest_definition_id: UUID FOREIGN KEY
+          - status: ENUM (active, completed, failed, abandoned)
+          - current_objectives: JSONB (текущий прогресс целей)
+          - choices_made: JSONB (выборы игрока)
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP
+          - rewards_received: JSONB (полученные награды)
+
+      - name: dialogue_definitions
+        description: Определения диалогов
+        columns:
+          - id: UUID PRIMARY KEY
+          - quest_id: UUID FOREIGN KEY (nullable)
+          - npc_id: UUID FOREIGN KEY
+          - tree: JSONB (диалоговое дерево)
+          - conditions: JSONB (условия для опций)
+          - version: INTEGER
+          - created_at: TIMESTAMP
+
+      - name: dialogue_states
+        description: Состояния диалогов для игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - dialogue_id: UUID FOREIGN KEY
+          - current_node_id: VARCHAR(255)
+          - visited_nodes: JSONB
+          - choices_history: JSONB
+          - last_interaction: TIMESTAMP
+
+      - name: quest_branches
+        description: Ветки квестов и последствия
+        columns:
+          - id: UUID PRIMARY KEY
+          - quest_id: UUID FOREIGN KEY
+          - branch_id: VARCHAR(255)
+          - parent_branch_id: VARCHAR(255) (nullable)
+          - unlock_conditions: JSONB
+          - consequences: JSONB (последствия выбора)
+          - locked_content: JSONB (контент, который блокируется)
+          - unlocked_content: JSONB (контент, который разблокируется)
+
+      - name: player_quest_choices
+        description: Выборы игроков в квестах
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - quest_id: UUID FOREIGN KEY
+          - branch_id: VARCHAR(255)
+          - choice_id: VARCHAR(255)
+          - timestamp: TIMESTAMP
+          - consequences_applied: BOOLEAN
+
+      - name: skill_check_results
+        description: Результаты проверок навыков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - quest_id: UUID FOREIGN KEY (nullable)
+          - dialogue_id: UUID FOREIGN KEY (nullable)
+          - skill_type: VARCHAR(100)
+          - base_value: DECIMAL(3,2)
+          - modifiers: JSONB
+          - final_value: DECIMAL(3,2)
+          - success: BOOLEAN
+          - timestamp: TIMESTAMP
+
+      - name: player_quest_board
+        description: Пользовательские квесты
+        columns:
+          - id: UUID PRIMARY KEY
+          - creator_id: UUID FOREIGN KEY
+          - title: VARCHAR(255)
+          - description: TEXT
+          - objectives: JSONB
+          - rewards: JSONB
+          - status: ENUM (pending, approved, rejected, published)
+          - rating: DECIMAL(3,2)
+          - completion_count: INTEGER
+          - created_at: TIMESTAMP
+          - published_at: TIMESTAMP (nullable)
+
+      - name: quest_analytics
+        description: Аналитика квестов
+        columns:
+          - id: UUID PRIMARY KEY
+          - quest_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - event_type: VARCHAR(100)
+          - event_data: JSONB
+          - timestamp: TIMESTAMP
+
+  integrations:
+    character_service: |
+      - Проверка требований квеста (уровень, класс, фракция)
+      - Получение данных персонажа для skill checks
+      - Обновление прогресса персонажа
+
+    economy_service: |
+      - Выдача наград (валюта, предметы)
+      - Расчет динамических наград на основе экономики
+      - Интеграция с системой торговли
+
+    social_service: |
+      - Интеграция с системой репутации
+      - Управление пользовательскими квестами
+      - Интеграция с кланами и фракциями
+
+    narrative_service: |
+      - Управление сюжетными линиями
+      - Интеграция с системой лиг
+      - Управление каноном
+
+    event_service: |
+      - Публикация событий квестов
+      - Подписка на события других систем
+      - Управление временными событиями
+
+    progression_service: |
+      - Получение данных навыков для проверок
+      - Обновление прогресса при завершении квестов
+      - Интеграция с системой ачивок
+
+    realtime_gateway: |
+      - Отправка уведомлений о квестах
+      - Реалтайм обновления прогресса
+      - Синхронизация состояния диалогов
+
+technical_specification:
+  subtasks:
+    - id: quest-engine-core
+      title: Реализация основного движка квестов
+      description: |
+        Реализация Quest Engine с поддержкой state machine, управления инстансами,
+        обработки целей и интеграции с event bus.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: quest-content-manager
+      title: Реализация менеджера контента квестов
+      description: |
+        Реализация Quest Content Manager с загрузкой и кэшированием определений квестов,
+        версионированием и фильтрацией.
+      dependencies: [quest-engine-core]
+      estimated_effort: 3 days
+
+    - id: dialogue-system
+      title: Реализация системы диалогов
+      description: |
+        Реализация Dialogue System с поддержкой диалоговых деревьев, выборов игрока,
+        условий и сохранения состояния.
+      dependencies: [quest-engine-core]
+      estimated_effort: 4 days
+
+    - id: quest-branch-manager
+      title: Реализация менеджера ветвления
+      description: |
+        Реализация Quest Branch Manager с отслеживанием выборов, применением последствий
+        и управлением блокировкой контента.
+      dependencies: [quest-engine-core, dialogue-system]
+      estimated_effort: 4 days
+
+    - id: quest-reward-calculator
+      title: Реализация калькулятора наград
+      description: |
+        Реализация Quest Reward Calculator с расчетом динамических наград, учетом стиля
+        прохождения и интеграцией с economy-service.
+      dependencies: [quest-engine-core]
+      estimated_effort: 3 days
+
+    - id: skill-check-engine
+      title: Реализация движка проверок навыков
+      description: |
+        Реализация Skill Check Engine с проверкой навыков, учетом модификаторов,
+        групповыми проверками и логированием.
+      dependencies: [quest-engine-core]
+      estimated_effort: 3 days
+
+    - id: player-quest-board
+      title: Реализация доски пользовательских квестов
+      description: |
+        Реализация Player Quest Board с созданием квестов игроками, модерацией,
+        рейтингом и интеграцией с досками фиксеров.
+      dependencies: [quest-engine-core, social-service]
+      estimated_effort: 5 days
+
+    - id: quest-analytics
+      title: Реализация аналитики квестов
+      description: |
+        Реализация Quest Analytics с логированием событий, статистикой выборов
+        и метриками для балансировки.
+      dependencies: [quest-engine-core]
+      estimated_effort: 2 days
+
+    - id: quest-event-publisher
+      title: Реализация публикатора событий
+      description: |
+        Реализация Quest Event Publisher с публикацией событий в event bus,
+        подпиской на события других систем и синхронизацией состояния.
+      dependencies: [quest-engine-core, event-service]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД для квестов
+      description: |
+        Создание таблиц БД для квестов, диалогов, ветвления, проверок навыков
+        и пользовательских квестов с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        Gateway --> QuestEngine[Quest Engine]
+        Gateway --> DialogueSystem[Dialogue System]
+        Gateway --> QuestBoard[Player Quest Board]
+        
+        QuestEngine --> ContentManager[Quest Content Manager]
+        QuestEngine --> BranchManager[Quest Branch Manager]
+        QuestEngine --> RewardCalc[Quest Reward Calculator]
+        QuestEngine --> SkillCheck[Skill Check Engine]
+        QuestEngine --> EventPub[Quest Event Publisher]
+        
+        DialogueSystem --> BranchManager
+        DialogueSystem --> SkillCheck
+        
+        QuestEngine --> CharacterService[Character Service]
+        QuestEngine --> EconomyService[Economy Service]
+        QuestEngine --> SocialService[Social Service]
+        QuestEngine --> NarrativeService[Narrative Service]
+        QuestEngine --> ProgressionService[Progression Service]
+        
+        EventPub --> EventBus[Event Bus]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        QuestEngine --> Analytics[Quest Analytics]
+        QuestBoard --> SocialService
+        
+        QuestEngine --> DB[(Quest Database)]
+        DialogueSystem --> DB
+        BranchManager --> DB
+        SkillCheck --> DB
+        QuestBoard --> DB
+        Analytics --> DB
+    ```
+
+  quest_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant QE as Quest Engine
+        participant CM as Content Manager
+        participant BM as Branch Manager
+        participant RC as Reward Calculator
+        participant ES as Economy Service
+        participant EB as Event Bus
+        
+        C->>QE: POST /quests/start
+        QE->>CM: Load quest definition
+        CM-->>QE: Quest definition
+        QE->>BM: Check branch availability
+        BM-->>QE: Available branches
+        QE->>QE: Create quest instance
+        QE->>EB: Publish quest:started
+        QE-->>C: Quest started
+        
+        Note over C,EB: Player completes objectives
+        
+        C->>QE: POST /quests/{id}/complete-objective
+        QE->>QE: Update progress
+        QE->>EB: Publish quest:objective-completed
+        QE-->>C: Objective completed
+        
+        C->>QE: POST /quests/{id}/complete
+        QE->>RC: Calculate rewards
+        RC-->>QE: Rewards
+        QE->>ES: Distribute rewards
+        ES-->>QE: Rewards distributed
+        QE->>BM: Apply consequences
+        QE->>EB: Publish quest:completed
+        QE-->>C: Quest completed with rewards
+    ```
+
+  dialogue_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant DS as Dialogue System
+        participant SC as Skill Check Engine
+        participant BM as Branch Manager
+        participant PS as Progression Service
+        
+        C->>DS: GET /dialogues/{id}
+        DS->>DS: Load dialogue tree
+        DS->>BM: Check conditions
+        BM-->>DS: Available options
+        DS-->>C: Dialogue with options
+        
+        C->>DS: POST /dialogues/{id}/select
+        DS->>DS: Check if skill check needed
+        alt Skill check required
+            DS->>SC: Execute skill check
+            SC->>PS: Get player skills
+            PS-->>SC: Skills data
+            SC->>SC: Calculate result
+            SC-->>DS: Check result
+        end
+        DS->>BM: Apply choice consequences
+        BM-->>DS: Consequences applied
+        DS->>DS: Move to next node
+        DS-->>C: Next dialogue node
+    ```
+
