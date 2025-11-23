@@ -16,52 +16,62 @@ Cursor Background Agents позволяют автоматизировать р�
 - **Метки:** `agent:architect`, `stage:design`
 - **Что делает:** Структурирует идеи, проектирует архитектуру
 
-### 3. API Designer (`agent-api-designer.mdc`)
+### 3. Database Engineer (`agent-database.mdc`)
+- **Статус:** `database-dev`
+- **Метки:** `agent:database`, `stage:database`, `database`
+- **Что делает:** Проектирует схемы БД, создает Liquibase миграции
+
+### 4. API Designer (`agent-api-designer.mdc`)
 - **Статус:** `api-designer`
 - **Метки:** `agent:api-designer`, `stage:api-design`, `protocol`
 - **Что делает:** Создает OpenAPI спецификации
 
-### 4. Backend Developer (`agent-backend.mdc`)
+### 5. Backend Developer (`agent-backend.mdc`)
 - **Статус:** `backend-dev`
 - **Метки:** `agent:backend`, `stage:backend-dev`, `backend`
 - **Что делает:** Реализует Go сервисы
 
-### 5. Network Engineer (`agent-network.mdc`)
+### 6. Network Engineer (`agent-network.mdc`)
 - **Статус:** `network-dev`
 - **Метки:** `agent:network`, `stage:network`, `infrastructure`, `protocol`
 - **Что делает:** Настраивает Envoy, gRPC, WebSocket, оптимизирует протокол
 
-### 6. DevOps (`agent-devops.mdc`)
+### 7. Security Agent (`agent-security.mdc`)
+- **Статус:** `security`
+- **Метки:** `agent:security`, `stage:security`, `security`
+- **Что делает:** Аудит безопасности, валидация, интеграция anti-cheat
+
+### 8. DevOps (`agent-devops.mdc`)
 - **Статус:** `devops`
 - **Метки:** `agent:devops`, `stage:infrastructure`, `infrastructure`
 - **Что делает:** Docker, Kubernetes, деплой, CI/CD, observability
 
-### 7. Performance Engineer (`agent-performance.mdc`)
+### 9. Performance Engineer (`agent-performance.mdc`)
 - **Статус:** `performance`
 - **Метки:** `agent:performance`, `stage:performance`
 - **Что делает:** Оптимизирует производительность, профилирование
 
-### 8. UE5 Developer (`agent-ue5.mdc`)
+### 10. UE5 Developer (`agent-ue5.mdc`)
 - **Статус:** `ue5-dev`
 - **Метки:** `agent:ue5`, `stage:client-dev`, `client`
 - **Что делает:** Реализует клиент на Unreal Engine 5.7
-
-### 9. QA/Testing (`agent-qa.mdc`)
-- **Статус:** `testing`
-- **Метки:** `agent:qa`, `stage:testing`
-- **Что делает:** Тестирует функциональность, ищет баги
-
-### 10. Content Writer (`agent-content-writer.mdc`)
-- **Статус:** `content-writer`
-- **Метки:** `agent:content-writer`, `stage:content`, `content`, `canon`, `lore`, `quest`
-- **Что делает:** Создает контентные квесты, лор, наратив, диалоги. Работает с готовой архитектурой системы квестов.
 
 ### 11. QA/Testing (`agent-qa.mdc`)
 - **Статус:** `testing`
 - **Метки:** `agent:qa`, `stage:testing`
 - **Что делает:** Тестирует функциональность, ищет баги
 
-### 12. Release (`agent-release.mdc`)
+### 12. Content Writer (`agent-content-writer.mdc`)
+- **Статус:** `content-writer`
+- **Метки:** `agent:content-writer`, `stage:content`, `content`, `canon`, `lore`, `quest`
+- **Что делает:** Создает контентные квесты, лор, наратив, диалоги. Работает с готовой архитектурой системы квестов.
+
+### 13. Game Balance Agent (`agent-game-balance.mdc`)
+- **Статус:** `game-balance`
+- **Метки:** `agent:game-balance`, `stage:balance`, `game-balance`
+- **Что делает:** Балансирует игровые механики, экономику, сложность
+
+### 14. Release (`agent-release.mdc`)
 - **Статус:** `release`
 - **Метки:** `agent:release`, `stage:release`
 - **Что делает:** Готовит релиз, создает release notes
@@ -70,11 +80,9 @@ Cursor Background Agents позволяют автоматизировать р�
 
 ### Системные задачи (требуют архитектуры):
 ```
-[Idea Writer] → [Architect] → [API Designer] → [Backend Dev] → [Network] → [UE5 Dev] → [QA] → [Release]
-                    ↓                                                      ↓
-              [DevOps] ←───────────────────────────────────────────────
-                    ↓
-              [Performance] (может работать параллельно)
+[Idea Writer] → [Architect] → [Database Engineer] → [API Designer] → [Backend Dev] → [Network] → [Security] → [DevOps] → [UE5 Dev] → [QA] → [Game Balance] → [Release]
+                    ↓                                                                                                              ↓
+              [Performance] (может работать параллельно)                                                                     [Performance]
 ```
 
 ### Контентные задачи (НЕ требуют архитектуры):
@@ -136,14 +144,17 @@ GitHub Actions автоматически:
 В GitHub Project создайте Custom Field "Development Stage" со значениями:
 - `idea-writer`
 - `architect`
+- `database-dev`
 - `api-designer`
 - `backend-dev`
 - `network-dev`
+- `security`
 - `devops`
 - `performance`
 - `ue5-dev`
 - `content-writer`
 - `testing`
+- `game-balance`
 - `release`
 
 ## Создание Views
