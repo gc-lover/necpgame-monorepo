@@ -1,585 +1,605 @@
 metadata:
   id: announcement-system-architecture
-  title: Архитектура системы объявлений (Announcement System)
+  title: Архитектура системы объявлений
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T03:30:00Z
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:59:00Z
   owners:
     - role: architect
       contact: architect@necp.game
   tags:
     - architecture
-    - announcement
-    - backend
     - live-ops
     - communications
+    - announcements
   related_systems:
-    - liveops-service-go
-    - admin-api
+    - announcement-service
     - notification-service
+    - admin-api
+    - player-service
   related_documents:
     - id: backend-announcement-system
-      relation: extends
+      relation: implements
   github_issue: 323
   visibility: internal
   audience:
     - architect
     - backend
+    - live-ops
     - api-designer
 
 summary:
   problem: |
-    Требуется спроектировать полную техническую архитектуру системы объявлений
-    для управления новостями, патчноутами, событиями, таргетингом и много канальной
-    доставкой объявлений для player engagement.
+    Требуется спроектировать полную архитектуру системы объявлений, включающую:
+    - Управление новостями, патчноутами, событиями
+    - Систему публикации объявлений
+    - Систему доставки объявлений (много канальная)
+    - Систему таргетинга
+    - Систему учёта прочтений
+    - Интеграции с уведомлениями и админ-панелью
   goal: |
     Создать архитектурную схему системы объявлений с определением:
-    - Компонентов системы (микросервисы, модули)
-    - API endpoints (высокоуровнево)
-    - Потоков данных и интеграций
-    - Системы публикации объявлений
-    - Системы доставки объявлений
-    - Системы таргетинга
-    - Системы учёта прочтений
+    - Компонентов для управления объявлениями
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
     - Технического задания для реализации
   essence: |
-    Система объявлений для управления новостями, патчноутами, событиями с таргетингом
-    и много канальной доставкой через popup, push, email и новостную ленту.
+    Полная архитектура системы объявлений с поддержкой публикации, доставки,
+    таргетинга и учёта прочтений.
 
 architecture:
   overview: |
-    Система объявлений состоит из восьми основных компонентов:
-    1. Announcement Manager - управление объявлениями
+    Архитектура системы объявлений состоит из следующих компонентов:
+    1. Announcement Manager - управление системой объявлений
     2. Announcement Publisher - публикация объявлений
-    3. Announcement Scheduler - планировщик публикаций
-    4. Announcement Delivery Service - доставка объявлений
-    5. Announcement Targeting Engine - система таргетинга
+    3. Announcement Scheduler - планирование публикации
+    4. Announcement Delivery Manager - управление доставкой
+    5. Announcement Targeting Manager - управление таргетингом
     6. Announcement Read Tracker - учёт прочтений
-    7. Patch Notes Service - сервис патчноутов
-    8. Announcement Event Handler - обработка событий
+    7. Patch Notes Manager - управление патчноутами
+    8. News Feed Manager - управление новостной лентой
+    9. Announcement Analytics Collector - сбор аналитики
+    10. Announcement Telemetry Collector - сбор телеметрии
 
-  components:
-    - name: Announcement Manager
-      location: liveops-service-go (модуль announcement)
+  microservices:
+    - name: announcement-service
+      port: 8094
       responsibility: |
-        - Управление объявлениями
-        - Создание объявлений
-        - Редактирование объявлений
-        - Управление статусами
-        - Интеграция с admin API
-      announcement_types: |
-        - GAME_NEWS: игровые новости
-        - PATCH_NOTES: патчноуты
-        - MAINTENANCE: обслуживание
-        - EVENT: события
-        - PROMOTION: промоакции
-        - COMMUNITY: сообщество
-        - EMERGENCY: экстренные
-      priorities: |
-        - LOW: низкий
-        - NORMAL: обычный
-        - HIGH: высокий
-        - CRITICAL: критический
-      display_styles: |
-        - NEWS_FEED: новостная лента
-        - POPUP: всплывающее окно
-        - MODAL: модальное окно
-        - BANNER: баннер
-        - TOAST: уведомление
-      endpoints:
-        - POST /api/v1/liveops/announcements - создание объявления
-        - GET /api/v1/liveops/announcements - список объявлений
-        - GET /api/v1/liveops/announcements/{announcement_id} - информация об объявлении
-        - PUT /api/v1/liveops/announcements/{announcement_id} - обновление объявления
-        - DELETE /api/v1/liveops/announcements/{announcement_id} - удаление объявления
-
-    - name: Announcement Publisher
-      location: liveops-service-go (модуль announcement-publisher)
-      responsibility: |
+        Обработка системы объявлений:
+        - Управление системой объявлений
         - Публикация объявлений
-        - Управление статусами публикации
-        - Немедленная публикация
-        - Отложенная публикация
-      publication_statuses: |
-        - DRAFT: черновик
-        - SCHEDULED: запланировано
-        - PUBLISHED: опубликовано
-        - ARCHIVED: архивировано
-      endpoints:
-        - POST /api/v1/liveops/announcements/{announcement_id}/publish - публикация объявления
-        - POST /api/v1/liveops/announcements/{announcement_id}/schedule - планирование публикации
-        - POST /api/v1/liveops/announcements/{announcement_id}/archive - архивирование
-
-    - name: Announcement Scheduler
-      location: liveops-service-go (модуль announcement-scheduler)
-      responsibility: |
-        - Планирование публикаций
-        - Автоматическая публикация по расписанию
-        - Отсчёт времени до публикации
-        - Интеграция с cron/scheduler
-      scheduling_features: |
-        - Планирование по дате/времени
-        - Автоматическая публикация
-        - Отсчёт времени
-        - Уведомления перед публикацией
-      endpoints:
-        - POST /api/v1/liveops/announcements/{announcement_id}/schedule - планирование
-        - GET /api/v1/liveops/announcements/scheduled - запланированные объявления
-
-    - name: Announcement Delivery Service
-      location: liveops-service-go (модуль announcement-delivery)
-      responsibility: |
-        - Доставка объявлений через различные каналы
-        - In-game popup
-        - Push-уведомления
-        - Email
-        - Новостная лента
-        - Интеграция с notification service
-      delivery_channels: |
-        - IN_GAME_POPUP: всплывающее окно в игре
-        - PUSH_NOTIFICATION: push-уведомление
-        - EMAIL: email
-        - NEWS_FEED: новостная лента
-      delivery_rules: |
-        - Для срочных сообщений автоматически активируются push и email
-        - Выбор каналов доставки при создании объявления
-        - Таргетинг аудитории
-      endpoints:
-        - POST /api/v1/liveops/announcements/{announcement_id}/deliver - доставка объявления
-        - GET /api/v1/liveops/announcements/{announcement_id}/delivery-status - статус доставки
-
-    - name: Announcement Targeting Engine
-      location: liveops-service-go (модуль announcement-targeting)
-      responsibility: |
-        - Таргетинг объявлений
-        - Выбор аудитории
-        - Фильтрация по критериям
-        - Персонализация
-      targeting_criteria: |
-        - По региону
-        - По уровню игрока
-        - По активности
-        - По платёжеспособности
-        - По языку
-        - По платформе
-      endpoints:
-        - POST /api/v1/liveops/announcements/{announcement_id}/target - настройка таргетинга
-        - GET /api/v1/liveops/announcements/{announcement_id}/audience - аудитория объявления
-
-    - name: Announcement Read Tracker
-      location: liveops-service-go (модуль announcement-tracking)
-      responsibility: |
-        - Учёт прочтений объявлений
-        - Отслеживание взаимодействий
-        - Статистика прочтений
-        - Аналитика
-      tracking_features: |
-        - Отслеживание прочтений
-        - Отслеживание кликов
-        - Отслеживание скрытий
-        - Статистика взаимодействий
-      endpoints:
-        - POST /api/v1/liveops/announcements/{announcement_id}/read - отметка прочтения
-        - POST /api/v1/liveops/announcements/{announcement_id}/click - отслеживание клика
-        - GET /api/v1/liveops/announcements/{announcement_id}/stats - статистика объявления
-
-    - name: Patch Notes Service
-      location: liveops-service-go (модуль patch-notes)
-      responsibility: |
+        - Планирование публикации
+        - Управление доставкой
+        - Управление таргетингом
+        - Учёт прочтений
         - Управление патчноутами
-        - Формирование модальных объявлений
-        - Версии патчноутов
-        - Списки улучшений и проблем
-      patch_notes_features: |
-        - Модальные объявления
-        - Версии патчноутов
-        - Списки улучшений
-        - Известные проблемы
-        - Вложения
+        - Управление новостной лентой
+        - Сбор аналитики
+        - Сбор телеметрии
+      components:
+        - announcement-manager: управление системой объявлений
+        - announcement-publisher: публикация объявлений
+        - announcement-scheduler: планирование публикации
+        - announcement-delivery-manager: управление доставкой
+        - announcement-targeting-manager: управление таргетингом
+        - announcement-read-tracker: учёт прочтений
+        - patch-notes-manager: управление патчноутами
+        - news-feed-manager: управление новостной лентой
+        - announcement-analytics-collector: сбор аналитики
+        - announcement-telemetry-collector: сбор телеметрии
       endpoints:
-        - POST /api/v1/liveops/patch-notes - создание патчноута
-        - GET /api/v1/liveops/patch-notes - список патчноутов
-        - GET /api/v1/liveops/patch-notes/{version} - патчноут по версии
+        - GET /api/v1/announcements - список объявлений
+        - GET /api/v1/announcements/{announcementId} - информация об объявлении
+        - POST /api/v1/announcements - создание объявления
+        - PUT /api/v1/announcements/{announcementId} - обновление объявления
+        - DELETE /api/v1/announcements/{announcementId} - удаление объявления
+        - POST /api/v1/announcements/{announcementId}/publish - публикация объявления
+        - POST /api/v1/announcements/{announcementId}/schedule - планирование публикации
+        - GET /api/v1/announcements/{characterId}/feed - новостная лента персонажа
+        - GET /api/v1/announcements/{characterId}/unread - непрочитанные объявления
+        - POST /api/v1/announcements/{announcementId}/read - отметка о прочтении
+        - GET /api/v1/announcements/patch-notes - список патчноутов
+        - GET /api/v1/announcements/patch-notes/{version} - патчноут по версии
+        - POST /api/v1/announcements/patch-notes - создание патчноута
+        - GET /api/v1/announcements/{characterId}/stats - статистика объявлений
+      websocket_channels:
+        - wss://api.necp.game/v1/announcements/{characterId} - поток новых объявлений персонажа
+      events_published:
+        - announcement.created: создано объявление
+        - announcement.updated: обновлено объявление
+        - announcement.published: опубликовано объявление
+        - announcement.scheduled: запланировано объявление
+        - announcement.delivered: доставлено объявление
+        - announcement.read: прочитано объявление
+        - announcement.patch-notes-published: опубликован патчноут
+      events_subscribed:
+        - character.created: создан персонаж
+        - character.level-up: повышение уровня персонажа
+        - maintenance.started: начато обслуживание
+        - maintenance.ended: завершено обслуживание
+        - event.started: начато событие
+        - event.ended: завершено событие
 
-    - name: Announcement Event Handler
-      location: liveops-service-go (модуль announcement-events)
-      responsibility: |
-        - Обработка событий объявлений
-        - Публикация событий в event bus
-        - Подписка на события от других систем
-        - Интеграция с аналитикой
-      announcement_events_published: |
-        - announcement:created
-        - announcement:published
-        - announcement:delivered
-        - announcement:read
-        - announcement:clicked
-      endpoints:
-        - GET /api/v1/liveops/announcements/events/{announcement_id} - события объявления
+  announcement_types:
+    - name: game_news
+      description: "Новости игры - общие новости о игре"
+      display_style: "NEWS_FEED"
+      priority: "MEDIUM"
 
-  data_flow:
-    announcement_creation: |
-      1. Администратор создаёт объявление через admin API
-      2. Announcement Manager сохраняет объявление в БД
-      3. Настраивается таргетинг через Announcement Targeting Engine
-      4. Выбираются каналы доставки
-      5. Если запланировано - Announcement Scheduler планирует публикацию
-      6. Announcement Event Handler публикует announcement:created
+    - name: patch_notes
+      description: "Патчноуты - информация об обновлениях"
+      display_style: "MODAL"
+      priority: "HIGH"
 
-    announcement_publication: |
-      1. При наступлении времени публикации или при ручной публикации
-      2. Announcement Publisher обновляет статус на PUBLISHED
-      3. Announcement Delivery Service выбирает аудиторию через Targeting Engine
-      4. Доставка через выбранные каналы (popup, push, email, news feed)
-      5. Announcement Event Handler публикует announcement:published и announcement:delivered
-      6. Notification Service отправляет уведомления
+    - name: maintenance
+      description: "Обслуживание - информация об обслуживании"
+      display_style: "POPUP"
+      priority: "HIGH"
 
-    announcement_read: |
-      1. Игрок видит объявление
-      2. Игрок взаимодействует с объявлением (читает, кликает, скрывает)
-      3. Announcement Read Tracker фиксирует взаимодействие
-      4. Статистика обновляется
-      5. Announcement Event Handler публикует события (announcement:read, announcement:clicked)
+    - name: event
+      description: "События - информация о событиях"
+      display_style: "BANNER"
+      priority: "MEDIUM"
 
-  integrations:
-    with_admin_api: |
-      - Создание объявлений
-      - Управление объявлениями
-      - Мониторинг статистики
+    - name: promotion
+      description: "Промо - рекламные акции"
+      display_style: "BANNER"
+      priority: "MEDIUM"
 
-    with_notification_service: |
-      - Доставка через push-уведомления
-      - Доставка через email
-      - Интеграция с системой уведомлений
+    - name: community
+      description: "Сообщество - новости сообщества"
+      display_style: "NEWS_FEED"
+      priority: "LOW"
 
-    with_player_service: |
-      - Получение информации об игроках для таргетинга
-      - Интеграция с профилями игроков
+    - name: emergency
+      description: "Экстренные - срочные объявления"
+      display_style: "POPUP"
+      priority: "CRITICAL"
 
-    with_analytics_service: |
-      - Статистика прочтений
-      - Статистика взаимодействий
-      - Интеграция с аналитикой
+  priorities:
+    - name: low
+      description: "Низкий приоритет"
+      delivery_channels: ["NEWS_FEED"]
 
-    with_realtime_gateway: |
-      - Синхронизация объявлений
-      - Уведомления о новых объявлениях
-      - Обновления в реальном времени
+    - name: medium
+      description: "Средний приоритет"
+      delivery_channels: ["NEWS_FEED", "BANNER"]
 
-  database_schema:
+    - name: high
+      description: "Высокий приоритет"
+      delivery_channels: ["NEWS_FEED", "BANNER", "POPUP"]
+
+    - name: critical
+      description: "Критический приоритет"
+      delivery_channels: ["NEWS_FEED", "BANNER", "POPUP", "PUSH", "EMAIL"]
+
+  display_styles:
+    - name: news_feed
+      description: "Новостная лента - стандартное отображение"
+      modal: false
+      dismissible: true
+
+    - name: popup
+      description: "Всплывающее окно - важные объявления"
+      modal: false
+      dismissible: true
+
+    - name: modal
+      description: "Модальное окно - требует взаимодействия"
+      modal: true
+      dismissible: false
+
+    - name: banner
+      description: "Баннер - постоянное отображение"
+      modal: false
+      dismissible: true
+
+    - name: toast
+      description: "Уведомление - краткое сообщение"
+      modal: false
+      dismissible: true
+
+  delivery_channels:
+    - name: in_game
+      description: "В игре - отображение в клиенте"
+      types: ["NEWS_FEED", "POPUP", "MODAL", "BANNER", "TOAST"]
+
+    - name: push
+      description: "Push уведомления - мобильные уведомления"
+      types: ["PUSH"]
+
+    - name: email
+      description: "Email - отправка на email"
+      types: ["EMAIL"]
+
+    - name: social_media
+      description: "Социальные сети - публикация в соцсетях"
+      types: ["SOCIAL_MEDIA"]
+
+  targeting:
+    criteria:
+      - level_range: "диапазон уровней"
+      - region: "регион"
+      - language: "язык"
+      - platform: "платформа"
+      - character_class: "класс персонажа"
+      - faction: "фракция"
+      - subscription_status: "статус подписки"
+      - custom_tags: "пользовательские теги"
+    operators:
+      - equals: "равно"
+      - not_equals: "не равно"
+      - in: "в списке"
+      - not_in: "не в списке"
+      - greater_than: "больше"
+      - less_than: "меньше"
+      - range: "диапазон"
+
+  publication_workflow:
+    statuses:
+      - draft: "черновик - редактирование"
+      - scheduled: "запланировано - ожидание публикации"
+      - published: "опубликовано - активно"
+      - archived: "архивировано - неактивно"
+    process:
+      - creation: "создание объявления"
+      - targeting_setup: "настройка таргетинга"
+      - scheduling: "планирование публикации"
+      - publication: "публикация объявления"
+      - delivery: "доставка объявления"
+      - tracking: "отслеживание прочтений"
+      - archiving: "архивирование объявления"
+
+  patch_notes:
+    structure:
+      - version: "версия патча"
+      - release_date: "дата релиза"
+      - improvements: "улучшения"
+      - bug_fixes: "исправления багов"
+      - known_issues: "известные проблемы"
+      - attachments: "вложения"
+    display:
+      - modal_window: "модальное окно при входе"
+      - news_feed: "в новостной ленте"
+      - dedicated_page: "отдельная страница"
+
+  read_tracking:
+    events:
+      - displayed: "отображено объявление"
+      - read: "прочитано объявление"
+      - clicked: "клик по объявлению"
+      - dismissed: "закрыто объявление"
+    analytics:
+      - read_rate: "процент прочтений"
+      - click_rate: "процент кликов"
+      - dismissal_rate: "процент закрытий"
+      - engagement_time: "время взаимодействия"
+
+  data_flows:
+    publication_flow: |
+      1. Администратор создает объявление через Admin API
+      2. Announcement Publisher сохраняет объявление в БД
+      3. Announcement Targeting Manager настраивает таргетинг
+      4. Announcement Scheduler планирует публикацию (если запланировано)
+      5. Announcement Publisher публикует объявление
+      6. Announcement Delivery Manager определяет целевую аудиторию
+      7. Announcement Delivery Manager доставляет объявление через каналы
+      8. Announcement Service публикует событие announcement.published
+      9. Notification Service отправляет уведомления
+      10. Realtime Gateway отправляет обновление клиентам
+
+    delivery_flow: |
+      1. Объявление опубликовано или запланировано
+      2. Announcement Delivery Manager получает список целевой аудитории
+      3. Announcement Targeting Manager фильтрует аудиторию по критериям
+      4. Announcement Delivery Manager выбирает каналы доставки
+      5. Announcement Delivery Manager доставляет через in-game канал
+      6. Notification Service доставляет через push/email каналы
+      7. Announcement Read Tracker отслеживает доставку
+      8. Announcement Service публикует событие announcement.delivered
+      9. Realtime Gateway отправляет обновление клиентам
+
+    read_tracking_flow: |
+      1. Игрок видит объявление в клиенте
+      2. Клиент отправляет событие displayed
+      3. Announcement Read Tracker фиксирует отображение
+      4. Игрок читает объявление
+      5. Клиент отправляет событие read
+      6. Announcement Read Tracker фиксирует прочтение
+      7. Announcement Service публикует событие announcement.read
+      8. Analytics Service собирает метрики
+
+  database_structure:
     tables:
       - name: announcements
         description: Объявления
-        fields:
-          - id: UUID (PK)
+        columns:
+          - id: UUID PRIMARY KEY
+          - type: ENUM (game_news, patch_notes, maintenance, event, promotion, community, emergency)
+          - priority: ENUM (low, medium, high, critical)
+          - display_style: ENUM (news_feed, popup, modal, banner, toast)
           - title: VARCHAR(255)
           - content: TEXT
-          - announcement_type: ENUM (GAME_NEWS, PATCH_NOTES, MAINTENANCE, EVENT, PROMOTION, COMMUNITY, EMERGENCY)
-          - priority: ENUM (LOW, NORMAL, HIGH, CRITICAL)
-          - display_style: ENUM (NEWS_FEED, POPUP, MODAL, BANNER, TOAST)
-          - status: ENUM (DRAFT, SCHEDULED, PUBLISHED, ARCHIVED)
-          - scheduled_publish_at: TIMESTAMP (nullable)
-          - published_at: TIMESTAMP (nullable)
-          - archived_at: TIMESTAMP (nullable)
-          - targeting: JSONB (nullable)
-          - delivery_channels: VARCHAR[] (default: ['NEWS_FEED'])
-          - media: JSONB (nullable)
-          - created_by: UUID (FK accounts)
+          - media_urls: JSONB
+          - targeting_criteria: JSONB
+          - delivery_channels: JSONB
+          - status: ENUM (draft, scheduled, published, archived)
+          - scheduled_publish_at: TIMESTAMP
+          - published_at: TIMESTAMP
+          - archived_at: TIMESTAMP
+          - created_by: UUID FOREIGN KEY
           - created_at: TIMESTAMP
           - updated_at: TIMESTAMP
-        indexes:
-          - status, scheduled_publish_at
-          - announcement_type, status
-          - published_at DESC
 
       - name: player_announcement_reads
         description: Прочтения объявлений игроками
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - announcement_id: UUID (FK announcements)
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - announcement_id: UUID FOREIGN KEY
+          - displayed_at: TIMESTAMP
           - read_at: TIMESTAMP
-          - clicked_at: TIMESTAMP (nullable)
-          - hidden_at: TIMESTAMP (nullable)
-          - delivery_channel: VARCHAR(50)
-        constraints: |
-          - UNIQUE(player_id, announcement_id)
-        indexes:
-          - player_id, read_at
-          - announcement_id, read_at
+          - clicked_at: TIMESTAMP
+          - dismissed_at: TIMESTAMP
+          - engagement_time: INTEGER
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
 
       - name: patch_notes
         description: Патчноуты
-        fields:
-          - id: UUID (PK)
-          - version: VARCHAR(50) (UNIQUE)
-          - title: VARCHAR(255)
-          - content: TEXT
-          - improvements: TEXT[]
-          - known_issues: TEXT[]
-          - attachments: JSONB (nullable)
-          - announcement_id: UUID (FK announcements, nullable)
-          - published_at: TIMESTAMP
+        columns:
+          - id: UUID PRIMARY KEY
+          - version: VARCHAR(50) UNIQUE
+          - release_date: TIMESTAMP
+          - improvements: JSONB
+          - bug_fixes: JSONB
+          - known_issues: JSONB
+          - attachments: JSONB
+          - announcement_id: UUID FOREIGN KEY
           - created_at: TIMESTAMP
-        indexes:
-          - version
-          - published_at DESC
+          - updated_at: TIMESTAMP
+
+      - name: announcement_telemetry
+        description: Телеметрия объявлений
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_type: VARCHAR(50)
+          - announcement_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - event_data: JSONB
+          - created_at: TIMESTAMP
+
+  integrations:
+    admin_api: |
+      - Создание объявлений
+      - Обновление объявлений
+      - Удаление объявлений
+      - Публикация объявлений
+      - Планирование публикации
+
+    notification_service: |
+      - Доставка через push уведомления
+      - Доставка через email
+      - Уведомления о новых объявлениях
+
+    player_service: |
+      - Получение информации о персонаже для таргетинга
+      - Проверка критериев таргетинга
+      - Обновление статистики персонажа
+
+    character_service: |
+      - Получение информации о персонаже
+      - Проверка уровня персонажа
+      - Проверка класса персонажа
+
+    maintenance_service: |
+      - Интеграция с системой обслуживания
+      - Автоматическое создание объявлений об обслуживании
+      - Уведомления о начале/завершении обслуживания
+
+    event_service: |
+      - Интеграция с системой событий
+      - Автоматическое создание объявлений о событиях
+      - Уведомления о начале/завершении событий
+
+    analytics_service: |
+      - Логирование всех операций объявлений
+      - Сбор метрик эффективности
+      - Анализ паттернов прочтений
+      - Мониторинг engagement
+
+    realtime_gateway: |
+      - Отправка realtime обновлений объявлений
+      - Уведомления о новых объявлениях
+      - Синхронизация новостной ленты
 
 technical_specification:
-  backend_requirements:
-    - Реализация модулей в liveops-service-go:
-      - announcement (управление объявлениями)
-      - announcement-publisher (публикация)
-      - announcement-scheduler (планировщик)
-      - announcement-delivery (доставка)
-      - announcement-targeting (таргетинг)
-      - announcement-tracking (учёт прочтений)
-      - patch-notes (патчноуты)
-      - announcement-events (события)
-    - Интеграция с admin API
-    - Интеграция с notification service
-    - Интеграция с analytics service
-    - Оптимизация запросов к БД (индексы, кэширование)
+  subtasks:
+    - id: announcement-manager
+      title: Реализация менеджера системы объявлений
+      description: |
+        Реализация Announcement Manager с управлением системой объявлений
+        и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 4 days
 
-  realtime_requirements:
-    - Синхронизация объявлений через WebSocket
-    - Уведомления о новых объявлениях
-    - Обновления в реальном времени
+    - id: announcement-publisher
+      title: Реализация публикатора объявлений
+      description: |
+        Реализация Announcement Publisher с публикацией объявлений,
+        управлением статусами и валидацией.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
 
-  performance_requirements:
-    - Создание объявления < 200ms
-    - Публикация объявления < 500ms
-    - Доставка объявления < 1s
-    - Загрузка объявлений < 200ms
-    - Поддержка до 10K объявлений
-    - Поддержка до 1M прочтений
+    - id: announcement-scheduler
+      title: Реализация планировщика публикации
+      description: |
+        Реализация Announcement Scheduler с планированием публикации,
+        автоматическим запуском и управлением расписанием.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
 
-  scalability_requirements:
-    - Горизонтальное масштабирование через liveops-service
-    - Распределение нагрузки на объявления
-    - Оптимизация запросов к БД (batch, индексы)
-    - Кэширование объявлений в Redis
-    - Оптимизация доставки через очереди
+    - id: announcement-delivery-manager
+      title: Реализация менеджера доставки
+      description: |
+        Реализация Announcement Delivery Manager с управлением доставкой,
+        выбором каналов и интеграцией с Notification Service.
+      dependencies: [announcement-manager]
+      estimated_effort: 5 days
 
-subtasks:
-  - id: announcement-manager-module
-    title: Реализация модуля Announcement Manager
-    description: |
-      Управление объявлениями
-      Создание объявлений
-      Управление статусами
-    priority: high
-    estimated_time: 3-4 дня
+    - id: announcement-targeting-manager
+      title: Реализация менеджера таргетинга
+      description: |
+        Реализация Announcement Targeting Manager с управлением таргетингом,
+        фильтрацией аудитории и проверкой критериев.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
 
-  - id: announcement-publisher
-    title: Реализация Announcement Publisher
-    description: |
-      Публикация объявлений
-      Управление статусами публикации
-      Немедленная/отложенная публикация
-    priority: high
-    estimated_time: 2-3 дня
+    - id: announcement-read-tracker
+      title: Реализация трекера прочтений
+      description: |
+        Реализация Announcement Read Tracker с учётом прочтений,
+        отслеживанием взаимодействий и сбором метрик.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
 
-  - id: announcement-scheduler
-    title: Реализация Announcement Scheduler
-    description: |
-      Планирование публикаций
-      Автоматическая публикация
-      Интеграция с cron/scheduler
-    priority: high
-    estimated_time: 3-4 дня
+    - id: patch-notes-manager
+      title: Реализация менеджера патчноутов
+      description: |
+        Реализация Patch Notes Manager с управлением патчноутами,
+        версионированием и отображением.
+      dependencies: [announcement-manager]
+      estimated_effort: 4 days
 
-  - id: announcement-delivery-service
-    title: Реализация Announcement Delivery Service
-    description: |
-      Доставка объявлений
-      Много канальная доставка
-      Интеграция с notification service
-    priority: high
-    estimated_time: 4-5 дней
+    - id: news-feed-manager
+      title: Реализация менеджера новостной ленты
+      description: |
+        Реализация News Feed Manager с управлением новостной лентой,
+        сортировкой и фильтрацией объявлений.
+      dependencies: [announcement-manager]
+      estimated_effort: 3 days
 
-  - id: announcement-targeting-engine
-    title: Реализация Announcement Targeting Engine
-    description: |
-      Таргетинг объявлений
-      Выбор аудитории
-      Фильтрация по критериям
-    priority: high
-    estimated_time: 3-4 дня
+    - id: announcement-analytics-collector
+      title: Реализация сборщика аналитики
+      description: |
+        Реализация Announcement Analytics Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [announcement-manager]
+      estimated_effort: 3 days
 
-  - id: announcement-read-tracker
-    title: Реализация Announcement Read Tracker
-    description: |
-      Учёт прочтений
-      Отслеживание взаимодействий
-      Статистика
-    priority: high
-    estimated_time: 3-4 дня
+    - id: announcement-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Announcement Telemetry Collector с логированием событий,
+        сбором телеметрии и интеграцией с Analytics Service.
+      dependencies: [announcement-manager]
+      estimated_effort: 2 days
 
-  - id: patch-notes-service
-    title: Реализация Patch Notes Service
-    description: |
-      Управление патчноутами
-      Формирование модальных объявлений
-      Версии патчноутов
-    priority: high
-    estimated_time: 3-4 дня
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений объявлений,
+        новостной ленты и уведомлений.
+      dependencies: [announcement-manager]
+      estimated_effort: 3 days
 
-  - id: announcement-event-handler
-    title: Реализация Announcement Event Handler
-    description: |
-      Обработка событий
-      Публикация событий
-      Интеграция с аналитикой
-    priority: high
-    estimated_time: 2-3 дня
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы объявлений.
+      dependencies: [announcement-manager]
+      estimated_effort: 2 days
 
-  - id: database-optimization
-    title: Оптимизация БД и запросов
-    description: |
-      Создание индексов
-      Оптимизация запросов
-      Кэширование объявлений
-    priority: medium
-    estimated_time: 1-2 дня
-
-  - id: api-endpoints
-    title: Реализация REST API endpoints
-    description: |
-      Создание всех endpoints для объявлений
-      Интеграция с существующим API liveops-service
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: integration-testing
-    title: Интеграционное тестирование
-    description: |
-      Тесты создания объявлений
-      Тесты публикации
-      Тесты доставки
-      Тесты таргетинга
-      Тесты учёта прочтений
-      Тесты интеграций
-    priority: high
-    estimated_time: 4-5 дней
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для объявлений, прочтений, патчноутов
+        и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
 
 diagrams:
   component_diagram: |
     ```mermaid
     graph TB
-        subgraph "Liveops Service"
-            AM[Announcement Manager]
-            AP[Announcement Publisher]
-            AS[Announcement Scheduler]
-            ADS[Announcement Delivery Service]
-            ATE[Announcement Targeting Engine]
-            ART[Announcement Read Tracker]
-            PNS[Patch Notes Service]
-            AEH[Announcement Event Handler]
-        end
-
-        subgraph "Database"
-            DB[(PostgreSQL<br/>announcements<br/>player_announcement_reads<br/>patch_notes)]
-        end
-
-        subgraph "External Services"
-            AA[Admin API]
-            NS[Notification Service]
-            PS[Player Service]
-            ASVC[Analytics Service]
-            RG[Realtime Gateway]
-        end
-
-        subgraph "Client"
-            CL[UE5 Client]
-        end
-
-        AA -->|create| AM
-        AS -->|schedule| AP
-        AP -->|publish| ADS
-        ADS --> ATE
-        ADS --> NS
-        ART --> ASVC
-        AEH --> RG
-        RG -->|push announcements| CL
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> AnnouncementService[Announcement Service<br/>8094]
+        
+        AnnouncementService --> AM[Announcement Manager]
+        AnnouncementService --> AP[Announcement Publisher]
+        AnnouncementService --> AS[Announcement Scheduler]
+        AnnouncementService --> ADM[Announcement Delivery Manager]
+        AnnouncementService --> ATM[Announcement Targeting Manager]
+        AnnouncementService --> ART[Announcement Read Tracker]
+        AnnouncementService --> PNM[Patch Notes Manager]
+        AnnouncementService --> NFM[News Feed Manager]
+        AnnouncementService --> AAC[Announcement Analytics Collector]
+        AnnouncementService --> ATC[Announcement Telemetry Collector]
+        
+        AM --> AP
+        AM --> AS
+        AM --> ADM
+        AM --> ATM
+        AM --> ART
+        AM --> PNM
+        AM --> NFM
+        
+        AnnouncementService --> AdminAPI[Admin API]
+        AnnouncementService --> NotificationService[Notification Service]
+        AnnouncementService --> PlayerService[Player Service]
+        AnnouncementService --> CharacterService[Character Service]
+        AnnouncementService --> MaintenanceService[Maintenance Service]
+        AnnouncementService --> EventService[Event Service]
+        AnnouncementService --> AnalyticsService[Analytics Service]
+        
+        AnnouncementService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        AnnouncementService --> DB[(Announcement DB)]
+        
+        Client --> WSAnnouncements[WebSocket<br/>Announcements]
+        WSAnnouncements --> AnnouncementService
     ```
 
-  data_flow_diagram: |
+  publication_flow_diagram: |
     ```mermaid
     sequenceDiagram
-        participant A as Admin
-        participant AM as Announcement Manager
+        participant Admin as Administrator
         participant AP as Announcement Publisher
-        participant ADS as Announcement Delivery Service
-        participant P as Player
-
-        A->>AM: Create announcement
-        AM->>AM: Save announcement
-        A->>AP: Publish announcement
-        AP->>ADS: Deliver announcement
-        ADS->>P: Show announcement
-        P->>ADS: Read announcement
+        participant ATM as Announcement Targeting Manager
+        participant AS as Announcement Scheduler
+        participant ADM as Announcement Delivery Manager
+        participant EB as Event Bus
+        
+        Admin->>AP: Create announcement
+        AP->>AP: Save to DB
+        AP->>ATM: Setup targeting
+        AP->>AS: Schedule publication
+        AS->>AS: Wait for scheduled time
+        AS->>AP: Publish announcement
+        AP->>ADM: Deliver announcement
+        AP->>EB: Publish announcement.published
     ```
 
-decisions:
-  - id: adr-announcement-architecture
-    summary: |
-      Выбрана модульная архитектура внутри liveops-service-go для обеспечения
-      тесной интеграции с live-ops системами.
-
-  - id: adr-announcement-types
-    summary: |
-      Семь типов объявлений (GAME_NEWS, PATCH_NOTES, MAINTENANCE, EVENT, PROMOTION,
-      COMMUNITY, EMERGENCY) обеспечивают гибкость в коммуникации с игроками.
-
-  - id: adr-delivery-channels
-    summary: |
-      Много канальная доставка (in-game popup, push, email, news feed) обеспечивает
-      максимальный охват аудитории и персонализацию.
-
-  - id: adr-targeting
-    summary: |
-      Система таргетинга позволяет доставлять объявления релевантной аудитории
-      и повышает эффективность коммуникации.
-
-  - id: adr-read-tracking
-    summary: |
-      Учёт прочтений и взаимодействий позволяет измерять эффективность объявлений
-      и оптимизировать коммуникацию.
-
-validation:
-  architecture_complete: true
-  components_defined: true
-  microservices_identified: true
-  api_endpoints_described: true
-  technical_specification_ready: true
-  subtasks_defined: true
-
-next_steps:
-  - Передача задачи агенту API Designer для создания OpenAPI спецификации
-  - Детализация API endpoints
-  - Создание request/response схем
-  - Определение формата таргетинга и доставки
-
-history:
-  - version: '1.0.0'
-    date: 2025-11-23
-    author: Architect Agent
-    changes: |
-      Создана полная архитектура системы объявлений:
-      - Определены компоненты (Announcement Manager, Announcement Publisher, Announcement Scheduler, Announcement Delivery Service, Announcement Targeting Engine, Announcement Read Tracker, Patch Notes Service, Announcement Event Handler)
-      - Описаны типы объявлений (GAME_NEWS, PATCH_NOTES, MAINTENANCE, EVENT, PROMOTION, COMMUNITY, EMERGENCY)
-      - Описаны приоритеты (LOW, NORMAL, HIGH, CRITICAL)
-      - Описаны стили отображения (NEWS_FEED, POPUP, MODAL, BANNER, TOAST)
-      - Описаны API endpoints (высокоуровнево)
-      - Спроектированы потоки данных
-      - Определена структура БД (announcements, player_announcement_reads, patch_notes)
-      - Спроектирована система публикации объявлений
-      - Спроектирована система доставки объявлений
-      - Спроектирована система таргетинга
-      - Спроектирована система учёта прочтений
-      - Создано техническое задание
-      - Разбито на подзадачи
-
+  delivery_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant ADM as Announcement Delivery Manager
+        participant ATM as Announcement Targeting Manager
+        participant NS as Notification Service
+        participant ART as Announcement Read Tracker
+        participant EB as Event Bus
+        
+        ADM->>ATM: Get target audience
+        ATM->>ATM: Filter by criteria
+        ADM->>ADM: Select delivery channels
+        ADM->>ADM: Deliver in-game
+        ADM->>NS: Deliver push/email
+        ADM->>ART: Track delivery
+        ADM->>EB: Publish announcement.delivered
+    ```
