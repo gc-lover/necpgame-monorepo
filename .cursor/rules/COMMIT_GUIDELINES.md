@@ -20,6 +20,7 @@
 - `[devops]` - DevOps агент
 - `[performance]` - Performance Engineer агент
 - `[ue5]` - UE5 Developer агент
+- `[content-writer]` - Content Writer агент
 - `[qa]` - QA/Testing агент
 - `[release]` - Release агент
 
@@ -229,6 +230,11 @@ git push origin feature/issue-{number}-{description}
 - Коммити C++ код в `client/UE5/`
 - Коммити Blueprint изменения (если нужно)
 - Используй `feat:` для новой функциональности
+
+### Content Writer
+- Коммити YAML файлы квестов в `knowledge/canon/lore/timeline-author/quests/`
+- Коммити лор и диалоги
+- Используй `feat:` для новых квестов, `fix:` для исправлений, `docs:` для документации
 
 ### QA
 - Коммити тестовые сценарии

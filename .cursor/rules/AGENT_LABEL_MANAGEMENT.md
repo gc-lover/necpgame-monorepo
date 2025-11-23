@@ -19,6 +19,7 @@
 - `agent:devops` - DevOps
 - `agent:performance` - Performance Engineer
 - `agent:ue5` - UE5 Developer
+- `agent:content-writer` - Content Writer
 - `agent:qa` - QA/Testing
 - `agent:release` - Release
 
@@ -31,6 +32,7 @@
 - `stage:infrastructure` - Infrastructure stage
 - `stage:performance` - Performance stage
 - `stage:client-dev` - Client Development stage
+- `stage:content` - Content stage
 - `stage:testing` - Testing stage
 - `stage:release` - Release stage
 
@@ -107,10 +109,18 @@ await mcp_github_add_issue_comment({
 
 ## Workflow переходов
 
+### Системные задачи (требуют архитектуры):
 ```
 idea-writer → architect → api-designer → backend → network → ue5 → qa → release
      ↓            ↓             ↓            ↓         ↓        ↓      ↓       ↓
 agent:idea   agent:arch   agent:api    agent:back  agent:net agent:ue agent:qa agent:rel
+```
+
+### Контентные задачи (НЕ требуют архитектуры):
+```
+idea-writer → content-writer → qa → release
+     ↓              ↓           ↓       ↓
+agent:idea    agent:content  agent:qa agent:rel
 ```
 
 ## Важно
