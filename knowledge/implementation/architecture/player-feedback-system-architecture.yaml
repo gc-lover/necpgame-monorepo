@@ -1,0 +1,621 @@
+metadata:
+  id: player-feedback-system-architecture
+  title: Архитектура системы обратной связи от игроков
+  document_type: architecture
+  category: system
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-23T14:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  processed_by: architect
+  processed_at: 2025-11-23T14:00:00Z
+  github_issue_number: 1335
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - player-feedback
+    - feedback-service
+    - github-integration
+    - community
+    - microservices
+  topics:
+    - architecture
+    - backend
+    - client
+    - automation
+  related_systems:
+    - character-service
+    - session-service
+    - notification-service
+  related_documents:
+    - id: player-feedback-system-idea
+      title: Концепция системы обратной связи
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system.yaml
+      relation: based_on
+    - id: github-issue-1335
+      title: GitHub Issue #1335
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+      relation: implements
+  source: architect
+  visibility: internal
+  audience:
+    - backend
+    - client
+    - devops
+  risk_level: medium
+review:
+  chain:
+    - role: architect
+      reviewer: ''
+      reviewed_at: ''
+      status: in_progress
+  next_actions:
+    - Передача Database Engineer для проектирования БД схемы
+    - Передача API Designer для создания OpenAPI спецификации
+summary:
+  problem: |
+    Необходимо спроектировать архитектуру системы обратной связи от игроков, которая включает:
+    - Микросервис для обработки обращений
+    - Интеграцию с GitHub API
+    - Систему голосования
+    - Модерацию обращений
+    - Клиентскую часть в UE5
+  goal: |
+    Спроектировать масштабируемую микросервисную архитектуру для системы обратной связи,
+    которая обеспечивает надежную обработку обращений игроков, интеграцию с GitHub,
+    систему голосования и модерацию контента.
+  essence: |
+    Архитектура состоит из:
+    1. Микросервис feedback-service (Go) - обработка обращений
+    2. База данных PostgreSQL - хранение обращений, голосов, авторов
+    3. Интеграция с GitHub API - создание Issues
+    4. Клиентская часть (UE5) - UI форма и доска идей
+    5. Агент player-feedback - классификация и маршрутизация
+  key_points:
+    - Микросервисная архитектура с изоляцией ответственности
+    - REST API для взаимодействия с клиентом
+    - Интеграция с существующими сервисами (character, session)
+    - Система голосования с real-time обновлениями
+    - Модерация (автоматическая + ручная)
+    - Rate limiting и безопасность
+content:
+  sections:
+    - id: system-overview
+      title: Обзор системы
+      body: |
+        **Архитектурная диаграмма:**
+        
+        ```mermaid
+        graph TB
+            Client[UE5 Client] -->|REST API| FeedbackService[feedback-service]
+            FeedbackService -->|Session Validation| SessionService[session-service]
+            FeedbackService -->|Player Data| CharacterService[character-service]
+            FeedbackService -->|Create Issues| GitHubAPI[GitHub API]
+            FeedbackService -->|Notifications| NotificationService[notification-service]
+            FeedbackService -->|Data Storage| PostgreSQL[(PostgreSQL)]
+            
+            PlayerFeedbackAgent[agent:player-feedback] -->|Monitor| GitHubAPI
+            PlayerFeedbackAgent -->|Update Status| FeedbackService
+            PlayerFeedbackAgent -->|Route| OtherAgents[Other Agents]
+            
+            Moderator[Moderator UI] -->|Review| FeedbackService
+        ```
+        
+        **Компоненты системы:**
+        
+        1. **feedback-service** - основной микросервис для обработки обращений
+        2. **PostgreSQL** - база данных для хранения обращений, голосов, авторов
+        3. **GitHub API** - интеграция для создания Issues
+        4. **UE5 Client** - клиентская часть с UI формой и доской идей
+        5. **agent:player-feedback** - агент для классификации и маршрутизации
+        6. **Session Service** - валидация сессий игроков
+        7. **Character Service** - получение данных игроков
+        8. **Notification Service** - опциональные уведомления
+      mechanics_links: []
+      assets: []
+    - id: microservice-architecture
+      title: Архитектура микросервиса feedback-service
+      body: |
+        **Структура сервиса:**
+        
+        ```
+        services/feedback-service-go/
+        ├── main.go                    # Точка входа
+        ├── go.mod                     # Зависимости
+        ├── go.sum                     # Checksums
+        ├── Dockerfile                 # Docker образ
+        ├── models/                    # Модели данных
+        │   ├── feedback.go           # Модель обращения
+        │   ├── vote.go               # Модель голоса
+        │   └── author.go             # Модель автора
+        └── server/                    # Серверная логика
+            ├── http_server.go        # HTTP сервер и роутинг
+            ├── feedback_service.go   # Бизнес-логика
+            ├── feedback_repository.go # Работа с БД
+            ├── github_client.go      # Интеграция с GitHub
+            ├── moderation_service.go # Модерация
+            ├── rate_limiter.go       # Rate limiting
+            ├── auth.go               # Аутентификация
+            ├── logger.go             # Логирование
+            └── metrics.go            # Метрики
+        ```
+        
+        **Принципы архитектуры:**
+        
+        - **SOLID принципы** - каждый компонент имеет одну ответственность
+        - **Dependency Injection** - зависимости инжектируются через конструкторы
+        - **Repository Pattern** - абстракция доступа к данным
+        - **Service Layer** - бизнес-логика отделена от HTTP слоя
+        - **Error Handling** - структурированная обработка ошибок
+        
+        **Основные компоненты:**
+        
+        1. **HTTP Server** - обработка HTTP запросов, роутинг, middleware
+        2. **Feedback Service** - бизнес-логика обработки обращений
+        3. **Feedback Repository** - работа с БД (CRUD операции)
+        4. **GitHub Client** - интеграция с GitHub API
+        5. **Moderation Service** - автоматическая и ручная модерация
+        6. **Rate Limiter** - ограничение частоты запросов
+        7. **Auth Middleware** - проверка аутентификации
+      mechanics_links: []
+      assets: []
+    - id: api-endpoints
+      title: API Endpoints (высокоуровнево)
+      body: |
+        **REST API структура:**
+        
+        **Базовый путь:** `/api/v1/feedback`
+        
+        **Endpoints:**
+        
+        1. **POST /api/v1/feedback/submit**
+           - Создание нового обращения
+           - Требует: аутентификация
+           - Rate limit: 5/час на игрока
+           - Возвращает: ID обращения, статус, ссылка на Issue
+        
+        2. **GET /api/v1/feedback/{id}**
+           - Получение обращения по ID
+           - Требует: аутентификация (только свои или публичные)
+           - Возвращает: полная информация об обращении
+        
+        3. **GET /api/v1/feedback/player/{player_id}**
+           - История обращений игрока
+           - Требует: аутентификация (только свои)
+           - Query params: status, type, limit, offset
+           - Возвращает: список обращений с пагинацией
+        
+        4. **POST /api/v1/feedback/{id}/update-status**
+           - Обновление статуса обращения
+           - Требует: специальная аутентификация (агенты/админы)
+           - Возвращает: обновленный статус
+        
+        5. **GET /api/v1/feedback/board**
+           - Доска идей (публичные предложения)
+           - Не требует: аутентификация (публичный доступ)
+           - Query params: category, status, sort, limit, offset, search
+           - Возвращает: список публичных предложений
+        
+        6. **POST /api/v1/feedback/{id}/vote**
+           - Голосование за предложение
+           - Требует: аутентификация
+           - Rate limit: 10/минуту
+           - Возвращает: обновленный счетчик голосов
+        
+        7. **DELETE /api/v1/feedback/{id}/vote**
+           - Отзыв голоса
+           - Требует: аутентификация
+           - Возвращает: обновленный счетчик голосов
+        
+        8. **GET /api/v1/feedback/stats**
+           - Статистика обращений
+           - Требует: специальная аутентификация (админы)
+           - Возвращает: статистика по обращениям
+        
+        **Middleware:**
+        - CORS
+        - Request logging
+        - Authentication
+        - Rate limiting
+        - Error handling
+        - Metrics collection
+      mechanics_links: []
+      assets: []
+    - id: database-schema
+      title: Схема базы данных
+      body: |
+        **База данных: PostgreSQL**
+        
+        **Таблицы:**
+        
+        **1. player_feedback**
+        - Основная таблица обращений
+        - Поля:
+          * id (UUID, PRIMARY KEY)
+          * player_id (UUID, NOT NULL) - автор обращения
+          * type (VARCHAR(50), NOT NULL) - тип обращения
+          * category (VARCHAR(50), NOT NULL) - категория
+          * title (VARCHAR(100), NOT NULL) - заголовок
+          * description (TEXT, NOT NULL) - описание
+          * priority (VARCHAR(20)) - приоритет
+          * game_context (JSONB) - контекст игры
+          * screenshots (TEXT[]) - массив URL скриншотов
+          * github_issue_number (INT) - номер GitHub Issue
+          * github_issue_url (TEXT) - ссылка на Issue
+          * status (VARCHAR(50), NOT NULL) - статус обращения
+          * votes_count (INT, DEFAULT 0) - количество голосов
+          * merged_into (UUID) - ID объединенного обращения
+          * moderation_status (VARCHAR(50)) - статус модерации
+          * moderation_reason (TEXT) - причина модерации
+          * created_at (TIMESTAMP, DEFAULT NOW())
+          * updated_at (TIMESTAMP, DEFAULT NOW())
+        - Индексы:
+          * PRIMARY KEY (id)
+          * INDEX (player_id)
+          * INDEX (status)
+          * INDEX (votes_count)
+          * INDEX (created_at)
+          * INDEX (github_issue_number)
+          * INDEX (type, category)
+        
+        **2. feedback_votes**
+        - Голоса игроков за предложения
+        - Поля:
+          * id (UUID, PRIMARY KEY)
+          * feedback_id (UUID, NOT NULL, FOREIGN KEY)
+          * player_id (UUID, NOT NULL)
+          * created_at (TIMESTAMP, DEFAULT NOW())
+        - Индексы:
+          * PRIMARY KEY (id)
+          * UNIQUE (feedback_id, player_id)
+          * INDEX (feedback_id)
+          * INDEX (player_id)
+        
+        **3. feedback_authors**
+        - Авторы предложений (для объединенных обращений)
+        - Поля:
+          * id (UUID, PRIMARY KEY)
+          * feedback_id (UUID, NOT NULL, FOREIGN KEY)
+          * player_id (UUID, NOT NULL)
+          * is_primary (BOOLEAN, DEFAULT false)
+          * created_at (TIMESTAMP, DEFAULT NOW())
+        - Индексы:
+          * PRIMARY KEY (id)
+          * INDEX (feedback_id)
+          * INDEX (player_id)
+          * UNIQUE (feedback_id, player_id)
+        
+        **4. feedback_moderation_queue** (опционально)
+        - Очередь модерации для ручной проверки
+        - Поля:
+          * id (UUID, PRIMARY KEY)
+          * feedback_id (UUID, NOT NULL, FOREIGN KEY)
+          * moderator_id (UUID)
+          * status (VARCHAR(50))
+          * reviewed_at (TIMESTAMP)
+          * created_at (TIMESTAMP, DEFAULT NOW())
+        - Индексы:
+          * PRIMARY KEY (id)
+          * INDEX (feedback_id)
+          * INDEX (status)
+        
+        **Связи:**
+        - player_feedback.id → feedback_votes.feedback_id (1:N)
+        - player_feedback.id → feedback_authors.feedback_id (1:N)
+        - player_feedback.id → feedback_moderation_queue.feedback_id (1:1)
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: Интеграции с другими сервисами
+      body: |
+        **1. Session Service**
+        - **Цель:** Валидация сессии игрока
+        - **Метод:** HTTP REST API
+        - **Endpoint:** `GET /api/v1/session/validate`
+        - **Использование:** Проверка валидности session token перед обработкой запросов
+        - **Обработка ошибок:** 401 Unauthorized при невалидной сессии
+        
+        **2. Character Service**
+        - **Цель:** Получение данных игрока
+        - **Метод:** HTTP REST API
+        - **Endpoint:** `GET /api/v1/character/{player_id}`
+        - **Использование:** Получение информации об игроке для контекста обращения
+        - **Обработка ошибок:** Fallback на анонимные данные при недоступности
+        
+        **3. GitHub API**
+        - **Цель:** Создание и управление Issues
+        - **Метод:** REST API или GraphQL
+        - **Аутентификация:** GitHub App или Personal Access Token
+        - **Endpoints:**
+          * `POST /repos/{owner}/{repo}/issues` - создание Issue
+          * `PATCH /repos/{owner}/{repo}/issues/{number}` - обновление Issue
+          * `GET /repos/{owner}/{repo}/issues/{number}` - получение Issue
+          * `POST /repos/{owner}/{repo}/issues/{number}/labels` - добавление меток
+        - **Обработка ошибок:** Retry с exponential backoff, логирование ошибок
+        
+        **4. Notification Service** (опционально)
+        - **Цель:** Уведомления игрокам
+        - **Метод:** HTTP REST API
+        - **Endpoint:** `POST /api/v1/notifications/send`
+        - **Использование:** Отправка уведомлений о статусе обращения (опционально)
+        - **Обработка ошибок:** Не блокирует основной поток, логирование
+        
+        **Стратегия обработки ошибок:**
+        - Circuit breaker для внешних сервисов
+        - Retry с exponential backoff
+        - Fallback значения при недоступности сервисов
+        - Асинхронная обработка некритичных операций
+      mechanics_links: []
+      assets: []
+    - id: client-architecture
+      title: Клиентская архитектура (UE5)
+      body: |
+        **Компоненты клиента:**
+        
+        **1. Feedback Form Widget**
+        - Модальное окно для отправки обращений
+        - Компоненты:
+          * UFeedbackFormWidget (UUserWidget)
+          * UFeedbackFormViewModel (ViewModel для данных)
+          * UFeedbackFormController (Controller для логики)
+        - Функции:
+          * Валидация полей
+          * Автосохранение черновика
+          * Отправка данных на сервер
+          * Обработка ответов
+        
+        **2. Ideas Board Widget**
+        - Доска идей с голосованием
+        - Компоненты:
+          * UIdeasBoardWidget (UUserWidget)
+          * UIdeasBoardViewModel
+          * UIdeasBoardController
+        - Функции:
+          * Отображение списка предложений
+          * Голосование за предложения
+          * Фильтрация и сортировка
+          * Пагинация
+        
+        **3. Feedback History Widget**
+        - История обращений игрока
+        - Компоненты:
+          * UFeedbackHistoryWidget (UUserWidget)
+          * UFeedbackHistoryViewModel
+          * UFeedbackHistoryController
+        - Функции:
+          * Отображение истории обращений
+          * Фильтрация по статусу
+          * Поиск по заголовку
+        
+        **4. API Client**
+        - Клиент для взаимодействия с feedback-service
+        - Компоненты:
+          * UFeedbackAPIClient (класс для API вызовов)
+          * UFeedbackAPIModels (модели данных)
+        - Функции:
+          * HTTP запросы к API
+          * Сериализация/десериализация JSON
+          * Обработка ошибок
+          * Кэширование ответов
+        
+        **Интеграция:**
+        - Использование существующего HTTP клиента проекта
+        - Интеграция с системой аутентификации
+        - Интеграция с системой уведомлений (опционально)
+      mechanics_links: []
+      assets: []
+    - id: agent-architecture
+      title: Архитектура агента player-feedback
+      body: |
+        **Агент: agent:player-feedback**
+        
+        **Расположение:** `.cursor/rules/agent-player-feedback.mdc` (новый файл)
+        
+        **Ответственность:**
+        - Мониторинг GitHub Issues с меткой `player-feedback`
+        - Классификация обращений
+        - Объединение дубликатов
+        - Маршрутизация к соответствующим агентам
+        - Обновление статусов в БД
+        
+        **Workflow:**
+        
+        1. **Мониторинг:**
+           - Периодическая проверка Issues (каждые 5 минут)
+           - Фильтрация по метке `player-feedback` и статусу `open`
+           - Получение новых Issues через GitHub API
+        
+        2. **Классификация:**
+           - Анализ типа обращения из Issue body
+           - Определение категории
+           - Извлечение приоритета
+           - Проверка контекста игры
+        
+        3. **Объединение дубликатов:**
+           - Семантический поиск похожих Issues
+           - Объединение в одно обращение
+           - Перенос голосов
+           - Сохранение всех авторов
+        
+        4. **Маршрутизация:**
+           - Добавление меток соответствующего агента
+           - Обновление меток этапа разработки
+           - Передача Issue агенту
+        
+        5. **Обновление статуса:**
+           - Обновление статуса в БД через API feedback-service
+           - Синхронизация с GitHub Issue
+        
+        **Интеграции:**
+        - GitHub API (MCP GitHub)
+        - feedback-service API
+        - База данных (через API)
+      mechanics_links: []
+      assets: []
+    - id: security-architecture
+      title: Архитектура безопасности
+      body: |
+        **Компоненты безопасности:**
+        
+        **1. Аутентификация:**
+        - Session token validation через session-service
+        - JWT токены для агентов
+        - Middleware для проверки аутентификации
+        
+        **2. Авторизация:**
+        - Проверка прав доступа (только свои обращения)
+        - Роли: player, moderator, admin, agent
+        - RBAC для административных операций
+        
+        **3. Rate Limiting:**
+        - Token bucket algorithm
+        - Лимиты:
+          * 5 обращений/час на игрока
+          * 20 обращений/день на игрока
+          * 10 голосов/минуту на игрока
+          * 1000 обращений/час глобально
+        - HTTP 429 при превышении
+        - Retry-After заголовок
+        
+        **4. Валидация данных:**
+        - Валидация на клиенте (UE5)
+        - Строгая валидация на сервере (Go)
+        - Проверка типов, длины, форматов
+        
+        **5. Санитизация:**
+        - Очистка HTML тегов
+        - Экранирование специальных символов
+        - Защита от XSS
+        - Prepared statements для SQL
+        
+        **6. Анонимизация:**
+        - Player ID не отображается публично
+        - Анонимные ID для публичного доступа
+        - Маскирование в логах
+        
+        **7. Модерация:**
+        - Автоматическая проверка на спам
+        - Проверка на запрещенные слова
+        - Ручная модерация (опционально)
+        
+        **8. Мониторинг:**
+        - Логирование всех операций
+        - Метрики безопасности
+        - Алерты при подозрительной активности
+      mechanics_links: []
+      assets: []
+    - id: scalability
+      title: Масштабируемость
+      body: |
+        **Горизонтальное масштабирование:**
+        - Stateless сервис (можно запускать несколько инстансов)
+        - Балансировка нагрузки через Envoy
+        - Shared database (PostgreSQL)
+        
+        **Вертикальное масштабирование:**
+        - Оптимизация запросов к БД
+        - Индексы для частых запросов
+        - Кэширование популярных данных (Redis, опционально)
+        
+        **Производительность:**
+        - Асинхронная обработка некритичных операций
+        - Batch операции для обновления статусов
+        - Connection pooling для БД
+        
+        **Мониторинг:**
+        - Метрики Prometheus
+        - Логи Loki
+        - Трейсы Tempo
+        - Health checks `/health`
+      mechanics_links: []
+      assets: []
+    - id: deployment
+      title: Развертывание
+      body: |
+        **Docker:**
+        - Multi-stage build для минимального образа
+        - Базовый образ: `golang:alpine`
+        - Финальный образ: `alpine:latest`
+        
+        **Kubernetes:**
+        - Deployment манифест
+        - Service для внутреннего доступа
+        - ConfigMap для конфигурации
+        - Secret для GitHub токенов
+        - HorizontalPodAutoscaler для масштабирования
+        
+        **Конфигурация:**
+        - Environment variables для настроек
+        - GitHub App credentials в Secrets
+        - Database connection string в Secrets
+        - Rate limit настройки в ConfigMap
+      mechanics_links: []
+      assets: []
+  subtasks:
+    - id: subtask-1
+      title: Проектирование детальной БД схемы
+      description: Создание детальной схемы БД с миграциями
+      assigned_to: database-engineer
+      status: pending
+    - id: subtask-2
+      title: Создание OpenAPI спецификации
+      description: Детальное описание всех API endpoints
+      assigned_to: api-designer
+      status: pending
+    - id: subtask-3
+      title: Реализация feedback-service
+      description: Реализация микросервиса на Go
+      assigned_to: backend-developer
+      status: pending
+    - id: subtask-4
+      title: Реализация клиентской части (UE5)
+      description: Создание UI формы и доски идей
+      assigned_to: ue5-developer
+      status: pending
+    - id: subtask-5
+      title: Создание агента player-feedback
+      description: Реализация агента для классификации и маршрутизации
+      assigned_to: agent-developer
+      status: pending
+appendix:
+  glossary:
+    - term: feedback-service
+      definition: Микросервис для обработки обращений от игроков
+    - term: player-feedback
+      definition: Обращение от игрока через in-game форму
+    - term: agent:player-feedback
+      definition: Агент для классификации и маршрутизации обращений
+  references:
+    - title: Концепция системы
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system.yaml
+    - title: GitHub Issue #1335
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+  decisions:
+    - date: 2025-11-23
+      decision: Использовать микросервисную архитектуру с отдельным feedback-service
+      rationale: Изоляция ответственности, независимое масштабирование, соответствие существующим паттернам
+    - date: 2025-11-23
+      decision: PostgreSQL для хранения данных
+      rationale: Соответствие существующей инфраструктуре, поддержка JSONB для game_context
+    - date: 2025-11-23
+      decision: REST API для взаимодействия
+      rationale: Простота интеграции, соответствие существующим сервисам
+    - date: 2025-11-23
+      decision: GitHub API для создания Issues
+      rationale: Интеграция с существующим workflow разработки
+implementation:
+  github_issue: 1335
+  needs_task: true
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: architect
+    changes: Создана архитектура системы обратной связи от игроков
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
