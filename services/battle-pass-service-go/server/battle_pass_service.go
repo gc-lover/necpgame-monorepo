@@ -87,11 +87,13 @@ func NewBattlePassService(dbURL, redisURL string) (*BattlePassService, error) {
 func (s *BattlePassService) GetCurrentSeason(ctx context.Context) (*models.BattlePassSeason, error) {
 	cacheKey := "battle_pass:current_season"
 
-	cached, err := s.cache.Get(ctx, cacheKey).Result()
-	if err == nil && cached != "" {
-		var season models.BattlePassSeason
-		if err := json.Unmarshal([]byte(cached), &season); err == nil {
-			return &season, nil
+	if s.cache != nil {
+		cached, err := s.cache.Get(ctx, cacheKey).Result()
+		if err == nil && cached != "" {
+			var season models.BattlePassSeason
+			if err := json.Unmarshal([]byte(cached), &season); err == nil {
+				return &season, nil
+			}
 		}
 	}
 
@@ -100,7 +102,7 @@ func (s *BattlePassService) GetCurrentSeason(ctx context.Context) (*models.Battl
 		return nil, err
 	}
 
-	if season != nil {
+	if season != nil && s.cache != nil {
 		seasonJSON, _ := json.Marshal(season)
 		s.cache.Set(ctx, cacheKey, seasonJSON, 5*time.Minute)
 	}

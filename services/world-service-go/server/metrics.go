@@ -1,0 +1,82 @@
+package server
+
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+var (
+	RequestsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"method", "path", "status"},
+	)
+
+	RequestDuration = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "world_service_request_duration_seconds",
+			Help:    "HTTP request duration in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "path"},
+	)
+
+	ResetExecutionsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_reset_executions_total",
+			Help: "Total number of reset executions",
+		},
+		[]string{"reset_type", "status"},
+	)
+
+	QuestAssignmentsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_quest_assignments_total",
+			Help: "Total number of quest assignments",
+		},
+		[]string{"pool_type"},
+	)
+
+	LoginRewardsClaimedTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_login_rewards_claimed_total",
+			Help: "Total number of login rewards claimed",
+		},
+		[]string{"reward_type"},
+	)
+
+	TravelEventsTriggeredTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_travel_events_triggered_total",
+			Help: "Total number of travel events triggered",
+		},
+		[]string{"event_type"},
+	)
+)
+
+func RecordRequest(method, path, status string) {
+	RequestsTotal.WithLabelValues(method, path, status).Inc()
+}
+
+func RecordRequestDuration(method, path string, duration float64) {
+	RequestDuration.WithLabelValues(method, path).Observe(duration)
+}
+
+func RecordResetExecution(resetType, status string) {
+	ResetExecutionsTotal.WithLabelValues(resetType, status).Inc()
+}
+
+func RecordQuestAssignment(poolType string) {
+	QuestAssignmentsTotal.WithLabelValues(poolType).Inc()
+}
+
+func RecordLoginRewardClaimed(rewardType string) {
+	LoginRewardsClaimedTotal.WithLabelValues(rewardType).Inc()
+}
+
+func RecordTravelEventTriggered(eventType string) {
+	TravelEventsTriggeredTotal.WithLabelValues(eventType).Inc()
+}
+

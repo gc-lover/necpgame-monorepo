@@ -23,13 +23,16 @@
    - `idea-writer`
    - `content-writer`
    - `architect`
+   - `database-dev`
    - `api-designer`
    - `backend-dev`
    - `network-dev`
+   - `security`
    - `devops`
    - `performance`
    - `ue5-dev`
    - `testing`
+   - `game-balance`
    - `release`
 
 ### Шаг 2: Создать Views для каждого агента (опционально)
@@ -42,13 +45,16 @@
 4. Повторите для каждого агента:
    - Content Writer Queue → `content-writer`
    - Architect Queue → `architect`
+   - Database Dev Queue → `database-dev`
    - API Designer Queue → `api-designer`
    - Backend Dev Queue → `backend-dev`
    - Network Dev Queue → `network-dev`
+   - Security Queue → `security`
    - DevOps Queue → `devops`
    - Performance Queue → `performance`
    - UE5 Dev Queue → `ue5-dev`
    - Testing Queue → `testing`
+   - Game Balance Queue → `game-balance`
    - Release Queue → `release`
 
 ### Шаг 3: Запустить синхронизацию labels
