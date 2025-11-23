@@ -148,6 +148,13 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 		GetLogger().Info("Mail reward subscriber started")
 	}
 
+	guildProgressionSubscriber := NewGuildProgressionSubscriber(guildRepo, eventBus, redisClient)
+	if err := guildProgressionSubscriber.Start(); err != nil {
+		GetLogger().WithError(err).Warn("Failed to start guild progression subscriber")
+	} else {
+		GetLogger().Info("Guild progression subscriber started")
+	}
+
 	return service, nil
 }
 
