@@ -37,6 +37,8 @@ type WorldRepository interface {
 	GetAvailableTravelEvents(ctx context.Context, zoneID uuid.UUID, epochID *string) ([]models.TravelEvent, error)
 	CreateTravelEventInstance(ctx context.Context, instance *models.TravelEventInstance) error
 	GetTravelEventInstance(ctx context.Context, id uuid.UUID) (*models.TravelEventInstance, error)
+	GetTravelEventInstancesByCharacterAndEvent(ctx context.Context, characterID, eventID uuid.UUID) ([]models.TravelEventInstance, error)
+	GetTravelEventInstancesByEvent(ctx context.Context, eventID uuid.UUID) ([]models.TravelEventInstance, error)
 	UpdateTravelEventInstance(ctx context.Context, instance *models.TravelEventInstance) error
 	GetCharacterTravelEventCooldowns(ctx context.Context, characterID uuid.UUID) ([]models.TravelEventCooldown, error)
 }
@@ -497,6 +499,30 @@ func (r *worldRepository) UpdateTravelEventInstance(ctx context.Context, instanc
 	`
 	_, err := r.db.ExecContext(ctx, query, instance.ID, instance.State, instance.CompletedAt, instance.UpdatedAt)
 	return err
+}
+
+func (r *worldRepository) GetTravelEventInstancesByCharacterAndEvent(ctx context.Context, characterID, eventID uuid.UUID) ([]models.TravelEventInstance, error) {
+	var instances []models.TravelEventInstance
+	query := `
+		SELECT id, event_id, character_id, zone_id, epoch_id, state, started_at, completed_at, created_at, updated_at
+		FROM travel_event_instances
+		WHERE character_id = $1 AND event_id = $2
+		ORDER BY created_at DESC
+	`
+	err := r.db.SelectContext(ctx, &instances, query, characterID, eventID)
+	return instances, err
+}
+
+func (r *worldRepository) GetTravelEventInstancesByEvent(ctx context.Context, eventID uuid.UUID) ([]models.TravelEventInstance, error) {
+	var instances []models.TravelEventInstance
+	query := `
+		SELECT id, event_id, character_id, zone_id, epoch_id, state, started_at, completed_at, created_at, updated_at
+		FROM travel_event_instances
+		WHERE event_id = $1
+		ORDER BY created_at DESC
+	`
+	err := r.db.SelectContext(ctx, &instances, query, eventID)
+	return instances, err
 }
 
 func (r *worldRepository) GetCharacterTravelEventCooldowns(ctx context.Context, characterID uuid.UUID) ([]models.TravelEventCooldown, error) {

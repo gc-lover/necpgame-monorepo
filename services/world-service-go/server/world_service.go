@@ -36,8 +36,15 @@ type WorldService interface {
 	TriggerTravelEvent(ctx context.Context, characterID, zoneID uuid.UUID, epochID *string) (*models.TravelEventInstance, error)
 	GetAvailableTravelEvents(ctx context.Context, zoneID uuid.UUID, epochID *string) ([]models.TravelEvent, error)
 	GetTravelEvent(ctx context.Context, id uuid.UUID) (*models.TravelEvent, error)
+	StartTravelEvent(ctx context.Context, eventID, characterID uuid.UUID) (*models.TravelEventInstance, error)
+	PerformTravelEventSkillCheck(ctx context.Context, eventID uuid.UUID, skill string, characterID uuid.UUID) (*models.SkillCheckResponse, error)
+	CompleteTravelEvent(ctx context.Context, eventID uuid.UUID, characterID uuid.UUID, success bool) (*models.TravelEventCompletionResponse, error)
+	CancelTravelEvent(ctx context.Context, eventID uuid.UUID, characterID uuid.UUID) (*models.TravelEventInstance, error)
 	GetEpochTravelEvents(ctx context.Context, epochID string) ([]models.TravelEvent, error)
 	GetCharacterTravelEventCooldowns(ctx context.Context, characterID uuid.UUID) ([]models.TravelEventCooldown, error)
+	CalculateTravelEventProbability(ctx context.Context, eventType string, characterID, zoneID uuid.UUID) (*models.TravelEventProbabilityResponse, error)
+	GetTravelEventRewards(ctx context.Context, eventID uuid.UUID) (*models.TravelEventRewardsResponse, error)
+	GetTravelEventPenalties(ctx context.Context, eventID uuid.UUID) (*models.TravelEventPenaltiesResponse, error)
 }
 
 type EventBus interface {
@@ -67,16 +74,18 @@ func (b *RedisEventBus) PublishEvent(ctx context.Context, eventType string, payl
 }
 
 type worldService struct {
-	repo     WorldRepository
-	logger   *logrus.Logger
-	eventBus EventBus
+	repo              WorldRepository
+	logger            *logrus.Logger
+	eventBus          EventBus
+	travelEventService *TravelEventService
 }
 
 func NewWorldService(repo WorldRepository, logger *logrus.Logger, eventBus EventBus) WorldService {
 	return &worldService{
-		repo:     repo,
-		logger:   logger,
-		eventBus: eventBus,
+		repo:              repo,
+		logger:            logger,
+		eventBus:          eventBus,
+		travelEventService: NewTravelEventService(repo, logger, eventBus),
 	}
 }
 
@@ -415,6 +424,424 @@ func (s *worldService) GetEpochTravelEvents(ctx context.Context, epochID string)
 
 func (s *worldService) GetCharacterTravelEventCooldowns(ctx context.Context, characterID uuid.UUID) ([]models.TravelEventCooldown, error) {
 	return s.repo.GetCharacterTravelEventCooldowns(ctx, characterID)
+}
+
+func (s *worldService) StartTravelEvent(ctx context.Context, eventID, characterID uuid.UUID) (*models.TravelEventInstance, error) {
+	event, err := s.repo.GetTravelEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	instances, err := s.repo.GetTravelEventInstancesByCharacterAndEvent(ctx, characterID, eventID)
+	if err != nil {
+		return nil, err
+	}
+	
+	var instance *models.TravelEventInstance
+	for _, inst := range instances {
+		if inst.State == "triggered" {
+			instance = &inst
+			break
+		}
+	}
+	
+	if instance == nil {
+		return nil, errors.New("travel event instance not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if instance == nil {
+		return nil, errors.New("travel event instance not found")
+	}
+	if instance.CharacterID != characterID {
+		return nil, errors.New("character does not own this event instance")
+	}
+	if instance.State != "triggered" {
+		return nil, errors.New("event instance is not in triggered state")
+	}
+	
+	instance.State = "started"
+	instance.UpdatedAt = time.Now()
+	
+	if err := s.repo.UpdateTravelEventInstance(ctx, instance); err != nil {
+		return nil, err
+	}
+	
+	RecordTravelEventStarted(instance.EventID.String())
+	
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"instance_id":  instance.ID.String(),
+			"event_id":     instance.EventID.String(),
+			"character_id": characterID.String(),
+		}
+		s.eventBus.PublishEvent(ctx, "world:travel-event:started", payload)
+	}
+	
+	return instance, nil
+}
+
+func (s *worldService) PerformTravelEventSkillCheck(ctx context.Context, eventID uuid.UUID, skill string, characterID uuid.UUID) (*models.SkillCheckResponse, error) {
+	event, err := s.repo.GetTravelEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	instances, err := s.repo.GetTravelEventInstancesByCharacterAndEvent(ctx, characterID, eventID)
+	if err != nil {
+		return nil, err
+	}
+	
+	var instance *models.TravelEventInstance
+	for _, inst := range instances {
+		if inst.State == "started" || inst.State == "in-progress" {
+			instance = &inst
+			break
+		}
+	}
+	
+	if instance == nil {
+		return nil, errors.New("travel event instance not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if instance == nil {
+		return nil, errors.New("travel event instance not found")
+	}
+	if instance.CharacterID != characterID {
+		return nil, errors.New("character does not own this event instance")
+	}
+	if instance.State != "started" && instance.State != "in-progress" {
+		return nil, errors.New("event instance is not in started or in-progress state")
+	}
+	
+	event, err = s.repo.GetTravelEvent(ctx, instance.EventID)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	var dc int
+	for _, sc := range event.SkillChecks {
+		if sc.Skill == skill {
+			dc = sc.DC
+			break
+		}
+	}
+	if dc == 0 {
+		return nil, errors.New("skill check not found for this event")
+	}
+	
+	skillCheckResult, err := s.travelEventService.PerformSkillCheck(ctx, skill, dc, characterID)
+	if err != nil {
+		return nil, err
+	}
+	
+	if instance.State == "started" {
+		instance.State = "in-progress"
+		instance.UpdatedAt = time.Now()
+		s.repo.UpdateTravelEventInstance(ctx, instance)
+	}
+	
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"instance_id":  instance.ID.String(),
+			"event_id":     instance.EventID.String(),
+			"character_id": characterID.String(),
+			"skill":        skill,
+			"dc":           dc,
+			"roll_result":  skillCheckResult.RollResult,
+			"success":      skillCheckResult.Success,
+		}
+		s.eventBus.PublishEvent(ctx, "world:travel-event:skill-check-performed", payload)
+	}
+	
+	return skillCheckResult, nil
+}
+
+func (s *worldService) CompleteTravelEvent(ctx context.Context, eventID uuid.UUID, characterID uuid.UUID, success bool) (*models.TravelEventCompletionResponse, error) {
+	event, err := s.repo.GetTravelEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	instances, err := s.repo.GetTravelEventInstancesByCharacterAndEvent(ctx, characterID, eventID)
+	if err != nil {
+		return nil, err
+	}
+	
+	var instance *models.TravelEventInstance
+	for _, inst := range instances {
+		if inst.State == "started" || inst.State == "in-progress" {
+			instance = &inst
+			break
+		}
+	}
+	
+	if instance == nil {
+		return nil, errors.New("travel event instance not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if instance == nil {
+		return nil, errors.New("travel event instance not found")
+	}
+	if instance.CharacterID != characterID {
+		return nil, errors.New("character does not own this event instance")
+	}
+	
+	event, err = s.repo.GetTravelEvent(ctx, instance.EventID)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	now := time.Now()
+	instance.CompletedAt = &now
+	if success {
+		instance.State = "completed"
+	} else {
+		instance.State = "failed"
+	}
+	instance.UpdatedAt = now
+	
+	if err := s.repo.UpdateTravelEventInstance(ctx, instance); err != nil {
+		return nil, err
+	}
+	
+	var skillCheckResult *models.SkillCheckResponse
+	if success {
+		skillCheckResult = &models.SkillCheckResponse{
+			Success:    true,
+			RollResult: 15,
+			DC:         10,
+		}
+	}
+	
+	rewards, err := s.travelEventService.DistributeRewards(ctx, event, instance, skillCheckResult)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to distribute rewards")
+	}
+	
+	penalties, err := s.travelEventService.ApplyPenalties(ctx, event, instance, skillCheckResult)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to apply penalties")
+	}
+	
+	if err := s.travelEventService.UpdateCooldown(ctx, characterID, event.EventType, event.CooldownHours); err != nil {
+		s.logger.WithError(err).Error("Failed to update cooldown")
+	}
+	
+	successStr := "false"
+	if success {
+		successStr = "true"
+	}
+	RecordTravelEventCompleted(event.EventType, successStr)
+	
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"instance_id":  instance.ID.String(),
+			"event_id":     instance.EventID.String(),
+			"character_id": characterID.String(),
+			"success":      success,
+			"rewards":      rewards,
+			"penalties":    penalties,
+		}
+		s.eventBus.PublishEvent(ctx, "world:travel-event:completed", payload)
+	}
+	
+	return &models.TravelEventCompletionResponse{
+		EventInstanceID: instance.ID,
+		Rewards:         rewards,
+		Penalties:       penalties,
+	}, nil
+}
+
+func (s *worldService) CancelTravelEvent(ctx context.Context, eventID uuid.UUID, characterID uuid.UUID) (*models.TravelEventInstance, error) {
+	event, err := s.repo.GetTravelEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	instances, err := s.repo.GetTravelEventInstancesByCharacterAndEvent(ctx, characterID, eventID)
+	if err != nil {
+		return nil, err
+	}
+	
+	var instance *models.TravelEventInstance
+	for _, inst := range instances {
+		if inst.State != "completed" && inst.State != "cancelled" && inst.State != "failed" {
+			instance = &inst
+			break
+		}
+	}
+	
+	if instance == nil {
+		return nil, errors.New("travel event instance not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if instance == nil {
+		return nil, errors.New("travel event instance not found")
+	}
+	if instance.State == "completed" || instance.State == "cancelled" {
+		return nil, errors.New("event instance is already completed or cancelled")
+	}
+	
+	instance.State = "cancelled"
+	instance.UpdatedAt = time.Now()
+	
+	if err := s.repo.UpdateTravelEventInstance(ctx, instance); err != nil {
+		return nil, err
+	}
+	
+	RecordTravelEventCancelled(instance.EventID.String())
+	
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"instance_id":  instance.ID.String(),
+			"event_id":     instance.EventID.String(),
+			"character_id": instance.CharacterID.String(),
+		}
+		s.eventBus.PublishEvent(ctx, "world:travel-event:cancelled", payload)
+	}
+	
+	return instance, nil
+}
+
+func (s *worldService) CalculateTravelEventProbability(ctx context.Context, eventType string, characterID, zoneID uuid.UUID) (*models.TravelEventProbabilityResponse, error) {
+	events, err := s.repo.GetAvailableTravelEvents(ctx, zoneID, nil)
+	if err != nil {
+		return nil, err
+	}
+	
+	var event *models.TravelEvent
+	for _, e := range events {
+		if e.EventType == eventType {
+			event = &e
+			break
+		}
+	}
+	
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	probability := s.travelEventService.CalculateProbability(ctx, event, characterID, zoneID)
+	
+	modifiers := map[string]interface{}{
+		"base_probability": event.BaseProbability,
+		"level_modifier":   1.0,
+		"reputation_modifier": 1.0,
+		"time_modifier":    1.0,
+		"zone_modifier":    1.0,
+	}
+	
+	return &models.TravelEventProbabilityResponse{
+		EventType:   eventType,
+		Probability: probability,
+		Modifiers:   modifiers,
+	}, nil
+}
+
+func (s *worldService) GetTravelEventRewards(ctx context.Context, eventID uuid.UUID) (*models.TravelEventRewardsResponse, error) {
+	event, err := s.repo.GetTravelEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	var rewards []models.TravelEventReward
+	if event.Rewards != nil {
+		if lootRewards, ok := event.Rewards["loot"].(map[string]interface{}); ok {
+			rewards = append(rewards, models.TravelEventReward{
+				Type: "loot",
+				Data: lootRewards,
+			})
+		}
+		if eddiesRewards, ok := event.Rewards["eddies"].(map[string]interface{}); ok {
+			rewards = append(rewards, models.TravelEventReward{
+				Type: "eddies",
+				Data: eddiesRewards,
+			})
+		}
+		if reputationRewards, ok := event.Rewards["reputation"].(map[string]interface{}); ok {
+			rewards = append(rewards, models.TravelEventReward{
+				Type: "reputation",
+				Data: reputationRewards,
+			})
+		}
+	}
+	
+	return &models.TravelEventRewardsResponse{
+		EventID: eventID,
+		Rewards: rewards,
+	}, nil
+}
+
+func (s *worldService) GetTravelEventPenalties(ctx context.Context, eventID uuid.UUID) (*models.TravelEventPenaltiesResponse, error) {
+	event, err := s.repo.GetTravelEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, errors.New("travel event not found")
+	}
+	
+	var penalties []models.TravelEventPenalty
+	if event.Penalties != nil {
+		if damagePenalties, ok := event.Penalties["damage"].(map[string]interface{}); ok {
+			penalties = append(penalties, models.TravelEventPenalty{
+				Type: "damage",
+				Data: damagePenalties,
+			})
+		}
+		if heatPenalties, ok := event.Penalties["heat"].(map[string]interface{}); ok {
+			penalties = append(penalties, models.TravelEventPenalty{
+				Type: "heat",
+				Data: heatPenalties,
+			})
+		}
+		if reputationPenalties, ok := event.Penalties["reputation"].(map[string]interface{}); ok {
+			penalties = append(penalties, models.TravelEventPenalty{
+				Type: "reputation",
+				Data: reputationPenalties,
+			})
+		}
+		if confiscationPenalties, ok := event.Penalties["confiscation"].(map[string]interface{}); ok {
+			penalties = append(penalties, models.TravelEventPenalty{
+				Type: "confiscation",
+				Data: confiscationPenalties,
+			})
+		}
+	}
+	
+	return &models.TravelEventPenaltiesResponse{
+		EventID:   eventID,
+		Penalties: penalties,
+	}, nil
 }
 
 func (s *worldService) GetResetExecution(ctx context.Context, id uuid.UUID) (*models.ResetExecution, error) {
