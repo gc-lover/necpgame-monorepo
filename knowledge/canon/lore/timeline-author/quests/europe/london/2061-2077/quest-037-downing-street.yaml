@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:58:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-23T12:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -52,6 +52,86 @@ summary:
     - Иконичная локация Даунинг-стрит, 10 с охраной высшего уровня.
     - Нелинейные способы попадания внутрь: подделка пропуска, технологический взлом, социальные связи.
     - Финальное решение формирует политический кризис или усиление шантажной сети.
+quest_definition:
+  quest_type: main
+  level_min: 35
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: plan_infiltration
+      text: "Подготовить план проникновения (подделка пропуска, хакерство, социальные связи)"
+      type: choice
+      target: infiltration_plan
+      count: 1
+      optional: false
+    - id: bypass_security
+      text: "Преодолеть физические и цифровые барьеры охраны"
+      type: stealth
+      target: downing_street_security
+      count: 5
+      optional: false
+    - id: search_office
+      text: "Изучить кабинет и личные помещения для поиска документов"
+      type: investigate
+      target: pm_office
+      count: 1
+      optional: false
+    - id: make_final_choice
+      text: "Принять решение о судьбе собранных материалов"
+      type: choice
+      target: evidence_disposition
+      count: 1
+      optional: false
+  rewards:
+    experience: 4000
+    money: 0
+    items: []
+    reputation: {}
+    unlocks: []
+  branches:
+    - branch_id: expose_media
+      branch_name: "Обнародовать через СМИ"
+      conditions:
+        flags: ["evidence_choice_media"]
+      consequences:
+        reputation_changes:
+          Public_Opinion: 50
+          Government: -50
+        unlocks_quests: []
+        world_state:
+          - key: "government_crisis_level"
+            value_change: 1
+            scope: server
+    - branch_id: blackmail
+      branch_name: "Использовать для шантажа"
+      conditions:
+        flags: ["evidence_choice_blackmail"]
+      consequences:
+        reputation_changes:
+          Criminal_Underworld: 30
+          Government: -20
+        unlocks_quests: []
+        world_state:
+          - key: "player_blackmail_network"
+            value: true
+            scope: player
+    - branch_id: hand_to_authorities
+      branch_name: "Передать властям"
+      conditions:
+        flags: ["evidence_choice_authorities"]
+      consequences:
+        reputation_changes:
+          Monarchy: 30
+          Intelligence_Services: 30
+        unlocks_quests: []
+        world_state:
+          - key: "internal_investigation_active"
+            value: true
+            scope: server
 content:
   sections:
     - id: setup
@@ -109,6 +189,10 @@ history:
     date: 2025-11-13
     author: Concept Director
     changes: Квест «Даунинг-стрит, 10» оформлен в YAML с описанием нелинейного прохождения и политических последствий.
+  - version: '1.1.0'
+    date: 2025-11-23
+    author: content_writer
+    changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
   checksum: ''
   schema_version: '1.0'
