@@ -23,6 +23,11 @@ type NotificationRepositoryInterface interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.NotificationStatus) (*models.Notification, error)
 }
 
+type NotificationPreferencesRepositoryInterface interface {
+	GetByAccountID(ctx context.Context, accountID uuid.UUID) (*models.NotificationPreferences, error)
+	Update(ctx context.Context, prefs *models.NotificationPreferences) error
+}
+
 type ChatRepositoryInterface interface {
 	CreateMessage(ctx context.Context, message *models.ChatMessage) (*models.ChatMessage, error)
 	GetMessagesByChannel(ctx context.Context, channelID uuid.UUID, limit, offset int) ([]models.ChatMessage, error)
@@ -71,14 +76,16 @@ type GuildRepositoryInterface interface {
 }
 
 type SocialService struct {
-	notificationRepo NotificationRepositoryInterface
-	chatRepo         ChatRepositoryInterface
-	mailRepo         MailRepositoryInterface
-	guildRepo        GuildRepositoryInterface
-	moderationRepo   ModerationRepositoryInterface
-	moderationService ModerationServiceInterface
-	cache            *redis.Client
-	logger           *logrus.Logger
+	notificationRepo         NotificationRepositoryInterface
+	notificationPrefsRepo    NotificationPreferencesRepositoryInterface
+	chatRepo                 ChatRepositoryInterface
+	mailRepo                 MailRepositoryInterface
+	guildRepo                GuildRepositoryInterface
+	moderationRepo            ModerationRepositoryInterface
+	moderationService         ModerationServiceInterface
+	cache                    *redis.Client
+	logger                   *logrus.Logger
+	notificationSubscriber    *NotificationSubscriber
 }
 
 func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
@@ -95,22 +102,31 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 	redisClient := redis.NewClient(redisOpts)
 
 	notificationRepo := NewNotificationRepository(dbPool)
+	notificationPrefsRepo := NewNotificationPreferencesRepository(dbPool)
 	chatRepo := NewChatRepository(dbPool)
 	mailRepo := NewMailRepository(dbPool)
 	guildRepo := NewGuildRepository(dbPool)
 	moderationRepo := NewModerationRepository(dbPool)
 	moderationService := NewModerationService(moderationRepo, redisClient)
+	notificationSubscriber := NewNotificationSubscriber(notificationRepo, redisClient)
+	notificationSubscriber.SetPreferencesRepository(notificationPrefsRepo)
 
 	return &SocialService{
-		notificationRepo: notificationRepo,
-		chatRepo:         chatRepo,
-		mailRepo:         mailRepo,
-		guildRepo:        guildRepo,
-		moderationRepo:   moderationRepo,
-		moderationService: moderationService,
-		cache:            redisClient,
-		logger:           GetLogger(),
+		notificationRepo:      notificationRepo,
+		notificationPrefsRepo: notificationPrefsRepo,
+		chatRepo:              chatRepo,
+		mailRepo:              mailRepo,
+		guildRepo:             guildRepo,
+		moderationRepo:        moderationRepo,
+		moderationService:     moderationService,
+		cache:                 redisClient,
+		logger:                GetLogger(),
+		notificationSubscriber: notificationSubscriber,
 	}, nil
+}
+
+func (s *SocialService) GetNotificationSubscriber() *NotificationSubscriber {
+	return s.notificationSubscriber
 }
 
 func (s *SocialService) CreateNotification(ctx context.Context, req *models.CreateNotificationRequest) (*models.Notification, error) {
@@ -473,4 +489,12 @@ func (s *SocialService) GetReports(ctx context.Context, status *string, limit, o
 
 func (s *SocialService) ResolveReport(ctx context.Context, reportID uuid.UUID, adminID uuid.UUID, status string) error {
 	return s.moderationService.ResolveReport(ctx, reportID, adminID, status)
+}
+
+func (s *SocialService) GetNotificationPreferences(ctx context.Context, accountID uuid.UUID) (*models.NotificationPreferences, error) {
+	return s.notificationPrefsRepo.GetByAccountID(ctx, accountID)
+}
+
+func (s *SocialService) UpdateNotificationPreferences(ctx context.Context, prefs *models.NotificationPreferences) error {
+	return s.notificationPrefsRepo.Update(ctx, prefs)
 }

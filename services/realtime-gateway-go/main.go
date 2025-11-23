@@ -40,6 +40,15 @@ func main() {
 			} else {
 				logger.Info("Ban notification subscriber started")
 			}
+
+			notificationSubscriber := server.NewNotificationSubscriber(redisClient, handler)
+			handler.SetNotificationSubscriber(notificationSubscriber)
+			
+			if err := notificationSubscriber.Start(); err != nil {
+				logger.WithError(err).Error("Failed to start notification subscriber")
+			} else {
+				logger.Info("Notification subscriber started")
+			}
 		}
 	}
 	
@@ -88,9 +97,16 @@ func main() {
 		logger.Info("Shutting down server...")
 		cancel()
 
-		if handler != nil && handler.GetBanNotifier() != nil {
-			if err := handler.GetBanNotifier().Stop(); err != nil {
-				logger.WithError(err).Error("Failed to stop ban notification subscriber")
+		if handler != nil {
+			if handler.GetBanNotifier() != nil {
+				if err := handler.GetBanNotifier().Stop(); err != nil {
+					logger.WithError(err).Error("Failed to stop ban notification subscriber")
+				}
+			}
+			if handler.GetNotificationSubscriber() != nil {
+				if err := handler.GetNotificationSubscriber().Stop(); err != nil {
+					logger.WithError(err).Error("Failed to stop notification subscriber")
+				}
 			}
 		}
 

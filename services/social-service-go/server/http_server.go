@@ -48,6 +48,8 @@ type SocialServiceInterface interface {
 	CreateReport(ctx context.Context, reporterID uuid.UUID, req *models.CreateReportRequest) (*models.ChatReport, error)
 	GetReports(ctx context.Context, status *string, limit, offset int) ([]models.ChatReport, int, error)
 	ResolveReport(ctx context.Context, reportID uuid.UUID, adminID uuid.UUID, status string) error
+	GetNotificationPreferences(ctx context.Context, accountID uuid.UUID) (*models.NotificationPreferences, error)
+	UpdateNotificationPreferences(ctx context.Context, prefs *models.NotificationPreferences) error
 }
 
 type HTTPServer struct {
@@ -87,6 +89,8 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidat
 	social.HandleFunc("/notifications", server.getNotifications).Methods("GET")
 	social.HandleFunc("/notifications/{id}", server.getNotification).Methods("GET")
 	social.HandleFunc("/notifications/{id}/status", server.updateNotificationStatus).Methods("PUT")
+	social.HandleFunc("/notifications/preferences", server.getNotificationPreferences).Methods("GET")
+	social.HandleFunc("/notifications/preferences", server.updateNotificationPreferences).Methods("PUT")
 
 	social.HandleFunc("/chat/channels", server.getChannels).Methods("GET")
 	social.HandleFunc("/chat/channels/{id}", server.getChannel).Methods("GET")
@@ -275,6 +279,58 @@ func (s *HTTPServer) updateNotificationStatus(w http.ResponseWriter, r *http.Req
 	}
 
 	s.respondJSON(w, http.StatusOK, notification)
+}
+
+func (s *HTTPServer) getNotificationPreferences(w http.ResponseWriter, r *http.Request) {
+	accountIDStr := r.URL.Query().Get("account_id")
+	if accountIDStr == "" {
+		s.respondError(w, http.StatusBadRequest, "account_id is required")
+		return
+	}
+
+	accountID, err := uuid.Parse(accountIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid account_id")
+		return
+	}
+
+	prefs, err := s.socialService.GetNotificationPreferences(r.Context(), accountID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get notification preferences")
+		s.respondError(w, http.StatusInternalServerError, "failed to get notification preferences")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, prefs)
+}
+
+func (s *HTTPServer) updateNotificationPreferences(w http.ResponseWriter, r *http.Request) {
+	var prefs models.NotificationPreferences
+	if err := json.NewDecoder(r.Body).Decode(&prefs); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if prefs.AccountID == uuid.Nil {
+		s.respondError(w, http.StatusBadRequest, "account_id is required")
+		return
+	}
+
+	err := s.socialService.UpdateNotificationPreferences(r.Context(), &prefs)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to update notification preferences")
+		s.respondError(w, http.StatusInternalServerError, "failed to update notification preferences")
+		return
+	}
+
+	updatedPrefs, err := s.socialService.GetNotificationPreferences(r.Context(), prefs.AccountID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get updated notification preferences")
+		s.respondError(w, http.StatusInternalServerError, "failed to get updated notification preferences")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, updatedPrefs)
 }
 
 func (s *HTTPServer) createMessage(w http.ResponseWriter, r *http.Request) {
