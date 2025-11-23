@@ -1,0 +1,699 @@
+metadata:
+  id: netfaction-npc-integration-architecture
+  title: Архитектура интеграции NPC лидеров сетевых фракций с системами хакерства и операций за Blackwall (на примере Маманы Брижит)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T15:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - npc
+    - netfaction
+    - hacking
+    - blackwall
+    - cyberspace
+    - integration
+  related_systems:
+    - gameplay-service-go
+    - world-service-go
+    - quest-engine
+    - hacking-system
+  related_documents:
+    - id: npc-integration-system-architecture
+      relation: extends
+    - id: npc-brigitte
+      relation: extends
+    - id: combat-hacking-types
+      relation: references
+  github_issue: 29
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - game-design
+    - api-designer
+
+summary:
+  problem: |
+    NPC лидеры сетевых фракций (такие как Мамана Брижит из Voodoo Boys) требуют специфической интеграции
+    с системами хакерства, операций за Blackwall, киберпространства и сетевых операций,
+    которые отличаются от обычных NPC интеграций.
+  goal: |
+    Создать архитектурную схему интеграции NPC лидеров сетевых фракций с игровыми системами:
+    - Интеграция с системами хакерства
+    - Операции за Blackwall
+    - Киберпространство и сетевые операции
+    - Управление информацией и данными
+    - API endpoints (высокоуровнево)
+    - Техническое задание для реализации
+  essence: |
+    Архитектура интеграции NPC лидеров сетевых фракций с системами хакерства и операций за Blackwall
+    для обеспечения динамического контента сетевых операций и киберпространства.
+
+architecture:
+  overview: |
+    Система интеграции NPC лидеров сетевых фракций расширяет общую архитектуру NPC интеграции
+    следующими компонентами:
+    1. Net Operation Manager - управление сетевыми операциями
+    2. Blackwall Operation Coordinator - координация операций за Blackwall
+    3. Cyberspace Mission System - система миссий в киберпространстве
+    4. Network Intelligence System - система сетевой разведки
+    5. Hacking Resource Manager - управление хакерскими ресурсами
+    6. Information Control System - система контроля информации
+    7. Net Faction Reputation Tracker - отслеживание репутации сетевых фракций
+
+  microservices:
+    - name: net-operation-manager
+      location: gameplay-service-go (модуль net-operations)
+      responsibility: |
+        Управление сетевыми операциями:
+        - Создание сетевых операций от NPC
+        - Координация участников операций
+        - Управление целями операций
+        - Отслеживание результатов операций
+      operation_types:
+        - Network Infiltration (проникновение в сети)
+        - Data Extraction (извлечение данных)
+        - System Sabotage (саботаж систем)
+        - Intelligence Gathering (сбор разведданных)
+      endpoints:
+        - GET /api/v1/netfaction/{faction_id}/operations - доступные операции
+        - POST /api/v1/netfaction/{faction_id}/operations/{op_id}/start - запуск операции
+        - GET /api/v1/netfaction/{faction_id}/operations/{op_id}/status - статус операции
+        - POST /api/v1/netfaction/{faction_id}/operations/{op_id}/complete - завершение операции
+
+    - name: blackwall-operation-coordinator
+      location: gameplay-service-go (модуль blackwall-operations)
+      responsibility: |
+        Координация операций за Blackwall:
+        - Планирование операций за Blackwall
+        - Координация участников операций
+        - Управление рисками операций
+        - Отслеживание результатов операций
+      blackwall_features:
+        - Operation planning (планирование операций)
+        - Risk management (управление рисками)
+        - Team coordination (координация команды)
+        - Data retrieval (извлечение данных)
+      endpoints:
+        - GET /api/v1/blackwall/operations - доступные операции за Blackwall
+        - POST /api/v1/blackwall/operations/{op_id}/plan - планирование операции
+        - POST /api/v1/blackwall/operations/{op_id}/start - запуск операции
+        - GET /api/v1/blackwall/operations/{op_id}/status - статус операции
+        - POST /api/v1/blackwall/operations/{op_id}/complete - завершение операции
+
+    - name: cyberspace-mission-system
+      location: gameplay-service-go (модуль cyberspace-missions)
+      responsibility: |
+        Система миссий в киберпространстве:
+        - Создание миссий в киберпространстве
+        - Управление киберпространственными зонами
+        - Координация участников миссий
+        - Управление наградами за миссии
+      mission_types:
+        - Hub Missions (миссии в хабах)
+        - Arena Missions (миссии в аренах)
+        - Event Missions (событийные миссии)
+        - Raid Missions (рейдовые миссии)
+      endpoints:
+        - GET /api/v1/cyberspace/missions - доступные миссии
+        - GET /api/v1/cyberspace/missions/{mission_id} - информация о миссии
+        - POST /api/v1/cyberspace/missions/{mission_id}/start - запуск миссии
+        - GET /api/v1/cyberspace/missions/{mission_id}/status - статус миссии
+        - POST /api/v1/cyberspace/missions/{mission_id}/complete - завершение миссии
+
+    - name: network-intelligence-system
+      location: gameplay-service-go (модуль network-intelligence)
+      responsibility: |
+        Система сетевой разведки:
+        - Сбор разведывательных данных
+        - Управление информацией
+        - Анализ сетевых данных
+        - Интеграция с квестами
+      intelligence_features:
+        - Data collection (сбор данных)
+        - Information analysis (анализ информации)
+        - Intelligence sharing (обмен разведданными)
+        - Data security (безопасность данных)
+      endpoints:
+        - GET /api/v1/network/intelligence/data - доступные данные разведки
+        - POST /api/v1/network/intelligence/data/{data_id}/collect - сбор данных
+        - GET /api/v1/network/intelligence/data/{data_id}/analyze - анализ данных
+        - POST /api/v1/network/intelligence/data/{data_id}/share - обмен данными
+
+    - name: hacking-resource-manager
+      location: gameplay-service-go (модуль hacking-resources)
+      responsibility: |
+        Управление хакерскими ресурсами:
+        - Управление доступом к хакерским программам
+        - Контроль кибердеков и демонов
+        - Управление уникальным софтом
+        - Интеграция с экономикой
+      resource_types:
+        - Hacking Programs (хакерские программы)
+        - Cyberdecks (кибердеки)
+        - Daemons (демоны)
+        - Unique Software (уникальный софт)
+      endpoints:
+        - GET /api/v1/netfaction/{faction_id}/hacking-resources - доступные ресурсы
+        - GET /api/v1/netfaction/{faction_id}/hacking-resources/{resource_id} - информация о ресурсе
+        - POST /api/v1/netfaction/{faction_id}/hacking-resources/{resource_id}/request - запрос ресурса
+        - GET /api/v1/netfaction/{faction_id}/hacking-resources/{resource_id}/access - проверка доступа
+
+    - name: information-control-system
+      location: world-service-go (модуль information-control)
+      responsibility: |
+        Система контроля информации:
+        - Управление доступом к информации
+        - Контроль распространения данных
+        - Управление секретностью
+        - Интеграция с квестами
+      control_features:
+        - Access control (контроль доступа)
+        - Data distribution (распространение данных)
+        - Secrecy management (управление секретностью)
+        - Information flow (поток информации)
+      endpoints:
+        - GET /api/v1/information/access/{player_id} - уровень доступа игрока
+        - POST /api/v1/information/data/{data_id}/share - распространение данных
+        - GET /api/v1/information/data/{data_id}/secrecy - уровень секретности
+        - POST /api/v1/information/data/{data_id}/restrict - ограничение доступа
+
+    - name: net-faction-reputation-tracker
+      location: gameplay-service-go (модуль netfaction-reputation)
+      responsibility: |
+        Отслеживание репутации сетевых фракций:
+        - Управление репутацией с сетевыми фракциями
+        - Отслеживание истории взаимодействий
+        - Влияние на доступность контента
+        - Интеграция с системой доверия
+      reputation_features:
+        - Reputation levels (уровни репутации)
+        - Trust tracking (отслеживание доверия)
+        - Content gating (ограничение доступа)
+        - Relationship history (история отношений)
+      endpoints:
+        - GET /api/v1/netfaction/{faction_id}/reputation/{player_id} - репутация игрока
+        - GET /api/v1/netfaction/{faction_id}/reputation/{player_id}/history - история репутации
+        - POST /api/v1/netfaction/{faction_id}/reputation/{player_id}/update - обновление репутации
+        - GET /api/v1/netfaction/{faction_id}/trust/{player_id} - уровень доверия
+
+  data_flow:
+    net_operation_flow: |
+      1. Игрок взаимодействует с NPC Маманой Брижит
+      2. NPC Dialogue System показывает опцию "Получить сетевую операцию"
+      3. Net Operation Manager проверяет условия доступа
+      4. Игрок получает сетевую операцию
+      5. Игрок присоединяется к операции
+      6. Net Operation Manager координирует участников
+      7. Операция проходит в киберпространстве
+      8. Net Operation Manager отслеживает прогресс
+      9. При завершении операции выдаются награды
+      10. Net Faction Reputation Tracker обновляет репутацию
+
+    blackwall_operation_flow: |
+      1. NPC Мамана Брижит планирует операцию за Blackwall
+      2. Blackwall Operation Coordinator создаёт операцию
+      3. Игроки получают уведомление о операции
+      4. Игроки присоединяются к операции
+      5. Blackwall Operation Coordinator координирует команду
+      6. Операция проходит за Blackwall
+      7. Blackwall Operation Coordinator отслеживает риски
+      8. При успешном выполнении извлекаются данные
+      9. Network Intelligence System обрабатывает данные
+      10. Net Faction Reputation Tracker обновляет репутацию
+
+    cyberspace_mission_flow: |
+      1. NPC Мамана Брижит создаёт миссию в киберпространстве
+      2. Cyberspace Mission System публикует миссию
+      3. Игроки просматривают доступные миссии
+      4. Игроки присоединяются к миссии
+      5. Cyberspace Mission System координирует участников
+      6. Миссия проходит в киберпространстве
+      7. Cyberspace Mission System отслеживает прогресс
+      8. При завершении миссии выдаются награды
+      9. Hacking Resource Manager открывает доступ к ресурсам
+
+    intelligence_gathering_flow: |
+      1. NPC Мамана Брижит даёт задание на сбор разведданных
+      2. Network Intelligence System создаёт задание
+      3. Игрок выполняет задание в сети
+      4. Network Intelligence System собирает данные
+      5. Network Intelligence System анализирует данные
+      6. Information Control System определяет уровень секретности
+      7. Игрок получает доступ к информации
+      8. Net Faction Reputation Tracker обновляет репутацию
+
+  integrations:
+    with_npc_integration_system: |
+      - Использование NPC Quest Manager для квестов
+      - Использование NPC Relationship Tracker для отношений
+      - Использование NPC Dialogue System для диалогов
+      - Использование NPC Event Trigger System для событий
+
+    with_hacking_system: |
+      - Интеграция с системами хакерства
+      - Управление хакерскими программами
+      - Координация сетевых операций
+      - Управление кибердеками и демонами
+
+    with_cyberspace_system: |
+      - Интеграция с киберпространством
+      - Управление зонами киберпространства
+      - Координация миссий в киберпространстве
+      - Управление хабами и аренами
+
+    with_quest_engine: |
+      - Создание квестов сетевых операций
+      - Интеграция с цепочками квестов
+      - Управление наградами за квесты
+
+    with_world_service: |
+      - Управление сетевыми событиями
+      - Синхронизация состояния операций
+      - Интеграция с Live Ops
+
+  database_schema:
+    tables:
+      - name: net_operations
+        description: Сетевые операции
+        fields:
+          - id: UUID (PK)
+          - faction_id: VARCHAR(50) (FK net_factions)
+          - operation_type: ENUM (infiltration, data_extraction, sabotage, intelligence)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - requirements: JSONB (требования для участия)
+          - rewards: JSONB (награды за операцию)
+          - status: ENUM (pending, active, completed, failed)
+          - participants: UUID[] (array of player IDs)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - faction_id, status
+          - operation_type, status
+
+      - name: blackwall_operations
+        description: Операции за Blackwall
+        fields:
+          - id: UUID (PK)
+          - faction_id: VARCHAR(50) (FK net_factions)
+          - operation_name: VARCHAR(255)
+          - risk_level: ENUM (low, medium, high, extreme)
+          - objectives: JSONB (цели операции)
+          - team_members: UUID[] (array of player IDs)
+          - status: ENUM (planned, active, completed, failed, lost)
+          - data_retrieved: JSONB (извлечённые данные)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - faction_id, status
+          - risk_level, status
+
+      - name: cyberspace_missions
+        description: Миссии в киберпространстве
+        fields:
+          - id: UUID (PK)
+          - faction_id: VARCHAR(50) (FK net_factions, nullable)
+          - mission_type: ENUM (hub, arena, event, raid)
+          - zone_id: UUID (FK cyberspace_zones)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - requirements: JSONB (требования для участия)
+          - rewards: JSONB (награды за миссию)
+          - status: ENUM (available, active, completed, failed)
+          - participants: UUID[] (array of player IDs)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - faction_id, status
+          - mission_type, status
+          - zone_id, status
+
+      - name: network_intelligence_data
+        description: Данные сетевой разведки
+        fields:
+          - id: UUID (PK)
+          - data_type: ENUM (corporate, military, personal, blackwall)
+          - data_source: VARCHAR(255)
+          - content: JSONB (содержимое данных)
+          - secrecy_level: ENUM (public, restricted, confidential, top_secret)
+          - access_control: JSONB (контроль доступа)
+          - collected_by: UUID (FK accounts, nullable)
+          - collected_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - data_type, secrecy_level
+          - collected_by
+
+      - name: hacking_resources
+        description: Хакерские ресурсы
+        fields:
+          - id: UUID (PK)
+          - faction_id: VARCHAR(50) (FK net_factions)
+          - resource_type: ENUM (program, cyberdeck, daemon, software)
+          - resource_id: VARCHAR(50) (FK на соответствующие таблицы)
+          - access_level: ENUM (public, member, trusted, elite)
+          - availability: INTEGER (количество доступных)
+          - requirements: JSONB (требования для доступа)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - faction_id, resource_type
+          - access_level, availability
+
+      - name: information_access_control
+        description: Контроль доступа к информации
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - data_id: UUID (FK network_intelligence_data)
+          - access_level: ENUM (none, read, write, full)
+          - granted_by: VARCHAR(50) (FK npcs, nullable)
+          - granted_at: TIMESTAMP
+          - expires_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, data_id)
+        indexes:
+          - player_id, access_level
+          - data_id, access_level
+
+      - name: netfaction_reputation
+        description: Репутация игроков с сетевыми фракциями
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - faction_id: VARCHAR(50) (FK net_factions)
+          - reputation_level: ENUM (hated, disliked, neutral, trusted, respected, legendary)
+          - reputation_points: INTEGER (очки репутации)
+          - trust_level: INTEGER (уровень доверия, 0-100)
+          - interaction_count: INTEGER (количество взаимодействий)
+          - last_interaction: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, faction_id)
+        indexes:
+          - player_id, faction_id
+          - faction_id, reputation_level
+
+technical_specification:
+  backend_requirements:
+    - Расширение gameplay-service-go модулями:
+      - net-operations (управление сетевыми операциями)
+      - blackwall-operations (координация операций за Blackwall)
+      - cyberspace-missions (миссии в киберпространстве)
+      - network-intelligence (сетевая разведка)
+      - hacking-resources (хакерские ресурсы)
+      - netfaction-reputation (репутация сетевых фракций)
+    - Расширение world-service-go модулем:
+      - information-control (контроль информации)
+    - Интеграция с npc-integration-system для базовой функциональности NPC
+    - Интеграция с hacking-system для хакерских механик
+    - Интеграция с cyberspace-system для киберпространства
+
+  netfaction_npc_specific_requirements:
+    - NPC Мамана Брижит (Voodoo Boys):
+      - Квесты сетевых операций
+      - Операции за Blackwall
+      - Миссии в киберпространстве
+      - Доступ к хакерским ресурсам
+      - Управление информацией
+
+  performance_requirements:
+    - Поддержка до 30 активных сетевых операций одновременно
+    - Задержка обновления состояния операций: <50 мс
+    - Поддержка до 20 активных операций за Blackwall
+    - Поддержка до 50 активных миссий в киберпространстве
+    - Поддержка до 1000 единиц данных разведки
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Кэширование состояния операций в Redis
+    - Асинхронная обработка операций через event bus
+    - Batch-обработка обновлений репутации
+
+subtasks:
+  - id: net-operation-manager-module
+    title: Реализация Net Operation Manager модуля
+    description: |
+      Управление сетевыми операциями:
+      - Создание сетевых операций
+      - Координация участников
+      - Управление целями операций
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: blackwall-operation-coordinator-module
+    title: Реализация Blackwall Operation Coordinator модуля
+    description: |
+      Координация операций за Blackwall:
+      - Планирование операций
+      - Координация участников
+      - Управление рисками
+    priority: high
+    estimated_time: 7-8 дней
+
+  - id: cyberspace-mission-system-module
+    title: Реализация Cyberspace Mission System модуля
+    description: |
+      Система миссий в киберпространстве:
+      - Создание миссий
+      - Управление зонами
+      - Координация участников
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: network-intelligence-system-module
+    title: Реализация Network Intelligence System модуля
+    description: |
+      Система сетевой разведки:
+      - Сбор разведывательных данных
+      - Управление информацией
+      - Анализ данных
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: hacking-resource-manager-module
+    title: Реализация Hacking Resource Manager модуля
+    description: |
+      Управление хакерскими ресурсами:
+      - Управление доступом к программам
+      - Контроль кибердеков и демонов
+      - Интеграция с экономикой
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: information-control-system-module
+    title: Реализация Information Control System модуля
+    description: |
+      Система контроля информации:
+      - Управление доступом
+      - Контроль распространения
+      - Управление секретностью
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: net-faction-reputation-tracker-module
+    title: Реализация Net Faction Reputation Tracker модуля
+    description: |
+      Отслеживание репутации сетевых фракций:
+      - Управление репутацией
+      - Отслеживание истории
+      - Интеграция с доверием
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: database-schema-netfaction-integration
+    title: Создание схемы БД для интеграции сетевых фракций
+    description: |
+      Создание таблиц для интеграции сетевых фракций:
+      - net_operations
+      - blackwall_operations
+      - cyberspace_missions
+      - network_intelligence_data
+      - hacking_resources
+      - information_access_control
+      - netfaction_reputation
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints-netfaction-integration
+    title: Реализация REST API endpoints для интеграции сетевых фракций
+    description: |
+      Создание всех endpoints для интеграции сетевых фракций:
+      - Net operation endpoints
+      - Blackwall operation endpoints
+      - Cyberspace mission endpoints
+      - Intelligence endpoints
+      - Hacking resource endpoints
+      - Information control endpoints
+      - Reputation endpoints
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: integration-testing-netfaction
+    title: Интеграционное тестирование систем сетевых фракций
+    description: |
+      Тесты интеграции сетевых фракций:
+      - Тесты сетевых операций
+      - Тесты операций за Blackwall
+      - Тесты миссий в киберпространстве
+      - Тесты сетевой разведки
+      - Тесты хакерских ресурсов
+      - Тесты контроля информации
+      - Тесты репутации
+    priority: high
+    estimated_time: 6-7 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Net Faction NPC Integration System"
+            NOM[Net Operation Manager]
+            BOC[Blackwall Operation Coordinator]
+            CMS[Cyberspace Mission System]
+            NIS[Network Intelligence System]
+            HRM[Hacking Resource Manager]
+            ICS[Information Control System]
+            NFRT[Net Faction Reputation Tracker]
+        end
+
+        subgraph "NPC Integration System"
+            NQM[NPC Quest Manager]
+            NRT[NPC Relationship Tracker]
+            NDS[NPC Dialogue System]
+        end
+
+        subgraph "Game Services"
+            HS[Hacking System]
+            CS[Cyberspace System]
+            QE[Quest Engine]
+            WS[World Service]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>net_operations<br/>blackwall_operations<br/>cyberspace_missions<br/>network_intelligence_data<br/>hacking_resources<br/>information_access_control<br/>netfaction_reputation)]
+        end
+
+        subgraph "NPC"
+            NPC[Мамана Брижит<br/>Voodoo Boys Leader]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|interact| NPC
+        NPC --> NDS
+        NDS --> NQM
+        NDS --> NOM
+        NDS --> BOC
+        NDS --> CMS
+        NDS --> NIS
+        NDS --> HRM
+        NOM --> HS
+        BOC --> HS
+        CMS --> CS
+        NIS --> QE
+        HRM --> WS
+        ICS --> WS
+        NFRT --> NRT
+        NOM --> DB
+        BOC --> DB
+        CMS --> DB
+        NIS --> DB
+        HRM --> DB
+        ICS --> DB
+        NFRT --> DB
+    ```
+
+  blackwall_operation_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant NPC as Мамана Брижит
+        participant NDS as NPC Dialogue System
+        participant BOC as Blackwall Operation Coordinator
+        participant HS as Hacking System
+        participant NIS as Network Intelligence System
+
+        C->>NPC: Interact
+        NPC->>NDS: Show dialogue tree
+        NDS->>C: Display "Blackwall Operation" option
+        C->>NDS: Select "Blackwall Operation"
+        NDS->>BOC: Request operation
+        BOC->>HS: Plan operation
+        HS->>BOC: Operation planned
+        BOC->>C: Operation available
+        C->>BOC: Join operation
+        BOC->>HS: Start operation
+        HS->>C: Operation in progress
+        Note over C,HS: Operation behind Blackwall
+        HS->>NIS: Extract data
+        NIS->>BOC: Data retrieved
+        BOC->>C: Operation completed
+    ```
+
+decisions:
+  - id: adr-netfaction-npc-integration-architecture
+    summary: |
+      Выбрана архитектура, расширяющая общую NPC интеграцию для NPC лидеров сетевых фракций
+      с фокусом на хакерство и операции за Blackwall.
+
+  - id: adr-blackwall-operations
+    summary: |
+      Координация операций за Blackwall обеспечивает высокорисковый контент
+      с управлением рисками и извлечением данных.
+
+  - id: adr-cyberspace-missions
+    summary: |
+      Система миссий в киберпространстве обеспечивает разнообразный контент
+      в виртуальных зонах с различными типами миссий.
+
+  - id: adr-network-intelligence
+    summary: |
+      Система сетевой разведки обеспечивает сбор и анализ данных
+      с управлением секретностью и контролем доступа.
+
+  - id: adr-hacking-resources
+    summary: |
+      Управление хакерскими ресурсами обеспечивает доступ к уникальному софту
+      и программам с контролем доступа на основе репутации.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация схем данных для интеграции сетевых фракций
+  - Определение формата операций за Blackwall
+  - Создание спецификации системы сетевой разведки
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура интеграции NPC лидеров сетевых фракций с игровыми системами:
+      - Определены компоненты (Net Operation Manager, Blackwall Operation Coordinator, Cyberspace Mission System, Network Intelligence System, Hacking Resource Manager, Information Control System, Net Faction Reputation Tracker)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (net operation flow, blackwall operation flow, cyberspace mission flow, intelligence gathering flow)
+      - Определена структура БД (7 таблиц)
+      - Спроектирована интеграция с игровыми системами (NPC integration, hacking system, cyberspace system, quest engine, world service)
+      - Создано техническое задание
+      - Разбито на подзадачи (10 подзадач)
+
