@@ -1,0 +1,621 @@
+metadata:
+  id: combat-stealth-architecture
+  title: Архитектура системы стелса
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T22:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - stealth
+    - detection
+    - disguise
+    - hacking
+  related_systems:
+    - gameplay-service
+    - combat-hacking-service
+    - quest-service
+    - social-service
+  related_documents:
+    - id: combat-stealth
+      relation: implements
+    - id: analysis-combat-stealth-brief
+      relation: extends
+  github_issue: 162
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы стелса, включающую:
+    - Каналы обнаружения (визуальные, аудиальные, технологические, сетевые)
+    - Элементы стелса (укрытия, тени, маскировка, убийства из засады, отвлечения, взлом камер)
+    - Профили обнаружения
+    - Маскировку под NPC
+    - Хак сетей и камер
+    - Достижения стелса
+    - Карту угроз
+    - Репутационные последствия
+  goal: |
+    Создать архитектурную схему системы стелса с определением:
+    - Компонентов для управления стелсом
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы стелса с поддержкой скрытности,
+    обнаружения, маскировки и интеграции с киберпространством.
+
+architecture:
+  overview: |
+    Архитектура системы стелса состоит из следующих компонентов:
+    1. Stealth Action Manager - управление действиями стелса
+    2. Detection System - система обнаружения
+    3. Disguise Manager - управление маскировкой
+    4. Network Hacking Integrator - интеграция хак сетей
+    5. Threat Map Manager - управление картой угроз
+    6. Stealth Achievement Tracker - отслеживание достижений
+    7. Reputation Impact Calculator - расчет репутационных последствий
+    8. Stealth Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка стелса:
+        - Управление действиями стелса
+        - Система обнаружения
+        - Управление маскировкой
+        - Интеграция хак сетей
+        - Управление картой угроз
+        - Отслеживание достижений
+        - Расчет репутационных последствий
+        - Сбор телеметрии
+      components:
+        - stealth-action-manager: управление действиями стелса
+        - detection-system: система обнаружения
+        - disguise-manager: управление маскировкой
+        - network-hacking-integrator: интеграция хак сетей
+        - threat-map-manager: управление картой угроз
+        - stealth-achievement-tracker: отслеживание достижений
+        - reputation-impact-calculator: расчет репутационных последствий
+        - stealth-telemetry-collector: сбор телеметрии
+      endpoints:
+        - POST /api/v1/gameplay/combat/stealth/actions - выполнение действия стелса
+        - GET /api/v1/gameplay/combat/stealth/detection - получение состояния обнаружения
+        - POST /api/v1/gameplay/combat/stealth/detection/recalculate - пересчет обнаружения
+        - GET /api/v1/gameplay/combat/stealth/profile - получение профиля стелса
+        - POST /api/v1/gameplay/combat/stealth/profile - обновление профиля
+        - POST /api/v1/gameplay/combat/stealth/disguise - активация маскировки
+        - GET /api/v1/gameplay/combat/stealth/disguise/{disguiseId} - получение маскировки
+        - POST /api/v1/gameplay/combat/stealth/network/hack - взлом сетевого узла
+        - GET /api/v1/gameplay/combat/stealth/network/nodes - получение сетевых узлов
+        - GET /api/v1/gameplay/combat/stealth/achievements - получение достижений стелса
+        - GET /api/v1/gameplay/combat/stealth/threat-map - получение карты угроз
+        - POST /api/v1/gameplay/combat/stealth/reputation/calculate - расчет репутационных последствий
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/stealth/{sessionId} - поток обнаружения, маскировки и тревог
+      events_published:
+        - combat.stealth.action: выполнение действия стелса
+        - combat.stealth.detection: изменение состояния обнаружения
+        - combat.stealth.disguise: активация/деактивация маскировки
+        - combat.stealth.hack: взлом сетевого узла
+        - combat.stealth.achievement: получение достижения стелса
+        - combat.stealth.threat-updated: обновление карты угроз
+        - combat.stealth.reputation-impact: изменение репутации
+      events_subscribed:
+        - combat.hacking.network-accessed: доступ к сети
+        - npc.interaction: взаимодействие с NPC
+        - quest.trigger: триггеры квестов
+        - social.reputation-updated: обновление репутации
+        - combat.ability.activated: активация способности
+        - combat.implant.activated: активация импланта
+
+  detection_channels:
+    - name: visual
+      description: "Визуальное обнаружение"
+      sensors: ["cameras", "guards", "drones"]
+      modifiers: ["shadows", "cover", "disguise"]
+
+    - name: audio
+      description: "Аудиальное обнаружение"
+      sensors: ["microphones", "guards", "sound-detectors"]
+      modifiers: ["silence", "distractions", "sound-dampening"]
+
+    - name: technological
+      description: "Технологическое обнаружение"
+      sensors: ["thermal", "EMF", "motion-detectors"]
+      modifiers: ["implants", "equipment", "abilities"]
+
+    - name: network
+      description: "Сетевое обнаружение"
+      sensors: ["netrunners", "security-systems", "network-monitors"]
+      modifiers: ["hacking", "network-signature", "cyberdeck"]
+
+  stealth_elements:
+    - name: cover
+      description: "Укрытия"
+      detection_reduction: "high"
+      requirements: []
+
+    - name: shadows
+      description: "Тени"
+      detection_reduction: "medium"
+      requirements: []
+
+    - name: disguise
+      description: "Маскировка под NPC"
+      detection_reduction: "very_high"
+      requirements: ["disguise_item", "faction_rep"]
+
+    - name: ambush_kill
+      description: "Убийство из засады"
+      detection_reduction: "none"
+      requirements: ["stealth_position", "target_unaware"]
+
+    - name: distraction
+      description: "Отвлечения"
+      detection_reduction: "medium"
+      requirements: ["distraction_item", "timing"]
+
+    - name: crowd
+      description: "Толпа"
+      detection_reduction: "high"
+      requirements: ["crowd_present", "blend_in"]
+
+    - name: camera_hack
+      description: "Взлом камер"
+      detection_reduction: "very_high"
+      requirements: ["hacking_skill", "network_access"]
+
+    - name: network_signature
+      description: "Сетевые подписи"
+      detection_reduction: "high"
+      requirements: ["cyberdeck", "hacking_skill"]
+
+  detection_stages:
+    - name: undetected
+      description: "Не обнаружен"
+      reaction: "none"
+      escalation_time: null
+
+    - name: suspicious
+      description: "Подозрение"
+      reaction: "investigate"
+      escalation_time: "30s"
+
+    - name: partially_detected
+      description: "Частичное обнаружение"
+      reaction: "alert"
+      escalation_time: "15s"
+
+    - name: fully_detected
+      description: "Полное обнаружение"
+      reaction: "combat"
+      escalation_time: "immediate"
+
+  disguise_system:
+    disguise_types:
+      - name: npc_disguise
+        description: "Маскировка под NPC"
+        requirements: ["disguise_item", "faction_rep"]
+        detection_reduction: 0.8
+
+      - name: faction_disguise
+        description: "Маскировка под фракцию"
+        requirements: ["faction_rep", "faction_uniform"]
+        detection_reduction: 0.9
+
+      - name: social_engineering
+        description: "Социальная инженерия"
+        requirements: ["social_skill", "npc_interaction"]
+        detection_reduction: 0.7
+
+    disguise_compatibility:
+      - factions: ["maelstrom", "valentinos", "tyger_claws"]
+        compatibility: "low"
+        reason: "Враждебные фракции"
+
+      - factions: ["corpos", "police"]
+        compatibility: "medium"
+        reason: "Нейтральные фракции"
+
+      - factions: ["same_faction"]
+        compatibility: "high"
+        reason: "Своя фракция"
+
+  data_flows:
+    stealth_action_flow: |
+      1. Игрок выполняет действие стелса
+      2. Stealth Action Manager получает запрос через POST /api/v1/gameplay/combat/stealth/actions
+      3. Stealth Action Manager проверяет доступность действия
+      4. Detection System пересчитывает обнаружение
+      5. Stealth Action Manager выполняет действие
+      6. Detection System обновляет состояние обнаружения
+      7. Threat Map Manager обновляет карту угроз
+      8. Gameplay Service публикует событие combat.stealth.action
+      9. Realtime Gateway отправляет обновление клиентам
+
+    detection_calculation_flow: |
+      1. Игрок перемещается или выполняет действие
+      2. Detection System получает данные о позиции и действиях
+      3. Detection System проверяет все каналы обнаружения (визуальный, аудиальный, технологический, сетевой)
+      4. Detection System учитывает элементы стелса (укрытия, тени, маскировка)
+      5. Detection System применяет модификаторы от имплантов и способностей
+      6. Detection System рассчитывает уровень обнаружения
+      7. Detection System определяет стадию обнаружения (undetected, suspicious, partially_detected, fully_detected)
+      8. Gameplay Service публикует событие combat.stealth.detection
+      9. Realtime Gateway отправляет обновление через WebSocket
+
+    disguise_activation_flow: |
+      1. Игрок активирует маскировку
+      2. Disguise Manager получает запрос через POST /api/v1/gameplay/combat/stealth/disguise
+      3. Disguise Manager проверяет требования маскировки
+      4. Disguise Manager проверяет совместимость с текущей фракцией
+      5. Disguise Manager применяет маскировку
+      6. Detection System пересчитывает обнаружение с учетом маскировки
+      7. Gameplay Service публикует событие combat.stealth.disguise
+      8. Realtime Gateway отправляет обновление клиентам
+
+    network_hacking_flow: |
+      1. Игрок взламывает сетевой узел
+      2. Network Hacking Integrator получает запрос через POST /api/v1/gameplay/combat/stealth/network/hack
+      3. Network Hacking Integrator проверяет навыки хакера
+      4. Network Hacking Integrator интегрируется с Combat Hacking Service
+      5. Network Hacking Integrator выполняет взлом
+      6. Network Hacking Integrator обновляет сетевые подписи
+      7. Detection System пересчитывает обнаружение
+      8. Gameplay Service публикует событие combat.stealth.hack
+      9. Realtime Gateway отправляет обновление клиентам
+
+    threat_map_update_flow: |
+      1. Игрок перемещается или изменяется окружение
+      2. Threat Map Manager получает данные о позиции
+      3. Threat Map Manager сканирует окружение на угрозы
+      4. Threat Map Manager определяет типы угроз (охранники, дроны, камеры, сетевые узлы)
+      5. Threat Map Manager рассчитывает уровень угрозы для каждой позиции
+      6. Threat Map Manager обновляет карту угроз
+      7. Gameplay Service публикует событие combat.stealth.threat-updated
+      8. Realtime Gateway отправляет обновление клиентам
+
+    achievement_tracking_flow: |
+      1. Игрок выполняет стелс-прохождение
+      2. Stealth Achievement Tracker отслеживает качество стелса
+      3. Stealth Achievement Tracker проверяет критерии достижений (незаметность, отсутствие тревог, отсутствующие тела)
+      4. Stealth Achievement Tracker начисляет достижения
+      5. Gameplay Service публикует событие combat.stealth.achievement
+      6. Realtime Gateway отправляет уведомление клиенту
+
+    reputation_impact_flow: |
+      1. Игрок завершает миссию в стелсе
+      2. Reputation Impact Calculator получает данные о прохождении
+      3. Reputation Impact Calculator проверяет качество стелса
+      4. Reputation Impact Calculator рассчитывает репутационные последствия
+      5. Reputation Impact Calculator применяет бонусы/штрафы к репутации
+      6. Gameplay Service публикует событие combat.stealth.reputation-impact
+      7. Social Service обновляет репутацию
+      8. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: stealth_actions
+        description: Действия стелса
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - action_type: ENUM (cover, shadows, disguise, ambush_kill, distraction, crowd, camera_hack, network_signature)
+          - position: JSONB
+          - target_id: UUID FOREIGN KEY
+          - detection_impact: DECIMAL(5,2)
+          - timestamp: TIMESTAMP
+
+      - name: stealth_profiles
+        description: Профили стелса персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - detection_modifiers: JSONB
+          - preferred_elements: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: stealth_detection_state
+        description: Состояние обнаружения
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - current_stage: ENUM (undetected, suspicious, partially_detected, fully_detected)
+          - detection_level: DECIMAL(5,2)
+          - channel_detection: JSONB
+          - modifiers: JSONB
+          - last_update: TIMESTAMP
+
+      - name: stealth_disguises
+        description: Маскировки
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - disguise_type: ENUM (npc_disguise, faction_disguise, social_engineering)
+          - target_faction: VARCHAR(100)
+          - compatibility: DECIMAL(3,2)
+          - detection_reduction: DECIMAL(3,2)
+          - active: BOOLEAN
+          - activated_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+
+      - name: stealth_network_nodes
+        description: Сетевые узлы для стелса
+        columns:
+          - id: UUID PRIMARY KEY
+          - node_id: UUID FOREIGN KEY
+          - node_type: VARCHAR(100)
+          - hacked: BOOLEAN
+          - hack_timestamp: TIMESTAMP
+          - network_signature: JSONB
+
+      - name: stealth_achievements
+        description: Достижения стелса
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - achievement_type: VARCHAR(100)
+          - quality_score: DECIMAL(5,2)
+          - criteria_met: JSONB
+          - unlocked_at: TIMESTAMP
+
+      - name: stealth_reputation_buffs
+        description: Репутационные бонусы стелса
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - mission_id: UUID FOREIGN KEY
+          - stealth_quality: DECIMAL(5,2)
+          - reputation_bonus: DECIMAL(5,2)
+          - applied_at: TIMESTAMP
+
+      - name: stealth_threat_map
+        description: Карта угроз
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - zone_id: UUID FOREIGN KEY
+          - threat_positions: JSONB
+          - threat_levels: JSONB
+          - last_update: TIMESTAMP
+
+  integrations:
+    combat_hacking_service: |
+      - Интеграция взлома сетевых узлов
+      - Управление сетевыми подписями
+      - Взлом камер и сенсоров
+
+    quest_service: |
+      - Триггеры квестов при стелс-прохождении
+      - Проверка требований квестов для стелса
+      - Интеграция с квестовыми целями
+
+    social_service: |
+      - Расчет репутационных последствий
+      - Применение бонусов/штрафов к репутации
+      - Интеграция с фракциями
+
+    npc_service: |
+      - Взаимодействие с NPC для маскировки
+      - Проверка совместимости маскировок
+      - Социальная инженерия
+
+    ability_service: |
+      - Получение способностей для стелса
+      - Интеграция способностей с обнаружением
+      - Обработка стелс-атак
+
+    implant_service: |
+      - Получение данных об имплантах для стелса
+      - Расчет бонусов имплантов для обнаружения
+      - Интеграция имплантов с маскировкой
+
+    progression_service: |
+      - Получение данных о навыках стелса
+      - Расчет бонусов навыков для обнаружения
+      - Обновление навыков на основе стелса
+
+    analytics_service: |
+      - Логирование всех действий стелса
+      - Сбор метрик эффективности
+      - Анализ паттернов стелса
+      - Детект эксплойтов
+
+    realtime_gateway: |
+      - Отправка realtime обновлений обнаружения
+      - Синхронизация маскировки
+      - Уведомления о тревогах
+
+technical_specification:
+  subtasks:
+    - id: stealth-action-manager
+      title: Реализация менеджера действий стелса
+      description: |
+        Реализация Stealth Action Manager с обработкой всех типов действий стелса,
+        валидацией доступности и интеграцией с обнаружением.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: detection-system
+      title: Реализация системы обнаружения
+      description: |
+        Реализация Detection System с расчетом обнаружения по всем каналам,
+        учетом элементов стелса и модификаторов.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: disguise-manager
+      title: Реализация менеджера маскировки
+      description: |
+        Реализация Disguise Manager с управлением маскировками, проверкой совместимости
+        и интеграцией с фракциями.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: network-hacking-integrator
+      title: Реализация интегратора хак сетей
+      description: |
+        Реализация Network Hacking Integrator с интеграцией Combat Hacking Service,
+        управлением сетевыми подписями и взломом камер.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: threat-map-manager
+      title: Реализация менеджера карты угроз
+      description: |
+        Реализация Threat Map Manager с сканированием окружения, определением угроз
+        и обновлением карты угроз.
+      dependencies: [detection-system]
+      estimated_effort: 4 days
+
+    - id: stealth-achievement-tracker
+      title: Реализация трекера достижений
+      description: |
+        Реализация Stealth Achievement Tracker с отслеживанием качества стелса,
+        проверкой критериев и начислением достижений.
+      dependencies: [stealth-action-manager]
+      estimated_effort: 3 days
+
+    - id: reputation-impact-calculator
+      title: Реализация калькулятора репутации
+      description: |
+        Реализация Reputation Impact Calculator с расчетом репутационных последствий,
+        применением бонусов/штрафов и интеграцией с Social Service.
+      dependencies: [stealth-achievement-tracker]
+      estimated_effort: 3 days
+
+    - id: stealth-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Stealth Telemetry Collector с логированием действий, сбором метрик
+        и интеграцией с Analytics Service.
+      dependencies: [stealth-action-manager]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений обнаружения,
+        маскировки и тревог.
+      dependencies: [detection-system, disguise-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы стелса.
+      dependencies: [stealth-action-manager, detection-system]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для действий, профилей, обнаружения, маскировок, сетевых узлов,
+        достижений, репутации и карты угроз с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> SAM[Stealth Action Manager]
+        GameplayService --> DS[Detection System]
+        GameplayService --> DM[Disguise Manager]
+        GameplayService --> NHI[Network Hacking Integrator]
+        GameplayService --> TMM[Threat Map Manager]
+        GameplayService --> SAT[Stealth Achievement Tracker]
+        GameplayService --> RIC[Reputation Impact Calculator]
+        GameplayService --> STC[Stealth Telemetry Collector]
+        
+        SAM --> DS
+        SAM --> DM
+        DS --> TMM
+        DM --> DS
+        
+        GameplayService --> CombatHacking[Combat Hacking Service]
+        GameplayService --> QuestService[Quest Service]
+        GameplayService --> SocialService[Social Service]
+        GameplayService --> NPCService[NPC Service]
+        GameplayService --> AbilityService[Ability Service]
+        GameplayService --> ImplantService[Implant Service]
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> AnalyticsService[Analytics Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSStealth[WebSocket<br/>Stealth]
+        WSStealth --> GameplayService
+    ```
+
+  detection_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant DS as Detection System
+        participant SAM as Stealth Action Manager
+        participant DM as Disguise Manager
+        participant IS as Implant Service
+        participant AS as Ability Service
+        participant EB as Event Bus
+        
+        C->>SAM: Perform stealth action
+        SAM->>DS: Recalculate detection
+        DS->>DS: Check visual channel
+        DS->>DS: Check audio channel
+        DS->>DS: Check technological channel
+        DS->>DS: Check network channel
+        DS->>DM: Get disguise modifiers
+        DM-->>DS: Disguise data
+        DS->>IS: Get implant modifiers
+        IS-->>DS: Implant data
+        DS->>AS: Get ability modifiers
+        AS-->>DS: Ability data
+        DS->>DS: Calculate detection level
+        DS->>DS: Determine detection stage
+        DS->>EB: Publish combat.stealth.detection
+        DS-->>C: Detection update
+    ```
+
+  disguise_activation_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant DM as Disguise Manager
+        participant SS as Social Service
+        participant DS as Detection System
+        participant EB as Event Bus
+        
+        C->>DM: Activate disguise
+        DM->>DM: Check disguise requirements
+        DM->>SS: Check faction compatibility
+        SS-->>DM: Compatibility result
+        DM->>DM: Apply disguise
+        DM->>DS: Recalculate detection
+        DS-->>DM: Updated detection
+        DM->>EB: Publish combat.stealth.disguise
+        DM-->>C: Disguise activated
+    ```
+
