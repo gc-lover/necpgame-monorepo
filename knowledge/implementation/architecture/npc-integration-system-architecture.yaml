@@ -1,0 +1,696 @@
+metadata:
+  id: npc-integration-system-architecture
+  title: Архитектура системы интеграции NPC с игровыми системами (на примере Ройса)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T11:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - npc
+    - integration
+    - quests
+    - raids
+    - economy
+    - factions
+  related_systems:
+    - gameplay-service-go
+    - economy-service-go
+    - world-service-go
+    - quest-engine
+  related_documents:
+    - id: npc-royce
+      relation: extends
+    - id: quest-engine-architecture
+      relation: references
+    - id: clan-war-system-architecture
+      relation: references
+  github_issue: 19
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - game-design
+    - api-designer
+
+summary:
+  problem: |
+    NPC профили существуют в изоляции и не интегрированы с игровыми системами:
+    рейдов, экономики имплантов, фракционных войн. Требуется спроектировать
+    архитектуру интеграции NPC как системных компонентов с игровыми механиками.
+  goal: |
+    Создать архитектурную схему интеграции NPC с игровыми системами:
+    - Система квестов и событий от NPC
+    - Интеграция с рейдовыми системами (Totentanz, конвои)
+    - Интеграция с экономикой имплантов (нелегальный рынок)
+    - Интеграция с фракционными войнами (уличные конфликты)
+    - API endpoints (высокоуровнево)
+    - Техническое задание для реализации
+  essence: |
+    Архитектура интеграции NPC как системных компонентов с рейдовыми системами,
+    экономикой имплантов и фракционными войнами для обеспечения динамического
+    игрового контента.
+
+architecture:
+  overview: |
+    Система интеграции NPC состоит из следующих компонентов:
+    1. NPC Quest Manager - управление квестами от NPC
+    2. NPC Raid Coordinator - координация рейдовых событий
+    3. NPC Economy Integrator - интеграция с экономикой имплантов
+    4. NPC Faction War Manager - управление фракционными конфликтами
+    5. NPC Relationship Tracker - отслеживание отношений с игроками
+    6. NPC Event Trigger System - система триггеров событий
+    7. NPC Dialogue System - система диалогов и взаимодействий
+    8. NPC State Manager - управление состоянием NPC
+
+  microservices:
+    - name: npc-quest-manager
+      location: gameplay-service-go (модуль npc-quests)
+      responsibility: |
+        Управление квестами от NPC:
+        - Создание и управление квестами от NPC
+        - Проверка условий доступности квестов
+        - Отслеживание прогресса квестов
+        - Выдача наград по завершении
+      npc_quest_types:
+        - Story quests (сюжетные квесты)
+        - Raid quests (рейдовые квесты)
+        - Economy quests (экономические квесты)
+        - Faction quests (фракционные квесты)
+        - Daily/Weekly quests (ежедневные/еженедельные)
+      endpoints:
+        - GET /api/v1/npc/{npc_id}/quests - список квестов от NPC
+        - GET /api/v1/npc/{npc_id}/quests/{quest_id} - информация о квесте
+        - POST /api/v1/npc/{npc_id}/quests/{quest_id}/accept - принятие квеста
+        - POST /api/v1/npc/{npc_id}/quests/{quest_id}/complete - завершение квеста
+        - GET /api/v1/npc/{npc_id}/quests/{quest_id}/progress - прогресс квеста
+
+    - name: npc-raid-coordinator
+      location: gameplay-service-go (модуль npc-raids)
+      responsibility: |
+        Координация рейдовых событий от NPC:
+        - Создание рейдовых инстансов (Totentanz, конвои Militech)
+        - Управление условиями доступа к рейдам
+        - Координация участников рейда
+        - Управление наградами за рейды
+      raid_types:
+        - Totentanz Raids (рейды в Totentanz)
+        - Militech Convoy Raids (рейды на конвои Militech)
+        - Psychoframe Trials (испытания Psychoframe)
+        - Maelstrom Rampage Events (события Maelstrom Rampage)
+      endpoints:
+        - GET /api/v1/npc/{npc_id}/raids - список доступных рейдов
+        - POST /api/v1/npc/{npc_id}/raids/{raid_id}/start - запуск рейда
+        - GET /api/v1/npc/{npc_id}/raids/{raid_id}/status - статус рейда
+        - POST /api/v1/npc/{npc_id}/raids/{raid_id}/complete - завершение рейда
+        - GET /api/v1/npc/{npc_id}/raids/{raid_id}/rewards - награды за рейд
+
+    - name: npc-economy-integrator
+      location: economy-service-go (модуль npc-economy)
+      responsibility: |
+        Интеграция NPC с экономикой имплантов:
+        - Управление нелегальным рынком имплантов
+        - Контроль доступа к экстремальным имплантам
+        - Управление ценами и доступностью имплантов
+        - Интеграция с фиксёрами
+      economy_features:
+        - Illegal implant market (нелегальный рынок имплантов)
+        - Extreme implant access (доступ к экстремальным имплантам)
+        - Fixer integration (интеграция с фиксёрами)
+        - Price manipulation (манипуляция ценами)
+        - Supply chain control (контроль цепочек поставок)
+      endpoints:
+        - GET /api/v1/npc/{npc_id}/implants - доступные импланты от NPC
+        - GET /api/v1/npc/{npc_id}/implants/{implant_id} - информация об импланте
+        - POST /api/v1/npc/{npc_id}/implants/{implant_id}/purchase - покупка импланта
+        - GET /api/v1/npc/{npc_id}/market - состояние рынка имплантов
+        - POST /api/v1/npc/{npc_id}/market/update - обновление рынка
+
+    - name: npc-faction-war-manager
+      location: gameplay-service-go (модуль npc-faction-wars)
+      responsibility: |
+        Управление фракционными конфликтами:
+        - Инициация уличных войн
+        - Управление фракционными событиями
+        - Координация конфликтов между фракциями
+        - Управление последствиями войн
+      faction_war_types:
+        - Street Wars (уличные войны)
+        - Territory Control (контроль территории)
+        - Faction Alliances (фракционные альянсы)
+        - Proxy Conflicts (прокси-конфликты)
+      endpoints:
+        - GET /api/v1/npc/{npc_id}/faction-wars - активные войны
+        - POST /api/v1/npc/{npc_id}/faction-wars/{war_id}/initiate - инициация войны
+        - GET /api/v1/npc/{npc_id}/faction-wars/{war_id}/status - статус войны
+        - POST /api/v1/npc/{npc_id}/faction-wars/{war_id}/resolve - разрешение войны
+
+    - name: npc-relationship-tracker
+      location: gameplay-service-go (модуль npc-relationships)
+      responsibility: |
+        Отслеживание отношений с игроками:
+        - Управление репутацией с NPC
+        - Отслеживание истории взаимодействий
+        - Управление уровнем доверия
+        - Влияние на доступность контента
+      relationship_features:
+        - Reputation tracking (отслеживание репутации)
+        - Trust level (уровень доверия)
+        - Interaction history (история взаимодействий)
+        - Content gating (ограничение доступа к контенту)
+      endpoints:
+        - GET /api/v1/npc/{npc_id}/relationships/{player_id} - отношения с игроком
+        - GET /api/v1/npc/{npc_id}/reputation/{player_id} - репутация игрока
+        - POST /api/v1/npc/{npc_id}/relationships/{player_id}/update - обновление отношений
+        - GET /api/v1/npc/{npc_id}/relationships/{player_id}/history - история взаимодействий
+
+    - name: npc-event-trigger-system
+      location: world-service-go (модуль npc-events)
+      responsibility: |
+        Система триггеров событий от NPC:
+        - Определение условий для событий
+        - Триггеры событий на основе действий игроков
+        - Управление мировыми событиями от NPC
+        - Координация с Live Ops
+      event_types:
+        - Maelstrom Rampage Events (события Maelstrom Rampage)
+        - Territory Control Events (события контроля территории)
+        - Economy Events (экономические события)
+        - Faction Conflict Events (события фракционных конфликтов)
+      endpoints:
+        - GET /api/v1/npc/{npc_id}/events - доступные события
+        - POST /api/v1/npc/{npc_id}/events/{event_id}/trigger - триггер события
+        - GET /api/v1/npc/{npc_id}/events/{event_id}/status - статус события
+        - POST /api/v1/npc/{npc_id}/events/{event_id}/complete - завершение события
+
+    - name: npc-dialogue-system
+      location: gameplay-service-go (модуль npc-dialogue)
+      responsibility: |
+        Система диалогов и взаимодействий:
+        - Управление диалоговыми деревьями
+        - Обработка выборов игроков
+        - Управление контекстными диалогами
+        - Интеграция с квестами и событиями
+      dialogue_features:
+        - Dialogue trees (диалоговые деревья)
+        - Player choices (выборы игроков)
+        - Contextual dialogues (контекстные диалоги)
+        - Quest integration (интеграция с квестами)
+      endpoints:
+        - GET /api/v1/npc/{npc_id}/dialogue - диалоговое дерево
+        - POST /api/v1/npc/{npc_id}/dialogue/{node_id}/select - выбор в диалоге
+        - GET /api/v1/npc/{npc_id}/dialogue/{node_id} - информация о узле диалога
+
+    - name: npc-state-manager
+      location: world-service-go (модуль npc-state)
+      responsibility: |
+        Управление состоянием NPC:
+        - Хранение состояния NPC (позиция, здоровье, инвентарь)
+        - Синхронизация состояния между сервисами
+        - Управление жизненным циклом NPC
+        - Персистентность состояния
+      state_features:
+        - Position tracking (отслеживание позиции)
+        - Health management (управление здоровьем)
+        - Inventory management (управление инвентарём)
+        - Lifecycle management (управление жизненным циклом)
+      endpoints:
+        - GET /api/v1/npc/{npc_id}/state - состояние NPC
+        - POST /api/v1/npc/{npc_id}/state/update - обновление состояния
+        - GET /api/v1/npc/{npc_id}/location - текущая локация NPC
+
+  data_flow:
+    quest_flow: |
+      1. Игрок взаимодействует с NPC Ройсом
+      2. NPC Dialogue System показывает диалоговое дерево
+      3. Игрок выбирает опцию "Получить квест"
+      4. NPC Quest Manager проверяет условия доступности квестов
+      5. NPC Quest Manager создаёт квест для игрока
+      6. Игрок принимает квест через API
+      7. NPC Quest Manager отслеживает прогресс квеста
+      8. При завершении квеста выдаются награды
+      9. NPC Relationship Tracker обновляет отношения
+
+    raid_flow: |
+      1. Игрок взаимодействует с NPC Ройсом
+      2. NPC Dialogue System показывает опцию "Запустить рейд"
+      3. NPC Raid Coordinator проверяет условия доступа
+      4. NPC Raid Coordinator создаёт рейдовый инстанс
+      5. Игроки присоединяются к рейду
+      6. Рейд проходит в Totentanz или на конвое Militech
+      7. NPC Raid Coordinator отслеживает прогресс рейда
+      8. При завершении рейда выдаются награды
+      9. NPC Relationship Tracker обновляет отношения
+
+    economy_flow: |
+      1. Игрок взаимодействует с NPC Ройсом
+      2. NPC Dialogue System показывает опцию "Просмотреть импланты"
+      3. NPC Economy Integrator получает доступные импланты
+      4. Игрок просматривает каталог имплантов
+      5. Игрок выбирает имплант для покупки
+      6. NPC Economy Integrator проверяет условия покупки
+      7. Игрок покупает имплант
+      8. NPC Economy Integrator обновляет рынок имплантов
+      9. NPC Relationship Tracker обновляет отношения
+
+    faction_war_flow: |
+      1. NPC Faction War Manager определяет условия для войны
+      2. NPC Event Trigger System триггерит событие войны
+      3. Игроки получают уведомление о начале войны
+      4. Игроки присоединяются к фракции (Maelstrom)
+      5. NPC Faction War Manager координирует конфликт
+      6. Игроки участвуют в уличных боях
+      7. NPC Faction War Manager отслеживает прогресс войны
+      8. При завершении войны определяются последствия
+      9. NPC Relationship Tracker обновляет отношения
+
+  integrations:
+    with_quest_engine: |
+      - Создание квестов от NPC
+      - Отслеживание прогресса квестов
+      - Выдача наград за квесты
+      - Интеграция с диалоговой системой
+
+    with_raid_system: |
+      - Создание рейдовых инстансов
+      - Координация участников рейда
+      - Управление наградами за рейды
+      - Интеграция с системой матчмейкинга
+
+    with_economy_service: |
+      - Управление рынком имплантов
+      - Контроль цен и доступности
+      - Интеграция с фиксёрами
+      - Управление цепочками поставок
+
+    with_faction_system: |
+      - Инициация фракционных конфликтов
+      - Управление территориальным контролем
+      - Координация альянсов
+      - Управление последствиями войн
+
+    with_world_service: |
+      - Управление состоянием NPC
+      - Синхронизация позиций
+      - Управление мировыми событиями
+      - Интеграция с Live Ops
+
+  database_schema:
+    tables:
+      - name: npc_quests
+        description: Квесты от NPC
+        fields:
+          - id: UUID (PK)
+          - npc_id: VARCHAR(50) (FK npcs)
+          - quest_type: ENUM (story, raid, economy, faction, daily, weekly)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - requirements: JSONB (требования для доступа)
+          - rewards: JSONB (награды за квест)
+          - status: ENUM (active, completed, failed, expired)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - npc_id, status
+          - quest_type, status
+
+      - name: npc_raid_instances
+        description: Рейдовые инстансы от NPC
+        fields:
+          - id: UUID (PK)
+          - npc_id: VARCHAR(50) (FK npcs)
+          - raid_type: ENUM (totentanz, militech_convoy, psychoframe, rampage)
+          - instance_id: UUID (FK raid_instances)
+          - status: ENUM (pending, active, completed, failed)
+          - participants: UUID[] (array of player IDs)
+          - rewards: JSONB (награды за рейд)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - npc_id, status
+          - raid_type, status
+
+      - name: npc_implant_market
+        description: Рынок имплантов от NPC
+        fields:
+          - id: UUID (PK)
+          - npc_id: VARCHAR(50) (FK npcs)
+          - implant_id: VARCHAR(50) (FK implants)
+          - price: DECIMAL(10,2)
+          - availability: INTEGER (количество доступных)
+          - requirements: JSONB (требования для покупки)
+          - status: ENUM (available, sold_out, restricted)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - npc_id, status
+          - implant_id, status
+
+      - name: npc_faction_wars
+        description: Фракционные войны от NPC
+        fields:
+          - id: UUID (PK)
+          - npc_id: VARCHAR(50) (FK npcs)
+          - war_type: ENUM (street_war, territory_control, alliance, proxy)
+          - target_faction: VARCHAR(50) (FK factions)
+          - status: ENUM (pending, active, resolved)
+          - participants: UUID[] (array of player IDs)
+          - outcome: JSONB (результат войны)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - npc_id, status
+          - target_faction, status
+
+      - name: npc_relationships
+        description: Отношения NPC с игроками
+        fields:
+          - id: UUID (PK)
+          - npc_id: VARCHAR(50) (FK npcs)
+          - player_id: UUID (FK accounts)
+          - reputation: INTEGER (репутация, -100 до 100)
+          - trust_level: INTEGER (уровень доверия, 0 до 100)
+          - interaction_count: INTEGER (количество взаимодействий)
+          - last_interaction: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(npc_id, player_id)
+        indexes:
+          - npc_id, player_id
+          - player_id, reputation
+
+      - name: npc_events
+        description: События от NPC
+        fields:
+          - id: UUID (PK)
+          - npc_id: VARCHAR(50) (FK npcs)
+          - event_type: ENUM (rampage, territory_control, economy, faction_conflict)
+          - trigger_conditions: JSONB (условия триггера)
+          - status: ENUM (pending, active, completed, cancelled)
+          - participants: UUID[] (array of player IDs)
+          - rewards: JSONB (награды за событие)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - npc_id, status
+          - event_type, status
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в gameplay-service-go:
+      - npc-quests (управление квестами)
+      - npc-raids (координация рейдов)
+      - npc-faction-wars (управление фракционными войнами)
+      - npc-relationships (отслеживание отношений)
+      - npc-dialogue (система диалогов)
+    - Реализация модулей в economy-service-go:
+      - npc-economy (интеграция с экономикой имплантов)
+    - Реализация модулей в world-service-go:
+      - npc-events (система триггеров событий)
+      - npc-state (управление состоянием NPC)
+    - Интеграция с quest-engine для квестов
+    - Интеграция с raid-system для рейдов
+    - Интеграция с faction-system для фракционных войн
+    - Интеграция с economy-service для экономики имплантов
+
+  npc_specific_requirements:
+    - NPC Ройс (Maelstrom):
+      - Квесты Maelstrom (рейды, испытания)
+      - Рынок экстремальных имплантов
+      - Инициация уличных войн
+      - События Maelstrom Rampage
+      - Интеграция с фиксёрами
+
+  performance_requirements:
+    - Поддержка до 1000 активных NPC одновременно
+    - Задержка обновления состояния NPC: <100 мс
+    - Поддержка до 100 активных квестов от NPC на игрока
+    - Поддержка до 50 активных рейдов от NPC
+    - Поддержка до 20 активных фракционных войн
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Кэширование состояния NPC в Redis
+    - Асинхронная обработка событий через event bus
+    - Batch-обработка обновлений отношений
+
+subtasks:
+  - id: npc-quest-manager-module
+    title: Реализация NPC Quest Manager модуля
+    description: |
+      Управление квестами от NPC:
+      - Создание и управление квестами
+      - Проверка условий доступности
+      - Отслеживание прогресса
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: npc-raid-coordinator-module
+    title: Реализация NPC Raid Coordinator модуля
+    description: |
+      Координация рейдовых событий:
+      - Создание рейдовых инстансов
+      - Управление условиями доступа
+      - Координация участников
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: npc-economy-integrator-module
+    title: Реализация NPC Economy Integrator модуля
+    description: |
+      Интеграция с экономикой имплантов:
+      - Управление нелегальным рынком
+      - Контроль доступа к имплантам
+      - Интеграция с фиксёрами
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: npc-faction-war-manager-module
+    title: Реализация NPC Faction War Manager модуля
+    description: |
+      Управление фракционными конфликтами:
+      - Инициация уличных войн
+      - Управление фракционными событиями
+      - Координация конфликтов
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: npc-relationship-tracker-module
+    title: Реализация NPC Relationship Tracker модуля
+    description: |
+      Отслеживание отношений с игроками:
+      - Управление репутацией
+      - Отслеживание истории взаимодействий
+      - Управление уровнем доверия
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: npc-event-trigger-system-module
+    title: Реализация NPC Event Trigger System модуля
+    description: |
+      Система триггеров событий:
+      - Определение условий для событий
+      - Триггеры событий на основе действий
+      - Управление мировыми событиями
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: npc-dialogue-system-module
+    title: Реализация NPC Dialogue System модуля
+    description: |
+      Система диалогов и взаимодействий:
+      - Управление диалоговыми деревьями
+      - Обработка выборов игроков
+      - Интеграция с квестами
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: npc-state-manager-module
+    title: Реализация NPC State Manager модуля
+    description: |
+      Управление состоянием NPC:
+      - Хранение состояния NPC
+      - Синхронизация между сервисами
+      - Управление жизненным циклом
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: database-schema-npc-integration
+    title: Создание схемы БД для интеграции NPC
+    description: |
+      Создание таблиц для NPC интеграции:
+      - npc_quests
+      - npc_raid_instances
+      - npc_implant_market
+      - npc_faction_wars
+      - npc_relationships
+      - npc_events
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints-npc-integration
+    title: Реализация REST API endpoints для NPC интеграции
+    description: |
+      Создание всех endpoints для NPC интеграции:
+      - Quest endpoints
+      - Raid endpoints
+      - Economy endpoints
+      - Faction war endpoints
+      - Relationship endpoints
+      - Event endpoints
+      - Dialogue endpoints
+      - State endpoints
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: integration-testing-npc
+    title: Интеграционное тестирование NPC систем
+    description: |
+      Тесты интеграции NPC:
+      - Тесты квестов от NPC
+      - Тесты рейдов от NPC
+      - Тесты экономики имплантов
+      - Тесты фракционных войн
+      - Тесты отношений с NPC
+      - Тесты событий от NPC
+    priority: high
+    estimated_time: 6-7 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "NPC Integration System"
+            NQM[NPC Quest Manager]
+            NRC[NPC Raid Coordinator]
+            NEI[NPC Economy Integrator]
+            NFWM[NPC Faction War Manager]
+            NRT[NPC Relationship Tracker]
+            NETS[NPC Event Trigger System]
+            NDS[NPC Dialogue System]
+            NSM[NPC State Manager]
+        end
+
+        subgraph "Game Services"
+            QE[Quest Engine]
+            RS[Raid System]
+            ES[Economy Service]
+            FS[Faction System]
+            WS[World Service]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>npc_quests<br/>npc_raid_instances<br/>npc_implant_market<br/>npc_faction_wars<br/>npc_relationships<br/>npc_events)]
+        end
+
+        subgraph "NPC"
+            NPC[Ройс<br/>Maelstrom Leader]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|interact| NPC
+        NPC --> NDS
+        NDS --> NQM
+        NDS --> NRC
+        NDS --> NEI
+        NDS --> NFWM
+        NQM --> QE
+        NRC --> RS
+        NEI --> ES
+        NFWM --> FS
+        NETS --> WS
+        NSM --> WS
+        NRT --> DB
+        NQM --> DB
+        NRC --> DB
+        NEI --> DB
+        NFWM --> DB
+    ```
+
+  quest_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant NPC as Ройс
+        participant NDS as NPC Dialogue System
+        participant NQM as NPC Quest Manager
+        participant QE as Quest Engine
+        participant NRT as NPC Relationship Tracker
+
+        C->>NPC: Interact
+        NPC->>NDS: Show dialogue tree
+        NDS->>C: Display dialogue options
+        C->>NDS: Select "Get Quest"
+        NDS->>NQM: Request available quests
+        NQM->>QE: Check quest conditions
+        QE->>NQM: Return available quests
+        NQM->>C: Show quest list
+        C->>NQM: Accept quest
+        NQM->>QE: Create quest for player
+        QE->>NQM: Quest created
+        NQM->>NRT: Update relationship
+        NQM->>C: Quest accepted
+    ```
+
+decisions:
+  - id: adr-npc-integration-architecture
+    summary: |
+      Выбрана модульная архитектура интеграции NPC с игровыми системами
+      для обеспечения гибкости и масштабируемости.
+
+  - id: adr-npc-quest-system
+    summary: |
+      Использована интеграция с quest-engine для управления квестами от NPC,
+      обеспечивающая единообразие и переиспользование логики квестов.
+
+  - id: adr-npc-raid-coordination
+    summary: |
+      Реализована координация рейдов через отдельный модуль для обеспечения
+      гибкости в создании рейдовых событий от NPC.
+
+  - id: adr-npc-economy-integration
+    summary: |
+      Интеграция с economy-service для управления рынком имплантов обеспечивает
+      единую экономическую систему с поддержкой нелегальных рынков.
+
+  - id: adr-npc-faction-wars
+    summary: |
+      Управление фракционными войнами через отдельный модуль обеспечивает
+      динамические конфликты и влияние на игровой мир.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация схем данных для NPC интеграции
+  - Определение формата диалоговых деревьев
+  - Создание спецификации событий от NPC
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура интеграции NPC с игровыми системами:
+      - Определены компоненты (NPC Quest Manager, NPC Raid Coordinator, NPC Economy Integrator, NPC Faction War Manager, NPC Relationship Tracker, NPC Event Trigger System, NPC Dialogue System, NPC State Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (quest flow, raid flow, economy flow, faction war flow)
+      - Определена структура БД (npc_quests, npc_raid_instances, npc_implant_market, npc_faction_wars, npc_relationships, npc_events)
+      - Спроектирована интеграция с игровыми системами (quest engine, raid system, economy service, faction system, world service)
+      - Создано техническое задание
+      - Разбито на подзадачи (11 подзадач)
+
