@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:55:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-23T12:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -52,6 +52,78 @@ summary:
     - Выборы с участием игроков и NPC, кампания и дебаты.
     - Парламентские процедуры, вдохновлённые Вестминстерской системой.
     - Прямое влияние на глобальные правила сезона.
+quest_definition:
+  quest_type: dynamic
+  level_min: 35
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation:
+      London_Communities: 50
+    required_items: []
+  objectives:
+    - id: collect_signatures
+      text: "Собрать подписи для выдвижения кандидатуры"
+      type: interact
+      target: npc_citizens
+      count: 100
+      optional: false
+    - id: pay_fee
+      text: "Оплатить вступительный взнос"
+      type: pay
+      target: election_system
+      count: 1
+      optional: false
+    - id: choose_manifesto
+      text: "Выбрать манифест для предвыборной кампании"
+      type: choice
+      target: manifesto_selection
+      count: 1
+      optional: false
+    - id: campaign_activities
+      text: "Провести предвыборную кампанию (дебаты, агитация, медиа)"
+      type: interact
+      target: campaign_system
+      count: 10
+      optional: false
+    - id: attend_parliament
+      text: "Участвовать в сессиях парламента (если избран)"
+      type: interact
+      target: parliament_sessions
+      count: 5
+      optional: true
+  rewards:
+    experience: 3000
+    money: 0
+    items:
+      - item_id: title_league_mp
+        quantity: 1
+    reputation:
+      London_Politics: 30
+    unlocks: []
+  branches:
+    - branch_id: elected_mp
+      branch_name: "Избран депутатом"
+      conditions:
+        flags: ["election_result_success"]
+      consequences:
+        reputation_changes:
+          London_Politics: 50
+        unlocks_quests: []
+        world_state:
+          - key: "player_parliament_access"
+            value: true
+            scope: player
+    - branch_id: election_lost
+      branch_name: "Проиграл выборы"
+      conditions:
+        flags: ["election_result_failure"]
+      consequences:
+        reputation_changes:
+          London_Politics: 10
+        unlocks_quests: []
+        world_state: []
 content:
   sections:
     - id: candidacy
@@ -106,6 +178,10 @@ history:
     date: 2025-11-13
     author: Concept Director
     changes: Квест «Парламент Лиги» перенесён в YAML и дополнен механикой сезонного голосования.
+  - version: '1.1.0'
+    date: 2025-11-23
+    author: content_writer
+    changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
   checksum: ''
   schema_version: '1.0'
