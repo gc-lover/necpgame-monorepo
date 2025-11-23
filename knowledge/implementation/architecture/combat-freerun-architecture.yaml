@@ -1,0 +1,510 @@
+metadata:
+  id: combat-freerun-architecture
+  title: Архитектура системы Freerun (паркур в бою)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T20:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - freerun
+    - parkour
+    - movement
+    - stamina
+  related_systems:
+    - gameplay-service
+    - quest-service
+    - analytics-service
+  related_documents:
+    - id: combat-freerun
+      relation: implements
+    - id: analysis-combat-freerun-brief
+      relation: extends
+  github_issue: 160
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы Freerun (паркур в бою), включающую:
+    - Смешанный контроль паркура (автоматический и ручной)
+    - Элементы паркура (прыжки, лазание, скольжение, гравиботы)
+    - Систему выносливости (stamina)
+    - Интеграцию с боем (атаки с воздуха, стрельба в движении, мобильные способности)
+    - Комбо паркура
+    - Пользовательские маршруты
+    - Телеметрию и античит
+  goal: |
+    Создать архитектурную схему системы Freerun с определением:
+    - Компонентов для управления паркуром
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы Freerun с поддержкой паркура в бою,
+    управления выносливостью, комбо и интеграции с боевой системой.
+
+architecture:
+  overview: |
+    Архитектура системы Freerun состоит из следующих компонентов:
+    1. Freerun Action Manager - управление действиями паркура
+    2. Stamina Manager - управление выносливостью
+    3. Freerun Combo System - система комбо паркура
+    4. Route Manager - управление маршрутами
+    5. Mobile Ability Integrator - интеграция мобильных способностей
+    6. Freerun Telemetry Collector - сбор телеметрии
+    7. Anti-Cheat Validator - валидация античит
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка Freerun:
+        - Управление действиями паркура
+        - Управление выносливостью
+        - Обработка комбо паркура
+        - Управление маршрутами
+        - Интеграция мобильных способностей
+        - Сбор телеметрии
+        - Валидация античит
+      components:
+        - freerun-action-manager: управление действиями паркура
+        - stamina-manager: управление выносливостью
+        - freerun-combo-system: система комбо паркура
+        - route-manager: управление маршрутами
+        - mobile-ability-integrator: интеграция мобильных способностей
+        - freerun-telemetry-collector: сбор телеметрии
+        - anti-cheat-validator: валидация античит
+      endpoints:
+        - POST /api/v1/gameplay/combat/freerun/actions - выполнение действия паркура
+        - GET /api/v1/gameplay/combat/freerun/actions/available - доступные действия
+        - POST /api/v1/gameplay/combat/freerun/combo - выполнение комбо паркура
+        - GET /api/v1/gameplay/combat/freerun/stamina - состояние выносливости
+        - POST /api/v1/gameplay/combat/freerun/stamina/recover - восстановление выносливости
+        - GET /api/v1/gameplay/combat/freerun/loadout - получение лоадаута паркура
+        - POST /api/v1/gameplay/combat/freerun/loadout - обновление лоадаута
+        - POST /api/v1/gameplay/combat/freerun/mobile-ability - активация мобильной способности
+        - POST /api/v1/gameplay/combat/freerun/route - создание пользовательского маршрута
+        - GET /api/v1/gameplay/combat/freerun/route/{routeId} - получение маршрута
+        - GET /api/v1/gameplay/combat/freerun/telemetry - телеметрия паркура
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/freerun/{sessionId} - поток действий и состояния stamina
+        - wss://api.necp.game/v1/gameplay/combat/freerun/telemetry/{characterId} - телеметрия тренировки
+      events_published:
+        - combat.freerun.action: выполнение действия паркура
+        - combat.freerun.combo: выполнение комбо паркура
+        - combat.freerun.stamina: изменение выносливости
+        - combat.freerun.mobile-ability: активация мобильной способности
+        - combat.freerun.route-created: создание пользовательского маршрута
+        - combat.freerun.route-completed: завершение маршрута
+      events_subscribed:
+        - combat.session.started: начало боевой сессии
+        - combat.ability.activated: активация способности
+        - combat.implant.activated: активация импланта
+        - quest.trigger: триггеры квестов
+        - progression.skill-updated: обновление навыков
+
+  freerun_elements:
+    - name: roof_jump
+      description: Прыжки между крышами
+      stamina_cost: 20
+      automation_level: "auto/manual"
+
+    - name: wall_climb
+      description: Лазание по стенам
+      stamina_cost: 15
+      automation_level: "auto/manual"
+
+    - name: wire_slide
+      description: Скольжение по проводам
+      stamina_cost: 10
+      automation_level: "auto/manual"
+
+    - name: rock_climb
+      description: Скалолазание
+      stamina_cost: 25
+      automation_level: "manual"
+
+    - name: hook_grab
+      description: Захват крюками
+      stamina_cost: 12
+      automation_level: "auto/manual"
+
+    - name: gravibot
+      description: Использование гравиботов
+      stamina_cost: 30
+      automation_level: "auto/manual"
+
+    - name: leg_implant
+      description: Использование имплантов для ног
+      stamina_cost: 18
+      automation_level: "auto/manual"
+
+  control_modes:
+    - name: basic
+      description: Базовый режим с автоматизацией
+      automation_level: "high"
+      features: "Автоматическое удержание на маршрутах, помощь в манёврах"
+
+    - name: advanced
+      description: Продвинутый режим с полным контролем
+      automation_level: "low"
+      features: "Полный контроль для точных манёвров, соревновательная игра"
+
+  data_flows:
+    freerun_action_flow: |
+      1. Игрок выполняет действие паркура
+      2. Freerun Action Manager получает запрос через POST /api/v1/gameplay/combat/freerun/actions
+      3. Freerun Action Manager проверяет доступность действия
+      4. Stamina Manager проверяет наличие выносливости
+      5. Anti-Cheat Validator валидирует действие
+      6. Freerun Action Manager выполняет действие
+      7. Stamina Manager расходует выносливость
+      8. Freerun Combo System проверяет комбо
+      9. Mobile Ability Integrator проверяет мобильные способности
+      10. Gameplay Service публикует событие combat.freerun.action
+      11. Realtime Gateway отправляет обновление клиентам
+
+    stamina_management_flow: |
+      1. Игрок выполняет действие паркура
+      2. Stamina Manager рассчитывает расход выносливости
+      3. Stamina Manager учитывает навыки и импланты
+      4. Stamina Manager обновляет состояние выносливости
+      5. Если выносливость обнулена, Stamina Manager блокирует действия
+      6. Stamina Manager запускает восстановление выносливости
+      7. Gameplay Service публикует событие combat.freerun.stamina
+      8. Realtime Gateway отправляет обновление клиентам
+
+    freerun_combo_flow: |
+      1. Игрок выполняет последовательность действий паркура
+      2. Freerun Combo System отслеживает последовательность
+      3. Freerun Combo System проверяет соответствие комбо
+      4. Freerun Combo System применяет бонусы комбо
+      5. Freerun Combo System интегрирует с боевыми комбо
+      6. Gameplay Service публикует событие combat.freerun.combo
+      7. Realtime Gateway отправляет обновление клиентам
+
+    mobile_ability_flow: |
+      1. Игрок активирует способность во время паркура
+      2. Mobile Ability Integrator проверяет доступность способности
+      3. Mobile Ability Integrator проверяет совместимость с текущим действием
+      4. Mobile Ability Integrator применяет мобильную версию способности
+      5. Mobile Ability Integrator корректирует затраты способности
+      6. Gameplay Service публикует событие combat.freerun.mobile-ability
+      7. Realtime Gateway отправляет обновление клиентам
+
+    route_creation_flow: |
+      1. Игрок создает пользовательский маршрут
+      2. Route Manager получает запрос через POST /api/v1/gameplay/combat/freerun/route
+      3. Route Manager валидирует маршрут
+      4. Route Manager проверяет доступность элементов маршрута
+      5. Route Manager сохраняет маршрут
+      6. Gameplay Service публикует событие combat.freerun.route-created
+      7. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: freerun_actions
+        description: Действия паркура
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - action_type: ENUM (roof_jump, wall_climb, wire_slide, rock_climb, hook_grab, gravibot, leg_implant)
+          - position_before: JSONB
+          - position_after: JSONB
+          - stamina_cost: INTEGER
+          - automation_level: VARCHAR(50)
+          - timestamp: TIMESTAMP
+
+      - name: freerun_profiles
+        description: Профили паркура персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - control_mode: ENUM (basic, advanced)
+          - preferred_automation: DECIMAL(3,2)
+          - loadout: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: freerun_combos_history
+        description: История комбо паркура
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - combo_sequence: JSONB
+          - bonuses_applied: JSONB
+          - combat_integration: BOOLEAN
+          - timestamp: TIMESTAMP
+
+      - name: freerun_stamina_state
+        description: Состояние выносливости
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - current_stamina: INTEGER
+          - max_stamina: INTEGER
+          - recovery_rate: DECIMAL(5,2)
+          - modifiers: JSONB
+          - last_update: TIMESTAMP
+
+      - name: freerun_routes
+        description: Пользовательские маршруты
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - name: VARCHAR(255)
+          - route_points: JSONB
+          - difficulty: VARCHAR(50)
+          - is_public: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: freerun_telemetry
+        description: Телеметрия паркура
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - action_type: VARCHAR(100)
+          - duration: INTEGER
+          - distance: DECIMAL(10,2)
+          - stamina_used: INTEGER
+          - combo_triggered: BOOLEAN
+          - timestamp: TIMESTAMP
+
+      - name: freerun_audit_log
+        description: Журнал аудита для античита
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - action_type: VARCHAR(100)
+          - validation_result: VARCHAR(50)
+          - suspicious_flags: JSONB
+          - timestamp: TIMESTAMP
+
+  integrations:
+    combat_session: |
+      - Интеграция действий паркура с боевой сессией
+      - Синхронизация позиций и состояний
+      - Обработка атак с воздуха и стрельбы в движении
+
+    ability_service: |
+      - Получение мобильных версий способностей
+      - Корректировка затрат способностей для паркура
+      - Интеграция способностей с действиями паркура
+
+    implant_service: |
+      - Получение данных об имплантах для паркура
+      - Расчет бонусов имплантов для выносливости
+      - Интеграция имплантов с элементами паркура
+
+    progression_service: |
+      - Получение данных о навыках паркура
+      - Расчет бонусов навыков для выносливости
+      - Обновление навыков на основе действий паркура
+
+    quest_service: |
+      - Триггеры квестов при выполнении маршрутов
+      - Проверка требований квестов для паркура
+      - Интеграция с квестовыми маршрутами
+
+    analytics_service: |
+      - Логирование всех действий паркура
+      - Сбор метрик эффективности
+      - Анализ паттернов использования паркура
+      - Детект эксплойтов
+
+    inventory_service: |
+      - Проверка экипировки для паркура
+      - Получение данных о гравиботах и оборудовании
+      - Расчет модификаторов экипировки
+
+    realtime_gateway: |
+      - Отправка realtime обновлений действий паркура
+      - Синхронизация состояния выносливости
+      - Уведомления о комбо и мобильных способностях
+
+technical_specification:
+  subtasks:
+    - id: freerun-action-manager
+      title: Реализация менеджера действий паркура
+      description: |
+        Реализация Freerun Action Manager с обработкой всех типов действий паркура,
+        валидацией доступности и интеграцией с боевой сессией.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: stamina-manager
+      title: Реализация менеджера выносливости
+      description: |
+        Реализация Stamina Manager с расчетом расхода, восстановления и модификаторов
+        выносливости на основе навыков и имплантов.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: freerun-combo-system
+      title: Реализация системы комбо паркура
+      description: |
+        Реализация Freerun Combo System с отслеживанием последовательностей действий,
+        применением бонусов и интеграцией с боевыми комбо.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 4 days
+
+    - id: route-manager
+      title: Реализация менеджера маршрутов
+      description: |
+        Реализация Route Manager с созданием, валидацией и управлением пользовательскими
+        маршрутами паркура.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 4 days
+
+    - id: mobile-ability-integrator
+      title: Реализация интегратора мобильных способностей
+      description: |
+        Реализация Mobile Ability Integrator с проверкой совместимости способностей
+        с паркуром и применением мобильных версий.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 4 days
+
+    - id: freerun-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Freerun Telemetry Collector с логированием действий, сбором метрик
+        и интеграцией с Analytics Service.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 3 days
+
+    - id: anti-cheat-validator
+      title: Реализация валидатора античит
+      description: |
+        Реализация Anti-Cheat Validator с проверкой действий паркура на подозрительность,
+        валидацией физической возможности и детектом эксплойтов.
+      dependencies: [freerun-action-manager]
+      estimated_effort: 5 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений действий паркура,
+        состояния выносливости и телеметрии.
+      dependencies: [freerun-action-manager, stamina-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы Freerun.
+      dependencies: [freerun-action-manager, freerun-combo-system]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для действий паркура, профилей, комбо, выносливости, маршрутов,
+        телеметрии и аудита с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> FAM[Freerun Action Manager]
+        GameplayService --> SM[Stamina Manager]
+        GameplayService --> FCS[Freerun Combo System]
+        GameplayService --> RM[Route Manager]
+        GameplayService --> MAI[Mobile Ability Integrator]
+        GameplayService --> FTC[Freerun Telemetry Collector]
+        GameplayService --> ACV[Anti-Cheat Validator]
+        
+        FAM --> SM
+        FAM --> FCS
+        FAM --> ACV
+        FCS --> MAI
+        
+        GameplayService --> CombatSession[Combat Session]
+        GameplayService --> AbilityService[Ability Service]
+        GameplayService --> ImplantService[Implant Service]
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> QuestService[Quest Service]
+        GameplayService --> AnalyticsService[Analytics Service]
+        GameplayService --> InventoryService[Inventory Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSFreerun[WebSocket<br/>Freerun]
+        WSFreerun --> GameplayService
+    ```
+
+  freerun_action_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant FAM as Freerun Action Manager
+        participant SM as Stamina Manager
+        participant ACV as Anti-Cheat Validator
+        participant FCS as Freerun Combo System
+        participant MAI as Mobile Ability Integrator
+        participant EB as Event Bus
+        
+        C->>FAM: POST /freerun/actions
+        FAM->>FAM: Check action availability
+        FAM->>SM: Check stamina
+        SM-->>FAM: Stamina status
+        FAM->>ACV: Validate action
+        ACV-->>FAM: Validation result
+        FAM->>FAM: Execute action
+        FAM->>SM: Consume stamina
+        FAM->>FCS: Check combo
+        FCS-->>FAM: Combo status
+        FAM->>MAI: Check mobile abilities
+        MAI-->>FAM: Mobile ability status
+        FAM->>EB: Publish combat.freerun.action
+        FAM-->>C: Action result
+    ```
+
+  stamina_recovery_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant SM as Stamina Manager
+        participant PS as Progression Service
+        participant IS as Implant Service
+        participant ES as Economy Service
+        participant EB as Event Bus
+        
+        Note over SM: Action performed, stamina consumed
+        SM->>SM: Calculate stamina consumption
+        SM->>PS: Get skill bonuses
+        PS-->>SM: Skill data
+        SM->>IS: Get implant bonuses
+        IS-->>SM: Implant data
+        SM->>SM: Apply modifiers
+        SM->>SM: Update stamina state
+        
+        alt Stamina depleted
+            SM->>SM: Block actions
+            SM->>SM: Start recovery timer
+        end
+        
+        SM->>SM: Natural recovery
+        SM->>EB: Publish combat.freerun.stamina
+    ```
+
