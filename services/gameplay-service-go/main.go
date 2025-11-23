@@ -38,6 +38,13 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize quest service")
 	}
 
+	progressionExperienceSubscriber := server.NewProgressionExperienceSubscriber(progressionService)
+	if err := progressionExperienceSubscriber.Start(); err != nil {
+		logger.WithError(err).Warn("Failed to start progression experience subscriber")
+	} else {
+		logger.Info("Progression experience subscriber started")
+	}
+
 	httpServer := server.NewHTTPServer(addr, progressionService, questService)
 
 	metricsMux := http.NewServeMux()
@@ -67,6 +74,12 @@ func main() {
 		<-sigChan
 		logger.Info("Shutting down server...")
 		cancel()
+
+		if progressionExperienceSubscriber != nil {
+			if err := progressionExperienceSubscriber.Stop(); err != nil {
+				logger.WithError(err).Error("Failed to stop progression experience subscriber")
+			}
+		}
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
