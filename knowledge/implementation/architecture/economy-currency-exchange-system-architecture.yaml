@@ -1,0 +1,777 @@
+metadata:
+  id: economy-currency-exchange-system-architecture
+  title: Архитектура валютной биржи
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T14:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - currency-exchange
+    - trading
+    - exchange
+  related_systems:
+    - economy-service
+    - wallet-service
+    - tax-service
+    - analytics-service
+  related_documents:
+    - id: economy-currency-exchange
+      relation: extends
+    - id: game-mechanics-systems-architecture
+      relation: extends
+  github_issue: 224
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру валютной биржи для обмена региональных валют
+    с поддержкой динамических курсов, instant и limit ордеров, риск-контроля
+    и интеграции с экономическими сервисами.
+  goal: |
+    Создать архитектурную схему валютной биржи с определением:
+    - Микросервисов для управления обменом валют
+    - Компонентов для курсов, ордеров, matching engine, риск-контроля
+    - API endpoints (высокоуровнево)
+    - Интеграций с другими экономическими системами
+    - Структуры БД для хранения курсов и ордеров
+    - Технического задания для реализации
+  essence: |
+    Валютная биржа управляет обменом валют через instant операции и лимитные ордера,
+    поддерживает динамические курсы, реагирующие на экономические события,
+    обеспечивает matching engine для исполнения ордеров и риск-контроль для предотвращения злоупотреблений.
+
+architecture:
+  overview: |
+    Валютная биржа состоит из следующих компонентов:
+    1. Currency Exchange Manager - управление обменом валют
+    2. Exchange Rate Manager - управление курсами валют
+    3. Order Manager - управление ордерами (instant и limit)
+    4. Matching Engine - исполнение ордеров
+    5. Risk Controller - контроль рисков и AML
+    6. Fee Calculator - расчёт комиссий и спредов
+    7. Market Maker - системный маркет-мейкер для основных пар
+    8. Exchange Analytics Collector - сбор аналитики по обменам
+
+  microservices:
+    - name: currency-exchange-service
+      location: services/currency-exchange-service
+      responsibility: |
+        Основной сервис для управления валютной биржей:
+        - CRUD операции с ордерами
+        - Управление курсами валют
+        - Исполнение ордеров через Matching Engine
+        - Интеграция с wallet-service для блокировки средств
+      components:
+        - Currency Exchange Manager
+        - Exchange Rate Manager
+        - Order Manager
+        - Matching Engine
+        - Fee Calculator
+      endpoints:
+        - GET /api/v1/currency-exchange/rates - текущие курсы валют
+        - GET /api/v1/currency-exchange/rates/{pair} - курс валютной пары
+        - GET /api/v1/currency-exchange/rates/history - история курсов
+        - POST /api/v1/currency-exchange/quote - расчёт предварительной котировки
+        - POST /api/v1/currency-exchange/orders/instant - instant обмен
+        - POST /api/v1/currency-exchange/orders/limit - создание лимитного ордера
+        - GET /api/v1/currency-exchange/orders/{id} - детали ордера
+        - DELETE /api/v1/currency-exchange/orders/{id} - отмена ордера
+        - GET /api/v1/currency-exchange/orders - список ордеров игрока
+        - GET /api/v1/currency-exchange/trades - история сделок
+        - WS /ws/currency-exchange/rates - WebSocket для потоковых котировок
+        - WS /ws/currency-exchange/orders/{id} - WebSocket для статуса ордера
+
+    - name: risk-service
+      location: services/risk-service (или модуль в currency-exchange-service)
+      responsibility: |
+        Контроль рисков валютной биржи:
+        - AML лимиты
+        - Троттлинг котировок
+        - Торговые остановки при волатильности
+        - Защита от арбитража
+      components:
+        - Risk Controller
+        - AML Monitor
+        - Volatility Monitor
+      endpoints:
+        - POST /api/v1/risk/check - проверка рисков для операции
+        - GET /api/v1/risk/limits/{player_id} - лимиты игрока
+        - POST /api/v1/risk/trading-halt - остановка торговли
+
+    - name: analytics-service
+      location: services/analytics-service
+      responsibility: |
+        Аналитика по валютной бирже:
+        - Сбор метрик обменов
+        - Анализ волатильности
+        - Отчёты по торговле
+      components:
+        - Exchange Analytics Collector
+      endpoints:
+        - GET /api/v1/analytics/currency-exchange/volume - объёмы торговли
+        - GET /api/v1/analytics/currency-exchange/volatility - волатильность
+
+  components:
+    - name: Currency Exchange Manager
+      location: currency-exchange-service
+      responsibility: |
+        Управление обменом валют:
+        - Создание instant обменов
+        - Управление лимитными ордерами
+        - Валидация операций
+        - Интеграция с wallet-service
+      methods:
+        - createInstantExchange(playerId, fromCurrency, toCurrency, amount)
+        - createLimitOrder(playerId, orderData)
+        - cancelOrder(orderId)
+        - getOrder(orderId)
+        - listOrders(playerId, filters)
+
+    - name: Exchange Rate Manager
+      location: currency-exchange-service
+      responsibility: |
+        Управление курсами валют:
+        - Обновление курсов валютных пар
+        - Расчёт спредов
+        - Реакция на экономические события
+        - История курсов
+      methods:
+        - updateRate(currencyPair, rate, spread)
+        - getRate(currencyPair)
+        - getRateHistory(currencyPair, timeRange)
+        - applyEventImpact(eventId, currencyPairs, impact)
+
+    - name: Order Manager
+      location: currency-exchange-service
+      responsibility: |
+        Управление ордерами:
+        - Создание, обновление, отмена ордеров
+        - Управление жизненным циклом ордеров
+        - Валидация ордеров
+        - Интеграция с Matching Engine
+      methods:
+        - createOrder(orderData)
+        - updateOrder(orderId, orderData)
+        - cancelOrder(orderId)
+        - getOrder(orderId)
+        - listOrders(filters)
+        - transitionOrderStatus(orderId, newStatus)
+
+    - name: Matching Engine
+      location: currency-exchange-service
+      responsibility: |
+        Исполнение ордеров:
+        - Matching ордеров по принципу FIFO
+        - Исполнение instant обменов
+        - Исполнение лимитных ордеров
+        - Частичное исполнение ордеров
+        - Интеграция с Market Maker
+      methods:
+        - matchOrders(currencyPair)
+        - executeInstantExchange(exchangeData)
+        - executeLimitOrder(orderId)
+        - partialFill(orderId, amount)
+
+    - name: Risk Controller
+      location: risk-service
+      responsibility: |
+        Контроль рисков:
+        - Проверка AML лимитов
+        - Троттлинг котировок
+        - Торговые остановки при волатильности
+        - Защита от кросс-регионального арбитража
+      methods:
+        - checkAMLLimits(playerId, amount)
+        - throttleQuotes(playerId)
+        - checkVolatility(currencyPair)
+        - haltTrading(currencyPair, reason)
+        - detectArbitrage(playerId, operations)
+
+    - name: Fee Calculator
+      location: currency-exchange-service
+      responsibility: |
+        Расчёт комиссий и спредов:
+        - Расчёт базовой комиссии (1%)
+        - Скидки для крупных объёмов, VIP, торговых гильдий
+        - Расчёт спредов в зависимости от ликвидности
+        - Финальная стоимость обмена
+      methods:
+        - calculateFee(amount, playerId, orderType)
+        - calculateSpread(currencyPair, liquidity)
+        - applyDiscounts(playerId, baseFee)
+        - calculateTotalCost(amount, rate, fee, spread)
+
+    - name: Market Maker
+      location: currency-exchange-service
+      responsibility: |
+        Системный маркет-мейкер:
+        - Обеспечение ликвидности для основных пар
+        - Автоматическое создание ордеров
+        - Поддержание спредов
+      methods:
+        - provideLiquidity(currencyPair)
+        - createMarketMakerOrders(currencyPair)
+        - adjustSpread(currencyPair, liquidity)
+
+    - name: Exchange Analytics Collector
+      location: analytics-service
+      responsibility: |
+        Сбор аналитики по обменам:
+        - Сбор метрик обменов
+        - Анализ волатильности
+        - Отчёты по торговле
+        - Интеграция с analytics-service
+      methods:
+        - collectExchangeMetrics(currencyPair, timeRange)
+        - analyzeVolatility(currencyPair)
+        - generateTradingReport(playerId, timeRange)
+
+  data_flow:
+    instant_exchange: |
+      1. Игрок запрашивает instant обмен через Currency Exchange Manager
+      2. Exchange Rate Manager получает текущий курс валютной пары
+      3. Fee Calculator рассчитывает комиссию и спред
+      4. Risk Controller проверяет AML лимиты и троттлинг
+      5. Wallet Service блокирует средства игрока
+      6. Matching Engine исполняет обмен
+      7. Wallet Service разблокирует средства и переводит валюту
+      8. Транзакция создаётся и сохраняется в БД
+      9. Событие публикуется в Event Bus (currency.exchange.instant_executed)
+
+    limit_order_creation: |
+      1. Игрок создаёт лимитный ордер через Order Manager
+      2. Order Manager валидирует ордер (курс, сумма, TTL)
+      3. Risk Controller проверяет AML лимиты
+      4. Wallet Service блокирует средства игрока
+      5. Ордер сохраняется в БД со статусом PENDING
+      6. Ордер добавляется в очередь Matching Engine
+      7. Событие публикуется в Event Bus (currency.exchange.order.created)
+
+    limit_order_matching: |
+      1. Matching Engine проверяет очередь ордеров для валютной пары
+      2. Находит подходящие ордера по принципу FIFO
+      3. Исполняет ордера (полностью или частично)
+      4. Order Manager обновляет статус ордеров (FILLED, PARTIALLY_FILLED)
+      5. Wallet Service переводит валюту между игроками
+      6. Транзакции создаются и сохраняются в БД
+      7. События публикуются в Event Bus (currency.exchange.order.filled, currency.exchange.order.partially_filled)
+
+    rate_update: |
+      1. Exchange Rate Manager получает обновление курса (от экономических событий или системы)
+      2. Обновляет курс в БД
+      3. Пересчитывает спреды в зависимости от ликвидности
+      4. WebSocket отправляет обновления клиентам
+      5. Matching Engine проверяет лимитные ордера на исполнение
+      6. Событие публикуется в Event Bus (currency.exchange.rate.updated)
+
+    risk_check: |
+      1. Risk Controller проверяет операцию на AML лимиты
+      2. Проверяет троттлинг котировок для игрока
+      3. Проверяет волатильность валютной пары
+      4. При превышении лимитов: блокирует операцию или останавливает торговлю
+      5. Генерирует алерт при необходимости
+      6. Событие публикуется в Event Bus (currency.exchange.risk.alert)
+
+  integrations:
+    with_wallet_service: |
+      - Блокировка средств при создании ордера
+      - Перевод валюты при исполнении ордера
+      - Разблокировка средств при отмене ордера
+      - Проверка баланса игрока
+
+    with_tax_service: |
+      - Расчёт налогов с обменов
+      - Удержание налогов
+      - Отчётность по налогам
+
+    with_economy_events: |
+      - Получение активных экономических событий
+      - Влияние событий на курсы валют
+      - Корректировка курсов при событиях
+
+    with_analytics_service: |
+      - Отправка метрик обменов
+      - Получение аналитики по торговле
+      - Генерация отчётов
+
+    with_notification_service: |
+      - Уведомления об исполнении ордеров
+      - Уведомления об отмене ордеров
+      - Уведомления об изменениях курсов
+
+  event_bus_events:
+    published:
+      - currency.exchange.rate.updated
+      - currency.exchange.order.created
+      - currency.exchange.order.filled
+      - currency.exchange.order.partially_filled
+      - currency.exchange.order.cancelled
+      - currency.exchange.instant_executed
+      - currency.exchange.trade.executed
+      - currency.exchange.risk.alert
+      - currency.exchange.trading.halted
+    subscribed:
+      - economy.event.active (для влияния на курсы)
+      - wallet.balance.updated (для проверки баланса)
+
+  database_schema:
+    tables:
+      - name: currency_exchange_rates
+        description: Курсы валютных пар
+        fields:
+          - id: UUID (PK)
+          - currency_pair: VARCHAR(10) (например, EDDY/USD, USD/EUR)
+          - base_currency: VARCHAR(10)
+          - quote_currency: VARCHAR(10)
+          - rate: DECIMAL(20,8)
+          - bid_rate: DECIMAL(20,8) (курс покупки)
+          - ask_rate: DECIMAL(20,8) (курс продажи)
+          - spread: DECIMAL(10,4)
+          - daily_volume: DECIMAL(20,2)
+          - volatility: DECIMAL(5,2)
+          - last_updated: TIMESTAMP
+          - created_at: TIMESTAMP
+        indexes:
+          - currency_pair, last_updated
+          - base_currency, quote_currency
+
+      - name: currency_exchange_rate_history
+        description: История курсов валютных пар
+        fields:
+          - id: UUID (PK)
+          - currency_pair: VARCHAR(10)
+          - rate: DECIMAL(20,8)
+          - bid_rate: DECIMAL(20,8)
+          - ask_rate: DECIMAL(20,8)
+          - spread: DECIMAL(10,4)
+          - volume: DECIMAL(20,2)
+          - recorded_at: TIMESTAMP
+        indexes:
+          - currency_pair, recorded_at
+          - recorded_at
+
+      - name: currency_exchange_orders
+        description: Ордера на обмен валют
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - currency_pair: VARCHAR(10)
+          - order_type: ENUM (instant, limit)
+          - side: ENUM (buy, sell)
+          - base_currency: VARCHAR(10)
+          - quote_currency: VARCHAR(10)
+          - amount: DECIMAL(20,2)
+          - limit_rate: DECIMAL(20,8) (nullable, для limit ордеров)
+          - executed_amount: DECIMAL(20,2) (для частичного исполнения)
+          - status: ENUM (pending, active, partially_filled, filled, cancelled, expired, blocked)
+          - fee: DECIMAL(10,2)
+          - fee_discount: DECIMAL(5,2) (скидка на комиссию)
+          - ttl_seconds: INTEGER (nullable, для limit ордеров)
+          - expires_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+          - executed_at: TIMESTAMP (nullable)
+        indexes:
+          - player_id, status
+          - currency_pair, status, created_at
+          - status, expires_at
+
+      - name: currency_exchange_trades
+        description: Исполненные сделки
+        fields:
+          - id: UUID (PK)
+          - buy_order_id: UUID (FK currency_exchange_orders)
+          - sell_order_id: UUID (FK currency_exchange_orders)
+          - currency_pair: VARCHAR(10)
+          - base_currency: VARCHAR(10)
+          - quote_currency: VARCHAR(10)
+          - amount: DECIMAL(20,2)
+          - rate: DECIMAL(20,8)
+          - total: DECIMAL(20,2)
+          - fee: DECIMAL(10,2)
+          - executed_at: TIMESTAMP
+        indexes:
+          - buy_order_id
+          - sell_order_id
+          - currency_pair, executed_at
+          - executed_at
+
+      - name: currency_exchange_risk_limits
+        description: Лимиты рисков для игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - limit_type: ENUM (daily_volume, transaction_count, aml_limit)
+          - limit_value: DECIMAL(20,2)
+          - current_value: DECIMAL(20,2)
+          - period_start: TIMESTAMP
+          - period_end: TIMESTAMP
+          - reset_at: TIMESTAMP
+        indexes:
+          - player_id, limit_type, period_start
+          - reset_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация Currency Exchange Manager в currency-exchange-service:
+      - CRUD операции с ордерами
+      - Управление instant обменами
+      - Интеграция с wallet-service
+    - Реализация Exchange Rate Manager:
+      - Обновление курсов валютных пар
+      - Расчёт спредов
+      - Реакция на экономические события
+    - Реализация Order Manager:
+      - Управление жизненным циклом ордеров
+      - Валидация ордеров
+      - Интеграция с Matching Engine
+    - Реализация Matching Engine:
+      - Matching ордеров по принципу FIFO
+      - Исполнение instant и limit ордеров
+      - Частичное исполнение
+    - Реализация Risk Controller:
+      - Проверка AML лимитов
+      - Троттлинг котировок
+      - Торговые остановки
+    - Реализация Fee Calculator:
+      - Расчёт комиссий и спредов
+      - Применение скидок
+    - Реализация Market Maker:
+      - Обеспечение ликвидности
+      - Автоматическое создание ордеров
+    - Реализация Exchange Analytics Collector:
+      - Сбор метрик обменов
+      - Анализ волатильности
+    - Интеграция с wallet-service для блокировки средств
+    - Интеграция с tax-service для налогов
+    - Интеграция с economy-events для влияния на курсы
+    - Создание схемы БД (currency_exchange_rates, currency_exchange_rate_history, currency_exchange_orders, currency_exchange_trades, currency_exchange_risk_limits)
+
+  performance_requirements:
+    - Получение курсов: <50 мс
+    - Создание instant обмена: <200 мс
+    - Создание лимитного ордера: <300 мс
+    - Matching ордеров: <100 мс
+    - WebSocket обновления: каждые 1-5 секунд
+    - Поддержка до 10000 активных ордеров одновременно
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Распределение валютных пар по инстансам
+    - Кэширование курсов в Redis
+    - Асинхронная обработка matching через очереди
+
+subtasks:
+  - id: currency-exchange-manager
+    title: Реализация Currency Exchange Manager
+    description: |
+      Управление обменом валют:
+      - Создание instant обменов
+      - Управление лимитными ордерами
+      - Интеграция с wallet-service
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: exchange-rate-manager
+    title: Реализация Exchange Rate Manager
+    description: |
+      Управление курсами:
+      - Обновление курсов
+      - Расчёт спредов
+      - Реакция на экономические события
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: order-manager
+    title: Реализация Order Manager
+    description: |
+      Управление ордерами:
+      - CRUD операции
+      - Управление жизненным циклом
+      - Валидация ордеров
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: matching-engine
+    title: Реализация Matching Engine
+    description: |
+      Исполнение ордеров:
+      - Matching по принципу FIFO
+      - Исполнение instant и limit ордеров
+      - Частичное исполнение
+    priority: high
+    estimated_time: 7-8 дней
+
+  - id: risk-controller
+    title: Реализация Risk Controller
+    description: |
+      Контроль рисков:
+      - Проверка AML лимитов
+      - Троттлинг котировок
+      - Торговые остановки
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: fee-calculator
+    title: Реализация Fee Calculator
+    description: |
+      Расчёт комиссий:
+      - Базовая комиссия
+      - Скидки для VIP, гильдий
+      - Расчёт спредов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: market-maker
+    title: Реализация Market Maker
+    description: |
+      Системный маркет-мейкер:
+      - Обеспечение ликвидности
+      - Автоматическое создание ордеров
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: exchange-analytics-collector
+    title: Реализация Exchange Analytics Collector
+    description: |
+      Сбор аналитики:
+      - Сбор метрик обменов
+      - Анализ волатильности
+      - Генерация отчётов
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: database-schema
+    title: Создание схемы БД для валютной биржи
+    description: |
+      Создание таблиц:
+      - currency_exchange_rates
+      - currency_exchange_rate_history
+      - currency_exchange_orders
+      - currency_exchange_trades
+      - currency_exchange_risk_limits
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для валютной биржи:
+      - CRUD операции с ордерами
+      - Получение курсов
+      - История сделок
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: websocket-streaming
+    title: Реализация WebSocket для потоковых котировок
+    description: |
+      WebSocket поток для клиентов:
+      - Подписка на курсы валютных пар
+      - Обновления статуса ордеров
+      - Уведомления об исполнении
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: wallet-integration
+    title: Интеграция с Wallet Service
+    description: |
+      Интеграция с кошельками:
+      - Блокировка средств
+      - Перевод валюты
+      - Разблокировка средств
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: event-bus-integration
+    title: Интеграция с Event Bus
+    description: |
+      Публикация и подписка на события:
+      - currency.exchange.* события
+      - Подписка на economy.event.active, wallet.balance.updated
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты валютной биржи:
+      - Тесты instant обменов
+      - Тесты лимитных ордеров
+      - Тесты matching engine
+      - Тесты рисков и AML
+      - Тесты интеграций
+      - Тесты производительности
+    priority: high
+    estimated_time: 7-8 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Currency Exchange Service"
+            CEM[Currency Exchange Manager]
+            ERM[Exchange Rate Manager]
+            OM[Order Manager]
+            ME[Matching Engine]
+            FC[Fee Calculator]
+            MM[Market Maker]
+        end
+
+        subgraph "Risk Service"
+            RC[Risk Controller]
+            AML[AML Monitor]
+            VM[Volatility Monitor]
+        end
+
+        subgraph "Analytics Service"
+            EAC[Exchange Analytics Collector]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>currency_exchange_rates<br/>currency_exchange_rate_history<br/>currency_exchange_orders<br/>currency_exchange_trades<br/>currency_exchange_risk_limits)]
+        end
+
+        subgraph "Event Bus"
+            EB[Kafka/Event Bus]
+        end
+
+        subgraph "External Services"
+            WS[Wallet Service]
+            TS[Tax Service]
+            ES[Economy Events]
+            NS[Notification Service]
+        end
+
+        CEM --> ERM
+        CEM --> OM
+        CEM --> FC
+        OM --> ME
+        ME --> MM
+        CEM --> RC
+        RC --> AML
+        RC --> VM
+        CEM --> EAC
+        CEM --> DB
+        ERM --> DB
+        OM --> DB
+        ME --> DB
+        CEM --> EB
+        ERM --> EB
+        ME --> EB
+        CEM --> WS
+        CEM --> TS
+        ERM --> ES
+        CEM --> NS
+    ```
+
+  order_lifecycle_flow: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> PENDING: Create Order
+        PENDING --> ACTIVE: Activate
+        ACTIVE --> PARTIALLY_FILLED: Partial Match
+        ACTIVE --> FILLED: Full Match
+        PARTIALLY_FILLED --> FILLED: Complete Match
+        PENDING --> CANCELLED: Cancel
+        ACTIVE --> CANCELLED: Cancel
+        PARTIALLY_FILLED --> CANCELLED: Cancel
+        PENDING --> EXPIRED: TTL Expired
+        ACTIVE --> EXPIRED: TTL Expired
+        PENDING --> BLOCKED: Risk Block
+        ACTIVE --> BLOCKED: Risk Block
+        FILLED --> [*]
+        CANCELLED --> [*]
+        EXPIRED --> [*]
+        BLOCKED --> [*]
+    ```
+
+  instant_exchange_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant CEM as Currency Exchange Manager
+        participant ERM as Exchange Rate Manager
+        participant FC as Fee Calculator
+        participant RC as Risk Controller
+        participant WS as Wallet Service
+        participant ME as Matching Engine
+
+        C->>CEM: Request Instant Exchange
+        CEM->>ERM: Get Current Rate
+        ERM->>CEM: Return Rate
+        CEM->>FC: Calculate Fee & Spread
+        FC->>CEM: Return Total Cost
+        CEM->>RC: Check Risks
+        RC->>CEM: Risk Check OK
+        CEM->>WS: Lock Funds
+        WS->>CEM: Funds Locked
+        CEM->>ME: Execute Exchange
+        ME->>CEM: Exchange Executed
+        CEM->>WS: Transfer Currency
+        WS->>CEM: Currency Transferred
+        CEM->>C: Exchange Complete
+    ```
+
+decisions:
+  - id: adr-currency-exchange-architecture
+    summary: |
+      Выбрана микросервисная архитектура с currency-exchange-service как основным сервисом
+      и отдельным risk-service для контроля рисков.
+
+  - id: adr-matching-engine
+    summary: |
+      Matching Engine реализован по принципу FIFO с поддержкой частичного исполнения
+      и интеграцией с системным маркет-мейкером для обеспечения ликвидности.
+
+  - id: adr-risk-control
+    summary: |
+      Риск-контроль включает AML лимиты, троттлинг котировок, торговые остановки
+      и защиту от кросс-регионального арбитража для поддержания честного рынка.
+
+  - id: adr-fee-structure
+    summary: |
+      Комиссии рассчитываются с базовой ставкой 1% и скидками для крупных объёмов,
+      VIP статусов и торговых гильдий для стимулирования активной торговли.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация формата валютных пар и курсов
+  - Определение формата ордеров и сделок
+  - Создание схем сообщений для Event Bus
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура валютной биржи:
+      - Определены микросервисы (currency-exchange-service, risk-service, analytics-service)
+      - Определены компоненты (Currency Exchange Manager, Exchange Rate Manager, Order Manager, Matching Engine, Risk Controller, Fee Calculator, Market Maker, Exchange Analytics Collector)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (instant exchange, limit order creation, limit order matching, rate update, risk check)
+      - Определена структура БД (currency_exchange_rates, currency_exchange_rate_history, currency_exchange_orders, currency_exchange_trades, currency_exchange_risk_limits)
+      - Описаны интеграции с другими сервисами (wallet-service, tax-service, economy-events, analytics-service, notification-service)
+      - Определены Event Bus события (published и subscribed)
+      - Создано техническое задание
+      - Разбито на подзадачи
+
