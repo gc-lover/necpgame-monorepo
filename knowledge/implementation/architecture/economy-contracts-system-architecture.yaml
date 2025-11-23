@@ -1,0 +1,843 @@
+metadata:
+  id: economy-contracts-system-architecture
+  title: Архитектура системы контрактов и сделок
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T15:30:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - contracts
+    - escrow
+    - trading
+  related_systems:
+    - economy-service
+    - inventory-service
+    - wallet-service
+    - reputation-service
+    - logistics-service
+  related_documents:
+    - id: economy-contracts
+      relation: extends
+    - id: game-mechanics-systems-architecture
+      relation: extends
+  github_issue: 217
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы контрактов и сделок для безопасных P2P транзакций
+    с поддержкой эскроу, залогов, арбитража и различных типов контрактов (обмен, доставка, крафт, сервисы).
+  goal: |
+    Создать архитектурную схему системы контрактов с определением:
+    - Микросервисов для управления контрактами
+    - Компонентов для эскроу, залогов, арбитража
+    - API endpoints (высокоуровнево)
+    - Интеграций с другими экономическими системами
+    - Структуры БД для хранения контрактов и их состояния
+    - Технического задания для реализации
+  essence: |
+    Система контрактов обеспечивает безопасные P2P сделки через эскроу и залоги,
+    поддерживает различные типы контрактов, арбитраж при спорах и интеграцию
+    с inventory-service, wallet-service, reputation-service и logistics-service.
+
+architecture:
+  overview: |
+    Система контрактов состоит из следующих компонентов:
+    1. Contract Manager - управление контрактами и их жизненным циклом
+    2. Contract Negotiation Manager - управление переговорами
+    3. Escrow Manager - управление эскроу
+    4. Collateral Manager - управление залогами
+    5. Arbitration Manager - управление арбитражем и спорами
+    6. Contract Validator - валидация контрактов и правил
+    7. Contract Execution Engine - исполнение контрактов
+    8. Contract Analytics Collector - сбор аналитики по контрактам
+
+  microservices:
+    - name: contract-service
+      location: services/contract-service
+      responsibility: |
+        Основной сервис для управления контрактами:
+        - CRUD операции с контрактами
+        - Управление жизненным циклом контрактов
+        - Управление переговорами
+        - Интеграция с эскроу и залогами
+      components:
+        - Contract Manager
+        - Contract Negotiation Manager
+        - Contract Execution Engine
+        - Contract Validator
+      endpoints:
+        - POST /api/v1/contracts - создание контракта
+        - GET /api/v1/contracts/{id} - детали контракта
+        - PUT /api/v1/contracts/{id} - обновление контракта
+        - DELETE /api/v1/contracts/{id} - отмена контракта
+        - POST /api/v1/contracts/{id}/negotiate - переговоры по контракту
+        - POST /api/v1/contracts/{id}/accept - принятие контракта
+        - POST /api/v1/contracts/{id}/reject - отклонение контракта
+        - POST /api/v1/contracts/{id}/execute - исполнение контракта
+        - POST /api/v1/contracts/{id}/complete - завершение контракта
+        - GET /api/v1/contracts - список контрактов (с фильтрами)
+        - GET /api/v1/contracts/active - активные контракты игрока
+
+    - name: escrow-service
+      location: services/escrow-service
+      responsibility: |
+        Управление эскроу и залогами:
+        - Блокировка активов в эскроу
+        - Управление залогами
+        - Освобождение эскроу при завершении
+        - Распределение эскроу при спорах
+      components:
+        - Escrow Manager
+        - Collateral Manager
+      endpoints:
+        - POST /api/v1/escrow/create - создание эскроу
+        - GET /api/v1/escrow/{id} - детали эскроу
+        - POST /api/v1/escrow/{id}/release - освобождение эскроу
+        - POST /api/v1/escrow/{id}/distribute - распределение эскроу
+        - POST /api/v1/collateral/create - создание залога
+        - GET /api/v1/collateral/{id} - детали залога
+
+    - name: arbitration-service
+      location: services/arbitration-service
+      responsibility: |
+        Управление арбитражем и спорами:
+        - Создание споров
+        - Сбор доказательств
+        - AI-модерация споров
+        - Принятие решений по спорам
+      components:
+        - Arbitration Manager
+        - Dispute Processor
+      endpoints:
+        - POST /api/v1/arbitration/disputes - создание спора
+        - GET /api/v1/arbitration/disputes/{id} - детали спора
+        - POST /api/v1/arbitration/disputes/{id}/evidence - добавление доказательств
+        - POST /api/v1/arbitration/disputes/{id}/resolve - разрешение спора
+
+  components:
+    - name: Contract Manager
+      location: contract-service
+      responsibility: |
+        Управление контрактами и их жизненным циклом:
+        - Создание, обновление, отмена контрактов
+        - Управление состояниями (DRAFT → NEGOTIATION → ESCROW_PENDING → ACTIVE → COMPLETED/CANCELLED/DISPUTED)
+        - Валидация контрактов
+        - Интеграция с другими компонентами
+      methods:
+        - createContract(contractData)
+        - updateContract(contractId, contractData)
+        - cancelContract(contractId)
+        - getContract(contractId)
+        - listContracts(filters)
+        - transitionState(contractId, newState)
+
+    - name: Contract Negotiation Manager
+      location: contract-service
+      responsibility: |
+        Управление переговорами по контрактам:
+        - Инициация переговоров
+        - Обмен предложениями
+        - Принятие/отклонение условий
+        - Финализация контракта
+      methods:
+        - startNegotiation(contractId)
+        - submitProposal(contractId, proposal)
+        - acceptProposal(contractId, proposalId)
+        - rejectProposal(contractId, proposalId)
+        - finalizeContract(contractId)
+
+    - name: Escrow Manager
+      location: escrow-service
+      responsibility: |
+        Управление эскроу:
+        - Создание эскроу для контракта
+        - Блокировка активов (предметы, валюта)
+        - Освобождение эскроу при завершении
+        - Распределение эскроу при спорах
+      methods:
+        - createEscrow(contractId, assets)
+        - lockAssets(escrowId, assets)
+        - releaseEscrow(escrowId)
+        - distributeEscrow(escrowId, distribution)
+
+    - name: Collateral Manager
+      location: escrow-service
+      responsibility: |
+        Управление залогами:
+        - Создание залога для контракта
+        - Блокировка залога
+        - Частичное удержание при нарушениях
+        - Возврат залога при выполнении
+      methods:
+        - createCollateral(contractId, amount)
+        - lockCollateral(collateralId, amount)
+        - forfeitCollateral(collateralId, amount)
+        - releaseCollateral(collateralId)
+
+    - name: Arbitration Manager
+      location: arbitration-service
+      responsibility: |
+        Управление арбитражем и спорами:
+        - Создание споров
+        - Сбор доказательств от сторон
+        - AI-модерация споров
+        - Принятие решений и распределение эскроу
+      methods:
+        - createDispute(contractId, reason, evidence)
+        - addEvidence(disputeId, evidence)
+        - moderateDispute(disputeId)
+        - resolveDispute(disputeId, decision)
+        - distributeEscrowOnDispute(disputeId, distribution)
+
+    - name: Contract Validator
+      location: contract-service
+      responsibility: |
+        Валидация контрактов и правил:
+        - Проверка требований по уровню
+        - KYC проверки
+        - Проверка лимитов collateral
+        - Ограничение параллельных контрактов
+        - Проверки на мошенничество
+      methods:
+        - validateContract(contractData)
+        - checkLevelRequirements(playerId, contractType)
+        - checkKYCRequirements(playerId)
+        - checkCollateralLimits(playerId, amount)
+        - checkConcurrentContracts(playerId)
+        - detectFraud(contractData)
+
+    - name: Contract Execution Engine
+      location: contract-service
+      responsibility: |
+        Исполнение контрактов:
+        - Выполнение условий контракта
+        - Интеграция с inventory-service для обмена предметами
+        - Интеграция с wallet-service для переводов
+        - Интеграция с logistics-service для доставки
+        - Интеграция с crafting-service для крафта
+      methods:
+        - executeContract(contractId)
+        - executeItemExchange(contractId)
+        - executeCurrencyTransfer(contractId)
+        - executeDelivery(contractId)
+        - executeCrafting(contractId)
+        - executeService(contractId)
+
+    - name: Contract Analytics Collector
+      location: analytics-service
+      responsibility: |
+        Сбор аналитики по контрактам:
+        - Сбор метрик контрактов
+        - Анализ успешности контрактов
+        - Отчёты по спорам
+        - Интеграция с analytics-service
+      methods:
+        - collectContractMetrics(playerId, timeRange)
+        - analyzeSuccessRate(contractType, timeRange)
+        - generateDisputeReport(timeRange)
+
+  data_flow:
+    contract_creation: |
+      1. Игрок создаёт контракт через Contract Manager
+      2. Contract Validator валидирует контракт (уровень, KYC, лимиты)
+      3. Контракт сохраняется в БД со статусом DRAFT
+      4. Игрок отправляет контракт другой стороне
+      5. Контракт переходит в статус NEGOTIATION
+      6. Событие публикуется в Event Bus (contract.created)
+
+    contract_negotiation: |
+      1. Contract Negotiation Manager инициирует переговоры
+      2. Стороны обмениваются предложениями
+      3. При принятии предложения: контракт финализируется
+      4. Контракт переходит в статус ESCROW_PENDING
+      5. Событие публикуется в Event Bus (contract.negotiated)
+
+    escrow_setup: |
+      1. Escrow Manager создаёт эскроу для контракта
+      2. Collateral Manager создаёт залоги для сторон (если требуется)
+      3. Inventory Service блокирует предметы в эскроу
+      4. Wallet Service блокирует валюту в эскроу
+      5. Контракт переходит в статус ACTIVE
+      6. Событие публикуется в Event Bus (contract.escrow.locked)
+
+    contract_execution: |
+      1. Contract Execution Engine начинает исполнение контракта
+      2. Выполняются условия контракта:
+         - Обмен предметами через inventory-service
+         - Перевод валюты через wallet-service
+         - Доставка через logistics-service
+         - Крафт через crafting-service
+      3. События публикуются в Event Bus (contract.executing)
+
+    contract_completion: |
+      1. Все условия контракта выполнены
+      2. Contract Execution Engine завершает исполнение
+      3. Escrow Manager освобождает эскроу
+      4. Collateral Manager возвращает залоги
+      5. Inventory Service и Wallet Service получают активы
+      6. Контракт переходит в статус COMPLETED
+      7. Reputation Service обновляет репутацию сторон
+      8. Событие публикуется в Event Bus (contract.completed)
+
+    contract_dispute: |
+      1. Одна из сторон создаёт спор через Arbitration Manager
+      2. Контракт переходит в статус DISPUTED
+      3. Стороны добавляют доказательства
+      4. AI-модератор анализирует спор
+      5. Arbitration Manager принимает решение
+      6. Escrow Manager распределяет эскроу согласно решению
+      7. Collateral Manager удерживает залоги при нарушениях
+      8. Контракт переходит в статус COMPLETED или CANCELLED
+      9. Событие публикуется в Event Bus (contract.disputed, contract.dispute.resolved)
+
+  integrations:
+    with_inventory_service: |
+      - Блокировка предметов в эскроу
+      - Обмен предметами при исполнении
+      - Освобождение предметов при завершении
+
+    with_wallet_service: |
+      - Блокировка валюты в эскроу
+      - Перевод валюты при исполнении
+      - Освобождение валюты при завершении
+
+    with_reputation_service: |
+      - Обновление репутации при завершении контракта
+      - Влияние споров на репутацию
+      - Рейтинги контрагентов
+
+    with_logistics_service: |
+      - Создание доставки для контрактов на доставку
+      - Отслеживание доставки
+      - Завершение доставки
+
+    with_crafting_service: |
+      - Создание заказа на крафт для контрактов на крафт
+      - Отслеживание крафта
+      - Завершение крафта
+
+    with_notification_service: |
+      - Уведомления о создании контракта
+      - Уведомления о переговорах
+      - Уведомления об исполнении
+      - Уведомления о спорах
+
+  event_bus_events:
+    published:
+      - contract.created
+      - contract.negotiated
+      - contract.accepted
+      - contract.rejected
+      - contract.escrow.locked
+      - contract.executing
+      - contract.completed
+      - contract.cancelled
+      - contract.disputed
+      - contract.dispute.resolved
+      - contract.escrow.released
+      - contract.collateral.forfeited
+    subscribed:
+      - inventory.item.locked (для эскроу)
+      - wallet.balance.locked (для эскроу)
+      - logistics.delivery.completed (для контрактов на доставку)
+      - crafting.order.completed (для контрактов на крафт)
+
+  database_schema:
+    tables:
+      - name: player_contracts
+        description: Контракты игроков
+        fields:
+          - id: UUID (PK)
+          - contract_type: ENUM (item_exchange, delivery, crafting, service)
+          - initiator_id: UUID (FK accounts)
+          - counterparty_id: UUID (FK accounts)
+          - status: ENUM (DRAFT, NEGOTIATION, ESCROW_PENDING, ACTIVE, COMPLETED, CANCELLED, DISPUTED)
+          - terms: JSONB (условия контракта)
+          - initiator_assets: JSONB (активы инициатора)
+          - counterparty_assets: JSONB (активы контрагента)
+          - escrow_id: UUID (FK escrows, nullable)
+          - initiator_collateral_id: UUID (FK collaterals, nullable)
+          - counterparty_collateral_id: UUID (FK collaterals, nullable)
+          - deadline: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+          - cancelled_at: TIMESTAMP (nullable)
+          - dispute_id: UUID (FK disputes, nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - initiator_id, status
+          - counterparty_id, status
+          - contract_type, status
+          - status, deadline
+
+      - name: contract_negotiations
+        description: Переговоры по контрактам
+        fields:
+          - id: UUID (PK)
+          - contract_id: UUID (FK player_contracts)
+          - proposal: JSONB (предложение)
+          - proposer_id: UUID (FK accounts)
+          - status: ENUM (pending, accepted, rejected)
+          - created_at: TIMESTAMP
+          - responded_at: TIMESTAMP (nullable)
+        indexes:
+          - contract_id, status
+          - proposer_id
+
+      - name: escrows
+        description: Эскроу для контрактов
+        fields:
+          - id: UUID (PK)
+          - contract_id: UUID (FK player_contracts)
+          - initiator_items: JSONB (предметы инициатора)
+          - counterparty_items: JSONB (предметы контрагента)
+          - initiator_currency: DECIMAL(10,2)
+          - counterparty_currency: DECIMAL(10,2)
+          - status: ENUM (locked, released, distributed)
+          - locked_at: TIMESTAMP
+          - released_at: TIMESTAMP (nullable)
+        indexes:
+          - contract_id
+          - status
+
+      - name: collaterals
+        description: Залоги для контрактов
+        fields:
+          - id: UUID (PK)
+          - contract_id: UUID (FK player_contracts)
+          - player_id: UUID (FK accounts)
+          - amount: DECIMAL(10,2)
+          - forfeited_amount: DECIMAL(10,2)
+          - status: ENUM (locked, released, forfeited)
+          - locked_at: TIMESTAMP
+          - released_at: TIMESTAMP (nullable)
+        indexes:
+          - contract_id
+          - player_id, status
+
+      - name: contract_disputes
+        description: Споры по контрактам
+        fields:
+          - id: UUID (PK)
+          - contract_id: UUID (FK player_contracts)
+          - initiator_id: UUID (FK accounts)
+          - reason: TEXT
+          - evidence: JSONB (доказательства)
+          - ai_moderation_result: JSONB (nullable)
+          - decision: ENUM (pending, initiator_wins, counterparty_wins, partial)
+          - escrow_distribution: JSONB (nullable)
+          - resolved_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - contract_id
+          - initiator_id
+          - decision, resolved_at
+
+      - name: contract_execution_log
+        description: Лог исполнения контрактов
+        fields:
+          - id: UUID (PK)
+          - contract_id: UUID (FK player_contracts)
+          - action: VARCHAR(255)
+          - details: JSONB
+          - executed_at: TIMESTAMP
+        indexes:
+          - contract_id, executed_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация Contract Manager в contract-service:
+      - CRUD операции с контрактами
+      - Управление жизненным циклом (переходы состояний)
+      - Валидация контрактов
+    - Реализация Contract Negotiation Manager:
+      - Управление переговорами
+      - Обмен предложениями
+      - Финализация контрактов
+    - Реализация Escrow Manager:
+      - Создание эскроу
+      - Блокировка активов
+      - Освобождение эскроу
+    - Реализация Collateral Manager:
+      - Создание залогов
+      - Блокировка залогов
+      - Удержание залогов
+    - Реализация Arbitration Manager:
+      - Создание споров
+      - Сбор доказательств
+      - AI-модерация
+      - Разрешение споров
+    - Реализация Contract Validator:
+      - Проверка требований
+      - KYC проверки
+      - Проверка лимитов
+      - Детекция мошенничества
+    - Реализация Contract Execution Engine:
+      - Исполнение контрактов
+      - Интеграция с другими сервисами
+    - Реализация Contract Analytics Collector:
+      - Сбор метрик
+      - Анализ успешности
+      - Генерация отчётов
+    - Интеграция с inventory-service для предметов
+    - Интеграция с wallet-service для валюты
+    - Интеграция с reputation-service для репутации
+    - Интеграция с logistics-service для доставки
+    - Интеграция с crafting-service для крафта
+    - Создание схемы БД (player_contracts, contract_negotiations, escrows, collaterals, contract_disputes, contract_execution_log)
+
+  performance_requirements:
+    - Создание контракта: <300 мс
+    - Создание эскроу: <200 мс
+    - Исполнение контракта: <500 мс
+    - Разрешение спора: <2000 мс
+    - Поддержка до 1000 активных контрактов на игрока
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Распределение контрактов по инстансам
+    - Кэширование правил валидации в Redis
+    - Асинхронная обработка споров через очереди
+
+subtasks:
+  - id: contract-manager
+    title: Реализация Contract Manager
+    description: |
+      Управление контрактами:
+      - CRUD операции
+      - Управление жизненным циклом
+      - Валидация контрактов
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: contract-negotiation-manager
+    title: Реализация Contract Negotiation Manager
+    description: |
+      Управление переговорами:
+      - Инициация переговоров
+      - Обмен предложениями
+      - Финализация контрактов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: escrow-manager
+    title: Реализация Escrow Manager
+    description: |
+      Управление эскроу:
+      - Создание эскроу
+      - Блокировка активов
+      - Освобождение эскроу
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: collateral-manager
+    title: Реализация Collateral Manager
+    description: |
+      Управление залогами:
+      - Создание залогов
+      - Блокировка залогов
+      - Удержание залогов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: arbitration-manager
+    title: Реализация Arbitration Manager
+    description: |
+      Управление арбитражем:
+      - Создание споров
+      - Сбор доказательств
+      - AI-модерация
+      - Разрешение споров
+    priority: high
+    estimated_time: 7-8 дней
+
+  - id: contract-validator
+    title: Реализация Contract Validator
+    description: |
+      Валидация контрактов:
+      - Проверка требований
+      - KYC проверки
+      - Проверка лимитов
+      - Детекция мошенничества
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: contract-execution-engine
+    title: Реализация Contract Execution Engine
+    description: |
+      Исполнение контрактов:
+      - Выполнение условий
+      - Интеграция с другими сервисами
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: contract-analytics-collector
+    title: Реализация Contract Analytics Collector
+    description: |
+      Сбор аналитики:
+      - Сбор метрик
+      - Анализ успешности
+      - Генерация отчётов
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: database-schema
+    title: Создание схемы БД для контрактов
+    description: |
+      Создание таблиц:
+      - player_contracts
+      - contract_negotiations
+      - escrows
+      - collaterals
+      - contract_disputes
+      - contract_execution_log
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для системы контрактов:
+      - CRUD операции
+      - Управление переговорами
+      - Управление эскроу и залогами
+      - Управление спорами
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: inventory-integration
+    title: Интеграция с Inventory Service
+    description: |
+      Интеграция с инвентарём:
+      - Блокировка предметов
+      - Обмен предметами
+      - Освобождение предметов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: wallet-integration
+    title: Интеграция с Wallet Service
+    description: |
+      Интеграция с кошельками:
+      - Блокировка валюты
+      - Перевод валюты
+      - Освобождение валюты
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: reputation-integration
+    title: Интеграция с Reputation Service
+    description: |
+      Интеграция с репутацией:
+      - Обновление репутации
+      - Влияние споров
+      - Рейтинги контрагентов
+    priority: medium
+    estimated_time: 3-4 дня
+
+  - id: logistics-crafting-integration
+    title: Интеграция с Logistics и Crafting Services
+    description: |
+      Интеграция с доставкой и крафтом:
+      - Создание доставки
+      - Создание заказа на крафт
+      - Отслеживание выполнения
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: event-bus-integration
+    title: Интеграция с Event Bus
+    description: |
+      Публикация и подписка на события:
+      - contract.* события
+      - Подписка на inventory.item.locked, wallet.balance.locked, logistics.delivery.completed, crafting.order.completed
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты системы контрактов:
+      - Тесты жизненного цикла
+      - Тесты эскроу и залогов
+      - Тесты арбитража
+      - Тесты интеграций
+      - Тесты производительности
+    priority: high
+    estimated_time: 7-8 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Contract Service"
+            CM[Contract Manager]
+            CNM[Contract Negotiation Manager]
+            CEE[Contract Execution Engine]
+            CV[Contract Validator]
+        end
+
+        subgraph "Escrow Service"
+            EM[Escrow Manager]
+            COL[Collateral Manager]
+        end
+
+        subgraph "Arbitration Service"
+            AM[Arbitration Manager]
+            DP[Dispute Processor]
+        end
+
+        subgraph "Analytics Service"
+            CAC[Contract Analytics Collector]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>player_contracts<br/>contract_negotiations<br/>escrows<br/>collaterals<br/>contract_disputes<br/>contract_execution_log)]
+        end
+
+        subgraph "Event Bus"
+            EB[Kafka/Event Bus]
+        end
+
+        subgraph "External Services"
+            IS[Inventory Service]
+            WS[Wallet Service]
+            RS[Reputation Service]
+            LS[Logistics Service]
+            CS[Crafting Service]
+            NS[Notification Service]
+        end
+
+        CM --> CNM
+        CM --> CEE
+        CM --> CV
+        CM --> EM
+        CM --> COL
+        CM --> AM
+        CEE --> IS
+        CEE --> WS
+        CEE --> LS
+        CEE --> CS
+        EM --> IS
+        EM --> WS
+        AM --> EM
+        AM --> COL
+        CM --> CAC
+        CM --> DB
+        CNM --> DB
+        EM --> DB
+        COL --> DB
+        AM --> DB
+        CM --> EB
+        EM --> EB
+        AM --> EB
+        CM --> RS
+        CM --> NS
+    ```
+
+  contract_lifecycle_flow: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> DRAFT: Create Contract
+        DRAFT --> NEGOTIATION: Send to Counterparty
+        NEGOTIATION --> ESCROW_PENDING: Accept Terms
+        ESCROW_PENDING --> ACTIVE: Escrow Locked
+        ACTIVE --> COMPLETED: Execute Contract
+        ACTIVE --> DISPUTED: Create Dispute
+        DISPUTED --> COMPLETED: Resolve Dispute
+        DISPUTED --> CANCELLED: Resolve Dispute
+        NEGOTIATION --> CANCELLED: Reject
+        ESCROW_PENDING --> CANCELLED: Cancel
+        ACTIVE --> CANCELLED: Cancel
+        COMPLETED --> [*]
+        CANCELLED --> [*]
+    ```
+
+  escrow_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant CM as Contract Manager
+        participant EM as Escrow Manager
+        participant IS as Inventory Service
+        participant WS as Wallet Service
+        participant COL as Collateral Manager
+
+        CM->>EM: Create Escrow
+        EM->>IS: Lock Items
+        IS->>EM: Items Locked
+        EM->>WS: Lock Currency
+        WS->>EM: Currency Locked
+        EM->>COL: Create Collaterals
+        COL->>WS: Lock Collateral
+        WS->>COL: Collateral Locked
+        EM->>CM: Escrow Ready
+        Note over CM: Contract Active
+        CM->>EM: Release Escrow
+        EM->>IS: Release Items
+        EM->>WS: Release Currency
+        COL->>WS: Release Collateral
+    ```
+
+decisions:
+  - id: adr-contracts-architecture
+    summary: |
+      Выбрана микросервисная архитектура с contract-service как основным сервисом
+      и отдельными сервисами для эскроу и арбитража.
+
+  - id: adr-contract-lifecycle
+    summary: |
+      Реализован жизненный цикл контрактов с состояниями DRAFT → NEGOTIATION → ESCROW_PENDING → ACTIVE → COMPLETED/CANCELLED/DISPUTED
+      для управления контрактами от создания до завершения.
+
+  - id: adr-escrow-system
+    summary: |
+      Эскроу реализован через отдельный сервис с блокировкой активов в inventory-service и wallet-service
+      для обеспечения безопасности сделок.
+
+  - id: adr-arbitration-system
+    summary: |
+      Арбитраж реализован через отдельный сервис с AI-модерацией для автоматического разрешения споров
+      и распределения эскроу согласно решениям.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация формата контрактов (JSONB структура)
+  - Определение формата эскроу и залогов
+  - Создание схем сообщений для Event Bus
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы контрактов и сделок:
+      - Определены микросервисы (contract-service, escrow-service, arbitration-service, analytics-service)
+      - Определены компоненты (Contract Manager, Contract Negotiation Manager, Escrow Manager, Collateral Manager, Arbitration Manager, Contract Validator, Contract Execution Engine, Contract Analytics Collector)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (contract creation, negotiation, escrow setup, execution, completion, dispute)
+      - Определена структура БД (player_contracts, contract_negotiations, escrows, collaterals, contract_disputes, contract_execution_log)
+      - Описаны интеграции с другими сервисами (inventory-service, wallet-service, reputation-service, logistics-service, crafting-service, notification-service)
+      - Определены Event Bus события (published и subscribed)
+      - Создано техническое задание
+      - Разбито на подзадачи
+
