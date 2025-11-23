@@ -70,6 +70,20 @@ func (s *SocialService) CreateGuild(ctx context.Context, leaderID uuid.UUID, req
 	}
 
 	s.invalidateGuildCache(ctx, guild.ID)
+
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"guild_id":   guild.ID.String(),
+			"leader_id":  leaderID.String(),
+			"name":       guild.Name,
+			"tag":        guild.Tag,
+			"level":      guild.Level,
+			"max_members": guild.MaxMembers,
+			"timestamp":  guild.CreatedAt.Format(time.RFC3339),
+		}
+		s.eventBus.PublishEvent(ctx, "guild:created", payload)
+	}
+
 	return guild, nil
 }
 
@@ -253,6 +267,17 @@ func (s *SocialService) AcceptInvitation(ctx context.Context, invitationID, char
 	}
 
 	s.invalidateGuildCache(ctx, invitation.GuildID)
+
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"guild_id":    invitation.GuildID.String(),
+			"character_id": characterID.String(),
+			"rank":        string(member.Rank),
+			"timestamp":   member.JoinedAt.Format(time.RFC3339),
+		}
+		s.eventBus.PublishEvent(ctx, "guild:member-joined", payload)
+	}
+
 	return nil
 }
 
