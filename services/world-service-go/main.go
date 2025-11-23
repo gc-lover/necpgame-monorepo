@@ -12,6 +12,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/necpgame/world-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -22,6 +23,7 @@ func main() {
 	metricsAddr := getEnv("METRICS_ADDR", ":9090")
 
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
+	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/8")
 
 	db, err := sqlx.Connect("postgres", dbURL)
 	if err != nil {
@@ -29,8 +31,16 @@ func main() {
 	}
 	defer db.Close()
 
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to parse Redis URL")
+	}
+	redisClient := redis.NewClient(opt)
+	defer redisClient.Close()
+
 	worldRepo := server.NewWorldRepository(db)
-	worldService := server.NewWorldService(worldRepo, logger)
+	eventBus := server.NewRedisEventBus(redisClient)
+	worldService := server.NewWorldService(worldRepo, logger, eventBus)
 
 	jwtIssuer := getEnv("JWT_ISSUER", "")
 	jwksURL := getEnv("JWKS_URL", "")

@@ -2,11 +2,13 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/necpgame/world-service-go/models"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,15 +40,43 @@ type WorldService interface {
 	GetCharacterTravelEventCooldowns(ctx context.Context, characterID uuid.UUID) ([]models.TravelEventCooldown, error)
 }
 
-type worldService struct {
-	repo   WorldRepository
+type EventBus interface {
+	PublishEvent(ctx context.Context, eventType string, payload map[string]interface{}) error
+}
+
+type RedisEventBus struct {
+	client *redis.Client
 	logger *logrus.Logger
 }
 
-func NewWorldService(repo WorldRepository, logger *logrus.Logger) WorldService {
+func NewRedisEventBus(redisClient *redis.Client) *RedisEventBus {
+	return &RedisEventBus{
+		client: redisClient,
+		logger: GetLogger(),
+	}
+}
+
+func (b *RedisEventBus) PublishEvent(ctx context.Context, eventType string, payload map[string]interface{}) error {
+	eventData, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	channel := "events:" + eventType
+	return b.client.Publish(ctx, channel, eventData).Err()
+}
+
+type worldService struct {
+	repo     WorldRepository
+	logger   *logrus.Logger
+	eventBus EventBus
+}
+
+func NewWorldService(repo WorldRepository, logger *logrus.Logger, eventBus EventBus) WorldService {
 	return &worldService{
-		repo:   repo,
-		logger: logger,
+		repo:     repo,
+		logger:   logger,
+		eventBus: eventBus,
 	}
 }
 
@@ -123,6 +153,17 @@ func (s *worldService) processReset(ctx context.Context, execution *models.Reset
 		CreatedAt: now,
 	}
 	s.repo.CreateResetEvent(ctx, event)
+	
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"execution_id":      execution.ID.String(),
+			"reset_type":        string(execution.ResetType),
+			"status":            string(execution.Status),
+			"players_processed": execution.PlayersProcessed,
+			"players_total":     execution.PlayersTotal,
+		}
+		s.eventBus.PublishEvent(ctx, "world:reset:completed", payload)
+	}
 }
 
 func (s *worldService) GetDailyResetStatus(ctx context.Context) (*models.ResetStatusInfo, error) {
@@ -251,6 +292,15 @@ func (s *worldService) AssignQuestToPlayer(ctx context.Context, playerID, questI
 	
 	RecordQuestAssignment(string(poolType))
 	
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"player_id": playerID.String(),
+			"quest_id":  questID.String(),
+			"pool_type": string(poolType),
+		}
+		s.eventBus.PublishEvent(ctx, "world:quest:assigned", payload)
+	}
+	
 	quests, err := s.repo.GetPlayerQuests(ctx, playerID, &poolType)
 	if err != nil {
 		return nil, err
@@ -279,6 +329,16 @@ func (s *worldService) ClaimLoginReward(ctx context.Context, playerID uuid.UUID,
 	}
 	
 	RecordLoginRewardClaimed(string(rewardType))
+	
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"player_id":   playerID.String(),
+			"reward_type": string(rewardType),
+			"day_number":  dayNumber,
+		}
+		s.eventBus.PublishEvent(ctx, "world:login-reward:claimed", payload)
+	}
+	
 	return nil
 }
 
@@ -326,6 +386,18 @@ func (s *worldService) TriggerTravelEvent(ctx context.Context, characterID, zone
 	}
 	
 	RecordTravelEventTriggered(event.EventType)
+	
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"instance_id":  instance.ID.String(),
+			"event_id":     event.ID.String(),
+			"character_id": characterID.String(),
+			"zone_id":      zoneID.String(),
+			"epoch_id":     event.EpochID,
+		}
+		s.eventBus.PublishEvent(ctx, "world:travel-event:triggered", payload)
+	}
+	
 	return instance, nil
 }
 
@@ -343,5 +415,9 @@ func (s *worldService) GetEpochTravelEvents(ctx context.Context, epochID string)
 
 func (s *worldService) GetCharacterTravelEventCooldowns(ctx context.Context, characterID uuid.UUID) ([]models.TravelEventCooldown, error) {
 	return s.repo.GetCharacterTravelEventCooldowns(ctx, characterID)
+}
+
+func (s *worldService) GetResetExecution(ctx context.Context, id uuid.UUID) (*models.ResetExecution, error) {
+	return s.repo.GetResetExecution(ctx, id)
 }
 
