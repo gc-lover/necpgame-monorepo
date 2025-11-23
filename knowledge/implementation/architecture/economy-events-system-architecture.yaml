@@ -1,0 +1,726 @@
+metadata:
+  id: economy-events-system-architecture
+  title: Архитектура системы экономических событий
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T13:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - events
+    - market
+    - pricing
+  related_systems:
+    - economy-service
+    - pricing-engine
+    - analytics-service
+    - stock-exchange-service
+    - currency-exchange-service
+    - quest-service
+  related_documents:
+    - id: economy-events
+      relation: extends
+    - id: game-mechanics-systems-architecture
+      relation: extends
+  github_issue: 225
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы экономических событий, которая управляет
+    кризисами, бумами, эмбарго, инфляцией и другими событиями, влияющими на цены, курсы валют
+    и активность игроков в экономике игры.
+  goal: |
+    Создать архитектурную схему системы экономических событий с определением:
+    - Микросервисов для управления событиями
+    - Компонентов для планирования, выполнения и мониторинга событий
+    - API endpoints (высокоуровнево)
+    - Интеграций с другими экономическими системами
+    - Структуры БД для хранения событий и их эффектов
+    - Технического задания для реализации
+  essence: |
+    Система экономических событий управляет жизненным циклом событий (PLANNED → ANNOUNCED → ACTIVE → COOLDOWN → ARCHIVED),
+    применяет эффекты к ценам и курсам, синхронизирует изменения через Event Bus и предоставляет API для мониторинга.
+
+architecture:
+  overview: |
+    Система экономических событий состоит из следующих компонентов:
+    1. Economic Events Manager - управление жизненным циклом событий
+    2. Event Scheduler - планирование и автоматический запуск событий
+    3. Event Effects Applier - применение эффектов к ценам и курсам
+    4. Event Monitor - мониторинг активных событий и метрик
+    5. Event Communication Manager - коммуникация с игроками (баннеры, уведомления)
+    6. Event Analytics Collector - сбор аналитики по событиям
+    7. Event Integration Manager - интеграция с другими сервисами
+    8. Event State Manager - управление состоянием событий
+
+  microservices:
+    - name: economy-service
+      location: services/economy-service
+      responsibility: |
+        Основной сервис для управления экономическими событиями:
+        - CRUD операции с событиями
+        - Управление жизненным циклом событий
+        - Применение эффектов к ценам
+        - Интеграция с pricing-engine
+      components:
+        - Economic Events Manager
+        - Event Effects Applier
+        - Event State Manager
+      endpoints:
+        - GET /api/v1/economy/events - список событий
+        - GET /api/v1/economy/events/{id} - детали события
+        - POST /api/v1/economy/events - создание события
+        - PUT /api/v1/economy/events/{id} - обновление события
+        - DELETE /api/v1/economy/events/{id} - удаление события
+        - POST /api/v1/economy/events/{id}/announce - анонс события
+        - POST /api/v1/economy/events/{id}/activate - активация события
+        - POST /api/v1/economy/events/{id}/deactivate - деактивация события
+        - GET /api/v1/economy/events/active - активные события
+        - GET /api/v1/economy/events/planned - запланированные события
+
+    - name: pricing-engine
+      location: services/pricing-engine (или модуль в economy-service)
+      responsibility: |
+        Применение эффектов событий к ценам:
+        - Получение модификаторов от событий
+        - Расчет новых цен с учетом эффектов
+        - Применение модификаторов к регионам/отраслям
+        - Синхронизация цен с другими сервисами
+      components:
+        - Price Modifier Calculator
+        - Price Update Manager
+      endpoints:
+        - POST /api/v1/pricing/apply-event-effects - применить эффекты события
+        - GET /api/v1/pricing/modifiers/{event_id} - модификаторы события
+        - POST /api/v1/pricing/recalculate - пересчет цен
+
+    - name: event-scheduler-service
+      location: services/event-scheduler-service (или модуль в economy-service)
+      responsibility: |
+        Планирование и автоматический запуск событий:
+        - Cron-задачи для запланированных событий
+        - Триггеры от квестов и симуляции
+        - Ограничения на количество активных событий
+        - Минимальные перерывы между событиями
+      components:
+        - Event Scheduler
+        - Trigger Manager
+        - Constraint Validator
+      endpoints:
+        - POST /api/v1/scheduler/events/schedule - запланировать событие
+        - GET /api/v1/scheduler/events/scheduled - запланированные события
+        - POST /api/v1/scheduler/events/{id}/trigger - ручной запуск
+
+    - name: analytics-service
+      location: services/analytics-service
+      responsibility: |
+        Сбор и анализ метрик по событиям:
+        - PriceDeviation (отклонение цен)
+        - TransactionVolume (объем транзакций)
+        - EventUptime (время активности событий)
+        - Алерты при нарушении прогнозов
+      components:
+        - Event Analytics Collector
+        - Metrics Calculator
+        - Alert Manager
+      endpoints:
+        - GET /api/v1/analytics/events/{id}/metrics - метрики события
+        - GET /api/v1/analytics/events/{id}/price-deviation - отклонение цен
+        - GET /api/v1/analytics/events/alerts - активные алерты
+
+  components:
+    - name: Economic Events Manager
+      location: economy-service
+      responsibility: |
+        Управление жизненным циклом событий:
+        - Создание, обновление, удаление событий
+        - Переходы между состояниями (PLANNED → ANNOUNCED → ACTIVE → COOLDOWN → ARCHIVED)
+        - Валидация данных событий
+        - Управление версиями событий
+      methods:
+        - createEvent(eventData)
+        - updateEvent(eventId, eventData)
+        - deleteEvent(eventId)
+        - transitionState(eventId, newState)
+        - getEvent(eventId)
+        - listEvents(filters)
+
+    - name: Event Scheduler
+      location: event-scheduler-service
+      responsibility: |
+        Планирование и автоматический запуск событий:
+        - Cron-задачи для запланированных событий
+        - Обработка триггеров (квесты, симуляция, ручной запуск)
+        - Проверка ограничений (максимум активных событий, минимальные перерывы)
+        - Автоматический переход PLANNED → ANNOUNCED → ACTIVE
+      methods:
+        - scheduleEvent(eventId, scheduleConfig)
+        - triggerEvent(eventId, triggerType)
+        - checkConstraints(eventId)
+        - processScheduledEvents()
+
+    - name: Event Effects Applier
+      location: economy-service
+      responsibility: |
+        Применение эффектов событий к ценам и курсам:
+        - Получение модификаторов от события
+        - Расчет новых цен с учетом эффектов
+        - Применение к регионам/отраслям/валютам
+        - Синхронизация с pricing-engine
+      methods:
+        - applyEventEffects(eventId)
+        - calculatePriceModifiers(eventId)
+        - updatePrices(modifiers)
+        - revertEventEffects(eventId)
+
+    - name: Event Monitor
+      location: economy-service
+      responsibility: |
+        Мониторинг активных событий и метрик:
+        - Отслеживание состояния событий
+        - Сбор метрик (PriceDeviation, TransactionVolume, EventUptime)
+        - Проверка алертов
+        - Аудит изменений
+      methods:
+        - monitorActiveEvents()
+        - collectMetrics(eventId)
+        - checkAlerts(eventId)
+        - auditEventChanges(eventId, changes)
+
+    - name: Event Communication Manager
+      location: economy-service (или отдельный сервис)
+      responsibility: |
+        Коммуникация с игроками о событиях:
+        - Создание баннеров для анонсов
+        - Push/email уведомления
+        - Советы игрокам о выгодных действиях
+        - Интеграция с announcement-system
+      methods:
+        - createAnnouncement(eventId, announcementData)
+        - sendNotifications(eventId, notificationType)
+        - generateTips(eventId)
+        - publishToFeed(eventId)
+
+    - name: Event Analytics Collector
+      location: analytics-service
+      responsibility: |
+        Сбор аналитики по событиям:
+        - Сбор метрик PriceDeviation, TransactionVolume, EventUptime
+        - Анализ влияния на экономику
+        - Генерация отчетов
+        - Интеграция с analytics-service
+      methods:
+        - collectEventMetrics(eventId)
+        - calculatePriceDeviation(eventId)
+        - analyzeImpact(eventId)
+        - generateReport(eventId)
+
+    - name: Event Integration Manager
+      location: economy-service
+      responsibility: |
+        Интеграция с другими сервисами:
+        - Интеграция с stock-exchange для влияния на акции
+        - Интеграция с currency-exchange для влияния на курсы
+        - Интеграция с quest-service для триггеров от квестов
+        - Интеграция с analytics-service для метрик
+      methods:
+        - integrateWithStockExchange(eventId)
+        - integrateWithCurrencyExchange(eventId)
+        - integrateWithQuestService(eventId)
+        - syncWithAnalytics(eventId)
+
+    - name: Event State Manager
+      location: economy-service
+      responsibility: |
+        Управление состоянием событий:
+        - Хранение текущего состояния (PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED)
+        - История переходов состояний
+        - Восстановление состояния после сбоев
+        - Синхронизация состояния между сервисами
+      methods:
+        - getState(eventId)
+        - setState(eventId, newState)
+        - getStateHistory(eventId)
+        - restoreState(eventId)
+
+  data_flow:
+    event_creation: |
+      1. Администратор создает событие через API
+      2. Economic Events Manager валидирует данные
+      3. Событие сохраняется в БД со статусом PLANNED
+      4. Event Scheduler добавляет событие в расписание (если указано)
+      5. Event Integration Manager регистрирует интеграции
+
+    event_activation: |
+      1. Event Scheduler определяет время активации (cron или триггер)
+      2. Проверка ограничений (максимум активных событий, минимальные перерывы)
+      3. Переход состояния PLANNED → ANNOUNCED
+      4. Event Communication Manager создает анонс (баннер, уведомления)
+      5. Переход состояния ANNOUNCED → ACTIVE (через указанное время)
+      6. Event Effects Applier применяет эффекты к ценам
+      7. Event Integration Manager синхронизирует с другими сервисами
+      8. Event Monitor начинает мониторинг метрик
+
+    event_effects_application: |
+      1. Event Effects Applier получает модификаторы от события
+      2. Price Modifier Calculator рассчитывает новые цены
+      3. Price Update Manager обновляет цены в pricing-engine
+      4. Событие публикуется в Event Bus (economic.event.active)
+      5. Другие сервисы получают уведомление и обновляют свои данные
+      6. Event Analytics Collector начинает сбор метрик
+
+    event_monitoring: |
+      1. Event Monitor отслеживает активные события
+      2. Event Analytics Collector собирает метрики (PriceDeviation, TransactionVolume)
+      3. Metrics Calculator рассчитывает KPI
+      4. Alert Manager проверяет алерты (нарушение прогнозов)
+      5. Аудит изменений сохраняется в БД
+
+    event_deactivation: |
+      1. Событие достигает времени окончания или деактивируется вручную
+      2. Переход состояния ACTIVE → COOLDOWN
+      3. Event Effects Applier постепенно снимает эффекты (или сразу)
+      4. Event Monitor останавливает мониторинг
+      5. Event Analytics Collector финализирует метрики
+      6. Переход состояния COOLDOWN → ARCHIVED
+      7. Событие публикуется в Event Bus (economic.event.archived)
+
+  integrations:
+    with_pricing_engine: |
+      - Получение текущих цен
+      - Применение модификаторов от событий
+      - Обновление цен с учетом эффектов
+      - Синхронизация изменений цен
+
+    with_stock_exchange: |
+      - Влияние на цены акций
+      - Публикация событий, влияющих на биржу
+      - Синхронизация изменений цен акций
+
+    with_currency_exchange: |
+      - Влияние на курсы валют
+      - Публикация событий, влияющих на валютную биржу
+      - Синхронизация изменений курсов
+
+    with_quest_service: |
+      - Получение триггеров от квестов
+      - Запуск событий при завершении квестов
+      - Интеграция событий в квестовые цепочки
+
+    with_analytics_service: |
+      - Отправка метрик событий
+      - Получение аналитики по влиянию на экономику
+      - Генерация отчетов
+
+    with_announcement_system: |
+      - Создание анонсов событий
+      - Push/email уведомления игрокам
+      - Баннеры в игре
+
+  event_bus_events:
+    published:
+      - economic.event.created
+      - economic.event.announced
+      - economic.event.activated
+      - economic.event.effects_applied
+      - economic.event.deactivated
+      - economic.event.archived
+      - economic.event.price_updated
+    subscribed:
+      - quest.completed (для триггеров от квестов)
+      - world.simulation.tick (для симуляционных событий)
+
+  database_schema:
+    tables:
+      - name: economic_events
+        description: Экономические события
+        fields:
+          - id: UUID (PK)
+          - type: ENUM (crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - status: ENUM (PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED)
+          - planned_start: TIMESTAMP
+          - announced_at: TIMESTAMP (nullable)
+          - active_start: TIMESTAMP (nullable)
+          - active_end: TIMESTAMP (nullable)
+          - cooldown_end: TIMESTAMP (nullable)
+          - archived_at: TIMESTAMP (nullable)
+          - scope: ENUM (global, regional, industry)
+          - region_ids: UUID[] (nullable, для региональных событий)
+          - industry_ids: UUID[] (nullable, для отраслевых событий)
+          - effects: JSONB (модификаторы цен, курсов, ликвидности)
+          - constraints: JSONB (максимум активных, минимальные перерывы)
+          - trigger_type: ENUM (manual, cron, quest, simulation)
+          - trigger_config: JSONB (конфигурация триггера)
+          - created_by: UUID (FK accounts)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - status, active_start
+          - type, status
+          - planned_start
+          - region_ids (GIN index для массива)
+
+      - name: economic_event_effects
+        description: Эффекты событий на цены и курсы
+        fields:
+          - id: UUID (PK)
+          - event_id: UUID (FK economic_events)
+          - target_type: ENUM (item, currency, stock, industry)
+          - target_id: UUID
+          - modifier_type: ENUM (percentage, fixed, multiplier)
+          - modifier_value: DECIMAL(10,2)
+          - applied_at: TIMESTAMP
+          - reverted_at: TIMESTAMP (nullable)
+        indexes:
+          - event_id, target_type
+          - target_type, target_id
+
+      - name: economic_event_metrics
+        description: Метрики событий
+        fields:
+          - id: UUID (PK)
+          - event_id: UUID (FK economic_events)
+          - metric_type: ENUM (price_deviation, transaction_volume, event_uptime)
+          - metric_value: DECIMAL(10,2)
+          - measured_at: TIMESTAMP
+        indexes:
+          - event_id, metric_type, measured_at
+
+      - name: economic_event_alerts
+        description: Алерты по событиям
+        fields:
+          - id: UUID (PK)
+          - event_id: UUID (FK economic_events)
+          - alert_type: ENUM (price_deviation_threshold, transaction_volume_threshold, prediction_violation)
+          - threshold: DECIMAL(10,2)
+          - current_value: DECIMAL(10,2)
+          - triggered_at: TIMESTAMP
+          - resolved_at: TIMESTAMP (nullable)
+          - status: ENUM (active, resolved)
+        indexes:
+          - event_id, status
+          - triggered_at
+
+      - name: economic_event_audit
+        description: Аудит изменений событий
+        fields:
+          - id: UUID (PK)
+          - event_id: UUID (FK economic_events)
+          - action: ENUM (created, updated, state_changed, effects_applied, effects_reverted)
+          - changed_by: UUID (FK accounts, nullable)
+          - changes: JSONB (детали изменений)
+          - created_at: TIMESTAMP
+        indexes:
+          - event_id, created_at
+          - action, created_at
+
+technical_specification:
+  backend_requirements:
+    - Реализация Economic Events Manager в economy-service:
+      - CRUD операции с событиями
+      - Управление жизненным циклом (переходы состояний)
+      - Валидация данных событий
+    - Реализация Event Scheduler:
+      - Cron-задачи для запланированных событий
+      - Обработка триггеров (квесты, симуляция, ручной запуск)
+      - Проверка ограничений
+    - Реализация Event Effects Applier:
+      - Применение модификаторов к ценам
+      - Интеграция с pricing-engine
+      - Синхронизация с другими сервисами
+    - Реализация Event Monitor:
+      - Мониторинг активных событий
+      - Сбор метрик
+      - Проверка алертов
+    - Реализация Event Communication Manager:
+      - Создание анонсов
+      - Отправка уведомлений
+      - Интеграция с announcement-system
+    - Реализация Event Analytics Collector:
+      - Сбор метрик PriceDeviation, TransactionVolume, EventUptime
+      - Интеграция с analytics-service
+    - Создание схемы БД (economic_events, economic_event_effects, economic_event_metrics, economic_event_alerts, economic_event_audit)
+
+  performance_requirements:
+    - Создание события: <100 мс
+    - Применение эффектов: <500 мс
+    - Мониторинг метрик: каждые 1-5 минут
+    - Обработка триггеров: <50 мс
+    - Поддержка до 100 активных событий одновременно
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Распределение событий по инстансам
+    - Кэширование активных событий в Redis
+    - Асинхронная обработка эффектов через очереди
+
+subtasks:
+  - id: economic-events-manager
+    title: Реализация Economic Events Manager
+    description: |
+      CRUD операции и управление жизненным циклом событий:
+      - Создание, обновление, удаление событий
+      - Переходы между состояниями
+      - Валидация данных
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: event-scheduler
+    title: Реализация Event Scheduler
+    description: |
+      Планирование и автоматический запуск событий:
+      - Cron-задачи
+      - Обработка триггеров
+      - Проверка ограничений
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: event-effects-applier
+    title: Реализация Event Effects Applier
+    description: |
+      Применение эффектов к ценам и курсам:
+      - Расчет модификаторов
+      - Обновление цен
+      - Интеграция с pricing-engine
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: event-monitor
+    title: Реализация Event Monitor
+    description: |
+      Мониторинг активных событий и метрик:
+      - Отслеживание состояния
+      - Сбор метрик
+      - Проверка алертов
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: event-communication-manager
+    title: Реализация Event Communication Manager
+    description: |
+      Коммуникация с игроками:
+      - Создание анонсов
+      - Отправка уведомлений
+      - Интеграция с announcement-system
+    priority: medium
+    estimated_time: 3-4 дня
+
+  - id: event-analytics-collector
+    title: Реализация Event Analytics Collector
+    description: |
+      Сбор аналитики по событиям:
+      - Сбор метрик
+      - Анализ влияния
+      - Генерация отчетов
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: database-schema
+    title: Создание схемы БД для экономических событий
+    description: |
+      Создание таблиц:
+      - economic_events
+      - economic_event_effects
+      - economic_event_metrics
+      - economic_event_alerts
+      - economic_event_audit
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для системы экономических событий:
+      - CRUD операции
+      - Управление жизненным циклом
+      - Мониторинг и метрики
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: event-bus-integration
+    title: Интеграция с Event Bus
+    description: |
+      Публикация и подписка на события:
+      - economic.event.* события
+      - Подписка на quest.completed, world.simulation.tick
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты системы экономических событий:
+      - Тесты жизненного цикла
+      - Тесты применения эффектов
+      - Тесты интеграций
+      - Тесты производительности
+    priority: high
+    estimated_time: 5-6 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Economy Service"
+            EEM[Economic Events Manager]
+            EEA[Event Effects Applier]
+            ESM[Event State Manager]
+        end
+
+        subgraph "Event Scheduler Service"
+            ES[Event Scheduler]
+            TM[Trigger Manager]
+            CV[Constraint Validator]
+        end
+
+        subgraph "Pricing Engine"
+            PMC[Price Modifier Calculator]
+            PUM[Price Update Manager]
+        end
+
+        subgraph "Analytics Service"
+            EAC[Event Analytics Collector]
+            MC[Metrics Calculator]
+            AM[Alert Manager]
+        end
+
+        subgraph "Communication"
+            ECM[Event Communication Manager]
+            AS[Announcement System]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>economic_events<br/>economic_event_effects<br/>economic_event_metrics<br/>economic_event_alerts<br/>economic_event_audit)]
+        end
+
+        subgraph "Event Bus"
+            EB[Kafka/Event Bus]
+        end
+
+        subgraph "External Services"
+            SE[Stock Exchange]
+            CE[Currency Exchange]
+            QS[Quest Service]
+        end
+
+        EEM --> ESM
+        EEM --> EEA
+        ES --> TM
+        ES --> CV
+        EEA --> PMC
+        EEA --> PUM
+        EAC --> MC
+        EAC --> AM
+        ECM --> AS
+        EEM --> DB
+        EEA --> DB
+        EAC --> DB
+        EEM --> EB
+        EEA --> EB
+        EEA --> SE
+        EEA --> CE
+        ES --> QS
+    ```
+
+  event_lifecycle_flow: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> PLANNED: Create Event
+        PLANNED --> ANNOUNCED: Schedule/Trigger
+        ANNOUNCED --> ACTIVE: Start Time
+        ACTIVE --> COOLDOWN: End Time
+        COOLDOWN --> ARCHIVED: Cooldown End
+        ARCHIVED --> [*]
+        
+        PLANNED --> ARCHIVED: Cancel
+        ANNOUNCED --> ARCHIVED: Cancel
+        ACTIVE --> ARCHIVED: Force Deactivate
+    ```
+
+  event_effects_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant ES as Event Scheduler
+        participant EEM as Events Manager
+        participant EEA as Effects Applier
+        participant PE as Pricing Engine
+        participant EB as Event Bus
+        participant SE as Stock Exchange
+        participant CE as Currency Exchange
+
+        ES->>EEM: Trigger Event Activation
+        EEM->>EEM: Transition to ACTIVE
+        EEM->>EEA: Apply Event Effects
+        EEA->>PE: Get Current Prices
+        PE->>EEA: Return Prices
+        EEA->>EEA: Calculate Modifiers
+        EEA->>PE: Update Prices with Modifiers
+        EEA->>EB: Publish economic.event.activated
+        EB->>SE: Notify Stock Exchange
+        EB->>CE: Notify Currency Exchange
+    ```
+
+decisions:
+  - id: adr-economy-events-architecture
+    summary: |
+      Выбрана микросервисная архитектура с economy-service как основным сервисом
+      и отдельными модулями для планирования, мониторинга и коммуникации.
+
+  - id: adr-event-lifecycle
+    summary: |
+      Реализован жизненный цикл событий с состояниями PLANNED → ANNOUNCED → ACTIVE → COOLDOWN → ARCHIVED
+      для управления событиями от планирования до архивации.
+
+  - id: adr-event-effects
+    summary: |
+      Эффекты событий применяются через pricing-engine с модификаторами (percentage, fixed, multiplier)
+      и синхронизируются через Event Bus с другими экономическими сервисами.
+
+  - id: adr-event-scheduling
+    summary: |
+      События планируются через cron-задачи, триггеры от квестов, симуляцию или ручной запуск
+      с проверкой ограничений (максимум активных событий, минимальные перерывы).
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация формата эффектов событий (JSONB структура)
+  - Определение формата модификаторов цен
+  - Создание схем сообщений для Event Bus
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы экономических событий:
+      - Определены микросервисы (economy-service, pricing-engine, event-scheduler-service, analytics-service)
+      - Определены компоненты (Economic Events Manager, Event Scheduler, Event Effects Applier, Event Monitor, Event Communication Manager, Event Analytics Collector, Event Integration Manager, Event State Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (создание, активация, применение эффектов, мониторинг, деактивация)
+      - Определена структура БД (economic_events, economic_event_effects, economic_event_metrics, economic_event_alerts, economic_event_audit)
+      - Описаны интеграции с другими сервисами (pricing-engine, stock-exchange, currency-exchange, quest-service, analytics-service, announcement-system)
+      - Определены Event Bus события (published и subscribed)
+      - Создано техническое задание
+      - Разбито на подзадачи
+
