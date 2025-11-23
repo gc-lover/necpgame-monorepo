@@ -1,0 +1,529 @@
+metadata:
+  id: combat-combos-synergies-architecture
+  title: Архитектура системы комбо и синергий
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T19:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - combos
+    - synergies
+    - scoring
+  related_systems:
+    - gameplay-service
+    - analytics-service
+    - economy-service
+  related_documents:
+    - id: mechanics-combat-combos-synergies
+      relation: implements
+    - id: analysis-2025-11-09-combat-combos-brief
+      relation: extends
+    - id: combat-abilities-architecture
+      relation: complements
+  github_issue: 158
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы комбо и синергий, включающую:
+    - Каталог комбо (solo, team, legendary)
+    - Типы синергий (ability, team, equipment, implant, timing)
+    - Систему scoring для оценки комбо
+    - Chain-комбо с сокращением кулдаунов
+    - Интеграцию с abilities, implants, progression и quest engine
+  goal: |
+    Создать архитектурную схему системы комбо и синергий с определением:
+    - Компонентов для управления комбо и синергиями
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы комбо и синергий с поддержкой каталога,
+    активации, scoring и аналитики.
+
+architecture:
+  overview: |
+    Архитектура системы комбо и синергий состоит из следующих компонентов:
+    1. Combo Catalog Manager - управление каталогом комбо
+    2. Combo Activation Engine - активация комбо
+    3. Synergy System - система синергий
+    4. Combo Scoring System - система оценки комбо
+    5. Chain Combo Manager - управление chain-комбо
+    6. Combo Loadout Manager - управление лоадаутами комбо
+    7. Combo Analytics Collector - сбор аналитики
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка комбо и синергий:
+        - Управление каталогом комбо
+        - Активация комбо
+        - Обработка синергий
+        - Система scoring
+        - Управление chain-комбо
+        - Сбор аналитики
+      components:
+        - combo-catalog-manager: управление каталогом комбо
+        - combo-activation-engine: активация комбо
+        - synergy-system: система синергий
+        - combo-scoring-system: система оценки комбо
+        - chain-combo-manager: управление chain-комбо
+        - combo-loadout-manager: управление лоадаутами
+        - combo-analytics-collector: сбор аналитики
+      endpoints:
+        - GET /api/v1/gameplay/combat/combos/catalog - каталог комбо
+        - GET /api/v1/gameplay/combat/combos/{comboId} - информация о комбо
+        - POST /api/v1/gameplay/combat/combos/activate - активация комбо
+        - POST /api/v1/gameplay/combat/combos/synergy - применение синергии
+        - GET /api/v1/gameplay/combat/combos/loadout - получение лоадаута
+        - POST /api/v1/gameplay/combat/combos/loadout - обновление лоадаута
+        - POST /api/v1/gameplay/combat/combos/score - отправка результатов scoring
+        - GET /api/v1/gameplay/combat/combos/analytics - метрики эффективности
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/combos/{sessionId} - поток активированных комбо
+        - wss://api.necp.game/v1/gameplay/combat/combos/player/{characterId} - персональные уведомления
+      events_published:
+        - combat.combo.activated: активация комбо
+        - combat.combo.synergy: фиксация синергий
+        - combat.combo.failure: аналитика неудачных попыток
+        - combat.combo.score: итоговый рейтинг и очки
+        - combat.combo.chain: срабатывание chain-комбо
+        - combat.combo.loadout-updated: обновление лоадаута
+      events_subscribed:
+        - combat.ability.activated: активация способности
+        - combat.freerun.actions: действия паркура
+        - combat.stealth.action: действия скрытности
+        - quest.trigger: триггеры квестов
+        - combat.ai.state: состояние AI врагов
+
+  combo_types:
+    - name: solo
+      description: Соло комбо
+      examples:
+        - Aerial Devastation
+        - Shadow Assassin
+        - Bullet Time Massacre
+      participants: 1
+      complexity: "Bronze to Legendary"
+
+    - name: team
+      description: Командные комбо
+      examples:
+        - Tank & Spank
+        - Netrunner Setup
+        - Raid Opener
+      participants: "2-5"
+      complexity: "Silver to Legendary"
+
+    - name: legendary
+      description: Легендарные сценарии
+      examples:
+        - The Perfect Heist
+        - The Raid Wipe
+      participants: "3-5"
+      complexity: "Legendary only"
+
+  synergy_types:
+    - name: ability
+      description: Синергии способностей
+      source: abilities
+      effects: "damage multipliers, control effects"
+
+    - name: team
+      description: Командные синергии
+      source: "multiple players"
+      effects: "coordination bonuses, synchronized effects"
+
+    - name: equipment
+      description: Синергии экипировки
+      source: equipment
+      effects: "weapon bonuses, gear set effects"
+
+    - name: implant
+      description: Синергии имплантов
+      source: implants
+      effects: "cyberware bonuses, implant combinations"
+
+    - name: timing
+      description: Тайминговые синергии
+      source: "execution timing"
+      effects: "chain bonuses, cooldown reductions"
+
+  data_flows:
+    combo_activation_flow: |
+      1. Игрок(и) выполняют последовательность действий
+      2. Combo Activation Engine отслеживает действия
+      3. Combo Activation Engine проверяет соответствие каталогу комбо
+      4. Combo Activation Engine проверяет требования комбо
+      5. Combo Activation Engine проверяет участников
+      6. Combo Activation Engine активирует комбо
+      7. Synergy System проверяет доступные синергии
+      8. Synergy System применяет синергии
+      9. Combo Scoring System оценивает комбо
+      10. Chain Combo Manager проверяет chain-комбо
+      11. Gameplay Service публикует событие combat.combo.activated
+      12. Realtime Gateway отправляет обновление клиентам
+
+    synergy_application_flow: |
+      1. Combo активирован
+      2. Synergy System анализирует контекст комбо
+      3. Synergy System проверяет ability синергии
+      4. Synergy System проверяет equipment синергии через Inventory Service
+      5. Synergy System проверяет implant синергии через Implant Service
+      6. Synergy System проверяет team синергии через Social Service
+      7. Synergy System проверяет timing синергии
+      8. Synergy System рассчитывает бонусы
+      9. Synergy System применяет эффекты
+      10. Gameplay Service публикует событие combat.combo.synergy
+      11. Realtime Gateway отправляет обновление клиентам
+
+    scoring_flow: |
+      1. Combo активирован и выполнен
+      2. Combo Scoring System собирает метрики:
+         - executionDifficulty (сложность исполнения)
+         - damageOutput (выданный урон)
+         - visualImpact (визуальный эффект)
+         - teamCoordination (координация команды)
+      3. Combo Scoring System рассчитывает общий score
+      4. Combo Scoring System определяет категорию (Bronze/Silver/Gold/Platinum/Legendary)
+      5. Combo Scoring System сохраняет результат
+      6. Gameplay Service публикует событие combat.combo.score
+      7. Analytics Service логирует scoring
+      8. Economy Service может выдать награды на основе score
+
+    chain_combo_flow: |
+      1. Первое комбо активировано
+      2. Chain Combo Manager отслеживает временное окно (<3 секунд)
+      3. Игрок(и) выполняют следующее комбо в окне
+      4. Chain Combo Manager проверяет совместимость комбо
+      5. Chain Combo Manager применяет бонусы chain-комбо
+      6. Chain Combo Manager сокращает кулдауны
+      7. Gameplay Service публикует событие combat.combo.chain
+      8. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: combo_catalog
+        description: Каталог комбо
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - description: TEXT
+          - combo_type: ENUM (solo, team, legendary)
+          - complexity: ENUM (Bronze, Silver, Gold, Platinum, Legendary)
+          - requirements: JSONB
+          - sequence: JSONB
+          - bonuses: JSONB
+          - cooldown: INTEGER
+          - chain_compatible: BOOLEAN
+          - created_at: TIMESTAMP
+
+      - name: combo_activations
+        description: Журнал активаций комбо
+        columns:
+          - id: UUID PRIMARY KEY
+          - combo_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - participants: JSONB
+          - context: JSONB
+          - success: BOOLEAN
+          - score: INTEGER
+          - activated_at: TIMESTAMP
+          - duration: INTEGER
+
+      - name: combo_synergies
+        description: Связи синергий
+        columns:
+          - id: UUID PRIMARY KEY
+          - synergy_type: ENUM (ability, team, equipment, implant, timing)
+          - combo_id: UUID FOREIGN KEY
+          - ability_ids: JSONB (nullable)
+          - equipment_ids: JSONB (nullable)
+          - implant_ids: JSONB (nullable)
+          - team_size: INTEGER (nullable)
+          - timing_window: INTEGER (nullable)
+          - bonuses: JSONB
+          - requirements: JSONB
+
+      - name: combo_loadouts
+        description: Лоадауты комбо
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - active_combos: JSONB
+          - preferences: JSONB
+          - auto_activate: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: combo_scoring_history
+        description: История scoring
+        columns:
+          - id: UUID PRIMARY KEY
+          - activation_id: UUID FOREIGN KEY
+          - execution_difficulty: INTEGER
+          - damage_output: INTEGER
+          - visual_impact: INTEGER
+          - team_coordination: INTEGER
+          - total_score: INTEGER
+          - category: VARCHAR(50)
+          - timestamp: TIMESTAMP
+
+      - name: combo_failure_log
+        description: Лог неудачных попыток
+        columns:
+          - id: UUID PRIMARY KEY
+          - combo_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - failure_reason: VARCHAR(255)
+          - context: JSONB
+          - timestamp: TIMESTAMP
+
+      - name: combo_chains
+        description: История chain-комбо
+        columns:
+          - id: UUID PRIMARY KEY
+          - first_combo_id: UUID FOREIGN KEY
+          - second_combo_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - time_between: INTEGER
+          - bonuses_applied: JSONB
+          - cooldown_reduction: INTEGER
+          - timestamp: TIMESTAMP
+
+  integrations:
+    ability_service: |
+      - Проверка доступности способностей для комбо
+      - Получение данных о способностях для синергий
+      - Интеграция с системой способностей
+
+    implant_service: |
+      - Проверка активных имплантов для синергий
+      - Получение данных об имплантах
+      - Расчет бонусов имплантов
+
+    inventory_service: |
+      - Проверка экипировки для синергий
+      - Получение данных об экипировке
+      - Расчет бонусов экипировки
+
+    progression_service: |
+      - Проверка требований комбо (навыки, уровень)
+      - Начисление опыта за комбо
+      - Обновление навыков на основе комбо
+
+    quest_service: |
+      - Триггеры квестов при выполнении комбо
+      - Проверка достижений комбо
+      - Интеграция с системой квестов
+
+    analytics_service: |
+      - Логирование всех активаций комбо
+      - Сбор метрик эффективности
+      - Анализ синергий и комбо
+      - Детект эксплойтов
+
+    economy_service: |
+      - Выдача наград на основе scoring
+      - Экономические модификаторы для комбо
+      - Интеграция с системой наград
+
+    social_service: |
+      - Координация командных комбо
+      - Проверка участников команды
+      - Социальные бонусы для командных комбо
+
+    realtime_gateway: |
+      - Отправка realtime обновлений комбо
+      - Синхронизация активаций
+      - Уведомления о синергиях
+
+technical_specification:
+  subtasks:
+    - id: combo-catalog-manager
+      title: Реализация менеджера каталога комбо
+      description: |
+        Реализация Combo Catalog Manager с загрузкой и кэшированием комбо,
+        фильтрацией по типам и сложности.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: combo-activation-engine
+      title: Реализация движка активации комбо
+      description: |
+        Реализация Combo Activation Engine с отслеживанием действий,
+        проверкой последовательностей и активацией комбо.
+      dependencies: [combo-catalog-manager]
+      estimated_effort: 5 days
+
+    - id: synergy-system
+      title: Реализация системы синергий
+      description: |
+        Реализация Synergy System с поддержкой всех типов синергий
+        и расчетом бонусов.
+      dependencies: [combo-activation-engine]
+      estimated_effort: 5 days
+
+    - id: combo-scoring-system
+      title: Реализация системы scoring
+      description: |
+        Реализация Combo Scoring System с расчетом метрик,
+        определением категорий и сохранением результатов.
+      dependencies: [combo-activation-engine]
+      estimated_effort: 4 days
+
+    - id: chain-combo-manager
+      title: Реализация менеджера chain-комбо
+      description: |
+        Реализация Chain Combo Manager с отслеживанием временных окон,
+        проверкой совместимости и применением бонусов.
+      dependencies: [combo-activation-engine]
+      estimated_effort: 4 days
+
+    - id: combo-loadout-manager
+      title: Реализация менеджера лоадаутов
+      description: |
+        Реализация Combo Loadout Manager с управлением активными комбо
+        и настройками персонажей.
+      dependencies: [combo-catalog-manager]
+      estimated_effort: 3 days
+
+    - id: combo-analytics-collector
+      title: Реализация сборщика аналитики
+      description: |
+        Реализация Combo Analytics Collector с логированием активаций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [combo-activation-engine, combo-scoring-system]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений комбо
+        и персональных уведомлений.
+      dependencies: [combo-activation-engine]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы комбо.
+      dependencies: [combo-activation-engine, synergy-system]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для комбо, синергий, scoring, лоадаутов
+        и chain-комбо с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> CCM[Combo Catalog Manager]
+        GameplayService --> CAE[Combo Activation Engine]
+        GameplayService --> SS[Synergy System]
+        GameplayService --> CSS[Combo Scoring System]
+        GameplayService --> CCM2[Chain Combo Manager]
+        GameplayService --> CLM[Combo Loadout Manager]
+        GameplayService --> CAC[Combo Analytics Collector]
+        
+        CAE --> CCM
+        CAE --> SS
+        CAE --> CSS
+        CAE --> CCM2
+        
+        GameplayService --> AbilityService[Ability Service]
+        GameplayService --> ImplantService[Implant Service]
+        GameplayService --> InventoryService[Inventory Service]
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> QuestService[Quest Service]
+        GameplayService --> AnalyticsService[Analytics Service]
+        GameplayService --> EconomyService[Economy Service]
+        GameplayService --> SocialService[Social Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSCombo[WebSocket<br/>Combos]
+        WSCombo --> GameplayService
+    ```
+
+  combo_activation_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player(s)
+        participant CAE as Combo Activation Engine
+        participant CCM as Combo Catalog Manager
+        participant SS as Synergy System
+        participant CSS as Combo Scoring System
+        participant CCM2 as Chain Combo Manager
+        participant EB as Event Bus
+        
+        P->>CAE: Execute action sequence
+        CAE->>CCM: Check combo match
+        CCM-->>CAE: Combo found
+        CAE->>CAE: Validate requirements
+        CAE->>CAE: Check participants
+        CAE->>CAE: Activate combo
+        CAE->>SS: Check synergies
+        SS->>SS: Analyze context
+        SS->>SS: Apply synergies
+        SS-->>CAE: Synergies applied
+        CAE->>CSS: Calculate score
+        CSS-->>CAE: Score calculated
+        CAE->>CCM2: Check chain combo
+        CCM2-->>CAE: Chain status
+        CAE->>EB: Publish combat.combo.activated
+        CAE-->>P: Combo activated
+    ```
+
+  synergy_scoring_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CAE as Combo Activation Engine
+        participant SS as Synergy System
+        participant IS as Implant Service
+        participant ES as Economy Service
+        participant CSS as Combo Scoring System
+        participant AS as Analytics Service
+        
+        CAE->>SS: Combo activated
+        SS->>SS: Check ability synergies
+        SS->>IS: Get active implants
+        IS-->>SS: Implants data
+        SS->>SS: Check equipment synergies
+        SS->>SS: Check team synergies
+        SS->>SS: Check timing synergies
+        SS->>SS: Calculate bonuses
+        SS->>CSS: Apply synergies to scoring
+        CSS->>CSS: Calculate total score
+        CSS->>AS: Log scoring
+        CSS->>ES: Check rewards
+        ES-->>CSS: Rewards determined
+        CSS-->>CAE: Scoring complete
+    ```
+
