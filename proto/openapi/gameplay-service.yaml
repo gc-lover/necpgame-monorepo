@@ -20,6 +20,14 @@ tags:
     description: Система квестов и заданий
   - name: Combat
     description: Боевые сессии
+  - name: Combat Stealth
+    description: Система стелса
+  - name: Combat Shooting
+    description: Система стрельбы
+  - name: Combat Freerun
+    description: Система паркура в бою
+  - name: Combat Combos
+    description: Система комбо и синергий
   - name: Narrative
     description: Система Narrative Coherence для целостности сюжета
   - name: WorldState
@@ -2208,6 +2216,1308 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /gameplay/combat/stealth/actions:
+    post:
+      tags:
+        - Combat Stealth
+      summary: Выполнить действие стелса
+      operationId: performStealthAction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StealthActionRequest'
+      responses:
+        '200':
+          description: Действие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StealthActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/detection:
+    get:
+      tags:
+        - Combat Stealth
+      summary: Получить состояние обнаружения
+      operationId: getStealthDetection
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние обнаружения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StealthDetectionState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/detection/recalculate:
+    post:
+      tags:
+        - Combat Stealth
+      summary: Пересчитать обнаружение
+      operationId: recalculateStealthDetection
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecalculateDetectionRequest'
+      responses:
+        '200':
+          description: Обнаружение пересчитано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StealthDetectionState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/profile:
+    get:
+      tags:
+        - Combat Stealth
+      summary: Получить профиль стелса
+      operationId: getStealthProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Профиль стелса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StealthProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combat Stealth
+      summary: Обновить профиль стелса
+      operationId: updateStealthProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStealthProfileRequest'
+      responses:
+        '200':
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StealthProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/disguise:
+    post:
+      tags:
+        - Combat Stealth
+      summary: Активировать маскировку
+      operationId: activateDisguise
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateDisguiseRequest'
+      responses:
+        '200':
+          description: Маскировка активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisguiseState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/disguise/{disguiseId}:
+    get:
+      tags:
+        - Combat Stealth
+      summary: Получить информацию о маскировке
+      operationId: getDisguise
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: disguiseId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о маскировке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisguiseState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/network/hack:
+    post:
+      tags:
+        - Combat Stealth
+      summary: Взломать сетевой узел
+      operationId: hackNetworkNode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HackNetworkNodeRequest'
+      responses:
+        '200':
+          description: Сетевой узел взломан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkHackResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/network/nodes:
+    get:
+      tags:
+        - Combat Stealth
+      summary: Получить сетевые узлы
+      operationId: getNetworkNodes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: zone_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список сетевых узлов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkNodesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/achievements:
+    get:
+      tags:
+        - Combat Stealth
+      summary: Получить достижения стелса
+      operationId: getStealthAchievements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Достижения стелса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StealthAchievementsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/threat-map:
+    get:
+      tags:
+        - Combat Stealth
+      summary: Получить карту угроз
+      operationId: getThreatMap
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: zone_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Карта угроз
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreatMapResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/stealth/reputation/calculate:
+    post:
+      tags:
+        - Combat Stealth
+      summary: Рассчитать репутационные последствия
+      operationId: calculateReputationImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateReputationImpactRequest'
+      responses:
+        '200':
+          description: Репутационные последствия рассчитаны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationImpactResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/shooting/profiles:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Получить профили стрельбы
+      operationId: getShootingProfiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pve, pvp, arena]
+      responses:
+        '200':
+          description: Профили стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShootingProfilesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/shooting/weapons/{weaponId}/recoil:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Получить отдачу оружия
+      operationId: getWeaponRecoil
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Отдача оружия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponRecoilResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combat Shooting
+      summary: Обновить отдачу оружия
+      operationId: updateWeaponRecoil
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRecoilRequest'
+      responses:
+        '200':
+          description: Отдача обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponRecoilResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/shooting/ttk:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Рассчитать TTK
+      operationId: calculateTTK
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: weapon_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mode
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pve, pvp, arena]
+      responses:
+        '200':
+          description: Рассчитанный TTK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TTKResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combat Shooting
+      summary: Обновить TTK
+      operationId: updateTTK
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTTKRequest'
+      responses:
+        '200':
+          description: TTK обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TTKResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/shooting/modifiers:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Получить модификаторы стрельбы
+      operationId: getShootingModifiers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Модификаторы стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShootingModifiersResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combat Shooting
+      summary: Применить модификаторы стрельбы
+      operationId: applyShootingModifiers
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyModifiersRequest'
+      responses:
+        '200':
+          description: Модификаторы применены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShootingModifiersResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/shooting/loadouts:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Получить лоадауты стрельбы
+      operationId: getShootingLoadouts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лоадауты стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShootingLoadoutsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combat Shooting
+      summary: Сохранить лоадаут стрельбы
+      operationId: saveShootingLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveLoadoutRequest'
+      responses:
+        '200':
+          description: Лоадаут сохранен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShootingLoadout'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/shooting/ballistics/simulate:
+    post:
+      tags:
+        - Combat Shooting
+      summary: Симулировать баллистику
+      operationId: simulateBallistics
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateBallisticsRequest'
+      responses:
+        '200':
+          description: Результат симуляции баллистики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BallisticsSimulationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/shooting/weapons/{weaponId}/customization:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Получить кастомизацию оружия
+      operationId: getWeaponCustomization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Кастомизация оружия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponCustomizationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combat Shooting
+      summary: Обновить кастомизацию оружия
+      operationId: updateWeaponCustomization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomizationRequest'
+      responses:
+        '200':
+          description: Кастомизация обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponCustomizationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/shooting/telemetry:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Получить телеметрию стрельбы
+      operationId: getShootingTelemetry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Телеметрия стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShootingTelemetryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/actions:
+    post:
+      tags:
+        - Combat Freerun
+      summary: Выполнить действие паркура
+      operationId: performFreerunAction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreerunActionRequest'
+      responses:
+        '200':
+          description: Действие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/actions/available:
+    get:
+      tags:
+        - Combat Freerun
+      summary: Получить доступные действия паркура
+      operationId: getAvailableFreerunActions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: position
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Доступные действия паркура
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableFreerunActionsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/combo:
+    post:
+      tags:
+        - Combat Freerun
+      summary: Выполнить комбо паркура
+      operationId: performFreerunCombo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreerunComboRequest'
+      responses:
+        '200':
+          description: Комбо выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunComboResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/stamina:
+    get:
+      tags:
+        - Combat Freerun
+      summary: Получить состояние выносливости
+      operationId: getFreerunStamina
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние выносливости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunStaminaState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/stamina/recover:
+    post:
+      tags:
+        - Combat Freerun
+      summary: Восстановить выносливость
+      operationId: recoverFreerunStamina
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoverStaminaRequest'
+      responses:
+        '200':
+          description: Выносливость восстановлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunStaminaState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/loadout:
+    get:
+      tags:
+        - Combat Freerun
+      summary: Получить лоадаут паркура
+      operationId: getFreerunLoadout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лоадаут паркура
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunLoadout'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combat Freerun
+      summary: Обновить лоадаут паркура
+      operationId: updateFreerunLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFreerunLoadoutRequest'
+      responses:
+        '200':
+          description: Лоадаут обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunLoadout'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/mobile-ability:
+    post:
+      tags:
+        - Combat Freerun
+      summary: Активировать мобильную способность
+      operationId: activateMobileAbility
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateMobileAbilityRequest'
+      responses:
+        '200':
+          description: Мобильная способность активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileAbilityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/route:
+    post:
+      tags:
+        - Combat Freerun
+      summary: Создать пользовательский маршрут
+      operationId: createFreerunRoute
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFreerunRouteRequest'
+      responses:
+        '201':
+          description: Маршрут создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunRoute'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/route/{routeId}:
+    get:
+      tags:
+        - Combat Freerun
+      summary: Получить маршрут паркура
+      operationId: getFreerunRoute
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Маршрут паркура
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunRoute'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/freerun/telemetry:
+    get:
+      tags:
+        - Combat Freerun
+      summary: Получить телеметрию паркура
+      operationId: getFreerunTelemetry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Телеметрия паркура
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreerunTelemetryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/catalog:
+    get:
+      tags:
+        - Combat Combos
+      summary: Получить каталог комбо
+      operationId: getComboCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: combo_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [solo, team, legendary]
+        - name: complexity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [Bronze, Silver, Gold, Platinum, Legendary]
+      responses:
+        '200':
+          description: Каталог комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboCatalogResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/{comboId}:
+    get:
+      tags:
+        - Combat Combos
+      summary: Получить информацию о комбо
+      operationId: getCombo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: comboId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Combo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/activate:
+    post:
+      tags:
+        - Combat Combos
+      summary: Активировать комбо
+      operationId: activateCombo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateComboRequest'
+      responses:
+        '200':
+          description: Комбо активировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboActivationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/synergy:
+    post:
+      tags:
+        - Combat Combos
+      summary: Применить синергию
+      operationId: applySynergy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplySynergyRequest'
+      responses:
+        '200':
+          description: Синергия применена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynergyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/loadout:
+    get:
+      tags:
+        - Combat Combos
+      summary: Получить лоадаут комбо
+      operationId: getComboLoadout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лоадаут комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboLoadout'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Combat Combos
+      summary: Обновить лоадаут комбо
+      operationId: updateComboLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateComboLoadoutRequest'
+      responses:
+        '200':
+          description: Лоадаут обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboLoadout'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/score:
+    post:
+      tags:
+        - Combat Combos
+      summary: Отправить результаты scoring комбо
+      operationId: submitComboScore
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitComboScoreRequest'
+      responses:
+        '200':
+          description: Результаты scoring отправлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboScoreResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/combat/combos/analytics:
+    get:
+      tags:
+        - Combat Combos
+      summary: Получить метрики эффективности комбо
+      operationId: getComboAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: combo_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month, all]
+            default: week
+      responses:
+        '200':
+          description: Метрики эффективности комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboAnalyticsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -3917,6 +5227,721 @@ components:
               factors:
                 type: object
                 additionalProperties: true
+
+    StealthActionRequest:
+      type: object
+      required:
+        - character_id
+        - action_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [cover, shadows, disguise, ambush_kill, distraction, crowd, camera_hack, network_signature]
+        position:
+          type: object
+          additionalProperties: true
+
+    StealthActionResponse:
+      type: object
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        detection_state:
+          $ref: '#/components/schemas/StealthDetectionState'
+
+    StealthDetectionState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        stage:
+          type: string
+          enum: [undetected, suspicious, partially_detected, fully_detected]
+        channels:
+          type: object
+          additionalProperties:
+            type: number
+
+    RecalculateDetectionRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        position:
+          type: object
+          additionalProperties: true
+
+    StealthProfile:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        stealth_level:
+          type: integer
+        modifiers:
+          type: object
+          additionalProperties: true
+
+    UpdateStealthProfileRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        stealth_level:
+          type: integer
+
+    ActivateDisguiseRequest:
+      type: object
+      required:
+        - character_id
+        - disguise_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        disguise_type:
+          type: string
+          enum: [npc_disguise, faction_disguise, social_engineering]
+
+    DisguiseState:
+      type: object
+      properties:
+        disguise_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        disguise_type:
+          type: string
+        active:
+          type: boolean
+
+    HackNetworkNodeRequest:
+      type: object
+      required:
+        - character_id
+        - node_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        node_id:
+          type: string
+          format: uuid
+
+    NetworkHackResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        node_id:
+          type: string
+          format: uuid
+        effects:
+          type: object
+          additionalProperties: true
+
+    NetworkNodesResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              node_id:
+                type: string
+                format: uuid
+              node_type:
+                type: string
+
+    StealthAchievementsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        achievements:
+          type: array
+          items:
+            type: object
+
+    ThreatMapResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        threats:
+          type: array
+          items:
+            type: object
+            properties:
+              threat_id:
+                type: string
+                format: uuid
+              threat_level:
+                type: integer
+
+    CalculateReputationImpactRequest:
+      type: object
+      required:
+        - character_id
+        - action_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+
+    ReputationImpactResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        impact:
+          type: object
+          additionalProperties:
+            type: integer
+
+    ShootingProfilesResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        profiles:
+          type: array
+          items:
+            type: object
+            properties:
+              mode:
+                type: string
+                enum: [pve, pvp, arena]
+              ttk_range:
+                type: string
+
+    WeaponRecoilResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        recoil_pattern:
+          type: object
+          additionalProperties: true
+
+    UpdateRecoilRequest:
+      type: object
+      required:
+        - weapon_id
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        recoil_pattern:
+          type: object
+          additionalProperties: true
+
+    TTKResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        ttk:
+          type: number
+
+    UpdateTTKRequest:
+      type: object
+      required:
+        - character_id
+        - weapon_id
+        - mode
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [pve, pvp, arena]
+
+    ShootingModifiersResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        modifiers:
+          type: object
+          additionalProperties: true
+
+    ApplyModifiersRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        modifiers:
+          type: object
+          additionalProperties: true
+
+    ShootingLoadoutsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        loadouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShootingLoadout'
+
+    SaveLoadoutRequest:
+      type: object
+      required:
+        - character_id
+        - loadout_name
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        loadout_name:
+          type: string
+        weapons:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ShootingLoadout:
+      type: object
+      properties:
+        loadout_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        loadout_name:
+          type: string
+        weapons:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    SimulateBallisticsRequest:
+      type: object
+      required:
+        - weapon_id
+        - start_position
+        - target_position
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        start_position:
+          type: object
+          additionalProperties: true
+        target_position:
+          type: object
+          additionalProperties: true
+
+    BallisticsSimulationResponse:
+      type: object
+      properties:
+        trajectory:
+          type: array
+          items:
+            type: object
+        hit:
+          type: boolean
+
+    WeaponCustomizationResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        slots:
+          type: object
+          additionalProperties: true
+
+    UpdateCustomizationRequest:
+      type: object
+      required:
+        - weapon_id
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        slots:
+          type: object
+          additionalProperties: true
+
+    ShootingTelemetryResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        telemetry:
+          type: array
+          items:
+            type: object
+
+    FreerunActionRequest:
+      type: object
+      required:
+        - character_id
+        - action_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [roof_jump, wall_climb, wire_slide, rock_climb, hook_grab, gravibot, leg_implant]
+
+    FreerunActionResponse:
+      type: object
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        stamina_used:
+          type: integer
+
+    AvailableFreerunActionsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action_type:
+                type: string
+              available:
+                type: boolean
+
+    FreerunComboRequest:
+      type: object
+      required:
+        - character_id
+        - actions
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        actions:
+          type: array
+          items:
+            type: string
+
+    FreerunComboResponse:
+      type: object
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        bonuses:
+          type: object
+          additionalProperties: true
+
+    FreerunStaminaState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_stamina:
+          type: integer
+        max_stamina:
+          type: integer
+
+    RecoverStaminaRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+
+    FreerunLoadout:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        control_mode:
+          type: string
+          enum: [basic, advanced]
+        loadout:
+          type: object
+          additionalProperties: true
+
+    UpdateFreerunLoadoutRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        control_mode:
+          type: string
+          enum: [basic, advanced]
+
+    ActivateMobileAbilityRequest:
+      type: object
+      required:
+        - character_id
+        - ability_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        ability_id:
+          type: string
+          format: uuid
+
+    MobileAbilityResponse:
+      type: object
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        effects:
+          type: object
+          additionalProperties: true
+
+    CreateFreerunRouteRequest:
+      type: object
+      required:
+        - character_id
+        - name
+        - route_points
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        route_points:
+          type: array
+          items:
+            type: object
+
+    FreerunRoute:
+      type: object
+      properties:
+        route_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        route_points:
+          type: array
+          items:
+            type: object
+
+    FreerunTelemetryResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        telemetry:
+          type: array
+          items:
+            type: object
+
+    ComboCatalogResponse:
+      type: object
+      properties:
+        combos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Combo'
+
+    Combo:
+      type: object
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        combo_type:
+          type: string
+          enum: [solo, team, legendary]
+        complexity:
+          type: string
+          enum: [Bronze, Silver, Gold, Platinum, Legendary]
+
+    ActivateComboRequest:
+      type: object
+      required:
+        - character_id
+        - combo_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        combo_id:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ComboActivationResponse:
+      type: object
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        score:
+          type: integer
+
+    ApplySynergyRequest:
+      type: object
+      required:
+        - character_id
+        - synergy_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        synergy_type:
+          type: string
+          enum: [ability, team, equipment, implant, timing]
+
+    SynergyResponse:
+      type: object
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        bonuses:
+          type: object
+          additionalProperties: true
+
+    ComboLoadout:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        active_combos:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    UpdateComboLoadoutRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        active_combos:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    SubmitComboScoreRequest:
+      type: object
+      required:
+        - activation_id
+        - score
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+        score:
+          type: integer
+        execution_difficulty:
+          type: integer
+        damage_output:
+          type: integer
+        visual_impact:
+          type: integer
+        team_coordination:
+          type: integer
+
+    ComboScoreResponse:
+      type: object
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+        total_score:
+          type: integer
+        category:
+          type: string
+          enum: [Bronze, Silver, Gold, Platinum, Legendary]
+
+    ComboAnalyticsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        analytics:
+          type: object
+          additionalProperties: true
 
     Error:
       type: object

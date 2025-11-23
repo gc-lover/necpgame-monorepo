@@ -26,6 +26,8 @@ tags:
     description: Управление расписанием сбросов
   - name: Reset Execution
     description: Выполнение сбросов
+  - name: Travel Events
+    description: Система travel-событий
 
 paths:
   /reset/daily/execute:
@@ -816,6 +818,251 @@ components:
         error:
           type: string
 
+    TriggerTravelEventRequest:
+      type: object
+      required:
+        - character_id
+        - zone_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        zone_id:
+          type: string
+          format: uuid
+        epoch_id:
+          type: string
+
+    TravelEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_code:
+          type: string
+        event_name:
+          type: string
+        event_type:
+          type: string
+        epoch_id:
+          type: string
+        description:
+          type: string
+        base_probability:
+          type: number
+          format: float
+        cooldown_hours:
+          type: integer
+        skill_checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillCheckDefinition'
+        rewards:
+          type: object
+        penalties:
+          type: object
+
+    TravelEventInstance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        zone_id:
+          type: string
+          format: uuid
+        epoch_id:
+          type: string
+        state:
+          type: string
+          enum: [triggered, started, in-progress, completed, cancelled, failed]
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AvailableTravelEventsResponse:
+      type: object
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+        epoch_id:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEvent'
+        total:
+          type: integer
+
+    StartTravelEventRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    SkillCheckDefinition:
+      type: object
+      properties:
+        skill:
+          type: string
+        dc:
+          type: integer
+
+    SkillCheckRequest:
+      type: object
+      required:
+        - skill
+      properties:
+        skill:
+          type: string
+        character_id:
+          type: string
+          format: uuid
+
+    SkillCheckResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        critical_success:
+          type: boolean
+        critical_failure:
+          type: boolean
+        roll_result:
+          type: integer
+        dc:
+          type: integer
+        modifiers:
+          type: object
+
+    CompleteTravelEventRequest:
+      type: object
+      required:
+        - character_id
+        - success
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+
+    TravelEventCompletionResponse:
+      type: object
+      properties:
+        event_instance_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventReward'
+        penalties:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventPenalty'
+
+    TravelEventReward:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [loot, reputation, eddies, item]
+        data:
+          type: object
+
+    TravelEventPenalty:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [damage, heat, reputation, confiscation]
+        data:
+          type: object
+
+    EpochTravelEventsResponse:
+      type: object
+      properties:
+        epoch_id:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEvent'
+        total:
+          type: integer
+
+    TravelEventCooldownResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        cooldowns:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventCooldown'
+
+    TravelEventCooldown:
+      type: object
+      properties:
+        event_type:
+          type: string
+        last_triggered_at:
+          type: string
+          format: date-time
+        cooldown_until:
+          type: string
+          format: date-time
+
+    TravelEventProbabilityResponse:
+      type: object
+      properties:
+        event_type:
+          type: string
+        probability:
+          type: number
+          format: float
+        modifiers:
+          type: object
+
+    TravelEventRewardsResponse:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventReward'
+
+    TravelEventPenaltiesResponse:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        penalties:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelEventPenalty'
+
   responses:
     BadRequest:
       description: Неверный запрос
@@ -831,6 +1078,13 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
 
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
     InternalServerError:
       description: Внутренняя ошибка сервера
       content:
@@ -838,4 +1092,346 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
 
+  /travel-events/trigger:
+    post:
+      tags:
+        - Travel Events
+      summary: Триггер travel-события
+      operationId: triggerTravelEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerTravelEventRequest'
+      responses:
+        '200':
+          description: Travel-событие активировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEventInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/available:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить доступные события для зоны
+      operationId: getAvailableTravelEvents
+      parameters:
+        - name: zone_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: epoch_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список доступных событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableTravelEventsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/{eventId}:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить информацию о событии
+      operationId: getTravelEvent
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о событии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEvent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/{eventId}/start:
+    post:
+      tags:
+        - Travel Events
+      summary: Начать событие
+      operationId: startTravelEvent
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTravelEventRequest'
+      responses:
+        '200':
+          description: Событие начато
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEventInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/{eventId}/skill-check:
+    post:
+      tags:
+        - Travel Events
+      summary: Выполнить skill check
+      operationId: performTravelEventSkillCheck
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillCheckRequest'
+      responses:
+        '200':
+          description: Skill check выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/{eventId}/complete:
+    post:
+      tags:
+        - Travel Events
+      summary: Завершить событие
+      operationId: completeTravelEvent
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteTravelEventRequest'
+      responses:
+        '200':
+          description: Событие завершено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEventCompletionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/{eventId}/cancel:
+    post:
+      tags:
+        - Travel Events
+      summary: Отменить событие
+      operationId: cancelTravelEvent
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Событие отменено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEventInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/epoch/{epochId}:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить события эпохи
+      operationId: getEpochTravelEvents
+      parameters:
+        - name: epochId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список событий эпохи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EpochTravelEventsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/cooldown/{characterId}:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить cooldown персонажа
+      operationId: getCharacterTravelEventCooldown
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Cooldown персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEventCooldownResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/probability:
+    get:
+      tags:
+        - Travel Events
+      summary: Рассчитать вероятность события
+      operationId: calculateTravelEventProbability
+      parameters:
+        - name: event_type
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: zone_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Вероятность события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEventProbabilityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/rewards/{eventId}:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить награды события
+      operationId: getTravelEventRewards
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награды события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEventRewardsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /travel-events/penalties/{eventId}:
+    get:
+      tags:
+        - Travel Events
+      summary: Получить штрафы события
+      operationId: getTravelEventPenalties
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Штрафы события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelEventPenaltiesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 

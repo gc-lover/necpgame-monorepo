@@ -3,15 +3,25 @@
 ## Ключевые слова и паттерны
 
 ### Idea Writer (agent:idea-writer, stage:idea)
-- Лор, lore, narrative, квесты, quests
-- NPC, персонажи, characters
-- Контент, content, game-design
+- Лор, lore, narrative, квесты, quests (концепции)
+- NPC, персонажи, characters (концепции)
+- Контент, content, game-design (концепции)
 - Видение, vision, philosophy, философия
 - Worldbuilding, world building
-- Canon (если про контент/документы)
-- Сюжет, story, storyline
-- Диалоги, dialogues
+- Canon (если про концепции/документы)
+- Сюжет, story, storyline (концепции)
+- Диалоги, dialogues (концепции)
 - Концепция, concept
+
+### Content Writer (agent:content-writer, stage:content)
+- [Canon/Lore] Квест: ... (контентные квесты)
+- Реализация контентных квестов
+- Создание YAML файлов квестов
+- Детальный лор для квестов
+- Диалоги и ветвления (реализация)
+- NPC взаимодействия (контент)
+- Контентные квесты после Idea Writer
+- Метки: `canon`, `lore`, `quest` (вместе с `content`)
 
 ### Architect (agent:architect, stage:design)
 - Система, system, architecture, архитектура
@@ -80,18 +90,34 @@
 
 1. Если есть явное указание на код/реализацию → Backend или UE5
 2. Если про систему/архитектуру → Architect
-3. Если про лор/контент/квесты → Idea Writer
-4. Если про инфраструктуру/деплой → DevOps
-5. Если про сеть/протокол → Network
-6. Если про оптимизацию → Performance
-7. Если про тестирование → QA
-8. Если про релиз → Release
+3. Если про контентные квесты (Canon/Lore) с метками `canon`, `lore`, `quest` → Content Writer
+4. Если про лор/контент/квесты (концепции) → Idea Writer
+5. Если про инфраструктуру/деплой → DevOps
+6. Если про сеть/протокол → Network
+7. Если про оптимизацию → Performance
+8. Если про тестирование → QA
+9. Если про релиз → Release
+
+## Workflow для контентных задач
+
+**Контентные квесты (Canon/Lore) НЕ проходят через архитектурный этап:**
+
+```
+Idea Writer → Content Writer → QA → Release
+```
+
+**Системные задачи проходят через архитектурный этап:**
+
+```
+Idea Writer → Architect → API Designer → Backend → Network → UE5 → QA → Release
+```
 
 ## Примеры
 
-- "[Canon] NPC Lore" → Idea Writer (лор, NPC)
+- "[Canon] NPC Lore" → Idea Writer (концепция лора, NPC)
+- "[Canon/Lore] Квест: Знак Голливуда" → Content Writer (контентный квест)
 - "[Canon] Narrative Coherence System" → Architect (система, архитектура)
 - "[Implementation] Укрепление автоматизации" → DevOps (автоматизация, инфраструктура)
-- "[Quests] Las Vegas" → Idea Writer (квесты, лор)
+- "[Quests] Las Vegas" → Idea Writer (концепция квестов)
 - "Настройка GitHub App" → DevOps (инфраструктура, настройка)
 

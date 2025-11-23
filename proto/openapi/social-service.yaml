@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: Social Service API
-  description: API для социальных функций: уведомления, друзья, чат, почта
-  version: 1.0.0
+  description: API для социальных функций: уведомления, друзья, чат, почта, найм NPC
+  version: 2.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
@@ -28,6 +28,14 @@ tags:
     description: Система гильдий
   - name: NPC Hiring
     description: Система найма NPC
+  - name: Reputation
+    description: Система репутации
+  - name: Relationships
+    description: Система отношений
+  - name: Player Orders
+    description: Система заказов от игроков
+  - name: Mentorship
+    description: Система наставничества
 
 paths:
   /social/notifications:
@@ -4246,6 +4254,1480 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /social/reputation/{player_id}:
+    get:
+      tags:
+        - Reputation
+      summary: Получить репутацию персонажа
+      operationId: getReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Репутация персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerReputation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/faction/{faction_id}:
+    get:
+      tags:
+        - Reputation
+      summary: Получить репутацию с фракцией
+      operationId: getFactionReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Репутация с фракцией
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionReputation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/change:
+    post:
+      tags:
+        - Reputation
+      summary: Изменить репутацию
+      operationId: changeReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeReputationRequest'
+      responses:
+        '200':
+          description: Репутация изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationChangeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/tier:
+    get:
+      tags:
+        - Reputation
+      summary: Получить уровень репутации
+      operationId: getReputationTier
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уровень репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationTier'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/heat:
+    get:
+      tags:
+        - Reputation
+      summary: Получить Heat
+      operationId: getHeat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Heat персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/heat/reduce:
+    post:
+      tags:
+        - Reputation
+      summary: Снизить Heat
+      operationId: reduceHeat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReduceHeatRequest'
+      responses:
+        '200':
+          description: Heat снижен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/access:
+    get:
+      tags:
+        - Reputation
+      summary: Проверить доступ на основе репутации
+      operationId: checkReputationAccess
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: access_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [territory, trade, quest, npc_recruitment, vip_services]
+      responses:
+        '200':
+          description: Статус доступа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/discounts:
+    get:
+      tags:
+        - Reputation
+      summary: Получить скидки на основе репутации
+      operationId: getReputationDiscounts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Скидки на основе репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationDiscounts'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/recovery/start:
+    post:
+      tags:
+        - Reputation
+      summary: Начать восстановление репутации
+      operationId: startReputationRecovery
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRecoveryRequest'
+      responses:
+        '200':
+          description: Восстановление начато
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/recovery/status:
+    get:
+      tags:
+        - Reputation
+      summary: Получить статус восстановления репутации
+      operationId: getRecoveryStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус восстановления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/faction-relations:
+    get:
+      tags:
+        - Reputation
+      summary: Получить отношения с фракциями
+      operationId: getFactionRelations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Отношения с фракциями
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionRelationsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/effects:
+    get:
+      tags:
+        - Reputation
+      summary: Получить эффекты репутации
+      operationId: getReputationEffects
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Эффекты репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationEffects'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/history:
+    get:
+      tags:
+        - Reputation
+      summary: Получить историю изменений репутации
+      operationId: getReputationHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История изменений репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationHistoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить отношения персонажа
+      operationId: getRelationships
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: relationship_type
+          in: query
+          schema:
+            type: string
+            enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Отношения персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id}/set:
+    post:
+      tags:
+        - Relationships
+      summary: Установить отношение
+      operationId: setRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRelationshipRequest'
+      responses:
+        '200':
+          description: Отношение установлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Relationship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id1}/{player_id2}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить отношение между персонажами
+      operationId: getRelationshipBetween
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id1
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: player_id2
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Отношение между персонажами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Relationship'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id}/trust:
+    get:
+      tags:
+        - Relationships
+      summary: Получить уровень доверия
+      operationId: getTrustLevel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: target_player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уровень доверия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustLevel'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id}/trust/update:
+    post:
+      tags:
+        - Relationships
+      summary: Обновить доверие
+      operationId: updateTrust
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTrustRequest'
+      responses:
+        '200':
+          description: Доверие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustLevel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/trust-contracts/create:
+    post:
+      tags:
+        - Relationships
+      summary: Создать договор доверия
+      operationId: createTrustContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrustContractRequest'
+      responses:
+        '201':
+          description: Договор доверия создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/trust-contracts/{contract_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить информацию о договоре доверия
+      operationId: getTrustContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о договоре доверия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Relationships
+      summary: Расторгнуть договор доверия
+      operationId: terminateTrustContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateTrustContractRequest'
+      responses:
+        '200':
+          description: Договор расторгнут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/create:
+    post:
+      tags:
+        - Relationships
+      summary: Создать союз
+      operationId: createAlliance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAllianceRequest'
+      responses:
+        '201':
+          description: Союз создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alliance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/alliances:
+    get:
+      tags:
+        - Relationships
+      summary: Получить список союзов
+      operationId: getAlliances
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: alliance_type
+          in: query
+          schema:
+            type: string
+            enum: [combat, trade, clan, faction]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список союзов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlliancesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/{alliance_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить информацию о союзе
+      operationId: getAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о союзе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alliance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Relationships
+      summary: Расторгнуть союз
+      operationId: terminateAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateAllianceRequest'
+      responses:
+        '200':
+          description: Союз расторгнут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alliance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/{alliance_id}/invite:
+    post:
+      tags:
+        - Relationships
+      summary: Пригласить в союз
+      operationId: inviteToAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteToAllianceRequest'
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceInvite'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/{alliance_id}/join:
+    post:
+      tags:
+        - Relationships
+      summary: Присоединиться к союзу
+      operationId: joinAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinAllianceRequest'
+      responses:
+        '200':
+          description: Присоединение к союзу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alliance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/{alliance_id}/leave:
+    post:
+      tags:
+        - Relationships
+      summary: Выйти из союза
+      operationId: leaveAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveAllianceRequest'
+      responses:
+        '200':
+          description: Выход из союза выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/ratings/{player_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить рейтинги персонажа
+      operationId: getRatings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: rating_type
+          in: query
+          schema:
+            type: string
+            enum: [combat, trade, social, overall]
+      responses:
+        '200':
+          description: Рейтинги персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRatings'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/ratings/{player_id}/update:
+    post:
+      tags:
+        - Relationships
+      summary: Обновить рейтинг персонажа
+      operationId: updateRating
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRatingRequest'
+      responses:
+        '200':
+          description: Рейтинг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRatings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/social-capital/{player_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить социальный капитал персонажа
+      operationId: getSocialCapital
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Социальный капитал персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialCapital'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/history/{player_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить историю взаимодействий
+      operationId: getInteractionHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: target_player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: interaction_type
+          in: query
+          schema:
+            type: string
+            enum: [quest, trade, combat, social, other]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История взаимодействий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionHistoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/arbitration/request:
+    post:
+      tags:
+        - Relationships
+      summary: Запросить арбитраж
+      operationId: requestArbitration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestArbitrationRequest'
+      responses:
+        '201':
+          description: Запрос арбитража создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/relationships/arbitration/{case_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить информацию об арбитраже
+      operationId: getArbitrationCase
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация об арбитраже
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/create:
+    post:
+      tags:
+        - Player Orders
+      summary: Создать заказ
+      operationId: createPlayerOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlayerOrderRequest'
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders:
+    get:
+      tags:
+        - Player Orders
+      summary: Получить список заказов
+      operationId: getPlayerOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum: [combat, hacking, trade, political, research, social]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, accepted, in_progress, completed, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrdersResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}:
+    get:
+      tags:
+        - Player Orders
+      summary: Получить информацию о заказе
+      operationId: getPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о заказе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/accept:
+    post:
+      tags:
+        - Player Orders
+      summary: Принять заказ
+      operationId: acceptPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Заказ принят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/complete:
+    post:
+      tags:
+        - Player Orders
+      summary: Завершить заказ
+      operationId: completePlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompletePlayerOrderRequest'
+      responses:
+        '200':
+          description: Заказ завершен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mentorship/mentors:
+    get:
+      tags:
+        - Mentorship
+      summary: Поиск наставников
+      operationId: searchMentors
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: min_reputation
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список наставников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mentorship/contracts:
+    get:
+      tags:
+        - Mentorship
+      summary: Получить список договоров наставничества
+      operationId: getMentorshipContracts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, terminated]
+      responses:
+        '200':
+          description: Список договоров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContractsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/mentorship/contracts/create:
+    post:
+      tags:
+        - Mentorship
+      summary: Создать договор наставничества
+      operationId: createMentorshipContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorshipContractRequest'
+      responses:
+        '201':
+          description: Договор создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -6202,6 +7684,1634 @@ components:
         unlocked:
           type: boolean
         unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NPCCandidate:
+      type: object
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        reputation_level:
+          type: string
+          enum: [low, medium, high]
+        skills:
+          type: array
+          items:
+            type: string
+        skill_levels:
+          type: object
+          additionalProperties:
+            type: integer
+        base_salary:
+          type: number
+          format: decimal
+        availability:
+          type: boolean
+        requirements:
+          type: object
+          properties:
+            reputation:
+              type: string
+            skills:
+              type: array
+              items:
+                type: string
+            capital:
+              type: number
+              format: decimal
+              nullable: true
+        description:
+          type: string
+
+    NPCCandidatesResponse:
+      type: object
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/NPCCandidate'
+        total:
+          type: integer
+
+    StartNegotiationRequest:
+      type: object
+      required:
+        - npc_id
+        - hiring_type
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        proposed_salary:
+          type: number
+          format: decimal
+        contract_duration:
+          type: integer
+          description: Длительность контракта в днях
+        autonomy_level:
+          type: string
+          enum: [direct, autonomous, hybrid]
+          default: hybrid
+
+    NegotiationResponse:
+      type: object
+      properties:
+        negotiation_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [in_progress, accepted, rejected, counter_offer]
+        npc_counter_offer:
+          type: object
+          properties:
+            salary:
+              type: number
+              format: decimal
+            contract_duration:
+              type: integer
+            autonomy_level:
+              type: string
+              enum: [direct, autonomous, hybrid]
+        message:
+          type: string
+
+    CreateContractRequest:
+      type: object
+      required:
+        - npc_id
+        - hiring_type
+        - contract_type
+        - salary_amount
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        contract_type:
+          type: string
+          enum: [salary, one-time, profit-share, combined]
+        salary_amount:
+          type: number
+          format: decimal
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        autonomy_level:
+          type: string
+          enum: [direct, autonomous, hybrid]
+          default: hybrid
+        terms:
+          type: object
+          additionalProperties: true
+
+    HiringContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        contract_type:
+          type: string
+          enum: [salary, one-time, profit-share, combined]
+        salary_amount:
+          type: number
+          format: decimal
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [active, terminated, completed]
+        autonomy_level:
+          type: string
+          enum: [direct, autonomous, hybrid]
+        terms:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    HiringContractsResponse:
+      type: object
+      properties:
+        contracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/HiringContract'
+        total:
+          type: integer
+
+    TerminateContractRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+        penalty_paid:
+          type: boolean
+          default: false
+
+    WorkforceResponse:
+      type: object
+      properties:
+        workforce:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkforceMember'
+        total:
+          type: integer
+
+    WorkforceMember:
+      type: object
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        status:
+          type: string
+          enum: [active, busy, idle, unavailable]
+        current_task:
+          $ref: '#/components/schemas/NPCTask'
+          nullable: true
+        performance_score:
+          type: number
+          format: decimal
+
+    AssignTaskRequest:
+      type: object
+      required:
+        - task_type
+        - task_description
+      properties:
+        task_type:
+          type: string
+        task_description:
+          type: string
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        resources:
+          type: object
+          additionalProperties: true
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+
+    NPCTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        task_type:
+          type: string
+        task_description:
+          type: string
+        priority:
+          type: integer
+        status:
+          type: string
+          enum: [pending, in-progress, completed, failed]
+        assigned_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        resources:
+          type: object
+          additionalProperties: true
+
+    NPCTasksResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/NPCTask'
+        total:
+          type: integer
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        task_description:
+          type: string
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+        status:
+          type: string
+          enum: [pending, in-progress, completed, failed]
+        resources:
+          type: object
+          additionalProperties: true
+
+    NPCPerformance:
+      type: object
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        skill_level:
+          type: integer
+        relationship_level:
+          type: integer
+        efficiency_score:
+          type: number
+          format: decimal
+        tasks_completed:
+          type: integer
+        tasks_failed:
+          type: integer
+        loyalty_score:
+          type: number
+          format: decimal
+        last_update:
+          type: string
+          format: date-time
+
+    NPCStatus:
+      type: object
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, busy, idle, unavailable]
+        current_task:
+          $ref: '#/components/schemas/NPCTask'
+          nullable: true
+        location:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        last_update:
+          type: string
+          format: date-time
+
+    InteractWithNPCRequest:
+      type: object
+      required:
+        - interaction_type
+      properties:
+        interaction_type:
+          type: string
+          enum: [talk, train, reward, criticize, dismiss]
+        message:
+          type: string
+        reward_amount:
+          type: number
+          format: decimal
+          nullable: true
+
+    InteractionResponse:
+      type: object
+      properties:
+        interaction_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+        npc_response:
+          type: string
+        relationship_change:
+          type: integer
+        loyalty_change:
+          type: number
+          format: decimal
+
+    PayrollCalculationResponse:
+      type: object
+      properties:
+        total_payroll:
+          type: number
+          format: decimal
+        npc_payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/NPCPayment'
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+
+    NPCPayment:
+      type: object
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        payment_type:
+          type: string
+          enum: [salary, one-time, profit-share]
+        amount:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [pending, paid, failed]
+
+    PaySalaryRequest:
+      type: object
+      required:
+        - contract_ids
+      properties:
+        contract_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        payment_date:
+          type: string
+          format: date-time
+
+    PaymentResponse:
+      type: object
+      properties:
+        payments_processed:
+          type: integer
+        total_amount:
+          type: number
+          format: decimal
+        failed_payments:
+          type: array
+          items:
+            type: object
+            properties:
+              contract_id:
+                type: string
+                format: uuid
+              error:
+                type: string
+
+    EconomyReportsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [daily, weekly, monthly]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        total_expenses:
+          type: number
+          format: decimal
+        total_income:
+          type: number
+          format: decimal
+        net_profit:
+          type: number
+          format: decimal
+        npc_count:
+          type: integer
+        average_efficiency:
+          type: number
+          format: decimal
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomyReport'
+
+    EconomyReport:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        expenses:
+          type: number
+          format: decimal
+        income:
+          type: number
+          format: decimal
+        profit:
+          type: number
+          format: decimal
+        npc_count:
+          type: integer
+
+    HiringLimitsResponse:
+      type: object
+      properties:
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        current_count:
+          type: integer
+        max_count:
+          type: integer
+        scaling_factors:
+          type: object
+          additionalProperties: true
+        requirements:
+          type: object
+          properties:
+            reputation:
+              type: string
+            skills:
+              type: array
+              items:
+                type: string
+            resources:
+              type: object
+              additionalProperties: true
+
+    CreateHiringChainRequest:
+      type: object
+      required:
+        - chain_name
+        - npc_ids
+        - chain_type
+      properties:
+        chain_name:
+          type: string
+        npc_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        chain_type:
+          type: string
+        efficiency_bonus:
+          type: number
+          format: decimal
+          default: 0.0
+
+    HiringChain:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        chain_name:
+          type: string
+        npc_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        chain_type:
+          type: string
+        efficiency_bonus:
+          type: number
+          format: decimal
+        created_at:
+          type: string
+          format: date-time
+
+    CreateGroupContractRequest:
+      type: object
+      required:
+        - group_name
+        - contract_ids
+      properties:
+        group_name:
+          type: string
+        contract_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        shared_bonuses:
+          type: object
+          additionalProperties: true
+
+    GroupContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        group_name:
+          type: string
+        contract_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        shared_bonuses:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ConfigureAutomationRequest:
+      type: object
+      required:
+        - automation_type
+        - configuration
+      properties:
+        automation_type:
+          type: string
+          enum: [hiring, task_assignment, payment, management]
+        configuration:
+          type: object
+          additionalProperties: true
+        enabled:
+          type: boolean
+          default: true
+
+    AutomationConfiguration:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        automation_type:
+          type: string
+          enum: [hiring, task_assignment, payment, management]
+        configuration:
+          type: object
+          additionalProperties: true
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PlayerReputation:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_reputations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionReputation'
+        overall_reputation:
+          type: integer
+          minimum: -100
+          maximum: 100
+        last_update:
+          type: string
+          format: date-time
+
+    FactionReputation:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        faction_name:
+          type: string
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_color:
+          type: string
+        heat:
+          type: integer
+          minimum: 0
+          maximum: 100
+        last_change:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+
+    ChangeReputationRequest:
+      type: object
+      required:
+        - faction_id
+        - change_amount
+        - reason
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        change_amount:
+          type: integer
+          description: Изменение репутации (может быть отрицательным)
+        reason:
+          type: string
+          enum: [quest_completed, enemy_killed, npc_interaction, transaction, world_event, player_order, other]
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID источника изменения (квест, NPC, событие и т.д.)
+
+    ReputationChangeResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        old_reputation:
+          type: integer
+        new_reputation:
+          type: integer
+        old_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        new_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_changed:
+          type: boolean
+        heat_change:
+          type: integer
+        new_heat:
+          type: integer
+
+    ReputationTier:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_name:
+          type: string
+        tier_color:
+          type: string
+        reputation_value:
+          type: integer
+        tier_range:
+          type: object
+          properties:
+            min:
+              type: integer
+            max:
+              type: integer
+        effects:
+          $ref: '#/components/schemas/ReputationEffects'
+
+    HeatStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        heat_value:
+          type: integer
+          minimum: 0
+          maximum: 100
+        heat_level:
+          type: string
+          enum: [none, low, medium, high, critical]
+        decay_rate:
+          type: number
+          format: decimal
+        next_decay:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+
+    ReduceHeatRequest:
+      type: object
+      required:
+        - faction_id
+        - reduction_method
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        reduction_method:
+          type: string
+          enum: [time, quest, payment, reputation_improvement]
+        amount:
+          type: integer
+          minimum: 1
+          description: Количество Heat для снижения (опционально, если не указано - максимальное снижение)
+
+    AccessStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        access_type:
+          type: string
+          enum: [territory, trade, quest, npc_recruitment, vip_services]
+        has_access:
+          type: boolean
+        access_level:
+          type: string
+          enum: [blocked, restricted, normal, enhanced]
+        reason:
+          type: string
+          nullable: true
+        required_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+          nullable: true
+
+    ReputationDiscounts:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        price_modifier:
+          type: number
+          format: decimal
+          description: Модификатор цены (1.0 = без изменений, 0.9 = скидка 10%, 1.5 = наценка 50%)
+        discount_percentage:
+          type: number
+          format: decimal
+          description: Процент скидки
+        applicable_categories:
+          type: array
+          items:
+            type: string
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+
+    StartRecoveryRequest:
+      type: object
+      required:
+        - faction_id
+        - recovery_method
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        recovery_method:
+          type: string
+          enum: [quest, payment, time, reputation_improvement]
+        target_reputation:
+          type: integer
+          minimum: -100
+          maximum: 100
+          description: Целевая репутация для восстановления
+
+    RecoveryStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        recovery_method:
+          type: string
+          enum: [quest, payment, time, reputation_improvement]
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, cancelled]
+        current_reputation:
+          type: integer
+        target_reputation:
+          type: integer
+        progress_percentage:
+          type: number
+          format: decimal
+        started_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+
+    FactionRelationsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        relations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionReputation'
+        total:
+          type: integer
+
+    ReputationEffects:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        territory_access:
+          type: string
+          enum: [blocked, restricted, normal, enhanced]
+        trade_access:
+          type: string
+          enum: [blocked, minimal, restricted, normal, enhanced]
+        npc_aggression:
+          type: string
+          enum: [none, low, medium, high]
+        price_modifier:
+          type: number
+          format: decimal
+        quest_access:
+          type: string
+          enum: [none, limited, restricted, normal, enhanced]
+        vip_services:
+          type: boolean
+        npc_recruitment:
+          type: boolean
+        exclusive_locations:
+          type: boolean
+        faction_bonuses:
+          type: array
+          items:
+            type: string
+        decay_modifier:
+          type: number
+          format: decimal
+
+    ReputationHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+          nullable: true
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReputationHistoryEntry'
+        total:
+          type: integer
+
+    ReputationHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        change_amount:
+          type: integer
+        old_reputation:
+          type: integer
+        new_reputation:
+          type: integer
+        old_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        new_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        reason:
+          type: string
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+        changed_at:
+          type: string
+          format: date-time
+
+    Relationship:
+      type: object
+      properties:
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RelationshipsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relationship'
+        total:
+          type: integer
+
+    SetRelationshipRequest:
+      type: object
+      required:
+        - target_player_id
+        - relationship_type
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+
+    TrustLevel:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        target_player_id:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        trust_points:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    UpdateTrustRequest:
+      type: object
+      required:
+        - target_player_id
+        - trust_change
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        trust_change:
+          type: integer
+          description: Изменение доверия (может быть отрицательным)
+        reason:
+          type: string
+
+    CreateTrustContractRequest:
+      type: object
+      required:
+        - target_player_id
+        - trust_level
+        - terms
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        terms:
+          type: object
+          additionalProperties: true
+        duration_days:
+          type: integer
+          minimum: 1
+
+    TrustContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        terms:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [active, terminated, expired]
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TerminateTrustContractRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    CreateAllianceRequest:
+      type: object
+      required:
+        - alliance_type
+        - name
+      properties:
+        alliance_type:
+          type: string
+          enum: [combat, trade, clan, faction]
+        name:
+          type: string
+        description:
+          type: string
+        terms:
+          type: object
+          additionalProperties: true
+
+    Alliance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        alliance_type:
+          type: string
+          enum: [combat, trade, clan, faction]
+        name:
+          type: string
+        description:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+            format: uuid
+        terms:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [active, terminated, expired]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AlliancesResponse:
+      type: object
+      properties:
+        alliances:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alliance'
+        total:
+          type: integer
+
+    TerminateAllianceRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    InviteToAllianceRequest:
+      type: object
+      required:
+        - target_player_id
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+
+    AllianceInvite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        alliance_id:
+          type: string
+          format: uuid
+        inviter_id:
+          type: string
+          format: uuid
+        invitee_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, rejected, expired]
+        created_at:
+          type: string
+          format: date-time
+
+    JoinAllianceRequest:
+      type: object
+      properties:
+        invite_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    LeaveAllianceRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    PlayerRatings:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        combat_rating:
+          type: integer
+        trade_rating:
+          type: integer
+        social_rating:
+          type: integer
+        overall_rating:
+          type: integer
+        total_ratings:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    UpdateRatingRequest:
+      type: object
+      required:
+        - target_player_id
+        - rating_type
+        - rating_value
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        rating_type:
+          type: string
+          enum: [combat, trade, social, overall]
+        rating_value:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    SocialCapital:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        capital_value:
+          type: integer
+        network_size:
+          type: integer
+        influence_score:
+          type: number
+          format: decimal
+        trust_score:
+          type: number
+          format: decimal
+        last_update:
+          type: string
+          format: date-time
+
+    InteractionHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionEntry'
+        total:
+          type: integer
+
+    InteractionEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum: [quest, trade, combat, social, other]
+        description:
+          type: string
+        reputation_change:
+          type: integer
+        trust_change:
+          type: integer
+        occurred_at:
+          type: string
+          format: date-time
+
+    RequestArbitrationRequest:
+      type: object
+      required:
+        - target_player_id
+        - dispute_type
+        - description
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        dispute_type:
+          type: string
+          enum: [trade, contract, alliance, reputation, other]
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+
+    ArbitrationCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        dispute_type:
+          type: string
+          enum: [trade, contract, alliance, reputation, other]
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_review, resolved, dismissed]
+        resolution:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreatePlayerOrderRequest:
+      type: object
+      required:
+        - order_type
+        - title
+        - description
+        - reward
+      properties:
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        reward:
+          type: object
+        requirements:
+          type: object
+        deadline:
+          type: string
+          format: date-time
+
+    PlayerOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        executor_id:
+          type: string
+          format: uuid
+          nullable: true
+        order_type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, accepted, in_progress, completed, cancelled]
+        reward:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    PlayerOrdersResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrder'
+        total:
+          type: integer
+
+    CompletePlayerOrderRequest:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        evidence:
+          type: array
+          items:
+            type: string
+
+    MentorsResponse:
+      type: object
+      properties:
+        mentors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mentor'
+        total:
+          type: integer
+
+    Mentor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        reputation:
+          type: integer
+        skills:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+          format: float
+
+    MentorshipContractsResponse:
+      type: object
+      properties:
+        contracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/MentorshipContract'
+        total:
+          type: integer
+
+    CreateMentorshipContractRequest:
+      type: object
+      required:
+        - mentor_id
+        - mentee_id
+        - skills
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        payment:
+          type: object
+
+    MentorshipContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, completed, terminated]
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
           type: string
           format: date-time
           nullable: true
