@@ -17,6 +17,41 @@
 - Обновление меток для множества Issues
 - Добавление комментариев к батчу Issues
 
+## Локальное зеркало Issues
+
+**Для работы офлайн используй локальное зеркало:**
+- `.local/issues/` - локальное хранилище Issues
+- `scripts/github-issues/` - скрипты для работы с локальными Issues
+- `.github/LOCAL_ISSUES_MIRROR.md` - полная документация
+
+**Преимущества:**
+- OK Работа офлайн без API запросов
+- OK Нет rate limit при локальной работе
+- OK Быстрый поиск и фильтрация
+- OK История изменений
+- OK Батчинг при синхронизации
+
+**Когда использовать:**
+- Работа с большим количеством Issues (>50)
+- Частые операции поиска и фильтрации
+- Массовые обновления меток
+- Работа без постоянного доступа к GitHub API
+
+**Быстрый старт:**
+```bash
+# Синхронизировать Issues из GitHub
+node scripts/github-issues/sync-from-github.js
+
+# Поиск локально
+node scripts/github-issues/search-local.js "content-writer" --labels="agent:content-writer"
+
+# Обновить Issue локально
+node scripts/github-issues/update-local.js 123 --labels="agent:qa,stage:testing"
+
+# Синхронизировать изменения в GitHub
+node scripts/github-issues/sync-to-github.js
+```
+
 ## Проблема
 
 GitHub API имеет два типа лимитов:
