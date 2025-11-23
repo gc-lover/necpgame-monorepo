@@ -5626,6 +5626,610 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /social/orders/{orderId}/start:
+    post:
+      tags:
+        - Player Orders
+      summary: Начать выполнение заказа
+      operationId: startPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Заказ начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/cancel:
+    post:
+      tags:
+        - Player Orders
+      summary: Отменить заказ
+      operationId: cancelPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Заказ отменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/review:
+    post:
+      tags:
+        - Player Orders
+      summary: Оставить отзыв о заказе
+      operationId: reviewPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewPlayerOrderRequest'
+      responses:
+        '200':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrderReview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/multi-executor/create:
+    post:
+      tags:
+        - Player Orders
+      summary: Создать мульти-исполнительный заказ
+      operationId: createMultiExecutorOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMultiExecutorOrderRequest'
+      responses:
+        '201':
+          description: Мульти-исполнительный заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/executors/invite:
+    post:
+      tags:
+        - Player Orders
+      summary: Пригласить исполнителя в заказ
+      operationId: inviteExecutor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteExecutorRequest'
+      responses:
+        '200':
+          description: Исполнитель приглашен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/executors/join:
+    post:
+      tags:
+        - Player Orders
+      summary: Присоединиться к заказу как исполнитель
+      operationId: joinOrderAsExecutor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Присоединение к заказу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/auctions:
+    get:
+      tags:
+        - Player Orders
+      summary: Получить список аукционов
+      operationId: getOrderAuctions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список аукционов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAuctionsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/auctions/create:
+    post:
+      tags:
+        - Player Orders
+      summary: Создать аукцион заказа
+      operationId: createOrderAuction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderAuctionRequest'
+      responses:
+        '201':
+          description: Аукцион создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAuction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/auctions/{auctionId}/bid:
+    post:
+      tags:
+        - Player Orders
+      summary: Сделать ставку на аукционе
+      operationId: bidOnAuction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidOnAuctionRequest'
+      responses:
+        '200':
+          description: Ставка сделана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAuction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/auctions/{auctionId}:
+    get:
+      tags:
+        - Player Orders
+      summary: Получить информацию об аукционе
+      operationId: getOrderAuction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация об аукционе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAuction'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/options/buy:
+    post:
+      tags:
+        - Player Orders
+      summary: Купить опцион на заказ
+      operationId: buyOrderOption
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyOrderOptionRequest'
+      responses:
+        '200':
+          description: Опцион куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderOption'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/options/exercise:
+    post:
+      tags:
+        - Player Orders
+      summary: Использовать опцион
+      operationId: exerciseOrderOption
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Опцион использован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderOption'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/arbitration/request:
+    post:
+      tags:
+        - Player Orders
+      summary: Запросить арбитраж по заказу
+      operationId: requestArbitration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestArbitrationRequest'
+      responses:
+        '201':
+          description: Арбитраж запрошен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/arbitration/{caseId}:
+    get:
+      tags:
+        - Player Orders
+      summary: Получить информацию об арбитраже
+      operationId: getArbitrationCase
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация об арбитраже
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/insurance/buy:
+    post:
+      tags:
+        - Player Orders
+      summary: Купить страховку для заказа
+      operationId: buyOrderInsurance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuyOrderInsuranceRequest'
+      responses:
+        '200':
+          description: Страховка куплена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderInsurance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/insurance:
+    get:
+      tags:
+        - Player Orders
+      summary: Получить информацию о страховке заказа
+      operationId: getOrderInsurance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о страховке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderInsurance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/ratings/{characterId}:
+    get:
+      tags:
+        - Player Orders
+      summary: Получить рейтинги персонажа по заказам
+      operationId: getOrderRatings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Рейтинги персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderRatingsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/reputation/{characterId}:
+    get:
+      tags:
+        - Player Orders
+      summary: Получить репутацию персонажа по заказам
+      operationId: getOrderReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Репутация персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderReputation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/orders/economy/pricing:
+    get:
+      tags:
+        - Player Orders
+      summary: Рассчитать стоимость заказа
+      operationId: calculateOrderPricing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [combat, hacking, trade, political, research, social]
+        - name: complexity
+          in: query
+          schema:
+            type: string
+            enum: [simple, medium, complex, extreme]
+        - name: duration
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Расчет стоимости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPricingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /social/mentorship/mentors:
     get:
       tags:
@@ -10189,6 +10793,356 @@ components:
           type: array
           items:
             type: string
+
+    ReviewPlayerOrderRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        executor_id:
+          type: string
+          format: uuid
+
+    PlayerOrderReview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        reviewer_id:
+          type: string
+          format: uuid
+        executor_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMultiExecutorOrderRequest:
+      type: object
+      required:
+        - order_type
+        - title
+        - description
+        - max_executors
+      properties:
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        max_executors:
+          type: integer
+          minimum: 2
+        reward:
+          type: object
+        requirements:
+          type: object
+
+    InviteExecutorRequest:
+      type: object
+      required:
+        - executor_id
+      properties:
+        executor_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+
+    OrderAuctionsResponse:
+      type: object
+      properties:
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderAuction'
+        total:
+          type: integer
+
+    CreateOrderAuctionRequest:
+      type: object
+      required:
+        - order_id
+        - starting_bid
+        - duration
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        starting_bid:
+          type: number
+          format: float
+        duration:
+          type: integer
+        reserve_price:
+          type: number
+          format: float
+          nullable: true
+
+    OrderAuction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        starting_bid:
+          type: number
+          format: float
+        current_bid:
+          type: number
+          format: float
+        reserve_price:
+          type: number
+          format: float
+          nullable: true
+        status:
+          type: string
+          enum: [open, closed, cancelled]
+        highest_bidder_id:
+          type: string
+          format: uuid
+          nullable: true
+        bids:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        closes_at:
+          type: string
+          format: date-time
+
+    BidOnAuctionRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: float
+
+    BuyOrderOptionRequest:
+      type: object
+      required:
+        - option_type
+        - strike_price
+      properties:
+        option_type:
+          type: string
+          enum: [call, put]
+        strike_price:
+          type: number
+          format: float
+        premium:
+          type: number
+          format: float
+        expiration_time:
+          type: string
+          format: date-time
+
+    OrderOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        option_type:
+          type: string
+        strike_price:
+          type: number
+          format: float
+        premium:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [active, exercised, expired]
+        expiration_time:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    RequestArbitrationRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+
+    ArbitrationCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        requester_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_review, resolved, dismissed]
+        arbitrator_id:
+          type: string
+          format: uuid
+          nullable: true
+        resolution:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    BuyOrderInsuranceRequest:
+      type: object
+      required:
+        - coverage_type
+        - premium
+      properties:
+        coverage_type:
+          type: string
+          enum: [completion, cancellation, failure]
+        premium:
+          type: number
+          format: float
+        coverage_amount:
+          type: number
+          format: float
+
+    OrderInsurance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        coverage_type:
+          type: string
+        premium:
+          type: number
+          format: float
+        coverage_amount:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [active, claimed, expired]
+        created_at:
+          type: string
+          format: date-time
+
+    OrderRatingsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        as_creator:
+          type: object
+          properties:
+            average_rating:
+              type: number
+              format: float
+            total_reviews:
+              type: integer
+        as_executor:
+          type: object
+          properties:
+            average_rating:
+              type: number
+              format: float
+            total_reviews:
+              type: integer
+
+    OrderReputation:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        reputation_score:
+          type: number
+          format: float
+        reputation_tier:
+          type: string
+        total_orders_created:
+          type: integer
+        total_orders_completed:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+        average_rating:
+          type: number
+          format: float
+
+    OrderPricingResponse:
+      type: object
+      properties:
+        order_type:
+          type: string
+        complexity:
+          type: string
+        base_price:
+          type: number
+          format: float
+        commission:
+          type: number
+          format: float
+        total_price:
+          type: number
+          format: float
+        estimated_duration:
+          type: integer
+        pricing_breakdown:
+          type: object
 
     MentorsResponse:
       type: object
