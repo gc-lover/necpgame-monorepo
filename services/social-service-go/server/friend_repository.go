@@ -130,6 +130,79 @@ func (r *FriendRepository) GetByCharacterID(ctx context.Context, characterID uui
 	return friendships, rows.Err()
 }
 
+func (r *FriendRepository) GetPendingRequests(ctx context.Context, characterID uuid.UUID) ([]models.Friendship, error) {
+	query := `
+		SELECT id, character_a_id, character_b_id, status, initiator_id, created_at, updated_at
+		FROM friendships
+		WHERE (character_a_id = $1 OR character_b_id = $1) 
+		  AND status = $2 
+		  AND initiator_id != $1
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.Query(ctx, query, characterID, models.FriendshipStatusPending)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var friendships []models.Friendship
+	for rows.Next() {
+		var friendship models.Friendship
+		err := rows.Scan(
+			&friendship.ID,
+			&friendship.CharacterAID,
+			&friendship.CharacterBID,
+			&friendship.Status,
+			&friendship.InitiatorID,
+			&friendship.CreatedAt,
+			&friendship.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		friendships = append(friendships, friendship)
+	}
+
+	return friendships, rows.Err()
+}
+
+func (r *FriendRepository) GetFriendship(ctx context.Context, characterAID, characterBID uuid.UUID) (*models.Friendship, error) {
+	characterA := characterAID
+	characterB := characterBID
+	if characterAID.String() > characterBID.String() {
+		characterA = characterBID
+		characterB = characterAID
+	}
+
+	query := `
+		SELECT id, character_a_id, character_b_id, status, initiator_id, created_at, updated_at
+		FROM friendships
+		WHERE character_a_id = $1 AND character_b_id = $2
+		LIMIT 1
+	`
+
+	var friendship models.Friendship
+	err := r.db.QueryRow(ctx, query, characterA, characterB).Scan(
+		&friendship.ID,
+		&friendship.CharacterAID,
+		&friendship.CharacterBID,
+		&friendship.Status,
+		&friendship.InitiatorID,
+		&friendship.CreatedAt,
+		&friendship.UpdatedAt,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &friendship, nil
+}
+
 func (r *FriendRepository) AcceptRequest(ctx context.Context, id uuid.UUID) (*models.Friendship, error) {
 	query := `
 		UPDATE friendships

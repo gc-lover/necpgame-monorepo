@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -50,6 +51,13 @@ type SocialServiceInterface interface {
 	ResolveReport(ctx context.Context, reportID uuid.UUID, adminID uuid.UUID, status string) error
 	GetNotificationPreferences(ctx context.Context, accountID uuid.UUID) (*models.NotificationPreferences, error)
 	UpdateNotificationPreferences(ctx context.Context, prefs *models.NotificationPreferences) error
+	SendFriendRequest(ctx context.Context, fromCharacterID uuid.UUID, req *models.SendFriendRequestRequest) (*models.Friendship, error)
+	AcceptFriendRequest(ctx context.Context, characterID uuid.UUID, requestID uuid.UUID) (*models.Friendship, error)
+	RejectFriendRequest(ctx context.Context, characterID uuid.UUID, requestID uuid.UUID) error
+	RemoveFriend(ctx context.Context, characterID uuid.UUID, friendID uuid.UUID) error
+	BlockFriend(ctx context.Context, characterID uuid.UUID, targetID uuid.UUID) (*models.Friendship, error)
+	GetFriends(ctx context.Context, characterID uuid.UUID) (*models.FriendListResponse, error)
+	GetFriendRequests(ctx context.Context, characterID uuid.UUID) ([]models.Friendship, error)
 }
 
 type HTTPServer struct {
@@ -91,6 +99,14 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidat
 	social.HandleFunc("/notifications/{id}/status", server.updateNotificationStatus).Methods("PUT")
 	social.HandleFunc("/notifications/preferences", server.getNotificationPreferences).Methods("GET")
 	social.HandleFunc("/notifications/preferences", server.updateNotificationPreferences).Methods("PUT")
+
+	social.HandleFunc("/friends", server.getFriends).Methods("GET")
+	social.HandleFunc("/friends/requests", server.getFriendRequests).Methods("GET")
+	social.HandleFunc("/friends/request", server.sendFriendRequest).Methods("POST")
+	social.HandleFunc("/friends/requests/{id}/accept", server.acceptFriendRequest).Methods("POST")
+	social.HandleFunc("/friends/requests/{id}/reject", server.rejectFriendRequest).Methods("POST")
+	social.HandleFunc("/friends/{id}", server.removeFriend).Methods("DELETE")
+	social.HandleFunc("/friends/{id}/block", server.blockFriend).Methods("POST")
 
 	social.HandleFunc("/chat/channels", server.getChannels).Methods("GET")
 	social.HandleFunc("/chat/channels/{id}", server.getChannel).Methods("GET")
@@ -331,6 +347,181 @@ func (s *HTTPServer) updateNotificationPreferences(w http.ResponseWriter, r *htt
 	}
 
 	s.respondJSON(w, http.StatusOK, updatedPrefs)
+}
+
+func (s *HTTPServer) getCharacterIDFromRequest(r *http.Request) (uuid.UUID, error) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		return uuid.Nil, errors.New("user not authenticated")
+	}
+
+	characterID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		return uuid.Nil, errors.New("invalid user id")
+	}
+
+	return characterID, nil
+}
+
+func (s *HTTPServer) sendFriendRequest(w http.ResponseWriter, r *http.Request) {
+	characterID, err := s.getCharacterIDFromRequest(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	var req models.SendFriendRequestRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	friendship, err := s.socialService.SendFriendRequest(r.Context(), characterID, &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to send friend request")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusCreated, friendship)
+}
+
+func (s *HTTPServer) acceptFriendRequest(w http.ResponseWriter, r *http.Request) {
+	characterID, err := s.getCharacterIDFromRequest(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	vars := mux.Vars(r)
+	requestIDStr := vars["id"]
+
+	requestID, err := uuid.Parse(requestIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request id")
+		return
+	}
+
+	friendship, err := s.socialService.AcceptFriendRequest(r.Context(), characterID, requestID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to accept friend request")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, friendship)
+}
+
+func (s *HTTPServer) rejectFriendRequest(w http.ResponseWriter, r *http.Request) {
+	characterID, err := s.getCharacterIDFromRequest(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	vars := mux.Vars(r)
+	requestIDStr := vars["id"]
+
+	requestID, err := uuid.Parse(requestIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request id")
+		return
+	}
+
+	err = s.socialService.RejectFriendRequest(r.Context(), characterID, requestID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to reject friend request")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusNoContent, nil)
+}
+
+func (s *HTTPServer) removeFriend(w http.ResponseWriter, r *http.Request) {
+	characterID, err := s.getCharacterIDFromRequest(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	vars := mux.Vars(r)
+	friendIDStr := vars["id"]
+
+	friendID, err := uuid.Parse(friendIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid friend id")
+		return
+	}
+
+	err = s.socialService.RemoveFriend(r.Context(), characterID, friendID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to remove friend")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusNoContent, nil)
+}
+
+func (s *HTTPServer) blockFriend(w http.ResponseWriter, r *http.Request) {
+	characterID, err := s.getCharacterIDFromRequest(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	vars := mux.Vars(r)
+	targetIDStr := vars["id"]
+
+	targetID, err := uuid.Parse(targetIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid target id")
+		return
+	}
+
+	friendship, err := s.socialService.BlockFriend(r.Context(), characterID, targetID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to block friend")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, friendship)
+}
+
+func (s *HTTPServer) getFriends(w http.ResponseWriter, r *http.Request) {
+	characterID, err := s.getCharacterIDFromRequest(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	response, err := s.socialService.GetFriends(r.Context(), characterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get friends")
+		s.respondError(w, http.StatusInternalServerError, "failed to get friends")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getFriendRequests(w http.ResponseWriter, r *http.Request) {
+	characterID, err := s.getCharacterIDFromRequest(r)
+	if err != nil {
+		s.respondError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	requests, err := s.socialService.GetFriendRequests(r.Context(), characterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get friend requests")
+		s.respondError(w, http.StatusInternalServerError, "failed to get friend requests")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, requests)
 }
 
 func (s *HTTPServer) createMessage(w http.ResponseWriter, r *http.Request) {

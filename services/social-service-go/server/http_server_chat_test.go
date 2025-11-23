@@ -903,3 +903,79 @@ func (m *mockSocialService) UpdateNotificationPreferences(ctx context.Context, p
 	return nil
 }
 
+func (m *mockSocialService) SendFriendRequest(ctx context.Context, fromCharacterID uuid.UUID, req *models.SendFriendRequestRequest) (*models.Friendship, error) {
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	return &models.Friendship{
+		ID:          uuid.New(),
+		CharacterAID: fromCharacterID,
+		CharacterBID: req.ToCharacterID,
+		Status:      models.FriendshipStatusPending,
+		InitiatorID: fromCharacterID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}, nil
+}
+
+func (m *mockSocialService) AcceptFriendRequest(ctx context.Context, characterID uuid.UUID, requestID uuid.UUID) (*models.Friendship, error) {
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	return &models.Friendship{
+		ID:          requestID,
+		CharacterAID: characterID,
+		CharacterBID: uuid.New(),
+		Status:      models.FriendshipStatusAccepted,
+		InitiatorID: uuid.New(),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}, nil
+}
+
+func (m *mockSocialService) RejectFriendRequest(ctx context.Context, characterID uuid.UUID, requestID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
+	return nil
+}
+
+func (m *mockSocialService) RemoveFriend(ctx context.Context, characterID uuid.UUID, friendID uuid.UUID) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
+	return nil
+}
+
+func (m *mockSocialService) BlockFriend(ctx context.Context, characterID uuid.UUID, targetID uuid.UUID) (*models.Friendship, error) {
+	if m.createErr != nil {
+		return nil, m.createErr
+	}
+	return &models.Friendship{
+		ID:          uuid.New(),
+		CharacterAID: characterID,
+		CharacterBID: targetID,
+		Status:      models.FriendshipStatusBlocked,
+		InitiatorID: characterID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}, nil
+}
+
+func (m *mockSocialService) GetFriends(ctx context.Context, characterID uuid.UUID) (*models.FriendListResponse, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	return &models.FriendListResponse{
+		Friends: []models.Friendship{},
+		Total:   0,
+	}, nil
+}
+
+func (m *mockSocialService) GetFriendRequests(ctx context.Context, characterID uuid.UUID) ([]models.Friendship, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	return []models.Friendship{}, nil
+}
+
