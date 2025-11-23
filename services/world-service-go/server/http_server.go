@@ -406,8 +406,7 @@ func (s *HTTPServer) getResetExecutionStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	repo := s.worldService.(*worldService).repo
-	execution, err := repo.GetResetExecution(r.Context(), executionID)
+	execution, err := s.worldService.GetResetExecution(r.Context(), executionID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get reset execution status")
 		s.respondError(w, http.StatusInternalServerError, "failed to get reset execution status")

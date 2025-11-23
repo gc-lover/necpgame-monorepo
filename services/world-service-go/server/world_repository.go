@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -279,7 +280,6 @@ func (r *worldRepository) CreateResetEvent(ctx context.Context, event *models.Re
 }
 
 func (r *worldRepository) GetResetEvents(ctx context.Context, resetType *models.ResetType, limit, offset int) ([]models.ResetEvent, int, error) {
-	var events []models.ResetEvent
 	query := `
 		SELECT id, event_type, reset_type, player_id, event_data, created_at
 		FROM reset_events
@@ -292,12 +292,40 @@ func (r *worldRepository) GetResetEvents(ctx context.Context, resetType *models.
 		args = append(args, *resetType)
 	}
 	
-	query += ` ORDER BY created_at DESC LIMIT $` + string(rune(len(args)+1)) + ` OFFSET $` + string(rune(len(args)+2))
+	query += fmt.Sprintf(` ORDER BY created_at DESC LIMIT $%d OFFSET $%d`, len(args)+1, len(args)+2)
 	args = append(args, limit, offset)
 	
-	err := r.db.SelectContext(ctx, &events, query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
+	}
+	defer rows.Close()
+	
+	var events []models.ResetEvent
+	for rows.Next() {
+		var event models.ResetEvent
+		var eventDataJSON []byte
+		var resetTypeStr sql.NullString
+		var playerIDStr sql.NullString
+		
+		if err := rows.Scan(&event.ID, &event.EventType, &resetTypeStr, &playerIDStr, &eventDataJSON, &event.CreatedAt); err != nil {
+			continue
+		}
+		
+		if resetTypeStr.Valid {
+			rt := models.ResetType(resetTypeStr.String)
+			event.ResetType = &rt
+		}
+		if playerIDStr.Valid {
+			if pid, err := uuid.Parse(playerIDStr.String); err == nil {
+				event.PlayerID = &pid
+			}
+		}
+		if len(eventDataJSON) > 0 {
+			json.Unmarshal(eventDataJSON, &event.EventData)
+		}
+		
+		events = append(events, event)
 	}
 	
 	var total int
@@ -314,31 +342,80 @@ func (r *worldRepository) GetResetEvents(ctx context.Context, resetType *models.
 
 func (r *worldRepository) GetTravelEvent(ctx context.Context, id uuid.UUID) (*models.TravelEvent, error) {
 	var event models.TravelEvent
+	var skillChecksJSON, rewardsJSON, penaltiesJSON []byte
+	
 	query := `
 		SELECT id, event_code, event_name, event_type, epoch_id, description, base_probability, cooldown_hours, skill_checks, rewards, penalties, created_at, updated_at
 		FROM travel_events
 		WHERE id = $1
 	`
-	err := r.db.GetContext(ctx, &event, query, id)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&event.ID, &event.EventCode, &event.EventName, &event.EventType, &event.EpochID,
+		&event.Description, &event.BaseProbability, &event.CooldownHours,
+		&skillChecksJSON, &rewardsJSON, &penaltiesJSON,
+		&event.CreatedAt, &event.UpdatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
-	return &event, err
+	if err != nil {
+		return nil, err
+	}
+	
+	if len(skillChecksJSON) > 0 {
+		json.Unmarshal(skillChecksJSON, &event.SkillChecks)
+	}
+	if len(rewardsJSON) > 0 {
+		json.Unmarshal(rewardsJSON, &event.Rewards)
+	}
+	if len(penaltiesJSON) > 0 {
+		json.Unmarshal(penaltiesJSON, &event.Penalties)
+	}
+	
+	return &event, nil
 }
 
 func (r *worldRepository) GetTravelEventsByEpoch(ctx context.Context, epochID string) ([]models.TravelEvent, error) {
-	var events []models.TravelEvent
 	query := `
 		SELECT id, event_code, event_name, event_type, epoch_id, description, base_probability, cooldown_hours, skill_checks, rewards, penalties, created_at, updated_at
 		FROM travel_events
 		WHERE epoch_id = $1
 	`
-	err := r.db.SelectContext(ctx, &events, query, epochID)
-	return events, err
+	rows, err := r.db.QueryContext(ctx, query, epochID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	var events []models.TravelEvent
+	for rows.Next() {
+		var event models.TravelEvent
+		var skillChecksJSON, rewardsJSON, penaltiesJSON []byte
+		
+		if err := rows.Scan(
+			&event.ID, &event.EventCode, &event.EventName, &event.EventType, &event.EpochID,
+			&event.Description, &event.BaseProbability, &event.CooldownHours,
+			&skillChecksJSON, &rewardsJSON, &penaltiesJSON,
+			&event.CreatedAt, &event.UpdatedAt); err != nil {
+			continue
+		}
+		
+		if len(skillChecksJSON) > 0 {
+			json.Unmarshal(skillChecksJSON, &event.SkillChecks)
+		}
+		if len(rewardsJSON) > 0 {
+			json.Unmarshal(rewardsJSON, &event.Rewards)
+		}
+		if len(penaltiesJSON) > 0 {
+			json.Unmarshal(penaltiesJSON, &event.Penalties)
+		}
+		
+		events = append(events, event)
+	}
+	
+	return events, nil
 }
 
 func (r *worldRepository) GetAvailableTravelEvents(ctx context.Context, zoneID uuid.UUID, epochID *string) ([]models.TravelEvent, error) {
-	var events []models.TravelEvent
 	query := `
 		SELECT te.id, te.event_code, te.event_name, te.event_type, te.epoch_id, te.description, te.base_probability, te.cooldown_hours, te.skill_checks, te.rewards, te.penalties, te.created_at, te.updated_at
 		FROM travel_events te
@@ -352,8 +429,39 @@ func (r *worldRepository) GetAvailableTravelEvents(ctx context.Context, zoneID u
 		args = append(args, *epochID)
 	}
 	
-	err := r.db.SelectContext(ctx, &events, query, args...)
-	return events, err
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	var events []models.TravelEvent
+	for rows.Next() {
+		var event models.TravelEvent
+		var skillChecksJSON, rewardsJSON, penaltiesJSON []byte
+		
+		if err := rows.Scan(
+			&event.ID, &event.EventCode, &event.EventName, &event.EventType, &event.EpochID,
+			&event.Description, &event.BaseProbability, &event.CooldownHours,
+			&skillChecksJSON, &rewardsJSON, &penaltiesJSON,
+			&event.CreatedAt, &event.UpdatedAt); err != nil {
+			continue
+		}
+		
+		if len(skillChecksJSON) > 0 {
+			json.Unmarshal(skillChecksJSON, &event.SkillChecks)
+		}
+		if len(rewardsJSON) > 0 {
+			json.Unmarshal(rewardsJSON, &event.Rewards)
+		}
+		if len(penaltiesJSON) > 0 {
+			json.Unmarshal(penaltiesJSON, &event.Penalties)
+		}
+		
+		events = append(events, event)
+	}
+	
+	return events, nil
 }
 
 func (r *worldRepository) CreateTravelEventInstance(ctx context.Context, instance *models.TravelEventInstance) error {
