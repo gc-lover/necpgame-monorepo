@@ -1,0 +1,694 @@
+metadata:
+  id: corporate-npc-integration-architecture
+  title: Архитектура интеграции корпоративных NPC с системами корпоративных войн и лояльности (на примере Джеймса Рида)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - npc
+    - corporate
+    - loyalty
+    - corporate-wars
+    - integration
+  related_systems:
+    - gameplay-service-go
+    - world-service-go
+    - quest-engine
+    - clan-war-system
+  related_documents:
+    - id: npc-integration-system-architecture
+      relation: extends
+    - id: npc-james-iron-reed
+      relation: extends
+    - id: clan-war-system-architecture
+      relation: references
+  github_issue: 24
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - game-design
+    - api-designer
+
+summary:
+  problem: |
+    Корпоративные NPC (такие как Джеймс Рид из Militech) требуют специфической интеграции
+    с системами корпоративных войн, лояльности корпораций, программ набора и военных операций,
+    которые отличаются от интеграции с бандами и уличными войнами.
+  goal: |
+    Создать архитектурную схему интеграции корпоративных NPC с игровыми системами:
+    - Система корпоративных войн (Militech vs Arasaka)
+    - Система лояльности корпораций
+    - Программы набора и операций
+    - Военные ресурсы и контракты
+    - API endpoints (высокоуровнево)
+    - Техническое задание для реализации
+  essence: |
+    Архитектура интеграции корпоративных NPC с системами корпоративных войн и лояльности
+    для обеспечения динамического корпоративного контента и PvP/PvE конфликтов.
+
+architecture:
+  overview: |
+    Система интеграции корпоративных NPC расширяет общую архитектуру NPC интеграции
+    следующими компонентами:
+    1. Corporate War Manager - управление корпоративными войнами
+    2. Corporate Loyalty System - система лояльности корпорациям
+    3. Corporate Recruitment Manager - управление программами набора
+    4. Corporate Operations Coordinator - координация военных операций
+    5. Corporate Resource Manager - управление военными ресурсами
+    6. Corporate Contract System - система корпоративных контрактов
+    7. Corporate Reputation Tracker - отслеживание корпоративной репутации
+
+  microservices:
+    - name: corporate-war-manager
+      location: gameplay-service-go (модуль corporate-wars)
+      responsibility: |
+        Управление корпоративными войнами:
+        - Инициация корпоративных войн (Militech vs Arasaka)
+        - Координация PvP/PvE конфликтов между корпорациями
+        - Управление территориальным контролем корпораций
+        - Отслеживание результатов войн
+      corporate_war_types:
+        - Proxy Wars (прокси-войны через наёмников)
+        - Direct Conflicts (прямые конфликты)
+        - Economic Wars (экономические войны)
+        - Information Wars (информационные войны)
+      endpoints:
+        - GET /api/v1/corporate/{corp_id}/wars - активные войны корпорации
+        - POST /api/v1/corporate/{corp_id}/wars/{war_id}/initiate - инициация войны
+        - GET /api/v1/corporate/{corp_id}/wars/{war_id}/status - статус войны
+        - POST /api/v1/corporate/{corp_id}/wars/{war_id}/join - присоединение к войне
+        - POST /api/v1/corporate/{corp_id}/wars/{war_id}/resolve - разрешение войны
+
+    - name: corporate-loyalty-system
+      location: gameplay-service-go (модуль corporate-loyalty)
+      responsibility: |
+        Система лояльности корпорациям:
+        - Отслеживание лояльности игроков к корпорациям
+        - Управление уровнями лояльности
+        - Проверка верности игроков
+        - Влияние на доступность контента
+      loyalty_features:
+        - Loyalty levels (уровни лояльности: neutral, friendly, trusted, loyal, devoted)
+        - Loyalty decay (угасание лояльности при бездействии)
+        - Betrayal detection (детекция предательства)
+        - Content gating (ограничение доступа к контенту)
+      endpoints:
+        - GET /api/v1/corporate/{corp_id}/loyalty/{player_id} - лояльность игрока
+        - POST /api/v1/corporate/{corp_id}/loyalty/{player_id}/update - обновление лояльности
+        - GET /api/v1/corporate/{corp_id}/loyalty/{player_id}/history - история лояльности
+        - POST /api/v1/corporate/{corp_id}/loyalty/{player_id}/betrayal - детекция предательства
+
+    - name: corporate-recruitment-manager
+      location: gameplay-service-go (модуль corporate-recruitment)
+      responsibility: |
+        Управление программами набора:
+        - Создание программ набора для корпораций
+        - Управление условиями набора
+        - Отслеживание кандидатов
+        - Управление процессом найма
+      recruitment_features:
+        - Recruitment programs (программы набора)
+        - Candidate tracking (отслеживание кандидатов)
+        - Hiring process (процесс найма)
+        - Onboarding (ввод в должность)
+      endpoints:
+        - GET /api/v1/corporate/{corp_id}/recruitment/programs - программы набора
+        - POST /api/v1/corporate/{corp_id}/recruitment/programs/{program_id}/apply - подача заявки
+        - GET /api/v1/corporate/{corp_id}/recruitment/candidates/{player_id} - статус кандидата
+        - POST /api/v1/corporate/{corp_id}/recruitment/candidates/{player_id}/accept - принятие кандидата
+
+    - name: corporate-operations-coordinator
+      location: gameplay-service-go (модуль corporate-operations)
+      responsibility: |
+        Координация военных операций:
+        - Создание военных операций от корпораций
+        - Координация участников операций
+        - Управление целями операций
+        - Отслеживание результатов операций
+      operation_types:
+        - Military Operations (военные операции)
+        - Intelligence Operations (разведывательные операции)
+        - Sabotage Operations (операции саботажа)
+        - Defense Operations (оборонительные операции)
+      endpoints:
+        - GET /api/v1/corporate/{corp_id}/operations - доступные операции
+        - POST /api/v1/corporate/{corp_id}/operations/{op_id}/start - запуск операции
+        - GET /api/v1/corporate/{corp_id}/operations/{op_id}/status - статус операции
+        - POST /api/v1/corporate/{corp_id}/operations/{op_id}/complete - завершение операции
+
+    - name: corporate-resource-manager
+      location: economy-service-go (модуль corporate-resources)
+      responsibility: |
+        Управление военными ресурсами:
+        - Управление доступом к военным ресурсам
+        - Контроль распределения ресурсов
+        - Управление военным снаряжением
+        - Интеграция с экономикой корпораций
+      resource_types:
+        - Military Equipment (военное снаряжение)
+        - Intelligence Data (разведывательные данные)
+        - Corporate Contracts (корпоративные контракты)
+        - Access Permissions (разрешения доступа)
+      endpoints:
+        - GET /api/v1/corporate/{corp_id}/resources - доступные ресурсы
+        - GET /api/v1/corporate/{corp_id}/resources/{resource_id} - информация о ресурсе
+        - POST /api/v1/corporate/{corp_id}/resources/{resource_id}/request - запрос ресурса
+        - GET /api/v1/corporate/{corp_id}/resources/{resource_id}/access - проверка доступа
+
+    - name: corporate-contract-system
+      location: gameplay-service-go (модуль corporate-contracts)
+      responsibility: |
+        Система корпоративных контрактов:
+        - Создание контрактов от корпораций
+        - Управление условиями контрактов
+        - Отслеживание выполнения контрактов
+        - Управление наградами за контракты
+      contract_types:
+        - Mercenary Contracts (контракты наёмников)
+        - Intelligence Contracts (разведывательные контракты)
+        - Sabotage Contracts (контракты саботажа)
+        - Protection Contracts (контракты защиты)
+      endpoints:
+        - GET /api/v1/corporate/{corp_id}/contracts - доступные контракты
+        - GET /api/v1/corporate/{corp_id}/contracts/{contract_id} - информация о контракте
+        - POST /api/v1/corporate/{corp_id}/contracts/{contract_id}/accept - принятие контракта
+        - POST /api/v1/corporate/{corp_id}/contracts/{contract_id}/complete - завершение контракта
+
+    - name: corporate-reputation-tracker
+      location: gameplay-service-go (модуль corporate-reputation)
+      responsibility: |
+        Отслеживание корпоративной репутации:
+        - Управление репутацией с корпорациями
+        - Отслеживание истории взаимодействий
+        - Влияние на доступность контента
+        - Интеграция с системой лояльности
+      reputation_features:
+        - Reputation levels (уровни репутации)
+        - Interaction history (история взаимодействий)
+        - Content gating (ограничение доступа)
+        - Loyalty integration (интеграция с лояльностью)
+      endpoints:
+        - GET /api/v1/corporate/{corp_id}/reputation/{player_id} - репутация игрока
+        - GET /api/v1/corporate/{corp_id}/reputation/{player_id}/history - история репутации
+        - POST /api/v1/corporate/{corp_id}/reputation/{player_id}/update - обновление репутации
+
+  data_flow:
+    corporate_war_flow: |
+      1. NPC Джеймс Рид инициирует корпоративную войну против Arasaka
+      2. Corporate War Manager создаёт войну
+      3. Игроки получают уведомление о начале войны
+      4. Игроки присоединяются к стороне (Militech или Arasaka)
+      5. Corporate War Manager координирует конфликт
+      6. Игроки участвуют в PvP/PvE боях
+      7. Corporate War Manager отслеживает прогресс войны
+      8. При завершении войны определяются последствия
+      9. Corporate Loyalty System обновляет лояльность игроков
+
+    loyalty_flow: |
+      1. Игрок взаимодействует с NPC Джеймсом Ридом
+      2. Игрок выполняет задания Militech
+      3. Corporate Loyalty System увеличивает лояльность
+      4. Игрок получает доступ к новому контенту
+      5. Игрок работает с конкурентами (Arasaka)
+      6. Corporate Loyalty System детектирует предательство
+      7. Лояльность к Militech снижается
+      8. Доступ к контенту Militech ограничивается
+
+    recruitment_flow: |
+      1. Игрок взаимодействует с NPC Джеймсом Ридом
+      2. NPC Dialogue System показывает опцию "Подать заявку на набор"
+      3. Corporate Recruitment Manager проверяет условия
+      4. Игрок подаёт заявку на программу набора
+      5. Corporate Recruitment Manager отслеживает кандидата
+      6. Игрок выполняет задания для набора
+      7. Corporate Recruitment Manager принимает кандидата
+      8. Corporate Resource Manager открывает доступ к ресурсам
+
+    operation_flow: |
+      1. NPC Джеймс Рид создаёт военную операцию
+      2. Corporate Operations Coordinator публикует операцию
+      3. Игроки просматривают доступные операции
+      4. Игроки присоединяются к операции
+      5. Corporate Operations Coordinator координирует участников
+      6. Операция проходит (рейд, PvP, PvE)
+      7. Corporate Operations Coordinator отслеживает прогресс
+      8. При завершении операции выдаются награды
+      9. Corporate Reputation Tracker обновляет репутацию
+
+  integrations:
+    with_npc_integration_system: |
+      - Использование NPC Quest Manager для квестов
+      - Использование NPC Relationship Tracker для отношений
+      - Использование NPC Dialogue System для диалогов
+      - Использование NPC Event Trigger System для событий
+
+    with_clan_war_system: |
+      - Интеграция с системой клановых войн
+      - Использование общих механизмов PvP
+      - Координация больших конфликтов
+
+    with_quest_engine: |
+      - Создание корпоративных квестов
+      - Интеграция с цепочками квестов
+      - Управление наградами за квесты
+
+    with_economy_service: |
+      - Управление экономикой корпораций
+      - Контроль ресурсов и контрактов
+      - Интеграция с рынками
+
+    with_world_service: |
+      - Управление корпоративными событиями
+      - Синхронизация состояния войн
+      - Интеграция с Live Ops
+
+  database_schema:
+    tables:
+      - name: corporate_wars
+        description: Корпоративные войны
+        fields:
+          - id: UUID (PK)
+          - initiator_corp: VARCHAR(50) (FK corporations)
+          - target_corp: VARCHAR(50) (FK corporations)
+          - war_type: ENUM (proxy, direct, economic, information)
+          - status: ENUM (pending, active, resolved)
+          - participants: UUID[] (array of player IDs)
+          - outcome: JSONB (результат войны)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - initiator_corp, status
+          - target_corp, status
+
+      - name: corporate_loyalty
+        description: Лояльность игроков к корпорациям
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - corporation_id: VARCHAR(50) (FK corporations)
+          - loyalty_level: ENUM (neutral, friendly, trusted, loyal, devoted)
+          - loyalty_points: INTEGER (очки лояльности)
+          - last_interaction: TIMESTAMP
+          - betrayal_count: INTEGER (количество предательств)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, corporation_id)
+        indexes:
+          - player_id, corporation_id
+          - corporation_id, loyalty_level
+
+      - name: corporate_recruitment_programs
+        description: Программы набора корпораций
+        fields:
+          - id: UUID (PK)
+          - corporation_id: VARCHAR(50) (FK corporations)
+          - program_name: VARCHAR(255)
+          - requirements: JSONB (требования для участия)
+          - rewards: JSONB (награды за участие)
+          - status: ENUM (active, closed, completed)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - corporation_id, status
+
+      - name: corporate_recruitment_candidates
+        description: Кандидаты на набор в корпорации
+        fields:
+          - id: UUID (PK)
+          - program_id: UUID (FK corporate_recruitment_programs)
+          - player_id: UUID (FK accounts)
+          - status: ENUM (applied, reviewing, accepted, rejected)
+          - application_data: JSONB (данные заявки)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(program_id, player_id)
+        indexes:
+          - program_id, status
+          - player_id, status
+
+      - name: corporate_operations
+        description: Военные операции корпораций
+        fields:
+          - id: UUID (PK)
+          - corporation_id: VARCHAR(50) (FK corporations)
+          - operation_type: ENUM (military, intelligence, sabotage, defense)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - requirements: JSONB (требования для участия)
+          - rewards: JSONB (награды за операцию)
+          - status: ENUM (pending, active, completed, failed)
+          - participants: UUID[] (array of player IDs)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - corporation_id, status
+          - operation_type, status
+
+      - name: corporate_resources
+        description: Ресурсы корпораций
+        fields:
+          - id: UUID (PK)
+          - corporation_id: VARCHAR(50) (FK corporations)
+          - resource_type: ENUM (equipment, intelligence, contract, permission)
+          - resource_id: VARCHAR(50) (FK на соответствующие таблицы)
+          - access_level: ENUM (public, member, trusted, loyal, devoted)
+          - availability: INTEGER (количество доступных)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - corporation_id, resource_type
+          - access_level, availability
+
+      - name: corporate_contracts
+        description: Корпоративные контракты
+        fields:
+          - id: UUID (PK)
+          - corporation_id: VARCHAR(50) (FK corporations)
+          - contract_type: ENUM (mercenary, intelligence, sabotage, protection)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - requirements: JSONB (требования для принятия)
+          - rewards: JSONB (награды за выполнение)
+          - status: ENUM (available, accepted, in_progress, completed, failed)
+          - contractor_id: UUID (FK accounts, nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - corporation_id, status
+          - contract_type, status
+          - contractor_id, status
+
+      - name: corporate_reputation
+        description: Репутация игроков с корпорациями
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - corporation_id: VARCHAR(50) (FK corporations)
+          - reputation_level: ENUM (hated, disliked, neutral, liked, respected, revered)
+          - reputation_points: INTEGER (очки репутации)
+          - interaction_count: INTEGER (количество взаимодействий)
+          - last_interaction: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        constraints: |
+          - UNIQUE(player_id, corporation_id)
+        indexes:
+          - player_id, corporation_id
+          - corporation_id, reputation_level
+
+technical_specification:
+  backend_requirements:
+    - Расширение gameplay-service-go модулями:
+      - corporate-wars (управление корпоративными войнами)
+      - corporate-loyalty (система лояльности)
+      - corporate-recruitment (программы набора)
+      - corporate-operations (военные операции)
+      - corporate-contracts (корпоративные контракты)
+      - corporate-reputation (корпоративная репутация)
+    - Расширение economy-service-go модулем:
+      - corporate-resources (управление ресурсами)
+    - Интеграция с npc-integration-system для базовой функциональности NPC
+    - Интеграция с clan-war-system для PvP механизмов
+    - Интеграция с quest-engine для корпоративных квестов
+
+  corporate_npc_specific_requirements:
+    - NPC Джеймс Рид (Militech):
+      - Квесты корпоративных войн
+      - Программы набора Militech
+      - Военные операции Militech
+      - Доступ к военным ресурсам
+      - Проверка лояльности игроков
+
+  performance_requirements:
+    - Поддержка до 10 активных корпоративных войн одновременно
+    - Задержка обновления лояльности: <50 мс
+    - Поддержка до 100 активных операций от корпораций
+    - Поддержка до 50 активных программ набора
+    - Поддержка до 200 активных контрактов
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Кэширование состояния лояльности в Redis
+    - Асинхронная обработка войн через event bus
+    - Batch-обработка обновлений репутации
+
+subtasks:
+  - id: corporate-war-manager-module
+    title: Реализация Corporate War Manager модуля
+    description: |
+      Управление корпоративными войнами:
+      - Инициация корпоративных войн
+      - Координация PvP/PvE конфликтов
+      - Управление территориальным контролем
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: corporate-loyalty-system-module
+    title: Реализация Corporate Loyalty System модуля
+    description: |
+      Система лояльности корпорациям:
+      - Отслеживание лояльности игроков
+      - Управление уровнями лояльности
+      - Детекция предательства
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: corporate-recruitment-manager-module
+    title: Реализация Corporate Recruitment Manager модуля
+    description: |
+      Управление программами набора:
+      - Создание программ набора
+      - Управление кандидатами
+      - Процесс найма
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: corporate-operations-coordinator-module
+    title: Реализация Corporate Operations Coordinator модуля
+    description: |
+      Координация военных операций:
+      - Создание военных операций
+      - Координация участников
+      - Управление целями операций
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: corporate-resource-manager-module
+    title: Реализация Corporate Resource Manager модуля
+    description: |
+      Управление военными ресурсами:
+      - Управление доступом к ресурсам
+      - Контроль распределения ресурсов
+      - Интеграция с экономикой
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: corporate-contract-system-module
+    title: Реализация Corporate Contract System модуля
+    description: |
+      Система корпоративных контрактов:
+      - Создание контрактов
+      - Управление условиями контрактов
+      - Отслеживание выполнения
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: corporate-reputation-tracker-module
+    title: Реализация Corporate Reputation Tracker модуля
+    description: |
+      Отслеживание корпоративной репутации:
+      - Управление репутацией
+      - Отслеживание истории взаимодействий
+      - Интеграция с лояльностью
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: database-schema-corporate-integration
+    title: Создание схемы БД для корпоративной интеграции
+    description: |
+      Создание таблиц для корпоративной интеграции:
+      - corporate_wars
+      - corporate_loyalty
+      - corporate_recruitment_programs
+      - corporate_recruitment_candidates
+      - corporate_operations
+      - corporate_resources
+      - corporate_contracts
+      - corporate_reputation
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints-corporate-integration
+    title: Реализация REST API endpoints для корпоративной интеграции
+    description: |
+      Создание всех endpoints для корпоративной интеграции:
+      - War endpoints
+      - Loyalty endpoints
+      - Recruitment endpoints
+      - Operations endpoints
+      - Resources endpoints
+      - Contracts endpoints
+      - Reputation endpoints
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: integration-testing-corporate
+    title: Интеграционное тестирование корпоративных систем
+    description: |
+      Тесты корпоративной интеграции:
+      - Тесты корпоративных войн
+      - Тесты системы лояльности
+      - Тесты программ набора
+      - Тесты военных операций
+      - Тесты ресурсов и контрактов
+      - Тесты репутации
+    priority: high
+    estimated_time: 6-7 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Corporate NPC Integration System"
+            CWM[Corporate War Manager]
+            CLS[Corporate Loyalty System]
+            CRM[Corporate Recruitment Manager]
+            COC[Corporate Operations Coordinator]
+            CRSM[Corporate Resource Manager]
+            CCS[Corporate Contract System]
+            CRT[Corporate Reputation Tracker]
+        end
+
+        subgraph "NPC Integration System"
+            NQM[NPC Quest Manager]
+            NRT[NPC Relationship Tracker]
+            NDS[NPC Dialogue System]
+        end
+
+        subgraph "Game Services"
+            CWS[Clan War System]
+            QE[Quest Engine]
+            ES[Economy Service]
+            WS[World Service]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>corporate_wars<br/>corporate_loyalty<br/>corporate_recruitment_programs<br/>corporate_operations<br/>corporate_resources<br/>corporate_contracts<br/>corporate_reputation)]
+        end
+
+        subgraph "NPC"
+            NPC[Джеймс Рид<br/>Militech Agent]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|interact| NPC
+        NPC --> NDS
+        NDS --> NQM
+        NDS --> CWM
+        NDS --> CLS
+        NDS --> CRM
+        NDS --> COC
+        NDS --> CRSM
+        NDS --> CCS
+        CWM --> CWS
+        COC --> QE
+        CRSM --> ES
+        CRT --> NRT
+        CWM --> DB
+        CLS --> DB
+        CRM --> DB
+        COC --> DB
+        CRSM --> DB
+        CCS --> DB
+        CRT --> DB
+    ```
+
+  corporate_war_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant NPC as Джеймс Рид
+        participant NDS as NPC Dialogue System
+        participant CWM as Corporate War Manager
+        participant CWS as Clan War System
+        participant CLS as Corporate Loyalty System
+
+        C->>NPC: Interact
+        NPC->>NDS: Show dialogue tree
+        NDS->>C: Display "Initiate War" option
+        C->>NDS: Select "Initiate War"
+        NDS->>CWM: Request war initiation
+        CWM->>CWS: Create corporate war
+        CWS->>CWM: War created
+        CWM->>C: Notify players
+        C->>CWM: Join war (Militech side)
+        CWM->>CLS: Update loyalty
+        CWM->>C: War started
+    ```
+
+decisions:
+  - id: adr-corporate-npc-integration-architecture
+    summary: |
+      Выбрана архитектура, расширяющая общую NPC интеграцию для корпоративных NPC
+      с фокусом на корпоративные войны и лояльность.
+
+  - id: adr-corporate-war-system
+    summary: |
+      Использована интеграция с clan-war-system для PvP механизмов корпоративных войн,
+      обеспечивающая единообразие и переиспользование логики.
+
+  - id: adr-corporate-loyalty-system
+    summary: |
+      Реализована отдельная система лояльности для корпораций с детекцией предательства
+      и влиянием на доступность контента.
+
+  - id: adr-corporate-recruitment
+    summary: |
+      Система набора корпораций обеспечивает структурированный процесс найма игроков
+      с проверкой условий и управлением кандидатами.
+
+  - id: adr-corporate-operations
+    summary: |
+      Координация военных операций через отдельный модуль обеспечивает гибкость
+      в создании различных типов операций от корпораций.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация схем данных для корпоративной интеграции
+  - Определение формата корпоративных войн
+  - Создание спецификации системы лояльности
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура интеграции корпоративных NPC с игровыми системами:
+      - Определены компоненты (Corporate War Manager, Corporate Loyalty System, Corporate Recruitment Manager, Corporate Operations Coordinator, Corporate Resource Manager, Corporate Contract System, Corporate Reputation Tracker)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (corporate war flow, loyalty flow, recruitment flow, operation flow)
+      - Определена структура БД (8 таблиц)
+      - Спроектирована интеграция с игровыми системами (NPC integration, clan war system, quest engine, economy service, world service)
+      - Создано техническое задание
+      - Разбито на подзадачи (10 подзадач)
+
