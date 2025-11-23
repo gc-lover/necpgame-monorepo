@@ -28,6 +28,21 @@ func main() {
 	}
 
 	handler := server.NewGatewayHandler(tickRate, sessionMgr)
+	
+	if sessionMgr != nil {
+		redisClient := sessionMgr.GetRedisClient()
+		if redisClient != nil {
+			banNotifier := server.NewBanNotificationSubscriber(redisClient, handler)
+			handler.SetBanNotifier(banNotifier)
+			
+			if err := banNotifier.Start(); err != nil {
+				logger.WithError(err).Error("Failed to start ban notification subscriber")
+			} else {
+				logger.Info("Ban notification subscriber started")
+			}
+		}
+	}
+	
 	wsServer := server.NewWebSocketServer(addr, handler)
 
 	metricsMux := http.NewServeMux()
@@ -72,6 +87,12 @@ func main() {
 		<-sigChan
 		logger.Info("Shutting down server...")
 		cancel()
+
+		if handler != nil && handler.GetBanNotifier() != nil {
+			if err := handler.GetBanNotifier().Stop(); err != nil {
+				logger.WithError(err).Error("Failed to stop ban notification subscriber")
+			}
+		}
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()

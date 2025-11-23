@@ -56,10 +56,11 @@ type GatewayHandler struct {
 	useDeltaCompression bool
 	sessionTokens    map[*websocket.Conn]string
 	sessionTokensMu  sync.RWMutex
+	banNotifier      *BanNotificationSubscriber
 }
 
 func NewGatewayHandler(tickRate int, sessionMgr SessionManagerInterface) *GatewayHandler {
-	return &GatewayHandler{
+	handler := &GatewayHandler{
 		tickRate:            tickRate,
 		gameStateMgr:        NewGameStateManager(tickRate),
 		sessionMgr:          sessionMgr,
@@ -68,6 +69,15 @@ func NewGatewayHandler(tickRate int, sessionMgr SessionManagerInterface) *Gatewa
 		useDeltaCompression: true,
 		sessionTokens:       make(map[*websocket.Conn]string),
 	}
+	return handler
+}
+
+func (h *GatewayHandler) SetBanNotifier(notifier *BanNotificationSubscriber) {
+	h.banNotifier = notifier
+}
+
+func (h *GatewayHandler) GetBanNotifier() *BanNotificationSubscriber {
+	return h.banNotifier
 }
 
 func (h *GatewayHandler) SetServerConnection(conn *websocket.Conn) {

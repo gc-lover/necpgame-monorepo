@@ -313,3 +313,7 @@ func (sm *SessionManager) CleanupExpiredSessions(ctx context.Context) error {
 	return nil
 }
 
+func (sm *SessionManager) GetRedisClient() *redis.Client {
+	return sm.redis
+}
+
