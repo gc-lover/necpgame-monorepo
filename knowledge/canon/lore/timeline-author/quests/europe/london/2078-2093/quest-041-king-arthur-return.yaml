@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:55:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-23T12:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -52,6 +52,77 @@ summary:
     - Масштабный рейд на 10+ игроков в стиле артурианского эпоса.
     - Легендарные предметы и титулы, завязанные на выбор фракции.
     - Ветвление мирового состояния: объединение Британии или падение ИИ.
+quest_definition:
+  quest_type: raid
+  level_min: 45
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: answer_call
+      text: "Ответить на призыв ИИ-Артура и присоединиться к вербовке"
+      type: interact
+      target: ai_arthur_call
+      count: 1
+      optional: false
+    - id: complete_trials
+      text: "Пройти серию испытаний достойности (честь, смелость, мудрость)"
+      type: complete
+      target: arthurian_trials
+      count: 3
+      optional: false
+    - id: raid_excalibur
+      text: "Участвовать в рейдовом бое за Экскалибур (требуется 10+ игроков)"
+      type: raid
+      target: excalibur_raid
+      count: 1
+      optional: false
+    - id: make_final_choice
+      text: "Принять решение: поддержать ИИ или разоблачить его"
+      type: choice
+      target: arthur_final_choice
+      count: 1
+      optional: false
+  rewards:
+    experience: 10000
+    money: 0
+    items:
+      - item_id: legendary_excalibur
+        quantity: 1
+      - item_id: title_knight_round_table
+        quantity: 1
+    reputation: {}
+    unlocks: []
+  branches:
+    - branch_id: support_ai
+      branch_name: "Поддержать ИИ-Артура"
+      conditions:
+        flags: ["arthur_choice_support"]
+      consequences:
+        reputation_changes:
+          AI_Believers: 50
+          AI_Skeptics: -30
+        unlocks_quests: []
+        world_state:
+          - key: "britain_unification_status"
+            value: "unified"
+            scope: server
+    - branch_id: expose_ai
+      branch_name: "Разоблачить ИИ"
+      conditions:
+        flags: ["arthur_choice_expose"]
+      consequences:
+        reputation_changes:
+          AI_Skeptics: 50
+          AI_Believers: -30
+        unlocks_quests: []
+        world_state:
+          - key: "britain_unification_status"
+            value: "divided"
+            scope: server
 content:
   sections:
     - id: setup
@@ -105,6 +176,10 @@ history:
     date: 2025-11-13
     author: Concept Director
     changes: Квест «Возвращение Короля Артура» оформлен в YAML с описанием рейдовой структуры и последствий.
+  - version: '1.1.0'
+    date: 2025-11-23
+    author: content_writer
+    changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
   checksum: ''
   schema_version: '1.0'
