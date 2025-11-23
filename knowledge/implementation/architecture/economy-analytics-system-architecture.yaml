@@ -1,0 +1,774 @@
+metadata:
+  id: economy-analytics-system-architecture
+  title: Архитектура системы экономической аналитики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T16:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - analytics
+    - charts
+    - market-intelligence
+  related_systems:
+    - economy-service
+    - analytics-service
+    - stock-exchange-service
+  related_documents:
+    - id: economy-analytics
+      relation: extends
+    - id: game-mechanics-systems-architecture
+      relation: extends
+  github_issue: 216
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы экономической аналитики для предоставления игрокам
+    инструментов визуализации и отслеживания трендов: графики цен, технические индикаторы, анализ настроений,
+    портфельная аналитика и оповещения.
+  goal: |
+    Создать архитектурную схему системы экономической аналитики с определением:
+    - Микросервисов для управления аналитикой
+    - Компонентов для графиков, индикаторов, анализа настроений, портфельной аналитики
+    - API endpoints (высокоуровнево)
+    - Интеграций с другими экономическими системами
+    - Структуры БД для хранения аналитических данных
+    - Технического задания для реализации
+  essence: |
+    Система экономической аналитики предоставляет профессиональные графики, технические индикаторы,
+    анализ настроений рынка, портфельную аналитику и систему оповещений для принятия торговых решений.
+
+architecture:
+  overview: |
+    Система экономической аналитики состоит из следующих компонентов:
+    1. Analytics Data Collector - сбор данных для аналитики
+    2. Chart Data Manager - управление данными для графиков
+    3. Technical Indicators Calculator - расчёт технических индикаторов
+    4. Sentiment Analyzer - анализ настроений рынка
+    5. Portfolio Analytics Manager - аналитика портфеля
+    6. Alert Manager - управление оповещениями
+    7. Analytics Cache Manager - кэширование аналитических данных
+    8. Analytics API Gateway - API для доступа к аналитике
+
+  microservices:
+    - name: analytics-service
+      location: services/analytics-service
+      responsibility: |
+        Основной сервис для экономической аналитики:
+        - Сбор данных для аналитики
+        - Расчёт технических индикаторов
+        - Анализ настроений
+        - Портфельная аналитика
+        - Управление оповещениями
+      components:
+        - Analytics Data Collector
+        - Chart Data Manager
+        - Technical Indicators Calculator
+        - Sentiment Analyzer
+        - Portfolio Analytics Manager
+        - Alert Manager
+        - Analytics Cache Manager
+      endpoints:
+        - GET /api/v1/analytics/chart/{symbol} - данные для графика
+        - GET /api/v1/analytics/chart/{symbol}/history - история цен
+        - GET /api/v1/analytics/indicators/{symbol} - технические индикаторы
+        - GET /api/v1/analytics/sentiment/{symbol} - анализ настроений
+        - GET /api/v1/analytics/portfolio/{player_id} - аналитика портфеля
+        - GET /api/v1/analytics/portfolio/{player_id}/history - история портфеля
+        - GET /api/v1/analytics/portfolio/{player_id}/metrics - метрики портфеля
+        - GET /api/v1/analytics/heatmap - тепловая карта рынка
+        - GET /api/v1/analytics/alerts - список оповещений игрока
+        - POST /api/v1/analytics/alerts - создание оповещения
+        - PUT /api/v1/analytics/alerts/{id} - обновление оповещения
+        - DELETE /api/v1/analytics/alerts/{id} - удаление оповещения
+        - WS /ws/analytics/chart/{symbol} - WebSocket для потоковых данных графика
+        - WS /ws/analytics/alerts - WebSocket для оповещений
+
+    - name: economy-service
+      location: services/economy-service
+      responsibility: |
+        Интеграция с экономическими данными:
+        - Предоставление данных о ценах
+        - Предоставление данных о транзакциях
+        - Интеграция с экономическими событиями
+      components:
+        - Economy Data Provider
+      endpoints:
+        - GET /api/v1/economy/prices/{symbol} - текущие цены
+        - GET /api/v1/economy/prices/{symbol}/history - история цен
+
+    - name: stock-exchange-service
+      location: services/stock-exchange-service
+      responsibility: |
+        Интеграция с биржей:
+        - Предоставление данных об акциях
+        - Предоставление данных о сделках
+        - Интеграция с биржевыми событиями
+      components:
+        - Stock Exchange Data Provider
+      endpoints:
+        - GET /api/v1/stock-exchange/stocks/{id}/prices - цены акций
+        - GET /api/v1/stock-exchange/stocks/{id}/trades - сделки
+
+  components:
+    - name: Analytics Data Collector
+      location: analytics-service
+      responsibility: |
+        Сбор данных для аналитики:
+        - Сбор данных о ценах из economy-service и stock-exchange-service
+        - Сбор данных о транзакциях
+        - Сбор данных о событиях
+        - Хранение исторических данных
+      methods:
+        - collectPriceData(symbol, timeRange)
+        - collectTransactionData(playerId, timeRange)
+        - collectEventData(timeRange)
+        - storeHistoricalData(data)
+
+    - name: Chart Data Manager
+      location: analytics-service
+      responsibility: |
+        Управление данными для графиков:
+        - Подготовка данных для различных типов графиков (линейные, свечные, OHLC, area, гистограммы)
+        - Агрегация данных по таймфреймам
+        - Кэширование данных графиков
+      methods:
+        - getChartData(symbol, chartType, timeFrame, timeRange)
+        - aggregateData(data, timeFrame)
+        - formatCandlestickData(data)
+        - formatOHLCData(data)
+
+    - name: Technical Indicators Calculator
+      location: analytics-service
+      responsibility: |
+        Расчёт технических индикаторов:
+        - MA (Moving Average)
+        - RSI (Relative Strength Index)
+        - MACD (Moving Average Convergence Divergence)
+        - Bollinger Bands
+        - Другие индикаторы
+      methods:
+        - calculateMA(data, period)
+        - calculateRSI(data, period)
+        - calculateMACD(data, fastPeriod, slowPeriod, signalPeriod)
+        - calculateBollingerBands(data, period, stdDev)
+        - calculateIndicator(symbol, indicatorType, parameters)
+
+    - name: Sentiment Analyzer
+      location: analytics-service
+      responsibility: |
+        Анализ настроений рынка:
+        - Расчёт баланса бычьих и медвежьих сигналов
+        - Индекс страха и жадности
+        - Тепловые карты по секторам
+        - Анализ настроений портфеля
+      methods:
+        - analyzeSentiment(symbol, timeRange)
+        - calculateFearGreedIndex(timeRange)
+        - generateHeatmap(sector, timeRange)
+        - analyzePortfolioSentiment(playerId)
+
+    - name: Portfolio Analytics Manager
+      location: analytics-service
+      responsibility: |
+        Аналитика портфеля:
+        - Расчёт доходности (total return)
+        - Расчёт риска (Sharpe ratio)
+        - Win rate и profit factor
+        - История сделок
+        - Динамика прибыли и убытков
+      methods:
+        - calculateTotalReturn(playerId, timeRange)
+        - calculateSharpeRatio(playerId, timeRange)
+        - calculateWinRate(playerId, timeRange)
+        - calculateProfitFactor(playerId, timeRange)
+        - getTradeHistory(playerId, timeRange)
+        - getProfitLossChart(playerId, timeRange)
+
+    - name: Alert Manager
+      location: analytics-service
+      responsibility: |
+        Управление оповещениями:
+        - Создание ценовых оповещений
+        - Создание событийных оповещений
+        - Проверка условий оповещений
+        - Отправка уведомлений
+      methods:
+        - createPriceAlert(playerId, symbol, condition, targetPrice)
+        - createEventAlert(playerId, eventType, condition)
+        - checkAlerts(symbol, currentPrice)
+        - sendAlert(alertId, notification)
+
+    - name: Analytics Cache Manager
+      location: analytics-service
+      responsibility: |
+        Кэширование аналитических данных:
+        - Кэширование данных графиков
+        - Кэширование индикаторов
+        - Кэширование портфельной аналитики
+        - Инвалидация кэша
+      methods:
+        - cacheChartData(symbol, chartType, timeFrame, data)
+        - getCachedChartData(symbol, chartType, timeFrame)
+        - cacheIndicator(symbol, indicatorType, data)
+        - invalidateCache(symbol, dataType)
+
+    - name: Analytics API Gateway
+      location: analytics-service
+      responsibility: |
+        API Gateway для аналитики:
+        - Маршрутизация запросов
+        - Агрегация данных из разных источников
+        - Форматирование ответов
+        - WebSocket для потоковых данных
+      methods:
+        - routeRequest(endpoint, parameters)
+        - aggregateData(sources)
+        - formatResponse(data, format)
+        - streamChartData(symbol, clientId)
+
+  data_flow:
+    chart_data_request: |
+      1. Клиент запрашивает данные для графика через Analytics API Gateway
+      2. Analytics Cache Manager проверяет кэш
+      3. Если данных нет в кэше: Analytics Data Collector собирает данные из economy-service/stock-exchange-service
+      4. Chart Data Manager форматирует данные для типа графика
+      5. Данные кэшируются
+      6. Данные возвращаются клиенту
+
+    indicator_calculation: |
+      1. Клиент запрашивает технический индикатор
+      2. Analytics Cache Manager проверяет кэш
+      3. Если данных нет: Analytics Data Collector собирает исторические данные
+      4. Technical Indicators Calculator рассчитывает индикатор
+      5. Результат кэшируется
+      6. Результат возвращается клиенту
+
+    sentiment_analysis: |
+      1. Клиент запрашивает анализ настроений
+      2. Sentiment Analyzer собирает данные о сигналах и событиях
+      3. Рассчитывается баланс бычьих/медвежьих сигналов
+      4. Рассчитывается индекс страха и жадности
+      5. Генерируется тепловая карта (если требуется)
+      6. Результат возвращается клиенту
+
+    portfolio_analytics: |
+      1. Клиент запрашивает аналитику портфеля
+      2. Portfolio Analytics Manager получает данные о позициях игрока
+      3. Собираются данные о транзакциях и сделках
+      4. Рассчитываются метрики (total return, Sharpe ratio, win rate, profit factor)
+      5. Формируется история сделок
+      6. Генерируется график прибыли/убытков
+      7. Результат возвращается клиенту
+
+    alert_processing: |
+      1. Alert Manager периодически проверяет условия оповещений
+      2. Для ценовых оповещений: проверяется текущая цена символа
+      3. Для событийных оповещений: проверяются активные события
+      4. При выполнении условия: отправляется уведомление через notification-service
+      5. WebSocket отправляет оповещение клиенту в реальном времени
+
+  integrations:
+    with_economy_service: |
+      - Получение данных о ценах
+      - Получение данных о транзакциях
+      - Интеграция с экономическими событиями
+
+    with_stock_exchange_service: |
+      - Получение данных об акциях
+      - Получение данных о сделках
+      - Интеграция с биржевыми событиями
+
+    with_investment_service: |
+      - Получение данных о портфеле игрока
+      - Получение данных о позициях
+      - Получение данных о сделках
+
+    with_notification_service: |
+      - Отправка оповещений
+      - Push-уведомления
+      - Email-уведомления
+
+    with_event_bus: |
+      - Подписка на события цен
+      - Подписка на экономические события
+      - Публикация аналитических событий
+
+  event_bus_events:
+    published:
+      - analytics.chart.data.updated
+      - analytics.indicator.calculated
+      - analytics.sentiment.updated
+      - analytics.portfolio.updated
+      - analytics.alert.triggered
+    subscribed:
+      - economy.price.updated (для обновления графиков)
+      - stock-exchange.price.updated (для обновления графиков)
+      - economy.event.active (для событийных оповещений)
+      - investment.position.updated (для портфельной аналитики)
+
+  database_schema:
+    tables:
+      - name: analytics_chart_data
+        description: Данные для графиков
+        fields:
+          - id: UUID (PK)
+          - symbol: VARCHAR(50)
+          - chart_type: ENUM (line, candlestick, ohlc, area, volume)
+          - time_frame: VARCHAR(20) (1m, 5m, 15m, 1h, 4h, 1d, 1w)
+          - timestamp: TIMESTAMP
+          - open: DECIMAL(20,8) (nullable)
+          - high: DECIMAL(20,8) (nullable)
+          - low: DECIMAL(20,8) (nullable)
+          - close: DECIMAL(20,8)
+          - volume: DECIMAL(20,2) (nullable)
+          - data: JSONB (дополнительные данные)
+        indexes:
+          - symbol, chart_type, time_frame, timestamp
+          - timestamp
+
+      - name: analytics_indicators
+        description: Технические индикаторы
+        fields:
+          - id: UUID (PK)
+          - symbol: VARCHAR(50)
+          - indicator_type: VARCHAR(50) (MA, RSI, MACD, BollingerBands, etc.)
+          - parameters: JSONB (параметры индикатора)
+          - timestamp: TIMESTAMP
+          - value: DECIMAL(20,8)
+          - signal: ENUM (buy, sell, neutral, nullable)
+        indexes:
+          - symbol, indicator_type, timestamp
+          - timestamp
+
+      - name: analytics_sentiment
+        description: Анализ настроений
+        fields:
+          - id: UUID (PK)
+          - symbol: VARCHAR(50) (nullable, для общего рынка может быть NULL)
+          - timestamp: TIMESTAMP
+          - bullish_signals: INTEGER
+          - bearish_signals: INTEGER
+          - fear_greed_index: DECIMAL(5,2) (0.00-100.00)
+          - sentiment_score: DECIMAL(5,2) (-100.00 to 100.00)
+        indexes:
+          - symbol, timestamp
+          - timestamp
+
+      - name: analytics_portfolio_snapshots
+        description: Снимки портфеля для аналитики
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - timestamp: TIMESTAMP
+          - total_value: DECIMAL(10,2)
+          - total_cost: DECIMAL(10,2)
+          - total_return: DECIMAL(10,2)
+          - total_return_percentage: DECIMAL(5,2)
+          - sharpe_ratio: DECIMAL(5,2) (nullable)
+          - win_rate: DECIMAL(5,2) (nullable)
+          - profit_factor: DECIMAL(5,2) (nullable)
+        indexes:
+          - player_id, timestamp
+          - timestamp
+
+      - name: analytics_alerts
+        description: Оповещения игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - alert_type: ENUM (price, event)
+          - symbol: VARCHAR(50) (nullable, для событийных оповещений)
+          - event_type: VARCHAR(50) (nullable, для событийных оповещений)
+          - condition: ENUM (above, below, equals, change_percentage)
+          - target_value: DECIMAL(20,8) (nullable)
+          - triggered: BOOLEAN
+          - triggered_at: TIMESTAMP (nullable)
+          - active: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id, active
+          - symbol, active, triggered
+          - triggered_at
+
+      - name: analytics_settings
+        description: Настройки аналитики игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - chart_preferences: JSONB (настройки графиков)
+          - indicator_preferences: JSONB (выбранные индикаторы)
+          - alert_preferences: JSONB (настройки оповещений)
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id
+
+technical_specification:
+  backend_requirements:
+    - Реализация Analytics Data Collector:
+      - Сбор данных о ценах
+      - Сбор данных о транзакциях
+      - Хранение исторических данных
+    - Реализация Chart Data Manager:
+      - Подготовка данных для графиков
+      - Агрегация данных по таймфреймам
+      - Форматирование данных
+    - Реализация Technical Indicators Calculator:
+      - Расчёт MA, RSI, MACD, Bollinger Bands
+      - Расчёт других индикаторов
+    - Реализация Sentiment Analyzer:
+      - Анализ настроений
+      - Расчёт индекса страха и жадности
+      - Генерация тепловых карт
+    - Реализация Portfolio Analytics Manager:
+      - Расчёт метрик портфеля
+      - История сделок
+      - Графики прибыли/убытков
+    - Реализация Alert Manager:
+      - Создание оповещений
+      - Проверка условий
+      - Отправка уведомлений
+    - Реализация Analytics Cache Manager:
+      - Кэширование данных
+      - Инвалидация кэша
+    - Реализация Analytics API Gateway:
+      - Маршрутизация запросов
+      - WebSocket для потоковых данных
+    - Интеграция с economy-service для данных о ценах
+    - Интеграция с stock-exchange-service для данных об акциях
+    - Интеграция с investment-service для портфельной аналитики
+    - Создание схемы БД (analytics_chart_data, analytics_indicators, analytics_sentiment, analytics_portfolio_snapshots, analytics_alerts, analytics_settings)
+
+  performance_requirements:
+    - Получение данных графика: <200 мс (с кэшем)
+    - Расчёт индикатора: <500 мс
+    - Анализ настроений: <1000 мс
+    - Портфельная аналитика: <1000 мс
+    - Проверка оповещений: <100 мс
+    - WebSocket обновления: каждые 1-5 секунд
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Распределение символов по инстансам
+    - Кэширование в Redis для быстрого доступа
+    - Асинхронная обработка расчётов через очереди
+
+subtasks:
+  - id: analytics-data-collector
+    title: Реализация Analytics Data Collector
+    description: |
+      Сбор данных для аналитики:
+      - Сбор данных о ценах
+      - Сбор данных о транзакциях
+      - Хранение исторических данных
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: chart-data-manager
+    title: Реализация Chart Data Manager
+    description: |
+      Управление данными для графиков:
+      - Подготовка данных для различных типов графиков
+      - Агрегация данных по таймфреймам
+      - Форматирование данных
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: technical-indicators-calculator
+    title: Реализация Technical Indicators Calculator
+    description: |
+      Расчёт технических индикаторов:
+      - MA, RSI, MACD, Bollinger Bands
+      - Другие индикаторы
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: sentiment-analyzer
+    title: Реализация Sentiment Analyzer
+    description: |
+      Анализ настроений:
+      - Расчёт баланса сигналов
+      - Индекс страха и жадности
+      - Тепловые карты
+    priority: medium
+    estimated_time: 5-6 дней
+
+  - id: portfolio-analytics-manager
+    title: Реализация Portfolio Analytics Manager
+    description: |
+      Аналитика портфеля:
+      - Расчёт метрик
+      - История сделок
+      - Графики прибыли/убытков
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: alert-manager
+    title: Реализация Alert Manager
+    description: |
+      Управление оповещениями:
+      - Создание оповещений
+      - Проверка условий
+      - Отправка уведомлений
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: analytics-cache-manager
+    title: Реализация Analytics Cache Manager
+    description: |
+      Кэширование данных:
+      - Кэширование графиков
+      - Кэширование индикаторов
+      - Инвалидация кэша
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: analytics-api-gateway
+    title: Реализация Analytics API Gateway
+    description: |
+      API Gateway:
+      - Маршрутизация запросов
+      - WebSocket для потоковых данных
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: database-schema
+    title: Создание схемы БД для аналитики
+    description: |
+      Создание таблиц:
+      - analytics_chart_data
+      - analytics_indicators
+      - analytics_sentiment
+      - analytics_portfolio_snapshots
+      - analytics_alerts
+      - analytics_settings
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для аналитики:
+      - Графики
+      - Индикаторы
+      - Настроения
+      - Портфель
+      - Оповещения
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: websocket-streaming
+    title: Реализация WebSocket для потоковых данных
+    description: |
+      WebSocket поток:
+      - Потоковые данные графиков
+      - Оповещения в реальном времени
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: economy-stock-integration
+    title: Интеграция с Economy и Stock Exchange Services
+    description: |
+      Интеграция с экономическими данными:
+      - Получение данных о ценах
+      - Получение данных о транзакциях
+      - Интеграция с событиями
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: event-bus-integration
+    title: Интеграция с Event Bus
+    description: |
+      Публикация и подписка на события:
+      - analytics.* события
+      - Подписка на economy.price.updated, stock-exchange.price.updated, economy.event.active, investment.position.updated
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты системы аналитики:
+      - Тесты графиков
+      - Тесты индикаторов
+      - Тесты настроений
+      - Тесты портфельной аналитики
+      - Тесты оповещений
+      - Тесты интеграций
+      - Тесты производительности
+    priority: high
+    estimated_time: 7-8 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Analytics Service"
+            ADC[Analytics Data Collector]
+            CDM[Chart Data Manager]
+            TIC[Technical Indicators Calculator]
+            SA[Sentiment Analyzer]
+            PAM[Portfolio Analytics Manager]
+            AM[Alert Manager]
+            ACM[Analytics Cache Manager]
+            AAG[Analytics API Gateway]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>analytics_chart_data<br/>analytics_indicators<br/>analytics_sentiment<br/>analytics_portfolio_snapshots<br/>analytics_alerts<br/>analytics_settings)]
+        end
+
+        subgraph "Cache"
+            REDIS[(Redis Cache)]
+        end
+
+        subgraph "Event Bus"
+            EB[Kafka/Event Bus]
+        end
+
+        subgraph "External Services"
+            ES[Economy Service]
+            SES[Stock Exchange Service]
+            IS[Investment Service]
+            NS[Notification Service]
+        end
+
+        AAG --> CDM
+        AAG --> TIC
+        AAG --> SA
+        AAG --> PAM
+        AAG --> AM
+        CDM --> ADC
+        CDM --> ACM
+        TIC --> ADC
+        TIC --> ACM
+        SA --> ADC
+        PAM --> ADC
+        AM --> ADC
+        ADC --> ES
+        ADC --> SES
+        ADC --> IS
+        ACM --> REDIS
+        ADC --> DB
+        CDM --> DB
+        TIC --> DB
+        SA --> DB
+        PAM --> DB
+        AM --> DB
+        AAG --> EB
+        ADC --> EB
+        AM --> NS
+    ```
+
+  chart_data_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant AAG as Analytics API Gateway
+        participant ACM as Analytics Cache Manager
+        participant ADC as Analytics Data Collector
+        participant CDM as Chart Data Manager
+        participant ES as Economy Service
+
+        C->>AAG: Request Chart Data
+        AAG->>ACM: Check Cache
+        alt Cache Hit
+            ACM->>AAG: Return Cached Data
+        else Cache Miss
+            ACM->>ADC: Request Data
+            ADC->>ES: Get Price Data
+            ES->>ADC: Return Price Data
+            ADC->>CDM: Format Data
+            CDM->>ACM: Store in Cache
+            CDM->>AAG: Return Formatted Data
+        end
+        AAG->>C: Return Chart Data
+    ```
+
+  indicator_calculation_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant AAG as Analytics API Gateway
+        participant TIC as Technical Indicators Calculator
+        participant ADC as Analytics Data Collector
+        participant ACM as Analytics Cache Manager
+
+        C->>AAG: Request Indicator
+        AAG->>ACM: Check Cache
+        alt Cache Hit
+            ACM->>AAG: Return Cached Indicator
+        else Cache Miss
+            ACM->>ADC: Request Historical Data
+            ADC->>ADC: Get Historical Data
+            ADC->>TIC: Calculate Indicator
+            TIC->>TIC: Apply Formula
+            TIC->>ACM: Store in Cache
+            TIC->>AAG: Return Indicator
+        end
+        AAG->>C: Return Indicator
+    ```
+
+decisions:
+  - id: adr-economy-analytics-architecture
+    summary: |
+      Выбрана микросервисная архитектура с analytics-service как основным сервисом
+      и интеграцией с economy-service и stock-exchange-service для получения данных.
+
+  - id: adr-chart-data-management
+    summary: |
+      Данные для графиков управляются через Chart Data Manager с поддержкой различных типов графиков
+      и агрегацией данных по таймфреймам для оптимизации производительности.
+
+  - id: adr-technical-indicators
+    summary: |
+      Технические индикаторы рассчитываются через Technical Indicators Calculator с кэшированием результатов
+      для быстрого доступа и снижения нагрузки на систему.
+
+  - id: adr-caching-strategy
+    summary: |
+      Используется многоуровневое кэширование (Redis + БД) для оптимизации производительности
+      и снижения нагрузки на источники данных.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация формата данных графиков (JSONB структура)
+  - Определение формата индикаторов и настроений
+  - Создание схем сообщений для Event Bus
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы экономической аналитики:
+      - Определены микросервисы (analytics-service, economy-service, stock-exchange-service)
+      - Определены компоненты (Analytics Data Collector, Chart Data Manager, Technical Indicators Calculator, Sentiment Analyzer, Portfolio Analytics Manager, Alert Manager, Analytics Cache Manager, Analytics API Gateway)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (chart data request, indicator calculation, sentiment analysis, portfolio analytics, alert processing)
+      - Определена структура БД (analytics_chart_data, analytics_indicators, analytics_sentiment, analytics_portfolio_snapshots, analytics_alerts, analytics_settings)
+      - Описаны интеграции с другими сервисами (economy-service, stock-exchange-service, investment-service, notification-service)
+      - Определены Event Bus события (published и subscribed)
+      - Создано техническое задание
+      - Разбито на подзадачи
+
