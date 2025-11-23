@@ -54,6 +54,38 @@ var (
 		},
 		[]string{"event_type"},
 	)
+
+	TravelEventsStartedTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_travel_events_started_total",
+			Help: "Total number of travel events started",
+		},
+		[]string{"event_id"},
+	)
+
+	TravelEventsCompletedTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_travel_events_completed_total",
+			Help: "Total number of travel events completed",
+		},
+		[]string{"event_type", "success"},
+	)
+
+	TravelEventsCancelledTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_travel_events_cancelled_total",
+			Help: "Total number of travel events cancelled",
+		},
+		[]string{"event_id"},
+	)
+
+	TravelEventSkillChecksTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "world_service_travel_event_skill_checks_total",
+			Help: "Total number of travel event skill checks",
+		},
+		[]string{"event_id", "skill", "success"},
+	)
 )
 
 func RecordRequest(method, path, status string) {
@@ -78,5 +110,21 @@ func RecordLoginRewardClaimed(rewardType string) {
 
 func RecordTravelEventTriggered(eventType string) {
 	TravelEventsTriggeredTotal.WithLabelValues(eventType).Inc()
+}
+
+func RecordTravelEventStarted(eventID string) {
+	TravelEventsStartedTotal.WithLabelValues(eventID).Inc()
+}
+
+func RecordTravelEventCompleted(eventType, success string) {
+	TravelEventsCompletedTotal.WithLabelValues(eventType, success).Inc()
+}
+
+func RecordTravelEventCancelled(eventID string) {
+	TravelEventsCancelledTotal.WithLabelValues(eventID).Inc()
+}
+
+func RecordTravelEventSkillCheck(eventID, skill, success string) {
+	TravelEventSkillChecksTotal.WithLabelValues(eventID, skill, success).Inc()
 }
 

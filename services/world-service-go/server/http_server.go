@@ -70,8 +70,15 @@ func NewHTTPServer(addr string, worldService WorldService, jwtValidator *JwtVali
 	api.HandleFunc("/travel-events/trigger", server.triggerTravelEvent).Methods("POST")
 	api.HandleFunc("/travel-events/available", server.getAvailableTravelEvents).Methods("GET")
 	api.HandleFunc("/travel-events/{eventId}", server.getTravelEvent).Methods("GET")
+	api.HandleFunc("/travel-events/{eventId}/start", server.startTravelEvent).Methods("POST")
+	api.HandleFunc("/travel-events/{eventId}/skill-check", server.performTravelEventSkillCheck).Methods("POST")
+	api.HandleFunc("/travel-events/{eventId}/complete", server.completeTravelEvent).Methods("POST")
+	api.HandleFunc("/travel-events/{eventId}/cancel", server.cancelTravelEvent).Methods("POST")
 	api.HandleFunc("/travel-events/epoch/{epochId}", server.getEpochTravelEvents).Methods("GET")
 	api.HandleFunc("/travel-events/cooldown/{characterId}", server.getCharacterTravelEventCooldowns).Methods("GET")
+	api.HandleFunc("/travel-events/probability", server.calculateTravelEventProbability).Methods("GET")
+	api.HandleFunc("/travel-events/rewards/{eventId}", server.getTravelEventRewards).Methods("GET")
+	api.HandleFunc("/travel-events/penalties/{eventId}", server.getTravelEventPenalties).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -589,6 +596,197 @@ func (s *HTTPServer) getCharacterTravelEventCooldowns(w http.ResponseWriter, r *
 		"character_id": characterID,
 		"cooldowns":    cooldowns,
 	})
+}
+
+func (s *HTTPServer) startTravelEvent(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	eventIDStr := vars["eventId"]
+
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid event_id")
+		return
+	}
+
+	var req models.StartTravelEventRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	instance, err := s.worldService.StartTravelEvent(r.Context(), eventID, req.CharacterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to start travel event")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, instance)
+}
+
+func (s *HTTPServer) performTravelEventSkillCheck(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	eventIDStr := vars["eventId"]
+
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid event_id")
+		return
+	}
+
+	var req models.SkillCheckRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	result, err := s.worldService.PerformTravelEventSkillCheck(r.Context(), eventID, req.Skill, req.CharacterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to perform skill check")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, result)
+}
+
+func (s *HTTPServer) completeTravelEvent(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	eventIDStr := vars["eventId"]
+
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid event_id")
+		return
+	}
+
+	var req models.CompleteTravelEventRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	response, err := s.worldService.CompleteTravelEvent(r.Context(), eventID, req.CharacterID, req.Success)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to complete travel event")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) cancelTravelEvent(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	eventIDStr := vars["eventId"]
+
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid event_id")
+		return
+	}
+
+	characterIDStr := r.URL.Query().Get("character_id")
+	if characterIDStr == "" {
+		s.respondError(w, http.StatusBadRequest, "character_id is required")
+		return
+	}
+
+	characterID, err := uuid.Parse(characterIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid character_id")
+		return
+	}
+
+	instance, err := s.worldService.CancelTravelEvent(r.Context(), eventID, characterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to cancel travel event")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, instance)
+}
+
+func (s *HTTPServer) calculateTravelEventProbability(w http.ResponseWriter, r *http.Request) {
+	eventType := r.URL.Query().Get("event_type")
+	if eventType == "" {
+		s.respondError(w, http.StatusBadRequest, "event_type is required")
+		return
+	}
+
+	characterIDStr := r.URL.Query().Get("character_id")
+	if characterIDStr == "" {
+		s.respondError(w, http.StatusBadRequest, "character_id is required")
+		return
+	}
+
+	characterID, err := uuid.Parse(characterIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid character_id")
+		return
+	}
+
+	zoneIDStr := r.URL.Query().Get("zone_id")
+	if zoneIDStr == "" {
+		s.respondError(w, http.StatusBadRequest, "zone_id is required")
+		return
+	}
+
+	zoneID, err := uuid.Parse(zoneIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid zone_id")
+		return
+	}
+
+	response, err := s.worldService.CalculateTravelEventProbability(r.Context(), eventType, characterID, zoneID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to calculate travel event probability")
+		s.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getTravelEventRewards(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	eventIDStr := vars["eventId"]
+
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid event_id")
+		return
+	}
+
+	response, err := s.worldService.GetTravelEventRewards(r.Context(), eventID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get travel event rewards")
+		s.respondError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getTravelEventPenalties(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	eventIDStr := vars["eventId"]
+
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid event_id")
+		return
+	}
+
+	response, err := s.worldService.GetTravelEventPenalties(r.Context(), eventID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get travel event penalties")
+		s.respondError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
 }
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
