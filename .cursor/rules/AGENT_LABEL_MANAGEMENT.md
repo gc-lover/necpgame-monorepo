@@ -38,73 +38,156 @@
 
 ## Использование MCP GitHub
 
+### WARNING ОБЯЗАТЕЛЬНО: Батчинг для массовых операций
+
+**Перед обновлением меток ОБЯЗАТЕЛЬНО:**
+1. **Для <3 Issues:** обновляй последовательно с задержками (300-500ms)
+2. **Для 3-9 Issues:** используй батчинг (батчи по 5, задержки между запросами и батчами)
+3. **Для >=10 Issues:** используй GitHub Actions Batch Processor (добавь метку `queue:batch-process`)
+4. (Опционально) Используй кэшированную функцию для чтения Issue в рамках одной сессии (см. `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md`)
+
 ### Добавление меток
 
 ```javascript
-await mcp_github_issue_write({
-  method: 'update',
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: 9,
-  labels: ['agent:idea-writer', 'stage:idea', ...existing_labels]
-});
+// OK ПРАВИЛЬНО: С кэшированием и задержками
+const issueCache = new Map();
+
+async function addLabels(issueNumber, newLabels) {
+  // Читаем Issue из кэша
+  let issue = issueCache.get(issueNumber);
+  if (!issue || Date.now() - issue.timestamp > 5 * 60 * 1000) {
+    issue = await mcp_github_issue_read({
+      method: 'get',
+      issue_number: issueNumber
+    });
+    issueCache.set(issueNumber, { data: issue, timestamp: Date.now() });
+  } else {
+    issue = issue.data;
+  }
+  
+  const currentLabels = issue.labels.map(l => l.name);
+  const allLabels = [...new Set([...currentLabels, ...newLabels])];
+  
+  await mcp_github_issue_write({
+    method: 'update',
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    issue_number: issueNumber,
+    labels: allLabels
+  });
+  
+  // Инвалидируем кэш
+  issueCache.delete(issueNumber);
+  await delay(300);
+}
 ```
 
 ### Удаление меток
 
 ```javascript
-// Получи текущие метки
-const issue = await mcp_github_issue_read({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: 9,
-  method: 'get'
-});
-
-// Удали свою метку
-const currentLabels = issue.labels.map(l => l.name);
-const newLabels = currentLabels.filter(l => l !== 'agent:idea-writer');
-
-// Обнови Issue
-await mcp_github_issue_write({
-  method: 'update',
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: 9,
-  labels: newLabels
-});
+// OK ПРАВИЛЬНО: С кэшированием
+async function removeLabel(issueNumber, labelToRemove) {
+  // Используем кэшированную функцию
+  const issue = await getCachedIssue(issueNumber);
+  
+  const currentLabels = issue.labels.map(l => l.name);
+  const newLabels = currentLabels.filter(l => l !== labelToRemove);
+  
+  await mcp_github_issue_write({
+    method: 'update',
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    issue_number: issueNumber,
+    labels: newLabels
+  });
+  
+  // Инвалидируем кэш
+  issueCache.delete(issueNumber);
+  await delay(300);
+}
 ```
 
 ### Переход к следующему агенту
 
 ```javascript
-// 1. Получи текущие метки
-const issue = await mcp_github_issue_read({...});
-const currentLabels = issue.labels.map(l => l.name);
+// OK ПРАВИЛЬНО: С кэшированием
+async function transferToNextAgent(issueNumber, myAgentLabel, nextAgentLabel, nextStageLabel) {
+  // 1. Используем кэшированную функцию для чтения
+  const issue = await getCachedIssue(issueNumber);
+  const currentLabels = issue.labels.map(l => l.name);
+  
+  // 2. Удали свою метку агента
+  const labelsWithoutMyAgent = currentLabels.filter(l => l !== myAgentLabel);
+  
+  // 3. Добавь метку следующего агента
+  const nextAgentLabels = [nextAgentLabel, nextStageLabel];
+  const allLabels = [...labelsWithoutMyAgent, ...nextAgentLabels];
+  
+  // 4. Обнови Issue
+  await mcp_github_issue_write({
+    method: 'update',
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    issue_number: issueNumber,
+    labels: allLabels
+  });
+  
+  // 5. Инвалидируем кэш
+  issueCache.delete(issueNumber);
+  await delay(300);
+  
+  // 6. Добавь комментарий
+  await mcp_github_add_issue_comment({
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    issue_number: issueNumber,
+    body: `OK Задача передана агенту ${nextAgentLabel}`
+  });
+  
+  await delay(300);
+}
+```
 
-// 2. Удали свою метку агента
-const labelsWithoutMyAgent = currentLabels.filter(l => l !== 'agent:idea-writer');
+### Массовое обновление меток (>=3 Issues)
 
-// 3. Добавь метку следующего агента
-const nextAgentLabels = ['agent:architect', 'stage:design'];
-const allLabels = [...labelsWithoutMyAgent, ...nextAgentLabels];
-
-// 4. Обнови Issue
-await mcp_github_issue_write({
-  method: 'update',
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: 9,
-  labels: allLabels
-});
-
-// 5. Добавь комментарий
-await mcp_github_add_issue_comment({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: 9,
-  body: 'OK Задача передана агенту @agent:architect'
-});
+```javascript
+// OK ПРАВИЛЬНО: Батчинг для >=3 Issues
+async function batchUpdateLabels(issueNumbers, newLabels) {
+  if (issueNumbers.length >= 10) {
+    // Для >10 Issues используем GitHub Actions Batch Processor
+    await mcp_github_issue_write({
+      method: 'update',
+      issue_number: issueNumbers[0],
+      labels: ['queue:batch-process', ...newLabels]
+    });
+    return 'Issues queued for batch processing';
+  }
+  
+  // Для 3-9 Issues используем батчинг
+  const batchSize = 5;
+  for (let i = 0; i < issueNumbers.length; i += batchSize) {
+    const batch = issueNumbers.slice(i, i + batchSize);
+    
+    for (const issueNum of batch) {
+      const issue = await getCachedIssue(issueNum);
+      const currentLabels = issue.labels.map(l => l.name);
+      const allLabels = [...new Set([...currentLabels, ...newLabels])];
+      
+      await mcp_github_issue_write({
+        method: 'update',
+        issue_number: issueNum,
+        labels: allLabels
+      });
+      
+      issueCache.delete(issueNum);
+      await delay(300);
+    }
+    
+    if (i + batchSize < issueNumbers.length) {
+      await delay(1000);
+    }
+  }
+}
 ```
 
 ## Workflow переходов
@@ -130,4 +213,13 @@ agent:idea    agent:content  agent:qa agent:rel
 - **ВСЕГДА** добавляй метку следующего агента при переходе
 - **НЕ** удаляй другие метки (приоритет, категория и т.д.)
 - **ИСПОЛЬЗУЙ** MCP GitHub для управления метками
+- **ОБЯЗАТЕЛЬНО** используй кэширование перед чтением Issues
+- **ОБЯЗАТЕЛЬНО** используй батчинг для >=3 Issues
+- **ОБЯЗАТЕЛЬНО** используй GitHub Actions для >10 Issues
+
+## Дополнительные ресурсы
+
+- `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md` - шаблоны кода для кэширования
+- `.cursor/rules/GITHUB_MCP_BEST_PRACTICES.md` - примеры правильного использования
+- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - полные правила оптимизации
 

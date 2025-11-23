@@ -42,6 +42,9 @@ on:
     - cron: '0 */6 * * *'
   issues:
     types: [labeled]
+    if: contains(github.event.label.name, 'queue:batch-process')
+  repository_dispatch:
+    types: [batch-process-issues]
 
 jobs:
   batch-process:
@@ -65,13 +68,14 @@ jobs:
       - name: Process Issues in Batches
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPERATION: ${{ github.event.inputs.operation || 'update-labels' }}
-          QUERY: ${{ github.event.inputs.query || 'is:issue is:open label:agent:content-writer label:stage:content' }}
-          BATCH_SIZE: ${{ github.event.inputs.batch_size || '5' }}
-          DELAY_MS: ${{ github.event.inputs.delay_ms || '500' }}
-          NEW_LABELS: ${{ github.event.inputs.new_labels || '' }}
-          COMMENT_TEMPLATE: ${{ github.event.inputs.comment_template || '' }}
-          NEXT_AGENT: ${{ github.event.inputs.next_agent || 'agent:qa' }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          OPERATION: ${{ github.event.inputs.operation || github.event.client_payload.operation || 'update-labels' }}
+          QUERY: ${{ github.event.inputs.query || github.event.client_payload.query || 'is:issue is:open label:queue:batch-process' }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size || github.event.client_payload.batch_size || '5' }}
+          DELAY_MS: ${{ github.event.inputs.delay_ms || github.event.client_payload.delay_ms || '500' }}
+          NEW_LABELS: ${{ github.event.inputs.new_labels || github.event.client_payload.new_labels || '' }}
+          COMMENT_TEMPLATE: ${{ github.event.inputs.comment_template || github.event.client_payload.comment_template || '' }}
+          NEXT_AGENT: ${{ github.event.inputs.next_agent || github.event.client_payload.next_agent || 'agent:qa' }}
         run: |
           node << 'EOF'
           const { Octokit } = require('@octokit/rest');
@@ -213,8 +217,36 @@ jobs:
             }
           }
           
+          async function handleLabeledEvent() {
+            if (process.env.GITHUB_EVENT_NAME === 'issues' && process.env.GITHUB_EVENT_ACTION === 'labeled') {
+              const eventPath = process.env.GITHUB_EVENT_PATH;
+              const fs = require('fs');
+              const event = JSON.parse(fs.readFileSync(eventPath, 'utf8'));
+              
+              if (event.label.name === 'queue:batch-process') {
+                const issueNumber = event.issue.number;
+                const issueLabels = event.issue.labels.map(l => l.name);
+                
+                const agentLabel = issueLabels.find(l => l.startsWith('agent:'));
+                const stageLabel = issueLabels.find(l => l.startsWith('stage:'));
+                
+                if (agentLabel && stageLabel) {
+                  const nextAgent = agentLabel === 'agent:content-writer' ? 'agent:qa' : 
+                                   agentLabel === 'agent:idea-writer' ? 'agent:architect' : 'agent:qa';
+                  
+                  const query = `is:issue is:open label:${agentLabel} label:${stageLabel}`;
+                  process.env.QUERY = query;
+                  process.env.OPERATION = 'transfer-to-next-stage';
+                  process.env.NEXT_AGENT = nextAgent;
+                }
+              }
+            }
+          }
+          
           async function main() {
             try {
+              await handleLabeledEvent();
+              
               const issues = await searchIssues();
               console.log(`Found ${issues.length} issues`);
               
