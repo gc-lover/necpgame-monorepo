@@ -57,6 +57,7 @@ type GatewayHandler struct {
 	sessionTokens    map[*websocket.Conn]string
 	sessionTokensMu  sync.RWMutex
 	banNotifier      *BanNotificationSubscriber
+	notificationSubscriber *NotificationSubscriber
 }
 
 func NewGatewayHandler(tickRate int, sessionMgr SessionManagerInterface) *GatewayHandler {
@@ -78,6 +79,14 @@ func (h *GatewayHandler) SetBanNotifier(notifier *BanNotificationSubscriber) {
 
 func (h *GatewayHandler) GetBanNotifier() *BanNotificationSubscriber {
 	return h.banNotifier
+}
+
+func (h *GatewayHandler) SetNotificationSubscriber(subscriber *NotificationSubscriber) {
+	h.notificationSubscriber = subscriber
+}
+
+func (h *GatewayHandler) GetNotificationSubscriber() *NotificationSubscriber {
+	return h.notificationSubscriber
 }
 
 func (h *GatewayHandler) SetServerConnection(conn *websocket.Conn) {

@@ -877,3 +877,29 @@ func (m *mockSocialService) ResolveReport(ctx context.Context, reportID uuid.UUI
 	return nil
 }
 
+func (m *mockSocialService) GetNotificationPreferences(ctx context.Context, accountID uuid.UUID) (*models.NotificationPreferences, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	return &models.NotificationPreferences{
+		AccountID:          accountID,
+		QuestEnabled:       true,
+		MessageEnabled:     true,
+		AchievementEnabled: true,
+		SystemEnabled:      true,
+		FriendEnabled:      true,
+		GuildEnabled:       true,
+		TradeEnabled:       true,
+		CombatEnabled:      true,
+		PreferredChannels:  []models.DeliveryChannel{models.DeliveryChannelInGame, models.DeliveryChannelWebSocket},
+		UpdatedAt:          time.Now(),
+	}, nil
+}
+
+func (m *mockSocialService) UpdateNotificationPreferences(ctx context.Context, prefs *models.NotificationPreferences) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
+	return nil
+}
+

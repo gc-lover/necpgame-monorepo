@@ -30,6 +30,17 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize social service")
 	}
 
+	if socialService != nil {
+		notificationSubscriber := socialService.GetNotificationSubscriber()
+		if notificationSubscriber != nil {
+			if err := notificationSubscriber.Start(); err != nil {
+				logger.WithError(err).Error("Failed to start notification subscriber")
+			} else {
+				logger.Info("Notification subscriber started")
+			}
+		}
+	}
+
 	var jwtValidator *server.JwtValidator
 	if authEnabled && keycloakURL != "" {
 		issuer := keycloakURL + "/realms/" + keycloakRealm
@@ -72,6 +83,15 @@ func main() {
 		<-sigChan
 		logger.Info("Shutting down server...")
 		cancel()
+
+		if socialService != nil {
+			notificationSubscriber := socialService.GetNotificationSubscriber()
+			if notificationSubscriber != nil {
+				if err := notificationSubscriber.Stop(); err != nil {
+					logger.WithError(err).Error("Failed to stop notification subscriber")
+				}
+			}
+		}
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
