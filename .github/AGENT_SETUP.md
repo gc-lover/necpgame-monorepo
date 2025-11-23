@@ -29,6 +29,7 @@
 3. Название: `Development Stage`
 4. Добавьте опции:
    - `idea-writer` (Idea Writer)
+   - `content-writer` (Content Writer)
    - `architect` (Architect)
    - `api-designer` (API Designer)
    - `backend-dev` (Backend Developer)

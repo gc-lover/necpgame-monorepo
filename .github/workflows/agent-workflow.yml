@@ -128,6 +128,18 @@ jobs:
               labels: ['agent:performance', 'stage:performance']
             });
 
+      - name: Route to Content Writer
+        if: contains(github.event.issue.labels.*.name, 'canon') || contains(github.event.issue.labels.*.name, 'lore') || contains(github.event.issue.labels.*.name, 'quest') || contains(github.event.issue.body, '[Canon/Lore]') || contains(github.event.issue.body, '[Content Writer]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['agent:content-writer', 'stage:content', 'content']
+            });
+
       - name: Route to UE5 Developer
         if: contains(github.event.issue.labels.*.name, 'client') || contains(github.event.pull_request.labels.*.name, 'client')
         uses: actions/github-script@v7

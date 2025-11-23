@@ -21,6 +21,7 @@
 5. Название поля: `Development Stage`
 6. Добавьте следующие опции (по одной):
    - `idea-writer`
+   - `content-writer`
    - `architect`
    - `api-designer`
    - `backend-dev`
@@ -39,6 +40,7 @@
 2. Название: **"Idea Writer Queue"**
 3. Фильтр: `Development Stage` = `idea-writer`
 4. Повторите для каждого агента:
+   - Content Writer Queue → `content-writer`
    - Architect Queue → `architect`
    - API Designer Queue → `api-designer`
    - Backend Dev Queue → `backend-dev`
