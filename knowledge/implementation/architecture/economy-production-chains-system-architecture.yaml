@@ -1,0 +1,878 @@
+metadata:
+  id: economy-production-chains-system-architecture
+  title: Архитектура системы производственных цепочек
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T15:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - economy
+    - production
+    - crafting
+    - manufacturing
+  related_systems:
+    - economy-service
+    - crafting-service
+    - guild-service
+    - inventory-service
+  related_documents:
+    - id: mechanics-economy-production-chains
+      relation: extends
+    - id: game-mechanics-systems-architecture
+      relation: extends
+  github_issue: 232
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - economy
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы производственных цепочек для управления
+    производством от добычи сырья до крафта легендарных предметов с учётом этапов, инвестиций,
+    рисков, массового производства и ускорителей.
+  goal: |
+    Создать архитектурную схему системы производственных цепочек с определением:
+    - Микросервисов для управления производством
+    - Компонентов для цепочек, станций, лицензий, ускорителей
+    - API endpoints (высокоуровнево)
+    - Интеграций с другими системами
+    - Структуры БД для хранения цепочек и производства
+    - Технического задания для реализации
+  essence: |
+    Система производственных цепочек управляет многоэтапным производством предметов,
+    поддерживает массовое производство, ускорители, rush-заказы и легендарный крафт,
+    интегрируется с crafting-service, guild-service и economy-service.
+
+architecture:
+  overview: |
+    Система производственных цепочек состоит из следующих компонентов:
+    1. Production Chain Manager - управление производственными цепочками
+    2. Production Stage Manager - управление этапами производства
+    3. Station Manager - управление производственными станциями
+    4. License Manager - управление лицензиями на производство
+    5. Resource Manager - управление ресурсами для производства
+    6. Bulk Production Manager - управление массовым производством
+    7. Accelerator Manager - управление ускорителями и rush-заказами
+    8. Legendary Craft Manager - управление легендарным крафтом
+    9. Production Analytics Collector - сбор аналитики по производству
+
+  microservices:
+    - name: production-service
+      location: services/production-service
+      responsibility: |
+        Основной сервис для управления производственными цепочками:
+        - CRUD операции с цепочками
+        - Управление этапами производства
+        - Управление станциями и лицензиями
+        - Массовое производство
+        - Интеграция с crafting-service
+      components:
+        - Production Chain Manager
+        - Production Stage Manager
+        - Station Manager
+        - License Manager
+        - Resource Manager
+        - Bulk Production Manager
+        - Accelerator Manager
+        - Legendary Craft Manager
+      endpoints:
+        - GET /api/v1/production/chains - список производственных цепочек
+        - GET /api/v1/production/chains/{id} - детали цепочки
+        - POST /api/v1/production/chains/{id}/start - запуск производства
+        - GET /api/v1/production/orders/{id} - детали заказа на производство
+        - POST /api/v1/production/orders - создание заказа
+        - DELETE /api/v1/production/orders/{id} - отмена заказа
+        - POST /api/v1/production/orders/{id}/rush - rush-заказ
+        - POST /api/v1/production/bulk - массовое производство
+        - GET /api/v1/production/stations - список станций игрока
+        - GET /api/v1/production/stations/{id} - детали станции
+        - POST /api/v1/production/stations/{id}/upgrade - улучшение станции
+        - GET /api/v1/production/licenses - список лицензий игрока
+        - POST /api/v1/production/licenses/{id}/purchase - покупка лицензии
+        - GET /api/v1/production/accelerators - доступные ускорители
+        - POST /api/v1/production/orders/{id}/accelerator - применение ускорителя
+        - GET /api/v1/production/legendary/quests - квесты для легендарного крафта
+        - POST /api/v1/production/legendary/craft - запуск легендарного крафта
+
+    - name: crafting-service
+      location: services/crafting-service
+      responsibility: |
+        Интеграция с системой крафта:
+        - Выполнение этапов крафта
+        - Управление рецептами
+        - Обработка результатов крафта
+      components:
+        - Crafting Integration Manager
+      endpoints:
+        - POST /api/v1/crafting/execute - выполнение крафта
+        - GET /api/v1/crafting/recipes/{id} - детали рецепта
+
+    - name: guild-service
+      location: services/guild-service
+      responsibility: |
+        Интеграция с гильдиями:
+        - Гильдийное производство
+        - Распределение ролей (добытчики, переработчики, крафтеры)
+        - Кооперативное производство
+      components:
+        - Guild Production Manager
+      endpoints:
+        - GET /api/v1/guilds/{id}/production - производство гильдии
+        - POST /api/v1/guilds/{id}/production/assign - назначение ролей
+
+  components:
+    - name: Production Chain Manager
+      location: production-service
+      responsibility: |
+        Управление производственными цепочками:
+        - Создание и управление цепочками
+        - Определение этапов производства
+        - Валидация цепочек
+        - Интеграция с рецептами
+      methods:
+        - getChains(itemTier, itemType)
+        - getChainDetails(chainId)
+        - validateChain(chainId, playerId)
+        - calculateChainCost(chainId, quantity)
+
+    - name: Production Stage Manager
+      location: production-service
+      responsibility: |
+        Управление этапами производства:
+        - Выполнение этапов (добыча сырья, переработка, крафт)
+        - Переходы между этапами
+        - Валидация ресурсов для этапа
+        - Обработка результатов этапа
+      methods:
+        - executeStage(orderId, stageId)
+        - validateStageResources(stageId, resources)
+        - processStageResult(stageId, result)
+        - transitionToNextStage(orderId)
+
+    - name: Station Manager
+      location: production-service
+      responsibility: |
+        Управление производственными станциями:
+        - Управление станциями игрока
+        - Улучшение станций
+        - Проверка доступности станций
+        - Резервирование станций
+      methods:
+        - getStations(playerId)
+        - getStationDetails(stationId)
+        - upgradeStation(stationId, upgradeType)
+        - reserveStation(stationId, orderId)
+        - releaseStation(stationId, orderId)
+
+    - name: License Manager
+      location: production-service
+      responsibility: |
+        Управление лицензиями на производство:
+        - Каталог лицензий
+        - Покупка лицензий
+        - Проверка наличия лицензий
+        - Управление сроками действия лицензий
+      methods:
+        - getLicenses(itemTier, itemType)
+        - purchaseLicense(playerId, licenseId)
+        - checkLicense(playerId, licenseId)
+        - renewLicense(licenseId)
+
+    - name: Resource Manager
+      location: production-service
+      responsibility: |
+        Управление ресурсами для производства:
+        - Проверка наличия ресурсов
+        - Резервирование ресурсов
+        - Расход ресурсов
+        - Интеграция с inventory-service
+      methods:
+        - checkResources(playerId, resources)
+        - reserveResources(playerId, resources, orderId)
+        - consumeResources(orderId, resources)
+        - releaseResources(orderId, resources)
+
+    - name: Bulk Production Manager
+      location: production-service
+      responsibility: |
+        Управление массовым производством:
+        - Создание массовых заказов
+        - Оптимизация времени и ресурсов
+        - Управление производственными площадками
+        - Сборочные линии
+      methods:
+        - createBulkOrder(playerId, itemId, quantity)
+        - optimizeBulkProduction(orderId)
+        - getProductionLines(playerId)
+        - assignToProductionLine(orderId, lineId)
+
+    - name: Accelerator Manager
+      location: production-service
+      responsibility: |
+        Управление ускорителями и rush-заказами:
+        - Применение ускорителей (Efficiency Catalyst, Quality Enhancer, Material Optimizer)
+        - Создание rush-заказов
+        - Расчёт стоимости ускорения
+        - Управление эффектами ускорителей
+      methods:
+        - getAccelerators()
+        - applyAccelerator(orderId, acceleratorId)
+        - createRushOrder(orderId, rushOptions)
+        - calculateRushCost(orderId, timeReduction)
+        - getAcceleratorEffects(orderId)
+
+    - name: Legendary Craft Manager
+      location: production-service
+      responsibility: |
+        Управление легендарным крафтом:
+        - Квестовые цепочки для легендарных предметов
+        - Проверка требований (чертежи, мастерство, компоненты)
+        - Доступ к легендарным кузням
+        - Обработка высоких рисков провала
+      methods:
+        - getLegendaryQuests(itemId)
+        - checkLegendaryRequirements(playerId, itemId)
+        - startLegendaryCraft(playerId, itemId, questChainId)
+        - processLegendaryResult(craftId, success)
+
+    - name: Production Analytics Collector
+      location: analytics-service
+      responsibility: |
+        Сбор аналитики по производству:
+        - Сбор метрик производства
+        - Анализ прибыльности
+        - Отчёты по производству
+        - Интеграция с analytics-service
+      methods:
+        - collectProductionMetrics(playerId, timeRange)
+        - analyzeProfitability(chainId, timeRange)
+        - generateProductionReport(playerId, timeRange)
+
+  data_flow:
+    production_start: |
+      1. Игрок выбирает производственную цепочку через Production Chain Manager
+      2. Production Chain Manager валидирует цепочку и проверяет лицензии
+      3. License Manager проверяет наличие необходимых лицензий
+      4. Resource Manager проверяет наличие ресурсов
+      5. Station Manager резервирует станцию
+      6. Создаётся заказ на производство со статусом PENDING
+      7. Событие публикуется в Event Bus (production.order.created)
+
+    production_execution: |
+      1. Production Stage Manager начинает выполнение первого этапа
+      2. Resource Manager резервирует ресурсы для этапа
+      3. Выполняется этап (добыча сырья, переработка, крафт)
+      4. Обрабатывается результат этапа (успех/провал)
+      5. При успехе: переход к следующему этапу
+      6. При провале: обработка провала (потеря ресурсов, возможность повтора)
+      7. Событие публикуется в Event Bus (production.stage.completed, production.stage.failed)
+
+    production_completion: |
+      1. Все этапы выполнены успешно
+      2. Production Stage Manager завершает производство
+      3. Resource Manager освобождает неиспользованные ресурсы
+      4. Station Manager освобождает станцию
+      5. Inventory Service получает готовый предмет
+      6. Заказ переводится в статус COMPLETED
+      7. Production Analytics Collector обновляет метрики
+      8. Событие публикуется в Event Bus (production.order.completed)
+
+    bulk_production: |
+      1. Игрок создаёт массовый заказ через Bulk Production Manager
+      2. Bulk Production Manager оптимизирует производство (экономия времени и ресурсов)
+      3. Заказ распределяется по производственным линиям
+      4. Параллельное выполнение этапов на разных линиях
+      5. Сбор результатов и передача в inventory-service
+      6. Событие публикуется в Event Bus (production.bulk.completed)
+
+    rush_order: |
+      1. Игрок создаёт rush-заказ через Accelerator Manager
+      2. Accelerator Manager рассчитывает стоимость ускорения
+      3. Игрок подтверждает rush-заказ (увеличение стоимости)
+      4. Время производства сокращается
+      5. Заказ выполняется с ускорением
+      6. Событие публикуется в Event Bus (production.order.rushed)
+
+    legendary_craft: |
+      1. Игрок начинает квестовую цепочку для легендарного предмета
+      2. Legendary Craft Manager проверяет требования (чертежи, мастерство, компоненты)
+      3. Игрок выполняет квестовые этапы
+      4. При выполнении всех требований: доступ к легендарной кузне
+      5. Запускается производство с высоким риском провала
+      6. Обрабатывается результат (успех/провал)
+      7. Событие публикуется в Event Bus (production.legendary.crafted, production.legendary.failed)
+
+  integrations:
+    with_crafting_service: |
+      - Выполнение этапов крафта
+      - Получение рецептов
+      - Обработка результатов крафта
+
+    with_guild_service: |
+      - Гильдийное производство
+      - Распределение ролей
+      - Кооперативное производство
+
+    with_inventory_service: |
+      - Проверка наличия ресурсов
+      - Резервирование ресурсов
+      - Получение готовых предметов
+
+    with_economy_service: |
+      - Расчёт стоимости производства
+      - Расчёт прибыльности
+      - Интеграция с экономическими событиями
+
+    with_quest_service: |
+      - Квестовые цепочки для легендарных предметов
+      - Интеграция с квестами производства
+
+  event_bus_events:
+    published:
+      - production.order.created
+      - production.order.started
+      - production.stage.started
+      - production.stage.completed
+      - production.stage.failed
+      - production.order.completed
+      - production.order.failed
+      - production.order.cancelled
+      - production.bulk.created
+      - production.bulk.completed
+      - production.order.rushed
+      - production.accelerator.applied
+      - production.legendary.quest.started
+      - production.legendary.crafted
+      - production.legendary.failed
+    subscribed:
+      - economy.event.active (для влияния на стоимость производства)
+      - inventory.resource.updated (для проверки ресурсов)
+
+  database_schema:
+    tables:
+      - name: production_chains
+        description: Производственные цепочки
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - item_tier: INTEGER (1-5)
+          - item_type: VARCHAR(50) (weapon, cyberdeck, consumable, mod, etc.)
+          - stages: JSONB (массив этапов цепочки)
+          - base_cost: DECIMAL(10,2)
+          - base_time_minutes: INTEGER
+          - base_success_rate: DECIMAL(5,2) (0.00-100.00)
+          - required_licenses: UUID[] (FK production_licenses)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - item_tier, item_type
+          - name
+
+      - name: production_orders
+        description: Заказы на производство
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - chain_id: UUID (FK production_chains)
+          - guild_id: UUID (FK guilds, nullable)
+          - quantity: INTEGER
+          - status: ENUM (pending, started, in_progress, completed, failed, cancelled)
+          - current_stage: INTEGER
+          - total_stages: INTEGER
+          - total_cost: DECIMAL(10,2)
+          - actual_cost: DECIMAL(10,2)
+          - estimated_time_minutes: INTEGER
+          - actual_time_minutes: INTEGER (nullable)
+          - success_rate: DECIMAL(5,2)
+          - is_rush: BOOLEAN
+          - rush_cost_multiplier: DECIMAL(3,2) (nullable)
+          - is_bulk: BOOLEAN
+          - bulk_efficiency: DECIMAL(5,2) (nullable)
+          - station_id: UUID (FK production_stations, nullable)
+          - started_at: TIMESTAMP (nullable)
+          - completed_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id, status
+          - chain_id, status
+          - guild_id, status
+          - status, started_at
+
+      - name: production_stages
+        description: Этапы производства
+        fields:
+          - id: UUID (PK)
+          - order_id: UUID (FK production_orders)
+          - stage_number: INTEGER
+          - stage_type: ENUM (resource_extraction, processing, crafting, assembly)
+          - status: ENUM (pending, in_progress, completed, failed)
+          - required_resources: JSONB
+          - consumed_resources: JSONB (nullable)
+          - result: JSONB (nullable)
+          - success: BOOLEAN (nullable)
+          - started_at: TIMESTAMP (nullable)
+          - completed_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - order_id, stage_number
+          - status
+
+      - name: production_stations
+        description: Производственные станции игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - station_type: ENUM (smelter, processor, assembler, legendary_forge)
+          - level: INTEGER
+          - efficiency_bonus: DECIMAL(5,2)
+          - capacity: INTEGER
+          - current_orders: INTEGER
+          - location: VARCHAR(255)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id, station_type
+          - station_type, level
+
+      - name: production_licenses
+        description: Лицензии на производство
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - item_tier: INTEGER
+          - item_type: VARCHAR(50)
+          - cost: DECIMAL(10,2)
+          - duration_days: INTEGER (nullable, для временных лицензий)
+          - created_at: TIMESTAMP
+        indexes:
+          - item_tier, item_type
+
+      - name: player_production_licenses
+        description: Лицензии игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - license_id: UUID (FK production_licenses)
+          - purchased_at: TIMESTAMP
+          - expires_at: TIMESTAMP (nullable)
+          - active: BOOLEAN
+        indexes:
+          - player_id, active
+          - license_id, active
+          - expires_at
+
+      - name: production_accelerators
+        description: Ускорители производства
+        fields:
+          - id: UUID (PK)
+          - order_id: UUID (FK production_orders)
+          - accelerator_type: ENUM (efficiency_catalyst, quality_enhancer, material_optimizer)
+          - effect: JSONB (описание эффекта)
+          - applied_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+        indexes:
+          - order_id
+          - expires_at
+
+      - name: production_legendary_quests
+        description: Квестовые цепочки для легендарного крафта
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - item_id: UUID (FK items)
+          - quest_chain: JSONB (массив квестов)
+          - required_blueprint: BOOLEAN
+          - required_mastery: INTEGER
+          - required_components: JSONB
+          - legendary_forge_required: BOOLEAN
+          - base_success_rate: DECIMAL(5,2)
+          - created_at: TIMESTAMP
+        indexes:
+          - item_id
+
+technical_specification:
+  backend_requirements:
+    - Реализация Production Chain Manager в production-service:
+      - CRUD операции с цепочками
+      - Валидация цепочек
+      - Расчёт стоимости цепочек
+    - Реализация Production Stage Manager:
+      - Управление этапами производства
+      - Выполнение этапов
+      - Переходы между этапами
+    - Реализация Station Manager:
+      - Управление станциями
+      - Улучшение станций
+      - Резервирование станций
+    - Реализация License Manager:
+      - Каталог лицензий
+      - Покупка лицензий
+      - Проверка лицензий
+    - Реализация Resource Manager:
+      - Проверка ресурсов
+      - Резервирование ресурсов
+      - Расход ресурсов
+    - Реализация Bulk Production Manager:
+      - Массовое производство
+      - Оптимизация производства
+      - Управление производственными линиями
+    - Реализация Accelerator Manager:
+      - Применение ускорителей
+      - Rush-заказы
+      - Расчёт стоимости ускорения
+    - Реализация Legendary Craft Manager:
+      - Квестовые цепочки
+      - Проверка требований
+      - Легендарный крафт
+    - Реализация Production Analytics Collector:
+      - Сбор метрик
+      - Анализ прибыльности
+      - Генерация отчётов
+    - Интеграция с crafting-service для выполнения крафта
+    - Интеграция с guild-service для гильдийного производства
+    - Интеграция с inventory-service для ресурсов
+    - Создание схемы БД (production_chains, production_orders, production_stages, production_stations, production_licenses, player_production_licenses, production_accelerators, production_legendary_quests)
+
+  performance_requirements:
+    - Получение цепочек: <200 мс
+    - Создание заказа: <300 мс
+    - Выполнение этапа: <500 мс
+    - Массовое производство: <1000 мс
+    - Поддержка до 100 активных заказов на игрока
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Распределение заказов по инстансам
+    - Кэширование цепочек в Redis
+    - Асинхронная обработка этапов через очереди
+
+subtasks:
+  - id: production-chain-manager
+    title: Реализация Production Chain Manager
+    description: |
+      Управление цепочками:
+      - CRUD операции
+      - Валидация цепочек
+      - Расчёт стоимости
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: production-stage-manager
+    title: Реализация Production Stage Manager
+    description: |
+      Управление этапами:
+      - Выполнение этапов
+      - Переходы между этапами
+      - Обработка результатов
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: station-manager
+    title: Реализация Station Manager
+    description: |
+      Управление станциями:
+      - CRUD операции
+      - Улучшение станций
+      - Резервирование
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: license-manager
+    title: Реализация License Manager
+    description: |
+      Управление лицензиями:
+      - Каталог лицензий
+      - Покупка лицензий
+      - Проверка лицензий
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: resource-manager
+    title: Реализация Resource Manager
+    description: |
+      Управление ресурсами:
+      - Проверка ресурсов
+      - Резервирование
+      - Расход ресурсов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: bulk-production-manager
+    title: Реализация Bulk Production Manager
+    description: |
+      Массовое производство:
+      - Создание массовых заказов
+      - Оптимизация производства
+      - Управление линиями
+    priority: medium
+    estimated_time: 5-6 дней
+
+  - id: accelerator-manager
+    title: Реализация Accelerator Manager
+    description: |
+      Ускорители и rush-заказы:
+      - Применение ускорителей
+      - Rush-заказы
+      - Расчёт стоимости
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: legendary-craft-manager
+    title: Реализация Legendary Craft Manager
+    description: |
+      Легендарный крафт:
+      - Квестовые цепочки
+      - Проверка требований
+      - Легендарный крафт
+    priority: medium
+    estimated_time: 6-7 дней
+
+  - id: production-analytics-collector
+    title: Реализация Production Analytics Collector
+    description: |
+      Сбор аналитики:
+      - Сбор метрик
+      - Анализ прибыльности
+      - Генерация отчётов
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: database-schema
+    title: Создание схемы БД для производственных цепочек
+    description: |
+      Создание таблиц:
+      - production_chains
+      - production_orders
+      - production_stages
+      - production_stations
+      - production_licenses
+      - player_production_licenses
+      - production_accelerators
+      - production_legendary_quests
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для производственных цепочек:
+      - CRUD операции
+      - Управление заказами
+      - Массовое производство
+      - Ускорители и rush-заказы
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: crafting-integration
+    title: Интеграция с Crafting Service
+    description: |
+      Интеграция с крафтом:
+      - Выполнение этапов крафта
+      - Получение рецептов
+      - Обработка результатов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: guild-integration
+    title: Интеграция с Guild Service
+    description: |
+      Интеграция с гильдиями:
+      - Гильдийное производство
+      - Распределение ролей
+      - Кооперативное производство
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: event-bus-integration
+    title: Интеграция с Event Bus
+    description: |
+      Публикация и подписка на события:
+      - production.* события
+      - Подписка на economy.event.active, inventory.resource.updated
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты производственных цепочек:
+      - Тесты цепочек и этапов
+      - Тесты массового производства
+      - Тесты ускорителей
+      - Тесты легендарного крафта
+      - Тесты интеграций
+      - Тесты производительности
+    priority: high
+    estimated_time: 7-8 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Production Service"
+            PCM[Production Chain Manager]
+            PSM[Production Stage Manager]
+            SM[Station Manager]
+            LM[License Manager]
+            RM[Resource Manager]
+            BPM[Bulk Production Manager]
+            AM[Accelerator Manager]
+            LCM[Legendary Craft Manager]
+        end
+
+        subgraph "Analytics Service"
+            PAC[Production Analytics Collector]
+        end
+
+        subgraph "Crafting Service"
+            CIM[Crafting Integration Manager]
+        end
+
+        subgraph "Guild Service"
+            GPM[Guild Production Manager]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>production_chains<br/>production_orders<br/>production_stages<br/>production_stations<br/>production_licenses<br/>player_production_licenses<br/>production_accelerators<br/>production_legendary_quests)]
+        end
+
+        subgraph "Event Bus"
+            EB[Kafka/Event Bus]
+        end
+
+        subgraph "External Services"
+            IS[Inventory Service]
+            ES[Economy Service]
+            QS[Quest Service]
+        end
+
+        PCM --> PSM
+        PCM --> LM
+        PSM --> SM
+        PSM --> RM
+        PSM --> CIM
+        BPM --> PSM
+        AM --> PSM
+        LCM --> PSM
+        PCM --> PAC
+        PSM --> GPM
+        PCM --> DB
+        PSM --> DB
+        SM --> DB
+        LM --> DB
+        PCM --> EB
+        PSM --> EB
+        RM --> IS
+        PCM --> ES
+        LCM --> QS
+    ```
+
+  production_lifecycle_flow: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> PENDING: Create Order
+        PENDING --> STARTED: Start Production
+        STARTED --> IN_PROGRESS: Stage Started
+        IN_PROGRESS --> STAGE_COMPLETED: Stage Completed
+        STAGE_COMPLETED --> IN_PROGRESS: Next Stage
+        STAGE_COMPLETED --> COMPLETED: All Stages Done
+        IN_PROGRESS --> FAILED: Stage Failed
+        PENDING --> CANCELLED: Cancel
+        STARTED --> CANCELLED: Cancel
+        IN_PROGRESS --> CANCELLED: Cancel
+        COMPLETED --> [*]
+        FAILED --> [*]
+        CANCELLED --> [*]
+    ```
+
+  production_stage_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant PCM as Production Chain Manager
+        participant PSM as Production Stage Manager
+        participant RM as Resource Manager
+        participant SM as Station Manager
+        participant CS as Crafting Service
+        participant IS as Inventory Service
+
+        P->>PCM: Start Production
+        PCM->>LM: Check Licenses
+        LM->>PCM: Licenses OK
+        PCM->>RM: Check Resources
+        RM->>PCM: Resources OK
+        PCM->>SM: Reserve Station
+        SM->>PCM: Station Reserved
+        PCM->>PSM: Start Stage
+        PSM->>RM: Reserve Resources
+        RM->>PSM: Resources Reserved
+        PSM->>CS: Execute Craft
+        CS->>PSM: Craft Result
+        PSM->>RM: Consume Resources
+        PSM->>IS: Add Result Item
+        PSM->>PSM: Next Stage or Complete
+    ```
+
+decisions:
+  - id: adr-production-chains-architecture
+    summary: |
+      Выбрана микросервисная архитектура с production-service как основным сервисом
+      и интеграцией с crafting-service, guild-service и analytics-service.
+
+  - id: adr-production-stages
+    summary: |
+      Производство реализовано через многоэтапную систему (добыча сырья, переработка, крафт, сборка)
+      с возможностью провала на каждом этапе и обработкой результатов.
+
+  - id: adr-bulk-production
+    summary: |
+      Массовое производство оптимизирует время и ресурсы через производственные площадки
+      и сборочные линии для эффективного выпуска крупных партий.
+
+  - id: adr-accelerators
+    summary: |
+      Ускорители и rush-заказы позволяют игрокам сокращать время производства
+      за увеличение стоимости для балансировки игрового процесса.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация формата производственных цепочек (JSONB структура)
+  - Определение формата этапов и ресурсов
+  - Создание схем сообщений для Event Bus
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы производственных цепочек:
+      - Определены микросервисы (production-service, crafting-service, guild-service, analytics-service)
+      - Определены компоненты (Production Chain Manager, Production Stage Manager, Station Manager, License Manager, Resource Manager, Bulk Production Manager, Accelerator Manager, Legendary Craft Manager, Production Analytics Collector)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (production start, execution, completion, bulk production, rush order, legendary craft)
+      - Определена структура БД (production_chains, production_orders, production_stages, production_stations, production_licenses, player_production_licenses, production_accelerators, production_legendary_quests)
+      - Описаны интеграции с другими сервисами (crafting-service, guild-service, inventory-service, economy-service, quest-service)
+      - Определены Event Bus события (published и subscribed)
+      - Создано техническое задание
+      - Разбито на подзадачи
+
