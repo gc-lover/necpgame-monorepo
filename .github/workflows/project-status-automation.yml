@@ -166,7 +166,10 @@ jobs:
             let stage = '';
             let agent = '';
             
-            if (labelNames.some(l => l.includes('idea-writer') || l.includes('idea'))) {
+            if (labelNames.some(l => l.includes('content-writer') || l.includes('content'))) {
+              stage = 'content-writer';
+              agent = 'content-writer';
+            } else if (labelNames.some(l => l.includes('idea-writer') || l.includes('idea'))) {
               stage = 'idea-writer';
               agent = 'idea-writer';
             } else if (labelNames.some(l => l.includes('architect') || l.includes('architecture'))) {
@@ -175,7 +178,7 @@ jobs:
             } else if (labelNames.some(l => l.includes('api-designer') || l.includes('api'))) {
               stage = 'api-designer';
               agent = 'api-designer';
-            } else             if (labelNames.some(l => l.includes('backend'))) {
+            } else if (labelNames.some(l => l.includes('backend'))) {
               stage = 'backend-dev';
               agent = 'backend';
             } else if (labelNames.some(l => l.includes('network'))) {
@@ -433,6 +436,7 @@ jobs:
               
               const agentNames = {
                 'idea-writer': '🎨 Idea Writer',
+                'content-writer': '✍️ Content Writer',
                 'architect': '📐 Architect',
                 'api-designer': '📋 API Designer',
                 'backend': '⚙️ Backend Developer',
@@ -491,8 +495,12 @@ jobs:
               const labels = issue.labels.map(l => l.name);
               const labelNames = labels.map(l => l.name);
               
+              const hasContentLabels = labelNames.some(l => ['canon', 'lore', 'quest'].includes(l));
+              const isContentQuest = hasContentLabels && (labelNames.some(l => l.includes('idea-writer')) || labelNames.some(l => l.includes('content')));
+              
               const stageTransitions = {
-                'idea-writer': 'architect',
+                'idea-writer': isContentQuest ? 'content-writer' : 'architect',
+                'content-writer': 'testing',
                 'architect': 'api-designer',
                 'api-designer': 'backend-dev',
                 'backend-dev': 'network-dev',
@@ -504,7 +512,8 @@ jobs:
               };
               
               let currentStage = '';
-              if (labelNames.some(l => l.includes('idea-writer'))) currentStage = 'idea-writer';
+              if (labelNames.some(l => l.includes('content-writer') || l.includes('content'))) currentStage = 'content-writer';
+              else if (labelNames.some(l => l.includes('idea-writer'))) currentStage = 'idea-writer';
               else if (labelNames.some(l => l.includes('architect'))) currentStage = 'architect';
               else if (labelNames.some(l => l.includes('api-designer'))) currentStage = 'api-designer';
               else if (labelNames.some(l => l.includes('backend'))) currentStage = 'backend-dev';
@@ -517,6 +526,7 @@ jobs:
               
               if (nextStage) {
                 const nextAgentLabels = {
+                  'content-writer': ['agent:content-writer', 'stage:content'],
                   'architect': ['agent:architect', 'stage:design'],
                   'api-designer': ['agent:api-designer', 'stage:api-design'],
                   'backend-dev': ['agent:backend', 'stage:backend-dev'],
@@ -536,6 +546,7 @@ jobs:
                 });
                 
                 const agentNames = {
+                  'content-writer': '✍️ Content Writer',
                   'architect': '📐 Architect',
                   'api-designer': '📋 API Designer',
                   'backend-dev': '⚙️ Backend Developer',

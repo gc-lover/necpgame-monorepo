@@ -58,8 +58,12 @@ jobs:
             const labels = JSON.parse('${{ steps.check_ready.outputs.current_labels }}');
             const labelNames = labels.map(l => l.name || l);
             
+            const hasContentLabels = labelNames.some(l => ['canon', 'lore', 'quest'].includes(l));
+            const isContentQuest = hasContentLabels && (labelNames.some(l => l.includes('idea-writer')) || labelNames.some(l => l.includes('content')));
+            
             const stageTransitions = {
-              'idea-writer': { next: 'architect', agent: 'architect', stage: 'design' },
+              'idea-writer': isContentQuest ? { next: 'content-writer', agent: 'content-writer', stage: 'content' } : { next: 'architect', agent: 'architect', stage: 'design' },
+              'content-writer': { next: 'testing', agent: 'qa', stage: 'testing' },
               'architect': { next: 'api-designer', agent: 'api-designer', stage: 'api-design' },
               'api-designer': { next: 'backend-dev', agent: 'backend', stage: 'backend-dev' },
               'backend-dev': { next: 'network-dev', agent: 'network', stage: 'network' },
@@ -69,7 +73,9 @@ jobs:
             };
             
             let currentStage = '';
-            if (labelNames.some(l => l.includes('idea-writer') || l.includes('idea'))) {
+            if (labelNames.some(l => l.includes('content-writer') || l.includes('content'))) {
+              currentStage = 'content-writer';
+            } else if (labelNames.some(l => l.includes('idea-writer') || l.includes('idea'))) {
               currentStage = 'idea-writer';
             } else if (labelNames.some(l => l.includes('architect') || l.includes('architecture'))) {
               currentStage = 'architect';
@@ -108,6 +114,7 @@ jobs:
             const currentStage = '${{ steps.next_stage.outputs.current_stage }}';
             
             const agentNames = {
+              'content-writer': '✍️ Content Writer',
               'architect': '📐 Architect',
               'api-designer': '📋 API Designer',
               'backend': '⚙️ Backend Developer',
