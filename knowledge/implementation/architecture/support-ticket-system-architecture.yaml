@@ -1,657 +1,601 @@
 metadata:
   id: support-ticket-system-architecture
-  title: Архитектура системы тикетов поддержки (Support Ticket System)
+  title: Архитектура системы тикетов поддержки
   document_type: architecture
   category: systems
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T04:00:00Z
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:59:00Z
   owners:
     - role: architect
       contact: architect@necp.game
   tags:
     - architecture
-    - support
-    - backend
     - operations
-    - customer-service
+    - support
+    - tickets
   related_systems:
-    - support-service-go
+    - support-service
     - notification-service
     - accounts-service
     - analytics-service
   related_documents:
     - id: support-ticket-system
-      relation: extends
+      relation: implements
   github_issue: 334
   visibility: internal
   audience:
     - architect
     - backend
+    - operations
+    - support
     - api-designer
 
 summary:
   problem: |
-    Требуется спроектировать полную техническую архитектуру системы тикетов поддержки
-    для обработки обращений игроков с контролем приоритетов, SLA, очередями агентов
-    и уведомлениями для обеспечения качественной поддержки игроков.
+    Требуется спроектировать полную архитектуру системы тикетов поддержки, включающую:
+    - Обработку обращений игроков
+    - Контроль приоритетов и SLA
+    - Очереди агентов
+    - Автокатегоризацию
+    - Уведомления
+    - Мониторинг SLA
   goal: |
     Создать архитектурную схему системы тикетов поддержки с определением:
-    - Компонентов системы (микросервисы, модули)
-    - API endpoints (высокоуровнево)
-    - Потоков данных и интеграций
-    - Системы создания тикетов
-    - Системы автокатегоризации
-    - Системы назначения приоритетов
-    - Системы очередей агентов
-    - Системы SLA мониторинга
+    - Компонентов для управления тикетами
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
     - Технического задания для реализации
   essence: |
-    Система тикетов поддержки для обработки обращений игроков с автокатегоризацией,
-    назначением приоритетов, очередями агентов и SLA мониторингом.
+    Полная архитектура системы тикетов поддержки с поддержкой создания тикетов,
+    автокатегоризации, назначения приоритетов, очередей агентов и SLA мониторинга.
 
 architecture:
   overview: |
-    Система тикетов поддержки состоит из девяти основных компонентов:
-    1. Ticket Manager - управление тикетами
-    2. Ticket Creation Handler - обработка создания тикетов
-    3. Auto-Categorization Engine - автокатегоризация тикетов
+    Архитектура системы тикетов поддержки состоит из следующих компонентов:
+    1. Support Ticket Manager - управление системой тикетов
+    2. Ticket Creator - создание тикетов
+    3. Auto Categorization Engine - автокатегоризация тикетов
     4. Priority Assignment Engine - назначение приоритетов
     5. Agent Queue Manager - управление очередями агентов
-    6. Ticket Response Handler - обработка ответов
-    7. SLA Monitor - мониторинг SLA
-    8. Ticket Rating System - система рейтинга
-    9. Support Event Handler - обработка событий
+    6. SLA Monitor - мониторинг SLA
+    7. Ticket Response Manager - управление ответами
+    8. Ticket Status Manager - управление статусами
+    9. Support Analytics Collector - сбор аналитики
+    10. Support Telemetry Collector - сбор телеметрии
 
-  components:
-    - name: Ticket Manager
-      location: support-service-go (модуль ticket)
+  microservices:
+    - name: support-service
+      port: 8095
       responsibility: |
-        - Управление тикетами
-        - Получение информации о тикетах
-        - Обновление тикетов
-        - Управление статусами
-      ticket_statuses: |
-        - OPEN: открыт
-        - ASSIGNED: назначен агенту
-        - IN_PROGRESS: в работе
-        - WAITING_FOR_PLAYER: ожидает ответа игрока
-        - RESOLVED: решён
-        - CLOSED: закрыт
-        - CANCELLED: отменён
-      endpoints:
-        - POST /api/v1/support/tickets - создание тикета
-        - GET /api/v1/support/tickets - список тикетов
-        - GET /api/v1/support/tickets/{ticket_id} - информация о тикете
-        - PUT /api/v1/support/tickets/{ticket_id} - обновление тикета
-        - POST /api/v1/support/tickets/{ticket_id}/close - закрытие тикета
-
-    - name: Ticket Creation Handler
-      location: support-service-go (модуль ticket-creation)
-      responsibility: |
-        - Обработка создания тикетов
-        - Генерация номера тикета
-        - Валидация данных
-        - Инициализация тикета
-      creation_flow: |
-        1. Игрок создаёт тикет
-        2. Валидация данных
-        3. Генерация уникального номера
-        4. Автокатегоризация
-        5. Назначение приоритета
-        6. Размещение в очередь
-        7. Уведомление игрока
-      endpoints:
-        - POST /api/v1/support/tickets/create - создание тикета
-
-    - name: Auto-Categorization Engine
-      location: support-service-go (модуль ticket-categorization)
-      responsibility: |
+        Обработка системы тикетов поддержки:
+        - Управление системой тикетов
+        - Создание тикетов
         - Автокатегоризация тикетов
-        - Анализ содержимого
-        - Определение категории
-        - Обучение на исторических данных
-      categories: |
-        - TECHNICAL: технические проблемы
-        - BILLING: вопросы оплаты
-        - ACCOUNT: проблемы с аккаунтом
-        - GAMEPLAY: вопросы геймплея
-        - BUG_REPORT: сообщения об ошибках
-        - FEATURE_REQUEST: запросы функций
-        - OTHER: прочее
-      categorization_methods: |
-        - Анализ ключевых слов
-        - Машинное обучение
-        - Правила категоризации
-      endpoints:
-        - POST /api/v1/support/tickets/{ticket_id}/categorize - категоризация тикета
-
-    - name: Priority Assignment Engine
-      location: support-service-go (модуль ticket-priority)
-      responsibility: |
-        - Назначение приоритетов тикетам
-        - Определение приоритета на основе категории и содержимого
-        - Обновление приоритета
-      priorities: |
-        - LOW: низкий
-        - NORMAL: обычный
-        - HIGH: высокий
-        - URGENT: срочный
-        - CRITICAL: критический
-      priority_rules: |
-        - CRITICAL: проблемы с аккаунтом, потеря прогресса
-        - URGENT: проблемы с оплатой, блокировка аккаунта
-        - HIGH: технические проблемы, влияющие на геймплей
-        - NORMAL: общие вопросы, запросы функций
-        - LOW: информационные запросы
-      endpoints:
-        - POST /api/v1/support/tickets/{ticket_id}/priority - обновление приоритета
-
-    - name: Agent Queue Manager
-      location: support-service-go (модуль ticket-queue)
-      responsibility: |
+        - Назначение приоритетов
         - Управление очередями агентов
-        - Назначение тикетов агентам
-        - Балансировка нагрузки
-        - Управление доступностью агентов
-      queue_features: |
-        - Очереди по категориям
-        - Очереди по приоритетам
-        - Назначение по навыкам агентов
-        - Балансировка нагрузки
-      assignment_strategy: |
-        - Round-robin
-        - По навыкам
-        - По загрузке
-        - По специализации
+        - Мониторинг SLA
+        - Управление ответами
+        - Управление статусами
+        - Сбор аналитики
+        - Сбор телеметрии
+      components:
+        - support-ticket-manager: управление системой тикетов
+        - ticket-creator: создание тикетов
+        - auto-categorization-engine: автокатегоризация тикетов
+        - priority-assignment-engine: назначение приоритетов
+        - agent-queue-manager: управление очередями агентов
+        - sla-monitor: мониторинг SLA
+        - ticket-response-manager: управление ответами
+        - ticket-status-manager: управление статусами
+        - support-analytics-collector: сбор аналитики
+        - support-telemetry-collector: сбор телеметрии
       endpoints:
-        - POST /api/v1/support/tickets/{ticket_id}/assign - назначение тикета агенту
-        - GET /api/v1/support/agents/queue - очередь агента
-        - GET /api/v1/support/agents/available - доступные агенты
+        - GET /api/v1/support/tickets - список тикетов
+        - GET /api/v1/support/tickets/{ticketId} - информация о тикете
+        - POST /api/v1/support/tickets - создание тикета
+        - PUT /api/v1/support/tickets/{ticketId} - обновление тикета
+        - DELETE /api/v1/support/tickets/{ticketId} - удаление тикета
+        - POST /api/v1/support/tickets/{ticketId}/assign - назначение агента
+        - POST /api/v1/support/tickets/{ticketId}/status - изменение статуса
+        - POST /api/v1/support/tickets/{ticketId}/priority - изменение приоритета
+        - GET /api/v1/support/tickets/{characterId}/my-tickets - тикеты персонажа
+        - GET /api/v1/support/tickets/{agentId}/assigned - назначенные тикеты агента
+        - GET /api/v1/support/tickets/queue - очередь тикетов
+        - POST /api/v1/support/tickets/{ticketId}/responses - добавление ответа
+        - GET /api/v1/support/tickets/{ticketId}/responses - список ответов
+        - POST /api/v1/support/tickets/{ticketId}/rate - оценка тикета
+        - GET /api/v1/support/tickets/{ticketId}/sla - информация о SLA
+        - GET /api/v1/support/tickets/stats - статистика тикетов
+      websocket_channels:
+        - wss://api.necp.game/v1/support/tickets/{ticketId} - поток обновлений тикета
+        - wss://api.necp.game/v1/support/agents/{agentId}/queue - поток очереди агента
+      events_published:
+        - support.ticket.created: создан тикет
+        - support.ticket.updated: обновлен тикет
+        - support.ticket.assigned: назначен агент
+        - support.ticket.status-changed: изменен статус
+        - support.ticket.priority-changed: изменен приоритет
+        - support.ticket.response-added: добавлен ответ
+        - support.ticket.rated: оценен тикет
+        - support.ticket.sla-warning: предупреждение SLA
+        - support.ticket.sla-breach: нарушение SLA
+      events_subscribed:
+        - character.created: создан персонаж
+        - character.banned: забанен персонаж
+        - payment.failed: неудачный платеж
+        - bug.reported: сообщен баг
 
-    - name: Ticket Response Handler
-      location: support-service-go (модуль ticket-response)
-      responsibility: |
-        - Обработка ответов на тикеты
-        - Создание ответов
-        - Управление видимостью ответов
-        - Вложения к ответам
-      response_visibility: |
-        - PUBLIC: публичный ответ (виден игроку)
-        - INTERNAL: внутренний ответ (только для агентов)
-      endpoints:
-        - POST /api/v1/support/tickets/{ticket_id}/responses - создание ответа
-        - GET /api/v1/support/tickets/{ticket_id}/responses - список ответов
-        - PUT /api/v1/support/tickets/{ticket_id}/responses/{response_id} - обновление ответа
+  ticket_categories:
+    - name: technical
+      description: "Технические проблемы - баги, лаги, краши"
+      auto_categorization_keywords: ["bug", "crash", "lag", "error", "glitch"]
 
-    - name: SLA Monitor
-      location: support-service-go (модуль ticket-sla)
-      responsibility: |
-        - Мониторинг SLA тикетов
-        - Отслеживание времени ответа
-        - Отслеживание времени решения
-        - Уведомления о нарушении SLA
-      sla_targets: |
-        - CRITICAL: первый ответ < 15 минут, решение < 2 часа
-        - URGENT: первый ответ < 1 час, решение < 4 часа
-        - HIGH: первый ответ < 4 часа, решение < 24 часа
-        - NORMAL: первый ответ < 24 часа, решение < 72 часа
-        - LOW: первый ответ < 48 часов, решение < 7 дней
-      endpoints:
-        - GET /api/v1/support/tickets/{ticket_id}/sla - статус SLA тикета
-        - GET /api/v1/support/sla/violations - нарушения SLA
+    - name: account
+      description: "Проблемы с аккаунтом - вход, восстановление, безопасность"
+      auto_categorization_keywords: ["login", "password", "account", "security", "hack"]
 
-    - name: Ticket Rating System
-      location: support-service-go (модуль ticket-rating)
-      responsibility: |
-        - Система рейтинга тикетов
-        - Оценка удовлетворённости игроков
-        - Сбор обратной связи
-        - Статистика рейтингов
-      rating_features: |
-        - Оценка от 1 до 5 звёзд
-        - Комментарии к оценке
-        - Аналитика рейтингов
-      endpoints:
-        - POST /api/v1/support/tickets/{ticket_id}/rate - оценка тикета
-        - GET /api/v1/support/tickets/{ticket_id}/rating - рейтинг тикета
-        - GET /api/v1/support/agents/{agent_id}/ratings - рейтинги агента
+    - name: payment
+      description: "Проблемы с платежами - оплата, возврат, подписка"
+      auto_categorization_keywords: ["payment", "refund", "subscription", "purchase", "money"]
 
-    - name: Support Event Handler
-      location: support-service-go (модуль ticket-events)
-      responsibility: |
-        - Обработка событий тикетов
-        - Публикация событий в event bus
-        - Подписка на события от других систем
-        - Интеграция с аналитикой
-      support_events_published: |
-        - support:ticket-created
-        - support:ticket-assigned
-        - support:ticket-status-changed
-        - support:response-added
-        - support:ticket-resolved
-        - support:ticket-rated
-        - support:sla-violated
-      endpoints:
-        - GET /api/v1/support/tickets/events/{ticket_id} - события тикета
+    - name: gameplay
+      description: "Вопросы по геймплею - механики, баланс, прогресс"
+      auto_categorization_keywords: ["gameplay", "balance", "progress", "quest", "skill"]
 
-  data_flow:
-    ticket_creation: |
-      1. Игрок создаёт тикет через API
-      2. Ticket Creation Handler валидирует данные
-      3. Генерируется уникальный номер тикета
-      4. Auto-Categorization Engine определяет категорию
-      5. Priority Assignment Engine назначает приоритет
-      6. Ticket Manager создаёт тикет в БД
-      7. Agent Queue Manager размещает тикет в очередь
-      8. Support Event Handler публикует support:ticket-created
-      9. Notification Service уведомляет игрока
-      10. SLA Monitor начинает отслеживание SLA
+    - name: social
+      description: "Социальные вопросы - гильдии, друзья, чат"
+      auto_categorization_keywords: ["guild", "friend", "chat", "social", "party"]
 
-    ticket_assignment: |
+    - name: report
+      description: "Жалобы - читеры, токсичность, нарушение правил"
+      auto_categorization_keywords: ["cheat", "toxic", "report", "abuse", "violation"]
+
+    - name: suggestion
+      description: "Предложения - идеи, фичи, улучшения"
+      auto_categorization_keywords: ["suggestion", "idea", "feature", "improvement", "wish"]
+
+    - name: other
+      description: "Прочее - все остальные вопросы"
+      auto_categorization_keywords: []
+
+  ticket_priorities:
+    - name: low
+      description: "Низкий приоритет - не срочные вопросы"
+      sla_response_time: "24 hours"
+      sla_resolution_time: "7 days"
+      auto_assignment_rules:
+        - category: suggestion
+        - category: other
+
+    - name: medium
+      description: "Средний приоритет - стандартные вопросы"
+      sla_response_time: "12 hours"
+      sla_resolution_time: "3 days"
+      auto_assignment_rules:
+        - category: gameplay
+        - category: social
+
+    - name: high
+      description: "Высокий приоритет - важные вопросы"
+      sla_response_time: "4 hours"
+      sla_resolution_time: "1 day"
+      auto_assignment_rules:
+        - category: account
+        - category: payment
+
+    - name: critical
+      description: "Критический приоритет - срочные проблемы"
+      sla_response_time: "1 hour"
+      sla_resolution_time: "4 hours"
+      auto_assignment_rules:
+        - category: technical
+        - keywords: ["crash", "hack", "security"]
+
+  ticket_statuses:
+    - name: open
+      description: "Открыт - ожидает назначения агента"
+      next_statuses: ["assigned", "closed"]
+
+    - name: assigned
+      description: "Назначен - назначен агент, ожидает ответа"
+      next_statuses: ["in_progress", "waiting_for_player", "closed"]
+
+    - name: in_progress
+      description: "В работе - агент работает над тикетом"
+      next_statuses: ["waiting_for_player", "resolved", "closed"]
+
+    - name: waiting_for_player
+      description: "Ожидает ответа игрока - агент ждет ответа"
+      next_statuses: ["in_progress", "resolved", "closed"]
+
+    - name: resolved
+      description: "Решен - проблема решена, ожидает подтверждения"
+      next_statuses: ["closed"]
+
+    - name: closed
+      description: "Закрыт - тикет закрыт"
+      next_statuses: []
+
+  agent_queues:
+    types:
+      - name: round_robin
+        description: "Круговая очередь - равномерное распределение"
+        assignment_strategy: "round_robin"
+
+      - name: least_busy
+        description: "Наименее загруженный - по количеству активных тикетов"
+        assignment_strategy: "least_busy"
+
+      - name: skill_based
+        description: "По навыкам - по категориям и экспертизе"
+        assignment_strategy: "skill_based"
+
+      - name: priority_based
+        description: "По приоритету - критичные тикеты первыми"
+        assignment_strategy: "priority_based"
+
+    rules:
+      - max_tickets_per_agent: 10
+      - max_critical_tickets_per_agent: 3
+      - auto_reassign_timeout: "2 hours"
+      - queue_refresh_interval: "5 minutes"
+
+  sla_monitoring:
+    metrics:
+      - first_response_time: "время первого ответа"
+      - resolution_time: "время решения"
+      - agent_response_time: "время ответа агента"
+      - player_response_time: "время ответа игрока"
+
+    thresholds:
+      - metric: first_response_time
+        warning: "80% от SLA"
+        breach: "100% от SLA"
+
+      - metric: resolution_time
+        warning: "80% от SLA"
+        breach: "100% от SLA"
+
+    actions:
+      - warning: "уведомление агента и супервайзера"
+      - breach: "эскалация супервайзеру, уведомление менеджмента"
+
+  data_flows:
+    ticket_creation_flow: |
+      1. Игрок создает тикет через API
+      2. Ticket Creator валидирует данные тикета
+      3. Auto Categorization Engine определяет категорию
+      4. Priority Assignment Engine назначает приоритет
+      5. Support Ticket Manager сохраняет тикет в БД
+      6. Agent Queue Manager добавляет тикет в очередь
+      7. Support Ticket Manager публикует событие support.ticket.created
+      8. Notification Service отправляет уведомление игроку
+      9. SLA Monitor начинает отслеживание SLA
+
+    ticket_assignment_flow: |
       1. Agent Queue Manager выбирает тикет из очереди
-      2. Выбирается подходящий агент
-      3. Тикет назначается агенту
-      4. Статус обновляется на ASSIGNED
-      5. Support Event Handler публикует support:ticket-assigned
-      6. Notification Service уведомляет агента и игрока
+      2. Agent Queue Manager выбирает агента по стратегии
+      3. Agent Queue Manager проверяет лимиты агента
+      4. Support Ticket Manager назначает агента тикету
+      5. Support Ticket Manager обновляет статус на "assigned"
+      6. Support Ticket Manager публикует событие support.ticket.assigned
+      7. Notification Service отправляет уведомление агенту
+      8. Notification Service отправляет уведомление игроку
+      9. SLA Monitor обновляет метрики
 
-    ticket_response: |
-      1. Агент создаёт ответ на тикет
-      2. Ticket Response Handler сохраняет ответ
-      3. Статус обновляется на IN_PROGRESS или WAITING_FOR_PLAYER
-      4. Support Event Handler публикует support:response-added
-      5. Notification Service уведомляет игрока
-      6. SLA Monitor обновляет метрики
+    ticket_response_flow: |
+      1. Агент или игрок добавляет ответ через API
+      2. Ticket Response Manager валидирует ответ
+      3. Ticket Response Manager сохраняет ответ в БД
+      4. Ticket Status Manager обновляет статус тикета
+      5. Support Ticket Manager публикует событие support.ticket.response-added
+      6. Notification Service отправляет уведомление получателю
+      7. SLA Monitor обновляет метрики ответа
+      8. Realtime Gateway отправляет обновление клиентам
 
-    ticket_resolution: |
-      1. Агент отмечает тикет как решённый
-      2. Статус обновляется на RESOLVED
-      3. Support Event Handler публикует support:ticket-resolved
-      4. Notification Service уведомляет игрока
-      5. Ticket Rating System запрашивает оценку
-      6. После оценки тикет закрывается
+    sla_monitoring_flow: |
+      1. SLA Monitor периодически проверяет активные тикеты
+      2. SLA Monitor вычисляет метрики для каждого тикета
+      3. SLA Monitor сравнивает метрики с порогами
+      4. При достижении warning порога - отправляет предупреждение
+      5. При достижении breach порога - эскалирует тикет
+      6. Support Ticket Manager публикует событие support.ticket.sla-warning или support.ticket.sla-breach
+      7. Notification Service отправляет уведомления
+      8. Analytics Service собирает метрики SLA
 
-  integrations:
-    with_accounts_service: |
-      - Получение информации об игроках
-      - Валидация аккаунтов
-      - Интеграция с системой аккаунтов
-
-    with_notification_service: |
-      - Уведомления игроков о статусе тикетов
-      - Уведомления агентов о новых тикетах
-      - Уведомления о нарушениях SLA
-
-    with_analytics_service: |
-      - Статистика тикетов
-      - Аналитика SLA
-      - Отчёты по поддержке
-
-    with_admin_api: |
-      - Административный доступ к тикетам
-      - Управление агентами
-      - Мониторинг очередей
-
-    with_realtime_gateway: |
-      - Синхронизация статуса тикетов
-      - Уведомления о событиях
-      - Обновления в реальном времени
-
-  database_schema:
+  database_structure:
     tables:
       - name: support_tickets
         description: Тикеты поддержки
-        fields:
-          - id: UUID (PK)
-          - ticket_number: VARCHAR(50) (UNIQUE)
-          - player_id: UUID (FK accounts)
-          - category: ENUM (TECHNICAL, BILLING, ACCOUNT, GAMEPLAY, BUG_REPORT, FEATURE_REQUEST, OTHER)
-          - priority: ENUM (LOW, NORMAL, HIGH, URGENT, CRITICAL)
-          - status: ENUM (OPEN, ASSIGNED, IN_PROGRESS, WAITING_FOR_PLAYER, RESOLVED, CLOSED, CANCELLED)
-          - assigned_agent_id: UUID (FK accounts, nullable)
+        columns:
+          - id: UUID PRIMARY KEY
+          - ticket_number: VARCHAR(20) UNIQUE
+          - character_id: UUID FOREIGN KEY
+          - category: ENUM (technical, account, payment, gameplay, social, report, suggestion, other)
+          - priority: ENUM (low, medium, high, critical)
+          - status: ENUM (open, assigned, in_progress, waiting_for_player, resolved, closed)
+          - assigned_agent_id: UUID FOREIGN KEY
           - subject: VARCHAR(255)
           - description: TEXT
+          - attachments: JSONB
           - created_at: TIMESTAMP
-          - assigned_at: TIMESTAMP (nullable)
-          - first_response_at: TIMESTAMP (nullable)
-          - resolved_at: TIMESTAMP (nullable)
-          - closed_at: TIMESTAMP (nullable)
           - updated_at: TIMESTAMP
-        indexes:
-          - player_id, created_at
-          - status, priority, created_at
-          - assigned_agent_id, status
-          - category, status
-          - ticket_number
+          - first_response_at: TIMESTAMP
+          - resolved_at: TIMESTAMP
+          - closed_at: TIMESTAMP
+          - sla_response_deadline: TIMESTAMP
+          - sla_resolution_deadline: TIMESTAMP
+          - rating: INTEGER
+          - rating_comment: TEXT
 
       - name: ticket_responses
         description: Ответы на тикеты
-        fields:
-          - id: UUID (PK)
-          - ticket_id: UUID (FK support_tickets)
-          - author_id: UUID (FK accounts)
-          - is_agent: BOOLEAN
-          - visibility: ENUM (PUBLIC, INTERNAL)
+        columns:
+          - id: UUID PRIMARY KEY
+          - ticket_id: UUID FOREIGN KEY
+          - author_id: UUID FOREIGN KEY
+          - author_type: ENUM (player, agent)
           - content: TEXT
-          - attachments: JSONB (nullable)
+          - attachments: JSONB
+          - is_internal: BOOLEAN
           - created_at: TIMESTAMP
-        indexes:
-          - ticket_id, created_at
-          - author_id
-
-      - name: ticket_ratings
-        description: Рейтинги тикетов
-        fields:
-          - id: UUID (PK)
-          - ticket_id: UUID (FK support_tickets, UNIQUE)
-          - player_id: UUID (FK accounts)
-          - rating: INTEGER (1-5)
-          - comment: TEXT (nullable)
-          - rated_at: TIMESTAMP
-        indexes:
-          - ticket_id
-          - player_id
+          - updated_at: TIMESTAMP
 
       - name: agent_queues
         description: Очереди агентов
-        fields:
-          - id: UUID (PK)
-          - agent_id: UUID (FK accounts)
-          - category: ENUM (TECHNICAL, BILLING, ACCOUNT, GAMEPLAY, BUG_REPORT, FEATURE_REQUEST, OTHER)
-          - priority: ENUM (LOW, NORMAL, HIGH, URGENT, CRITICAL)
-          - ticket_id: UUID (FK support_tickets)
-          - position: INTEGER
-          - created_at: TIMESTAMP
-        indexes:
-          - agent_id, priority, position
-          - category, priority, position
-
-      - name: sla_tracking
-        description: Отслеживание SLA
-        fields:
-          - id: UUID (PK)
-          - ticket_id: UUID (FK support_tickets, UNIQUE)
-          - priority: ENUM (LOW, NORMAL, HIGH, URGENT, CRITICAL)
-          - first_response_target: TIMESTAMP
-          - first_response_actual: TIMESTAMP (nullable)
-          - resolution_target: TIMESTAMP
-          - resolution_actual: TIMESTAMP (nullable)
-          - first_response_sla_met: BOOLEAN (nullable)
-          - resolution_sla_met: BOOLEAN (nullable)
+        columns:
+          - id: UUID PRIMARY KEY
+          - agent_id: UUID FOREIGN KEY
+          - queue_type: ENUM (round_robin, least_busy, skill_based, priority_based)
+          - active_tickets_count: INTEGER
+          - max_tickets: INTEGER
+          - skills: JSONB
           - created_at: TIMESTAMP
           - updated_at: TIMESTAMP
-        indexes:
-          - ticket_id
-          - first_response_target
-          - resolution_target
+
+      - name: ticket_sla_metrics
+        description: Метрики SLA тикетов
+        columns:
+          - id: UUID PRIMARY KEY
+          - ticket_id: UUID FOREIGN KEY
+          - metric_type: VARCHAR(50)
+          - metric_value: INTEGER
+          - threshold_warning: INTEGER
+          - threshold_breach: INTEGER
+          - status: ENUM (ok, warning, breach)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: support_telemetry
+        description: Телеметрия поддержки
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_type: VARCHAR(50)
+          - ticket_id: UUID FOREIGN KEY
+          - agent_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - event_data: JSONB
+          - created_at: TIMESTAMP
+
+  integrations:
+    notification_service: |
+      - Уведомления о создании тикета
+      - Уведомления о назначении агента
+      - Уведомления о новых ответах
+      - Уведомления об изменении статуса
+      - Уведомления о SLA предупреждениях
+
+    accounts_service: |
+      - Получение информации об аккаунте
+      - Проверка статуса аккаунта
+      - Валидация доступа к тикетам
+
+    character_service: |
+      - Получение информации о персонаже
+      - Проверка статуса персонажа
+      - Валидация доступа к тикетам
+
+    analytics_service: |
+      - Логирование всех операций с тикетами
+      - Сбор метрик эффективности
+      - Анализ паттернов обращений
+      - Мониторинг SLA
+
+    realtime_gateway: |
+      - Отправка realtime обновлений тикетов
+      - Уведомления о новых ответах
+      - Синхронизация очереди агентов
 
 technical_specification:
-  backend_requirements:
-    - Реализация модулей в support-service-go:
-      - ticket (управление тикетами)
-      - ticket-creation (создание тикетов)
-      - ticket-categorization (автокатегоризация)
-      - ticket-priority (назначение приоритетов)
-      - ticket-queue (очереди агентов)
-      - ticket-response (ответы)
-      - ticket-sla (мониторинг SLA)
-      - ticket-rating (рейтинги)
-      - ticket-events (события)
-    - Интеграция с accounts service
-    - Интеграция с notification service
-    - Интеграция с analytics service
-    - Оптимизация запросов к БД (индексы, кэширование)
+  subtasks:
+    - id: support-ticket-manager
+      title: Реализация менеджера системы тикетов
+      description: |
+        Реализация Support Ticket Manager с управлением системой тикетов
+        и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 5 days
 
-  realtime_requirements:
-    - Синхронизация статуса тикетов через WebSocket
-    - Уведомления о событиях
-    - Обновления в реальном времени
+    - id: ticket-creator
+      title: Реализация создателя тикетов
+      description: |
+        Реализация Ticket Creator с созданием тикетов,
+        валидацией данных и генерацией номеров.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
 
-  performance_requirements:
-    - Создание тикета < 200ms
-    - Назначение тикета < 100ms
-    - Создание ответа < 200ms
-    - Загрузка тикетов < 200ms
-    - Поддержка до 100K тикетов
-    - Поддержка до 10K активных тикетов
+    - id: auto-categorization-engine
+      title: Реализация движка автокатегоризации
+      description: |
+        Реализация Auto Categorization Engine с определением категорий,
+        анализом ключевых слов и машинным обучением.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 5 days
 
-  scalability_requirements:
-    - Горизонтальное масштабирование через support-service
-    - Распределение нагрузки на тикеты
-    - Оптимизация запросов к БД (batch, индексы)
-    - Кэширование очередей в Redis
-    - Оптимизация автокатегоризации
+    - id: priority-assignment-engine
+      title: Реализация движка назначения приоритетов
+      description: |
+        Реализация Priority Assignment Engine с назначением приоритетов,
+        применением правил и анализом контента.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 4 days
 
-subtasks:
-  - id: ticket-manager-module
-    title: Реализация модуля Ticket Manager
-    description: |
-      Управление тикетами
-      Получение информации о тикетах
-      Управление статусами
-    priority: high
-    estimated_time: 3-4 дня
+    - id: agent-queue-manager
+      title: Реализация менеджера очередей агентов
+      description: |
+        Реализация Agent Queue Manager с управлением очередями,
+        назначением агентов и стратегиями распределения.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 5 days
 
-  - id: ticket-creation-handler
-    title: Реализация Ticket Creation Handler
-    description: |
-      Обработка создания тикетов
-      Генерация номера тикета
-      Валидация данных
-    priority: high
-    estimated_time: 2-3 дня
+    - id: sla-monitor
+      title: Реализация монитора SLA
+      description: |
+        Реализация SLA Monitor с мониторингом SLA,
+        вычислением метрик и отправкой предупреждений.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 4 days
 
-  - id: auto-categorization-engine
-    title: Реализация Auto-Categorization Engine
-    description: |
-      Автокатегоризация тикетов
-      Анализ содержимого
-      Определение категории
-    priority: high
-    estimated_time: 4-5 дней
+    - id: ticket-response-manager
+      title: Реализация менеджера ответов
+      description: |
+        Реализация Ticket Response Manager с управлением ответами,
+        валидацией и управлением видимостью.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
 
-  - id: priority-assignment-engine
-    title: Реализация Priority Assignment Engine
-    description: |
-      Назначение приоритетов
-      Определение приоритета
-      Обновление приоритета
-    priority: high
-    estimated_time: 3-4 дня
+    - id: ticket-status-manager
+      title: Реализация менеджера статусов
+      description: |
+        Реализация Ticket Status Manager с управлением статусами,
+        валидацией переходов и обновлением метрик.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
 
-  - id: agent-queue-manager
-    title: Реализация Agent Queue Manager
-    description: |
-      Управление очередями агентов
-      Назначение тикетов
-      Балансировка нагрузки
-    priority: high
-    estimated_time: 4-5 дней
+    - id: support-analytics-collector
+      title: Реализация сборщика аналитики
+      description: |
+        Реализация Support Analytics Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
 
-  - id: ticket-response-handler
-    title: Реализация Ticket Response Handler
-    description: |
-      Обработка ответов
-      Создание ответов
-      Управление видимостью
-    priority: high
-    estimated_time: 3-4 дня
+    - id: support-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Support Telemetry Collector с логированием событий,
+        сбором телеметрии и интеграцией с Analytics Service.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 2 days
 
-  - id: sla-monitor
-    title: Реализация SLA Monitor
-    description: |
-      Мониторинг SLA
-      Отслеживание времени ответа
-      Уведомления о нарушениях
-    priority: high
-    estimated_time: 4-5 дней
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений тикетов,
+        очереди агентов и уведомлений.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 3 days
 
-  - id: ticket-rating-system
-    title: Реализация Ticket Rating System
-    description: |
-      Система рейтинга
-      Оценка удовлетворённости
-      Статистика рейтингов
-    priority: high
-    estimated_time: 2-3 дня
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы тикетов.
+      dependencies: [support-ticket-manager]
+      estimated_effort: 2 days
 
-  - id: support-event-handler
-    title: Реализация Support Event Handler
-    description: |
-      Обработка событий
-      Публикация событий
-      Интеграция с аналитикой
-    priority: high
-    estimated_time: 2-3 дня
-
-  - id: database-optimization
-    title: Оптимизация БД и запросов
-    description: |
-      Создание индексов
-      Оптимизация запросов
-      Кэширование очередей
-    priority: medium
-    estimated_time: 1-2 дня
-
-  - id: api-endpoints
-    title: Реализация REST API endpoints
-    description: |
-      Создание всех endpoints для тикетов
-      Интеграция с существующим API support-service
-    priority: high
-    estimated_time: 3-4 дня
-
-  - id: integration-testing
-    title: Интеграционное тестирование
-    description: |
-      Тесты создания тикетов
-      Тесты автокатегоризации
-      Тесты назначения приоритетов
-      Тесты очередей агентов
-      Тесты SLA мониторинга
-      Тесты интеграций
-    priority: high
-    estimated_time: 4-5 дней
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для тикетов, ответов, очередей агентов,
+        метрик SLA и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
 
 diagrams:
   component_diagram: |
     ```mermaid
     graph TB
-        subgraph "Support Service"
-            TM[Ticket Manager]
-            TCH[Ticket Creation Handler]
-            ACE[Auto-Categorization Engine]
-            PAE[Priority Assignment Engine]
-            AQM[Agent Queue Manager]
-            TRH[Ticket Response Handler]
-            SLAM[SLA Monitor]
-            TRS[Ticket Rating System]
-            SEH[Support Event Handler]
-        end
-
-        subgraph "Database"
-            DB[(PostgreSQL<br/>support_tickets<br/>ticket_responses<br/>ticket_ratings<br/>agent_queues<br/>sla_tracking)]
-        end
-
-        subgraph "External Services"
-            AS[Accounts Service]
-            NS[Notification Service]
-            ANAS[Analytics Service]
-            RG[Realtime Gateway]
-        end
-
-        subgraph "Client"
-            CL[UE5 Client]
-        end
-
-        CL -->|create ticket| TCH
-        TCH --> ACE
-        TCH --> PAE
-        TCH --> AQM
-        AQM --> AS
-        TRH --> NS
-        SLAM --> NS
-        SEH --> ANAS
-        SEH --> RG
-        RG -->|push events| CL
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SupportService[Support Service<br/>8095]
+        
+        SupportService --> STM[Support Ticket Manager]
+        SupportService --> TC[Ticket Creator]
+        SupportService --> ACE[Auto Categorization Engine]
+        SupportService --> PAE[Priority Assignment Engine]
+        SupportService --> AQM[Agent Queue Manager]
+        SupportService --> SLAM[SLA Monitor]
+        SupportService --> TRM[Ticket Response Manager]
+        SupportService --> TSM[Ticket Status Manager]
+        SupportService --> SAC[Support Analytics Collector]
+        SupportService --> STC[Support Telemetry Collector]
+        
+        STM --> TC
+        STM --> ACE
+        STM --> PAE
+        STM --> AQM
+        STM --> SLAM
+        STM --> TRM
+        STM --> TSM
+        
+        SupportService --> NotificationService[Notification Service]
+        SupportService --> AccountsService[Accounts Service]
+        SupportService --> CharacterService[Character Service]
+        SupportService --> AnalyticsService[Analytics Service]
+        
+        SupportService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SupportService --> DB[(Support DB)]
+        
+        Client --> WSTickets[WebSocket<br/>Tickets]
+        WSTickets --> SupportService
     ```
 
-  data_flow_diagram: |
+  ticket_creation_flow_diagram: |
     ```mermaid
     sequenceDiagram
-        participant P as Player
-        participant TCH as Ticket Creation Handler
-        participant ACE as Auto-Categorization Engine
+        participant Player as Player
+        participant TC as Ticket Creator
+        participant ACE as Auto Categorization Engine
+        participant PAE as Priority Assignment Engine
+        participant STM as Support Ticket Manager
         participant AQM as Agent Queue Manager
-        participant A as Agent
-
-        P->>TCH: Create ticket
-        TCH->>ACE: Categorize
-        ACE->>ACE: Determine category
-        TCH->>AQM: Assign to queue
-        AQM->>A: Assign ticket
-        A->>A: Respond to ticket
+        participant SLAM as SLA Monitor
+        participant NS as Notification Service
+        
+        Player->>TC: Create ticket
+        TC->>TC: Validate data
+        TC->>ACE: Categorize ticket
+        ACE->>ACE: Analyze keywords
+        ACE->>TC: Return category
+        TC->>PAE: Assign priority
+        PAE->>PAE: Apply rules
+        PAE->>TC: Return priority
+        TC->>STM: Save ticket
+        STM->>STM: Generate ticket number
+        STM->>AQM: Add to queue
+        STM->>SLAM: Start SLA monitoring
+        STM->>NS: Notify player
     ```
 
-decisions:
-  - id: adr-support-architecture
-    summary: |
-      Выбрана модульная архитектура внутри support-service-go для обеспечения
-      тесной интеграции с системами поддержки.
-
-  - id: adr-auto-categorization
-    summary: |
-      Автокатегоризация тикетов на основе анализа содержимого и машинного обучения
-      ускоряет обработку и улучшает маршрутизацию.
-
-  - id: adr-priority-assignment
-    summary: |
-      Автоматическое назначение приоритетов на основе категории и содержимого
-      обеспечивает правильную обработку критических тикетов.
-
-  - id: adr-agent-queues
-    summary: |
-      Система очередей агентов с балансировкой нагрузки и назначением по навыкам
-      обеспечивает эффективное распределение тикетов.
-
-  - id: adr-sla-monitoring
-    summary: |
-      Мониторинг SLA с различными целями для разных приоритетов обеспечивает
-      качество поддержки и позволяет отслеживать производительность.
-
-validation:
-  architecture_complete: true
-  components_defined: true
-  microservices_identified: true
-  api_endpoints_described: true
-  technical_specification_ready: true
-  subtasks_defined: true
-
-next_steps:
-  - Передача задачи агенту API Designer для создания OpenAPI спецификации
-  - Детализация API endpoints
-  - Создание request/response схем
-  - Определение формата автокатегоризации и SLA
-
-history:
-  - version: '1.0.0'
-    date: 2025-11-23
-    author: Architect Agent
-    changes: |
-      Создана полная архитектура системы тикетов поддержки:
-      - Определены компоненты (Ticket Manager, Ticket Creation Handler, Auto-Categorization Engine, Priority Assignment Engine, Agent Queue Manager, Ticket Response Handler, SLA Monitor, Ticket Rating System, Support Event Handler)
-      - Описаны статусы тикетов (OPEN, ASSIGNED, IN_PROGRESS, WAITING_FOR_PLAYER, RESOLVED, CLOSED, CANCELLED)
-      - Описаны категории (TECHNICAL, BILLING, ACCOUNT, GAMEPLAY, BUG_REPORT, FEATURE_REQUEST, OTHER)
-      - Описаны приоритеты (LOW, NORMAL, HIGH, URGENT, CRITICAL)
-      - Описаны API endpoints (высокоуровнево)
-      - Спроектированы потоки данных
-      - Определена структура БД (support_tickets, ticket_responses, ticket_ratings, agent_queues, sla_tracking)
-      - Спроектирована система создания тикетов
-      - Спроектирована система автокатегоризации
-      - Спроектирована система назначения приоритетов
-      - Спроектирована система очередей агентов
-      - Спроектирована система SLA мониторинга
-      - Создано техническое задание
-      - Разбито на подзадачи
-
+  ticket_assignment_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant AQM as Agent Queue Manager
+        participant STM as Support Ticket Manager
+        participant NS as Notification Service
+        participant SLAM as SLA Monitor
+        
+        AQM->>AQM: Select ticket from queue
+        AQM->>AQM: Select agent by strategy
+        AQM->>AQM: Check agent limits
+        AQM->>STM: Assign agent
+        STM->>STM: Update status to assigned
+        STM->>NS: Notify agent
+        STM->>NS: Notify player
+        STM->>SLAM: Update metrics
+    ```
