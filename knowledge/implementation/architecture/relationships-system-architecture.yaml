@@ -1,0 +1,773 @@
+metadata:
+  id: relationships-system-architecture
+  title: Архитектура системы отношений
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:58:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - relationships
+    - trust
+    - alliances
+  related_systems:
+    - social-service
+    - economy-service
+    - world-service
+    - gameplay-service
+  related_documents:
+    - id: relationships-system-detailed
+      relation: implements
+    - id: reputation-system-architecture
+      relation: complements
+  github_issue: 306
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы отношений, включающую:
+    - Отношения между игроками (Friends, Close Allies, Pact, Enemies, Nemesis)
+    - Доверие и договоры доверия (5 уровней)
+    - Союзы (Combat, Trade, Clan, Faction)
+    - Рейтинги и социальный капитал
+    - История взаимодействий и арбитраж
+    - Интеграции с репутацией, экономикой и миром
+  goal: |
+    Создать архитектурную схему системы отношений с определением:
+    - Компонентов для управления отношениями
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы отношений с поддержкой межличностных отношений,
+    доверия, союзов, рейтингов и интеграции с репутацией и экономикой.
+
+architecture:
+  overview: |
+    Архитектура системы отношений состоит из следующих компонентов:
+    1. Relationship Manager - управление отношениями
+    2. Player Relationship Manager - управление отношениями между игроками
+    3. Trust Manager - управление доверием
+    4. Trust Contract Manager - управление договорами доверия
+    5. Alliance Manager - управление союзами
+    6. Rating Manager - управление рейтингами
+    7. Social Capital Manager - управление социальным капиталом
+    8. Interaction History Manager - управление историей взаимодействий
+    9. Relationship Arbitration Manager - управление арбитражем отношений
+    10. Relationship Effects Applier - применение эффектов отношений
+    11. Relationship Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Обработка отношений:
+        - Управление отношениями между игроками
+        - Управление доверием и договорами
+        - Управление союзами
+        - Управление рейтингами
+        - Управление социальным капиталом
+        - Управление историей взаимодействий
+        - Управление арбитражем
+        - Применение эффектов отношений
+        - Сбор телеметрии
+      components:
+        - relationship-manager: управление отношениями
+        - player-relationship-manager: управление отношениями между игроками
+        - trust-manager: управление доверием
+        - trust-contract-manager: управление договорами доверия
+        - alliance-manager: управление союзами
+        - rating-manager: управление рейтингами
+        - social-capital-manager: управление социальным капиталом
+        - interaction-history-manager: управление историей взаимодействий
+        - relationship-arbitration-manager: управление арбитражем
+        - relationship-effects-applier: применение эффектов отношений
+        - relationship-telemetry-collector: сбор телеметрии
+      endpoints:
+        - GET /api/v1/social/relationships/{characterId} - отношения персонажа
+        - POST /api/v1/social/relationships/{characterId}/set - установка отношения
+        - GET /api/v1/social/relationships/{characterId1}/{characterId2} - отношение между персонажами
+        - POST /api/v1/social/relationships/{characterId}/trust/update - обновление доверия
+        - GET /api/v1/social/relationships/{characterId}/trust - уровень доверия
+        - POST /api/v1/social/relationships/trust-contracts/create - создание договора доверия
+        - GET /api/v1/social/relationships/trust-contracts/{contractId} - информация о договоре
+        - POST /api/v1/social/relationships/trust-contracts/{contractId}/terminate - расторжение договора
+        - POST /api/v1/social/relationships/alliances/create - создание союза
+        - GET /api/v1/social/relationships/alliances - список союзов
+        - GET /api/v1/social/relationships/alliances/{allianceId} - информация о союзе
+        - POST /api/v1/social/relationships/alliances/{allianceId}/invite - приглашение в союз
+        - POST /api/v1/social/relationships/alliances/{allianceId}/join - присоединение к союзу
+        - POST /api/v1/social/relationships/alliances/{allianceId}/leave - выход из союза
+        - POST /api/v1/social/relationships/alliances/{allianceId}/terminate - расторжение союза
+        - GET /api/v1/social/relationships/ratings/{characterId} - рейтинги персонажа
+        - POST /api/v1/social/relationships/ratings/{characterId}/update - обновление рейтинга
+        - GET /api/v1/social/relationships/social-capital/{characterId} - социальный капитал
+        - GET /api/v1/social/relationships/history/{characterId} - история взаимодействий
+        - POST /api/v1/social/relationships/arbitration/request - запрос арбитража
+        - GET /api/v1/social/relationships/arbitration/{caseId} - информация об арбитраже
+      websocket_channels:
+        - wss://api.necp.game/v1/social/relationships/{characterId} - поток обновлений отношений персонажа
+      events_published:
+        - social.relationship.changed: изменено отношение
+        - social.relationship.trust-updated: обновлено доверие
+        - social.relationship.trust-contract-created: создан договор доверия
+        - social.relationship.trust-contract-terminated: расторгнут договор доверия
+        - social.relationship.alliance-created: создан союз
+        - social.relationship.alliance-joined: присоединение к союзу
+        - social.relationship.alliance-left: выход из союза
+        - social.relationship.alliance-terminated: расторгнут союз
+        - social.relationship.rating-updated: обновлен рейтинг
+        - social.relationship.social-capital-updated: обновлен социальный капитал
+        - social.relationship.interaction-logged: залогировано взаимодействие
+        - social.relationship.arbitration-requested: запрошен арбитраж
+        - social.relationship.arbitration-resolved: арбитраж разрешен
+      events_subscribed:
+        - quest.completed: завершение квеста
+        - character.level-up: повышение уровня
+        - reputation.changed: изменение репутации
+        - economy.transaction: транзакция в экономике
+        - world.event: событие мира
+        - combat.pvp-encounter: PvP встреча
+        - player-order.completed: завершение заказа
+
+  player_relationship_levels:
+    - name: friends
+      description: "Друзья - базовый уровень дружеских отношений"
+      reputation_range: [20, 50]
+      effects:
+        - visibility: "видимость в списке друзей"
+        - coordination: "координация действий"
+        - resource_sharing: "базовый доступ к ресурсам"
+
+    - name: close_allies
+      description: "Близкие союзники - высокий уровень доверия"
+      reputation_range: [50, 80]
+      effects:
+        - visibility: "приоритетная видимость"
+        - coordination: "расширенная координация"
+        - resource_sharing: "расширенный доступ к ресурсам"
+        - base_access: "доступ к базам"
+
+    - name: pact
+      description: "Пакт - максимальный уровень союза"
+      reputation_range: [80, 100]
+      effects:
+        - visibility: "полная видимость"
+        - coordination: "полная координация"
+        - resource_sharing: "полный доступ к ресурсам"
+        - base_access: "полный доступ к базам"
+        - joint_operations: "совместные операции"
+
+    - name: neutral
+      description: "Нейтральные - отсутствие отношений"
+      reputation_range: [-20, 20]
+      effects:
+        - visibility: "стандартная видимость"
+        - coordination: "нет координации"
+        - resource_sharing: "нет доступа к ресурсам"
+
+    - name: enemies
+      description: "Враги - враждебные отношения"
+      reputation_range: [-50, -20]
+      effects:
+        - visibility: "видимость врагов"
+        - warnings: "предупреждения о приближении"
+        - pvp_quests: "триггеры PvP-квестов"
+
+    - name: nemesis
+      description: "Злейшие враги - максимальная враждебность"
+      reputation_range: [-100, -50]
+      effects:
+        - visibility: "приоритетная видимость врагов"
+        - warnings: "активные предупреждения"
+        - pvp_quests: "приоритетные PvP-квесты"
+        - bounty: "возможность награды за устранение"
+
+  trust_levels:
+    - level: 0
+      name: "No Trust"
+      description: "Отсутствие доверия"
+      effects:
+        - trade_limit: 0
+        - resource_access: false
+        - contract_depth: "none"
+
+    - level: 1
+      name: "Low Trust"
+      description: "Низкий уровень доверия"
+      range: [1, 25]
+      effects:
+        - trade_limit: 1000
+        - resource_access: "basic"
+        - contract_depth: "simple"
+
+    - level: 2
+      name: "Moderate Trust"
+      description: "Умеренный уровень доверия"
+      range: [25, 50]
+      effects:
+        - trade_limit: 5000
+        - resource_access: "moderate"
+        - contract_depth: "standard"
+
+    - level: 3
+      name: "High Trust"
+      description: "Высокий уровень доверия"
+      range: [50, 75]
+      effects:
+        - trade_limit: 20000
+        - resource_access: "high"
+        - contract_depth: "advanced"
+
+    - level: 4
+      name: "Maximum Trust"
+      description: "Максимальный уровень доверия"
+      range: [75, 100]
+      effects:
+        - trade_limit: 100000
+        - resource_access: "full"
+        - contract_depth: "complex"
+
+  trust_contracts:
+    types:
+      - name: resource_sharing
+        description: "Договор о совместном использовании ресурсов"
+        parameters:
+          - resource_types: "типы ресурсов"
+          - sharing_percentage: "процент совместного использования"
+          - duration: "длительность договора"
+
+      - name: profit_sharing
+        description: "Договор о распределении прибыли"
+        parameters:
+          - profit_percentage: "процент прибыли"
+          - distribution_method: "метод распределения"
+          - duration: "длительность договора"
+
+      - name: base_access
+        description: "Договор о доступе к базам"
+        parameters:
+          - base_ids: "список баз"
+          - access_level: "уровень доступа"
+          - duration: "длительность договора"
+
+    termination_conditions:
+      - violation: "нарушение условий"
+      - mutual_agreement: "взаимное согласие"
+      - expiration: "истечение срока"
+      - arbitration: "решение арбитража"
+
+  alliance_types:
+    - name: combat
+      description: "Боевой союз - совместные боевые операции"
+      effects:
+        - combat_bonus: "бонусы к боевым действиям"
+        - shared_objectives: "совместные цели"
+        - reputation_bonus: "бонус к репутации"
+
+    - name: trade
+      description: "Торговый союз - совместная торговля"
+      effects:
+        - trade_discounts: "торговые скидки"
+        - shared_markets: "совместные рынки"
+        - profit_sharing: "распределение прибыли"
+
+    - name: clan
+      description: "Клановый союз - союз между кланами"
+      effects:
+        - clan_bonuses: "бонусы кланов"
+        - shared_resources: "совместные ресурсы"
+        - joint_operations: "совместные операции"
+
+    - name: faction
+      description: "Фракционный союз - союз между фракциями"
+      effects:
+        - faction_bonuses: "бонусы фракций"
+        - diplomatic_status: "дипломатический статус"
+        - world_influence: "влияние на мир"
+
+  ratings:
+    types:
+      - name: overall
+        description: "Общий рейтинг"
+        factors:
+          - completion_rate: "процент успешных выполнений"
+          - quality_score: "оценка качества"
+          - timeliness: "своевременность"
+
+      - name: combat
+        description: "Боевой рейтинг"
+        factors:
+          - combat_performance: "боевая эффективность"
+          - pvp_record: "PvP рекорд"
+          - raid_performance: "эффективность в рейдах"
+
+      - name: trade
+        description: "Торговый рейтинг"
+        factors:
+          - trade_volume: "объем торговли"
+          - trade_reliability: "надежность торговли"
+          - profit_margin: "маржа прибыли"
+
+      - name: reliability
+        description: "Рейтинг надежности"
+        factors:
+          - contract_completion: "выполнение контрактов"
+          - deadline_adherence: "соблюдение сроков"
+          - dispute_resolution: "разрешение споров"
+
+      - name: social_influence
+        description: "Рейтинг социального влияния"
+        factors:
+          - network_size: "размер сети"
+          - mentorship_rating: "рейтинг наставничества"
+          - community_contributions: "вклад в сообщество"
+
+  social_capital:
+    factors:
+      - relationship_count: "количество отношений"
+      - trust_level_average: "средний уровень доверия"
+      - alliance_count: "количество союзов"
+      - rating_average: "средний рейтинг"
+      - interaction_history: "история взаимодействий"
+
+    effects:
+      - mission_access: "доступ к миссиям"
+      - reward_bonuses: "бонусы к наградам"
+      - reputation_modifier: "модификатор репутации"
+      - economic_benefits: "экономические преимущества"
+
+  interaction_history:
+    event_types:
+      - trade: "торговые сделки"
+      - combat: "боевые встречи"
+      - contracts: "контракты"
+      - quests: "квесты"
+      - disputes: "споры"
+      - arbitration: "арбитраж"
+
+    logging:
+      - event_type: "тип события"
+      - participants: "участники"
+      - outcome: "результат"
+      - timestamp: "временная метка"
+      - evidence: "доказательства"
+
+  arbitration:
+    triggers:
+      - contract_violation: "нарушение контракта"
+      - trust_abuse: "злоупотребление доверием"
+      - alliance_violation: "нарушение союза"
+      - dispute: "спор"
+
+    process:
+      - complaint_filing: "подача жалобы"
+      - evidence_collection: "сбор доказательств"
+      - analysis: "анализ"
+      - decision: "вынесение решения"
+      - enforcement: "исполнение решения"
+
+    decisions:
+      - compensation: "компенсация"
+      - penalty: "штраф"
+      - relationship_change: "изменение отношения"
+      - trust_reduction: "снижение доверия"
+      - alliance_termination: "расторжение союза"
+
+  data_flows:
+    relationship_change_flow: |
+      1. Игрок устанавливает отношение к другому игроку
+      2. Player Relationship Manager проверяет требования
+      3. Player Relationship Manager обновляет отношение в БД
+      4. Relationship Effects Applier применяет эффекты
+      5. Social Service публикует событие social.relationship.changed
+      6. Realtime Gateway отправляет обновление клиентам
+
+    trust_update_flow: |
+      1. Происходит взаимодействие между игроками
+      2. Trust Manager рассчитывает изменение доверия
+      3. Trust Manager обновляет уровень доверия
+      4. Relationship Effects Applier применяет эффекты
+      5. Social Service публикует событие social.relationship.trust-updated
+      6. Realtime Gateway отправляет обновление клиентам
+
+    alliance_creation_flow: |
+      1. Игрок или клан создает союз через Alliance Manager
+      2. Alliance Manager проверяет требования
+      3. Alliance Manager отправляет приглашения
+      4. Участники принимают приглашения
+      5. Alliance Manager создает союз
+      6. Relationship Effects Applier применяет эффекты
+      7. Social Service публикует событие social.relationship.alliance-created
+      8. Realtime Gateway отправляет обновление клиентам
+
+    arbitration_flow: |
+      1. Одна из сторон подает запрос на арбитраж
+      2. Relationship Arbitration Manager собирает доказательства
+      3. Relationship Arbitration Manager анализирует доказательства
+      4. Relationship Arbitration Manager выносит решение
+      5. Relationship Effects Applier применяет решение
+      6. Social Service публикует событие social.relationship.arbitration-resolved
+      7. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: player_relationships
+        description: Отношения между игроками
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id_1: UUID FOREIGN KEY
+          - character_id_2: UUID FOREIGN KEY
+          - relationship_type: ENUM (friends, close_allies, pact, neutral, enemies, nemesis)
+          - reputation_value: INTEGER
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: trust_levels
+        description: Уровни доверия между игроками
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id_1: UUID FOREIGN KEY
+          - character_id_2: UUID FOREIGN KEY
+          - trust_level: INTEGER
+          - trust_value: INTEGER
+          - last_update: TIMESTAMP
+
+      - name: trust_contracts
+        description: Договоры доверия
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id_1: UUID FOREIGN KEY
+          - character_id_2: UUID FOREIGN KEY
+          - contract_type: ENUM (resource_sharing, profit_sharing, base_access)
+          - parameters: JSONB
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP
+          - status: ENUM (active, terminated, expired)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: alliances
+        description: Союзы
+        columns:
+          - id: UUID PRIMARY KEY
+          - alliance_type: ENUM (combat, trade, clan, faction)
+          - creator_id: UUID FOREIGN KEY
+          - creator_type: ENUM (player, clan, faction)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - member_ids: UUID[]
+          - member_types: JSONB
+          - parameters: JSONB
+          - status: ENUM (pending, active, terminated)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: alliance_members
+        description: Участники союзов
+        columns:
+          - id: UUID PRIMARY KEY
+          - alliance_id: UUID FOREIGN KEY
+          - member_id: UUID FOREIGN KEY
+          - member_type: ENUM (player, clan, faction)
+          - role: VARCHAR(50)
+          - joined_at: TIMESTAMP
+          - left_at: TIMESTAMP
+
+      - name: character_ratings
+        description: Рейтинги персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - rating_type: ENUM (overall, combat, trade, reliability, social_influence)
+          - rating_value: DECIMAL(5,2)
+          - factors: JSONB
+          - last_update: TIMESTAMP
+
+      - name: social_capital
+        description: Социальный капитал
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - relationship_count: INTEGER
+          - trust_level_average: DECIMAL(5,2)
+          - alliance_count: INTEGER
+          - rating_average: DECIMAL(5,2)
+          - social_capital_score: DECIMAL(10,2)
+          - last_update: TIMESTAMP
+
+      - name: interaction_history
+        description: История взаимодействий
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id_1: UUID FOREIGN KEY
+          - character_id_2: UUID FOREIGN KEY
+          - event_type: ENUM (trade, combat, contracts, quests, disputes, arbitration)
+          - event_data: JSONB
+          - outcome: JSONB
+          - evidence: JSONB
+          - created_at: TIMESTAMP
+
+      - name: relationship_arbitration
+        description: Арбитраж отношений
+        columns:
+          - id: UUID PRIMARY KEY
+          - complainant_id: UUID FOREIGN KEY
+          - defendant_id: UUID FOREIGN KEY
+          - reason: TEXT
+          - evidence: JSONB
+          - status: ENUM (pending, in-review, resolved, dismissed)
+          - decision: JSONB
+          - resolved_at: TIMESTAMP
+          - created_at: TIMESTAMP
+
+      - name: relationship_telemetry
+        description: Телеметрия отношений
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_type: VARCHAR(50)
+          - event_data: JSONB
+          - created_at: TIMESTAMP
+
+  integrations:
+    reputation_service: |
+      - Получение репутации для расчета отношений
+      - Обновление репутации на основе отношений
+      - Влияние отношений на репутацию
+
+    economy_service: |
+      - Проверка торговых лимитов на основе доверия
+      - Обработка распределения прибыли
+      - Расчет экономических эффектов союзов
+
+    world_service: |
+      - Влияние союзов на мир
+      - Триггеры событий на основе отношений
+      - Обновление влияния фракций
+
+    gameplay_service: |
+      - Получение событий игрового процесса
+      - Интеграция с системой прогрессии
+      - Модификация опыта за взаимодействия
+
+    quest_service: |
+      - Интеграция с квестами на основе отношений
+      - Триггеры квестов при изменении отношений
+      - Обновление прогресса квестов
+
+    analytics_service: |
+      - Логирование всех операций отношений
+      - Сбор метрик эффективности
+      - Анализ паттернов отношений
+      - Мониторинг социального капитала
+
+    realtime_gateway: |
+      - Отправка realtime обновлений отношений
+      - Синхронизация союзов
+      - Уведомления о событиях
+
+technical_specification:
+  subtasks:
+    - id: relationship-manager
+      title: Реализация менеджера отношений
+      description: |
+        Реализация Relationship Manager с управлением отношениями
+        и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: player-relationship-manager
+      title: Реализация менеджера отношений между игроками
+      description: |
+        Реализация Player Relationship Manager с управлением отношениями
+        между игроками и применением эффектов.
+      dependencies: [relationship-manager]
+      estimated_effort: 4 days
+
+    - id: trust-manager
+      title: Реализация менеджера доверия
+      description: |
+        Реализация Trust Manager с расчетом уровня доверия
+        и обновлением на основе взаимодействий.
+      dependencies: [relationship-manager]
+      estimated_effort: 4 days
+
+    - id: trust-contract-manager
+      title: Реализация менеджера договоров доверия
+      description: |
+        Реализация Trust Contract Manager с созданием договоров,
+        управлением условиями и расторжением.
+      dependencies: [trust-manager]
+      estimated_effort: 4 days
+
+    - id: alliance-manager
+      title: Реализация менеджера союзов
+      description: |
+        Реализация Alliance Manager с созданием союзов,
+        управлением участниками и применением эффектов.
+      dependencies: [relationship-manager]
+      estimated_effort: 5 days
+
+    - id: rating-manager
+      title: Реализация менеджера рейтингов
+      description: |
+        Реализация Rating Manager с расчетом рейтингов
+        и обновлением на основе взаимодействий.
+      dependencies: [relationship-manager]
+      estimated_effort: 4 days
+
+    - id: social-capital-manager
+      title: Реализация менеджера социального капитала
+      description: |
+        Реализация Social Capital Manager с расчетом социального капитала
+        и применением эффектов.
+      dependencies: [rating-manager]
+      estimated_effort: 3 days
+
+    - id: interaction-history-manager
+      title: Реализация менеджера истории взаимодействий
+      description: |
+        Реализация Interaction History Manager с логированием взаимодействий
+        и предоставлением истории.
+      dependencies: [relationship-manager]
+      estimated_effort: 3 days
+
+    - id: relationship-arbitration-manager
+      title: Реализация менеджера арбитража отношений
+      description: |
+        Реализация Relationship Arbitration Manager с обработкой жалоб,
+        сбором доказательств и вынесением решений.
+      dependencies: [interaction-history-manager]
+      estimated_effort: 4 days
+
+    - id: relationship-effects-applier
+      title: Реализация применения эффектов отношений
+      description: |
+        Реализация Relationship Effects Applier с применением эффектов
+        отношений на доступ, экономику и мир.
+      dependencies: [relationship-manager]
+      estimated_effort: 4 days
+
+    - id: relationship-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Relationship Telemetry Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [relationship-manager]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений отношений,
+        союзов и уведомлений.
+      dependencies: [relationship-manager, alliance-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы отношений.
+      dependencies: [relationship-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для отношений, доверия, договоров, союзов,
+        рейтингов, социального капитала, истории взаимодействий, арбитража
+        и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 4 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SocialService[Social Service<br/>8084]
+        
+        SocialService --> RM[Relationship Manager]
+        SocialService --> PRM[Player Relationship Manager]
+        SocialService --> TM[Trust Manager]
+        SocialService --> TCM[Trust Contract Manager]
+        SocialService --> AM[Alliance Manager]
+        SocialService --> RTM[Rating Manager]
+        SocialService --> SCM[Social Capital Manager]
+        SocialService --> IHM[Interaction History Manager]
+        SocialService --> RAM[Relationship Arbitration Manager]
+        SocialService --> REA[Relationship Effects Applier]
+        SocialService --> RTC[Relationship Telemetry Collector]
+        
+        RM --> PRM
+        RM --> TM
+        TM --> TCM
+        RM --> AM
+        RM --> RTM
+        RTM --> SCM
+        RM --> IHM
+        IHM --> RAM
+        RM --> REA
+        
+        SocialService --> ReputationService[Reputation Service]
+        SocialService --> EconomyService[Economy Service]
+        SocialService --> WorldService[World Service]
+        SocialService --> GameplayService[Gameplay Service]
+        SocialService --> QuestService[Quest Service]
+        SocialService --> AnalyticsService[Analytics Service]
+        
+        SocialService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SocialService --> DB[(Social DB)]
+        
+        Client --> WSRelationships[WebSocket<br/>Relationships]
+        WSRelationships --> SocialService
+    ```
+
+  relationship_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P1 as Player 1
+        participant PRM as Player Relationship Manager
+        participant REA as Relationship Effects Applier
+        participant EB as Event Bus
+        
+        P1->>PRM: Set relationship
+        PRM->>PRM: Validate requirements
+        PRM->>PRM: Update relationship
+        PRM->>REA: Apply effects
+        REA->>EB: Publish social.relationship.changed
+    ```
+
+  alliance_creation_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Creator
+        participant AM as Alliance Manager
+        participant P1 as Player 1
+        participant P2 as Player 2
+        participant EB as Event Bus
+        
+        C->>AM: Create alliance
+        AM->>P1: Send invitation
+        AM->>P2: Send invitation
+        P1->>AM: Accept invitation
+        P2->>AM: Accept invitation
+        AM->>AM: Create alliance
+        AM->>EB: Publish social.relationship.alliance-created
+    ```
+
