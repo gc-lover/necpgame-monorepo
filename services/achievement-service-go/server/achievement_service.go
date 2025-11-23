@@ -32,9 +32,36 @@ type AchievementRepositoryInterface interface {
 }
 
 type AchievementService struct {
-	repo  AchievementRepositoryInterface
-	cache *redis.Client
+	repo     AchievementRepositoryInterface
+	cache    *redis.Client
+	logger   *logrus.Logger
+	eventBus EventBus
+}
+
+type EventBus interface {
+	PublishEvent(ctx context.Context, eventType string, payload map[string]interface{}) error
+}
+
+type RedisEventBus struct {
+	client *redis.Client
 	logger *logrus.Logger
+}
+
+func NewRedisEventBus(redisClient *redis.Client) *RedisEventBus {
+	return &RedisEventBus{
+		client: redisClient,
+		logger: GetLogger(),
+	}
+}
+
+func (b *RedisEventBus) PublishEvent(ctx context.Context, eventType string, payload map[string]interface{}) error {
+	eventData, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	channel := "events:" + eventType
+	return b.client.Publish(ctx, channel, eventData).Err()
 }
 
 func NewAchievementService(dbURL, redisURL string) (*AchievementService, error) {
@@ -51,11 +78,13 @@ func NewAchievementService(dbURL, redisURL string) (*AchievementService, error) 
 	redisClient := redis.NewClient(redisOpts)
 
 	repo := NewAchievementRepository(dbPool)
+	eventBus := NewRedisEventBus(redisClient)
 
 	return &AchievementService{
-		repo:  repo,
-		cache: redisClient,
-		logger: GetLogger(),
+		repo:     repo,
+		cache:    redisClient,
+		logger:   GetLogger(),
+		eventBus: eventBus,
 	}, nil
 }
 
@@ -254,7 +283,26 @@ func (s *AchievementService) UnlockAchievement(ctx context.Context, playerID, ac
 	RecordAchievementUnlock(string(achievement.Category), string(achievement.Rarity))
 	s.invalidatePlayerAchievementCache(ctx, playerID)
 
+	err = s.publishAchievementUnlockedEvent(ctx, playerID, achievementID, achievement)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to publish achievement unlocked event")
+	}
+
 	return nil
+}
+
+func (s *AchievementService) publishAchievementUnlockedEvent(ctx context.Context, playerID, achievementID uuid.UUID, achievement *models.Achievement) error {
+	payload := map[string]interface{}{
+		"player_id":     playerID.String(),
+		"achievement_id": achievementID.String(),
+		"achievement_code": achievement.Code,
+		"category":       string(achievement.Category),
+		"rarity":         string(achievement.Rarity),
+		"rewards":        achievement.Rewards,
+		"timestamp":      time.Now().Format(time.RFC3339),
+	}
+
+	return s.eventBus.PublishEvent(ctx, "achievement:unlocked", payload)
 }
 
 func (s *AchievementService) GetPlayerAchievements(ctx context.Context, playerID uuid.UUID, category *models.AchievementCategory, limit, offset int) (*models.PlayerAchievementResponse, error) {
