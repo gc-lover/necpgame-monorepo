@@ -1,0 +1,449 @@
+metadata:
+  id: combat-abilities-architecture
+  title: Архитектура системы боевых способностей
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T17:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - abilities
+    - synergies
+    - cyberpsychosis
+  related_systems:
+    - gameplay-service
+    - progression-service
+    - economy-service
+    - analytics-service
+  related_documents:
+    - id: combat-abilities
+      relation: implements
+    - id: mechanics-combat-combos-synergies
+      relation: implements
+    - id: analysis-2025-11-09-combat-abilities-package
+      relation: extends
+  github_issue: 156
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы боевых способностей, включающую:
+    - Каталог способностей с источниками (экипировка, импланты, прокачка, кибердека)
+    - Управление лоадаутами (Q/E/R слоты, пассивы, хакерские слоты)
+    - Активацию способностей с кулдаунами и ресурсами
+    - Синергии между способностями, имплантами и комбо
+    - Влияние на киберпсихоз
+    - Метрики и аналитику
+  goal: |
+    Создать архитектурную схему системы боевых способностей с определением:
+    - Компонентов для управления способностями
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы боевых способностей с поддержкой каталога,
+    лоадаутов, активации, синергий и киберпсихоза.
+
+architecture:
+  overview: |
+    Архитектура системы боевых способностей состоит из следующих компонентов:
+    1. Ability Catalog Manager - управление каталогом способностей
+    2. Ability Loadout Manager - управление лоадаутами
+    3. Ability Activation Engine - активация способностей
+    4. Cooldown Manager - управление кулдаунами
+    5. Synergy System - система синергий
+    6. Cyberpsychosis Tracker - отслеживание киберпсихоза
+    7. Ability Metrics Collector - сбор метрик
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка боевых способностей:
+        - Управление каталогом способностей
+        - Управление лоадаутами
+        - Активация способностей
+        - Управление кулдаунами
+        - Обработка синергий
+        - Отслеживание киберпсихоза
+      components:
+        - ability-catalog-manager: управление каталогом способностей
+        - ability-loadout-manager: управление лоадаутами
+        - ability-activation-engine: активация способностей
+        - cooldown-manager: управление кулдаунами
+        - synergy-system: система синергий
+        - cyberpsychosis-tracker: отслеживание киберпсихоза
+        - ability-metrics-collector: сбор метрик
+      endpoints:
+        - GET /api/v1/gameplay/combat/abilities/catalog - каталог способностей
+        - GET /api/v1/gameplay/combat/abilities/{abilityId} - информация о способности
+        - POST /api/v1/gameplay/combat/abilities/loadouts - создание/обновление лоадаута
+        - GET /api/v1/gameplay/combat/abilities/loadouts - получение лоадаутов
+        - POST /api/v1/gameplay/combat/abilities/activate - активация способности
+        - POST /api/v1/gameplay/combat/abilities/cooldowns - проверка кулдаунов
+        - GET /api/v1/gameplay/combat/abilities/synergies - доступные синергии
+        - POST /api/v1/gameplay/combat/abilities/synergies/apply - применение синергии
+        - POST /api/v1/gameplay/combat/abilities/cyberpsychosis - обновление киберпсихоза
+        - GET /api/v1/gameplay/combat/abilities/metrics - метрики способностей
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/abilities/{sessionId} - live события активаций
+        - wss://api.necp.game/v1/gameplay/combat/abilities/player/{characterId} - обновления лоадаутов
+      events_published:
+        - combat.ability.activated: активация способности
+        - combat.ability.cooldown-started: начало кулдауна
+        - combat.ability.cooldown-finished: окончание кулдауна
+        - combat.ability.synergy-triggered: срабатывание синергии
+        - combat.ability.cyberpsychosis-updated: обновление киберпсихоза
+        - combat.ability.loadout-updated: обновление лоадаута
+      events_subscribed:
+        - combat.freerun.mobile-ability: мобильные способности из паркура
+        - combat.combos.apply: применение комбо
+        - progression.attribute-updated: обновление атрибутов
+        - quest.trigger: триггеры квестов
+
+  data_flows:
+    ability_activation_flow: |
+      1. Клиент отправляет POST /api/v1/gameplay/combat/abilities/activate
+      2. Ability Activation Engine проверяет доступность способности
+      3. Ability Activation Engine проверяет кулдауны через Cooldown Manager
+      4. Ability Activation Engine проверяет ресурсы (энергия, здоровье)
+      5. Ability Activation Engine проверяет киберпсихоз через Cyberpsychosis Tracker
+      6. Ability Activation Engine активирует способность
+      7. Cooldown Manager запускает кулдаун
+      8. Synergy System проверяет доступные синергии
+      9. Cyberpsychosis Tracker обновляет уровень киберпсихоза
+      10. Gameplay Service публикует событие combat.ability.activated
+      11. Realtime Gateway отправляет обновление клиенту
+
+    loadout_update_flow: |
+      1. Клиент отправляет POST /api/v1/gameplay/combat/abilities/loadouts
+      2. Ability Loadout Manager валидирует лоадаут
+      3. Ability Loadout Manager проверяет требования способностей
+      4. Ability Loadout Manager проверяет доступность способностей через Ability Catalog Manager
+      5. Ability Loadout Manager проверяет синергии через Synergy System
+      6. Ability Loadout Manager сохраняет лоадаут в БД
+      7. Gameplay Service публикует событие combat.ability.loadout-updated
+      8. Realtime Gateway отправляет обновление клиенту
+
+    synergy_trigger_flow: |
+      1. Игрок активирует способность
+      2. Synergy System проверяет условия синергии
+      3. Synergy System проверяет наличие других способностей/имплантов/экипировки
+      4. Synergy System рассчитывает бонусы синергии
+      5. Synergy System применяет эффекты синергии
+      6. Gameplay Service публикует событие combat.ability.synergy-triggered
+      7. Analytics Service логирует синергию
+
+    cyberpsychosis_update_flow: |
+      1. Игрок активирует способность
+      2. Cyberpsychosis Tracker рассчитывает влияние на киберпсихоз
+      3. Cyberpsychosis Tracker учитывает активные импланты
+      4. Cyberpsychosis Tracker учитывает длительность использования
+      5. Cyberpsychosis Tracker проверяет пороговые значения
+      6. Cyberpsychosis Tracker обновляет уровень киберпсихоза
+      7. Gameplay Service публикует событие combat.ability.cyberpsychosis-updated
+      8. Если достигнут порог, применяются штрафы через Progression Service
+
+  database_structure:
+    tables:
+      - name: abilities_catalog
+        description: Каталог способностей
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - description: TEXT
+          - ability_type: ENUM (tactical, signature, ultimate, passive, hacking)
+          - slot: ENUM (Q, E, R, passive, hacking)
+          - source: ENUM (equipment, implant, progression, cyberdeck)
+          - rank: INTEGER
+          - energy_cost: INTEGER
+          - health_cost: INTEGER
+          - cooldown_base: INTEGER
+          - requirements: JSONB
+          - modifiers: JSONB
+          - cyberpsychosis_impact: DECIMAL(3,2)
+          - created_at: TIMESTAMP
+
+      - name: ability_loadouts
+        description: Лоадауты способностей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - name: VARCHAR(255)
+          - slot_q: UUID FOREIGN KEY (nullable)
+          - slot_e: UUID FOREIGN KEY (nullable)
+          - slot_r: UUID FOREIGN KEY (nullable)
+          - passive_abilities: JSONB
+          - hacking_abilities: JSONB
+          - auto_cast_enabled: BOOLEAN
+          - priority: INTEGER
+          - is_active: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: ability_cooldowns
+        description: Состояние кулдаунов
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - ability_id: UUID FOREIGN KEY
+          - started_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+          - cooldown_duration: INTEGER
+          - modifiers: JSONB
+          - is_active: BOOLEAN
+
+      - name: ability_synergies
+        description: Синергии способностей
+        columns:
+          - id: UUID PRIMARY KEY
+          - synergy_type: ENUM (ability, team, equipment, implant, timing)
+          - ability_ids: JSONB
+          - implant_ids: JSONB (nullable)
+          - equipment_ids: JSONB (nullable)
+          - requirements: JSONB
+          - bonuses: JSONB
+          - complexity: VARCHAR(50)
+          - created_at: TIMESTAMP
+
+      - name: ability_effects_history
+        description: История активаций способностей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - ability_id: UUID FOREIGN KEY
+          - activated_at: TIMESTAMP
+          - target_id: UUID (nullable)
+          - result: JSONB
+          - synergy_triggered: BOOLEAN
+          - cyberpsychosis_before: DECIMAL(3,2)
+          - cyberpsychosis_after: DECIMAL(3,2)
+
+      - name: cyberpsychosis_state
+        description: Состояние киберпсихоза
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - current_level: DECIMAL(3,2)
+          - threshold_breaches: INTEGER
+          - active_implants_count: INTEGER
+          - last_update: TIMESTAMP
+          - restrictions: JSONB
+
+  integrations:
+    progression_service: |
+      - Получение данных о прокачке для проверки требований способностей
+      - Обновление атрибутов влияет на эффективность способностей
+      - Киберпсихоз влияет на атрибуты через Progression Service
+
+    economy_service: |
+      - Проверка доступности способностей из экипировки
+      - Покупка способностей через Economy Service
+      - Экономические модификаторы для способностей
+
+    inventory_service: |
+      - Получение данных об экипировке для способностей
+      - Проверка наличия предметов для активации способностей
+      - Обновление инвентаря при использовании расходников
+
+    implant_service: |
+      - Получение данных об имплантах для способностей
+      - Проверка активных имплантов для синергий
+      - Обновление киберпсихоза на основе имплантов
+
+    analytics_service: |
+      - Логирование всех активаций способностей
+      - Сбор метрик использования способностей
+      - Анализ синергий и комбо
+      - Античит мониторинг
+
+    realtime_gateway: |
+      - Отправка realtime обновлений активаций
+      - Синхронизация кулдаунов
+      - Уведомления о синергиях
+
+technical_specification:
+  subtasks:
+    - id: ability-catalog-manager
+      title: Реализация менеджера каталога способностей
+      description: |
+        Реализация Ability Catalog Manager с загрузкой и кэшированием способностей,
+        фильтрацией по источникам и рангам.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: ability-loadout-manager
+      title: Реализация менеджера лоадаутов
+      description: |
+        Реализация Ability Loadout Manager с поддержкой Q/E/R слотов, пассивов,
+        хакерских слотов и валидации требований.
+      dependencies: [ability-catalog-manager]
+      estimated_effort: 4 days
+
+    - id: ability-activation-engine
+      title: Реализация движка активации способностей
+      description: |
+        Реализация Ability Activation Engine с проверкой доступности, ресурсов,
+        кулдаунов и киберпсихоза.
+      dependencies: [ability-catalog-manager, ability-loadout-manager]
+      estimated_effort: 5 days
+
+    - id: cooldown-manager
+      title: Реализация менеджера кулдаунов
+      description: |
+        Реализация Cooldown Manager с отслеживанием кулдаунов, модификаторами
+        и автоматическим истечением.
+      dependencies: [ability-activation-engine]
+      estimated_effort: 3 days
+
+    - id: synergy-system
+      title: Реализация системы синергий
+      description: |
+        Реализация Synergy System с поддержкой ability/team/equipment/implant/timing
+        синергий и расчетом бонусов.
+      dependencies: [ability-activation-engine]
+      estimated_effort: 5 days
+
+    - id: cyberpsychosis-tracker
+      title: Реализация трекера киберпсихоза
+      description: |
+        Реализация Cyberpsychosis Tracker с расчетом влияния способностей,
+        отслеживанием порогов и применением ограничений.
+      dependencies: [ability-activation-engine]
+      estimated_effort: 4 days
+
+    - id: ability-metrics-collector
+      title: Реализация сборщика метрик
+      description: |
+        Реализация Ability Metrics Collector с логированием активаций,
+        сбором статистики и интеграцией с Analytics Service.
+      dependencies: [ability-activation-engine]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений активаций
+        и лоадаутов.
+      dependencies: [ability-activation-engine, ability-loadout-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы способностей.
+      dependencies: [ability-activation-engine, synergy-system, cyberpsychosis-tracker]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для способностей, лоадаутов, кулдаунов, синергий
+        и киберпсихоза с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> ACM[Ability Catalog Manager]
+        GameplayService --> ALM[Ability Loadout Manager]
+        GameplayService --> AAE[Ability Activation Engine]
+        GameplayService --> CM[Cooldown Manager]
+        GameplayService --> SS[Synergy System]
+        GameplayService --> CT[Cyberpsychosis Tracker]
+        GameplayService --> AMC[Ability Metrics Collector]
+        
+        AAE --> CM
+        AAE --> CT
+        AAE --> SS
+        
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> EconomyService[Economy Service]
+        GameplayService --> InventoryService[Inventory Service]
+        GameplayService --> ImplantService[Implant Service]
+        GameplayService --> AnalyticsService[Analytics Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSAbl[WebSocket<br/>Abilities]
+        WSAbl --> GameplayService
+    ```
+
+  ability_activation_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant AAE as Ability Activation Engine
+        participant CM as Cooldown Manager
+        participant CT as Cyberpsychosis Tracker
+        participant SS as Synergy System
+        participant PS as Progression Service
+        participant EB as Event Bus
+        
+        C->>AAE: POST /abilities/activate
+        AAE->>AAE: Check ability availability
+        AAE->>CM: Check cooldowns
+        CM-->>AAE: Cooldown status
+        AAE->>AAE: Check resources (energy, health)
+        AAE->>CT: Check cyberpsychosis
+        CT-->>AAE: Cyberpsychosis level
+        AAE->>AAE: Activate ability
+        AAE->>CM: Start cooldown
+        AAE->>SS: Check synergies
+        SS-->>AAE: Available synergies
+        AAE->>CT: Update cyberpsychosis
+        AAE->>EB: Publish combat.ability.activated
+        AAE-->>C: Activation result
+        
+        EB->>PS: combat.ability.activated
+        PS->>PS: Update attributes if needed
+    ```
+
+  loadout_synergy_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant ALM as Ability Loadout Manager
+        participant ACM as Ability Catalog Manager
+        participant SS as Synergy System
+        participant IS as Implant Service
+        participant ES as Economy Service
+        participant EB as Event Bus
+        
+        C->>ALM: POST /abilities/loadouts
+        ALM->>ALM: Validate loadout
+        ALM->>ACM: Check ability requirements
+        ACM-->>ALM: Ability data
+        ALM->>SS: Check synergies
+        SS->>IS: Get active implants
+        IS-->>SS: Implants data
+        SS->>ES: Check equipment
+        ES-->>SS: Equipment data
+        SS->>SS: Calculate synergy bonuses
+        SS-->>ALM: Synergy results
+        ALM->>ALM: Save loadout
+        ALM->>EB: Publish combat.ability.loadout-updated
+        ALM-->>C: Loadout saved
+    ```
+
