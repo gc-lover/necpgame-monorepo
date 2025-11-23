@@ -1,0 +1,898 @@
+metadata:
+  id: mentorship-system-architecture
+  title: Архитектура системы наставничества
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:45:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - mentorship
+    - education
+  related_systems:
+    - social-service
+    - economy-service
+    - world-service
+    - gameplay-service
+    - content-service
+  related_documents:
+    - id: mentorship-system-detailed
+      relation: implements
+  github_issue: 303
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы наставничества, включающую:
+    - Типы наставничества (игрок→игрок, игрок→NPC, NPC→игрок, NPC→NPC, академии)
+    - Пайплайн наставничества (инициирование, договоры, расписание, уроки, оценка)
+    - Форматы обучения (теоретические, практические, контентные, экзаменационные, групповые, VR)
+    - Навыки и награды
+    - Репутацию наставника
+    - Академии и образовательные центры
+    - Цепочки наставничества
+    - Экономику наставничества
+  goal: |
+    Создать архитектурную схему системы наставничества с определением:
+    - Компонентов для управления наставничеством
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы наставничества с поддержкой типов наставничества,
+    процесса обучения, академий, цепочек наставничества и экономики.
+
+architecture:
+  overview: |
+    Архитектура системы наставничества состоит из следующих компонентов:
+    1. Mentorship Manager - управление наставничеством
+    2. Mentorship Discovery Service - поиск наставников и учеников
+    3. Contract Manager - управление договорами наставничества
+    4. Schedule Manager - управление расписанием уроков
+    5. Lesson Manager - управление уроками
+    6. Learning Format Manager - управление форматами обучения
+    7. Skill Progress Tracker - отслеживание прогресса навыков
+    8. Mentor Reputation Manager - управление репутацией наставника
+    9. Academy Manager - управление академиями
+    10. Mentorship Chain Manager - управление цепочками наставничества
+    11. Content Manager - управление учебным контентом
+    12. Economy Manager - управление экономикой наставничества
+    13. Mentorship Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Обработка наставничества:
+        - Управление наставничеством
+        - Поиск наставников и учеников
+        - Управление договорами
+        - Управление расписанием
+        - Управление уроками
+        - Управление форматами обучения
+        - Отслеживание прогресса навыков
+        - Управление репутацией наставника
+        - Управление академиями
+        - Управление цепочками наставничества
+        - Управление учебным контентом
+        - Управление экономикой наставничества
+        - Сбор телеметрии
+      components:
+        - mentorship-manager: управление наставничеством
+        - mentorship-discovery-service: поиск наставников и учеников
+        - contract-manager: управление договорами наставничества
+        - schedule-manager: управление расписанием уроков
+        - lesson-manager: управление уроками
+        - learning-format-manager: управление форматами обучения
+        - skill-progress-tracker: отслеживание прогресса навыков
+        - mentor-reputation-manager: управление репутацией наставника
+        - academy-manager: управление академиями
+        - mentorship-chain-manager: управление цепочками наставничества
+        - content-manager: управление учебным контентом
+        - economy-manager: управление экономикой наставничества
+        - mentorship-telemetry-collector: сбор телеметрии
+      endpoints:
+        - GET /api/v1/social/mentorship/mentors - поиск наставников
+        - GET /api/v1/social/mentorship/mentees - поиск учеников
+        - GET /api/v1/social/mentorship/mentors/{mentorId} - информация о наставнике
+        - POST /api/v1/social/mentorship/proposal/create - создание предложения наставничества
+        - POST /api/v1/social/mentorship/proposal/{proposalId}/accept - принятие предложения
+        - POST /api/v1/social/mentorship/proposal/{proposalId}/reject - отклонение предложения
+        - POST /api/v1/social/mentorship/contract/create - создание договора
+        - GET /api/v1/social/mentorship/contracts - список договоров
+        - GET /api/v1/social/mentorship/contracts/{contractId} - информация о договоре
+        - POST /api/v1/social/mentorship/contracts/{contractId}/terminate - расторжение договора
+        - POST /api/v1/social/mentorship/schedule/create - создание расписания
+        - GET /api/v1/social/mentorship/schedule/{contractId} - расписание договора
+        - POST /api/v1/social/mentorship/schedule/{scheduleId}/update - обновление расписания
+        - POST /api/v1/social/mentorship/lesson/create - создание урока
+        - GET /api/v1/social/mentorship/lessons/{contractId} - список уроков
+        - GET /api/v1/social/mentorship/lessons/{lessonId} - информация об уроке
+        - POST /api/v1/social/mentorship/lessons/{lessonId}/start - начало урока
+        - POST /api/v1/social/mentorship/lessons/{lessonId}/complete - завершение урока
+        - POST /api/v1/social/mentorship/lessons/{lessonId}/evaluate - оценка урока
+        - GET /api/v1/social/mentorship/skills/progress/{contractId} - прогресс навыков
+        - GET /api/v1/social/mentorship/reputation/{mentorId} - репутация наставника
+        - POST /api/v1/social/mentorship/reputation/{mentorId}/review - отзыв о наставнике
+        - GET /api/v1/social/mentorship/academies - список академий
+        - GET /api/v1/social/mentorship/academies/{academyId} - информация об академии
+        - POST /api/v1/social/mentorship/academies/{academyId}/enroll - запись в академию
+        - GET /api/v1/social/mentorship/academies/{academyId}/programs - программы академии
+        - POST /api/v1/social/mentorship/chains/create - создание цепочки наставничества
+        - GET /api/v1/social/mentorship/chains/{characterId} - цепочки наставничества персонажа
+        - GET /api/v1/social/mentorship/content - поиск учебного контента
+        - POST /api/v1/social/mentorship/content/create - создание учебного контента
+        - GET /api/v1/social/mentorship/content/{contentId} - информация о контенте
+        - GET /api/v1/social/mentorship/economy/payments - платежи наставничества
+        - POST /api/v1/social/mentorship/economy/pay - обработка платежа
+      websocket_channels:
+        - wss://api.necp.game/v1/social/mentorship/{characterId} - поток обновлений наставничества и уроков
+      events_published:
+        - social.mentorship.proposal-created: создано предложение наставничества
+        - social.mentorship.proposal-accepted: предложение принято
+        - social.mentorship.proposal-rejected: предложение отклонено
+        - social.mentorship.contract-created: создан договор
+        - social.mentorship.contract-terminated: расторгнут договор
+        - social.mentorship.schedule-created: создано расписание
+        - social.mentorship.lesson-created: создан урок
+        - social.mentorship.lesson-started: урок начат
+        - social.mentorship.lesson-completed: урок завершен
+        - social.mentorship.lesson-evaluated: урок оценен
+        - social.mentorship.skill-progress-updated: обновлен прогресс навыков
+        - social.mentorship.reputation-updated: обновлена репутация наставника
+        - social.mentorship.academy-enrolled: запись в академию
+        - social.mentorship.chain-created: создана цепочка наставничества
+        - social.mentorship.content-created: создан учебный контент
+        - social.mentorship.payment-processed: обработан платеж
+      events_subscribed:
+        - quest.completed: завершение квеста
+        - character.level-up: повышение уровня персонажа
+        - skill.level-up: повышение уровня навыка
+        - reputation.changed: изменение репутации
+        - economy.transaction: транзакция в экономике
+        - world.event: событие мира
+        - npc.interaction: взаимодействие с NPC
+
+  mentorship_types:
+    - name: player_to_player
+      description: "Игрок → Игрок - Teacher-класс обучает других игроков"
+      subclasses:
+        - mentor: "фокус на новичках и базовых навыках"
+        - professor: "углублённое обучение и создание учебного контента"
+        - trainer: "боевые и технические интенсивы"
+      requirements:
+        - active_teacher_class: true
+        - skill_level_exceeds_student: true
+        - student_consent: true
+      limits:
+        - max_students: "зависит от уровня наставника"
+        - one_mentor_per_skill: true
+        - high_stats_required: true
+
+    - name: player_to_npc
+      description: "Игрок → NPC - игроки-Teacher прокачивают NPC"
+      features:
+        - high_cost: "высокая стоимость времени и ресурсов"
+        - npc_enhancement: "расширение возможностей NPC"
+        - story_impact: "влияние на сюжетные ветки"
+
+    - name: npc_to_player
+      description: "NPC → Игрок - NPC-наставники обучают игроков"
+      requirements:
+        - reputation: "требуется репутация"
+        - special_quests: "специальные квесты"
+        - npc_conditions: "соответствие условиям NPC"
+      limits:
+        - limited_skill_set: true
+        - time_windows: true
+        - story_dependencies: true
+
+    - name: npc_to_npc
+      description: "NPC → NPC - фоновая симуляция обучения между NPC"
+      features:
+        - world_simulation: "поддержка живости мира"
+        - resource_redistribution: "перераспределение сил"
+        - event_triggers: "вызов событий, влияющих на экономику и конфликты"
+
+    - name: academy
+      description: "Академии - корпоративные, бандитские и независимые образовательные центры"
+      types:
+        - corporate: "корпоративные академии"
+        - gang: "бандитские академии"
+        - independent: "независимые академии"
+      features:
+        - schedule_management: "управление расписаниями"
+        - ratings: "рейтинги"
+        - events: "события"
+        - educational_hubs: "образовательные хабы городов"
+
+  mentorship_pipeline:
+    initiation: |
+      - Поиск наставника или ученика
+      - Создание предложения наставничества
+      - Проверка требований и ограничений
+      - Отправка предложения
+
+    contract: |
+      - Принятие или отклонение предложения
+      - Создание договора наставничества
+      - Определение условий договора
+      - Фиксация обязанностей сторон
+      - Тип оплаты и вознаграждения
+
+    schedule: |
+      - Планирование расписания уроков
+      - Определение формата обучения
+      - Установка времени и места
+      - Настройка ресурсов
+
+    execution: |
+      - Проведение уроков
+      - Отслеживание прогресса
+      - Оценка результатов
+      - Обновление навыков
+
+    evaluation: |
+      - Оценка урока
+      - Обновление репутации наставника
+      - Начисление наград
+      - Решение о продолжении
+
+  learning_formats:
+    - name: theoretical
+      description: "Теоретическое обучение - ускоряет освоение основ навыка"
+      requirements:
+        - resources: "минимальные"
+        - time: "короткое"
+        - interaction: "низкое"
+
+    - name: practical
+      description: "Практическое обучение - демонстрация и тренировки"
+      requirements:
+        - resources: "средние"
+        - time: "среднее"
+        - interaction: "высокое"
+
+    - name: content_based
+      description: "Контентное обучение - использование учебных материалов"
+      requirements:
+        - resources: "зависит от контента"
+        - time: "зависит от контента"
+        - interaction: "среднее"
+
+    - name: examination
+      description: "Экзаменационное обучение - проверка знаний"
+      requirements:
+        - resources: "минимальные"
+        - time: "короткое"
+        - interaction: "низкое"
+
+    - name: group
+      description: "Групповое обучение - обучение нескольких учеников"
+      requirements:
+        - resources: "высокие"
+        - time: "длинное"
+        - interaction: "высокое"
+
+    - name: vr
+      description: "VR-обучение - виртуальные кампусы и симуляции"
+      requirements:
+        - resources: "очень высокие"
+        - time: "зависит от симуляции"
+        - interaction: "очень высокое"
+
+  skill_tracks:
+    - name: combat
+      description: "Боевые навыки"
+      categories:
+        - weapons
+        - tactics
+        - survival
+
+    - name: social
+      description: "Социальные навыки"
+      categories:
+        - negotiation
+        - leadership
+        - networking
+
+    - name: technical
+      description: "Технические навыки"
+      categories:
+        - engineering
+        - hacking
+        - crafting
+
+    - name: economic
+      description: "Экономические навыки"
+      categories:
+        - trading
+        - investment
+        - management
+
+  mentor_reputation:
+    factors: |
+      - Опыт наставника
+      - Отзывы учеников
+      - Количество успешных выпускников
+      - Качество учебного контента
+      - Рейтинг академии
+
+    benefits: |
+      - Доступ к элитным программам
+      - Повышенные вознаграждения
+      - Приоритет в рекомендациях
+      - Доступ к эксклюзивному контенту
+
+    penalties: |
+      - Санкции за жалобы
+      - Штрафы за нарушения
+      - Снижение репутации
+      - Ограничение доступа
+
+  academy_features:
+    schedule_management: |
+      - Управление расписаниями программ
+      - Бронирование времени
+      - Автоматизация расписаний
+
+    ratings: |
+      - Рейтинги академий
+      - Рейтинги программ
+      - Рейтинги наставников
+
+    events: |
+      - Образовательные события
+      - Фестивали наставников
+      - Выпускные церемонии
+
+    educational_hubs: |
+      - Образовательные хабы городов
+      - Виртуальные кампусы
+      - Интеграция с миром
+
+  mentorship_chains:
+    linear_chains: |
+      - Последовательное обучение
+      - Передача знаний от наставника к ученику
+      - Ученик становится наставником
+
+    network_chains: |
+      - Сетевые цепочки обучения
+      - Множественные наставники
+      - Коллективное обучение
+
+    faction_chains: |
+      - Фракционные программы
+      - Обучение внутри фракций
+      - Влияние на фракции
+
+    academy_chains: |
+      - Академические программы
+      - Структурированное обучение
+      - Сертификация
+
+  mentorship_economy:
+    payment_models: |
+      - Платные курсы
+      - Гранты
+      - Очки влияния
+      - Ресурсы академий
+
+    monetization: |
+      - Создание и продажа учебного контента
+      - Комиссии за обучение
+      - Подписки на программы
+      - Премиум доступ
+
+    taxation: |
+      - Налогообложение доходов наставников
+      - Субсидии для академий
+      - Распределение ресурсов
+
+  data_flows:
+    mentorship_initiation_flow: |
+      1. Игрок или NPC инициирует поиск наставника/ученика
+      2. Mentorship Discovery Service находит подходящих кандидатов
+      3. Игрок или NPC создает предложение наставничества
+      4. Contract Manager проверяет требования и ограничения
+      5. Предложение отправляется получателю
+      6. Получатель принимает или отклоняет предложение
+      7. При принятии создается договор наставничества
+      8. Social Service публикует событие social.mentorship.contract-created
+      9. Realtime Gateway отправляет обновление клиентам
+
+    lesson_execution_flow: |
+      1. Наступает время урока по расписанию
+      2. Lesson Manager создает урок
+      3. Learning Format Manager определяет формат обучения
+      4. Урок начинается
+      5. Skill Progress Tracker отслеживает прогресс
+      6. Урок завершается
+      7. Lesson Manager оценивает результаты
+      8. Skill Progress Tracker обновляет навыки
+      9. Mentor Reputation Manager обновляет репутацию
+      10. Social Service публикует событие social.mentorship.lesson-completed
+      11. Realtime Gateway отправляет обновление клиентам
+
+    academy_enrollment_flow: |
+      1. Игрок выбирает академию и программу
+      2. Academy Manager проверяет требования
+      3. Economy Manager проверяет оплату
+      4. Academy Manager записывает игрока в программу
+      5. Schedule Manager создает расписание
+      6. Social Service публикует событие social.mentorship.academy-enrolled
+      7. Realtime Gateway отправляет обновление клиентам
+
+    content_creation_flow: |
+      1. Наставник создает учебный контент
+      2. Content Manager получает контент
+      3. Content Manager отправляет на модерацию
+      4. После модерации контент публикуется
+      5. Content Manager добавляет контент в витрину академии
+      6. Social Service публикует событие social.mentorship.content-created
+      7. Realtime Gateway отправляет обновление клиентам
+
+  database_structure:
+    tables:
+      - name: mentorship_contracts
+        description: Договоры наставничества
+        columns:
+          - id: UUID PRIMARY KEY
+          - mentor_id: UUID FOREIGN KEY
+          - mentee_id: UUID FOREIGN KEY
+          - mentorship_type: ENUM (player_to_player, player_to_npc, npc_to_player, npc_to_npc, academy)
+          - contract_type: VARCHAR(50)
+          - skill_track: VARCHAR(50)
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP
+          - status: ENUM (active, completed, terminated)
+          - payment_model: ENUM (paid, grant, influence_points, resources)
+          - payment_amount: DECIMAL(10,2)
+          - terms: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: mentorship_schedules
+        description: Расписания уроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - contract_id: UUID FOREIGN KEY
+          - lesson_date: TIMESTAMP
+          - lesson_time: TIME
+          - location: VARCHAR(255)
+          - format: ENUM (theoretical, practical, content_based, examination, group, vr)
+          - resources: JSONB
+          - status: ENUM (scheduled, in-progress, completed, cancelled)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: mentorship_lessons
+        description: Уроки наставничества
+        columns:
+          - id: UUID PRIMARY KEY
+          - contract_id: UUID FOREIGN KEY
+          - schedule_id: UUID FOREIGN KEY
+          - lesson_type: VARCHAR(50)
+          - format: ENUM (theoretical, practical, content_based, examination, group, vr)
+          - content_id: UUID FOREIGN KEY
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP
+          - duration: INTEGER
+          - skill_progress: JSONB
+          - evaluation: JSONB
+          - status: ENUM (scheduled, in-progress, completed, failed)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: mentorship_skill_progress
+        description: Прогресс навыков учеников
+        columns:
+          - id: UUID PRIMARY KEY
+          - contract_id: UUID FOREIGN KEY
+          - mentee_id: UUID FOREIGN KEY
+          - skill_track: VARCHAR(50)
+          - skill_name: VARCHAR(100)
+          - initial_level: INTEGER
+          - current_level: INTEGER
+          - target_level: INTEGER
+          - experience_gained: INTEGER
+          - bonus_applied: DECIMAL(5,2)
+          - last_update: TIMESTAMP
+
+      - name: mentor_reputation
+        description: Репутация наставников
+        columns:
+          - id: UUID PRIMARY KEY
+          - mentor_id: UUID FOREIGN KEY
+          - reputation_score: DECIMAL(5,2)
+          - total_students: INTEGER
+          - successful_graduates: INTEGER
+          - average_rating: DECIMAL(3,2)
+          - total_reviews: INTEGER
+          - content_quality_score: DECIMAL(5,2)
+          - academy_rating: DECIMAL(3,2)
+          - last_update: TIMESTAMP
+
+      - name: mentorship_reviews
+        description: Отзывы о наставниках
+        columns:
+          - id: UUID PRIMARY KEY
+          - contract_id: UUID FOREIGN KEY
+          - mentor_id: UUID FOREIGN KEY
+          - mentee_id: UUID FOREIGN KEY
+          - rating: INTEGER
+          - review_text: TEXT
+          - created_at: TIMESTAMP
+
+      - name: academies
+        description: Академии и образовательные центры
+        columns:
+          - id: UUID PRIMARY KEY
+          - academy_name: VARCHAR(255)
+          - academy_type: ENUM (corporate, gang, independent)
+          - location: VARCHAR(255)
+          - description: TEXT
+          - rating: DECIMAL(3,2)
+          - total_students: INTEGER
+          - total_programs: INTEGER
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: academy_programs
+        description: Программы академий
+        columns:
+          - id: UUID PRIMARY KEY
+          - academy_id: UUID FOREIGN KEY
+          - program_name: VARCHAR(255)
+          - skill_track: VARCHAR(50)
+          - duration: INTEGER
+          - cost: DECIMAL(10,2)
+          - requirements: JSONB
+          - schedule: JSONB
+          - status: ENUM (active, inactive)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: academy_enrollments
+        description: Записи в академии
+        columns:
+          - id: UUID PRIMARY KEY
+          - academy_id: UUID FOREIGN KEY
+          - program_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - enrolled_at: TIMESTAMP
+          - completed_at: TIMESTAMP
+          - status: ENUM (enrolled, in-progress, completed, dropped)
+          - payment_status: ENUM (pending, paid, refunded)
+
+      - name: mentorship_chains
+        description: Цепочки наставничества
+        columns:
+          - id: UUID PRIMARY KEY
+          - chain_name: VARCHAR(255)
+          - chain_type: ENUM (linear, network, faction, academy)
+          - contract_ids: UUID[]
+          - character_ids: UUID[]
+          - chain_level: INTEGER
+          - created_at: TIMESTAMP
+
+      - name: mentorship_content
+        description: Учебный контент
+        columns:
+          - id: UUID PRIMARY KEY
+          - creator_id: UUID FOREIGN KEY
+          - content_type: ENUM (guide, simulation, vr_scene, video, text)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - skill_track: VARCHAR(50)
+          - content_data: JSONB
+          - moderation_status: ENUM (pending, approved, rejected)
+          - monetization_status: ENUM (free, paid, subscription)
+          - price: DECIMAL(10,2)
+          - rating: DECIMAL(3,2)
+          - views: INTEGER
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: mentorship_economy
+        description: Экономика наставничества
+        columns:
+          - id: UUID PRIMARY KEY
+          - contract_id: UUID FOREIGN KEY
+          - payment_type: ENUM (course_fee, grant, influence_points, resources)
+          - amount: DECIMAL(10,2)
+          - payer_id: UUID FOREIGN KEY
+          - recipient_id: UUID FOREIGN KEY
+          - payment_date: TIMESTAMP
+          - status: ENUM (pending, paid, failed, refunded)
+          - transaction_id: UUID
+
+  integrations:
+    npc_service: |
+      - Получение информации о NPC-наставниках
+      - Проверка доступности NPC
+      - Обновление статуса NPC
+      - Взаимодействие с NPC
+
+    economy_service: |
+      - Проверка баланса игрока
+      - Обработка платежей за обучение
+      - Расчет доходов наставников
+      - Интеграция с налоговой системой
+      - Обработка грантов
+
+    world_service: |
+      - Проверка доступа к академиям
+      - Триггеры событий на основе наставничества
+      - Влияние наставничества на мир
+      - Интеграция с образовательными хабами
+
+    quest_service: |
+      - Интеграция с квестами наставничества
+      - Назначение квестов ученикам
+      - Оценка выполнения квестов
+
+    reputation_service: |
+      - Проверка репутации для наставничества
+      - Влияние наставничества на репутацию
+      - Обновление репутации на основе обучения
+
+    gameplay_service: |
+      - Получение событий игрового процесса
+      - Интеграция с системой прогрессии
+      - Модификация прогресса навыков
+      - Начисление опыта за обучение
+
+    content_service: |
+      - Создание учебного контента
+      - Модерация контента
+      - Публикация контента
+      - Управление витриной контента
+
+    analytics_service: |
+      - Логирование всех операций наставничества
+      - Сбор метрик эффективности
+      - Анализ паттернов наставничества
+      - Мониторинг удовлетворенности
+
+    realtime_gateway: |
+      - Отправка realtime обновлений наставничества
+      - Синхронизация уроков
+      - Уведомления о событиях наставничества
+
+technical_specification:
+  subtasks:
+    - id: mentorship-manager
+      title: Реализация менеджера наставничества
+      description: |
+        Реализация Mentorship Manager с управлением наставничеством,
+        договорами и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: mentorship-discovery-service
+      title: Реализация сервиса поиска
+      description: |
+        Реализация Mentorship Discovery Service с поиском наставников и учеников,
+        фильтрацией и рекомендациями.
+      dependencies: [mentorship-manager]
+      estimated_effort: 4 days
+
+    - id: contract-manager
+      title: Реализация менеджера договоров
+      description: |
+        Реализация Contract Manager с управлением договорами наставничества,
+        обработкой предложений и условий.
+      dependencies: [mentorship-manager]
+      estimated_effort: 4 days
+
+    - id: schedule-manager
+      title: Реализация менеджера расписания
+      description: |
+        Реализация Schedule Manager с управлением расписанием уроков,
+        бронированием времени и автоматизацией.
+      dependencies: [contract-manager]
+      estimated_effort: 4 days
+
+    - id: lesson-manager
+      title: Реализация менеджера уроков
+      description: |
+        Реализация Lesson Manager с управлением уроками,
+        отслеживанием прогресса и оценкой результатов.
+      dependencies: [schedule-manager]
+      estimated_effort: 4 days
+
+    - id: learning-format-manager
+      title: Реализация менеджера форматов обучения
+      description: |
+        Реализация Learning Format Manager с поддержкой различных форматов обучения,
+        управлением ресурсами и взаимодействием.
+      dependencies: [lesson-manager]
+      estimated_effort: 4 days
+
+    - id: skill-progress-tracker
+      title: Реализация трекера прогресса навыков
+      description: |
+        Реализация Skill Progress Tracker с отслеживанием прогресса навыков,
+        расчетом бонусов и обновлением уровней.
+      dependencies: [lesson-manager]
+      estimated_effort: 4 days
+
+    - id: mentor-reputation-manager
+      title: Реализация менеджера репутации наставника
+      description: |
+        Реализация Mentor Reputation Manager с управлением репутацией наставников,
+        обработкой отзывов и расчетом рейтингов.
+      dependencies: [mentorship-manager]
+      estimated_effort: 4 days
+
+    - id: academy-manager
+      title: Реализация менеджера академий
+      description: |
+        Реализация Academy Manager с управлением академиями,
+        программами и записями в академии.
+      dependencies: [mentorship-manager]
+      estimated_effort: 5 days
+
+    - id: mentorship-chain-manager
+      title: Реализация менеджера цепочек наставничества
+      description: |
+        Реализация Mentorship Chain Manager с поддержкой цепочек наставничества,
+        линейных и сетевых структур.
+      dependencies: [mentorship-manager]
+      estimated_effort: 4 days
+
+    - id: content-manager
+      title: Реализация менеджера контента
+      description: |
+        Реализация Content Manager с управлением учебным контентом,
+        модерацией и публикацией.
+      dependencies: [mentorship-manager]
+      estimated_effort: 4 days
+
+    - id: economy-manager
+      title: Реализация менеджера экономики наставничества
+      description: |
+        Реализация Economy Manager с управлением экономикой наставничества,
+        обработкой платежей и интеграцией с Economy Service.
+      dependencies: [mentorship-manager]
+      estimated_effort: 4 days
+
+    - id: mentorship-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Mentorship Telemetry Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [mentorship-manager]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений наставничества,
+        уроков и расписания.
+      dependencies: [mentorship-manager, lesson-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы наставничества.
+      dependencies: [mentorship-manager]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для наставничества, договоров, расписаний, уроков,
+        прогресса навыков, репутации, академий, цепочек, контента и экономики
+        с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SocialService[Social Service<br/>8084]
+        
+        SocialService --> MM[Mentorship Manager]
+        SocialService --> MDS[Mentorship Discovery Service]
+        SocialService --> CM[Contract Manager]
+        SocialService --> SM[Schedule Manager]
+        SocialService --> LM[Lesson Manager]
+        SocialService --> LFM[Learning Format Manager]
+        SocialService --> SPT[Skill Progress Tracker]
+        SocialService --> MRM[Mentor Reputation Manager]
+        SocialService --> AM[Academy Manager]
+        SocialService --> MCM[Mentorship Chain Manager]
+        SocialService --> CM2[Content Manager]
+        SocialService --> EM[Economy Manager]
+        SocialService --> MTC[Mentorship Telemetry Collector]
+        
+        MM --> MDS
+        MM --> CM
+        CM --> SM
+        SM --> LM
+        LM --> LFM
+        LM --> SPT
+        MM --> MRM
+        MM --> AM
+        MM --> MCM
+        MM --> CM2
+        MM --> EM
+        
+        SocialService --> NPCService[NPC Service]
+        SocialService --> EconomyService[Economy Service]
+        SocialService --> WorldService[World Service]
+        SocialService --> QuestService[Quest Service]
+        SocialService --> ReputationService[Reputation Service]
+        SocialService --> GameplayService[Gameplay Service]
+        SocialService --> ContentService[Content Service]
+        SocialService --> AnalyticsService[Analytics Service]
+        
+        SocialService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SocialService --> DB[(Social DB)]
+        
+        Client --> WSMentorship[WebSocket<br/>Mentorship]
+        WSMentorship --> SocialService
+    ```
+
+  mentorship_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant MDS as Mentorship Discovery Service
+        participant CM as Contract Manager
+        participant SM as Schedule Manager
+        participant LM as Lesson Manager
+        participant SPT as Skill Progress Tracker
+        participant EB as Event Bus
+        
+        P->>MDS: Search mentor
+        MDS->>MDS: Find mentors
+        MDS->>P: Return mentors
+        P->>CM: Create proposal
+        CM->>CM: Check requirements
+        CM->>CM: Create contract
+        CM->>SM: Create schedule
+        SM->>LM: Create lesson
+        LM->>SPT: Track progress
+        SPT->>SPT: Update skills
+        LM->>EB: Publish social.mentorship.lesson-completed
+    ```
+
+  academy_enrollment_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant AM as Academy Manager
+        participant EM as Economy Manager
+        participant SM as Schedule Manager
+        participant EB as Event Bus
+        
+        P->>AM: Enroll in academy
+        AM->>AM: Check requirements
+        AM->>EM: Check payment
+        EM->>EM: Process payment
+        AM->>SM: Create schedule
+        AM->>EB: Publish social.mentorship.academy-enrolled
+    ```
+
