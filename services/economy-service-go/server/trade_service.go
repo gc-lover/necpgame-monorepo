@@ -26,9 +26,10 @@ type TradeRepositoryInterface interface {
 }
 
 type TradeService struct {
-	repo  TradeRepositoryInterface
-	cache *redis.Client
-	logger *logrus.Logger
+	repo     TradeRepositoryInterface
+	cache    *redis.Client
+	logger   *logrus.Logger
+	eventBus EventBus
 }
 
 func NewTradeService(dbURL, redisURL string) (*TradeService, error) {
@@ -45,11 +46,13 @@ func NewTradeService(dbURL, redisURL string) (*TradeService, error) {
 	redisClient := redis.NewClient(redisOpts)
 
 	repo := NewTradeRepository(dbPool)
+	eventBus := NewRedisEventBus(redisClient)
 
 	return &TradeService{
-		repo:  repo,
-		cache: redisClient,
-		logger: GetLogger(),
+		repo:     repo,
+		cache:    redisClient,
+		logger:   GetLogger(),
+		eventBus: eventBus,
 	}, nil
 }
 
@@ -89,6 +92,20 @@ func (s *TradeService) CreateTrade(ctx context.Context, initiatorID uuid.UUID, r
 	err = s.repo.Create(ctx, session)
 	if err != nil {
 		return nil, err
+	}
+
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"trade_id":     session.ID.String(),
+			"initiator_id": initiatorID.String(),
+			"recipient_id": req.RecipientID.String(),
+			"zone_id":      nil,
+			"timestamp":    session.CreatedAt.Format(time.RFC3339),
+		}
+		if session.ZoneID != nil {
+			payload["zone_id"] = session.ZoneID.String()
+		}
+		s.eventBus.PublishEvent(ctx, "trade:started", payload)
 	}
 
 	RecordTrade(string(session.Status))
@@ -253,6 +270,20 @@ func (s *TradeService) CompleteTrade(ctx context.Context, sessionID uuid.UUID) e
 		return err
 	}
 
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"trade_id":     session.ID.String(),
+			"initiator_id": session.InitiatorID.String(),
+			"recipient_id": session.RecipientID.String(),
+			"zone_id":      nil,
+			"timestamp":    now.Format(time.RFC3339),
+		}
+		if session.ZoneID != nil {
+			payload["zone_id"] = session.ZoneID.String()
+		}
+		s.eventBus.PublishEvent(ctx, "trade:completed", payload)
+	}
+
 	RecordTradeCompleted()
 	s.invalidateTradeCache(ctx, session.InitiatorID)
 	s.invalidateTradeCache(ctx, session.RecipientID)
@@ -283,6 +314,21 @@ func (s *TradeService) CancelTrade(ctx context.Context, sessionID, characterID u
 	err = s.repo.UpdateStatus(ctx, sessionID, models.TradeStatusCancelled)
 	if err != nil {
 		return err
+	}
+
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"trade_id":     sessionID.String(),
+			"initiator_id": session.InitiatorID.String(),
+			"recipient_id": session.RecipientID.String(),
+			"cancelled_by": characterID.String(),
+			"zone_id":      nil,
+			"timestamp":    session.UpdatedAt.Format(time.RFC3339),
+		}
+		if session.ZoneID != nil {
+			payload["zone_id"] = session.ZoneID.String()
+		}
+		s.eventBus.PublishEvent(ctx, "trade:cancelled", payload)
 	}
 
 	RecordTrade(string(session.Status))
