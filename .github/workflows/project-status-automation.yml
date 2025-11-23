@@ -175,6 +175,9 @@ jobs:
             } else if (labelNames.some(l => l.includes('architect') || l.includes('architecture'))) {
               stage = 'architect';
               agent = 'architect';
+            } else if (labelNames.some(l => l.includes('database'))) {
+              stage = 'database-dev';
+              agent = 'database';
             } else if (labelNames.some(l => l.includes('api-designer') || l.includes('api'))) {
               stage = 'api-designer';
               agent = 'api-designer';
@@ -184,6 +187,9 @@ jobs:
             } else if (labelNames.some(l => l.includes('network'))) {
               stage = 'network-dev';
               agent = 'network';
+            } else if (labelNames.some(l => l.includes('security'))) {
+              stage = 'security';
+              agent = 'security';
             } else if (labelNames.some(l => l.includes('devops'))) {
               stage = 'devops';
               agent = 'devops';
@@ -196,6 +202,9 @@ jobs:
             } else if (labelNames.some(l => l.includes('qa') || l.includes('testing'))) {
               stage = 'testing';
               agent = 'qa';
+            } else if (labelNames.some(l => l.includes('game-balance'))) {
+              stage = 'game-balance';
+              agent = 'game-balance';
             } else if (labelNames.some(l => l.includes('release'))) {
               stage = 'release';
               agent = 'release';
@@ -501,13 +510,16 @@ jobs:
               const stageTransitions = {
                 'idea-writer': isContentQuest ? 'content-writer' : 'architect',
                 'content-writer': 'testing',
-                'architect': 'api-designer',
+                'architect': 'database-dev',
+                'database-dev': 'api-designer',
                 'api-designer': 'backend-dev',
                 'backend-dev': 'network-dev',
-                'network-dev': 'ue5-dev',
+                'network-dev': 'security',
+                'security': 'devops',
+                'devops': 'ue5-dev',
                 'ue5-dev': 'testing',
-                'testing': 'release',
-                'devops': 'testing',
+                'testing': 'game-balance',
+                'game-balance': 'release',
                 'performance': null
               };
               
@@ -515,12 +527,15 @@ jobs:
               if (labelNames.some(l => l.includes('content-writer') || l.includes('content'))) currentStage = 'content-writer';
               else if (labelNames.some(l => l.includes('idea-writer'))) currentStage = 'idea-writer';
               else if (labelNames.some(l => l.includes('architect'))) currentStage = 'architect';
+              else if (labelNames.some(l => l.includes('database'))) currentStage = 'database-dev';
               else if (labelNames.some(l => l.includes('api-designer'))) currentStage = 'api-designer';
               else if (labelNames.some(l => l.includes('backend'))) currentStage = 'backend-dev';
               else if (labelNames.some(l => l.includes('network'))) currentStage = 'network-dev';
+              else if (labelNames.some(l => l.includes('security'))) currentStage = 'security';
+              else if (labelNames.some(l => l.includes('devops'))) currentStage = 'devops';
               else if (labelNames.some(l => l.includes('ue5') || l.includes('client'))) currentStage = 'ue5-dev';
               else if (labelNames.some(l => l.includes('testing') || l.includes('qa'))) currentStage = 'testing';
-              else if (labelNames.some(l => l.includes('devops'))) currentStage = 'devops';
+              else if (labelNames.some(l => l.includes('game-balance'))) currentStage = 'game-balance';
               
               const nextStage = stageTransitions[currentStage];
               
@@ -528,11 +543,15 @@ jobs:
                 const nextAgentLabels = {
                   'content-writer': ['agent:content-writer', 'stage:content'],
                   'architect': ['agent:architect', 'stage:design'],
+                  'database-dev': ['agent:database', 'stage:database'],
                   'api-designer': ['agent:api-designer', 'stage:api-design'],
                   'backend-dev': ['agent:backend', 'stage:backend-dev'],
                   'network-dev': ['agent:network', 'stage:network'],
+                  'security': ['agent:security', 'stage:security'],
+                  'devops': ['agent:devops', 'stage:infrastructure'],
                   'ue5-dev': ['agent:ue5', 'stage:client-dev'],
                   'testing': ['agent:qa', 'stage:testing'],
+                  'game-balance': ['agent:game-balance', 'stage:balance'],
                   'release': ['agent:release', 'stage:release']
                 };
                 
@@ -548,11 +567,15 @@ jobs:
                 const agentNames = {
                   'content-writer': '✍️ Content Writer',
                   'architect': '📐 Architect',
+                  'database-dev': '🗄️ Database Engineer',
                   'api-designer': '📋 API Designer',
                   'backend-dev': '⚙️ Backend Developer',
                   'network-dev': '🌐 Network Engineer',
+                  'security': '🔒 Security Agent',
+                  'devops': '🐳 DevOps',
                   'ue5-dev': '🎮 UE5 Developer',
                   'testing': '🧪 QA/Testing',
+                  'game-balance': '⚖️ Game Balance Agent',
                   'release': '🚀 Release Manager'
                 };
                 
@@ -580,13 +603,15 @@ jobs:
             const labels = context.payload.pull_request.labels || [];
             const labelNames = labels.map(l => l.name);
             
-            const stageTransitions = {
+                const stageTransitions = {
               'backend': 'network-dev',
-              'network': 'ue5-dev',
+              'network': 'security',
+              'security': 'devops',
+              'devops': 'ue5-dev',
               'ue5': 'testing',
               'client': 'testing',
               'api': 'backend-dev',
-              'devops': 'testing'
+              'database': 'api-designer'
             };
             
             let nextStage = '';
@@ -601,9 +626,12 @@ jobs:
               const linkedIssues = context.payload.pull_request.body?.match(/#\d+/g) || [];
               const nextAgentLabels = {
                 'network-dev': ['agent:network', 'stage:network'],
+                'security': ['agent:security', 'stage:security'],
+                'devops': ['agent:devops', 'stage:infrastructure'],
                 'ue5-dev': ['agent:ue5', 'stage:client-dev'],
                 'testing': ['agent:qa', 'stage:testing'],
-                'backend-dev': ['agent:backend', 'stage:backend-dev']
+                'backend-dev': ['agent:backend', 'stage:backend-dev'],
+                'api-designer': ['agent:api-designer', 'stage:api-design']
               };
               
               const nextLabels = nextAgentLabels[nextStage] || [`stage:${nextStage}`];

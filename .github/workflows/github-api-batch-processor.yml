@@ -1,0 +1,236 @@
+name: GitHub API Batch Processor
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Operation type'
+        required: true
+        type: choice
+        options:
+          - update-labels
+          - add-comments
+          - transfer-to-qa
+          - transfer-to-next-stage
+      query:
+        description: 'GitHub search query (e.g., is:issue is:open label:agent:content-writer)'
+        required: true
+        type: string
+      batch_size:
+        description: 'Batch size (default: 5)'
+        required: false
+        type: string
+        default: '5'
+      delay_ms:
+        description: 'Delay between requests in ms (default: 500)'
+        required: false
+        type: string
+        default: '500'
+      new_labels:
+        description: 'New labels (comma-separated, for update-labels operation)'
+        required: false
+        type: string
+      comment_template:
+        description: 'Comment template (for add-comments operation)'
+        required: false
+        type: string
+      next_agent:
+        description: 'Next agent label (for transfer operations)'
+        required: false
+        type: string
+  schedule:
+    - cron: '0 */6 * * *'
+  issues:
+    types: [labeled]
+
+jobs:
+  batch-process:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install @octokit/rest
+
+      - name: Process Issues in Batches
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPERATION: ${{ github.event.inputs.operation || 'update-labels' }}
+          QUERY: ${{ github.event.inputs.query || 'is:issue is:open label:agent:content-writer label:stage:content' }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size || '5' }}
+          DELAY_MS: ${{ github.event.inputs.delay_ms || '500' }}
+          NEW_LABELS: ${{ github.event.inputs.new_labels || '' }}
+          COMMENT_TEMPLATE: ${{ github.event.inputs.comment_template || '' }}
+          NEXT_AGENT: ${{ github.event.inputs.next_agent || 'agent:qa' }}
+        run: |
+          node << 'EOF'
+          const { Octokit } = require('@octokit/rest');
+          
+          const octokit = new Octokit({
+            auth: process.env.GITHUB_TOKEN,
+          });
+          
+          const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+          const operation = process.env.OPERATION;
+          const query = process.env.QUERY;
+          const batchSize = parseInt(process.env.BATCH_SIZE) || 5;
+          const delayMs = parseInt(process.env.DELAY_MS) || 500;
+          const newLabels = process.env.NEW_LABELS ? process.env.NEW_LABELS.split(',').map(l => l.trim()) : [];
+          const commentTemplate = process.env.COMMENT_TEMPLATE || '';
+          const nextAgent = process.env.NEXT_AGENT;
+          
+          async function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+          }
+          
+          async function searchIssues() {
+            console.log(`Searching issues with query: ${query}`);
+            const { data } = await octokit.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} ${query}`,
+              per_page: 100,
+            });
+            return data.items;
+          }
+          
+          async function updateIssueLabels(issueNumber, currentLabels, newLabels) {
+            const labelsToRemove = currentLabels
+              .filter(l => l.startsWith('agent:') || l.startsWith('stage:'))
+              .filter(l => !newLabels.includes(l));
+            
+            const allLabels = [
+              ...currentLabels.filter(l => !labelsToRemove.includes(l)),
+              ...newLabels.filter(l => !currentLabels.includes(l))
+            ];
+            
+            await octokit.rest.issues.update({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              labels: allLabels,
+            });
+          }
+          
+          async function addComment(issueNumber, template) {
+            const comment = template
+              .replace('{issue_number}', issueNumber)
+              .replace('{timestamp}', new Date().toISOString());
+            
+            await octokit.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              body: comment,
+            });
+          }
+          
+          async function transferToNextAgent(issueNumber, currentLabels) {
+            const agentLabels = currentLabels.filter(l => l.startsWith('agent:'));
+            const stageLabels = currentLabels.filter(l => l.startsWith('stage:'));
+            
+            const newLabels = [
+              ...currentLabels.filter(l => !l.startsWith('agent:') && !l.startsWith('stage:')),
+              nextAgent,
+            ];
+            
+            if (nextAgent === 'agent:qa') {
+              newLabels.push('stage:testing');
+            } else if (nextAgent === 'agent:content-writer') {
+              newLabels.push('stage:content');
+            } else if (nextAgent === 'agent:architect') {
+              newLabels.push('stage:design');
+            }
+            
+            await octokit.rest.issues.update({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              labels: newLabels,
+            });
+            
+            await delay(delayMs);
+            
+            await octokit.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              body: `OK Задача передана агенту ${nextAgent}\n\nОбработано через GitHub Actions Batch Processor.`,
+            });
+          }
+          
+          async function processBatch(issues) {
+            console.log(`Processing ${issues.length} issues in batches of ${batchSize}`);
+            
+            for (let i = 0; i < issues.length; i += batchSize) {
+              const batch = issues.slice(i, i + batchSize);
+              console.log(`\nProcessing batch ${Math.floor(i / batchSize) + 1} (${batch.length} issues)`);
+              
+              for (const issue of batch) {
+                try {
+                  const issueNumber = issue.number;
+                  const currentLabels = issue.labels.map(l => l.name);
+                  
+                  console.log(`  Processing issue #${issueNumber}...`);
+                  
+                  switch (operation) {
+                    case 'update-labels':
+                      await updateIssueLabels(issueNumber, currentLabels, newLabels);
+                      break;
+                    case 'add-comments':
+                      await addComment(issueNumber, commentTemplate);
+                      break;
+                    case 'transfer-to-qa':
+                      await transferToNextAgent(issueNumber, currentLabels);
+                      break;
+                    case 'transfer-to-next-stage':
+                      await transferToNextAgent(issueNumber, currentLabels);
+                      break;
+                  }
+                  
+                  await delay(delayMs);
+                } catch (error) {
+                  console.error(`  Error processing issue #${issue.number}:`, error.message);
+                  if (error.status === 403) {
+                    console.log('  Rate limit exceeded, waiting...');
+                    await delay(60000);
+                  }
+                }
+              }
+              
+              if (i + batchSize < issues.length) {
+                console.log(`  Waiting 1s before next batch...`);
+                await delay(1000);
+              }
+            }
+          }
+          
+          async function main() {
+            try {
+              const issues = await searchIssues();
+              console.log(`Found ${issues.length} issues`);
+              
+              if (issues.length === 0) {
+                console.log('No issues found, exiting');
+                return;
+              }
+              
+              await processBatch(issues);
+              console.log('\nOK Batch processing completed');
+            } catch (error) {
+              console.error('Error:', error);
+              process.exit(1);
+            }
+          }
+          
+          main();
+          EOF
+

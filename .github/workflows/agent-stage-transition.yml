@@ -64,12 +64,16 @@ jobs:
             const stageTransitions = {
               'idea-writer': isContentQuest ? { next: 'content-writer', agent: 'content-writer', stage: 'content' } : { next: 'architect', agent: 'architect', stage: 'design' },
               'content-writer': { next: 'testing', agent: 'qa', stage: 'testing' },
-              'architect': { next: 'api-designer', agent: 'api-designer', stage: 'api-design' },
+              'architect': { next: 'database-dev', agent: 'database', stage: 'database' },
+              'database-dev': { next: 'api-designer', agent: 'api-designer', stage: 'api-design' },
               'api-designer': { next: 'backend-dev', agent: 'backend', stage: 'backend-dev' },
               'backend-dev': { next: 'network-dev', agent: 'network', stage: 'network' },
-              'network-dev': { next: 'ue5-dev', agent: 'ue5', stage: 'client-dev' },
+              'network-dev': { next: 'security', agent: 'security', stage: 'security' },
+              'security': { next: 'devops', agent: 'devops', stage: 'infrastructure' },
+              'devops': { next: 'ue5-dev', agent: 'ue5', stage: 'client-dev' },
               'ue5-dev': { next: 'testing', agent: 'qa', stage: 'testing' },
-              'testing': { next: 'release', agent: 'release', stage: 'release' }
+              'testing': { next: 'game-balance', agent: 'game-balance', stage: 'balance' },
+              'game-balance': { next: 'release', agent: 'release', stage: 'release' }
             };
             
             let currentStage = '';
@@ -79,16 +83,24 @@ jobs:
               currentStage = 'idea-writer';
             } else if (labelNames.some(l => l.includes('architect') || l.includes('architecture'))) {
               currentStage = 'architect';
+            } else if (labelNames.some(l => l.includes('database'))) {
+              currentStage = 'database-dev';
             } else if (labelNames.some(l => l.includes('api-designer') || l.includes('api'))) {
               currentStage = 'api-designer';
             } else if (labelNames.some(l => l.includes('backend'))) {
               currentStage = 'backend-dev';
             } else if (labelNames.some(l => l.includes('network'))) {
               currentStage = 'network-dev';
+            } else if (labelNames.some(l => l.includes('security'))) {
+              currentStage = 'security';
+            } else if (labelNames.some(l => l.includes('devops'))) {
+              currentStage = 'devops';
             } else if (labelNames.some(l => l.includes('ue5') || l.includes('client'))) {
               currentStage = 'ue5-dev';
             } else if (labelNames.some(l => l.includes('testing') || l.includes('qa'))) {
               currentStage = 'testing';
+            } else if (labelNames.some(l => l.includes('game-balance'))) {
+              currentStage = 'game-balance';
             }
             
             const transition = stageTransitions[currentStage];
@@ -116,11 +128,15 @@ jobs:
             const agentNames = {
               'content-writer': '✍️ Content Writer',
               'architect': '📐 Architect',
+              'database': '🗄️ Database Engineer',
               'api-designer': '📋 API Designer',
               'backend': '⚙️ Backend Developer',
               'network': '🌐 Network Engineer',
+              'security': '🔒 Security Agent',
+              'devops': '🐳 DevOps',
               'ue5': '🎮 UE5 Developer',
               'qa': '🧪 QA/Testing',
+              'game-balance': '⚖️ Game Balance Agent',
               'release': '🚀 Release Manager'
             };
             
