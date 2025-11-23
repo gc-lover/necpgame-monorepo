@@ -1,0 +1,730 @@
+metadata:
+  id: hybrid-network-system-architecture
+  title: Архитектура гибридной сетевой системы (WebSocket/UDP)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T10:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - networking
+    - websocket
+    - udp
+    - hybrid
+    - realtime
+  related_systems:
+    - realtime-gateway-go
+    - ws-lobby-go
+    - matchmaking-go
+    - world-service-go
+  related_documents:
+    - id: network-architecture-analysis
+      relation: extends
+    - id: realtime-server-system-architecture
+      relation: extends
+  github_issue: 11
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - infrastructure
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать гибридную сетевую архитектуру с динамическим переключением
+    между WebSocket (TCP) и UDP протоколами для оптимальной производительности в различных
+    режимах игры: MMORPG зоны (PvE/PvP), малые PvP зоны, GvG битвы (200-400 игроков),
+    масштабные войны (2000+ игроков).
+  goal: |
+    Создать архитектурную схему гибридной сетевой системы с определением:
+    - Микросервисов для поддержки WebSocket и UDP
+    - Механизма динамического переключения протоколов
+    - Архитектуры для различных типов зон и масштабов битв
+    - Стратегий оптимизации и масштабирования
+    - API endpoints (высокоуровнево)
+    - Технического задания для реализации
+  essence: |
+    Гибридная сетевая архитектура с WebSocket для MMORPG зон (PvE) и UDP для PvP зон,
+    с динамическим переключением протоколов и масштабированием для больших битв.
+
+architecture:
+  overview: |
+    Гибридная сетевая система состоит из следующих компонентов:
+    1. Protocol Gateway - единая точка входа с поддержкой WebSocket и UDP
+    2. Protocol Switch Manager - управление динамическим переключением протоколов
+    3. WebSocket Gateway - обработка WebSocket соединений (PvE зоны)
+    4. UDP Gateway - обработка UDP соединений (PvP зоны)
+    5. Zone Manager - управление зонами и выбор протокола
+    6. Session Manager - управление сессиями и состояние переключения
+    7. Spatial Partitioning Engine - оптимизация для средних битв (200 игроков)
+    8. Spatial Sharding Manager - масштабирование для больших битв (400+ игроков)
+    9. Cluster Coordinator - координация мультисерверных кластеров (2000+ игроков)
+
+  microservices:
+    - name: protocol-gateway
+      location: realtime-gateway-go (расширение)
+      responsibility: |
+        Единая точка входа для всех сетевых соединений:
+        - Принятие WebSocket соединений (ws://, wss://)
+        - Принятие UDP соединений (udp://)
+        - Маршрутизация к соответствующему обработчику
+        - Балансировка нагрузки между инстансами
+      protocol_support:
+        - WebSocket (TCP) на портах 8080, 8443 (TLS)
+        - UDP на портах 18080, 18081-18100 (диапазон для кластеров)
+        - Поддержка TLS для WebSocket (wss://)
+      endpoints:
+        - WS /ws/game - WebSocket endpoint для игры
+        - WS /ws/lobby - WebSocket endpoint для лобби
+        - UDP :18080 - UDP endpoint для PvP зон
+        - GET /api/v1/gateway/status - статус gateway
+        - GET /api/v1/gateway/protocols - поддерживаемые протоколы
+        - POST /api/v1/gateway/switch-protocol - запрос на переключение протокола
+
+    - name: protocol-switch-manager
+      location: realtime-gateway-go (новый модуль)
+      responsibility: |
+        Управление динамическим переключением протоколов:
+        - Определение триггеров переключения (вход/выход из боя)
+        - Синхронизация состояния между протоколами
+        - Координация overlap периода (оба соединения активны)
+        - Fallback на WebSocket при проблемах с UDP
+      switch_triggers:
+        - PvE → PvP: Вход в боевой режим, детекция врагов
+        - PvP → PvE: Выход из боя, отсутствие врагов 5+ секунд
+        - UDP недоступен: Автоматический fallback на WebSocket
+      switch_mechanics: |
+        1. Запрос на переключение от клиента или сервера
+        2. Синхронизация состояния через WebSocket (критичные данные)
+        3. Установка нового соединения (UDP или WebSocket)
+        4. Overlap период (1-2 секунды): оба соединения активны
+        5. Миграция всех обновлений на новый протокол
+        6. Закрытие старого соединения после подтверждения
+        7. Время переключения: 0.5-1 секунда
+      endpoints:
+        - POST /api/v1/protocol/switch/request - запрос на переключение
+        - POST /api/v1/protocol/switch/sync - синхронизация состояния
+        - GET /api/v1/protocol/switch/status - статус переключения
+
+    - name: websocket-gateway
+      location: ws-lobby-go (расширение) + realtime-gateway-go
+      responsibility: |
+        Обработка WebSocket соединений для MMORPG зон:
+        - Управление WebSocket соединениями
+        - Обработка сообщений через WebSocket
+        - Поддержка топиков (zone, character, world, chat)
+        - Heartbeat и keepalive
+      zone_types:
+        - Global PvE zones (города, открытый мир)
+        - Social zones (лобби, торговые зоны)
+        - Quest zones (квестовые инстансы)
+      features:
+        - Tick rate: 20-30 Hz для PvE зон
+        - Задержка: <100 мс
+        - Поддержка до 500 игроков на зону
+        - Надежная доставка сообщений
+      endpoints:
+        - WS /ws/game - основное WebSocket соединение
+        - WS /ws/lobby - WebSocket для лобби
+        - POST /api/v1/websocket/connections/{id}/subscribe - подписка на топик
+        - POST /api/v1/websocket/connections/{id}/unsubscribe - отписка
+
+    - name: udp-gateway
+      location: realtime-gateway-go (новый модуль)
+      responsibility: |
+        Обработка UDP соединений для PvP зон:
+        - Управление UDP соединениями
+        - Обработка UDP пакетов (Protobuf)
+        - Поддержка надежности поверх UDP (sequence numbers, ACK/NACK)
+        - QoS управление (prioritization, packet ordering)
+      zone_types:
+        - Small PvP zones (5-20 игроков)
+        - GvG zones (200-400 игроков)
+        - Massive war zones (2000+ игроков)
+      features:
+        - Tick rate: 60-128 Hz (зависит от типа зоны)
+        - Задержка: 5-50 мс
+        - Надежность: собственная реализация (sequence, ACK)
+        - Anti-cheat: валидация пакетов, rate limiting
+      endpoints:
+        - UDP :18080 - основной UDP endpoint
+        - UDP :18081-18100 - UDP endpoints для кластеров
+        - GET /api/v1/udp/connections/{id}/stats - статистика UDP соединения
+        - POST /api/v1/udp/test - тест UDP соединения
+
+    - name: zone-manager
+      location: realtime-gateway-go (расширение модуля zone-manager)
+      responsibility: |
+        Управление зонами и выбор протокола:
+        - Определение типа зоны (PvE/PvP)
+        - Выбор оптимального протокола
+        - Управление лимитами игроков
+        - Мониторинг производительности зон
+      zone_protocol_mapping:
+        - Global PvE zones → WebSocket (TCP)
+        - Small PvP zones (5-20) → UDP
+        - GvG zones (200) → UDP + Spatial Partitioning
+        - GvG zones (400) → UDP + Spatial Sharding
+        - Massive war (2000+) → UDP + Cluster + Sharding
+      endpoints:
+        - GET /api/v1/zones - список зон
+        - GET /api/v1/zones/{id} - информация о зоне
+        - GET /api/v1/zones/{id}/protocol - рекомендуемый протокол
+        - POST /api/v1/zones/{id}/join - присоединение к зоне
+
+    - name: session-manager
+      location: realtime-gateway-go (новый модуль)
+      responsibility: |
+        Управление сессиями и состоянием переключения:
+        - Создание и управление сессиями
+        - Хранение состояния переключения протоколов
+        - Синхронизация данных между протоколами
+        - Восстановление сессий после разрывов
+      session_states:
+        - websocket_only: только WebSocket соединение
+        - udp_only: только UDP соединение
+        - switching: процесс переключения
+        - dual: оба соединения активны (overlap)
+      endpoints:
+        - GET /api/v1/sessions/{id} - информация о сессии
+        - POST /api/v1/sessions/{id}/switch - переключение протокола
+        - GET /api/v1/sessions/{id}/state - состояние переключения
+
+    - name: spatial-partitioning-engine
+      location: realtime-gateway-go (новый модуль)
+      responsibility: |
+        Оптимизация для средних битв (100-400 игроков):
+        - Разделение зоны на сетку (grid) 100x100 м
+        - Определение видимых игроков (своя ячейка + 8 соседних)
+        - Фильтрация обновлений по близости
+        - Приоритезация обновлений
+      optimization:
+        - Grid size: 100x100 метров
+        - Visibility: своя ячейка + 8 соседних (3x3)
+        - Traffic reduction: 80-90%
+        - Max updates per tick: 50-100 (зависит от зоны)
+      endpoints:
+        - GET /api/v1/spatial/{zone_id}/cells - ячейки зоны
+        - GET /api/v1/spatial/{zone_id}/cells/{x}/{y}/players - игроки в ячейке
+        - POST /api/v1/spatial/{zone_id}/update - обновление позиции
+
+    - name: spatial-sharding-manager
+      location: realtime-gateway-go (новый модуль)
+      responsibility: |
+        Масштабирование для больших битв (400-2000 игроков):
+        - Разделение зоны на shards (серверы)
+        - Распределение игроков по shards по координатам
+        - Синхронизация между shards
+        - Edge synchronization (границы shards)
+      sharding_strategy:
+        - 400 игроков: 2-4 shards
+        - 1000 игроков: 5-7 shards
+        - 2000 игроков: 8-10 shards
+        - Shard size: ~200x200 метров
+        - Edge buffer: 50 метров (пересекающиеся зоны)
+      endpoints:
+        - GET /api/v1/sharding/{zone_id}/shards - shards зоны
+        - GET /api/v1/sharding/{zone_id}/shard/{id}/players - игроки в shard
+        - POST /api/v1/sharding/{zone_id}/sync - синхронизация между shards
+
+    - name: cluster-coordinator
+      location: realtime-gateway-go (новый модуль) + отдельный сервис
+      responsibility: |
+        Координация мультисерверных кластеров (2000+ игроков):
+        - Управление кластером серверов
+        - Распределение нагрузки
+        - Синхронизация состояния между серверами
+        - LOD (Level of Detail) управление
+        - Агрегация событий
+      cluster_features:
+        - Server count: 5-10 серверов
+        - Spatial sharding по серверам
+        - Event aggregation (батчинг 100 мс)
+        - LOD для дальних объектов (снижение детализации)
+        - Global state synchronization
+      endpoints:
+        - GET /api/v1/cluster/status - статус кластера
+        - GET /api/v1/cluster/servers - серверы в кластере
+        - POST /api/v1/cluster/sync - синхронизация кластера
+
+  data_flow:
+    protocol_switching: |
+      1. Игрок в PvE зоне (WebSocket), детектируется вход в бой
+      2. Protocol Switch Manager получает запрос на переключение
+      3. Синхронизация критичных данных через WebSocket (инвентарь, здоровье)
+      4. Установка UDP соединения параллельно с WebSocket
+      5. Overlap период (1-2 сек): оба соединения получают обновления
+      6. Миграция всех обновлений на UDP
+      7. Подтверждение от клиента о получении UDP обновлений
+      8. Закрытие WebSocket соединения (или переход в idle режим)
+      9. Игрок в PvP режиме (UDP только)
+
+    zone_joining: |
+      1. Игрок запрашивает присоединение к зоне
+      2. Zone Manager определяет тип зоны и рекомендуемый протокол
+      3. Protocol Gateway устанавливает соединение (WebSocket или UDP)
+      4. Session Manager создает сессию
+      5. Для PvP зон: Spatial Partitioning/Sharding добавляет игрока в ячейку/shard
+      6. Начальная синхронизация состояния
+      7. Игрок получает обновления через выбранный протокол
+
+    large_battle_optimization: |
+      1. GvG битва 400 игроков начинается
+      2. Spatial Sharding Manager делит зону на 4 shards
+      3. Игроки распределяются по shards по координатам
+      4. Каждый shard обрабатывается отдельным сервером
+      5. Edge synchronization обеспечивает синхронизацию на границах
+      6. Spatial Partitioning внутри каждого shard (grid 100x100 м)
+      7. LOD снижает детализацию для дальних объектов
+      8. Event aggregation группирует события в батчи
+      9. Клиенты получают оптимизированные обновления через UDP
+
+  integrations:
+    with_world_service: |
+      - Получение данных о зонах
+      - Синхронизация мировых событий
+      - Управление NPC и объектами
+
+    with_gameplay_service: |
+      - Обработка боевых событий
+      - Валидация боевых действий
+      - Синхронизация боевого состояния
+
+    with_matchmaking_service: |
+      - Создание PvP инстансов
+      - Распределение игроков по зонам
+      - Управление очередями
+
+    with_character_service: |
+      - Получение данных о персонажах
+      - Синхронизация позиций
+      - Обновление статов
+
+  database_schema:
+    tables:
+      - name: zone_protocol_config
+        description: Конфигурация протоколов для зон
+        fields:
+          - zone_id: UUID (PK, FK zones)
+          - default_protocol: ENUM (websocket, udp)
+          - supports_switching: BOOLEAN
+          - min_players_for_udp: INTEGER
+          - tick_rate_websocket: INTEGER
+          - tick_rate_udp: INTEGER
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: protocol_sessions
+        description: Сессии переключения протоколов
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - character_id: UUID (FK characters)
+          - zone_id: UUID (FK zones)
+          - current_protocol: ENUM (websocket, udp, switching, dual)
+          - websocket_connection_id: UUID (nullable)
+          - udp_connection_id: UUID (nullable)
+          - switch_state: JSONB (состояние переключения)
+          - last_protocol_switch: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: spatial_cells
+        description: Ячейки spatial partitioning
+        fields:
+          - id: UUID (PK)
+          - zone_id: UUID (FK zones)
+          - shard_id: UUID (FK shards, nullable)
+          - cell_x: INTEGER
+          - cell_y: INTEGER
+          - min_x: FLOAT
+          - min_y: FLOAT
+          - max_x: FLOAT
+          - max_y: FLOAT
+          - player_count: INTEGER
+        indexes:
+          - zone_id, cell_x, cell_y
+          - shard_id, cell_x, cell_y
+
+      - name: spatial_shards
+        description: Shards для больших битв
+        fields:
+          - id: UUID (PK)
+          - zone_id: UUID (FK zones)
+          - server_id: UUID (FK game_instances)
+          - shard_x: INTEGER
+          - shard_y: INTEGER
+          - min_x: FLOAT
+          - min_y: FLOAT
+          - max_x: FLOAT
+          - max_y: FLOAT
+          - player_count: INTEGER
+          - status: ENUM (active, syncing, full)
+        indexes:
+          - zone_id, shard_x, shard_y
+          - server_id
+
+      - name: cluster_servers
+        description: Серверы в мультисерверном кластере
+        fields:
+          - id: UUID (PK)
+          - cluster_id: UUID
+          - server_id: UUID (FK game_instances)
+          - shard_ids: UUID[] (array of shard IDs)
+          - player_count: INTEGER
+          - load_percentage: FLOAT
+          - status: ENUM (active, syncing, overloaded, down)
+          - last_sync: TIMESTAMP
+        indexes:
+          - cluster_id, status
+          - server_id
+
+technical_specification:
+  backend_requirements:
+    - Расширение realtime-gateway-go для поддержки WebSocket и UDP:
+      - Модуль protocol-gateway (поддержка обоих протоколов)
+      - Модуль protocol-switch-manager (динамическое переключение)
+      - Модуль udp-gateway (UDP обработка)
+      - Модуль session-manager (управление сессиями)
+      - Модуль spatial-partitioning-engine (оптимизация средних битв)
+      - Модуль spatial-sharding-manager (масштабирование больших битв)
+      - Модуль cluster-coordinator (координация кластеров)
+    - Расширение ws-lobby-go для поддержки WebSocket в MMORPG зонах
+    - Интеграция с world-service для данных о зонах
+    - Интеграция с gameplay-service для боевых событий
+    - Интеграция с matchmaking-service для PvP инстансов
+
+  protocol_requirements:
+    - WebSocket (TCP):
+      - Tick rate: 20-30 Hz для PvE зон
+      - Задержка: <100 мс
+      - Надежная доставка сообщений
+      - Поддержка TLS (wss://)
+    - UDP:
+      - Tick rate: 60-128 Hz (зависит от типа зоны)
+      - Задержка: 5-50 мс
+      - Собственная реализация надежности (sequence, ACK/NACK)
+      - QoS управление (prioritization, packet ordering)
+      - Anti-cheat валидация
+
+  performance_requirements:
+    - Protocol switching: <1 секунда
+    - WebSocket: до 500 игроков на зону
+    - UDP small PvP: 5-20 игроков, 60-128 Hz
+    - UDP GvG 200: 200 игроков, 60-80 Hz, spatial partitioning
+    - UDP GvG 400: 400 игроков, 40-60 Hz, spatial sharding (2-4 shards)
+    - UDP massive war: 2000+ игроков, 20-40 Hz, cluster (5-10 servers)
+    - Bandwidth optimization: 80-90% снижение через spatial partitioning
+    - Event aggregation: батчинг 100 мс для больших битв
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Автоскейлинг на основе нагрузки (количество игроков)
+    - Распределение зон по инстансам
+    - Edge-ноды для снижения задержки
+    - Live-migration зон между инстансами
+
+subtasks:
+  - id: protocol-gateway-module
+    title: Реализация Protocol Gateway модуля
+    description: |
+      Единая точка входа с поддержкой WebSocket и UDP:
+      - Принятие соединений обоих типов
+      - Маршрутизация к обработчикам
+      - Балансировка нагрузки
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: protocol-switch-manager-module
+    title: Реализация Protocol Switch Manager модуля
+    description: |
+      Управление динамическим переключением протоколов:
+      - Определение триггеров переключения
+      - Синхронизация состояния
+      - Координация overlap периода
+      - Fallback механизм
+    priority: high
+    estimated_time: 7-8 дней
+
+  - id: udp-gateway-module
+    title: Реализация UDP Gateway модуля
+    description: |
+      Обработка UDP соединений для PvP зон:
+      - Управление UDP соединениями
+      - Надежность поверх UDP (sequence, ACK)
+      - QoS управление
+      - Anti-cheat валидация
+    priority: high
+    estimated_time: 8-10 дней
+
+  - id: session-manager-module
+    title: Реализация Session Manager модуля
+    description: |
+      Управление сессиями и состоянием переключения:
+      - Создание и управление сессиями
+      - Хранение состояния переключения
+      - Синхронизация данных между протоколами
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: spatial-partitioning-engine
+    title: Реализация Spatial Partitioning Engine
+    description: |
+      Оптимизация для средних битв:
+      - Разделение зон на сетку
+      - Определение видимых игроков
+      - Фильтрация обновлений
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: spatial-sharding-manager
+    title: Реализация Spatial Sharding Manager
+    description: |
+      Масштабирование для больших битв:
+      - Разделение зон на shards
+      - Распределение игроков по shards
+      - Синхронизация между shards
+    priority: high
+    estimated_time: 7-8 дней
+
+  - id: cluster-coordinator
+    title: Реализация Cluster Coordinator
+    description: |
+      Координация мультисерверных кластеров:
+      - Управление кластером серверов
+      - Синхронизация состояния
+      - LOD управление
+      - Агрегация событий
+    priority: medium
+    estimated_time: 8-10 дней
+
+  - id: database-schema
+    title: Создание схемы БД для гибридной сети
+    description: |
+      Создание таблиц для протоколов, сессий, spatial partitioning и sharding:
+      - zone_protocol_config
+      - protocol_sessions
+      - spatial_cells
+      - spatial_shards
+      - cluster_servers
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для гибридной сетевой системы:
+      - Protocol Gateway endpoints
+      - Protocol Switch Manager endpoints
+      - Session Manager endpoints
+      - Spatial Partitioning/Sharding endpoints
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты протоколов и переключения:
+      - Тесты WebSocket соединений
+      - Тесты UDP соединений
+      - Тесты динамического переключения
+      - Тесты spatial partitioning/sharding
+      - Тесты производительности
+    priority: high
+    estimated_time: 7-8 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Protocol Gateway"
+            PG[Protocol Gateway<br/>WebSocket + UDP]
+        end
+
+        subgraph "Protocol Management"
+            PSM[Protocol Switch Manager]
+            SM[Session Manager]
+        end
+
+        subgraph "Protocol Handlers"
+            WSH[WebSocket Gateway<br/>PvE Zones]
+            UDH[UDP Gateway<br/>PvP Zones]
+        end
+
+        subgraph "Zone Management"
+            ZM[Zone Manager]
+            SPE[Spatial Partitioning<br/>200 players]
+            SSM[Spatial Sharding<br/>400 players]
+            CC[Cluster Coordinator<br/>2000+ players]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>zones<br/>protocol_sessions<br/>spatial_cells<br/>spatial_shards<br/>cluster_servers)]
+        end
+
+        subgraph "External Services"
+            WS[World Service]
+            GS[Gameplay Service]
+            MS[Matchmaking Service]
+            CS[Character Service]
+        end
+
+        subgraph "Clients"
+            CL[UE5 Client<br/>WebSocket/UDP]
+        end
+
+        CL -->|WebSocket/UDP| PG
+        PG --> PSM
+        PSM --> SM
+        PSM -->|route| WSH
+        PSM -->|route| UDH
+        WSH --> ZM
+        UDH --> ZM
+        ZM --> SPE
+        ZM --> SSM
+        ZM --> CC
+        SM --> DB
+        ZM --> DB
+        ZM --> WS
+        WSH --> GS
+        UDH --> GS
+        ZM --> MS
+    ```
+
+  protocol_switching_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant PG as Protocol Gateway
+        participant PSM as Protocol Switch Manager
+        participant SM as Session Manager
+        participant WSH as WebSocket Handler
+        participant UDH as UDP Handler
+
+        C->>PG: WebSocket connection (PvE)
+        PG->>WSH: Route to WebSocket handler
+        WSH->>SM: Create session (websocket_only)
+        Note over C,UDH: Player enters combat
+        
+        C->>PSM: Request protocol switch (PvE→PvP)
+        PSM->>SM: Get session state
+        SM->>PSM: Current state (websocket_only)
+        PSM->>WSH: Sync critical data
+        WSH->>C: Send critical state
+        
+        PSM->>UDH: Create UDP connection
+        UDH->>C: Establish UDP connection
+        SM->>SM: Update session (dual mode)
+        
+        Note over C,UDH: Overlap period (1-2 sec)
+        WSH->>C: Updates via WebSocket
+        UDH->>C: Updates via UDP
+        
+        C->>PSM: Confirm UDP ready
+        PSM->>SM: Update session (udp_only)
+        PSM->>WSH: Close WebSocket (or idle)
+        Note over C,UDH: Player in PvP mode (UDP only)
+    ```
+
+  large_battle_architecture: |
+    ```mermaid
+    graph TB
+        subgraph "Massive War Zone (2000 players)"
+            subgraph "Cluster Coordinator"
+                CC[Cluster Coordinator]
+            end
+            
+            subgraph "Server 1"
+                S1[Game Server 1]
+                SH1[Shard 1-1<br/>200 players]
+                SH2[Shard 1-2<br/>200 players]
+            end
+            
+            subgraph "Server 2"
+                S2[Game Server 2]
+                SH3[Shard 2-1<br/>200 players]
+                SH4[Shard 2-2<br/>200 players]
+            end
+            
+            subgraph "Server 3"
+                S3[Game Server 3]
+                SH5[Shard 3-1<br/>200 players]
+                SH6[Shard 3-2<br/>200 players]
+            end
+            
+            CC --> S1
+            CC --> S2
+            CC --> S3
+            S1 --> SH1
+            S1 --> SH2
+            S2 --> SH3
+            S2 --> SH4
+            S3 --> SH5
+            S3 --> SH6
+            
+            SH1 -.->|Edge Sync| SH2
+            SH2 -.->|Edge Sync| SH3
+            SH3 -.->|Edge Sync| SH4
+        end
+    ```
+
+decisions:
+  - id: adr-hybrid-protocol-architecture
+    summary: |
+      Выбрана гибридная архитектура с WebSocket для PvE зон и UDP для PvP зон
+      с динамическим переключением протоколов для оптимальной производительности.
+
+  - id: adr-protocol-switching
+    summary: |
+      Реализован механизм динамического переключения с overlap периодом (1-2 секунды)
+      для бесшовной миграции между протоколами без потери данных.
+
+  - id: adr-spatial-optimization
+    summary: |
+      Использован spatial partitioning (grid 100x100 м) для средних битв и spatial sharding
+      для больших битв для масштабирования до 2000+ игроков.
+
+  - id: adr-udp-reliability
+    summary: |
+      Реализована собственная система надежности поверх UDP (sequence numbers, ACK/NACK)
+      вместо использования QUIC из-за проблем совместимости между MsQuic (UE5) и quic-go (Go).
+
+  - id: adr-cluster-architecture
+    summary: |
+      Использован мультисерверный кластер с spatial sharding и edge synchronization
+      для поддержки масштабных войн до 2000+ игроков.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация протокола переключения
+  - Создание схем сообщений для WebSocket и UDP
+  - Определение формата данных для синхронизации состояния
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура гибридной сетевой системы:
+      - Определены микросервисы (Protocol Gateway, Protocol Switch Manager, WebSocket Gateway, UDP Gateway, Zone Manager, Session Manager, Spatial Partitioning Engine, Spatial Sharding Manager, Cluster Coordinator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных и переключение протоколов
+      - Определена структура БД (zone_protocol_config, protocol_sessions, spatial_cells, spatial_shards, cluster_servers)
+      - Спроектирована архитектура для различных типов зон (PvE, малые PvP, GvG 200/400, massive war 2000+)
+      - Спроектированы стратегии оптимизации (spatial partitioning, sharding, clustering)
+      - Создано техническое задание
+      - Разбито на подзадачи
+
