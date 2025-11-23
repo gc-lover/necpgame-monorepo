@@ -126,7 +126,7 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 	notificationSubscriber.SetPreferencesRepository(notificationPrefsRepo)
 	eventBus := NewRedisEventBus(redisClient)
 
-	return &SocialService{
+	service := &SocialService{
 		notificationRepo:      notificationRepo,
 		notificationPrefsRepo: notificationPrefsRepo,
 		friendRepo:            friendRepo,
@@ -139,7 +139,16 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 		logger:                GetLogger(),
 		notificationSubscriber: notificationSubscriber,
 		eventBus:              eventBus,
-	}, nil
+	}
+
+	mailRewardSubscriber := NewMailRewardSubscriber(mailRepo, notificationRepo, redisClient)
+	if err := mailRewardSubscriber.Start(); err != nil {
+		GetLogger().WithError(err).Warn("Failed to start mail reward subscriber")
+	} else {
+		GetLogger().Info("Mail reward subscriber started")
+	}
+
+	return service, nil
 }
 
 func (s *SocialService) GetNotificationSubscriber() *NotificationSubscriber {
@@ -349,6 +358,25 @@ func (s *SocialService) SendMail(ctx context.Context, req *models.CreateMailRequ
 
 	s.invalidateMailCache(ctx, req.RecipientID)
 
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"mail_id":     mail.ID.String(),
+			"sender_id":   nil,
+			"recipient_id": mail.RecipientID.String(),
+			"type":        string(mail.Type),
+			"subject":     mail.Subject,
+			"has_attachments": mail.Attachments != nil && len(mail.Attachments) > 0,
+			"timestamp":   mail.SentAt.Format(time.RFC3339),
+		}
+		if mail.SenderID != nil {
+			payload["sender_id"] = mail.SenderID.String()
+		}
+		s.eventBus.PublishEvent(ctx, "mail:sent", payload)
+
+		payload["status"] = string(mail.Status)
+		s.eventBus.PublishEvent(ctx, "mail:received", payload)
+	}
+
 	return mail, nil
 }
 
@@ -432,6 +460,16 @@ func (s *SocialService) ClaimAttachment(ctx context.Context, mailID uuid.UUID) (
 	}
 
 	s.invalidateMailCache(ctx, mail.RecipientID)
+
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"mail_id":     mail.ID.String(),
+			"recipient_id": mail.RecipientID.String(),
+			"attachments": mail.Attachments,
+			"timestamp":   time.Now().Format(time.RFC3339),
+		}
+		s.eventBus.PublishEvent(ctx, "mail:attachment-claimed", payload)
+	}
 
 	items := make(map[string]interface{})
 	currency := make(map[string]int)
