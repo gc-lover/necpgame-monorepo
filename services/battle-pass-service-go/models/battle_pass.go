@@ -80,7 +80,9 @@ type WeeklyChallenge struct {
 	Title       string    `json:"title" db:"title"`
 	Description string    `json:"description" db:"description"`
 	XPReward    int       `json:"xp_reward" db:"xp_reward"`
+	Progress    int       `json:"progress"`
 	Target      int       `json:"target" db:"target"`
+	IsCompleted bool      `json:"is_completed"`
 	WeekNumber  int       `json:"week_number" db:"week_number"`
 	IsActive    bool      `json:"is_active" db:"is_active"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
