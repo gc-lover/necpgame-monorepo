@@ -948,3 +948,4 @@ func TestGuildRepository_UpdateBank(t *testing.T) {
 	assert.Len(t, updated.Items, 1)
 }
 
+

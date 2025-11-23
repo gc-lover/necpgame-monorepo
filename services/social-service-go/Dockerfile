@@ -20,3 +20,4 @@ EXPOSE 8084 9094
 
 CMD ["./social-service"]
 
+

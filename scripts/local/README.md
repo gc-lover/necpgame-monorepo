@@ -129,3 +129,4 @@ chmod +x scripts/local/*.sh
    - Создать тестовый PR
    - Проверить работу GitHub Actions
 
+

@@ -184,3 +184,4 @@ Workflow `project-status-automation.yml` автоматически:
    - Комментируй в Issue
    - Переходи к следующему этапу
 
+

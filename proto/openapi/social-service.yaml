@@ -26,6 +26,8 @@ tags:
     description: Система групп
   - name: Guild
     description: Система гильдий
+  - name: NPC Hiring
+    description: Система найма NPC
 
 paths:
   /social/notifications:
@@ -3534,6 +3536,713 @@ paths:
                 $ref: '#/components/schemas/GuildPerksResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/candidates:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Поиск кандидатов для найма
+      operationId: searchNPCCandidates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hiring_type
+          in: query
+          schema:
+            type: string
+            enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        - name: min_reputation
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high]
+        - name: skills
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: max_salary
+          in: query
+          schema:
+            type: number
+            format: decimal
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список кандидатов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCCandidatesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/candidates/{npc_id}:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получить информацию о кандидате
+      operationId: getNPCCandidate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о кандидате
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCCandidate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/negotiate:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Начать переговоры с NPC
+      operationId: startNegotiation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartNegotiationRequest'
+      responses:
+        '200':
+          description: Переговоры начаты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NegotiationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/contract/create:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Создать контракт найма
+      operationId: createHiringContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractRequest'
+      responses:
+        '201':
+          description: Контракт создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiringContract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/contracts:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получить список контрактов
+      operationId: getHiringContracts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, terminated, completed]
+        - name: hiring_type
+          in: query
+          schema:
+            type: string
+            enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список контрактов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiringContractsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/contracts/{contract_id}:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получить информацию о контракте
+      operationId: getHiringContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о контракте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiringContract'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - NPC Hiring
+      summary: Расторгнуть контракт
+      operationId: terminateContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateContractRequest'
+      responses:
+        '200':
+          description: Контракт расторгнут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiringContract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получить список нанятых NPC
+      operationId: getWorkforce
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hiring_type
+          in: query
+          schema:
+            type: string
+            enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список нанятых NPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkforceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npc_id}/assign-task:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Назначить задачу NPC
+      operationId: assignTask
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTaskRequest'
+      responses:
+        '201':
+          description: Задача назначена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npc_id}/tasks:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получить список задач NPC
+      operationId: getNPCTasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in-progress, completed, failed]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список задач
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCTasksResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npc_id}/tasks/{task_id}:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Обновить задачу NPC
+      operationId: updateTask
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Задача обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npc_id}/performance:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получить эффективность NPC
+      operationId: getNPCPerformance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Эффективность NPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCPerformance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npc_id}/status:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получить статус NPC
+      operationId: getNPCStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус NPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/workforce/{npc_id}/interact:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Взаимодействие с NPC
+      operationId: interactWithNPC
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractWithNPCRequest'
+      responses:
+        '200':
+          description: Взаимодействие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/economy/payroll:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Рассчитать зарплаты
+      operationId: calculatePayroll
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Расчет зарплат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollCalculationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/economy/pay:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Выплатить зарплату
+      operationId: paySalary
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaySalaryRequest'
+      responses:
+        '200':
+          description: Зарплата выплачена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/economy/reports:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Получить отчеты по экономике найма
+      operationId: getEconomyReports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: monthly
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Отчеты по экономике
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomyReportsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/limits:
+    get:
+      tags:
+        - NPC Hiring
+      summary: Проверить лимиты найма
+      operationId: getHiringLimits
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hiring_type
+          in: query
+          schema:
+            type: string
+            enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+      responses:
+        '200':
+          description: Лимиты найма
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiringLimitsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/chain/create:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Создать цепочку найма
+      operationId: createHiringChain
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHiringChainRequest'
+      responses:
+        '201':
+          description: Цепочка найма создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HiringChain'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/group/create:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Создать групповой контракт
+      operationId: createGroupContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupContractRequest'
+      responses:
+        '201':
+          description: Групповой контракт создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupContract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /social/npc-hiring/automation/configure:
+    post:
+      tags:
+        - NPC Hiring
+      summary: Настроить автоматизацию найма
+      operationId: configureAutomation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigureAutomationRequest'
+      responses:
+        '200':
+          description: Автоматизация настроена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationConfiguration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
 

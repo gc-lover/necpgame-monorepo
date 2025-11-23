@@ -56,3 +56,4 @@ func RecordError(errorType string) {
 	socialErrorsTotal.WithLabelValues(errorType).Inc()
 }
 
+

@@ -94,3 +94,4 @@ type NotificationPreferences struct {
 	UpdatedAt           time.Time           `json:"updated_at" db:"updated_at"`
 }
 
+
