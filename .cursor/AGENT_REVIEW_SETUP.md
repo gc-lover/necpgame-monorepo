@@ -57,26 +57,63 @@ git commit -m "Add Agent Review rules"
 
 ## Troubleshooting
 
+### Проблема: "Failed to gather Agent Review context. Caused by: Error when executing 'git':"
+
+**Это основная проблема. Решения:**
+
+1. **Проверьте git в PATH:**
+   ```bash
+   git --version
+   # Должно показать версию git
+   ```
+
+2. **Проверьте конфигурацию git:**
+   ```bash
+   git config --global user.name
+   git config --global user.email
+   # Должны быть установлены
+   ```
+
+3. **Закоммитьте незакоммиченные изменения:**
+   ```bash
+   git status
+   # Если есть изменения - закоммитьте их
+   git add .
+   git commit -m "WIP: temporary commit"
+   ```
+
+4. **Проверьте upstream для ветки:**
+   ```bash
+   git branch -vv
+   # Убедитесь, что ветка отслеживает remote
+   ```
+
+5. **Перезапустите Cursor** после всех изменений
+
+**Подробнее:** см. `.cursor/AGENT_REVIEW_TROUBLESHOOTING.md`
+
 ### Проблема: Git команды не выполняются
 
 **Решение:**
 - Убедитесь, что git установлен и доступен в PATH
 - Проверьте права доступа к репозиторию
 - Убедитесь, что репозиторий не поврежден
+- На Windows: проверьте, что git.exe доступен в системном PATH
 
 ### Проблема: Agent Review не видит правила
 
 **Решение:**
-- Убедитесь, что `.cursor/BUGBOT.md` закоммичен
-- Проверьте, что файл имеет правильный формат (YAML frontmatter)
+- Убедитесь, что `.cursor/BUGBOT.md` закоммичен (проверьте: `git log --oneline --all -- .cursor/BUGBOT.md`)
+- Проверьте, что файл имеет правильный формат (YAML frontmatter с `alwaysApply: true`)
 - Перезапустите Cursor
 
 ### Проблема: Ошибка при получении контекста
 
 **Решение:**
-- Проверьте, что репозиторий синхронизирован с remote
+- Проверьте, что репозиторий синхронизирован с remote (`git fetch origin`)
 - Убедитесь, что есть доступ к GitHub (если используется)
-- Проверьте логи Cursor для деталей ошибки
+- Проверьте логи Cursor (Help → Toggle Developer Tools → Console)
+- Попробуйте закоммитить все изменения перед ревью
 
 ## Дополнительная информация
 

@@ -17,40 +17,66 @@
 - Обновление меток для множества Issues
 - Добавление комментариев к батчу Issues
 
-## Локальное зеркало Issues
+## ⚠️ ОСНОВНЫЕ МЕТОДЫ ОПТИМИЗАЦИИ
 
-**Для работы офлайн используй локальное зеркало:**
-- `.local/issues/` - локальное хранилище Issues
-- `scripts/github-issues/` - скрипты для работы с локальными Issues
-- `.github/LOCAL_ISSUES_MIRROR.md` - полная документация
+**КРИТИЧЕСКИ ВАЖНО:** Основные методы избежания rate limit - это поиск и батчинг, а не кэширование.
 
-**Преимущества:**
-- ✅ Работа офлайн без API запросов
-- ✅ Нет rate limit при локальной работе
-- ✅ Быстрый поиск и фильтрация
-- ✅ История изменений
-- ✅ Батчинг при синхронизации
+### 1. Использование поиска (ОБЯЗАТЕЛЬНО)
 
-**Когда использовать:**
-- Работа с большим количеством Issues (>50)
-- Частые операции поиска и фильтрации
-- Массовые обновления меток
-- Работа без постоянного доступа к GitHub API
+**ВСЕГДА используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read`:**
 
-**Быстрый старт:**
-```bash
-# Синхронизировать Issues из GitHub
-node scripts/github-issues/sync-from-github.js
+```javascript
+// ❌ НЕПРАВИЛЬНО: 100 запросов
+for (let i = 1; i <= 100; i++) {
+  await mcp_github_issue_read({ issue_number: i });
+}
 
-# Поиск локально
-node scripts/github-issues/search-local.js "content-writer" --labels="agent:content-writer"
-
-# Обновить Issue локально
-node scripts/github-issues/update-local.js 123 --labels="agent:qa,stage:testing"
-
-# Синхронизировать изменения в GitHub
-node scripts/github-issues/sync-to-github.js
+// ✅ ПРАВИЛЬНО: 1 запрос поиска
+const result = await mcp_github_search_issues({
+  query: 'is:issue is:open label:agent:content-writer',
+  perPage: 100
+});
 ```
+
+### 2. Батчинг для массовых операций (ОБЯЗАТЕЛЬНО)
+
+**Для >=3 Issues используй батчинг:**
+
+```javascript
+// Батчи по 5 Issues с задержками
+const batchSize = 5;
+for (let i = 0; i < issues.length; i += batchSize) {
+  const batch = issues.slice(i, i + batchSize);
+  for (const issue of batch) {
+    await updateIssue(issue);
+    await delay(300); // Задержка между запросами
+  }
+  if (i + batchSize < issues.length) {
+    await delay(1000); // Задержка между батчами
+  }
+}
+```
+
+### 3. Кэширование в памяти (дополнительная оптимизация)
+
+**⚠️ ОГРАНИЧЕНИЕ:** Кэш работает только в рамках одного вызова агента (одна сессия чата). Между разными вызовами агентов кэш не сохраняется.
+
+**Когда полезен:**
+- Когда агент делает несколько запросов к одному Issue в рамках одной сессии
+- Когда агент повторно использует результаты поиска в рамках одной сессии
+
+**Правила кэширования:**
+
+1. **Инициализация кэша** - в начале работы агента создай кэш в памяти
+2. **TTL кэша:**
+   - Issues: 5-10 минут
+   - Поиск Issues: 1-2 минуты
+   - Project items: 2-3 минуты
+3. **Проверка кэша** - перед запросом проверяй кэш (если есть в рамках сессии)
+4. **Обновление кэша** - после успешного запроса обновляй кэш
+
+**Шаблон кода:** См. `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md`
+
 
 ## Проблема
 
@@ -141,29 +167,44 @@ for (let i = 0; i < issuesToUpdate.length; i += batchSize) {
 }
 ```
 
-### 3. Кэширование результатов
+### 3. Кэширование результатов (ОБЯЗАТЕЛЬНО)
+
+**⚠️ КРИТИЧЕСКИ ВАЖНО:** Кэширование в памяти сессии ОБЯЗАТЕЛЬНО для всех агентов.
+
+**❌ НЕПРАВИЛЬНО:**
+```javascript
+// Нет кэширования - каждый раз запрос к API
+const issue = await mcp_github_issue_read({ issue_number: 123 });
+const issue2 = await mcp_github_issue_read({ issue_number: 123 }); // Повторный запрос!
+```
 
 **✅ ПРАВИЛЬНО:**
 ```javascript
-// Кэшируй результаты локально
+// Кэшируй результаты в памяти сессии
 const issueCache = new Map();
+const ISSUE_TTL = 5 * 60 * 1000; // 5 минут
 
 async function getCachedIssue(issueNumber) {
-  // Проверяем кэш
+  // ОБЯЗАТЕЛЬНО: Проверяем кэш ПЕРЕД запросом
   if (issueCache.has(issueNumber)) {
     const cached = issueCache.get(issueNumber);
-    // Кэш действителен 5 минут
-    if (Date.now() - cached.timestamp < 5 * 60 * 1000) {
+    const age = Date.now() - cached.timestamp;
+    
+    // Если кэш актуален - используем его
+    if (age < ISSUE_TTL) {
       return cached.data;
     }
+    
+    // Кэш устарел - удаляем
+    issueCache.delete(issueNumber);
   }
   
-  // Запрашиваем из API
+  // Запрашиваем из API только если нет в кэше
   const issue = await mcp_github_issue_read({
     issue_number: issueNumber
   });
   
-  // Сохраняем в кэш
+  // ОБЯЗАТЕЛЬНО: Сохраняем в кэш после запроса
   issueCache.set(issueNumber, {
     data: issue,
     timestamp: Date.now()
@@ -176,7 +217,15 @@ async function getCachedIssue(issueNumber) {
 }
 ```
 
-### 4. Использование поиска вместо множественных запросов
+**TTL для разных типов данных:**
+- Issues: 5-10 минут
+- Поиск Issues: 1-2 минуты
+- Project items: 2-3 минуты
+- Комментарии: 3-5 минут
+
+### 4. Использование поиска вместо множественных запросов (ОБЯЗАТЕЛЬНО)
+
+**⚠️ КРИТИЧЕСКИ ВАЖНО:** Для получения списка Issues ВСЕГДА используй поиск, а не множественные `issue_read`.
 
 **❌ НЕПРАВИЛЬНО:**
 ```javascript
@@ -197,15 +246,50 @@ for (let i = 1; i <= 100; i++) {
 
 **✅ ПРАВИЛЬНО:**
 ```javascript
-// Один запрос поиска вместо 100 запросов
-const searchResult = await mcp_github_search_issues({
-  query: 'is:issue is:open label:agent:content-writer label:stage:content',
-  perPage: 100,
-  page: 1
-});
+// Один запрос поиска вместо 100 запросов + кэширование
+const searchCache = new Map();
+const SEARCH_TTL = 2 * 60 * 1000; // 2 минуты
 
-// Используем результаты поиска
-const issues = searchResult.items;
+async function searchIssuesCached(query) {
+  const cacheKey = `search:${query}`;
+  
+  // Проверяем кэш поиска
+  if (searchCache.has(cacheKey)) {
+    const cached = searchCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < SEARCH_TTL) {
+      return cached.data;
+    }
+  }
+  
+  // Запрашиваем через поиск
+  const searchResult = await mcp_github_search_issues({
+    query: query,
+    perPage: 100,
+    page: 1
+  });
+  
+  // Кэшируем результаты поиска
+  searchCache.set(cacheKey, {
+    data: searchResult,
+    timestamp: Date.now()
+  });
+  
+  // Кэшируем каждое Issue отдельно
+  searchResult.items.forEach(issue => {
+    issueCache.set(issue.number, {
+      data: issue,
+      timestamp: Date.now()
+    });
+  });
+  
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return searchResult;
+}
+
+// Использование
+const result = await searchIssuesCached('is:issue is:open label:agent:content-writer');
+const issues = result.items;
 ```
 
 ## Паттерны для агентов
@@ -362,14 +446,17 @@ async function checkRateLimit() {
 
 ## Чеклист перед массовыми операциями
 
+- [ ] **ОБЯЗАТЕЛЬНО:** Используй поиск (`mcp_github_search_issues`) вместо множественных `mcp_github_issue_read`
 - [ ] Определи: использовать Batch Processor или прямые запросы
-- [ ] Используй поиск вместо множественных запросов
-- [ ] Группируй операции в батчи по 5-10
+  - <3 Issues: прямые запросы с задержками
+  - 3-9 Issues: батчинг с задержками
+  - >=10 Issues: GitHub Actions Batch Processor
+- [ ] Группируй операции в батчи по 5-10 Issues
 - [ ] Добавляй задержки между запросами (300-500ms)
 - [ ] Добавляй большие задержки между батчами (1000ms)
-- [ ] Кэшируй результаты локально
-- [ ] Обрабатывай ошибки rate limit с повторными попытками
 - [ ] Делай операции последовательно, не параллельно
+- [ ] Обрабатывай ошибки rate limit с повторными попытками
+- [ ] (Опционально) Инициализируй кэш в памяти для повторных запросов в рамках одной сессии
 
 ## Примеры для разных агентов
 
