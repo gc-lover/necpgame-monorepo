@@ -1,0 +1,577 @@
+metadata:
+  id: auth-character-management-architecture
+  title: Архитектура Auth & Character Management
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T16:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - auth
+    - characters
+    - progression
+    - backend
+  related_systems:
+    - auth-service
+    - character-service
+    - gameplay-service
+    - session-service
+    - economy-service
+    - analytics-service
+  related_documents:
+    - id: analysis-2025-11-09-auth-characters-package
+      relation: implements
+  github_issue: 153
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру систем аутентификации и управления персонажами,
+    включая интеграцию с прогрессией, сессиями и экономикой.
+  goal: |
+    Создать архитектурную схему Auth & Character Management с определением:
+    - Компонентов для аутентификации и управления персонажами
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций между сервисами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура аутентификации, управления персонажами и прогрессии
+    с поддержкой REST API, WebSocket и Event Bus коммуникации.
+
+architecture:
+  overview: |
+    Архитектура Auth & Character Management состоит из следующих компонентов:
+    1. Auth Service - аутентификация и авторизация
+    2. Character Service - управление персонажами
+    3. Progression Service - прогрессия персонажей
+    4. Session Service - управление сессиями
+    5. Интеграции с Economy, Analytics и другими сервисами
+
+  microservices:
+    - name: auth-service
+      port: 8081
+      responsibility: |
+        Аутентификация и авторизация:
+        - Регистрация и вход
+        - JWT/Refresh токены
+        - OAuth интеграция
+        - Управление ролями и правами
+        - Управление паролями
+      components:
+        - authentication-manager: управление аутентификацией
+        - jwt-service: генерация и валидация JWT токенов
+        - oauth-handler: обработка OAuth провайдеров
+        - role-manager: управление ролями и правами
+        - password-manager: управление паролями
+        - session-tracker: отслеживание сессий
+      endpoints:
+        - POST /api/v1/auth/register - регистрация
+        - POST /api/v1/auth/login - вход
+        - POST /api/v1/auth/logout - выход
+        - POST /api/v1/auth/refresh - обновление токенов
+        - POST /api/v1/auth/password/forgot - запрос сброса пароля
+        - POST /api/v1/auth/password/reset - сброс пароля
+        - GET /api/v1/auth/roles - список ролей
+        - POST /api/v1/auth/oauth/{provider}/callback - OAuth callback
+        - POST /api/v1/auth/roles/{roleId}/permissions - управление правами
+      websocket_channels:
+        - wss://api.necp.game/v1/auth/sessions/{accountId} - статусы сессий, события входа/выхода
+      events_published:
+        - ACCOUNT_CREATED: создание аккаунта
+        - LOGIN_SUCCESS: успешный вход
+        - LOGOUT: выход из системы
+        - ROLE_UPDATED: обновление роли
+
+    - name: character-service
+      port: 8082
+      responsibility: |
+        Управление персонажами:
+        - Создание и удаление персонажей
+        - Управление слотами персонажей
+        - Переключение между персонажами
+        - Восстановление удаленных персонажей
+        - Аудит действий персонажей
+      components:
+        - character-manager: управление персонажами
+        - slot-manager: управление слотами
+        - character-switcher: переключение персонажей
+        - character-recovery: восстановление персонажей
+        - character-audit: аудит действий
+      endpoints:
+        - POST /api/v1/players/{accountId}/characters - создание персонажа
+        - DELETE /api/v1/players/{accountId}/characters/{characterId} - удаление персонажа
+        - POST /api/v1/players/{accountId}/characters/{characterId}/restore - восстановление
+        - POST /api/v1/players/{accountId}/switch - переключение персонажа
+        - POST /api/v1/players/{accountId}/slots/purchase - покупка слота
+        - GET /api/v1/players/{accountId}/activity - аудит действий
+      websocket_channels:
+        - wss://api.necp.game/v1/characters/{accountId} - список персонажей, слоты, активный персонаж
+      events_published:
+        - CharacterCreated: создание персонажа
+        - CharacterDeleted: удаление персонажа
+        - CharacterSwitched: переключение персонажа
+        - CharacterSlotPurchased: покупка слота
+
+    - name: progression-service
+      port: 8087
+      responsibility: |
+        Прогрессия персонажей:
+        - Начисление опыта
+        - Управление уровнями
+        - Управление навыками
+        - Распределение атрибутов
+        - Снимки состояния прогрессии
+      components:
+        - experience-manager: управление опытом
+        - level-manager: управление уровнями
+        - skill-manager: управление навыками
+        - attribute-manager: управление атрибутами
+        - snapshot-manager: управление снимками состояния
+      endpoints:
+        - POST /api/v1/gameplay/progression/experience - начисление опыта
+        - POST /api/v1/gameplay/progression/skills - обновление навыков
+        - POST /api/v1/gameplay/progression/attributes - распределение атрибутов
+        - GET /api/v1/gameplay/progression/{characterId} - состояние прогрессии
+      websocket_channels:
+        - wss://api.necp.game/v1/progression/{characterId} - level-up, skill-up, начисление атрибутов
+      events_published:
+        - character:level-up: повышение уровня
+        - character:skill-leveled: повышение навыка
+        - character:attribute-allocated: распределение атрибутов
+
+    - name: session-service
+      port: 8090
+      responsibility: |
+        Управление сессиями:
+        - Отслеживание активных сессий
+        - Управление сессионными данными
+        - Интеграция с Auth Service
+      components:
+        - session-manager: управление сессиями
+        - session-storage: хранение сессий
+        - session-validator: валидация сессий
+      integrations:
+        - auth-service: получение данных о сессиях
+        - character-service: переключение персонажей в сессии
+
+  data_flows:
+    registration_flow: |
+      1. Клиент отправляет POST /api/v1/auth/register
+      2. Auth Service валидирует данные
+      3. Auth Service создает аккаунт в БД
+      4. Auth Service отправляет email для подтверждения
+      5. Auth Service публикует событие ACCOUNT_CREATED
+      6. Character Service получает событие и инициализирует слоты
+      7. Analytics Service логирует регистрацию
+      8. Notification Service отправляет приветственное сообщение
+
+    login_flow: |
+      1. Клиент отправляет POST /api/v1/auth/login
+      2. Auth Service проверяет учетные данные
+      3. Auth Service проверяет антибрютфорс защиту
+      4. Auth Service генерирует JWT и Refresh токены
+      5. Auth Service сохраняет сессию в account_sessions
+      6. Auth Service публикует событие LOGIN_SUCCESS
+      7. Session Service обновляет активные сессии
+      8. Analytics Service логирует вход
+      9. Auth Service возвращает токены клиенту
+
+    character_creation_flow: |
+      1. Клиент отправляет POST /api/v1/players/{accountId}/characters
+      2. Character Service проверяет доступные слоты
+      3. Character Service валидирует данные персонажа
+      4. Character Service создает персонажа в БД
+      5. Character Service инициализирует прогрессию через Progression Service
+      6. Character Service публикует событие CharacterCreated
+      7. Gameplay Service инициализирует игровые данные
+      8. Inventory Service создает начальный инвентарь
+      9. Analytics Service логирует создание персонажа
+
+    character_switch_flow: |
+      1. Клиент отправляет POST /api/v1/players/{accountId}/switch
+      2. Character Service проверяет существование персонажа
+      3. Character Service обновляет активного персонажа
+      4. Character Service сохраняет снимок состояния предыдущего персонажа
+      5. Character Service публикует событие CharacterSwitched
+      6. Session Service обновляет сессию с новым персонажем
+      7. Gameplay Service загружает данные нового персонажа
+      8. Realtime Gateway отправляет обновление клиенту
+
+    progression_flow: |
+      1. Игрок выполняет действие (бой, квест, крафт)
+      2. Соответствующий сервис публикует событие с опытом
+      3. Progression Service получает событие
+      4. Progression Service начисляет опыт через POST /api/v1/gameplay/progression/experience
+      5. Progression Service проверяет повышение уровня
+      6. Если уровень повышен, Progression Service публикует character:level-up
+      7. Progression Service обновляет навыки при необходимости
+      8. Progression Service создает снимок состояния
+      9. Realtime Gateway отправляет обновление прогрессии клиенту
+
+  database_structure:
+    tables:
+      - name: accounts
+        description: Учетные записи
+        columns:
+          - id: UUID PRIMARY KEY
+          - email: VARCHAR(255) UNIQUE
+          - password_hash: VARCHAR(255)
+          - email_verified: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+          - deleted_at: TIMESTAMP (soft delete)
+
+      - name: account_oauth
+        description: OAuth привязки
+        columns:
+          - id: UUID PRIMARY KEY
+          - account_id: UUID FOREIGN KEY
+          - provider: VARCHAR(50)
+          - provider_user_id: VARCHAR(255)
+          - linked_at: TIMESTAMP
+          - last_used: TIMESTAMP
+
+      - name: account_sessions
+        description: Сессии аккаунтов
+        columns:
+          - id: UUID PRIMARY KEY
+          - account_id: UUID FOREIGN KEY
+          - jwt_token: TEXT
+          - refresh_token: VARCHAR(255)
+          - ip_address: VARCHAR(45)
+          - user_agent: TEXT
+          - expires_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - last_activity: TIMESTAMP
+
+      - name: account_security_audit
+        description: Аудит безопасности
+        columns:
+          - id: UUID PRIMARY KEY
+          - account_id: UUID FOREIGN KEY
+          - event_type: VARCHAR(100)
+          - ip_address: VARCHAR(45)
+          - user_agent: TEXT
+          - risk_score: INTEGER
+          - timestamp: TIMESTAMP
+
+      - name: roles
+        description: Роли
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(100) UNIQUE
+          - description: TEXT
+          - created_at: TIMESTAMP
+
+      - name: role_permissions
+        description: Права ролей
+        columns:
+          - id: UUID PRIMARY KEY
+          - role_id: UUID FOREIGN KEY
+          - permission: VARCHAR(100)
+          - created_at: TIMESTAMP
+
+      - name: account_roles
+        description: Роли аккаунтов
+        columns:
+          - id: UUID PRIMARY KEY
+          - account_id: UUID FOREIGN KEY
+          - role_id: UUID FOREIGN KEY
+          - assigned_at: TIMESTAMP
+
+      - name: players
+        description: Игроки (связь аккаунт-персонаж)
+        columns:
+          - id: UUID PRIMARY KEY
+          - account_id: UUID FOREIGN KEY
+          - active_character_id: UUID FOREIGN KEY (nullable)
+          - total_slots: INTEGER
+          - purchased_slots: INTEGER
+          - created_at: TIMESTAMP
+
+      - name: characters
+        description: Персонажи
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - name: VARCHAR(255)
+          - origin: VARCHAR(100)
+          - class: VARCHAR(100)
+          - created_at: TIMESTAMP
+          - deleted_at: TIMESTAMP (soft delete)
+          - can_restore_until: TIMESTAMP
+
+      - name: character_slots
+        description: Слоты персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - slot_number: INTEGER
+          - character_id: UUID FOREIGN KEY (nullable)
+          - purchased: BOOLEAN
+          - purchased_at: TIMESTAMP (nullable)
+
+      - name: character_state_snapshots
+        description: Снимки состояния персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - snapshot_data: JSONB
+          - created_at: TIMESTAMP
+
+      - name: character_progression
+        description: Прогрессия персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - level: INTEGER
+          - experience: BIGINT
+          - experience_to_next_level: BIGINT
+          - updated_at: TIMESTAMP
+
+      - name: skill_experience
+        description: Опыт навыков
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - skill_type: VARCHAR(100)
+          - experience: BIGINT
+          - level: INTEGER
+          - updated_at: TIMESTAMP
+
+      - name: progression_audit
+        description: Аудит прогрессии
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - event_type: VARCHAR(100)
+          - event_data: JSONB
+          - timestamp: TIMESTAMP
+
+  integrations:
+    auth_to_character: |
+      - Событие ACCOUNT_CREATED инициализирует слоты персонажей
+      - Событие LOGIN_SUCCESS обновляет активные сессии
+      - Character Service проверяет права доступа через Auth Service
+
+    character_to_progression: |
+      - Событие CharacterCreated инициализирует прогрессию
+      - Character Service запрашивает начальные данные прогрессии
+      - Progression Service обновляет прогрессию при переключении персонажа
+
+    progression_to_gameplay: |
+      - Progression Service публикует события level-up и skill-leveled
+      - Gameplay Service использует данные прогрессии для игрового процесса
+      - Gameplay Service начисляет опыт через Progression Service
+
+    economy_integration: |
+      - Character Service запрашивает покупку слотов через Economy Service
+      - Economy Service обрабатывает транзакцию
+      - Character Service получает подтверждение и обновляет слоты
+
+    analytics_integration: |
+      - Все сервисы публикуют события для Analytics Service
+      - Analytics Service собирает метрики регистрации, входа, создания персонажей
+      - Analytics Service отслеживает прогрессию и активность
+
+    session_integration: |
+      - Auth Service управляет сессиями через Session Service
+      - Character Service обновляет сессии при переключении персонажей
+      - Session Service валидирует сессии для всех запросов
+
+technical_specification:
+  subtasks:
+    - id: auth-service-core
+      title: Реализация основного функционала Auth Service
+      description: |
+        Реализация Authentication Manager, JWT Service, OAuth Handler
+        с поддержкой регистрации, входа, обновления токенов.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: auth-security
+      title: Реализация безопасности Auth Service
+      description: |
+        Реализация Role Manager, Password Manager, антибрютфорс защиты
+        и аудита безопасности.
+      dependencies: [auth-service-core]
+      estimated_effort: 4 days
+
+    - id: character-service-core
+      title: Реализация основного функционала Character Service
+      description: |
+        Реализация Character Manager, Slot Manager, Character Switcher
+        с поддержкой создания, удаления и переключения персонажей.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: character-advanced
+      title: Реализация расширенного функционала Character Service
+      description: |
+        Реализация Character Recovery, Character Audit и интеграции
+        с Economy Service для покупки слотов.
+      dependencies: [character-service-core]
+      estimated_effort: 3 days
+
+    - id: progression-service-core
+      title: Реализация основного функционала Progression Service
+      description: |
+        Реализация Experience Manager, Level Manager, Skill Manager
+        с поддержкой начисления опыта и управления навыками.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: progression-advanced
+      title: Реализация расширенного функционала Progression Service
+      description: |
+        Реализация Attribute Manager, Snapshot Manager и аудита прогрессии
+        с поддержкой откатов.
+      dependencies: [progression-service-core]
+      estimated_effort: 3 days
+
+    - id: session-service
+      title: Реализация Session Service
+      description: |
+        Реализация Session Manager, Session Storage, Session Validator
+        с интеграцией с Auth и Character Service.
+      dependencies: [auth-service-core]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для Auth, Character и Progression
+        с поддержкой realtime обновлений.
+      dependencies: [auth-service-core, character-service-core, progression-service-core]
+      estimated_effort: 4 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех сервисов Auth & Character Management.
+      dependencies: [auth-service-core, character-service-core, progression-service-core]
+      estimated_effort: 3 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для Auth, Character и Progression
+        с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> AuthService[Auth Service<br/>8081]
+        Gateway --> CharacterService[Character Service<br/>8082]
+        Gateway --> ProgressionService[Progression Service<br/>8087]
+        
+        AuthService --> AuthDB[(Auth DB)]
+        CharacterService --> CharacterDB[(Character DB)]
+        ProgressionService --> ProgressionDB[(Progression DB)]
+        
+        AuthService --> SessionService[Session Service<br/>8090]
+        CharacterService --> SessionService
+        
+        AuthService --> Keycloak[Keycloak<br/>OAuth]
+        AuthService --> Redis[(Redis<br/>Sessions)]
+        
+        AuthService --> EventBus[Event Bus<br/>Kafka]
+        CharacterService --> EventBus
+        ProgressionService --> EventBus
+        
+        EventBus --> EconomyService[Economy Service]
+        EventBus --> AnalyticsService[Analytics Service]
+        EventBus --> GameplayService[Gameplay Service]
+        EventBus --> InventoryService[Inventory Service]
+        EventBus --> NotificationService[Notification Service]
+        
+        Client --> WSAuth[WebSocket<br/>Auth Sessions]
+        Client --> WSChar[WebSocket<br/>Characters]
+        Client --> WSProg[WebSocket<br/>Progression]
+        
+        WSAuth --> AuthService
+        WSChar --> CharacterService
+        WSProg --> ProgressionService
+    ```
+
+  auth_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant AS as Auth Service
+        participant SS as Session Service
+        participant DB as Database
+        participant EB as Event Bus
+        participant CS as Character Service
+        
+        C->>AS: POST /auth/register
+        AS->>DB: Create account
+        AS->>EB: Publish ACCOUNT_CREATED
+        AS-->>C: Registration success
+        
+        EB->>CS: ACCOUNT_CREATED
+        CS->>CS: Initialize character slots
+        
+        C->>AS: POST /auth/login
+        AS->>DB: Validate credentials
+        AS->>AS: Check brute-force protection
+        AS->>DB: Create session
+        AS->>SS: Update active sessions
+        AS->>EB: Publish LOGIN_SUCCESS
+        AS-->>C: JWT + Refresh tokens
+        
+        C->>AS: POST /auth/refresh
+        AS->>DB: Validate refresh token
+        AS->>DB: Generate new tokens
+        AS-->>C: New JWT + Refresh tokens
+    ```
+
+  character_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant CS as Character Service
+        participant PS as Progression Service
+        participant GS as Gameplay Service
+        participant IS as Inventory Service
+        participant EB as Event Bus
+        
+        C->>CS: POST /players/{id}/characters
+        CS->>CS: Check available slots
+        CS->>CS: Validate character data
+        CS->>CS: Create character
+        CS->>PS: Initialize progression
+        CS->>EB: Publish CharacterCreated
+        CS-->>C: Character created
+        
+        EB->>GS: CharacterCreated
+        GS->>GS: Initialize gameplay data
+        
+        EB->>IS: CharacterCreated
+        IS->>IS: Create initial inventory
+        
+        C->>CS: POST /players/{id}/switch
+        CS->>CS: Update active character
+        CS->>CS: Save snapshot
+        CS->>EB: Publish CharacterSwitched
+        CS-->>C: Character switched
+        
+        EB->>GS: CharacterSwitched
+        GS->>GS: Load new character data
+    ```
+
