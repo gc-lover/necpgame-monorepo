@@ -1,0 +1,889 @@
+metadata:
+  id: travel-events-system-architecture
+  title: Архитектура системы travel-событий
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:50:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - world
+    - events
+    - travel
+  related_systems:
+    - world-service
+    - economy-service
+    - security-service
+    - quest-service
+    - reputation-service
+  related_documents:
+    - id: world-events-travel-2020-2093
+      relation: implements
+  github_issue: 317
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - world
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы travel-событий для обработки событий,
+    происходящих во время перемещения игроков по миру:
+    - Генерация событий на основе вероятностей и cooldown
+    - Обработка skill checks с различными DC
+    - Выдача наград и применение штрафов
+    - Интеграция с эпохами (2020-2093)
+    - Управление репутацией и heat
+  goal: |
+    Создать архитектурную схему системы travel-событий с определением:
+    - Компонентов для генерации и обработки событий
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Архитектура системы travel-событий с поддержкой генерации событий по эпохам,
+    обработки skill checks, выдачи наград и интеграции с мировыми системами.
+
+architecture:
+  overview: |
+    Архитектура системы travel-событий состоит из следующих компонентов:
+    1. Travel Event Generator - генератор travel-событий
+    2. Event Probability Calculator - калькулятор вероятностей событий
+    3. Event Cooldown Manager - менеджер cooldown событий
+    4. Skill Check Processor - обработчик skill checks
+    5. Event Reward Distributor - распределитель наград
+    6. Event Penalty Applier - применение штрафов
+    7. Epoch Event Catalog - каталог событий по эпохам
+    8. Event Trigger Manager - менеджер триггеров событий
+    9. Event State Manager - менеджер состояния событий
+    10. Travel Event Telemetry Collector - сбор телеметрии
+
+  microservices:
+    - name: world-service
+      port: 8086
+      responsibility: |
+        Обработка travel-событий:
+        - Генерация travel-событий
+        - Расчет вероятностей событий
+        - Управление cooldown
+        - Обработка skill checks
+        - Распределение наград
+        - Применение штрафов
+        - Управление каталогом событий по эпохам
+        - Управление триггерами событий
+        - Управление состоянием событий
+        - Сбор телеметрии
+      components:
+        - travel-event-generator: генератор travel-событий
+        - event-probability-calculator: калькулятор вероятностей
+        - event-cooldown-manager: менеджер cooldown
+        - skill-check-processor: обработчик skill checks
+        - event-reward-distributor: распределитель наград
+        - event-penalty-applier: применение штрафов
+        - epoch-event-catalog: каталог событий по эпохам
+        - event-trigger-manager: менеджер триггеров
+        - event-state-manager: менеджер состояния
+        - travel-event-telemetry-collector: сбор телеметрии
+      endpoints:
+        - POST /api/v1/world/travel-events/trigger - триггер travel-события
+        - GET /api/v1/world/travel-events/available - доступные события для зоны
+        - GET /api/v1/world/travel-events/{eventId} - информация о событии
+        - POST /api/v1/world/travel-events/{eventId}/start - начало события
+        - POST /api/v1/world/travel-events/{eventId}/skill-check - выполнение skill check
+        - POST /api/v1/world/travel-events/{eventId}/complete - завершение события
+        - POST /api/v1/world/travel-events/{eventId}/cancel - отмена события
+        - GET /api/v1/world/travel-events/epoch/{epochId} - события эпохи
+        - GET /api/v1/world/travel-events/cooldown/{characterId} - cooldown персонажа
+        - GET /api/v1/world/travel-events/probability - расчет вероятности события
+        - GET /api/v1/world/travel-events/rewards/{eventId} - награды события
+        - GET /api/v1/world/travel-events/penalties/{eventId} - штрафы события
+      websocket_channels:
+        - wss://api.necp.game/v1/world/travel-events/{characterId} - поток travel-событий персонажа
+      events_published:
+        - world.travel-event.triggered: travel-событие активировано
+        - world.travel-event.started: travel-событие начато
+        - world.travel-event.skill-check-performed: выполнен skill check
+        - world.travel-event.completed: travel-событие завершено
+        - world.travel-event.cancelled: travel-событие отменено
+        - world.travel-event.reward-distributed: награда распределена
+        - world.travel-event.penalty-applied: штраф применен
+        - world.travel-event.cooldown-updated: обновлен cooldown
+      events_subscribed:
+        - character.moved: перемещение персонажа
+        - character.zone-entered: вход в зону
+        - character.zone-exited: выход из зоны
+        - quest.completed: завершение квеста
+        - reputation.changed: изменение репутации
+        - economy.transaction: транзакция в экономике
+        - world.epoch-changed: изменение эпохи
+
+  event_types:
+    - name: ambush
+      description: "Бандитские засады"
+      epochs: [2020-2030, 2030-2045, 2045-2060, 2060-2077, 2077, 2078-2093]
+      base_probability: 0.15
+      cooldown_hours: 6
+      skill_checks:
+        - skill: Combat
+          dc: 20
+        - skill: Stealth
+          dc: 18
+      rewards:
+        - type: loot
+          rarity: common
+          probability: 0.6
+        - type: loot
+          rarity: rare
+          probability: 0.3
+        - type: loot
+          rarity: epic
+          probability: 0.1
+        - type: eddies
+          min: 50
+          max: 200
+      penalties:
+        - type: damage
+          severity: medium
+        - type: heat
+          amount: 5
+
+    - name: political_rally
+      description: "Политические митинги"
+      epochs: [2020-2030, 2030-2045, 2045-2060]
+      base_probability: 0.12
+      cooldown_hours: 8
+      skill_checks:
+        - skill: Social
+          dc: 18
+        - skill: Politician
+          dc: 20
+      rewards:
+        - type: reputation
+          faction: Citizens
+          amount: 3
+        - type: eddies
+          min: 100
+          max: 300
+      penalties:
+        - type: heat
+          amount: 10
+
+    - name: implant_market
+      description: "Рынки имплантов"
+      epochs: [2020-2030, 2030-2045]
+      base_probability: 0.18
+      cooldown_hours: 4
+      skill_checks:
+        - skill: Trader
+          dc: 18
+        - skill: Medtech
+          dc: 16
+      rewards:
+        - type: implant
+          rarity: common
+          probability: 0.5
+        - type: eddies
+          min: 200
+          max: 500
+      penalties:
+        - type: heat
+          amount: 3
+
+    - name: infrastructure_accident
+      description: "Аварии инфраструктуры"
+      epochs: [2020-2030, 2030-2045, 2045-2060]
+      base_probability: 0.10
+      cooldown_hours: 12
+      skill_checks:
+        - skill: Technology
+          dc: 20
+        - skill: Medicine
+          dc: 18
+      rewards:
+        - type: reputation
+          faction: Citizens
+          amount: 5
+        - type: eddies
+          min: 150
+          max: 400
+      penalties:
+        - type: damage
+          severity: high
+
+    - name: nomad_assistance
+      description: "Помощь номадам"
+      epochs: [2020-2030, 2030-2045, 2045-2060]
+      base_probability: 0.14
+      cooldown_hours: 6
+      skill_checks:
+        - skill: Social
+          dc: 16
+        - skill: Combat
+          dc: 18
+      rewards:
+        - type: reputation
+          faction: Nomads
+          amount: 4
+        - type: loot
+          rarity: rare
+          probability: 0.4
+      penalties:
+        - type: heat
+          amount: 2
+
+    - name: corporate_intrigue
+      description: "Корпоративные интриги"
+      epochs: [2020-2030, 2030-2045, 2045-2060, 2060-2077]
+      base_probability: 0.12
+      cooldown_hours: 10
+      skill_checks:
+        - skill: Social
+          dc: 20
+        - skill: Stealth
+          dc: 18
+      rewards:
+        - type: reputation
+          faction: Corpos
+          amount: 3
+        - type: eddies
+          min: 300
+          max: 800
+      penalties:
+        - type: heat
+          amount: 15
+
+    - name: network_failure
+      description: "Сетевые сбои"
+      epochs: [2020-2030, 2030-2045]
+      base_probability: 0.15
+      cooldown_hours: 8
+      skill_checks:
+        - skill: Hacking
+          dc: 18
+        - skill: Technology
+          dc: 16
+      rewards:
+        - type: reputation
+          faction: NetWatch
+          amount: 2
+        - type: loot
+          rarity: rare
+          probability: 0.3
+      penalties:
+        - type: heat
+          amount: 8
+
+    - name: dao_voting
+      description: "DAO-голосования"
+      epochs: [2030-2045, 2045-2060]
+      base_probability: 0.20
+      cooldown_hours: 4
+      skill_checks:
+        - skill: Social
+          dc: 20
+        - skill: Legal
+          dc: 18
+      rewards:
+        - type: reputation
+          faction: DAO
+          amount: 3
+        - type: eddies
+          min: 100
+          max: 300
+      penalties:
+        - type: reputation
+          faction: DAO
+          amount: -2
+
+    - name: gray_market
+      description: "Серые рынки"
+      epochs: [2030-2045, 2045-2060, 2060-2077]
+      base_probability: 0.18
+      cooldown_hours: 4
+      skill_checks:
+        - skill: Trader
+          dc: 18
+        - skill: Stealth
+          dc: 18
+      rewards:
+        - type: loot
+          rarity: rare
+          probability: 0.5
+        - type: eddies
+          min: 200
+          max: 500
+      penalties:
+        - type: heat
+          amount: 10
+        - type: confiscation
+          probability: 0.3
+
+    - name: brain_dance_boom
+      description: "Брейндэнс-бумы"
+      epochs: [2045-2060, 2060-2077]
+      base_probability: 0.12
+      cooldown_hours: 6
+      skill_checks:
+        - skill: Social
+          dc: 16
+        - skill: Technology
+          dc: 18
+      rewards:
+        - type: reputation
+          faction: Media
+          amount: 2
+        - type: eddies
+          min: 150
+          max: 400
+      penalties:
+        - type: heat
+          amount: 5
+
+    - name: concordat_inspection
+      description: "Конкордатные инспекции"
+      epochs: [2060-2077, 2077]
+      base_probability: 0.10
+      cooldown_hours: 12
+      skill_checks:
+        - skill: Legal
+          dc: 20
+        - skill: Social
+          dc: 18
+      rewards:
+        - type: reputation
+          faction: Corpos
+          amount: 4
+        - type: eddies
+          min: 300
+          max: 700
+      penalties:
+        - type: heat
+          amount: 20
+
+    - name: league_info_war
+      description: "Инфовойны лиг"
+      epochs: [2078-2093]
+      base_probability: 0.14
+      cooldown_hours: 8
+      skill_checks:
+        - skill: Hacking
+          dc: 20
+        - skill: Social
+          dc: 18
+      rewards:
+        - type: reputation
+          faction: Media
+          amount: 3
+        - type: loot
+          rarity: epic
+          probability: 0.2
+      penalties:
+        - type: heat
+          amount: 12
+
+    - name: export_license
+      description: "Экспортные лицензии"
+      epochs: [2078-2093]
+      base_probability: 0.16
+      cooldown_hours: 6
+      skill_checks:
+        - skill: Legal
+          dc: 18
+        - skill: Trader
+          dc: 20
+      rewards:
+        - type: reputation
+          faction: Corpos
+          amount: 5
+        - type: eddies
+          min: 500
+          max: 1000
+      penalties:
+        - type: heat
+          amount: 8
+
+  probability_formula: |
+    P(event) = baseChance * (1 + levelModifier) * (1 + reputationModifier) * (1 + timeModifier) * (1 + zoneModifier)
+    
+    Где:
+    - baseChance: базовая вероятность события (8-20%)
+    - levelModifier: модификатор уровня персонажа (0.1 за уровень выше среднего)
+    - reputationModifier: модификатор репутации (-0.2 до +0.2)
+    - timeModifier: модификатор времени суток (-0.1 до +0.1)
+    - zoneModifier: модификатор зоны (-0.3 до +0.3)
+
+  skill_check_system:
+    dc_levels:
+      - name: easy
+        dc: 10
+      - name: medium
+        dc: 15
+      - name: hard
+        dc: 20
+      - name: very_hard
+        dc: 25
+      - name: extreme
+        dc: 30
+    critical_success: |
+      Результат >= DC + 10: критический успех
+      - Удвоенные награды
+      - Бонусная репутация
+      - Дополнительный лут
+    critical_failure: |
+      Результат <= DC - 10: критический провал
+      - Удвоенные штрафы
+      - Дополнительный heat
+      - Потеря репутации
+
+  reward_system:
+    loot_tables:
+      - rarity: common
+        probability: 0.6
+        items:
+          - type: consumable
+            probability: 0.4
+          - type: weapon
+            probability: 0.3
+          - type: implant
+            probability: 0.2
+          - type: resource
+            probability: 0.1
+      - rarity: rare
+        probability: 0.3
+        items:
+          - type: weapon
+            probability: 0.4
+          - type: implant
+            probability: 0.3
+          - type: consumable
+            probability: 0.2
+          - type: resource
+            probability: 0.1
+      - rarity: epic
+        probability: 0.1
+        items:
+          - type: weapon
+            probability: 0.5
+          - type: implant
+            probability: 0.3
+          - type: unique_item
+            probability: 0.2
+    reputation_rewards:
+      - faction: Citizens
+        amount_range: [1, 5]
+      - faction: Corpos
+        amount_range: [2, 5]
+      - faction: Nomads
+        amount_range: [1, 4]
+      - faction: NetWatch
+        amount_range: [1, 3]
+      - faction: DAO
+        amount_range: [2, 4]
+      - faction: Media
+        amount_range: [1, 3]
+    eddies_rewards:
+      - min: 50
+      - max: 1000
+      - distribution: normal
+
+  penalty_system:
+    damage_types:
+      - type: light
+        health_loss: 10
+      - type: medium
+        health_loss: 25
+      - type: heavy
+        health_loss: 50
+    heat_penalties:
+      - min: 2
+      - max: 20
+      - distribution: normal
+    reputation_penalties:
+      - faction: all
+        amount_range: [-5, -1]
+    confiscation:
+      - probability: 0.1
+      - item_types: [weapon, implant, consumable]
+
+  data_flows:
+    travel_event_trigger_flow: |
+      1. Персонаж перемещается в зону
+      2. Travel Event Generator проверяет доступные события для зоны и эпохи
+      3. Event Probability Calculator рассчитывает вероятность каждого события
+      4. Event Cooldown Manager проверяет cooldown для персонажа
+      5. Travel Event Generator выбирает событие на основе вероятностей
+      6. Event Trigger Manager активирует событие
+      7. Event State Manager создает состояние события
+      8. World Service публикует событие world.travel-event.triggered
+      9. Realtime Gateway отправляет уведомление клиенту
+
+    skill_check_flow: |
+      1. Игрок выполняет действие в travel-событии
+      2. Skill Check Processor получает запрос на проверку
+      3. Skill Check Processor определяет требуемый навык и DC
+      4. Skill Check Processor получает уровень навыка персонажа
+      5. Skill Check Processor выполняет проверку (d20 + модификаторы)
+      6. Skill Check Processor определяет результат (успех/критический успех/провал/критический провал)
+      7. Event Reward Distributor или Event Penalty Applier обрабатывает результат
+      8. World Service публикует событие world.travel-event.skill-check-performed
+      9. Realtime Gateway отправляет обновление клиенту
+
+    event_completion_flow: |
+      1. Travel-событие завершается (успешно или провально)
+      2. Event Reward Distributor распределяет награды (лут, репутация, эдди)
+      3. Event Penalty Applier применяет штрафы (урон, heat, конфискация)
+      4. Event Cooldown Manager обновляет cooldown для персонажа
+      5. Event State Manager обновляет состояние события
+      6. World Service публикует событие world.travel-event.completed
+      7. Economy Service обрабатывает транзакции
+      8. Reputation Service обновляет репутацию
+      9. Realtime Gateway отправляет финальное обновление клиенту
+
+  database_structure:
+    tables:
+      - name: travel_events
+        description: Каталог travel-событий
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_code: VARCHAR(50) UNIQUE
+          - event_name: VARCHAR(255)
+          - event_type: VARCHAR(50)
+          - epoch_id: VARCHAR(50)
+          - description: TEXT
+          - base_probability: DECIMAL(5,4)
+          - cooldown_hours: INTEGER
+          - zone_types: JSONB
+          - skill_checks: JSONB
+          - rewards: JSONB
+          - penalties: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: travel_event_instances
+        description: Экземпляры travel-событий
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - zone_id: UUID FOREIGN KEY
+          - epoch_id: VARCHAR(50)
+          - state: ENUM (triggered, started, in-progress, completed, cancelled, failed)
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP
+          - skill_check_results: JSONB
+          - rewards_distributed: JSONB
+          - penalties_applied: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: travel_event_cooldowns
+        description: Cooldown travel-событий для персонажей
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - event_type: VARCHAR(50)
+          - last_triggered_at: TIMESTAMP
+          - cooldown_until: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: travel_event_skill_checks
+        description: Результаты skill checks в travel-событиях
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_instance_id: UUID FOREIGN KEY
+          - skill_name: VARCHAR(50)
+          - dc: INTEGER
+          - roll_result: INTEGER
+          - modifiers: JSONB
+          - success: BOOLEAN
+          - critical_success: BOOLEAN
+          - critical_failure: BOOLEAN
+          - performed_at: TIMESTAMP
+
+      - name: travel_event_rewards
+        description: Награды за travel-события
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_instance_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - reward_type: ENUM (loot, reputation, eddies, item)
+          - reward_data: JSONB
+          - distributed_at: TIMESTAMP
+
+      - name: travel_event_penalties
+        description: Штрафы за travel-события
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_instance_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - penalty_type: ENUM (damage, heat, reputation, confiscation)
+          - penalty_data: JSONB
+          - applied_at: TIMESTAMP
+
+      - name: travel_event_telemetry
+        description: Телеметрия travel-событий
+        columns:
+          - id: UUID PRIMARY KEY
+          - event_instance_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - event_type: VARCHAR(50)
+          - zone_id: UUID FOREIGN KEY
+          - epoch_id: VARCHAR(50)
+          - duration_seconds: INTEGER
+          - skill_checks_count: INTEGER
+          - success: BOOLEAN
+          - rewards_value: DECIMAL(10,2)
+          - penalties_value: DECIMAL(10,2)
+          - created_at: TIMESTAMP
+
+  integrations:
+    economy_service: |
+      - Обработка транзакций за награды (эдди)
+      - Проверка баланса перед выдачей наград
+      - Логирование экономических операций
+
+    reputation_service: |
+      - Обновление репутации фракций
+      - Проверка репутации для доступа к событиям
+      - Влияние репутации на вероятность событий
+
+    security_service: |
+      - Обновление heat персонажа
+      - Проверка heat для доступа к событиям
+      - Влияние heat на вероятность событий
+
+    quest_service: |
+      - Интеграция с квестами на основе travel-событий
+      - Триггеры квестов при завершении событий
+      - Обновление прогресса квестов
+
+    character_service: |
+      - Получение информации о персонаже (уровень, навыки)
+      - Применение урона
+      - Обновление состояния персонажа
+
+    inventory_service: |
+      - Выдача лута
+      - Конфискация предметов
+      - Проверка инвентаря
+
+    gameplay_service: |
+      - Получение событий игрового процесса
+      - Интеграция с системой прогрессии
+      - Модификация опыта за события
+
+    analytics_service: |
+      - Логирование всех операций travel-событий
+      - Сбор метрик эффективности
+      - Анализ паттернов событий
+      - Мониторинг участия игроков
+
+    realtime_gateway: |
+      - Отправка realtime обновлений travel-событий
+      - Синхронизация состояния событий
+      - Уведомления о событиях
+
+technical_specification:
+  subtasks:
+    - id: travel-event-generator
+      title: Реализация генератора travel-событий
+      description: |
+        Реализация Travel Event Generator с генерацией событий на основе вероятностей,
+        cooldown и доступности для зоны и эпохи.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: event-probability-calculator
+      title: Реализация калькулятора вероятностей
+      description: |
+        Реализация Event Probability Calculator с расчетом вероятностей событий
+        на основе формулы с модификаторами.
+      dependencies: [travel-event-generator]
+      estimated_effort: 3 days
+
+    - id: event-cooldown-manager
+      title: Реализация менеджера cooldown
+      description: |
+        Реализация Event Cooldown Manager с управлением cooldown для персонажей
+        и проверкой доступности событий.
+      dependencies: [travel-event-generator]
+      estimated_effort: 3 days
+
+    - id: skill-check-processor
+      title: Реализация обработчика skill checks
+      description: |
+        Реализация Skill Check Processor с обработкой skill checks,
+        определением результатов и критических исходов.
+      dependencies: [travel-event-generator]
+      estimated_effort: 4 days
+
+    - id: event-reward-distributor
+      title: Реализация распределителя наград
+      description: |
+        Реализация Event Reward Distributor с распределением наград (лут, репутация, эдди)
+        на основе результатов событий.
+      dependencies: [skill-check-processor]
+      estimated_effort: 4 days
+
+    - id: event-penalty-applier
+      title: Реализация применения штрафов
+      description: |
+        Реализация Event Penalty Applier с применением штрафов (урон, heat, конфискация)
+        на основе результатов событий.
+      dependencies: [skill-check-processor]
+      estimated_effort: 4 days
+
+    - id: epoch-event-catalog
+      title: Реализация каталога событий по эпохам
+      description: |
+        Реализация Epoch Event Catalog с управлением каталогом событий по эпохам,
+        загрузкой событий из конфигурации и фильтрацией по эпохам.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: event-trigger-manager
+      title: Реализация менеджера триггеров
+      description: |
+        Реализация Event Trigger Manager с управлением триггерами событий,
+        активацией событий и обработкой условий.
+      dependencies: [travel-event-generator, event-probability-calculator]
+      estimated_effort: 4 days
+
+    - id: event-state-manager
+      title: Реализация менеджера состояния
+      description: |
+        Реализация Event State Manager с управлением состоянием событий,
+        отслеживанием прогресса и обновлением состояния.
+      dependencies: [travel-event-generator]
+      estimated_effort: 3 days
+
+    - id: travel-event-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Travel Event Telemetry Collector с логированием операций,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [travel-event-generator]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений travel-событий,
+        состояния событий и уведомлений.
+      dependencies: [event-state-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы travel-событий.
+      dependencies: [travel-event-generator]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для travel-событий, экземпляров, cooldown, skill checks,
+        наград, штрафов и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 3 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> WorldService[World Service<br/>8086]
+        
+        WorldService --> TEG[Travel Event Generator]
+        WorldService --> EPC[Event Probability Calculator]
+        WorldService --> ECM[Event Cooldown Manager]
+        WorldService --> SCP[Skill Check Processor]
+        WorldService --> ERD[Event Reward Distributor]
+        WorldService --> EPA[Event Penalty Applier]
+        WorldService --> EEC[Epoch Event Catalog]
+        WorldService --> ETM[Event Trigger Manager]
+        WorldService --> ESM[Event State Manager]
+        WorldService --> TETC[Travel Event Telemetry Collector]
+        
+        TEG --> EPC
+        TEG --> ECM
+        TEG --> EEC
+        TEG --> ETM
+        ETM --> ESM
+        ESM --> SCP
+        SCP --> ERD
+        SCP --> EPA
+        
+        WorldService --> EconomyService[Economy Service]
+        WorldService --> ReputationService[Reputation Service]
+        WorldService --> SecurityService[Security Service]
+        WorldService --> QuestService[Quest Service]
+        WorldService --> CharacterService[Character Service]
+        WorldService --> InventoryService[Inventory Service]
+        WorldService --> GameplayService[Gameplay Service]
+        WorldService --> AnalyticsService[Analytics Service]
+        
+        WorldService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        WorldService --> DB[(World DB)]
+        
+        Client --> WSTravel[WebSocket<br/>Travel Events]
+        WSTravel --> WorldService
+    ```
+
+  travel_event_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant TEG as Travel Event Generator
+        participant EPC as Event Probability Calculator
+        participant ECM as Event Cooldown Manager
+        participant ETM as Event Trigger Manager
+        participant SCP as Skill Check Processor
+        participant ERD as Event Reward Distributor
+        participant EB as Event Bus
+        
+        P->>TEG: Move to zone
+        TEG->>EPC: Calculate probabilities
+        TEG->>ECM: Check cooldown
+        TEG->>ETM: Trigger event
+        ETM->>SCP: Process skill check
+        SCP->>SCP: Roll dice + modifiers
+        SCP->>ERD: Distribute rewards
+        ERD->>EB: Publish world.travel-event.completed
+    ```
+
+  skill_check_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant SCP as Skill Check Processor
+        participant CS as Character Service
+        participant ERD as Event Reward Distributor
+        participant EPA as Event Penalty Applier
+        participant EB as Event Bus
+        
+        P->>SCP: Perform action
+        SCP->>CS: Get skill level
+        CS->>SCP: Return skill level
+        SCP->>SCP: Roll d20 + modifiers
+        alt Success
+            SCP->>ERD: Distribute rewards
+        else Failure
+            SCP->>EPA: Apply penalties
+        end
+        SCP->>EB: Publish world.travel-event.skill-check-performed
+    ```
+
