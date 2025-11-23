@@ -23,3 +23,4 @@ CREATE INDEX IF NOT EXISTS idx_chat_reports_status
 CREATE INDEX IF NOT EXISTS idx_chat_reports_created_at 
   ON social.chat_reports(created_at DESC);
 
+
