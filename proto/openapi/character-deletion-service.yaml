@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Character Deletion Service API
+  description: API для удаления и восстановления персонажей
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Character Deletion
+    description: Удаление и восстановление персонажей
+
+paths:
+  /character/characters/{character_id}/deletion-status:
+    get:
+      tags:
+        - Character Deletion
+      summary: Статус удаления персонажа
+      operationId: getDeletionStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус удаления
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeletionStatus"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/restore:
+    post:
+      tags:
+        - Character Deletion
+      summary: Восстановить персонажа
+      operationId: restoreCharacter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestoreCharacterRequest"
+      responses:
+        "200":
+          description: Персонаж восстановлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterFull"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/deleted:
+    get:
+      tags:
+        - Character Deletion
+      summary: Получить удаленных персонажей
+      operationId: getDeletedCharacters
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список удаленных персонажей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  characters:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DeletedCharacter"
+                  total:
+                    type: integer
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CharacterFull:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        deleted:
+          type: boolean
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+        can_restore_until:
+          type: string
+          format: date-time
+          nullable: true
+
+    DeletionStatus:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+        can_restore_until:
+          type: string
+          format: date-time
+          nullable: true
+        can_restore:
+          type: boolean
+
+    RestoreCharacterRequest:
+      type: object
+      properties:
+        restore_from_snapshot:
+          type: boolean
+          default: true
+
+    DeletedCharacter:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        deleted_at:
+          type: string
+          format: date-time
+        can_restore_until:
+          type: string
+          format: date-time
+        can_restore:
+          type: boolean
+
+security:
+  - BearerAuth: []
+
+
+
+

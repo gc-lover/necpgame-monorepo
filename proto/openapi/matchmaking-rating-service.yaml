@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Rating Service API
+  description: API для системы рейтинга матчмейкинга
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Rating
+    description: Система рейтинга
+
+paths:
+  /matchmaking/rating/{player_id}:
+    get:
+      tags:
+        - Rating
+      summary: Получить рейтинг игрока
+      operationId: getPlayerRating
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: queue_type
+          in: query
+          schema:
+            type: string
+            enum: [pvp, pve, raid, ranked, casual]
+      responses:
+        '200':
+          description: Рейтинг игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRating'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /matchmaking/rating/leaderboard:
+    get:
+      tags:
+        - Rating
+      summary: Получить таблицу лидеров
+      operationId: getRatingLeaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: queue_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pvp, pve, raid, ranked, casual]
+        - name: tier
+          in: query
+          schema:
+            type: string
+            enum: [bronze, silver, gold, platinum, diamond, master, grandmaster]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Таблица лидеров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingLeaderboardResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /matchmaking/rating/update:
+    post:
+      tags:
+        - Rating
+      summary: Обновить рейтинг игрока
+      operationId: updatePlayerRating
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRatingRequest'
+      responses:
+        '200':
+          description: Рейтинг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRating'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerRating:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        queue_type:
+          type: string
+        rating:
+          type: number
+          format: float
+        tier:
+          type: string
+          enum: [bronze, silver, gold, platinum, diamond, master, grandmaster]
+        wins:
+          type: integer
+        losses:
+          type: integer
+        win_rate:
+          type: number
+          format: float
+        streak:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    RatingLeaderboardResponse:
+      type: object
+      properties:
+        leaderboard:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerRating'
+        total:
+          type: integer
+
+    UpdateRatingRequest:
+      type: object
+      required:
+        - player_id
+        - queue_type
+        - match_result
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        queue_type:
+          type: string
+        match_result:
+          type: string
+          enum: [win, loss, draw]
+        opponent_rating:
+          type: number
+          format: float
+        match_quality:
+          type: number
+          format: float
+
+security:
+  - BearerAuth: []
+
+
+
+

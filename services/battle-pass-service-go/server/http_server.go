@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/necpgame/battle-pass-service-go/models"
+	"github.com/necpgame/battle-pass-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,23 +38,24 @@ func NewHTTPServer(addr string, battlePassService BattlePassServiceInterface, jw
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	api := router.PathPrefix("/api/v1").Subrouter()
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 
 	if authEnabled {
-		api.Use(server.authMiddleware)
+		apiRouter.Use(server.authMiddleware)
 	}
 
-	api.HandleFunc("/battle-pass/current", server.getCurrentBattlePass).Methods("GET")
-	api.HandleFunc("/battle-pass/progress", server.getPlayerProgress).Methods("GET")
-	api.HandleFunc("/battle-pass/progress/xp", server.awardBattlePassXP).Methods("POST")
-	api.HandleFunc("/battle-pass/premium", server.purchasePremium).Methods("POST")
-	api.HandleFunc("/battle-pass/rewards", server.getSeasonRewards).Methods("GET")
-	api.HandleFunc("/battle-pass/rewards/claim", server.claimReward).Methods("POST")
-	api.HandleFunc("/battle-pass/challenges/weekly", server.getWeeklyChallenges).Methods("GET")
-	api.HandleFunc("/battle-pass/challenges/{challengeId}/complete", server.completeChallenge).Methods("POST")
-	api.HandleFunc("/battle-pass/season/{season_id}", server.getSeasonInfo).Methods("GET")
-	api.HandleFunc("/battle-pass/season/create", server.createSeason).Methods("POST")
-	api.HandleFunc("/battle-pass/progress/level/{level}", server.getLevelRequirements).Methods("GET")
+	handlers := NewBattlePassHandlers(battlePassService)
+	api.HandlerWithOptions(handlers, api.GorillaServerOptions{
+		BaseRouter: apiRouter,
+	})
+
+	apiRouter.HandleFunc("/battle-pass/progress/xp", server.awardBattlePassXP).Methods("POST")
+	apiRouter.HandleFunc("/battle-pass/rewards", server.getSeasonRewards).Methods("GET")
+	apiRouter.HandleFunc("/battle-pass/rewards/claim", server.claimReward).Methods("POST")
+	apiRouter.HandleFunc("/battle-pass/challenges/weekly", server.getWeeklyChallenges).Methods("GET")
+	apiRouter.HandleFunc("/battle-pass/challenges/{challengeId}/complete", server.completeChallenge).Methods("POST")
+	apiRouter.HandleFunc("/battle-pass/season/{season_id}", server.getSeasonInfo).Methods("GET")
+	apiRouter.HandleFunc("/battle-pass/season/create", server.createSeason).Methods("POST")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -92,65 +93,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) getCurrentBattlePass(w http.ResponseWriter, r *http.Request) {
-	season, err := s.battlePassService.GetCurrentSeason(r.Context())
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get current season")
-		s.respondError(w, http.StatusInternalServerError, "failed to get current season")
-		return
-	}
-
-	if season == nil {
-		s.respondError(w, http.StatusNotFound, "no active season")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, season)
-}
-
-func (s *HTTPServer) getPlayerProgress(w http.ResponseWriter, r *http.Request) {
-	characterIDStr := r.URL.Query().Get("character_id")
-	if characterIDStr == "" {
-		s.respondError(w, http.StatusBadRequest, "character_id is required")
-		return
-	}
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
-
-	var seasonID uuid.UUID
-	if seasonIDStr := r.URL.Query().Get("season_id"); seasonIDStr != "" {
-		seasonID, err = uuid.Parse(seasonIDStr)
-		if err != nil {
-			s.respondError(w, http.StatusBadRequest, "invalid season_id")
-			return
-		}
-	} else {
-		season, err := s.battlePassService.GetCurrentSeason(r.Context())
-		if err != nil {
-			s.logger.WithError(err).Error("Failed to get current season")
-			s.respondError(w, http.StatusInternalServerError, "failed to get current season")
-			return
-		}
-		if season == nil {
-			s.respondError(w, http.StatusNotFound, "no active season")
-			return
-		}
-		seasonID = season.ID
-	}
-
-	progress, err := s.battlePassService.GetProgress(r.Context(), characterID, seasonID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get progress")
-		s.respondError(w, http.StatusInternalServerError, "failed to get progress")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, progress)
-}
 
 func (s *HTTPServer) awardBattlePassXP(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -179,25 +121,6 @@ func (s *HTTPServer) awardBattlePassXP(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, http.StatusOK, progress)
 }
 
-func (s *HTTPServer) purchasePremium(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		CharacterID uuid.UUID `json:"character_id"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	progress, err := s.battlePassService.PurchasePremium(r.Context(), req.CharacterID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to purchase premium")
-		s.respondError(w, http.StatusInternalServerError, "failed to purchase premium")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, progress)
-}
 
 func (s *HTTPServer) getSeasonRewards(w http.ResponseWriter, r *http.Request) {
 	seasonIDStr := r.URL.Query().Get("season_id")
@@ -354,25 +277,6 @@ func (s *HTTPServer) createSeason(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, http.StatusCreated, season)
 }
 
-func (s *HTTPServer) getLevelRequirements(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	levelStr := vars["level"]
-
-	level, err := strconv.Atoi(levelStr)
-	if err != nil || level < 1 || level > 100 {
-		s.respondError(w, http.StatusBadRequest, "invalid level")
-		return
-	}
-
-	requirements, err := s.battlePassService.GetLevelRequirements(r.Context(), level)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get level requirements")
-		s.respondError(w, http.StatusInternalServerError, "failed to get level requirements")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, requirements)
-}
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "ok"})

@@ -1,0 +1,152 @@
+openapi: 3.0.3
+info:
+  title: Social Chat Format Service API
+  description: API для форматирования и событий чата
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Chat Format
+    description: Форматирование и события чата
+
+paths:
+  /social/chat/format:
+    post:
+      tags:
+        - Chat Format
+      summary: Форматировать сообщение
+      operationId: formatChatMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormatMessageRequest'
+      responses:
+        '200':
+          description: Отформатированное сообщение
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormattedMessageResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/chat/events:
+    get:
+      tags:
+        - Chat Format
+      summary: Получить события чата
+      operationId: getChatEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [chat:message-sent, chat:message-received, chat:channel-joined, chat:channel-left, chat:user-banned]
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: События чата
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatEventsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    FormatMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        format_options:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    FormattedMessageResponse:
+      type: object
+      properties:
+        original:
+          type: string
+        formatted:
+          type: string
+        mentions:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ChatEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [chat:message-sent, chat:message-received, chat:channel-joined, chat:channel-left, chat:user-banned]
+        channel_id:
+          type: string
+          format: uuid
+          nullable: true
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ChatEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

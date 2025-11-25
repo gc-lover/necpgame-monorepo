@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: Auth Registration Service API
+  description: API для регистрации аккаунтов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Registration
+    description: Регистрация аккаунтов
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Registration
+      summary: Зарегистрировать новый аккаунт
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Аккаунт создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/verify-email:
+    post:
+      tags:
+        - Registration
+      summary: Подтвердить email
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        "200":
+          description: Email подтвержден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/resend-verification:
+    post:
+      tags:
+        - Registration
+      summary: Отправить повторное письмо подтверждения
+      operationId: resendVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Письмо отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - username
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+
+    RegisterResponse:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        username:
+          type: string
+        email_verification_required:
+          type: boolean
+
+    VerifyEmailRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+
+security:
+  - BearerAuth: []
+
+
+
+

@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Economy Inventory Storage Service API
+  description: API для управления хранилищем
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Inventory Storage
+    description: Управление хранилищем
+
+paths:
+  /economy/inventory/{characterId}/storage:
+    get:
+      tags:
+        - Inventory Storage
+      summary: Получить хранилище персонажа
+      operationId: getStorage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: storage_type
+          in: query
+          schema:
+            type: string
+            enum: [personal_bank, guild_bank]
+      responses:
+        "200":
+          description: Хранилище персонажа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Storage"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/storage/items:
+    post:
+      tags:
+        - Inventory Storage
+      summary: Добавить предмет в хранилище
+      operationId: addStorageItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddStorageItemRequest"
+      responses:
+        "200":
+          description: Предмет добавлен в хранилище
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/storage/transfer:
+    post:
+      tags:
+        - Inventory Storage
+      summary: Переместить предмет между инвентарём и хранилищем
+      operationId: transferStorageItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferStorageItemRequest"
+      responses:
+        "200":
+          description: Предмет перемещён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/storage/expand:
+    post:
+      tags:
+        - Inventory Storage
+      summary: Расширить хранилище
+      operationId: expandStorage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpandStorageRequest"
+      responses:
+        "200":
+          description: Хранилище расширено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Storage"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Storage:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        storage_type:
+          type: string
+          enum: [personal_bank, guild_bank]
+        max_slots:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorageItem"
+        updated_at:
+          type: string
+          format: date-time
+
+    StorageItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+          format: uuid
+        slot_index:
+          type: integer
+        quantity:
+          type: integer
+        stored_at:
+          type: string
+          format: date-time
+
+    AddStorageItemRequest:
+      type: object
+      required:
+        - item_id
+        - storage_type
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        storage_type:
+          type: string
+          enum: [personal_bank, guild_bank]
+        slot_index:
+          type: integer
+          nullable: true
+
+    TransferStorageItemRequest:
+      type: object
+      required:
+        - item_id
+        - direction
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        direction:
+          type: string
+          enum: [to_storage, from_storage]
+        storage_type:
+          type: string
+          enum: [personal_bank, guild_bank]
+        target_slot_index:
+          type: integer
+          nullable: true
+
+    TransferResult:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        direction:
+          type: string
+        source_slot:
+          type: integer
+        target_slot:
+          type: integer
+        transferred_at:
+          type: string
+          format: date-time
+
+    ExpandStorageRequest:
+      type: object
+      required:
+        - storage_type
+        - slots_to_add
+      properties:
+        storage_type:
+          type: string
+          enum: [personal_bank, guild_bank]
+        slots_to_add:
+          type: integer
+          minimum: 1
+
+security:
+  - BearerAuth: []
+

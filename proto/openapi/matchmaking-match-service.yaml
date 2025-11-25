@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Match Service API
+  description: API для управления матчами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Match
+    description: Управление матчами
+
+paths:
+  /matchmaking/match/find:
+    post:
+      tags:
+        - Match
+      summary: Найти матч
+      operationId: findMatch
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindMatchRequest"
+      responses:
+        "200":
+          description: Матч найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /matchmaking/match/{match_id}:
+    get:
+      tags:
+        - Match
+      summary: Получить информацию о матче
+      operationId: getMatch
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о матче
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /matchmaking/match/{match_id}/accept:
+    post:
+      tags:
+        - Match
+      summary: Принять матч
+      operationId: acceptMatch
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptMatchRequest"
+      responses:
+        "200":
+          description: Матч принят
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /matchmaking/match/{match_id}/decline:
+    post:
+      tags:
+        - Match
+      summary: Отклонить матч
+      operationId: declineMatch
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeclineMatchRequest"
+      responses:
+        "200":
+          description: Матч отклонен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    FindMatchRequest:
+      type: object
+      required:
+        - character_id
+        - queue_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        queue_type:
+          type: string
+          enum: [pvp, pve, raid, ranked, casual]
+        party_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        queue_type:
+          type: string
+        status:
+          type: string
+          enum: [found, accepted, declined, cancelled, started]
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/Team"
+        quality_score:
+          type: number
+          format: float
+        found_at:
+          type: string
+          format: date-time
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/MatchPlayer"
+        average_rating:
+          type: number
+          format: float
+
+    MatchPlayer:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+        rating:
+          type: number
+          format: float
+        accepted:
+          type: boolean
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AcceptMatchRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    DeclineMatchRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+
+security:
+  - BearerAuth: []
+
+
+

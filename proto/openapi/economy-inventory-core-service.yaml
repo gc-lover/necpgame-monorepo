@@ -1,0 +1,342 @@
+openapi: 3.0.3
+info:
+  title: Economy Inventory Core Service API
+  description: API для основных операций с инвентарём
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Inventory
+    description: Управление инвентарём
+
+paths:
+  /economy/inventory/{characterId}:
+    get:
+      tags:
+        - Inventory
+      summary: Получить инвентарь персонажа
+      operationId: getInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Инвентарь персонажа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Inventory"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/items:
+    post:
+      tags:
+        - Inventory
+      summary: Добавить предмет в инвентарь
+      operationId: addInventoryItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddInventoryItemRequest"
+      responses:
+        "200":
+          description: Предмет добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/items/{itemId}:
+    put:
+      tags:
+        - Inventory
+      summary: Обновить предмет в инвентаре
+      operationId: updateInventoryItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInventoryItemRequest"
+      responses:
+        "200":
+          description: Предмет обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    delete:
+      tags:
+        - Inventory
+      summary: Удалить предмет из инвентаря
+      operationId: deleteInventoryItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Предмет удалён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/items/{itemId}/move:
+    post:
+      tags:
+        - Inventory
+      summary: Переместить предмет в инвентаре
+      operationId: moveInventoryItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveInventoryItemRequest"
+      responses:
+        "200":
+          description: Предмет перемещён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/free-slots:
+    get:
+      tags:
+        - Inventory
+      summary: Получить свободные слоты инвентаря
+      operationId: getFreeInventorySlots
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Свободные слоты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreeSlotsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Inventory:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        max_slots:
+          type: integer
+        current_weight:
+          type: number
+          format: float
+        max_weight:
+          type: number
+          format: float
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+        updated_at:
+          type: string
+          format: date-time
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+          format: uuid
+        slot_index:
+          type: integer
+        quantity:
+          type: integer
+        max_stack_size:
+          type: integer
+        weight:
+          type: number
+          format: float
+        properties:
+          type: object
+          additionalProperties: true
+
+    AddInventoryItemRequest:
+      type: object
+      required:
+        - item_template_id
+        - quantity
+      properties:
+        item_template_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        slot_index:
+          type: integer
+          nullable: true
+
+    UpdateInventoryItemRequest:
+      type: object
+      properties:
+        slot_index:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        properties:
+          type: object
+          additionalProperties: true
+
+    MoveInventoryItemRequest:
+      type: object
+      required:
+        - target_slot_index
+      properties:
+        target_slot_index:
+          type: integer
+
+    FreeSlotsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        free_slots:
+          type: array
+          items:
+            type: integer
+        total_free:
+          type: integer
+        total_slots:
+          type: integer
+
+security:
+  - BearerAuth: []
+

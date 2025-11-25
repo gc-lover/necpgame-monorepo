@@ -228,3 +228,60 @@ func (r *MailRepository) MarkAsExpired(ctx context.Context, mailID uuid.UUID) er
 	return err
 }
 
+func (r *MailRepository) GetExpiringMailsByDays(ctx context.Context, recipientID uuid.UUID, days int, limit, offset int) ([]models.MailMessage, error) {
+	cutoffDate := time.Now().AddDate(0, 0, days)
+	query := `
+		SELECT id, sender_id, sender_name, recipient_id, type, subject, content,
+			attachments, cod_amount, status, is_read, is_claimed,
+			sent_at, read_at, expires_at, created_at, updated_at
+		FROM social.mail_messages
+		WHERE recipient_id = $1 AND expires_at IS NOT NULL 
+			AND expires_at <= $2 AND expires_at > $3
+			AND deleted_at IS NULL AND status NOT IN ($4, $5)
+		ORDER BY expires_at ASC
+		LIMIT $6 OFFSET $7`
+
+	rows, err := r.db.Query(ctx, query, recipientID, cutoffDate, time.Now(), 
+		models.MailStatusExpired, models.MailStatusReturned, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []models.MailMessage
+	for rows.Next() {
+		var mail models.MailMessage
+		var attachmentsJSON []byte
+		var senderID *uuid.UUID
+
+		err := rows.Scan(
+			&mail.ID, &senderID, &mail.SenderName, &mail.RecipientID, &mail.Type,
+			&mail.Subject, &mail.Content, &attachmentsJSON, &mail.CODAmount,
+			&mail.Status, &mail.IsRead, &mail.IsClaimed,
+			&mail.SentAt, &mail.ReadAt, &mail.ExpiresAt, &mail.CreatedAt, &mail.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		mail.SenderID = senderID
+		if len(attachmentsJSON) > 0 {
+			json.Unmarshal(attachmentsJSON, &mail.Attachments)
+		}
+
+		messages = append(messages, mail)
+	}
+
+	return messages, nil
+}
+
+func (r *MailRepository) ExtendExpiration(ctx context.Context, mailID uuid.UUID, days int) error {
+	query := `
+		UPDATE social.mail_messages
+		SET expires_at = expires_at + INTERVAL '1 day' * $1, updated_at = $2
+		WHERE id = $3 AND deleted_at IS NULL AND expires_at IS NOT NULL`
+
+	_, err := r.db.Exec(ctx, query, days, time.Now(), mailID)
+	return err
+}
+

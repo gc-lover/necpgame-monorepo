@@ -4,27 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/necpgame/companion-service-go/models"
+	"github.com/necpgame/companion-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
-
-type CompanionServiceInterface interface {
-	GetCompanionType(ctx context.Context, companionTypeID string) (*models.CompanionType, error)
-	ListCompanionTypes(ctx context.Context, category *models.CompanionCategory, limit, offset int) (*models.CompanionTypeListResponse, error)
-	PurchaseCompanion(ctx context.Context, characterID uuid.UUID, companionTypeID string) (*models.PlayerCompanion, error)
-	ListPlayerCompanions(ctx context.Context, characterID uuid.UUID, status *models.CompanionStatus, limit, offset int) (*models.PlayerCompanionListResponse, error)
-	GetCompanionDetail(ctx context.Context, companionID uuid.UUID) (*models.CompanionDetailResponse, error)
-	SummonCompanion(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID) error
-	DismissCompanion(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID) error
-	RenameCompanion(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID, customName string) error
-	AddExperience(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID, amount int64, source string) error
-	UseAbility(ctx context.Context, characterID uuid.UUID, companionID uuid.UUID, abilityID string) error
-}
 
 type HTTPServer struct {
 	addr            string
@@ -47,18 +32,18 @@ func NewHTTPServer(addr string, companionService CompanionServiceInterface) *HTT
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	api := router.PathPrefix("/api/v1/companions").Subrouter()
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 
-	api.HandleFunc("/types", server.listCompanionTypes).Methods("GET")
-	api.HandleFunc("/types/{type_id}", server.getCompanionType).Methods("GET")
-	api.HandleFunc("/purchase", server.purchaseCompanion).Methods("POST")
-	api.HandleFunc("/characters/{character_id}", server.listPlayerCompanions).Methods("GET")
-	api.HandleFunc("/{companion_id}", server.getCompanionDetail).Methods("GET")
-	api.HandleFunc("/{companion_id}/summon", server.summonCompanion).Methods("POST")
-	api.HandleFunc("/{companion_id}/dismiss", server.dismissCompanion).Methods("POST")
-	api.HandleFunc("/{companion_id}/rename", server.renameCompanion).Methods("POST")
-	api.HandleFunc("/{companion_id}/experience", server.addExperience).Methods("POST")
-	api.HandleFunc("/{companion_id}/abilities/{ability_id}/use", server.useAbility).Methods("POST")
+	service, ok := companionService.(*CompanionService)
+	var repo CompanionRepositoryInterface
+	if ok && service != nil {
+		repo = service.repo
+	}
+
+	handlers := NewCompanionHandlers(companionService, repo)
+	api.HandlerWithOptions(handlers, api.GorillaServerOptions{
+		BaseRouter: apiRouter,
+	})
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -94,289 +79,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 		return s.server.Shutdown(ctx)
 	}
 	return nil
-}
-
-func (s *HTTPServer) listCompanionTypes(w http.ResponseWriter, r *http.Request) {
-	var category *models.CompanionCategory
-	if categoryStr := r.URL.Query().Get("category"); categoryStr != "" {
-		cat := models.CompanionCategory(categoryStr)
-		category = &cat
-	}
-
-	limit := 50
-	offset := 0
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
-		}
-	}
-	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-			offset = o
-		}
-	}
-
-	response, err := s.companionService.ListCompanionTypes(r.Context(), category, limit, offset)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to list companion types")
-		s.respondError(w, http.StatusInternalServerError, "failed to list companion types")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
-}
-
-func (s *HTTPServer) getCompanionType(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	companionType, err := s.companionService.GetCompanionType(r.Context(), vars["type_id"])
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get companion type")
-		s.respondError(w, http.StatusInternalServerError, "failed to get companion type")
-		return
-	}
-
-	if companionType == nil {
-		s.respondError(w, http.StatusNotFound, "companion type not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, companionType)
-}
-
-func (s *HTTPServer) purchaseCompanion(w http.ResponseWriter, r *http.Request) {
-	var req models.PurchaseCompanionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	companion, err := s.companionService.PurchaseCompanion(r.Context(), req.CharacterID, req.CompanionTypeID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to purchase companion")
-		if err.Error() == "companion type not found" || err.Error() == "companion already owned" {
-			s.respondError(w, http.StatusBadRequest, err.Error())
-		} else {
-			s.respondError(w, http.StatusInternalServerError, "failed to purchase companion")
-		}
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, companion)
-}
-
-func (s *HTTPServer) listPlayerCompanions(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterID, err := uuid.Parse(vars["character_id"])
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
-
-	var status *models.CompanionStatus
-	if statusStr := r.URL.Query().Get("status"); statusStr != "" {
-		st := models.CompanionStatus(statusStr)
-		status = &st
-	}
-
-	limit := 50
-	offset := 0
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
-		}
-	}
-	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-			offset = o
-		}
-	}
-
-	response, err := s.companionService.ListPlayerCompanions(r.Context(), characterID, status, limit, offset)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to list player companions")
-		s.respondError(w, http.StatusInternalServerError, "failed to list player companions")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
-}
-
-func (s *HTTPServer) getCompanionDetail(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	companionID, err := uuid.Parse(vars["companion_id"])
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid companion_id")
-		return
-	}
-
-	response, err := s.companionService.GetCompanionDetail(r.Context(), companionID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get companion detail")
-		if err.Error() == "companion not found" {
-			s.respondError(w, http.StatusNotFound, err.Error())
-		} else {
-			s.respondError(w, http.StatusInternalServerError, "failed to get companion detail")
-		}
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
-}
-
-func (s *HTTPServer) summonCompanion(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	companionID, err := uuid.Parse(vars["companion_id"])
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid companion_id")
-		return
-	}
-
-	var req models.SummonCompanionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	req.CompanionID = companionID
-
-	err = s.companionService.SummonCompanion(r.Context(), req.CharacterID, req.CompanionID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to summon companion")
-		if err.Error() == "companion not found" || err.Error() == "companion already summoned" {
-			s.respondError(w, http.StatusBadRequest, err.Error())
-		} else {
-			s.respondError(w, http.StatusInternalServerError, "failed to summon companion")
-		}
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) dismissCompanion(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	companionID, err := uuid.Parse(vars["companion_id"])
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid companion_id")
-		return
-	}
-
-	var req models.DismissCompanionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	req.CompanionID = companionID
-
-	err = s.companionService.DismissCompanion(r.Context(), req.CharacterID, req.CompanionID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to dismiss companion")
-		if err.Error() == "companion not found" || err.Error() == "companion is not summoned" {
-			s.respondError(w, http.StatusBadRequest, err.Error())
-		} else {
-			s.respondError(w, http.StatusInternalServerError, "failed to dismiss companion")
-		}
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) renameCompanion(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	companionID, err := uuid.Parse(vars["companion_id"])
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid companion_id")
-		return
-	}
-
-	var req models.RenameCompanionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	req.CompanionID = companionID
-
-	err = s.companionService.RenameCompanion(r.Context(), req.CharacterID, req.CompanionID, req.CustomName)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to rename companion")
-		if err.Error() == "companion not found" {
-			s.respondError(w, http.StatusNotFound, err.Error())
-		} else {
-			s.respondError(w, http.StatusInternalServerError, "failed to rename companion")
-		}
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) addExperience(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	companionID, err := uuid.Parse(vars["companion_id"])
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid companion_id")
-		return
-	}
-
-	var req models.AddExperienceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	req.CompanionID = companionID
-	if req.Source == "" {
-		req.Source = "unknown"
-	}
-
-	err = s.companionService.AddExperience(r.Context(), req.CharacterID, req.CompanionID, req.Amount, req.Source)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to add experience")
-		if err.Error() == "companion not found" {
-			s.respondError(w, http.StatusNotFound, err.Error())
-		} else {
-			s.respondError(w, http.StatusInternalServerError, "failed to add experience")
-		}
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) useAbility(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	companionID, err := uuid.Parse(vars["companion_id"])
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid companion_id")
-		return
-	}
-
-	abilityID := vars["ability_id"]
-
-	var req models.UseAbilityRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	req.CompanionID = companionID
-	req.AbilityID = abilityID
-
-	err = s.companionService.UseAbility(r.Context(), req.CharacterID, req.CompanionID, req.AbilityID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to use ability")
-		if err.Error() == "companion not found" || err.Error() == "companion is not summoned" || err.Error() == "ability is on cooldown" {
-			s.respondError(w, http.StatusBadRequest, err.Error())
-		} else {
-			s.respondError(w, http.StatusInternalServerError, "failed to use ability")
-		}
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
 }
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
@@ -447,4 +149,5 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
+
 

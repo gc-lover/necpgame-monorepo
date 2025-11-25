@@ -2,22 +2,26 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
+RUN apk add --no-cache make nodejs npm
+
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o social-service .
+
+RUN make generate-api || true
+
+RUN go mod tidy
+RUN CGO_ENABLED=0 GOOS=linux go build -o social-service -ldflags="-w -s" .
 
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
+WORKDIR /app
 
-COPY --from=builder /app/social-service .
+COPY --from=builder /app/social-service /app/
 
-EXPOSE 8084 9094
+EXPOSE 8084/tcp 9094
 
-CMD ["./social-service"]
-
-
+ENTRYPOINT ["/app/social-service"]

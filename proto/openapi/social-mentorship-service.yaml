@@ -1,0 +1,620 @@
+openapi: 3.0.3
+info:
+  title: Social Mentorship Service API
+  description: API для системы наставничества
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Mentorship
+    description: Система наставничества
+
+paths:
+  /social/mentorship/mentors:
+    get:
+      tags:
+        - Mentorship
+      summary: Поиск наставников
+      operationId: searchMentors
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: min_reputation
+          in: query
+          schema:
+            type: integer
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список наставников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/contracts:
+    get:
+      tags:
+        - Mentorship
+      summary: Получить список договоров наставничества
+      operationId: getMentorshipContracts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, terminated]
+      responses:
+        '200':
+          description: Список договоров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContractsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/contracts/create:
+    post:
+      tags:
+        - Mentorship
+      summary: Создать договор наставничества
+      operationId: createMentorshipContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorshipContractRequest'
+      responses:
+        '201':
+          description: Договор создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContract'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/mentees:
+    get:
+      tags:
+        - Mentorship
+      summary: Поиск учеников
+      operationId: searchMentees
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: max_level
+          in: query
+          schema:
+            type: integer
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список учеников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenteesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/mentors/{mentorId}:
+    get:
+      tags:
+        - Mentorship
+      summary: Получить информацию о наставнике
+      operationId: getMentor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mentorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о наставнике
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/proposal/create:
+    post:
+      tags:
+        - Mentorship
+      summary: Создать предложение наставничества
+      operationId: createMentorshipProposal
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorshipProposalRequest'
+      responses:
+        '201':
+          description: Предложение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipProposal'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/proposal/{proposalId}/accept:
+    post:
+      tags:
+        - Mentorship
+      summary: Принять предложение наставничества
+      operationId: acceptMentorshipProposal
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предложение принято
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContract'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/proposal/{proposalId}/reject:
+    post:
+      tags:
+        - Mentorship
+      summary: Отклонить предложение наставничества
+      operationId: rejectMentorshipProposal
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предложение отклонено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipProposal'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/contracts/{contractId}:
+    get:
+      tags:
+        - Mentorship
+      summary: Получить информацию о договоре
+      operationId: getMentorshipContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о договоре
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContract'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/contracts/{contractId}/terminate:
+    post:
+      tags:
+        - Mentorship
+      summary: Расторгнуть договор наставничества
+      operationId: terminateMentorshipContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateContractRequest'
+      responses:
+        '200':
+          description: Договор расторгнут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContract'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/reputation/{mentorId}:
+    get:
+      tags:
+        - Mentorship
+      summary: Получить репутацию наставника
+      operationId: getMentorReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mentorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Репутация наставника
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorReputation'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/reputation/{mentorId}/review:
+    post:
+      tags:
+        - Mentorship
+      summary: Оставить отзыв о наставнике
+      operationId: reviewMentor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mentorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorReviewRequest'
+      responses:
+        '200':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorReview'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    MentorsResponse:
+      type: object
+      properties:
+        mentors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mentor'
+        total:
+          type: integer
+
+    Mentor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        reputation:
+          type: integer
+        skills:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+          format: float
+
+    MentorshipContractsResponse:
+      type: object
+      properties:
+        contracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/MentorshipContract'
+        total:
+          type: integer
+
+    CreateMentorshipContractRequest:
+      type: object
+      required:
+        - mentor_id
+        - mentee_id
+        - skills
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        payment:
+          type: object
+          additionalProperties: true
+
+    MentorshipContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, completed, terminated]
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    MenteesResponse:
+      type: object
+      properties:
+        mentees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mentee'
+        total:
+          type: integer
+
+    Mentee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        level:
+          type: integer
+        skills:
+          type: array
+          items:
+            type: string
+        looking_for:
+          type: array
+          items:
+            type: string
+
+    CreateMentorshipProposalRequest:
+      type: object
+      required:
+        - mentor_id
+        - mentee_id
+        - skills
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+        payment:
+          type: object
+          additionalProperties: true
+
+    MentorshipProposal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        created_at:
+          type: string
+          format: date-time
+
+    TerminateContractRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+
+    MentorReputation:
+      type: object
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        rating:
+          type: number
+          format: float
+        total_reviews:
+          type: integer
+        total_mentees:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+
+    CreateMentorReviewRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    MentorReview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        reviewer_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+
+
+

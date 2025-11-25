@@ -1,0 +1,86 @@
+openapi: 3.0.3
+info:
+  title: Social Chat Commands Service API
+  description: API для команд чата
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Chat Commands
+    description: Команды чата
+
+paths:
+  /social/chat/commands/execute:
+    post:
+      tags:
+        - Chat Commands
+      summary: Выполнить команду чата
+      operationId: executeChatCommand
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCommandRequest'
+      responses:
+        '200':
+          description: Команда выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ExecuteCommandRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+        args:
+          type: array
+          items:
+            type: string
+
+    CommandResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        command:
+          type: string
+        result:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+
+security:
+  - BearerAuth: []
+
+
+
+

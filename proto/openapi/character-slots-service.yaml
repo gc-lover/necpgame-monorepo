@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Character Slots Service API
+  description: API для управления слотами персонажей
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Character Slots
+    description: Управление слотами персонажей
+
+paths:
+  /character/slots:
+    get:
+      tags:
+        - Character Slots
+      summary: Информация о слотах
+      operationId: getCharacterSlots
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о слотах
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterSlots"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/slots/purchase:
+    post:
+      tags:
+        - Character Slots
+      summary: Покупка слота
+      operationId: purchaseCharacterSlot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseSlotRequest"
+      responses:
+        "200":
+          description: Слот куплен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterSlots"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/slots/available:
+    get:
+      tags:
+        - Character Slots
+      summary: Доступные слоты
+      operationId: getAvailableCharacterSlots
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Доступные слоты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailableSlotsResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CharacterSlots:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        base_slots:
+          type: integer
+          default: 3
+        premium_slots:
+          type: integer
+          default: 0
+        total_slots:
+          type: integer
+        used_slots:
+          type: integer
+        available_slots:
+          type: integer
+        premium_slots_purchased:
+          type: integer
+
+    PurchaseSlotRequest:
+      type: object
+      required:
+        - player_id
+        - currency_type
+        - amount
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        currency_type:
+          type: string
+        amount:
+          type: integer
+
+    AvailableSlotsResponse:
+      type: object
+      properties:
+        available:
+          type: integer
+        total:
+          type: integer
+        used:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

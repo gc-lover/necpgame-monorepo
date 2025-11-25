@@ -1,0 +1,252 @@
+openapi: 3.0.3
+info:
+  title: Achievement Player Service API
+  description: API для прогресса игроков по достижениям
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Player Achievements
+    description: Прогресс игроков по достижениям
+
+paths:
+  /players/{playerId}/achievements:
+    get:
+      tags:
+        - Player Achievements
+      summary: Получить прогресс игрока по достижениям
+      operationId: getPlayerAchievements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/AchievementStatus"
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/AchievementCategory"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAchievementResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /players/{playerId}/progress:
+    get:
+      tags:
+        - Player Achievements
+      summary: Получить прогресс игрока по достижениям
+      operationId: getPlayerProgress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/AchievementCategory"
+      responses:
+        "200":
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerProgressResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /players/{playerId}/unlocked:
+    get:
+      tags:
+        - Player Achievements
+      summary: Получить разблокированные достижения игрока
+      operationId: getPlayerUnlocked
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/AchievementCategory"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Разблокированные достижения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerUnlockedResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        type:
+          $ref: "#/components/schemas/AchievementType"
+        category:
+          $ref: "#/components/schemas/AchievementCategory"
+        rarity:
+          $ref: "#/components/schemas/AchievementRarity"
+        title:
+          type: string
+        description:
+          type: string
+        points:
+          type: integer
+          minimum: 0
+
+    AchievementCategory:
+      type: string
+      enum: [combat, exploration, social, crafting, collection, quest, pvp, pve, raid, other]
+
+    AchievementRarity:
+      type: string
+      enum: [common, uncommon, rare, epic, legendary, mythic]
+
+    AchievementStatus:
+      type: string
+      enum: [locked, in_progress, unlocked]
+
+    AchievementType:
+      type: string
+      enum: [one_time, progressive, hidden, seasonal, meta]
+
+    PlayerAchievementResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerAchievement"
+        total:
+          type: integer
+
+    PlayerAchievement:
+      type: object
+      properties:
+        achievement:
+          $ref: "#/components/schemas/Achievement"
+        status:
+          $ref: "#/components/schemas/AchievementStatus"
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    PlayerProgressResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        total_achievements:
+          type: integer
+        unlocked_count:
+          type: integer
+        in_progress_count:
+          type: integer
+        locked_count:
+          type: integer
+        progress_by_category:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              total:
+                type: integer
+              unlocked:
+                type: integer
+              in_progress:
+                type: integer
+
+    PlayerUnlockedResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Achievement"
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

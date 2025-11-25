@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: Social Notifications Core Service API
+  description: API для основных операций с уведомлениями
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Notifications
+    description: Управление уведомлениями
+
+paths:
+  /social/notifications:
+    post:
+      tags:
+        - Notifications
+      summary: Создать уведомление
+      operationId: createNotification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotificationRequest"
+      responses:
+        "201":
+          description: Уведомление создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    get:
+      tags:
+        - Notifications
+      summary: Получить список уведомлений
+      operationId: getNotifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [unread, read, archived]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [quest, message, achievement, system, friend, guild, trade, combat]
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/notifications/{id}:
+    get:
+      tags:
+        - Notifications
+      summary: Получить уведомление
+      operationId: getNotification
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Уведомление
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Notification:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/BaseEntityWithTimestamps'
+        - type: object
+          properties:
+            account_id:
+              type: string
+              format: uuid
+            type:
+              type: string
+              enum: [quest, message, achievement, system, friend, guild, trade, combat]
+            priority:
+              $ref: 'common.yaml#/components/schemas/NotificationPriority'
+              default: medium
+            title:
+              type: string
+              maxLength: 200
+            content:
+              type: string
+            data:
+              type: object
+              additionalProperties: true
+            status:
+              $ref: 'common.yaml#/components/schemas/NotificationStatus'
+              default: unread
+            channels:
+              type: array
+              items:
+                type: string
+                enum: [in_game, websocket, email]
+              default: [in_game]
+            read_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    CreateNotificationRequest:
+      type: object
+      required:
+        - account_id
+        - type
+        - title
+        - content
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [quest, message, achievement, system, friend, guild, trade, combat]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+        title:
+          type: string
+          maxLength: 200
+        content:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, websocket, email]
+          default: [in_game]
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NotificationListResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        total:
+          type: integer
+        unread:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+

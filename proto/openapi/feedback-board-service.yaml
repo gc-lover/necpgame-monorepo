@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+  title: Feedback Board Service API
+  description: API для доски идей (публичные предложения)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8090/api/v1/feedback
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/feedback
+    description: Продакшен сервер
+
+tags:
+  - name: Feedback Board
+    description: Доска идей
+
+paths:
+  /board:
+    get:
+      tags:
+        - Feedback Board
+      summary: Получить доску идей
+      operationId: getFeedbackBoard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [feature_request, bug_report, wishlist, feedback]
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [gameplay, balance, content, technical, lore, ui_ux, other]
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [votes, date, status]
+            default: votes
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Доска идей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackBoardResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    FeedbackBoardResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/FeedbackBoardItem'
+
+    FeedbackBoardItem:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/BaseEntityWithTimestamps'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [feature_request, bug_report, wishlist, feedback]
+            category:
+              type: string
+              enum: [gameplay, balance, content, technical, lore, ui_ux, other]
+            title:
+              type: string
+            description:
+              type: string
+            votes_count:
+              type: integer
+              minimum: 0
+            status:
+              type: string
+              enum: [pending, in_review, approved]
+            github_issue_number:
+              type: integer
+              nullable: true
+            github_issue_url:
+              type: string
+              format: uri
+              nullable: true
+
+security:
+  - BearerAuth: []
+
+

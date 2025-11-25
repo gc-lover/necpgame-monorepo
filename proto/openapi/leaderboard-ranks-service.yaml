@@ -1,0 +1,173 @@
+openapi: 3.0.3
+info:
+  title: Leaderboard Ranks Service API
+  description: API для рангов и позиций в лидербордах
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Leaderboard Ranks
+    description: Ранги и позиции в лидербордах
+
+paths:
+  /leaderboards/rank:
+    get:
+      tags:
+        - Leaderboard Ranks
+      summary: Получить ранг игрока
+      operationId: getPlayerRank
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [overall_power, combat_score, level, achievements]
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [global, class, seasonal, friend, guild]
+      responses:
+        "200":
+          description: Ранг игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerRank"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /leaderboards/rank/neighbors:
+    get:
+      tags:
+        - Leaderboard Ranks
+      summary: Получить соседние позиции игрока
+      operationId: getRankNeighbors
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [overall_power, combat_score, level, achievements]
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [global, class, seasonal, friend, guild]
+        - name: range
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+      responses:
+        "200":
+          description: Соседние позиции
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    PlayerRank:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        rank:
+          type: integer
+          minimum: 1
+        score:
+          type: number
+          format: float
+        total_players:
+          type: integer
+        metric:
+          type: string
+        scope:
+          type: string
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        character_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        score:
+          type: number
+          format: float
+        level:
+          type: integer
+
+    LeaderboardResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        total:
+          type: integer
+        metric:
+          type: string
+        scope:
+          type: string
+
+security:
+  - BearerAuth: []
+
+
+
+

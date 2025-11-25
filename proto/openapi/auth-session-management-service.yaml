@@ -1,0 +1,376 @@
+openapi: 3.0.3
+info:
+  title: Auth Session Management Service API
+  description: API для управления и мониторинга сессий
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Session Management
+    description: Управление и мониторинг сессий
+
+paths:
+  /auth/session/cleanup:
+    post:
+      tags:
+        - Session Management
+      summary: Очистить неактивные сессии
+      operationId: cleanupSessions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CleanupSessionsRequest"
+      responses:
+        "200":
+          description: Сессии очищены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupSessionsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/cleanup/stats:
+    get:
+      tags:
+        - Session Management
+      summary: Получить статистику очистки сессий
+      operationId: getCleanupStats
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Статистика очистки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupStatsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/security/validate:
+    post:
+      tags:
+        - Session Management
+      summary: Валидировать безопасность сессии
+      operationId: validateSessionSecurity
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateSessionSecurityRequest"
+      responses:
+        "200":
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionSecurityValidationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/security/rotate-token:
+    post:
+      tags:
+        - Session Management
+      summary: Обновить токен сессии
+      operationId: rotateSessionToken
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RotateSessionTokenRequest"
+      responses:
+        "200":
+          description: Токен обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RotateSessionTokenResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/monitoring/stats:
+    get:
+      tags:
+        - Session Management
+      summary: Получить статистику сессий
+      operationId: getSessionStats
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Статистика сессий
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionStatsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/monitoring/active:
+    get:
+      tags:
+        - Session Management
+      summary: Получить активные сессии
+      operationId: getActiveSessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Активные сессии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveSessionsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/admin/terminate:
+    post:
+      tags:
+        - Session Management
+      summary: Принудительно закрыть сессию (admin)
+      operationId: terminateSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerminateSessionRequest"
+      responses:
+        "200":
+          description: Сессия закрыта
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/StatusResponse"
+              example:
+                status: terminated
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CleanupSessionsRequest:
+      type: object
+      properties:
+        max_age_seconds:
+          type: integer
+          default: 3600
+        status_filter:
+          type: array
+          items:
+            type: string
+            enum: [INACTIVE, DISCONNECTED, TERMINATED]
+
+    CleanupSessionsResponse:
+      type: object
+      properties:
+        cleaned_sessions:
+          type: integer
+        cleaned_at:
+          type: string
+          format: date-time
+
+    CleanupStatsResponse:
+      type: object
+      properties:
+        total_cleaned:
+          type: integer
+        last_cleanup:
+          type: string
+          format: date-time
+        average_cleanup_time:
+          type: number
+          format: float
+        cleanup_frequency:
+          type: string
+
+    ValidateSessionSecurityRequest:
+      type: object
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+
+    SessionSecurityValidationResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        is_valid:
+          type: boolean
+        security_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        warnings:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+
+    RotateSessionTokenRequest:
+      type: object
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+
+    RotateSessionTokenResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        new_token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    SessionStatsResponse:
+      type: object
+      properties:
+        total_sessions:
+          type: integer
+        active_sessions:
+          type: integer
+        inactive_sessions:
+          type: integer
+        disconnected_sessions:
+          type: integer
+        average_session_duration:
+          type: number
+          format: float
+        peak_concurrent_sessions:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    ActiveSessionsResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Session"
+              description: Список активных сессий
+
+    Session:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        server_id:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, DISCONNECTED, TERMINATED]
+        created_at:
+          type: string
+          format: date-time
+        last_heartbeat:
+          type: string
+          format: date-time
+
+    TerminateSessionRequest:
+      type: object
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        force:
+          type: boolean
+          default: false
+
+security:
+  - BearerAuth: []
+
+

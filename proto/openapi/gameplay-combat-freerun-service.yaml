@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Freerun Service API
+  description: API для системы паркура в бою
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Combat Freerun
+    description: Система паркура в бою
+
+paths:
+  /gameplay/combat/freerun/actions:
+    post:
+      tags:
+        - Combat Freerun
+      summary: Выполнить действие паркура
+      operationId: performFreerunAction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FreerunActionRequest"
+      responses:
+        "200":
+          description: Действие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunActionResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/freerun/stamina:
+    get:
+      tags:
+        - Combat Freerun
+      summary: Получить состояние выносливости
+      operationId: getFreerunStamina
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние выносливости
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunStaminaState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    FreerunActionRequest:
+      type: object
+      required:
+        - character_id
+        - action_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [jump, climb, slide, wallrun]
+
+    FreerunActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        stamina_used:
+          type: integer
+        message:
+          type: string
+
+    FreerunStaminaState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_stamina:
+          type: integer
+        max_stamina:
+          type: integer
+
+security:
+  - BearerAuth: []
+

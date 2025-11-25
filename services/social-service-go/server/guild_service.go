@@ -350,6 +350,270 @@ func (s *SocialService) GetInvitationsByCharacter(ctx context.Context, character
 	return s.guildRepo.GetInvitationsByCharacter(ctx, characterID)
 }
 
+func (s *SocialService) GetGuildRanks(ctx context.Context, guildID uuid.UUID) (*models.GuildRanksResponse, error) {
+	ranks, err := s.guildRepo.GetRanks(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.GuildRanksResponse{
+		Ranks: ranks,
+		Total: len(ranks),
+	}, nil
+}
+
+func (s *SocialService) CreateGuildRank(ctx context.Context, guildID uuid.UUID, leaderID uuid.UUID, req *models.CreateGuildRankRequest) (*models.GuildRankEntity, error) {
+	guild, err := s.guildRepo.GetByID(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+	if guild == nil || guild.LeaderID != leaderID {
+		return nil, nil
+	}
+
+	ranks, err := s.guildRepo.GetRanks(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+
+	maxOrder := 0
+	for _, rank := range ranks {
+		if rank.Order > maxOrder {
+			maxOrder = rank.Order
+		}
+	}
+
+	rank := &models.GuildRankEntity{
+		ID:          uuid.New(),
+		GuildID:     guildID,
+		Name:        req.Name,
+		Permissions: req.Permissions,
+		Order:       maxOrder + 1,
+		CreatedAt:   time.Now(),
+	}
+
+	err = s.guildRepo.CreateRank(ctx, rank)
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateGuildCache(ctx, guildID)
+	return rank, nil
+}
+
+func (s *SocialService) UpdateGuildRank(ctx context.Context, guildID, rankID, leaderID uuid.UUID, req *models.UpdateGuildRankRequest) (*models.GuildRankEntity, error) {
+	guild, err := s.guildRepo.GetByID(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+	if guild == nil || guild.LeaderID != leaderID {
+		return nil, nil
+	}
+
+	rank, err := s.guildRepo.GetRankByID(ctx, rankID)
+	if err != nil {
+		return nil, err
+	}
+	if rank == nil || rank.GuildID != guildID {
+		return nil, nil
+	}
+
+	if req.Name != nil {
+		rank.Name = *req.Name
+	}
+	if req.Permissions != nil {
+		rank.Permissions = req.Permissions
+	}
+	if req.Order != nil {
+		rank.Order = *req.Order
+	}
+
+	err = s.guildRepo.UpdateRank(ctx, rank)
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateGuildCache(ctx, guildID)
+	return rank, nil
+}
+
+func (s *SocialService) DeleteGuildRank(ctx context.Context, guildID, rankID, leaderID uuid.UUID) error {
+	guild, err := s.guildRepo.GetByID(ctx, guildID)
+	if err != nil {
+		return err
+	}
+	if guild == nil || guild.LeaderID != leaderID {
+		return nil
+	}
+
+	err = s.guildRepo.DeleteRank(ctx, guildID, rankID)
+	if err != nil {
+		return err
+	}
+
+	s.invalidateGuildCache(ctx, guildID)
+	return nil
+}
+
+func (s *SocialService) DepositToGuildBank(ctx context.Context, guildID, accountID uuid.UUID, req *models.GuildBankDepositRequest) (*models.GuildBankTransaction, error) {
+	guild, err := s.guildRepo.GetByID(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+	if guild == nil {
+		return nil, nil
+	}
+
+	member, err := s.guildRepo.GetMember(ctx, guildID, accountID)
+	if err != nil {
+		return nil, err
+	}
+	if member == nil {
+		return nil, nil
+	}
+
+	bank, err := s.guildRepo.GetBank(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+	if bank == nil {
+		bank = &models.GuildBank{
+			ID:        uuid.New(),
+			GuildID:   guildID,
+			Currency:  make(map[string]int),
+			Items:     []map[string]interface{}{},
+			UpdatedAt: time.Now(),
+		}
+		err = s.guildRepo.CreateBank(ctx, bank)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Currency > 0 {
+		if bank.Currency == nil {
+			bank.Currency = make(map[string]int)
+		}
+		bank.Currency["credits"] = bank.Currency["credits"] + req.Currency
+	}
+
+	if len(req.Items) > 0 {
+		bank.Items = append(bank.Items, req.Items...)
+	}
+
+	err = s.guildRepo.UpdateBank(ctx, bank)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction := &models.GuildBankTransaction{
+		ID:        uuid.New(),
+		GuildID:   guildID,
+		AccountID: accountID,
+		Type:      "deposit",
+		Currency:  req.Currency,
+		Items:     req.Items,
+		CreatedAt: time.Now(),
+	}
+
+	err = s.guildRepo.CreateBankTransaction(ctx, transaction)
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateGuildCache(ctx, guildID)
+	return transaction, nil
+}
+
+func (s *SocialService) WithdrawFromGuildBank(ctx context.Context, guildID, accountID uuid.UUID, req *models.GuildBankWithdrawRequest) (*models.GuildBankTransaction, error) {
+	guild, err := s.guildRepo.GetByID(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+	if guild == nil {
+		return nil, nil
+	}
+
+	member, err := s.guildRepo.GetMember(ctx, guildID, accountID)
+	if err != nil {
+		return nil, err
+	}
+	if member == nil || (member.Rank != models.GuildRankLeader && member.Rank != models.GuildRankOfficer) {
+		return nil, nil
+	}
+
+	bank, err := s.guildRepo.GetBank(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+	if bank == nil {
+		return nil, nil
+	}
+
+	if req.Currency > 0 {
+		if bank.Currency == nil {
+			bank.Currency = make(map[string]int)
+		}
+		if bank.Currency["credits"] < req.Currency {
+			return nil, nil
+		}
+		bank.Currency["credits"] = bank.Currency["credits"] - req.Currency
+	}
+
+	if len(req.Items) > 0 {
+		for _, withdrawItem := range req.Items {
+			for i, bankItem := range bank.Items {
+				if itemID, ok := withdrawItem["item_id"].(string); ok {
+					if bankItemID, ok := bankItem["item_id"].(string); ok && itemID == bankItemID {
+						bank.Items = append(bank.Items[:i], bank.Items[i+1:]...)
+						break
+					}
+				}
+			}
+		}
+	}
+
+	err = s.guildRepo.UpdateBank(ctx, bank)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction := &models.GuildBankTransaction{
+		ID:        uuid.New(),
+		GuildID:   guildID,
+		AccountID: accountID,
+		Type:      "withdraw",
+		Currency:  req.Currency,
+		Items:     req.Items,
+		CreatedAt: time.Now(),
+	}
+
+	err = s.guildRepo.CreateBankTransaction(ctx, transaction)
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateGuildCache(ctx, guildID)
+	return transaction, nil
+}
+
+func (s *SocialService) GetGuildBankTransactions(ctx context.Context, guildID uuid.UUID, limit, offset int) (*models.GuildBankTransactionsResponse, error) {
+	transactions, err := s.guildRepo.GetBankTransactions(ctx, guildID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := s.guildRepo.CountBankTransactions(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.GuildBankTransactionsResponse{
+		Transactions: transactions,
+		Total:        total,
+	}, nil
+}
+
 func (s *SocialService) invalidateGuildCache(ctx context.Context, guildID uuid.UUID) {
 	pattern := "guild:" + guildID.String()
 	s.cache.Del(ctx, pattern)

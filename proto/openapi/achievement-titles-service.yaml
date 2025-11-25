@@ -1,0 +1,152 @@
+openapi: 3.0.3
+info:
+  title: Achievement Titles Service API
+  description: API для титулов игроков
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Player Titles
+    description: Титулы игроков
+
+paths:
+  /players/{playerId}/titles:
+    get:
+      tags:
+        - Player Titles
+      summary: Получить титулы игрока
+      operationId: getPlayerTitles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Титулы игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerTitlesResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /players/{playerId}/titles/{titleId}/equip:
+    post:
+      tags:
+        - Player Titles
+      summary: Экипировать титул
+      operationId: equipTitle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: titleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Титул экипирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipTitleResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    PlayerTitlesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        titles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Title"
+        equipped_title_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    Title:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        rarity:
+          $ref: "#/components/schemas/AchievementRarity"
+        achievement_id:
+          type: string
+          format: uuid
+        unlocked_at:
+          type: string
+          format: date-time
+
+    AchievementRarity:
+      type: string
+      enum: [common, uncommon, rare, epic, legendary, mythic]
+
+    EquipTitleResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        title_id:
+          type: string
+          format: uuid
+        equipped:
+          type: boolean
+        message:
+          type: string
+
+security:
+  - BearerAuth: []
+
+
+
+

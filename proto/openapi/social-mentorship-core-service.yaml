@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: Social Mentorship Core Service API
+  description: API для основных операций с наставничеством
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Mentorship Core
+    description: Основные операции с наставничеством
+
+paths:
+  /social/mentorship/mentors:
+    get:
+      tags:
+        - Mentorship Core
+      summary: Поиск наставников
+      operationId: searchMentors
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: min_reputation
+          in: query
+          schema:
+            type: integer
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список наставников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/mentees:
+    get:
+      tags:
+        - Mentorship Core
+      summary: Получить список подопечных
+      operationId: getMentees
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mentor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список подопечных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenteesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/mentors/{mentorId}:
+    get:
+      tags:
+        - Mentorship Core
+      summary: Получить информацию о наставнике
+      operationId: getMentor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mentorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о наставнике
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Mentor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        reputation:
+          type: number
+          format: decimal
+        active_mentees:
+          type: integer
+        total_mentees:
+          type: integer
+
+    MentorsResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Mentor'
+              description: Список наставников
+
+    MenteesResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Mentee'
+              description: Список учеников
+
+    Mentee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, completed, terminated]
+
+security:
+  - BearerAuth: []
+
+

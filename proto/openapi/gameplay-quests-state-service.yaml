@@ -1,0 +1,298 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Quests State Service API
+  description: API для управления состоянием квестов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Quest State
+    description: Управление состоянием квестов
+
+paths:
+  /gameplay/quests/{questId}/state:
+    get:
+      tags:
+        - Quest State
+      summary: Получить состояние квеста
+      operationId: getQuestState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние квеста
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestStateResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/{questId}/state/update:
+    post:
+      tags:
+        - Quest State
+      summary: Обновить состояние квеста
+      operationId: updateQuestState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateQuestStateRequest"
+      responses:
+        "200":
+          description: Состояние квеста обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestStateResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/{questId}/dialogue:
+    get:
+      tags:
+        - Quest State
+      summary: Получить текущий диалог квеста
+      operationId: getQuestDialogue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Текущий диалог
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestDialogue"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/{questId}/dialogue/history:
+    get:
+      tags:
+        - Quest State
+      summary: Получить историю диалогов квеста
+      operationId: getQuestDialogueHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: История диалогов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestDialogueHistoryResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/{questId}/skill-checks:
+    get:
+      tags:
+        - Quest State
+      summary: Получить историю проверок навыков квеста
+      operationId: getQuestSkillChecks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: История проверок навыков
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestSkillChecksResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    QuestStateResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+        current_objective:
+          type: string
+          nullable: true
+        progress:
+          type: object
+          additionalProperties:
+            type: integer
+        state_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    UpdateQuestStateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+        state_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    QuestDialogue:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        current_node_id:
+          type: string
+          format: uuid
+        speaker:
+          type: string
+        text:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              option_id:
+                type: string
+                format: uuid
+              text:
+                type: string
+              skill_check_required:
+                type: object
+                nullable: true
+
+    QuestDialogueHistoryResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        dialogue_history:
+          type: array
+          items:
+            type: object
+            properties:
+              node_id:
+                type: string
+                format: uuid
+              speaker:
+                type: string
+              text:
+                type: string
+              selected_option_id:
+                type: string
+                format: uuid
+                nullable: true
+              timestamp:
+                type: string
+                format: date-time
+        total:
+          type: integer
+
+    QuestSkillChecksResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        skill_checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/SkillCheckResult"
+        total:
+          type: integer
+
+    SkillCheckResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        skill_level:
+          type: integer
+        roll:
+          type: integer
+        difficulty:
+          type: integer
+        message:
+          type: string
+
+security:
+  - BearerAuth: []
+

@@ -4,30 +4,31 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/necpgame/reset-service-go/models"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/necpgame/reset-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
-type ResetServiceInterface interface {
-	TriggerReset(ctx context.Context, resetType models.ResetType) error
-	GetResetStats(ctx context.Context) (*models.ResetStats, error)
-	GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*models.ResetListResponse, error)
-}
-
 type HTTPServer struct {
 	addr         string
-	router       *mux.Router
+	router       *chi.Mux
 	resetService ResetServiceInterface
 	logger       *logrus.Logger
 	server       *http.Server
 }
 
 func NewHTTPServer(addr string, resetService ResetServiceInterface) *HTTPServer {
-	router := mux.NewRouter()
+	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.Timeout(60 * time.Second))
+
 	server := &HTTPServer{
 		addr:         addr,
 		router:       router,
@@ -39,13 +40,14 @@ func NewHTTPServer(addr string, resetService ResetServiceInterface) *HTTPServer 
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	api := router.PathPrefix("/api/v1").Subrouter()
+	handlers := NewResetHandlers(resetService)
+	
+	api.HandlerWithOptions(handlers, api.ChiServerOptions{
+		BaseURL:    "/api/v1",
+		BaseRouter: router,
+	})
 
-	api.HandleFunc("/reset/stats", server.getResetStats).Methods("GET")
-	api.HandleFunc("/reset/history", server.getResetHistory).Methods("GET")
-	api.HandleFunc("/reset/trigger", server.triggerReset).Methods("POST")
-
-	router.HandleFunc("/health", server.healthCheck).Methods("GET")
+	router.Get("/health", server.healthCheck)
 
 	return server
 }
@@ -81,71 +83,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) getResetStats(w http.ResponseWriter, r *http.Request) {
-	stats, err := s.resetService.GetResetStats(r.Context())
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get reset stats")
-		s.respondError(w, http.StatusInternalServerError, "failed to get reset stats")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, stats)
-}
-
-func (s *HTTPServer) getResetHistory(w http.ResponseWriter, r *http.Request) {
-	var resetType *models.ResetType
-	if typeStr := r.URL.Query().Get("type"); typeStr != "" {
-		rt := models.ResetType(typeStr)
-		if rt == models.ResetTypeDaily || rt == models.ResetTypeWeekly {
-			resetType = &rt
-		}
-	}
-
-	limit := 50
-	offset := 0
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
-		}
-	}
-	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-			offset = o
-		}
-	}
-
-	response, err := s.resetService.GetResetHistory(r.Context(), resetType, limit, offset)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get reset history")
-		s.respondError(w, http.StatusInternalServerError, "failed to get reset history")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
-}
-
-func (s *HTTPServer) triggerReset(w http.ResponseWriter, r *http.Request) {
-	var req models.TriggerResetRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.Type != models.ResetTypeDaily && req.Type != models.ResetTypeWeekly {
-		s.respondError(w, http.StatusBadRequest, "invalid reset type")
-		return
-	}
-
-	err := s.resetService.TriggerReset(r.Context(), req.Type)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to trigger reset")
-		s.respondError(w, http.StatusInternalServerError, "failed to trigger reset")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
@@ -154,10 +91,6 @@ func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interfa
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
-}
-
-func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {
-	s.respondJSON(w, status, map[string]string{"error": message})
 }
 
 func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
@@ -214,4 +147,3 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
-

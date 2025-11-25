@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Social Mail COD Service API
+  description: API для COD (Cash on Delivery) в почте
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Mail COD
+    description: COD (Cash on Delivery) в почте
+
+paths:
+  /social/mail/{mail_id}/cod/pay:
+    post:
+      tags:
+        - Mail COD
+      summary: Оплатить COD
+      operationId: payMailCOD
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: COD оплачен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mail/{mail_id}/cod/decline:
+    post:
+      tags:
+        - Mail COD
+      summary: Отклонить COD
+      operationId: declineMailCOD
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: COD отклонен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    MailMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+          nullable: true
+        sender_name:
+          type: string
+        recipient_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [player, system, quest, auction, trade]
+        subject:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        cod_amount:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [unread, read, claimed, expired, returned]
+        sent_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+
+
+
+

@@ -45,6 +45,8 @@ type MailRepositoryInterface interface {
 	Delete(ctx context.Context, mailID uuid.UUID) error
 	CountByRecipientID(ctx context.Context, recipientID uuid.UUID) (int, error)
 	CountUnreadByRecipientID(ctx context.Context, recipientID uuid.UUID) (int, error)
+	GetExpiringMailsByDays(ctx context.Context, recipientID uuid.UUID, days int, limit, offset int) ([]models.MailMessage, error)
+	ExtendExpiration(ctx context.Context, mailID uuid.UUID, days int) error
 }
 
 type FriendRepositoryInterface interface {
@@ -84,6 +86,28 @@ type GuildRepositoryInterface interface {
 	GetBank(ctx context.Context, guildID uuid.UUID) (*models.GuildBank, error)
 	CreateBank(ctx context.Context, bank *models.GuildBank) error
 	UpdateBank(ctx context.Context, bank *models.GuildBank) error
+	GetRanks(ctx context.Context, guildID uuid.UUID) ([]models.GuildRankEntity, error)
+	GetRankByID(ctx context.Context, rankID uuid.UUID) (*models.GuildRankEntity, error)
+	CreateRank(ctx context.Context, rank *models.GuildRankEntity) error
+	UpdateRank(ctx context.Context, rank *models.GuildRankEntity) error
+	DeleteRank(ctx context.Context, guildID, rankID uuid.UUID) error
+	CreateBankTransaction(ctx context.Context, transaction *models.GuildBankTransaction) error
+	GetBankTransactions(ctx context.Context, guildID uuid.UUID, limit, offset int) ([]models.GuildBankTransaction, error)
+	CountBankTransactions(ctx context.Context, guildID uuid.UUID) (int, error)
+}
+
+type OrderRepositoryInterface interface {
+	Create(ctx context.Context, order *models.PlayerOrder) error
+	GetByID(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error)
+	List(ctx context.Context, orderType *models.OrderType, status *models.OrderStatus, limit, offset int) ([]models.PlayerOrder, error)
+	Count(ctx context.Context, orderType *models.OrderType, status *models.OrderStatus) (int, error)
+	UpdateStatus(ctx context.Context, orderID uuid.UUID, status models.OrderStatus) error
+	AcceptOrder(ctx context.Context, orderID, executorID uuid.UUID) error
+	StartOrder(ctx context.Context, orderID uuid.UUID) error
+	CompleteOrder(ctx context.Context, orderID uuid.UUID) error
+	CancelOrder(ctx context.Context, orderID uuid.UUID) error
+	CreateReview(ctx context.Context, review *models.PlayerOrderReview) error
+	GetReviewByOrderID(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrderReview, error)
 }
 
 type SocialService struct {
@@ -93,6 +117,7 @@ type SocialService struct {
 	chatRepo                 ChatRepositoryInterface
 	mailRepo                 MailRepositoryInterface
 	guildRepo              GuildRepositoryInterface
+	orderRepo                OrderRepositoryInterface
 	moderationRepo              ModerationRepositoryInterface
 	moderationService      ModerationServiceInterface
 	cache                  *redis.Client
@@ -120,6 +145,7 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 	chatRepo := NewChatRepository(dbPool)
 	mailRepo := NewMailRepository(dbPool)
 	guildRepo := NewGuildRepository(dbPool)
+	orderRepo := NewOrderRepository(dbPool)
 	moderationRepo := NewModerationRepository(dbPool)
 	moderationService := NewModerationService(moderationRepo, redisClient)
 	notificationSubscriber := NewNotificationSubscriber(notificationRepo, redisClient)
@@ -133,6 +159,7 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 		chatRepo:              chatRepo,
 		mailRepo:              mailRepo,
 		guildRepo:             guildRepo,
+		orderRepo:             orderRepo,
 		moderationRepo:        moderationRepo,
 		moderationService:     moderationService,
 		cache:                 redisClient,
@@ -521,6 +548,259 @@ func (s *SocialService) GetMail(ctx context.Context, mailID uuid.UUID) (*models.
 	return s.mailRepo.GetByID(ctx, mailID)
 }
 
+func (s *SocialService) GetUnreadMailCount(ctx context.Context, recipientID uuid.UUID) (*models.UnreadMailCountResponse, error) {
+	unread, err := s.mailRepo.CountUnreadByRecipientID(ctx, recipientID)
+	if err != nil {
+		return nil, err
+	}
+	total, err := s.mailRepo.CountByRecipientID(ctx, recipientID)
+	if err != nil {
+		return nil, err
+	}
+	return &models.UnreadMailCountResponse{
+		UnreadCount: unread,
+		TotalCount:  total,
+	}, nil
+}
+
+func (s *SocialService) GetMailAttachments(ctx context.Context, mailID uuid.UUID) (*models.MailAttachmentsResponse, error) {
+	mail, err := s.mailRepo.GetByID(ctx, mailID)
+	if err != nil {
+		return nil, err
+	}
+	if mail == nil {
+		return nil, nil
+	}
+
+	attachments := []models.MailAttachment{}
+	if mail.Attachments != nil {
+		if items, ok := mail.Attachments["items"].([]interface{}); ok {
+			for _, item := range items {
+				if itemMap, ok := item.(map[string]interface{}); ok {
+					att := models.MailAttachment{
+						Type: "item",
+						Data: itemMap,
+					}
+					if itemID, ok := itemMap["item_id"].(string); ok {
+						att.ItemID = &itemID
+					}
+					if qty, ok := itemMap["quantity"].(float64); ok {
+						qtyInt := int(qty)
+						att.Quantity = &qtyInt
+					}
+					attachments = append(attachments, att)
+				}
+			}
+		}
+		if currency, ok := mail.Attachments["currency"].(map[string]interface{}); ok {
+			currencyMap := make(map[string]int)
+			for k, v := range currency {
+				if val, ok := v.(float64); ok {
+					currencyMap[k] = int(val)
+				}
+			}
+			if len(currencyMap) > 0 {
+				attachments = append(attachments, models.MailAttachment{
+					Type:     "currency",
+					Currency: currencyMap,
+				})
+			}
+		}
+	}
+
+	return &models.MailAttachmentsResponse{
+		MailID:      mailID,
+		Attachments: attachments,
+		HasCOD:      mail.CODAmount != nil && *mail.CODAmount > 0,
+		CODAmount:   mail.CODAmount,
+	}, nil
+}
+
+func (s *SocialService) PayMailCOD(ctx context.Context, mailID uuid.UUID) (*models.ClaimAttachmentResponse, error) {
+	mail, err := s.mailRepo.GetByID(ctx, mailID)
+	if err != nil {
+		return nil, err
+	}
+	if mail == nil {
+		return &models.ClaimAttachmentResponse{Success: false}, nil
+	}
+
+	if mail.CODAmount == nil || *mail.CODAmount <= 0 {
+		return &models.ClaimAttachmentResponse{Success: false}, nil
+	}
+
+	if mail.IsClaimed {
+		return &models.ClaimAttachmentResponse{Success: false}, nil
+	}
+
+	err = s.mailRepo.MarkAsClaimed(ctx, mailID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateMailCache(ctx, mail.RecipientID)
+
+	items := make(map[string]interface{})
+	currency := make(map[string]int)
+
+	if mail.Attachments != nil {
+		if attachments, ok := mail.Attachments["items"].([]interface{}); ok {
+			items["items"] = attachments
+		}
+		if attachments, ok := mail.Attachments["currency"].(map[string]interface{}); ok {
+			for k, v := range attachments {
+				if val, ok := v.(float64); ok {
+					currency[k] = int(val)
+				}
+			}
+		}
+	}
+
+	return &models.ClaimAttachmentResponse{
+		Success:  true,
+		Items:    items,
+		Currency: currency,
+	}, nil
+}
+
+func (s *SocialService) DeclineMailCOD(ctx context.Context, mailID uuid.UUID) error {
+	mail, err := s.mailRepo.GetByID(ctx, mailID)
+	if err != nil {
+		return err
+	}
+	if mail == nil {
+		return nil
+	}
+
+	if mail.CODAmount == nil || *mail.CODAmount <= 0 {
+		return nil
+	}
+
+	s.invalidateMailCache(ctx, mail.RecipientID)
+	return nil
+}
+
+func (s *SocialService) GetExpiringMails(ctx context.Context, recipientID uuid.UUID, days int, limit, offset int) (*models.MailListResponse, error) {
+	messages, err := s.mailRepo.GetExpiringMailsByDays(ctx, recipientID, days, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := s.mailRepo.CountByRecipientID(ctx, recipientID)
+	if err != nil {
+		return nil, err
+	}
+
+	unread, err := s.mailRepo.CountUnreadByRecipientID(ctx, recipientID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.MailListResponse{
+		Messages: messages,
+		Total:    total,
+		Unread:   unread,
+	}, nil
+}
+
+func (s *SocialService) ExtendMailExpiration(ctx context.Context, mailID uuid.UUID, days int) (*models.MailMessage, error) {
+	err := s.mailRepo.ExtendExpiration(ctx, mailID, days)
+	if err != nil {
+		return nil, err
+	}
+
+	mail, err := s.mailRepo.GetByID(ctx, mailID)
+	if err != nil {
+		return nil, err
+	}
+
+	if mail != nil {
+		s.invalidateMailCache(ctx, mail.RecipientID)
+	}
+
+	return mail, nil
+}
+
+func (s *SocialService) SendSystemMail(ctx context.Context, req *models.SendSystemMailRequest) (*models.MailMessage, error) {
+	now := time.Now()
+	expiresAt := (*time.Time)(nil)
+	if req.ExpiresIn != nil && *req.ExpiresIn > 0 {
+		exp := now.Add(time.Duration(*req.ExpiresIn) * 24 * time.Hour)
+		expiresAt = &exp
+	}
+
+	mail := &models.MailMessage{
+		ID:          uuid.New(),
+		SenderID:    nil,
+		SenderName:  "System",
+		RecipientID: req.RecipientID,
+		Type:        req.Type,
+		Subject:     req.Title,
+		Content:     req.Content,
+		Attachments: req.Attachments,
+		Status:      models.MailStatusUnread,
+		IsRead:      false,
+		IsClaimed:    false,
+		SentAt:      now,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		ExpiresAt:   expiresAt,
+	}
+
+	err := s.mailRepo.Create(ctx, mail)
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateMailCache(ctx, req.RecipientID)
+
+	if s.eventBus != nil {
+		payload := map[string]interface{}{
+			"mail_id":      mail.ID.String(),
+			"recipient_id": mail.RecipientID.String(),
+			"type":         string(mail.Type),
+			"subject":      mail.Subject,
+			"timestamp":    mail.SentAt.Format(time.RFC3339),
+		}
+		s.eventBus.PublishEvent(ctx, "mail:system-sent", payload)
+	}
+
+	return mail, nil
+}
+
+func (s *SocialService) BroadcastSystemMail(ctx context.Context, req *models.BroadcastSystemMailRequest) (*models.BroadcastResult, error) {
+	result := &models.BroadcastResult{
+		TotalSent:       0,
+		TotalFailed:     0,
+		FailedRecipients: []string{},
+	}
+
+	if len(req.RecipientIDs) == 0 {
+		return result, nil
+	}
+
+	for _, recipientID := range req.RecipientIDs {
+		systemReq := &models.SendSystemMailRequest{
+			RecipientID: recipientID,
+			Type:        req.Type,
+			Title:       req.Title,
+			Content:     req.Content,
+			Attachments: req.Attachments,
+			ExpiresIn:   req.ExpiresIn,
+		}
+
+		_, err := s.SendSystemMail(ctx, systemReq)
+		if err != nil {
+			result.TotalFailed++
+			result.FailedRecipients = append(result.FailedRecipients, recipientID.String())
+		} else {
+			result.TotalSent++
+		}
+	}
+
+	return result, nil
+}
+
 func (s *SocialService) invalidateMailCache(ctx context.Context, recipientID uuid.UUID) {
 	pattern := "mails:recipient:" + recipientID.String() + ":*"
 	keys, _ := s.cache.Keys(ctx, pattern).Result()
@@ -742,4 +1022,113 @@ func (s *SocialService) GetFriends(ctx context.Context, characterID uuid.UUID) (
 
 func (s *SocialService) GetFriendRequests(ctx context.Context, characterID uuid.UUID) ([]models.Friendship, error) {
 	return s.friendRepo.GetPendingRequests(ctx, characterID)
+}
+
+func (s *SocialService) CreatePlayerOrder(ctx context.Context, customerID uuid.UUID, req *models.CreatePlayerOrderRequest) (*models.PlayerOrder, error) {
+	order := &models.PlayerOrder{
+		ID:          uuid.New(),
+		CustomerID:  customerID,
+		OrderType:   req.OrderType,
+		Title:       req.Title,
+		Description: req.Description,
+		Status:      models.OrderStatusOpen,
+		Reward:      req.Reward,
+		Requirements: req.Requirements,
+		Deadline:    req.Deadline,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	if err := s.orderRepo.Create(ctx, order); err != nil {
+		return nil, err
+	}
+
+	return s.orderRepo.GetByID(ctx, order.ID)
+}
+
+func (s *SocialService) GetPlayerOrders(ctx context.Context, orderType *models.OrderType, status *models.OrderStatus, limit, offset int) (*models.PlayerOrdersResponse, error) {
+	orders, err := s.orderRepo.List(ctx, orderType, status, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := s.orderRepo.Count(ctx, orderType, status)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.PlayerOrdersResponse{
+		Orders: orders,
+		Total:  total,
+	}, nil
+}
+
+func (s *SocialService) GetPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error) {
+	return s.orderRepo.GetByID(ctx, orderID)
+}
+
+func (s *SocialService) AcceptPlayerOrder(ctx context.Context, orderID, executorID uuid.UUID) (*models.PlayerOrder, error) {
+	if err := s.orderRepo.AcceptOrder(ctx, orderID, executorID); err != nil {
+		return nil, err
+	}
+
+	return s.orderRepo.GetByID(ctx, orderID)
+}
+
+func (s *SocialService) StartPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error) {
+	if err := s.orderRepo.StartOrder(ctx, orderID); err != nil {
+		return nil, err
+	}
+
+	return s.orderRepo.GetByID(ctx, orderID)
+}
+
+func (s *SocialService) CompletePlayerOrder(ctx context.Context, orderID uuid.UUID, req *models.CompletePlayerOrderRequest) (*models.PlayerOrder, error) {
+	if !req.Success {
+		return nil, errors.New("order completion requires success=true")
+	}
+
+	if err := s.orderRepo.CompleteOrder(ctx, orderID); err != nil {
+		return nil, err
+	}
+
+	return s.orderRepo.GetByID(ctx, orderID)
+}
+
+func (s *SocialService) CancelPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error) {
+	if err := s.orderRepo.CancelOrder(ctx, orderID); err != nil {
+		return nil, err
+	}
+
+	return s.orderRepo.GetByID(ctx, orderID)
+}
+
+func (s *SocialService) ReviewPlayerOrder(ctx context.Context, orderID, reviewerID uuid.UUID, req *models.ReviewPlayerOrderRequest) (*models.PlayerOrderReview, error) {
+	order, err := s.orderRepo.GetByID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order == nil {
+		return nil, errors.New("order not found")
+	}
+
+	if order.Status != models.OrderStatusCompleted {
+		return nil, errors.New("can only review completed orders")
+	}
+
+	review := &models.PlayerOrderReview{
+		ID:         uuid.New(),
+		OrderID:    orderID,
+		ReviewerID: reviewerID,
+		ExecutorID: req.ExecutorID,
+		Rating:     req.Rating,
+		Comment:    req.Comment,
+		CreatedAt:  time.Now(),
+	}
+
+	if err := s.orderRepo.CreateReview(ctx, review); err != nil {
+		return nil, err
+	}
+
+	return review, nil
 }

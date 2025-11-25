@@ -1,11 +1,18 @@
 FROM golang:1.24-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/movement-service-go
 
-COPY go.mod go.sum ./
+RUN apk add --no-cache make nodejs npm git
+
+COPY services/movement-service-go/go.mod services/movement-service-go/go.sum ./
 RUN go mod download
 
-COPY . .
+RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+
+COPY proto/ ../../proto/
+COPY services/movement-service-go/ ./
+
+RUN make generate-api || true
 
 RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -o movement-service -ldflags="-w -s" .
@@ -16,8 +23,8 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 
-COPY --from=builder /app/movement-service /app/
+COPY --from=builder /app/services/movement-service-go/movement-service /app/
 
-EXPOSE 8086/tcp 9091
+EXPOSE 8084/tcp 9094
 
 ENTRYPOINT ["/app/movement-service"]

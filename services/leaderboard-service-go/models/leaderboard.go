@@ -35,13 +35,44 @@ const (
 	TypeGuild    LeaderboardType = "guild"
 )
 
+type LeaderboardCategory string
+
+const (
+	CategoryOverall      LeaderboardCategory = "overall"
+	CategoryKills        LeaderboardCategory = "kills"
+	CategoryDeaths       LeaderboardCategory = "deaths"
+	CategoryAssists      LeaderboardCategory = "assists"
+	CategoryHeadshots    LeaderboardCategory = "headshots"
+	CategoryLevel        LeaderboardCategory = "level"
+	CategoryWins         LeaderboardCategory = "wins"
+	CategoryLosses       LeaderboardCategory = "losses"
+	CategoryRating       LeaderboardCategory = "rating"
+	CategoryAchievements LeaderboardCategory = "achievements"
+)
+
 type LeaderboardEntry struct {
 	Rank         int       `json:"rank"`
 	CharacterID  uuid.UUID `json:"character_id"`
+	PlayerID     uuid.UUID `json:"player_id"`
 	CharacterName string   `json:"character_name"`
+	PlayerName   string    `json:"player_name"`
 	Score        int64     `json:"score"`
 	Metric       LeaderboardMetric `json:"metric"`
+	Change       int       `json:"change"`
 	LastUpdated  time.Time `json:"last_updated"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type GuildLeaderboardEntry struct {
+	Rank         int       `json:"rank"`
+	GuildID      uuid.UUID `json:"guild_id"`
+	GuildName    string    `json:"guild_name"`
+	GuildTag     string    `json:"guild_tag"`
+	Score        int64     `json:"score"`
+	Change       int       `json:"change"`
+	MemberCount  int       `json:"member_count"`
+	AverageLevel int       `json:"average_level"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type LeaderboardResponse struct {

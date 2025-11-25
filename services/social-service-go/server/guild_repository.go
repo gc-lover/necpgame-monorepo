@@ -468,3 +468,169 @@ func (r *GuildRepository) UpdateBank(ctx context.Context, bank *models.GuildBank
 	return err
 }
 
+func (r *GuildRepository) GetRanks(ctx context.Context, guildID uuid.UUID) ([]models.GuildRankEntity, error) {
+	query := `
+		SELECT id, guild_id, name, permissions, "order", created_at
+		FROM social.guild_ranks
+		WHERE guild_id = $1
+		ORDER BY "order" ASC`
+
+	rows, err := r.db.Query(ctx, query, guildID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ranks []models.GuildRankEntity
+	for rows.Next() {
+		var rank models.GuildRankEntity
+		var permissionsJSON []byte
+
+		err := rows.Scan(
+			&rank.ID, &rank.GuildID, &rank.Name, &permissionsJSON, &rank.Order, &rank.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(permissionsJSON) > 0 {
+			json.Unmarshal(permissionsJSON, &rank.Permissions)
+		}
+
+		ranks = append(ranks, rank)
+	}
+
+	return ranks, rows.Err()
+}
+
+func (r *GuildRepository) GetRankByID(ctx context.Context, rankID uuid.UUID) (*models.GuildRankEntity, error) {
+	var rank models.GuildRankEntity
+	var permissionsJSON []byte
+
+	query := `
+		SELECT id, guild_id, name, permissions, "order", created_at
+		FROM social.guild_ranks
+		WHERE id = $1`
+
+	err := r.db.QueryRow(ctx, query, rankID).Scan(
+		&rank.ID, &rank.GuildID, &rank.Name, &permissionsJSON, &rank.Order, &rank.CreatedAt,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if len(permissionsJSON) > 0 {
+		json.Unmarshal(permissionsJSON, &rank.Permissions)
+	}
+
+	return &rank, nil
+}
+
+func (r *GuildRepository) CreateRank(ctx context.Context, rank *models.GuildRankEntity) error {
+	permissionsJSON, _ := json.Marshal(rank.Permissions)
+
+	query := `
+		INSERT INTO social.guild_ranks (
+			id, guild_id, name, permissions, "order", created_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6
+		)`
+
+	_, err := r.db.Exec(ctx, query,
+		rank.ID, rank.GuildID, rank.Name, permissionsJSON, rank.Order, rank.CreatedAt,
+	)
+
+	return err
+}
+
+func (r *GuildRepository) UpdateRank(ctx context.Context, rank *models.GuildRankEntity) error {
+	permissionsJSON, _ := json.Marshal(rank.Permissions)
+
+	query := `
+		UPDATE social.guild_ranks
+		SET name = $1, permissions = $2, "order" = $3
+		WHERE id = $4 AND guild_id = $5`
+
+	_, err := r.db.Exec(ctx, query,
+		rank.Name, permissionsJSON, rank.Order, rank.ID, rank.GuildID,
+	)
+
+	return err
+}
+
+func (r *GuildRepository) DeleteRank(ctx context.Context, guildID, rankID uuid.UUID) error {
+	query := `
+		DELETE FROM social.guild_ranks
+		WHERE id = $1 AND guild_id = $2`
+
+	_, err := r.db.Exec(ctx, query, rankID, guildID)
+	return err
+}
+
+func (r *GuildRepository) CreateBankTransaction(ctx context.Context, transaction *models.GuildBankTransaction) error {
+	itemsJSON, _ := json.Marshal(transaction.Items)
+
+	query := `
+		INSERT INTO social.guild_bank_transactions (
+			id, guild_id, account_id, type, currency, items, created_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7
+		)`
+
+	_, err := r.db.Exec(ctx, query,
+		transaction.ID, transaction.GuildID, transaction.AccountID,
+		transaction.Type, transaction.Currency, itemsJSON, transaction.CreatedAt,
+	)
+
+	return err
+}
+
+func (r *GuildRepository) GetBankTransactions(ctx context.Context, guildID uuid.UUID, limit, offset int) ([]models.GuildBankTransaction, error) {
+	query := `
+		SELECT id, guild_id, account_id, type, currency, items, created_at
+		FROM social.guild_bank_transactions
+		WHERE guild_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
+
+	rows, err := r.db.Query(ctx, query, guildID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []models.GuildBankTransaction
+	for rows.Next() {
+		var transaction models.GuildBankTransaction
+		var itemsJSON []byte
+
+		err := rows.Scan(
+			&transaction.ID, &transaction.GuildID, &transaction.AccountID,
+			&transaction.Type, &transaction.Currency, &itemsJSON, &transaction.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(itemsJSON) > 0 {
+			json.Unmarshal(itemsJSON, &transaction.Items)
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	return transactions, rows.Err()
+}
+
+func (r *GuildRepository) CountBankTransactions(ctx context.Context, guildID uuid.UUID) (int, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM social.guild_bank_transactions WHERE guild_id = $1`
+
+	err := r.db.QueryRow(ctx, query, guildID).Scan(&count)
+	return count, err
+}
+

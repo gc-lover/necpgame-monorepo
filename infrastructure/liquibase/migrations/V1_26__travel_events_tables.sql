@@ -158,3 +158,6 @@ CREATE TRIGGER travel_event_cooldowns_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_travel_events_updated_at();
 
+
+
+

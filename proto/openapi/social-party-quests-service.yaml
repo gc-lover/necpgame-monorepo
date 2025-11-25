@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: Social Party Quests Service API
+  description: API для синхронизации квестов в группах
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Party Quests
+    description: Синхронизация квестов в группах
+
+paths:
+  /social/party/{partyId}/quests:
+    get:
+      tags:
+        - Party Quests
+      summary: Получить квесты группы
+      operationId: getPartyQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Квесты группы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyQuestsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/party/{partyId}/quests/{questId}/sync:
+    post:
+      tags:
+        - Party Quests
+      summary: Синхронизировать квест
+      operationId: syncPartyQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncQuestRequest'
+      responses:
+        '200':
+          description: Квест синхронизирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestSyncResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PartyQuestsResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyQuest'
+        total:
+          type: integer
+
+    PartyQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        quest_name:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, failed]
+        progress:
+          type: object
+          additionalProperties: true
+        synced_members:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    SyncQuestRequest:
+      type: object
+      required:
+        - quest_id
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        progress_data:
+          type: object
+          additionalProperties: true
+
+    QuestSyncResult:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        synced:
+          type: boolean
+        synced_members:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+security:
+  - BearerAuth: []
+
+
+
+

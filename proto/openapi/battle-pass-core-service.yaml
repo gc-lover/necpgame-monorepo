@@ -1,0 +1,215 @@
+openapi: 3.0.3
+info:
+  title: Battle Pass Core Service API
+  description: API для основных операций с боевым пропуском
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8093/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Battle Pass
+    description: Управление боевым пропуском
+
+paths:
+  /battle-pass/current:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить текущий сезон боевого пропуска
+      operationId: getCurrentBattlePass
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Текущий сезон
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattlePassSeason"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /battle-pass/progress:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить прогресс игрока
+      operationId: getPlayerProgress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerBattlePassProgress"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /battle-pass/progress/level/{level}:
+    get:
+      tags:
+        - Battle Pass
+      summary: Получить требования уровня
+      operationId: getLevelRequirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: level
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Требования уровня
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LevelRequirements"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /battle-pass/premium:
+    post:
+      tags:
+        - Battle Pass
+      summary: Купить премиум пропуск
+      operationId: purchasePremium
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchasePremiumRequest"
+      responses:
+        "200":
+          description: Премиум пропуск куплен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerBattlePassProgress"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    BattlePassSeason:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        max_level:
+          type: integer
+          default: 100
+        is_active:
+          type: boolean
+
+    PlayerBattlePassProgress:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        xp:
+          type: integer
+          minimum: 0
+        xp_to_next_level:
+          type: integer
+          minimum: 0
+        has_premium:
+          type: boolean
+        premium_purchased_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    PurchasePremiumRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    LevelRequirements:
+      type: object
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        xp_required:
+          type: integer
+          minimum: 0
+        cumulative_xp:
+          type: integer
+          minimum: 0
+
+security:
+  - BearerAuth: []
+
+
+
+
