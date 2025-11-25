@@ -19,7 +19,6 @@ func toAPIReferralCode(code *models.ReferralCode) api.ReferralCode {
 		PlayerId:  &apiPlayerID,
 		Code:      &code.Code,
 		IsActive:  &code.IsActive,
-		UsedCount: &code.UsedCount,
 		CreatedAt: &code.CreatedAt,
 	}
 }
@@ -31,17 +30,21 @@ func toAPIReferral(ref *models.Referral) api.Referral {
 
 	apiID := openapi_types.UUID(ref.ID)
 	apiReferrerID := openapi_types.UUID(ref.ReferrerID)
-	apiReferredID := openapi_types.UUID(ref.ReferredID)
+	apiRefereeID := openapi_types.UUID(ref.RefereeID)
+	apiReferralCodeID := openapi_types.UUID(ref.ReferralCodeID)
 	apiStatus := api.ReferralStatus(ref.Status)
 
 	return api.Referral{
-		Id:           &apiID,
-		ReferrerId:   &apiReferrerID,
-		ReferredId:   &apiReferredID,
-		Status:       &apiStatus,
-		ReferralCode: &ref.ReferralCode,
-		CreatedAt:    &ref.CreatedAt,
-		CompletedAt:  ref.CompletedAt,
+		Id:                 &apiID,
+		ReferrerId:         &apiReferrerID,
+		RefereeId:          &apiRefereeID,
+		ReferralCodeId:     &apiReferralCodeID,
+		Status:             &apiStatus,
+		RegisteredAt:       &ref.RegisteredAt,
+		Level10Reached:     &ref.Level10Reached,
+		Level10ReachedAt:   ref.Level10ReachedAt,
+		ReferrerBonusGiven: &ref.ReferrerBonusGiven,
+		CreatedAt:          &ref.RegisteredAt,
 	}
 }
 
@@ -52,17 +55,16 @@ func toAPIReferralMilestone(ms *models.ReferralMilestone) api.ReferralMilestone 
 
 	apiID := openapi_types.UUID(ms.ID)
 	apiPlayerID := openapi_types.UUID(ms.PlayerID)
-	apiMilestoneType := api.ReferralMilestoneType(ms.MilestoneType)
+	apiMilestoneType := api.ReferralMilestoneMilestoneType(ms.MilestoneType)
 
 	return api.ReferralMilestone{
-		Id:            &apiID,
-		PlayerId:      &apiPlayerID,
-		MilestoneType: &apiMilestoneType,
-		IsCompleted:   &ms.IsCompleted,
-		IsClaimed:     &ms.IsClaimed,
-		CompletedAt:   ms.CompletedAt,
-		ClaimedAt:     ms.ClaimedAt,
-		RewardData:    ms.RewardData,
+		Id:              &apiID,
+		PlayerId:        &apiPlayerID,
+		MilestoneType:   &apiMilestoneType,
+		MilestoneValue:  &ms.MilestoneValue,
+		AchievedAt:      &ms.AchievedAt,
+		RewardClaimed:   &ms.RewardClaimed,
+		RewardClaimedAt: ms.RewardClaimedAt,
 	}
 }
 
@@ -72,19 +74,23 @@ func toAPIReferralReward(reward *models.ReferralReward) api.ReferralReward {
 	}
 
 	apiID := openapi_types.UUID(reward.ID)
-	apiReferralID := openapi_types.UUID(reward.ReferralID)
 	apiPlayerID := openapi_types.UUID(reward.PlayerID)
-	apiRewardType := api.ReferralRewardType(reward.RewardType)
+	apiRewardType := api.ReferralRewardRewardType(reward.RewardType)
+
+	var apiReferralID *openapi_types.UUID
+	if reward.ReferralID != nil {
+		id := openapi_types.UUID(*reward.ReferralID)
+		apiReferralID = &id
+	}
 
 	return api.ReferralReward{
-		Id:         &apiID,
-		ReferralId: &apiReferralID,
-		PlayerId:   &apiPlayerID,
-		RewardType: &apiRewardType,
-		IsClaimed:  &reward.IsClaimed,
-		RewardData: reward.RewardData,
-		CreatedAt:  &reward.CreatedAt,
-		ClaimedAt:  reward.ClaimedAt,
+		Id:            &apiID,
+		ReferralId:    apiReferralID,
+		PlayerId:      &apiPlayerID,
+		RewardType:    &apiRewardType,
+		RewardAmount:  &reward.RewardAmount,
+		CurrencyType:  &reward.CurrencyType,
+		DistributedAt: &reward.DistributedAt,
 	}
 }
 
@@ -94,15 +100,21 @@ func toAPIReferralStats(stats *models.ReferralStats) api.ReferralStats {
 	}
 
 	apiPlayerID := openapi_types.UUID(stats.PlayerID)
+	
+	var apiCurrentMilestone *api.ReferralStatsCurrentMilestone
+	if stats.CurrentMilestone != nil {
+		ms := api.ReferralStatsCurrentMilestone(string(*stats.CurrentMilestone))
+		apiCurrentMilestone = &ms
+	}
 
 	return api.ReferralStats{
-		PlayerId:              &apiPlayerID,
-		TotalReferrals:        &stats.TotalReferrals,
-		ActiveReferrals:       &stats.ActiveReferrals,
-		CompletedReferrals:    &stats.CompletedReferrals,
-		TotalRewardsEarned:    &stats.TotalRewardsEarned,
-		CurrentMilestone:      stats.CurrentMilestone,
-		NextMilestoneProgress: stats.NextMilestoneProgress,
+		PlayerId:         &apiPlayerID,
+		TotalReferrals:   &stats.TotalReferrals,
+		ActiveReferrals:  &stats.ActiveReferrals,
+		Level10Referrals: &stats.Level10Referrals,
+		CurrentMilestone: apiCurrentMilestone,
+		TotalRewards:     &stats.TotalRewards,
+		LastUpdated:      &stats.LastUpdated,
 	}
 }
 
@@ -112,14 +124,22 @@ func toAPILeaderboardEntry(entry *models.ReferralLeaderboardEntry) api.ReferralL
 	}
 
 	apiPlayerID := openapi_types.UUID(entry.PlayerID)
+	
+	var apiCurrentMilestone *api.ReferralLeaderboardEntryCurrentMilestone
+	if entry.CurrentMilestone != nil {
+		ms := api.ReferralLeaderboardEntryCurrentMilestone(string(*entry.CurrentMilestone))
+		apiCurrentMilestone = &ms
+	}
 
 	return api.ReferralLeaderboardEntry{
-		PlayerId:        &apiPlayerID,
-		PlayerName:      entry.PlayerName,
-		Rank:            &entry.Rank,
-		TotalReferrals:  &entry.TotalReferrals,
-		ActiveReferrals: &entry.ActiveReferrals,
-		Score:           &entry.Score,
+		PlayerId:         &apiPlayerID,
+		PlayerName:       &entry.PlayerName,
+		Rank:             &entry.Rank,
+		TotalReferrals:   &entry.TotalReferrals,
+		ActiveReferrals:  &entry.ActiveReferrals,
+		Level10Referrals: &entry.Level10Referrals,
+		CurrentMilestone: apiCurrentMilestone,
+		TotalRewards:     &entry.TotalRewards,
 	}
 }
 
@@ -130,20 +150,13 @@ func toAPIReferralEvent(event *models.ReferralEvent) api.ReferralEvent {
 
 	apiID := openapi_types.UUID(event.ID)
 	apiPlayerID := openapi_types.UUID(event.PlayerID)
-	apiEventType := api.ReferralEventType(event.EventType)
-
-	var apiReferralID *openapi_types.UUID
-	if event.ReferralID != nil {
-		id := openapi_types.UUID(*event.ReferralID)
-		apiReferralID = &id
-	}
+	apiEventType := api.ReferralEventEventType(event.EventType)
 
 	return api.ReferralEvent{
-		Id:         &apiID,
-		PlayerId:   &apiPlayerID,
-		ReferralId: apiReferralID,
-		EventType:  &apiEventType,
-		EventData:  event.EventData,
-		CreatedAt:  &event.CreatedAt,
+		Id:        &apiID,
+		PlayerId:  &apiPlayerID,
+		EventType: &apiEventType,
+		EventData: &event.EventData,
+		CreatedAt: &event.CreatedAt,
 	}
 }
