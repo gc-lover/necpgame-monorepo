@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: Social Chat History Service API
+  description: API для истории и поиска в чате
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Chat History
+    description: История и поиск в чате
+
+paths:
+  /social/chat/history/{channel_type}:
+    get:
+      tags:
+        - Chat History
+      summary: Получить историю канала
+      operationId: getChatHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История канала
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatHistoryResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/chat/history/search:
+    get:
+      tags:
+        - Chat History
+      summary: Поиск в истории чата
+      operationId: searchChatHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: channel_type
+          in: query
+          schema:
+            type: string
+            enum: [GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE]
+        - name: sender_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatSearchResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ChatHistoryResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            channel_type:
+              type: string
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChatMessage'
+              description: Список сообщений
+
+    ChatSearchResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            query:
+              type: string
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChatMessage'
+              description: Результаты поиска
+
+    ChatMessage:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/BaseEntityWithTimestamps'
+        - type: object
+          properties:
+            channel_id:
+              type: string
+              format: uuid
+            channel_type:
+              type: string
+              enum: [GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE]
+            sender_id:
+              type: string
+              format: uuid
+            sender_name:
+              type: string
+            content:
+              type: string
+            formatted_text:
+              type: string
+            message_type:
+              type: string
+              enum: [text, system, emote, command]
+            is_edited:
+              type: boolean
+              default: false
+            is_deleted:
+              type: boolean
+              default: false
+
+security:
+  - BearerAuth: []
+
+

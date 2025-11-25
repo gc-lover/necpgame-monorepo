@@ -1,0 +1,323 @@
+openapi: 3.0.3
+info:
+  title: Social Orders Core Service API
+  description: API для основных операций с заказами между игроками
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Player Orders Core
+    description: Основные операции с заказами
+
+paths:
+  /social/orders/create:
+    post:
+      tags:
+        - Player Orders Core
+      summary: Создать заказ
+      operationId: createPlayerOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlayerOrderRequest'
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders:
+    get:
+      tags:
+        - Player Orders Core
+      summary: Получить список заказов
+      operationId: getPlayerOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, accepted, in_progress, completed, cancelled]
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum: [combat, hacking, trade, political, research, social]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrdersResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}:
+    get:
+      tags:
+        - Player Orders Core
+      summary: Получить заказ
+      operationId: getPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Заказ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/accept:
+    post:
+      tags:
+        - Player Orders Core
+      summary: Принять заказ
+      operationId: acceptPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Заказ принят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/complete:
+    post:
+      tags:
+        - Player Orders Core
+      summary: Завершить заказ
+      operationId: completePlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompletePlayerOrderRequest'
+      responses:
+        '200':
+          description: Заказ завершен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/start:
+    post:
+      tags:
+        - Player Orders Core
+      summary: Начать выполнение заказа
+      operationId: startPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Заказ начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/cancel:
+    post:
+      tags:
+        - Player Orders Core
+      summary: Отменить заказ
+      operationId: cancelPlayerOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Заказ отменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CreatePlayerOrderRequest:
+      type: object
+      required:
+        - order_type
+        - title
+        - description
+        - reward
+      properties:
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        reward:
+          type: object
+          properties:
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        requirements:
+          type: object
+          additionalProperties: true
+
+    PlayerOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        executor_id:
+          type: string
+          format: uuid
+          nullable: true
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, accepted, in_progress, completed, cancelled]
+        reward:
+          type: object
+          properties:
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+        created_at:
+          type: string
+          format: date-time
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    PlayerOrdersResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrder'
+        total:
+          type: integer
+
+    CompletePlayerOrderRequest:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        evidence:
+          type: array
+          items:
+            type: string
+
+security:
+  - BearerAuth: []
+
+

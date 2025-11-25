@@ -1,0 +1,343 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Quests Requirements Service API
+  description: API для проверки требований и условий квестов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Quest Requirements
+    description: Требования и условия квестов
+
+paths:
+  /gameplay/quests/{questId}/conditions/check:
+    post:
+      tags:
+        - Quest Requirements
+      summary: Проверить условия квеста
+      operationId: checkQuestConditions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckQuestConditionsRequest"
+      responses:
+        "200":
+          description: Результат проверки условий
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestConditionsCheckResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/{questId}/requirements:
+    get:
+      tags:
+        - Quest Requirements
+      summary: Получить требования квеста
+      operationId: getQuestRequirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Требования квеста
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestRequirementsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/{questId}/rewards/distribute:
+    post:
+      tags:
+        - Quest Requirements
+      summary: Распределить награды квеста
+      operationId: distributeQuestRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributeQuestRewardsRequest"
+      responses:
+        "200":
+          description: Награды распределены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestRewardsDistributionResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/{questId}/rewards:
+    get:
+      tags:
+        - Quest Requirements
+      summary: Получить награды квеста
+      operationId: getQuestRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Награды квеста
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestRewardsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/{questId}/events:
+    get:
+      tags:
+        - Quest Requirements
+      summary: Получить события квеста
+      operationId: getQuestEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: События квеста
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestEventsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CheckQuestConditionsRequest:
+      type: object
+      required:
+        - player_id
+        - condition_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        condition_type:
+          type: string
+          enum: [start, complete, objective]
+        condition_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    QuestConditionsCheckResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        condition_type:
+          type: string
+        all_conditions_met:
+          type: boolean
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              condition_id:
+                type: string
+                format: uuid
+              condition_type:
+                type: string
+              met:
+                type: boolean
+              message:
+                type: string
+                nullable: true
+
+    QuestRequirementsResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        level_requirement:
+          type: integer
+          nullable: true
+        item_requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        quest_prerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+        world_state_requirements:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    DistributeQuestRewardsRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        reward_modifiers:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    QuestRewardsDistributionResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        rewards_distributed:
+          type: boolean
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+
+    QuestRewardsResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+
+    QuestEventsResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              event_id:
+                type: string
+                format: uuid
+              event_type:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              details:
+                type: object
+                additionalProperties: true
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+

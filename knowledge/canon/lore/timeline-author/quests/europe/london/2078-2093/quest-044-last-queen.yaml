@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:55:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-23T12:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -52,6 +52,83 @@ summary:
     - Эмоциональные катсцены прощания и национального траура.
     - Решение игрока напрямую влияет на политическую систему Лондона.
     - Три исхода: сохранение монархии, республика, цифровой монарх.
+quest_definition:
+  quest_type: main
+  level_min: 40
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation:
+      London_Elite: 30
+    required_items: []
+  objectives:
+    - id: attend_mourning_events
+      text: "Присутствовать на массовых мероприятиях прощания и параде траура"
+      type: visit
+      target: mourning_ceremonies
+      count: 3
+      optional: false
+    - id: meet_queen
+      text: "Получить последнюю аудиенцию у королевы (требуется высокая репутация)"
+      type: talk
+      target: last_queen
+      count: 1
+      optional: true
+    - id: vote_succession
+      text: "Принять решение о будущем британской монархии"
+      type: choice
+      target: succession_vote
+      count: 1
+      optional: false
+  rewards:
+    experience: 5000
+    money: 0
+    items:
+      - item_id: cosmetic_governance_style
+        quantity: 1
+    reputation: {}
+    unlocks: []
+  branches:
+    - branch_id: preserve_monarchy
+      branch_name: "Сохранить монархию"
+      conditions:
+        flags: ["succession_choice_monarchy"]
+      consequences:
+        reputation_changes:
+          London_Traditionalists: 50
+          London_Republicans: -30
+        unlocks_quests: []
+        world_state:
+          - key: "london_governance_type"
+            value: "monarchy"
+            scope: server
+    - branch_id: declare_republic
+      branch_name: "Объявить республику"
+      conditions:
+        flags: ["succession_choice_republic"]
+      consequences:
+        reputation_changes:
+          London_Republicans: 50
+          London_Traditionalists: -30
+        unlocks_quests: []
+        world_state:
+          - key: "london_governance_type"
+            value: "republic"
+            scope: server
+    - branch_id: ai_monarch
+      branch_name: "Создать ИИ-монарха"
+      conditions:
+        flags: ["succession_choice_ai"]
+      consequences:
+        reputation_changes:
+          London_Tech_Elite: 50
+          London_Traditionalists: -50
+        unlocks_quests: []
+        world_state:
+          - key: "london_governance_type"
+            value: "ai_monarchy"
+            scope: server
 content:
   sections:
     - id: announcement
@@ -100,6 +177,10 @@ history:
     date: 2025-11-13
     author: Concept Director
     changes: Квест «Последняя Королева» перенесён в YAML с описанием ветвлений и влияния на политическую систему.
+  - version: '1.1.0'
+    date: 2025-11-23
+    author: content_writer
+    changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
   checksum: ''
   schema_version: '1.0'

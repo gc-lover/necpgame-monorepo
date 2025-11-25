@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: Feedback Core Service API
+  description: API для основных операций с обратной связью
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8090/api/v1/feedback
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/feedback
+    description: Продакшен сервер
+
+tags:
+  - name: Feedback Core
+    description: Основные операции с обратной связью
+
+paths:
+  /submit:
+    post:
+      tags:
+        - Feedback Core
+      summary: Создание нового обращения
+      operationId: submitFeedback
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitFeedbackRequest'
+      responses:
+        '201':
+          description: Обращение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitFeedbackResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /{id}:
+    get:
+      tags:
+        - Feedback Core
+      summary: Получить обращение
+      operationId: getFeedback
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Обращение
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /player/{player_id}:
+    get:
+      tags:
+        - Feedback Core
+      summary: Получить обращения игрока
+      operationId: getPlayerFeedback
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_review, approved, rejected, merged, closed]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список обращений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /{id}/update-status:
+    put:
+      tags:
+        - Feedback Core
+      summary: Обновить статус обращения
+      operationId: updateFeedbackStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Статус обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    SubmitFeedbackRequest:
+      type: object
+      required: [type, category, title, description]
+      properties:
+        type:
+          type: string
+          enum: [feature_request, bug_report, wishlist, feedback]
+        category:
+          type: string
+          enum: [gameplay, balance, content, technical, lore, ui_ux, other]
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 2000
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        game_context:
+          $ref: '#/components/schemas/GameContext'
+        screenshots:
+          type: array
+          maxItems: 3
+          items:
+            type: string
+            format: uri
+
+    SubmitFeedbackResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, in_review, approved, rejected, merged, closed]
+        github_issue_number:
+          type: integer
+          nullable: true
+        github_issue_url:
+          type: string
+          format: uri
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Feedback:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [feature_request, bug_report, wishlist, feedback]
+        category:
+          type: string
+          enum: [gameplay, balance, content, technical, lore, ui_ux, other]
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_review, approved, rejected, merged, closed]
+        github_issue_number:
+          type: integer
+          nullable: true
+        github_issue_url:
+          type: string
+          format: uri
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FeedbackListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feedback'
+        total:
+          type: integer
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending, in_review, approved, rejected, merged, closed]
+        comment:
+          type: string
+
+    GameContext:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        location:
+          type: string
+        game_version:
+          type: string
+
+security:
+  - BearerAuth: []
+
+

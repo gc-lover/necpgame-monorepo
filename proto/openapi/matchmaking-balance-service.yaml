@@ -1,0 +1,155 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Balance Service API
+  description: API для балансировки команд
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Balance
+    description: Балансировка команд
+
+paths:
+  /matchmaking/balance/calculate:
+    post:
+      tags:
+        - Balance
+      summary: Рассчитать баланс команд
+      operationId: calculateTeamBalance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateBalanceRequest'
+      responses:
+        '200':
+          description: Результат балансировки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamBalanceResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /matchmaking/balance/redistribute:
+    post:
+      tags:
+        - Balance
+      summary: Перераспределить команды
+      operationId: redistributeTeams
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedistributeTeamsRequest'
+      responses:
+        '200':
+          description: Команды перераспределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamBalanceResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Team:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchPlayer'
+        average_rating:
+          type: number
+          format: float
+
+    MatchPlayer:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+        rating:
+          type: number
+          format: float
+
+    CalculateBalanceRequest:
+      type: object
+      required:
+        - teams
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
+        strategy:
+          type: string
+          enum: [snake_draft, role_based, rating_based, skill_based]
+
+    RedistributeTeamsRequest:
+      type: object
+      required:
+        - match_id
+        - strategy
+      properties:
+        match_id:
+          type: string
+          format: uuid
+        strategy:
+          type: string
+          enum: [snake_draft, role_based, rating_based, skill_based]
+
+    TeamBalanceResult:
+      type: object
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
+        balance_score:
+          type: number
+          format: float
+        is_balanced:
+          type: boolean
+
+security:
+  - BearerAuth: []
+
+
+
+

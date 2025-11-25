@@ -112,3 +112,53 @@ type GuildMemberListResponse struct {
 	Total   int          `json:"total"`
 }
 
+type GuildRankEntity struct {
+	ID          uuid.UUID `json:"id" db:"id"`
+	GuildID     uuid.UUID `json:"guild_id" db:"guild_id"`
+	Name        string    `json:"name" db:"name"`
+	Permissions []string  `json:"permissions" db:"permissions"`
+	Order       int       `json:"order" db:"order"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+}
+
+type CreateGuildRankRequest struct {
+	Name        string   `json:"name"`
+	Permissions []string `json:"permissions"`
+}
+
+type UpdateGuildRankRequest struct {
+	Name        *string  `json:"name,omitempty"`
+	Permissions []string `json:"permissions,omitempty"`
+	Order       *int     `json:"order,omitempty"`
+}
+
+type GuildRanksResponse struct {
+	Ranks []GuildRankEntity `json:"ranks"`
+	Total int                `json:"total"`
+}
+
+type GuildBankDepositRequest struct {
+	Currency int                    `json:"currency"`
+	Items    []map[string]interface{} `json:"items,omitempty"`
+}
+
+type GuildBankWithdrawRequest struct {
+	Currency int                    `json:"currency"`
+	Items    []map[string]interface{} `json:"items,omitempty"`
+}
+
+type GuildBankTransaction struct {
+	ID        uuid.UUID              `json:"id" db:"id"`
+	GuildID   uuid.UUID              `json:"guild_id" db:"guild_id"`
+	AccountID uuid.UUID              `json:"account_id" db:"account_id"`
+	Type      string                 `json:"type" db:"type"`
+	Currency  int                    `json:"currency" db:"currency"`
+	Items     []map[string]interface{} `json:"items" db:"items"`
+	CreatedAt time.Time              `json:"created_at" db:"created_at"`
+}
+
+type GuildBankTransactionsResponse struct {
+	Transactions []GuildBankTransaction `json:"transactions"`
+	Total        int                     `json:"total"`
+}
+

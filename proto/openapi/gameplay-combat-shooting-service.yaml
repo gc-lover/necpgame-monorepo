@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Combat Shooting Service API
+  description: API для системы стрельбы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Combat Shooting
+    description: Система стрельбы
+
+paths:
+  /gameplay/combat/shooting/profiles:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Получить профили стрельбы
+      operationId: getShootingProfiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [pve, pvp, arena]
+      responses:
+        "200":
+          description: Профили стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShootingProfilesResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/combat/shooting/weapons/{weaponId}/recoil:
+    get:
+      tags:
+        - Combat Shooting
+      summary: Получить отдачу оружия
+      operationId: getWeaponRecoil
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Отдача оружия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponRecoilResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ShootingProfilesResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        profiles:
+          type: array
+          items:
+            type: object
+
+    WeaponRecoilResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        recoil_pattern:
+          type: array
+          items:
+            type: number
+
+security:
+  - BearerAuth: []
+

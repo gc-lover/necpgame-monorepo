@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: Social Notifications Preferences Service API
+  description: API для настройки уведомлений
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Notifications Preferences
+    description: Настройки уведомлений
+
+paths:
+  /social/notifications/preferences:
+    get:
+      tags:
+        - Notifications Preferences
+      summary: Получить настройки уведомлений
+      operationId: getNotificationPreferences
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Настройки уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPreferences"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    put:
+      tags:
+        - Notifications Preferences
+      summary: Обновить настройки уведомлений
+      operationId: updateNotificationPreferences
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationPreferencesRequest"
+      responses:
+        "200":
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPreferences"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    NotificationPreferences:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        quest_enabled:
+          type: boolean
+          default: true
+        message_enabled:
+          type: boolean
+          default: true
+        achievement_enabled:
+          type: boolean
+          default: true
+        system_enabled:
+          type: boolean
+          default: true
+        friend_enabled:
+          type: boolean
+          default: true
+        guild_enabled:
+          type: boolean
+          default: true
+        trade_enabled:
+          type: boolean
+          default: true
+        combat_enabled:
+          type: boolean
+          default: true
+        preferred_channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, websocket, email]
+          default: [in_game]
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateNotificationPreferencesRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        quest_enabled:
+          type: boolean
+        message_enabled:
+          type: boolean
+        achievement_enabled:
+          type: boolean
+        system_enabled:
+          type: boolean
+        friend_enabled:
+          type: boolean
+        guild_enabled:
+          type: boolean
+        trade_enabled:
+          type: boolean
+        combat_enabled:
+          type: boolean
+        preferred_channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, websocket, email]
+
+security:
+  - BearerAuth: []
+
+
+
+

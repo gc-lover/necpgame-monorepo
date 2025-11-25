@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '0.1.0'
-  last_updated: 2025-11-22T23:50:00Z
+  version: '1.0.0'
+  last_updated: 2025-11-23T12:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -49,6 +49,82 @@ summary:
     - Legacy-набор влияет на старт следующей лиги.
     - Кат-сцена подчёркивает британскую стойкость и символ феникса.
     - Титул «Ветеран Лондона 2020-2093» фиксирует достижения игрока.
+quest_definition:
+  quest_type: main
+  level_min: 50
+  level_max: null
+  requirements:
+    required_quests:
+      - quest-049-goodbye-london
+    required_flags:
+      - london_arc_completed
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: legacy_choice
+      text: "Выбрать Legacy-набор для следующей лиги"
+      type: choice
+      target: legacy_system
+      count: 1
+      optional: false
+    - id: farewell_message
+      text: "Оставить послание будущим защитникам Лондона"
+      type: interact
+      target: thames_riverbank
+      count: 1
+      optional: false
+    - id: watch_cutscene
+      text: "Наблюдать кат-сцену перерождения Лондона"
+      type: cutscene
+      target: big_ben_midnight
+      count: 1
+      optional: false
+  rewards:
+    experience: 50000
+    money: 0
+    items:
+      - item_id: title_veteran_london_2020_2093
+        quantity: 1
+      - item_id: legacy_package_choice
+        quantity: 1
+    reputation: {}
+    unlocks:
+      - new_league_access
+  branches:
+    - branch_id: legacy_resources
+      branch_name: "Legacy: Ресурсы"
+      conditions:
+        flags: ["legacy_choice_resources"]
+      consequences:
+        reputation_changes: {}
+        unlocks_quests: []
+        world_state:
+          - key: "player_starting_resources"
+            value_change: 50000
+            scope: player
+    - branch_id: legacy_connections
+      branch_name: "Legacy: Связи"
+      conditions:
+        flags: ["legacy_choice_connections"]
+      consequences:
+        reputation_changes:
+          London_Factions: 50
+        unlocks_quests: []
+        world_state:
+          - key: "player_starting_reputation_bonus"
+            value_change: 50
+            scope: player
+    - branch_id: legacy_module
+      branch_name: "Legacy: Уникальный модуль"
+      conditions:
+        flags: ["legacy_choice_module"]
+      consequences:
+        reputation_changes: {}
+        unlocks_quests: []
+        world_state:
+          - key: "player_legacy_module_unlocked"
+            value_change: 1
+            scope: player
 content:
   sections:
     - id: legacy-choice
@@ -100,6 +176,10 @@ history:
     date: 2025-11-13
     author: concept_director
     changes: Финал «Возрождение Лондона» приведён к стандартизированному шаблону.
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: content_writer
+    changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
   checksum: ''
   schema_version: '1.0'

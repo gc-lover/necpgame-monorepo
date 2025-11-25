@@ -191,3 +191,72 @@ type TravelEventCooldown struct {
 	CooldownUntil  time.Time `json:"cooldown_until"`
 }
 
+type TriggerTravelEventRequest struct {
+	CharacterID uuid.UUID `json:"character_id"`
+	ZoneID      uuid.UUID `json:"zone_id"`
+	EpochID     *string   `json:"epoch_id,omitempty"`
+}
+
+type StartTravelEventRequest struct {
+	CharacterID uuid.UUID `json:"character_id"`
+}
+
+type SkillCheckRequest struct {
+	Skill       string    `json:"skill"`
+	CharacterID uuid.UUID `json:"character_id"`
+}
+
+type SkillCheckResponse struct {
+	Success         bool                   `json:"success"`
+	CriticalSuccess bool                   `json:"critical_success"`
+	CriticalFailure bool                   `json:"critical_failure"`
+	RollResult      int                    `json:"roll_result"`
+	DC              int                    `json:"dc"`
+	Modifiers       map[string]interface{} `json:"modifiers"`
+}
+
+type CompleteTravelEventRequest struct {
+	CharacterID uuid.UUID `json:"character_id"`
+	Success     bool      `json:"success"`
+}
+
+type TravelEventCompletionResponse struct {
+	EventInstanceID uuid.UUID              `json:"event_instance_id"`
+	Rewards         []TravelEventReward   `json:"rewards"`
+	Penalties       []TravelEventPenalty  `json:"penalties"`
+}
+
+type AvailableTravelEventsResponse struct {
+	ZoneID  uuid.UUID      `json:"zone_id"`
+	EpochID string         `json:"epoch_id"`
+	Events  []TravelEvent  `json:"events"`
+	Total   int            `json:"total"`
+}
+
+type EpochTravelEventsResponse struct {
+	EpochID string        `json:"epoch_id"`
+	Events  []TravelEvent `json:"events"`
+	Total   int           `json:"total"`
+}
+
+type TravelEventCooldownResponse struct {
+	CharacterID uuid.UUID              `json:"character_id"`
+	Cooldowns   []TravelEventCooldown `json:"cooldowns"`
+}
+
+type TravelEventProbabilityResponse struct {
+	EventType  string                 `json:"event_type"`
+	Probability float64               `json:"probability"`
+	Modifiers  map[string]interface{} `json:"modifiers"`
+}
+
+type TravelEventRewardsResponse struct {
+	EventID uuid.UUID            `json:"event_id"`
+	Rewards []TravelEventReward  `json:"rewards"`
+}
+
+type TravelEventPenaltiesResponse struct {
+	EventID   uuid.UUID            `json:"event_id"`
+	Penalties []TravelEventPenalty `json:"penalties"`
+}
+

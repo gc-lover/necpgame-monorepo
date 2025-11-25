@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Character Stats Service API
+  description: API для пересчёта и управления статами персонажей
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Character Stats
+    description: Пересчёт и управление статами персонажей
+
+paths:
+  /character/characters/{character_id}/recalculate-stats:
+    post:
+      tags:
+        - Character Stats
+      summary: Пересчёт статов
+      operationId: recalculateCharacterStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статы пересчитаны
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterStats"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /character/characters/{character_id}/stats:
+    get:
+      tags:
+        - Character Stats
+      summary: Текущие статы персонажа
+      operationId: getCharacterStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Текущие статы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterStats"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CharacterStats:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        base_stats:
+          type: object
+          properties:
+            health:
+              type: integer
+            max_health:
+              type: integer
+            armor:
+              type: integer
+            damage:
+              type: integer
+            attack_speed:
+              type: number
+            movement_speed:
+              type: number
+        equipment_bonuses:
+          type: object
+          additionalProperties: true
+        buff_bonuses:
+          type: object
+          additionalProperties: true
+        total_stats:
+          type: object
+          properties:
+            health:
+              type: integer
+            max_health:
+              type: integer
+            armor:
+              type: integer
+            damage:
+              type: integer
+            attack_speed:
+              type: number
+            movement_speed:
+              type: number
+        recalculated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+
+
+

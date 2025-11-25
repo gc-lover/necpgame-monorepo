@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: Social Relationships Ratings Service API
+  description: API для рейтингов и социального капитала
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Relationships Ratings
+    description: Рейтинги и социальный капитал
+
+paths:
+  /social/relationships/ratings/{player_id}:
+    get:
+      tags:
+        - Relationships Ratings
+      summary: Получить рейтинги персонажа
+      operationId: getPlayerRatings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Рейтинги персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRatings'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/ratings/{player_id}/update:
+    post:
+      tags:
+        - Relationships Ratings
+      summary: Обновить рейтинг
+      operationId: updateRating
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRatingRequest'
+      responses:
+        '200':
+          description: Рейтинг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRatings'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/social-capital/{player_id}:
+    get:
+      tags:
+        - Relationships Ratings
+      summary: Получить социальный капитал
+      operationId: getSocialCapital
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Социальный капитал
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialCapital'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerRatings:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        combat_rating:
+          type: integer
+        trade_rating:
+          type: integer
+        social_rating:
+          type: integer
+        overall_rating:
+          type: integer
+        total_ratings:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    UpdateRatingRequest:
+      type: object
+      required:
+        - target_player_id
+        - rating_type
+        - rating_value
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        rating_type:
+          type: string
+          enum: [combat, trade, social, overall]
+        rating_value:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    SocialCapital:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        capital_value:
+          type: integer
+        network_size:
+          type: integer
+        influence_score:
+          type: number
+          format: decimal
+        trust_score:
+          type: number
+          format: decimal
+        last_update:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+
+
+

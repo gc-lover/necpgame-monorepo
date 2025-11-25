@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: Social Guild Ranks Service API
+  description: API для управления рангами гильдий
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Guild Ranks
+    description: Управление рангами гильдий
+
+paths:
+  /social/guilds/{guild_id}/ranks:
+    get:
+      tags:
+        - Guild Ranks
+      summary: Получить список рангов гильдии
+      operationId: getGuildRanks
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+      responses:
+        '200':
+          description: Список рангов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRanksResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Guild Ranks
+      summary: Создать ранг в гильдии
+      operationId: createGuildRank
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRankRequest'
+      responses:
+        '201':
+          description: Ранг создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRank'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/ranks/{rank_id}:
+    put:
+      tags:
+        - Guild Ranks
+      summary: Обновить ранг гильдии
+      operationId: updateGuildRank
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+        - $ref: 'common.yaml#/components/parameters/RankId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRankRequest'
+      responses:
+        '200':
+          description: Ранг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRank'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Guild Ranks
+      summary: Удалить ранг гильдии
+      operationId: deleteGuildRank
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+        - $ref: 'common.yaml#/components/parameters/RankId'
+      responses:
+        '200':
+          description: Ранг удален
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+              example:
+                status: deleted
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CreateGuildRankRequest:
+      type: object
+      required:
+        - name
+        - permissions
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [invite_members, kick_members, manage_ranks, manage_bank, declare_war, manage_territory, view_logs]
+        order:
+          type: integer
+          minimum: 0
+
+    UpdateGuildRankRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [invite_members, kick_members, manage_ranks, manage_bank, declare_war, manage_territory, view_logs]
+        order:
+          type: integer
+          minimum: 0
+
+    GuildRank:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        order:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    GuildRanksResponse:
+      type: object
+      properties:
+        ranks:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildRank'
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+

@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Social Mentorship Proposals Service API
+  description: API для предложений наставничества
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Mentorship Proposals
+    description: Предложения наставничества
+
+paths:
+  /social/mentorship/proposal/create:
+    post:
+      tags:
+        - Mentorship Proposals
+      summary: Создать предложение наставничества
+      operationId: createMentorshipProposal
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorshipProposalRequest'
+      responses:
+        '201':
+          description: Предложение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipProposal'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/proposal/{proposalId}/accept:
+    post:
+      tags:
+        - Mentorship Proposals
+      summary: Принять предложение наставничества
+      operationId: acceptMentorshipProposal
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предложение принято
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorshipContract'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/proposal/{proposalId}/reject:
+    post:
+      tags:
+        - Mentorship Proposals
+      summary: Отклонить предложение наставничества
+      operationId: rejectMentorshipProposal
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предложение отклонено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: rejected
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CreateMentorshipProposalRequest:
+      type: object
+      required:
+        - mentor_id
+        - mentee_id
+        - message
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+        terms:
+          type: object
+          additionalProperties: true
+
+    MentorshipProposal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected, expired]
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    MentorshipContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, completed, terminated]
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+
+
+

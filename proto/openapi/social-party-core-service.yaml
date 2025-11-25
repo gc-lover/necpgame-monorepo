@@ -1,0 +1,274 @@
+openapi: 3.0.3
+info:
+  title: Social Party Core Service API
+  description: API для основных операций с группами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Party Core
+    description: Основные операции с группами
+
+paths:
+  /social/party:
+    post:
+      tags:
+        - Party Core
+      summary: Создать группу
+      operationId: createParty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartyRequest'
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Party Core
+      summary: Получить информацию о группе
+      operationId: getParty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: party_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о группе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/party/{partyId}:
+    get:
+      tags:
+        - Party Core
+      summary: Получить группу по ID
+      operationId: getPartyById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Группа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/party/{partyId}/transfer-leadership:
+    post:
+      tags:
+        - Party Core
+      summary: Передать лидерство
+      operationId: transferPartyLeadership
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferLeadershipRequest'
+      responses:
+        '200':
+          description: Лидерство передано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/party/{partyId}/leader:
+    get:
+      tags:
+        - Party Core
+      summary: Получить лидера группы
+      operationId: getPartyLeader
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Лидер группы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyMember'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/party/player/{accountId}:
+    get:
+      tags:
+        - Party Core
+      summary: Получить группу игрока
+      operationId: getPlayerParty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Группа игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Party:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        leader_id:
+          type: string
+          format: uuid
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyMember'
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 5
+        loot_mode:
+          type: string
+          enum: [free_for_all, round_robin, need_before_greed, master_looter]
+          default: free_for_all
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreatePartyRequest:
+      type: object
+      properties:
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 5
+        loot_mode:
+          type: string
+          enum: [free_for_all, round_robin, need_before_greed, master_looter]
+
+    PartyMember:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [leader, member]
+        joined_at:
+          type: string
+          format: date-time
+
+    TransferLeadershipRequest:
+      type: object
+      required:
+        - new_leader_id
+      properties:
+        new_leader_id:
+          type: string
+          format: uuid
+
+security:
+  - BearerAuth: []
+
+
+
+

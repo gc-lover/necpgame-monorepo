@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: Social Party Loot Service API
+  description: API для распределения лута в группах
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Party Loot
+    description: Распределение лута в группах
+
+paths:
+  /social/party/{partyId}/loot-mode:
+    get:
+      tags:
+        - Party Loot
+      summary: Получить текущий режим распределения лута
+      operationId: getLootMode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Режим распределения лута
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootModeResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Party Loot
+      summary: Изменить режим распределения лута
+      operationId: changeLootMode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeLootModeRequest'
+      responses:
+        '200':
+          description: Режим изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Party'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/party/{partyId}/loot/distribute:
+    post:
+      tags:
+        - Party Loot
+      summary: Распределить лут между участниками группы
+      operationId: distributeLoot
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeLootRequest'
+      responses:
+        '200':
+          description: Лут распределен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootDistributionResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/party/{partyId}/loot/roll:
+    post:
+      tags:
+        - Party Loot
+      summary: Бросить кубик за лут
+      operationId: rollForLoot
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollForLootRequest'
+      responses:
+        '200':
+          description: Результат броска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LootRollResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Party:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        loot_mode:
+          type: string
+          enum: [free_for_all, round_robin, need_before_greed, master_looter]
+
+    LootModeResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        loot_mode:
+          type: string
+          enum: [free_for_all, round_robin, need_before_greed, master_looter]
+
+    ChangeLootModeRequest:
+      type: object
+      required:
+        - loot_mode
+      properties:
+        loot_mode:
+          type: string
+          enum: [free_for_all, round_robin, need_before_greed, master_looter]
+
+    DistributeLootRequest:
+      type: object
+      required:
+        - item_id
+        - target_account_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        target_account_id:
+          type: string
+          format: uuid
+
+    LootDistributionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        item_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+
+    RollForLootRequest:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+
+    LootRollResponse:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        roll_value:
+          type: integer
+          minimum: 1
+          maximum: 100
+        winner_id:
+          type: string
+          format: uuid
+          nullable: true
+
+security:
+  - BearerAuth: []
+
+
+
+

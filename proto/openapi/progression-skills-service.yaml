@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: Progression Skills Service API
+  description: API для навыков персонажей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Skills
+    description: Управление навыками персонажей
+
+paths:
+  /progression/skills/{player_id}:
+    get:
+      tags:
+        - Skills
+      summary: Получить навыки персонажа
+      operationId: getPlayerSkills
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Навыки персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSkillsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /progression/skills/experience/add:
+    post:
+      tags:
+        - Skills
+      summary: Добавить опыт навыку
+      operationId: addSkillExperience
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSkillExperienceRequest'
+      responses:
+        '200':
+          description: Опыт добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillExperienceResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /progression/skills/unlock:
+    post:
+      tags:
+        - Skills
+      summary: Разблокировать навык
+      operationId: unlockSkill
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockSkillRequest'
+      responses:
+        '200':
+          description: Навык разблокирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillProgress'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /progression/skills/tree/{player_id}:
+    get:
+      tags:
+        - Skills
+      summary: Получить дерево навыков
+      operationId: getSkillTree
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Дерево навыков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillTreeResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    SkillProgress:
+      type: object
+      properties:
+        skill_id:
+          type: string
+          format: uuid
+        skill_name:
+          type: string
+        level:
+          type: integer
+          minimum: 0
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        is_unlocked:
+          type: boolean
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    PlayerSkillsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillProgress'
+        total:
+          type: integer
+
+    AddSkillExperienceRequest:
+      type: object
+      required:
+        - player_id
+        - skill_id
+        - experience_amount
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        experience_amount:
+          type: integer
+          minimum: 1
+        source:
+          type: string
+          enum: [skill_use, quest_reward, achievement]
+
+    SkillExperienceResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+        experience:
+          type: integer
+        experience_to_next_level:
+          type: integer
+        level_up:
+          type: boolean
+
+    UnlockSkillRequest:
+      type: object
+      required:
+        - player_id
+        - skill_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+
+    SkillTreeResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        tree:
+          type: object
+          additionalProperties: true
+
+security:
+  - BearerAuth: []
+
+
+
+

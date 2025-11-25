@@ -1,0 +1,115 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Progression Attributes Service API
+  description: API для управления атрибутами персонажей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Progression Attributes
+    description: Управление атрибутами персонажей
+
+paths:
+  /gameplay/progression/attributes/{playerId}:
+    get:
+      tags:
+        - Progression Attributes
+      summary: Получить атрибуты игрока
+      operationId: getPlayerAttributes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Атрибуты игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAttributesResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/progression/attributes/points/{playerId}:
+    get:
+      tags:
+        - Progression Attributes
+      summary: Получить доступные очки атрибутов
+      operationId: getAvailableAttributePoints
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Доступные очки атрибутов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailableAttributePointsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    PlayerAttributesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        total_points_spent:
+          type: integer
+          minimum: 0
+
+    AvailableAttributePointsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        available_points:
+          type: integer
+          minimum: 0
+        total_points_earned:
+          type: integer
+          minimum: 0
+
+security:
+  - BearerAuth: []
+

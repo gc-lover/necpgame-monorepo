@@ -10,6 +10,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.17.0
 	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
@@ -27,7 +28,6 @@ require (
 	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect

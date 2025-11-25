@@ -1,0 +1,847 @@
+openapi: 3.0.3
+info:
+  title: Social Reputation Service API
+  description: API для системы репутации
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Reputation
+    description: Система репутации
+
+paths:
+  /social/reputation/{player_id}:
+    get:
+      tags:
+        - Reputation
+      summary: Получить репутацию персонажа
+      operationId: getReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Репутация персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerReputation'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/faction/{faction_id}:
+    get:
+      tags:
+        - Reputation
+      summary: Получить репутацию с фракцией
+      operationId: getFactionReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Репутация с фракцией
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionReputation'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/change:
+    post:
+      tags:
+        - Reputation
+      summary: Изменить репутацию
+      operationId: changeReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeReputationRequest'
+      responses:
+        '200':
+          description: Репутация изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationChangeResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/tier:
+    get:
+      tags:
+        - Reputation
+      summary: Получить уровень репутации
+      operationId: getReputationTier
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уровень репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationTier'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/heat:
+    get:
+      tags:
+        - Reputation
+      summary: Получить Heat
+      operationId: getHeat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Heat персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatStatus'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/heat/reduce:
+    post:
+      tags:
+        - Reputation
+      summary: Снизить Heat
+      operationId: reduceHeat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReduceHeatRequest'
+      responses:
+        '200':
+          description: Heat снижен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatStatus'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/access:
+    get:
+      tags:
+        - Reputation
+      summary: Проверить доступ на основе репутации
+      operationId: checkReputationAccess
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: access_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [territory, trade, quest, npc_recruitment, vip_services]
+      responses:
+        '200':
+          description: Статус доступа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessStatus'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/discounts:
+    get:
+      tags:
+        - Reputation
+      summary: Получить скидки на основе репутации
+      operationId: getReputationDiscounts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Скидки на основе репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationDiscounts'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/recovery/start:
+    post:
+      tags:
+        - Reputation
+      summary: Начать восстановление репутации
+      operationId: startReputationRecovery
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRecoveryRequest'
+      responses:
+        '200':
+          description: Восстановление начато
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryStatus'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/recovery/status:
+    get:
+      tags:
+        - Reputation
+      summary: Получить статус восстановления репутации
+      operationId: getRecoveryStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус восстановления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryStatus'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/faction-relations:
+    get:
+      tags:
+        - Reputation
+      summary: Получить отношения с фракциями
+      operationId: getFactionRelations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Отношения с фракциями
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionRelationsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/effects:
+    get:
+      tags:
+        - Reputation
+      summary: Получить эффекты репутации
+      operationId: getReputationEffects
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Эффекты репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationEffects'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/history:
+    get:
+      tags:
+        - Reputation
+      summary: Получить историю изменений репутации
+      operationId: getReputationHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История изменений репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationHistoryResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerReputation:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_reputations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionReputation'
+        overall_reputation:
+          type: integer
+          minimum: -100
+          maximum: 100
+        last_update:
+          type: string
+          format: date-time
+
+    FactionReputation:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        faction_name:
+          type: string
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_color:
+          type: string
+        heat:
+          type: integer
+          minimum: 0
+          maximum: 100
+        last_change:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+
+    ChangeReputationRequest:
+      type: object
+      required:
+        - faction_id
+        - change_amount
+        - reason
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        change_amount:
+          type: integer
+          description: Изменение репутации (может быть отрицательным)
+        reason:
+          type: string
+          enum: [quest_completed, enemy_killed, npc_interaction, transaction, world_event, player_order, other]
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID источника изменения
+
+    ReputationChangeResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        old_reputation:
+          type: integer
+        new_reputation:
+          type: integer
+        old_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        new_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_changed:
+          type: boolean
+        heat_change:
+          type: integer
+        new_heat:
+          type: integer
+
+    ReputationTier:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_name:
+          type: string
+        tier_color:
+          type: string
+        reputation_value:
+          type: integer
+        tier_range:
+          type: object
+          properties:
+            min:
+              type: integer
+            max:
+              type: integer
+        effects:
+          $ref: '#/components/schemas/ReputationEffects'
+
+    HeatStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        heat_value:
+          type: integer
+          minimum: 0
+          maximum: 100
+        heat_level:
+          type: string
+          enum: [none, low, medium, high, critical]
+        decay_rate:
+          type: number
+          format: decimal
+        next_decay:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+
+    ReduceHeatRequest:
+      type: object
+      required:
+        - faction_id
+        - reduction_method
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        reduction_method:
+          type: string
+          enum: [time, quest, payment, reputation_improvement]
+        amount:
+          type: integer
+          minimum: 1
+          description: Количество Heat для снижения
+
+    AccessStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        access_type:
+          type: string
+          enum: [territory, trade, quest, npc_recruitment, vip_services]
+        has_access:
+          type: boolean
+        access_level:
+          type: string
+          enum: [blocked, restricted, normal, enhanced]
+        reason:
+          type: string
+          nullable: true
+        required_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+          nullable: true
+
+    ReputationDiscounts:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        price_modifier:
+          type: number
+          format: decimal
+          description: Модификатор цены (1.0 = без изменений, 0.9 = скидка 10%, 1.5 = наценка 50%)
+        discount_percentage:
+          type: number
+          format: decimal
+          description: Процент скидки
+        applicable_categories:
+          type: array
+          items:
+            type: string
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+
+    StartRecoveryRequest:
+      type: object
+      required:
+        - faction_id
+        - recovery_method
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        recovery_method:
+          type: string
+          enum: [quest, payment, time, reputation_improvement]
+        target_reputation:
+          type: integer
+          minimum: -100
+          maximum: 100
+          description: Целевая репутация для восстановления
+
+    RecoveryStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        recovery_method:
+          type: string
+          enum: [quest, payment, time, reputation_improvement]
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, cancelled]
+        current_reputation:
+          type: integer
+        target_reputation:
+          type: integer
+        progress_percentage:
+          type: number
+          format: decimal
+        started_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+
+    FactionRelationsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        relations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionReputation'
+        total:
+          type: integer
+
+    ReputationEffects:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        territory_access:
+          type: string
+          enum: [blocked, restricted, normal, enhanced]
+        trade_access:
+          type: string
+          enum: [blocked, minimal, restricted, normal, enhanced]
+        npc_aggression:
+          type: string
+          enum: [none, low, medium, high]
+        price_modifier:
+          type: number
+          format: decimal
+        quest_access:
+          type: string
+          enum: [none, limited, restricted, normal, enhanced]
+        vip_services:
+          type: boolean
+        npc_recruitment:
+          type: boolean
+        exclusive_locations:
+          type: boolean
+        faction_bonuses:
+          type: array
+          items:
+            type: string
+        decay_modifier:
+          type: number
+          format: decimal
+
+    ReputationHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+          nullable: true
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReputationHistoryEntry'
+        total:
+          type: integer
+
+    ReputationHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        change_amount:
+          type: integer
+        reason:
+          type: string
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+        old_reputation:
+          type: integer
+        new_reputation:
+          type: integer
+        old_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        new_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

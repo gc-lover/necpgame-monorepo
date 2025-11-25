@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+  title: Social Reputation Heat Service API
+  description: API для системы Heat (враждебности) в репутации
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Reputation Heat
+    description: Система Heat (враждебности)
+
+paths:
+  /social/reputation/{player_id}/heat:
+    get:
+      tags:
+        - Reputation Heat
+      summary: Получить Heat
+      operationId: getHeat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Heat персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatStatus'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/heat/reduce:
+    post:
+      tags:
+        - Reputation Heat
+      summary: Снизить Heat
+      operationId: reduceHeat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReduceHeatRequest'
+      responses:
+        '200':
+          description: Heat снижен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatStatus'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    HeatStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        heat_value:
+          type: integer
+          minimum: 0
+          maximum: 100
+        heat_level:
+          type: string
+          enum: [none, low, medium, high, critical]
+        decay_rate:
+          type: number
+          format: decimal
+        next_decay:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+
+    ReduceHeatRequest:
+      type: object
+      required:
+        - faction_id
+        - reduction_method
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        reduction_method:
+          type: string
+          enum: [time, quest, payment, reputation_improvement]
+        amount:
+          type: integer
+          minimum: 1
+          description: Количество Heat для снижения
+
+security:
+  - BearerAuth: []
+
+
+
+

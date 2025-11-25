@@ -4,22 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/necpgame/inventory-service-go/models"
+	"github.com/necpgame/inventory-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
-
-type InventoryServiceInterface interface {
-	GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error)
-	AddItem(ctx context.Context, characterID uuid.UUID, req *models.AddItemRequest) error
-	RemoveItem(ctx context.Context, characterID uuid.UUID, itemID uuid.UUID) error
-	EquipItem(ctx context.Context, characterID uuid.UUID, req *models.EquipItemRequest) error
-	UnequipItem(ctx context.Context, characterID uuid.UUID, itemID uuid.UUID) error
-}
 
 type HTTPServer struct {
 	addr             string
@@ -42,13 +32,12 @@ func NewHTTPServer(addr string, inventoryService InventoryServiceInterface) *HTT
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	api := router.PathPrefix("/api/v1").Subrouter()
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 	
-	api.HandleFunc("/inventory/{characterId}", server.getInventory).Methods("GET")
-	api.HandleFunc("/inventory/{characterId}/items", server.addItem).Methods("POST")
-	api.HandleFunc("/inventory/{characterId}/items/{itemId}", server.removeItem).Methods("DELETE")
-	api.HandleFunc("/inventory/{characterId}/equip", server.equipItem).Methods("POST")
-	api.HandleFunc("/inventory/{characterId}/unequip/{itemId}", server.unequipItem).Methods("POST")
+	handlers := NewInventoryHandlers(inventoryService)
+	api.HandlerWithOptions(handlers, api.GorillaServerOptions{
+		BaseRouter: apiRouter,
+	})
 	
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -86,157 +75,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) getInventory(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterIDStr := vars["characterId"]
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character id")
-		return
-	}
-
-	response, err := s.inventoryService.GetInventory(r.Context(), characterID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get inventory")
-		s.respondError(w, http.StatusInternalServerError, "failed to get inventory")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
-}
-
-func (s *HTTPServer) addItem(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterIDStr := vars["characterId"]
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character id")
-		return
-	}
-
-	var req models.AddItemRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.ItemID == "" || req.StackCount <= 0 {
-		s.respondError(w, http.StatusBadRequest, "invalid item id or stack count")
-		return
-	}
-
-	err = s.inventoryService.AddItem(r.Context(), characterID, &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to add item")
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "full") {
-			s.respondError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		s.respondError(w, http.StatusInternalServerError, "failed to add item")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) removeItem(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterIDStr := vars["characterId"]
-	itemIDStr := vars["itemId"]
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character id")
-		return
-	}
-
-	itemID, err := uuid.Parse(itemIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid item id")
-		return
-	}
-
-	err = s.inventoryService.RemoveItem(r.Context(), characterID, itemID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to remove item")
-		if strings.Contains(err.Error(), "not found") {
-			s.respondError(w, http.StatusNotFound, err.Error())
-			return
-		}
-		s.respondError(w, http.StatusInternalServerError, "failed to remove item")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) equipItem(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterIDStr := vars["characterId"]
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character id")
-		return
-	}
-
-	var req models.EquipItemRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.ItemID == "" || req.EquipSlot == "" {
-		s.respondError(w, http.StatusBadRequest, "invalid item id or equip slot")
-		return
-	}
-
-	err = s.inventoryService.EquipItem(r.Context(), characterID, &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to equip item")
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "cannot be equipped") {
-			s.respondError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		s.respondError(w, http.StatusInternalServerError, "failed to equip item")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) unequipItem(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterIDStr := vars["characterId"]
-	itemIDStr := vars["itemId"]
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character id")
-		return
-	}
-
-	itemID, err := uuid.Parse(itemIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid item id")
-		return
-	}
-
-	err = s.inventoryService.UnequipItem(r.Context(), characterID, itemID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to unequip item")
-		if strings.Contains(err.Error(), "not found") {
-			s.respondError(w, http.StatusNotFound, err.Error())
-			return
-		}
-		s.respondError(w, http.StatusInternalServerError, "failed to unequip item")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})

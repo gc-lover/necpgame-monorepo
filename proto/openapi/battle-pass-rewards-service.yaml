@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: Battle Pass Rewards Service API
+  description: API для наград боевого пропуска
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8093/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Rewards
+    description: Награды боевого пропуска
+
+paths:
+  /battle-pass/rewards:
+    get:
+      tags:
+        - Rewards
+      summary: Получить награды уровня
+      operationId: getRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: season_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: track
+          in: query
+          schema:
+            type: string
+            enum: [free, premium]
+      responses:
+        "200":
+          description: Награды уровня
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BattlePassReward"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /battle-pass/rewards/claim:
+    post:
+      tags:
+        - Rewards
+      summary: Получить награду
+      operationId: claimReward
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimRewardRequest"
+      responses:
+        "200":
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimRewardResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /battle-pass/rewards/claimed/{player_id}:
+    get:
+      tags:
+        - Rewards
+      summary: Получить полученные награды игрока
+      operationId: getClaimedRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Полученные награды
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimedRewardsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /battle-pass/premium/claim-all:
+    post:
+      tags:
+        - Rewards
+      summary: Получить все премиум награды
+      operationId: claimAllPremium
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimAllPremiumRequest"
+      responses:
+        "200":
+          description: Все награды получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimAllPremiumResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    BattlePassReward:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        track:
+          type: string
+          enum: [free, premium]
+        reward_type:
+          type: string
+          enum: [currency, item, cosmetic, xp_boost, title]
+        reward_data:
+          type: object
+          additionalProperties: true
+
+    ClaimRewardRequest:
+      type: object
+      required:
+        - character_id
+        - reward_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        reward_id:
+          type: string
+          format: uuid
+
+    ClaimRewardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        reward:
+          type: object
+          additionalProperties: true
+
+    ClaimedRewardsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        claimed_rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/BattlePassReward"
+        total:
+          type: integer
+
+    ClaimAllPremiumRequest:
+      type: object
+      required:
+        - player_id
+        - season_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+
+    ClaimAllPremiumResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        rewards_claimed:
+          type: array
+          items:
+            $ref: "#/components/schemas/BattlePassReward"
+        total_rewards:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

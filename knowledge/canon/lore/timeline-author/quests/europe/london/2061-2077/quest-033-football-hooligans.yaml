@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-23T12:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +45,68 @@ summary:
     - Аутентичные элементы английского хулиганизма: шарфы, кричалки, пабная атмосфера.
     - Массовая драка с участием десятков NPC и динамическим вмешательством полиции.
     - Система риска: репутационный рост среди фирм при угрозе ареста.
+quest_definition:
+  quest_type: side
+  level_min: 15
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: choose_firm
+      text: "Выбрать фирму и пройти их испытание на лояльность"
+      type: choice
+      target: football_firm_selection
+      count: 1
+      optional: false
+    - id: attend_derby
+      text: "Посетить матч дерби и подготовить сигнал к драке"
+      type: visit
+      target: football_stadium
+      count: 1
+      optional: false
+    - id: participate_brawl
+      text: "Участвовать в массовом бою на окраине стадиона"
+      type: combat
+      target: hooligan_brawl
+      count: 1
+      optional: false
+    - id: escape_police
+      text: "Уйти от полиции или принять последствия ареста"
+      type: choice
+      target: police_encounter
+      count: 1
+      optional: false
+  rewards:
+    experience: 1500
+    money: 0
+    items: []
+    reputation: {}
+    unlocks: []
+  branches:
+    - branch_id: escape_success
+      branch_name: "Успешный побег"
+      conditions:
+        flags: ["police_escape_success"]
+      consequences:
+        reputation_changes:
+          Football_Firms: 10
+        unlocks_quests: []
+        world_state: []
+    - branch_id: arrested
+      branch_name: "Арест"
+      conditions:
+        flags: ["police_arrested"]
+      consequences:
+        reputation_changes:
+          Football_Firms: 5
+        unlocks_quests: []
+        world_state:
+          - key: "player_wanted_status"
+            value: true
+            scope: player
 content:
   sections:
     - id: setup
@@ -103,6 +165,10 @@ history:
     date: 2025-11-13
     author: Concept Director
     changes: Квест «Футбольные Хулиганы» переведён из Markdown в YAML с описанием механик и рисков.
+  - version: '1.1.0'
+    date: 2025-11-23
+    author: content_writer
+    changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
   checksum: ''
   schema_version: '1.0'

@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Anti-Smurf Service API
+  description: API для обнаружения смурфов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Anti-Smurf
+    description: Обнаружение смурфов
+
+paths:
+  /matchmaking/anti-smurf/check:
+    post:
+      tags:
+        - Anti-Smurf
+      summary: Проверить игрока на смурф
+      operationId: checkSmurf
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckSmurfRequest"
+      responses:
+        "200":
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SmurfCheckResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /matchmaking/anti-smurf/status/{player_id}:
+    get:
+      tags:
+        - Anti-Smurf
+      summary: Получить статус смурфа
+      operationId: getSmurfStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус смурфа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SmurfStatus"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CheckSmurfRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    SmurfCheckResult:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        is_smurf:
+          type: boolean
+        confidence:
+          type: number
+          format: float
+        reasons:
+          type: array
+          items:
+            type: string
+        restrictions_applied:
+          type: array
+          items:
+            type: string
+
+    SmurfStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        is_smurf:
+          type: boolean
+        confidence:
+          type: number
+          format: float
+        restrictions:
+          type: array
+          items:
+            type: string
+        last_checked:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+
+

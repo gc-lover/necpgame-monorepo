@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: Economy Inventory Weight Service API
+  description: API для управления весом инвентаря
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Inventory Weight
+    description: Управление весом инвентаря
+
+paths:
+  /economy/inventory/{characterId}/weight:
+    get:
+      tags:
+        - Inventory Weight
+      summary: Получить текущий вес инвентаря
+      operationId: getInventoryWeight
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Текущий вес инвентаря
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryWeight"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/weight/limit:
+    get:
+      tags:
+        - Inventory Weight
+      summary: Получить лимит веса инвентаря
+      operationId: getInventoryWeightLimit
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Лимит веса инвентаря
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryWeightLimit"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/weight/validate:
+    post:
+      tags:
+        - Inventory Weight
+      summary: Валидировать вес инвентаря
+      operationId: validateInventoryWeight
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateWeightRequest"
+      responses:
+        "200":
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeightValidationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    InventoryWeight:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_weight:
+          type: number
+          format: float
+        max_weight:
+          type: number
+          format: float
+        weight_percentage:
+          type: number
+          format: float
+        is_overloaded:
+          type: boolean
+
+    InventoryWeightLimit:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        base_limit:
+          type: number
+          format: float
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              value:
+                type: number
+        final_limit:
+          type: number
+          format: float
+
+    ValidateWeightRequest:
+      type: object
+      required:
+        - item_weight
+      properties:
+        item_weight:
+          type: number
+          format: float
+        item_quantity:
+          type: integer
+          minimum: 1
+          default: 1
+
+    WeightValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        current_weight:
+          type: number
+          format: float
+        max_weight:
+          type: number
+          format: float
+        new_weight:
+          type: number
+          format: float
+        can_add:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
+
+security:
+  - BearerAuth: []
+

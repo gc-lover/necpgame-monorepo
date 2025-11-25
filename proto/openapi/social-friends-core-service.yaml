@@ -1,0 +1,193 @@
+openapi: 3.0.3
+info:
+  title: Social Friends Core Service API
+  description: API для основных операций с друзьями
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Friends Core
+    description: Основные операции с друзьями
+
+paths:
+  /social/friends:
+    get:
+      tags:
+        - Friends Core
+      summary: Получить список друзей
+      operationId: getFriends
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: online_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/{friend_id}:
+    get:
+      tags:
+        - Friends Core
+      summary: Получить информацию о друге
+      operationId: getFriend
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/FriendId'
+      responses:
+        '200':
+          description: Информация о друге
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Friends Core
+      summary: Удалить друга
+      operationId: removeFriend
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/FriendId'
+      responses:
+        '200':
+          description: Друг удален
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+              example:
+                status: removed
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/online:
+    get:
+      tags:
+        - Friends Core
+      summary: Получить список онлайн друзей
+      operationId: getOnlineFriends
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список онлайн друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/count:
+    get:
+      tags:
+        - Friends Core
+      summary: Получить количество друзей
+      operationId: getFriendsCount
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Количество друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendsCountResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Friendship:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_a_id:
+          type: string
+          format: uuid
+        character_b_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, blocked]
+        initiator_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FriendListResponse:
+      type: object
+      properties:
+        friends:
+          type: array
+          items:
+            $ref: '#/components/schemas/Friendship'
+        total:
+          type: integer
+
+    FriendsCountResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+        online_count:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+

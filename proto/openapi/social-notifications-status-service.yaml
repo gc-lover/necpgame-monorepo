@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Social Notifications Status Service API
+  description: API для управления статусом уведомлений
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Notifications Status
+    description: Управление статусом уведомлений
+
+paths:
+  /social/notifications/{id}/status:
+    put:
+      tags:
+        - Notifications Status
+      summary: Обновить статус уведомления
+      operationId: updateNotificationStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationStatusRequest"
+      responses:
+        "200":
+          description: Статус обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/notifications/batch/read:
+    post:
+      tags:
+        - Notifications Status
+      summary: Отметить несколько уведомлений как прочитанные
+      operationId: markNotificationsAsRead
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchReadRequest"
+      responses:
+        "200":
+          description: Уведомления отмечены как прочитанные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [unread, read, archived]
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateNotificationStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [read, archived]
+
+    BatchReadRequest:
+      type: object
+      required:
+        - account_id
+        - notification_ids
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        notification_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+
+security:
+  - BearerAuth: []
+
+
+
+

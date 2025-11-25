@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Social Friends Status Service API
+  description: API для статусов друзей и последних контактов
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Friends Status
+    description: Статусы друзей и контакты
+
+paths:
+  /social/friends/{friend_id}/status:
+    get:
+      tags:
+        - Friends Status
+      summary: Получить онлайн-статус друга
+      operationId: getFriendStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: friend_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус друга
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendStatusResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/status/batch:
+    get:
+      tags:
+        - Friends Status
+      summary: Получить статусы нескольких друзей
+      operationId: getFriendsStatusBatch
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: friend_ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+      responses:
+        '200':
+          description: Статусы друзей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendsStatusBatchResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/recent:
+    get:
+      tags:
+        - Friends Status
+      summary: Получить последние контакты
+      operationId: getRecentContacts
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Последние контакты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecentContactsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/recent/{player_id}:
+    post:
+      tags:
+        - Friends Status
+      summary: Добавить игрока в последние контакты
+      operationId: addToRecentContacts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Игрок добавлен в контакты
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+              example:
+                status: added
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    FriendStatusResponse:
+      type: object
+      properties:
+        friend_id:
+          type: string
+          format: uuid
+        is_online:
+          type: boolean
+        last_seen:
+          type: string
+          format: date-time
+        current_session_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    FriendsStatusBatchResponse:
+      type: object
+      properties:
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/FriendStatusResponse'
+        total:
+          type: integer
+
+    RecentContactsResponse:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecentContact'
+        total:
+          type: integer
+
+    RecentContact:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        last_interaction_at:
+          type: string
+          format: date-time
+        interaction_count:
+          type: integer
+        is_friend:
+          type: boolean
+        is_online:
+          type: boolean
+
+security:
+  - BearerAuth: []
+
+

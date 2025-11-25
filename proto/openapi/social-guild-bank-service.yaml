@@ -1,0 +1,258 @@
+openapi: 3.0.3
+info:
+  title: Social Guild Bank Service API
+  description: API для банка гильдий
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Guild Bank
+    description: Банк гильдий
+
+paths:
+  /social/guilds/{guild_id}/bank:
+    get:
+      tags:
+        - Guild Bank
+      summary: Получить состояние банка гильдии
+      operationId: getGuildBank
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние банка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBank'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/bank/deposit:
+    post:
+      tags:
+        - Guild Bank
+      summary: Внести депозит в банк гильдии
+      operationId: depositToGuildBank
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuildBankDepositRequest'
+      responses:
+        '200':
+          description: Депозит внесён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBankTransaction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/bank/withdraw:
+    post:
+      tags:
+        - Guild Bank
+      summary: Снять средства из банка гильдии
+      operationId: withdrawFromGuildBank
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuildBankWithdrawRequest'
+      responses:
+        '200':
+          description: Средства сняты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBankTransaction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/bank/transactions:
+    get:
+      tags:
+        - Guild Bank
+      summary: Получить историю транзакций банка гильдии
+      operationId: getGuildBankTransactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBankTransactionsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    GuildBank:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        currency:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        updated_at:
+          type: string
+          format: date-time
+
+    GuildBankDepositRequest:
+      type: object
+      required:
+        - currency
+      properties:
+        currency:
+          type: integer
+          minimum: 1
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+
+    GuildBankWithdrawRequest:
+      type: object
+      required:
+        - currency
+      properties:
+        currency:
+          type: integer
+          minimum: 1
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+
+    GuildBankTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - deposit
+            - withdraw
+        currency:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+
+    GuildBankTransactionsResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildBankTransaction'
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

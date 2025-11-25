@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: Common Base API Components
+  description: Базовые компоненты для всех OpenAPI спецификаций
+  version: 1.0.0
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+
+    BaseEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор
+
+    TimestampFields:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          description: Дата истечения
+          nullable: true
+
+    BaseEntityWithTimestamps:
+      allOf:
+        - $ref: "#/components/schemas/BaseEntity"
+        - $ref: "#/components/schemas/TimestampFields"
+
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          description: Статус операции
+
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Статус операции
+
+
+

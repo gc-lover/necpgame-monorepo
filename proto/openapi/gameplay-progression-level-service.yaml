@@ -1,0 +1,242 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Progression Level Service API
+  description: API для управления уровнями и опытом персонажей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Progression Level
+    description: Управление уровнями и опытом
+
+paths:
+  /gameplay/progression/experience/calculate:
+    get:
+      tags:
+        - Progression Level
+      summary: Рассчитать опыт
+      operationId: calculateExperience
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: base_xp
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: source
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [combat:enemy-killed, quest:completed, skill:used, exploration:area-discovered, achievement:unlocked]
+        - name: level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: modifiers
+          in: query
+          schema:
+            type: object
+            additionalProperties: true
+      responses:
+        "200":
+          description: Результат расчёта опыта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperienceCalculationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/progression/level/{playerId}:
+    get:
+      tags:
+        - Progression Level
+      summary: Получить уровень игрока
+      operationId: getPlayerLevel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Уровень игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerLevelResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/progression/level/check:
+    post:
+      tags:
+        - Progression Level
+      summary: Проверить повышение уровня
+      operationId: checkLevelUp
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckLevelUpRequest"
+      responses:
+        "200":
+          description: Результат проверки повышения уровня
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LevelUpCheckResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/progression/level/requirements/{level}:
+    get:
+      tags:
+        - Progression Level
+      summary: Получить требования к уровню
+      operationId: getLevelRequirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: level
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Требования к уровню
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LevelRequirementsResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ExperienceCalculationResponse:
+      type: object
+      properties:
+        base_xp:
+          type: integer
+        modifiers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        final_xp:
+          type: integer
+        calculation_details:
+          type: object
+          additionalProperties: true
+
+    PlayerLevelResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+
+    CheckLevelUpRequest:
+      type: object
+      required:
+        - player_id
+        - current_experience
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        current_experience:
+          type: integer
+          minimum: 0
+        new_experience:
+          type: integer
+          minimum: 0
+
+    LevelUpCheckResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        level_up_available:
+          type: boolean
+        current_level:
+          type: integer
+        new_level:
+          type: integer
+          nullable: true
+        attribute_points_gained:
+          type: integer
+          nullable: true
+        skill_points_gained:
+          type: integer
+          nullable: true
+
+    LevelRequirementsResponse:
+      type: object
+      properties:
+        level:
+          type: integer
+        experience_required:
+          type: integer
+        cumulative_experience:
+          type: integer
+        attribute_points_reward:
+          type: integer
+        skill_points_reward:
+          type: integer
+
+security:
+  - BearerAuth: []
+

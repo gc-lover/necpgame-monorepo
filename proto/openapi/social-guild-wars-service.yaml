@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: Social Guild Wars Service API
+  description: API для войн между гильдиями
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Guild Wars
+    description: Войны между гильдиями
+
+paths:
+  /social/guilds/{guild_id}/wars:
+    get:
+      tags:
+        - Guild Wars
+      summary: Получить список войн гильдии
+      operationId: getGuildWars
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - declared
+              - active
+              - ended
+              - cancelled
+      responses:
+        '200':
+          description: Список войн
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildWarsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/wars/declare:
+    post:
+      tags:
+        - Guild Wars
+      summary: Объявить войну другой гильдии
+      operationId: declareGuildWar
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareGuildWarRequest'
+      responses:
+        '200':
+          description: Война объявлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildWar'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/wars/{war_id}:
+    get:
+      tags:
+        - Guild Wars
+      summary: Получить информацию о войне
+      operationId: getGuildWar
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о войне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildWar'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/wars/{war_id}/end:
+    post:
+      tags:
+        - Guild Wars
+      summary: Завершить войну
+      operationId: endGuildWar
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndGuildWarRequest'
+      responses:
+        '200':
+          description: Война завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildWar'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    GuildWar:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        attacker_guild_id:
+          type: string
+          format: uuid
+        defender_guild_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - declared
+            - active
+            - ended
+            - cancelled
+        winner_guild_id:
+          type: string
+          format: uuid
+          nullable: true
+        declared_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    DeclareGuildWarRequest:
+      type: object
+      required:
+        - target_guild_id
+      properties:
+        target_guild_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 500
+
+    EndGuildWarRequest:
+      type: object
+      required:
+        - winner_guild_id
+      properties:
+        winner_guild_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 500
+
+    GuildWarsResponse:
+      type: object
+      properties:
+        wars:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildWar'
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

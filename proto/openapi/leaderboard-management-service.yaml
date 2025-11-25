@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: Leaderboard Management Service API
+  description: API для управления лидербордами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Leaderboard Management
+    description: Управление лидербордами
+
+paths:
+  /world/leaderboards:
+    get:
+      tags:
+        - Leaderboard Management
+      summary: Получить список лидербордов
+      operationId: listLeaderboards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [global, class, seasonal, friend, guild]
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список лидербордов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardListResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/leaderboards/{leaderboardId}:
+    get:
+      tags:
+        - Leaderboard Management
+      summary: Получить лидерборд
+      operationId: getLeaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leaderboardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Лидерборд
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardDetails"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/leaderboards/{leaderboardId}/top:
+    get:
+      tags:
+        - Leaderboard Management
+      summary: Получить топ игроков лидерборда
+      operationId: getLeaderboardTop
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leaderboardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Топ игроков
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/leaderboards/{leaderboardId}/rank/{playerId}:
+    get:
+      tags:
+        - Leaderboard Management
+      summary: Получить позицию игрока в лидерборде
+      operationId: getPlayerRankInLeaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leaderboardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Позиция игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerRank"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/leaderboards/{leaderboardId}/around/{playerId}:
+    get:
+      tags:
+        - Leaderboard Management
+      summary: Получить соседние позиции игрока
+      operationId: getRankAround
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leaderboardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: range
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+      responses:
+        "200":
+          description: Соседние позиции
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    LeaderboardListResponse:
+      type: object
+      properties:
+        leaderboards:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardInfo"
+        total:
+          type: integer
+
+    LeaderboardInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [global, class, seasonal, friend, guild]
+        scope:
+          type: string
+        metric:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, archived]
+
+    LeaderboardDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [global, class, seasonal, friend, guild]
+        scope:
+          type: string
+        metric:
+          type: string
+        status:
+          type: string
+        total_players:
+          type: integer
+        season_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        character_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        score:
+          type: number
+          format: float
+        level:
+          type: integer
+
+    LeaderboardResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        total:
+          type: integer
+        metric:
+          type: string
+        scope:
+          type: string
+
+    PlayerRank:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        rank:
+          type: integer
+          minimum: 1
+        score:
+          type: number
+          format: float
+        total_players:
+          type: integer
+        metric:
+          type: string
+        scope:
+          type: string
+
+security:
+  - BearerAuth: []
+
+
+
+

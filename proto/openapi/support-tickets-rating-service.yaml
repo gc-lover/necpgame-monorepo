@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: Support Tickets Rating Service API
+  description: API для рейтинга тикетов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Ticket Rating
+    description: Рейтинг тикетов
+
+paths:
+  /support/tickets/{ticket_id}/rating:
+    post:
+      tags:
+        - Ticket Rating
+      summary: Оценить тикет
+      operationId: rateTicket
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RateTicketRequest"
+      responses:
+        "200":
+          description: Тикет оценен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketRating"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /support/agents/{agent_id}/ratings:
+    get:
+      tags:
+        - Ticket Rating
+      summary: Получить рейтинги агента
+      operationId: getAgentRatings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Рейтинги агента
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentRatingsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    RateTicketRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    TicketRating:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticket_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    AgentRatingsResponse:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        ratings:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketRating"
+        average_rating:
+          type: number
+          format: float
+        total_ratings:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+
