@@ -2,10 +2,19 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+RUN apk add --no-cache make nodejs npm git
+
+COPY services/housing-service-go/go.mod services/housing-service-go/go.sum ./
 RUN go mod download
 
-COPY . .
+RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+
+COPY services/housing-service-go ./services/housing-service-go
+COPY proto ./proto
+
+WORKDIR /app/services/housing-service-go
+
+RUN make generate-api || true
 
 RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -o housing-service -ldflags="-w -s" .
@@ -16,9 +25,8 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 
-COPY --from=builder /app/housing-service /app/
+COPY --from=builder /app/services/housing-service-go/housing-service /app/housing-service
 
-EXPOSE 8093/tcp 9093
+EXPOSE 8090/tcp 9090
 
 ENTRYPOINT ["/app/housing-service"]
-

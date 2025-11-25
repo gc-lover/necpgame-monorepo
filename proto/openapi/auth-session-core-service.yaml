@@ -1,0 +1,190 @@
+openapi: 3.0.3
+info:
+  title: Auth Session Core Service API
+  description: API для основных операций с сессиями
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Session
+    description: Управление игровыми сессиями
+
+paths:
+  /auth/session/create:
+    post:
+      tags:
+        - Session
+      summary: Создать игровую сессию
+      operationId: createSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+      responses:
+        "201":
+          description: Сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/logout:
+    post:
+      tags:
+        - Session
+      summary: Выйти из игровой сессии
+      operationId: logoutSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogoutSessionRequest"
+      responses:
+        "200":
+          description: Выход выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/{sessionId}:
+    get:
+      tags:
+        - Session
+      summary: Получить информацию о сессии
+      operationId: getSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о сессии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CreateSessionRequest:
+      type: object
+      required:
+        - character_id
+        - server_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        server_id:
+          type: string
+        client_info:
+          $ref: "#/components/schemas/ClientInfo"
+
+    ClientInfo:
+      type: object
+      properties:
+        client_version:
+          type: string
+        platform:
+          type: string
+          enum: [PC, CONSOLE, MOBILE]
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+
+    Session:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        server_id:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, DISCONNECTED, TERMINATED]
+        created_at:
+          type: string
+          format: date-time
+        last_heartbeat:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        client_info:
+          $ref: "#/components/schemas/ClientInfo"
+        session_token:
+          type: string
+
+    LogoutSessionRequest:
+      type: object
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [USER_LOGOUT, TIMEOUT, FORCED, ERROR]
+
+security:
+  - BearerAuth: []
+
+
+
+

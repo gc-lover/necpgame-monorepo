@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: Social Friends Blocks Service API
+  description: API для блокировки игроков
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Friends Blocks
+    description: Блокировка игроков
+
+paths:
+  /social/friends/{friend_id}/block:
+    post:
+      tags:
+        - Friends Blocks
+      summary: Заблокировать игрока
+      operationId: blockPlayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: friend_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockPlayerRequest'
+      responses:
+        '200':
+          description: Игрок заблокирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockedPlayer'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/blocks:
+    get:
+      tags:
+        - Friends Blocks
+      summary: Получить список заблокированных игроков
+      operationId: getBlockedPlayers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список заблокированных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockedPlayersResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/blocks/{blocked_id}:
+    delete:
+      tags:
+        - Friends Blocks
+      summary: Разблокировать игрока
+      operationId: unblockPlayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: blocked_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Игрок разблокирован
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+              example:
+                status: unblocked
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/blocks/check/{player_id}:
+    get:
+      tags:
+        - Friends Blocks
+      summary: Проверить, заблокирован ли игрок
+      operationId: checkBlockStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус блокировки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockStatusResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    BlockPlayerRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 200
+
+    BlockedPlayer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        blocked_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+
+    BlockedPlayersResponse:
+      type: object
+      properties:
+        blocked_players:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockedPlayer'
+        total:
+          type: integer
+
+    BlockStatusResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        is_blocked:
+          type: boolean
+        blocked_by_me:
+          type: boolean
+        i_am_blocked:
+          type: boolean
+
+security:
+  - BearerAuth: []
+
+

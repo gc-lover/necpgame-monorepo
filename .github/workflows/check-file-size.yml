@@ -1,0 +1,77 @@
+name: Check File Size
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  check-file-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check file sizes
+        id: check-size
+        run: |
+          MAX_LINES=600
+          FAILED_FILES=()
+          
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            
+            echo "Checking files changed in PR..."
+            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT $BASE_SHA..$HEAD_SHA)
+          else
+            echo "Checking all files in push..."
+            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT HEAD~1 HEAD)
+          fi
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No files changed, skipping check"
+            exit 0
+          fi
+          
+          for file in $CHANGED_FILES; do
+            if [ ! -f "$file" ]; then
+              continue
+            fi
+            
+            if [[ "$file" == *.md ]] || [[ "$file" == *.mdx ]] || [[ "$file" == *.yaml ]] || [[ "$file" == *.yml ]] || [[ "$file" == *.json ]] || [[ "$file" == *.proto ]] || [[ "$file" == *.go ]] || [[ "$file" == *.cpp ]] || [[ "$file" == *.h ]] || [[ "$file" == *.hpp ]] || [[ "$file" == *.java ]] || [[ "$file" == *.kt ]] || [[ "$file" == *.ts ]] || [[ "$file" == *.tsx ]] || [[ "$file" == *.js ]] || [[ "$file" == *.jsx ]] || [[ "$file" == *.py ]] || [[ "$file" == *.rs ]] || [[ "$file" == *.sql ]] || [[ "$file" == *.sh ]] || [[ "$file" == *.bat ]] || [[ "$file" == *.ps1 ]]; then
+              LINES=$(wc -l < "$file" 2>/dev/null || echo "0")
+              
+              if [ "$LINES" -gt "$MAX_LINES" ]; then
+                FAILED_FILES+=("$file:$LINES")
+                echo "❌ $file has $LINES lines (max: $MAX_LINES)"
+              else
+                echo "OK $file has $LINES lines (OK)"
+              fi
+            fi
+          done
+          
+          if [ ${#FAILED_FILES[@]} -gt 0 ]; then
+            echo ""
+            echo "::error::Found files exceeding $MAX_LINES lines:"
+            for entry in "${FAILED_FILES[@]}"; do
+              IFS=':' read -r file lines <<< "$entry"
+              echo "::error file=$file::File $file has $lines lines (max: $MAX_LINES)"
+            done
+            echo ""
+            echo "Please split these files into smaller files (max 500 lines per file recommended)."
+            exit 1
+          else
+            echo ""
+            echo "OK All files are within the $MAX_LINES line limit"
+          fi
+
+
+
+

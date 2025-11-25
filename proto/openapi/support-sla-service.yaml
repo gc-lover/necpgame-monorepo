@@ -1,0 +1,159 @@
+openapi: 3.0.3
+info:
+  title: Support SLA Service API
+  description: API для мониторинга SLA
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: SLA Monitoring
+    description: Мониторинг SLA
+
+paths:
+  /support/tickets/{ticket_id}/sla:
+    get:
+      tags:
+        - SLA Monitoring
+      summary: Получить статус SLA тикета
+      operationId: getTicketSLA
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/TicketId'
+      responses:
+        "200":
+          description: Статус SLA тикета
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketSLAStatus"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /support/sla/violations:
+    get:
+      tags:
+        - SLA Monitoring
+      summary: Получить нарушения SLA
+      operationId: getSLAViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: priority
+          in: query
+          schema:
+            type: string
+            $ref: 'common.yaml#/components/schemas/TicketPriority'
+        - name: violation_type
+          in: query
+          schema:
+            type: string
+            enum: [FIRST_RESPONSE, RESOLUTION]
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Нарушения SLA
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SLAViolationsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    TicketSLAStatus:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [LOW, NORMAL, HIGH, URGENT, CRITICAL]
+        first_response_target:
+          type: string
+          format: date-time
+        first_response_actual:
+          type: string
+          format: date-time
+          nullable: true
+        resolution_target:
+          type: string
+          format: date-time
+        resolution_actual:
+          type: string
+          format: date-time
+          nullable: true
+        first_response_sla_met:
+          type: boolean
+          nullable: true
+        resolution_sla_met:
+          type: boolean
+          nullable: true
+        time_until_first_response_target:
+          type: integer
+          nullable: true
+        time_until_resolution_target:
+          type: integer
+          nullable: true
+
+    SLAViolation:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+        ticket_number:
+          type: string
+        priority:
+          type: string
+          enum: [LOW, NORMAL, HIGH, URGENT, CRITICAL]
+        violation_type:
+          type: string
+          enum: [FIRST_RESPONSE, RESOLUTION]
+        target_time:
+          type: string
+          format: date-time
+        actual_time:
+          type: string
+          format: date-time
+          nullable: true
+        violation_duration_seconds:
+          type: integer
+          nullable: true
+
+    SLAViolationsResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/SLAViolation"
+              description: Список нарушений SLA
+
+security:
+  - BearerAuth: []
+
+

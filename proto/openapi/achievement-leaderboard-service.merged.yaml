@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Achievement Leaderboard Service API
+  description: API для лидербордов достижений
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
+tags:
+- name: Leaderboards
+  description: Лидерборды достижений
+paths:
+  /achievements/leaderboard:
+    get:
+      tags:
+      - Leaderboards
+      summary: Получить лидерборд достижений
+      operationId: getLeaderboard
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - all_time
+          - weekly
+          - monthly
+          - season
+          default: all_time
+      - name: category
+        in: query
+        schema:
+          $ref: '#/components/schemas/AchievementCategory'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Лидерборд
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '#/components/securitySchemes/BearerAuth'
+  schemas:
+    AchievementCategory:
+      type: string
+      enum:
+      - combat
+      - exploration
+      - social
+      - crafting
+      - collection
+      - quest
+      - pvp
+      - pve
+      - raid
+      - other
+    LeaderboardResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+        total:
+          type: integer
+        period:
+          type: string
+          enum:
+          - all_time
+          - weekly
+          - monthly
+          - season
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        total_points:
+          type: integer
+          minimum: 0
+        unlocked:
+          type: integer
+          minimum: 0
+  responses:
+    InternalServerError:
+      $ref: '#/components/responses/InternalServerError'
+    BadRequest:
+      $ref: '#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '#/components/responses/Unauthorized'
+  parameters:
+    Limit:
+      $ref: '#/components/parameters/Limit'
+    Offset:
+      $ref: '#/components/parameters/Offset'
+security:
+- BearerAuth: []

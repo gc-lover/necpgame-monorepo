@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: Social Relationships Trust Service API
+  description: API для системы доверия между игроками
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Relationships Trust
+    description: Система доверия между игроками
+
+paths:
+  /social/relationships/{player_id}/trust:
+    get:
+      tags:
+        - Relationships Trust
+      summary: Получить уровень доверия
+      operationId: getTrustLevel
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: target_player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уровень доверия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustLevel'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id}/trust/update:
+    post:
+      tags:
+        - Relationships Trust
+      summary: Обновить доверие
+      operationId: updateTrust
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTrustRequest'
+      responses:
+        '200':
+          description: Доверие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustLevel'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/trust-contracts/create:
+    post:
+      tags:
+        - Relationships Trust
+      summary: Создать договор доверия
+      operationId: createTrustContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrustContractRequest'
+      responses:
+        '201':
+          description: Договор создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/trust-contracts/{contract_id}:
+    get:
+      tags:
+        - Relationships Trust
+      summary: Получить договор доверия
+      operationId: getTrustContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/ContractId'
+      responses:
+        '200':
+          description: Договор доверия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Relationships Trust
+      summary: Расторгнуть договор доверия
+      operationId: terminateTrustContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/ContractId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateTrustContractRequest'
+      responses:
+        '200':
+          description: Договор расторгнут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    TrustLevel:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        target_player_id:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        trust_points:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    UpdateTrustRequest:
+      type: object
+      required:
+        - target_player_id
+        - trust_change
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        trust_change:
+          type: integer
+          description: Изменение доверия (может быть отрицательным)
+        reason:
+          type: string
+
+    CreateTrustContractRequest:
+      type: object
+      required:
+        - target_player_id
+        - trust_level
+        - terms
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        terms:
+          type: object
+          additionalProperties: true
+        duration_days:
+          type: integer
+          minimum: 1
+
+    TrustContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        terms:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [active, terminated, expired]
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TerminateTrustContractRequest:
+      $ref: 'common.yaml#/components/schemas/ReasonRequest'
+
+security:
+  - BearerAuth: []
+
+

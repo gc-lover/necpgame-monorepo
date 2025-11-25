@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: Social Guild Territories Service API
+  description: API для территорий гильдий
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Guild Territories
+    description: Территории гильдий
+
+paths:
+  /social/guilds/{guild_id}/territories:
+    get:
+      tags:
+        - Guild Territories
+      summary: Получить территории гильдии
+      operationId: getGuildTerritories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Территории гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildTerritoriesResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/territories/{territory_id}/capture:
+    post:
+      tags:
+        - Guild Territories
+      summary: Захватить территорию
+      operationId: captureTerritory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: territory_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Территория захвачена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Territory'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/territories/{territory_id}/resources:
+    get:
+      tags:
+        - Guild Territories
+      summary: Получить ресурсы территории
+      operationId: getTerritoryResources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: territory_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ресурсы территории
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerritoryResources'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Territory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        owner_guild_id:
+          type: string
+          format: uuid
+          nullable: true
+        captured_at:
+          type: string
+          format: date-time
+          nullable: true
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+
+    GuildTerritoriesResponse:
+      type: object
+      properties:
+        territories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Territory'
+        total:
+          type: integer
+
+    TerritoryResources:
+      type: object
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        resources:
+          type: array
+          items:
+            type: object
+            properties:
+              resource_type:
+                type: string
+              quantity:
+                type: integer
+              generation_rate:
+                type: number
+        last_updated:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+
+
+

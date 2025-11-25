@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: Social Mail Attachments Service API
+  description: API для работы с вложениями в почте
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Mail Attachments
+    description: Вложения в почте
+
+paths:
+  /social/mail/{mail_id}/attachments/claim:
+    post:
+      tags:
+        - Mail Attachments
+      summary: Забрать вложения из письма
+      operationId: claimMailAttachments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Вложения забраны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimAttachmentResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mail/{mail_id}/attachments:
+    get:
+      tags:
+        - Mail Attachments
+      summary: Получить список вложений письма
+      operationId: getMailAttachments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список вложений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailAttachmentsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ClaimAttachmentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        items:
+          type: object
+          additionalProperties: true
+        currency:
+          type: object
+          additionalProperties:
+            type: integer
+
+    MailAttachmentsResponse:
+      type: object
+      properties:
+        mail_id:
+          type: string
+          format: uuid
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+        has_cod:
+          type: boolean
+        cod_amount:
+          type: integer
+          nullable: true
+
+    MailAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [item, currency, quest_reward, achievement_reward]
+        item_id:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: integer
+        currency:
+          type: integer
+          nullable: true
+        claimed:
+          type: boolean
+
+security:
+  - BearerAuth: []
+
+
+
+

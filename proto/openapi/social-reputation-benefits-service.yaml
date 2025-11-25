@@ -1,0 +1,232 @@
+openapi: 3.0.3
+info:
+  title: Social Reputation Benefits Service API
+  description: API для преимуществ репутации (доступ, скидки, эффекты)
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Reputation Benefits
+    description: Преимущества репутации
+
+paths:
+  /social/reputation/{player_id}/access:
+    get:
+      tags:
+        - Reputation Benefits
+      summary: Проверить доступ на основе репутации
+      operationId: checkReputationAccess
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: access_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [territory, trade, quest, npc_recruitment, vip_services]
+      responses:
+        '200':
+          description: Статус доступа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessStatus'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/discounts:
+    get:
+      tags:
+        - Reputation Benefits
+      summary: Получить скидки на основе репутации
+      operationId: getReputationDiscounts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Скидки на основе репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationDiscounts'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/effects:
+    get:
+      tags:
+        - Reputation Benefits
+      summary: Получить эффекты репутации
+      operationId: getReputationEffects
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Эффекты репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationEffects'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    AccessStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        access_type:
+          type: string
+          enum: [territory, trade, quest, npc_recruitment, vip_services]
+        has_access:
+          type: boolean
+        access_level:
+          type: string
+          enum: [blocked, restricted, normal, enhanced]
+        reason:
+          type: string
+          nullable: true
+        required_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+          nullable: true
+
+    ReputationDiscounts:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        price_modifier:
+          type: number
+          format: decimal
+          description: Модификатор цены (1.0 = без изменений, 0.9 = скидка 10%, 1.5 = наценка 50%)
+        discount_percentage:
+          type: number
+          format: decimal
+          description: Процент скидки
+        applicable_categories:
+          type: array
+          items:
+            type: string
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+
+    ReputationEffects:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        territory_access:
+          type: string
+          enum: [blocked, restricted, normal, enhanced]
+        trade_access:
+          type: string
+          enum: [blocked, minimal, restricted, normal, enhanced]
+        npc_aggression:
+          type: string
+          enum: [none, low, medium, high]
+        price_modifier:
+          type: number
+          format: decimal
+        quest_access:
+          type: string
+          enum: [none, limited, restricted, normal, enhanced]
+        vip_services:
+          type: boolean
+        npc_recruitment:
+          type: boolean
+        exclusive_locations:
+          type: boolean
+        faction_bonuses:
+          type: array
+          items:
+            type: string
+        decay_modifier:
+          type: number
+          format: decimal
+
+security:
+  - BearerAuth: []
+
+
+
+

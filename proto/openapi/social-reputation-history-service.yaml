@@ -1,0 +1,194 @@
+openapi: 3.0.3
+info:
+  title: Social Reputation History Service API
+  description: API для истории и отношений репутации
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Reputation History
+    description: История и отношения репутации
+
+paths:
+  /social/reputation/{player_id}/faction-relations:
+    get:
+      tags:
+        - Reputation History
+      summary: Получить отношения с фракциями
+      operationId: getFactionRelations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Отношения с фракциями
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionRelationsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/history:
+    get:
+      tags:
+        - Reputation History
+      summary: Получить историю изменений репутации
+      operationId: getReputationHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История изменений репутации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationHistoryResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    FactionReputation:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        faction_name:
+          type: string
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        tier_color:
+          type: string
+        heat:
+          type: integer
+          minimum: 0
+          maximum: 100
+        last_change:
+          type: string
+          format: date-time
+        last_update:
+          type: string
+          format: date-time
+
+    FactionRelationsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        relations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionReputation'
+        total:
+          type: integer
+
+    ReputationHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+          nullable: true
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReputationHistoryEntry'
+        total:
+          type: integer
+
+    ReputationHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        change_amount:
+          type: integer
+        reason:
+          type: string
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+        old_reputation:
+          type: integer
+        new_reputation:
+          type: integer
+        old_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        new_tier:
+          type: string
+          enum: [hated, hostile, unfriendly, neutral, friendly, honored, legendary]
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+
+
+

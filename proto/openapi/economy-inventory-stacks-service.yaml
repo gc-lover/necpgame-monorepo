@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: Economy Inventory Stacks Service API
+  description: API для операций со стеками предметов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Inventory Stacks
+    description: Операции со стеками предметов
+
+paths:
+  /economy/inventory/{characterId}/items/{itemId}/split:
+    post:
+      tags:
+        - Inventory Stacks
+      summary: Разделить стек предметов
+      operationId: splitInventoryItemStack
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SplitStackRequest"
+      responses:
+        "200":
+          description: Стек разделён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SplitStackResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/items/{itemId}/merge:
+    post:
+      tags:
+        - Inventory Stacks
+      summary: Объединить стеки предметов
+      operationId: mergeInventoryItemStacks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MergeStackRequest"
+      responses:
+        "200":
+          description: Стеки объединены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/items/{itemId}/stack:
+    post:
+      tags:
+        - Inventory Stacks
+      summary: Выполнить операцию со стеком предметов
+      operationId: stackInventoryItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StackOperationRequest"
+      responses:
+        "200":
+          description: Операция выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/items/{itemId}/stack-info:
+    get:
+      tags:
+        - Inventory Stacks
+      summary: Получить информацию о стеке предметов
+      operationId: getStackInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о стеке
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StackInfo"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    SplitStackRequest:
+      type: object
+      required:
+        - quantity
+        - target_slot_index
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+        target_slot_index:
+          type: integer
+
+    SplitStackResponse:
+      type: object
+      properties:
+        original_item:
+          $ref: "#/components/schemas/InventoryItem"
+        new_item:
+          $ref: "#/components/schemas/InventoryItem"
+
+    MergeStackRequest:
+      type: object
+      required:
+        - target_item_id
+      properties:
+        target_item_id:
+          type: string
+          format: uuid
+
+    StackOperationRequest:
+      type: object
+      required:
+        - operation
+      properties:
+        operation:
+          type: string
+          enum: [split, merge]
+        target_item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+
+    StackInfo:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        current_quantity:
+          type: integer
+        max_stack_size:
+          type: integer
+        can_stack:
+          type: boolean
+        available_space:
+          type: integer
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+          format: uuid
+        slot_index:
+          type: integer
+        quantity:
+          type: integer
+        max_stack_size:
+          type: integer
+        properties:
+          type: object
+          additionalProperties: true
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,448 @@
+openapi: 3.0.3
+info:
+  title: Social Notifications Service API
+  description: API для управления уведомлениями
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Notifications
+    description: Управление уведомлениями
+
+paths:
+  /social/notifications:
+    post:
+      tags:
+        - Notifications
+      summary: Создать уведомление
+      operationId: createNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        '201':
+          description: Уведомление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Notifications
+      summary: Получить список уведомлений
+      operationId: getNotifications
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/AccountId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/notifications/{id}:
+    get:
+      tags:
+        - Notifications
+      summary: Получить уведомление
+      operationId: getNotification
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уведомление
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - Notifications
+      summary: Удалить уведомление
+      operationId: deleteNotification
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уведомление удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/notifications/{id}/status:
+    put:
+      tags:
+        - Notifications
+      summary: Обновить статус уведомления
+      operationId: updateNotificationStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationStatusRequest'
+      responses:
+        '200':
+          description: Статус обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/notifications/preferences:
+    get:
+      tags:
+        - Notifications
+      summary: Получить настройки уведомлений
+      operationId: getNotificationPreferences
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: Настройки уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Notifications
+      summary: Обновить настройки уведомлений
+      operationId: updateNotificationPreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationPreferencesRequest'
+      responses:
+        '200':
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/notifications/batch/read:
+    post:
+      tags:
+        - Notifications
+      summary: Отметить несколько уведомлений как прочитанные
+      operationId: markNotificationsAsRead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchReadRequest'
+      responses:
+        '200':
+          description: Уведомления отмечены как прочитанные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+                    description: Количество обновленных уведомлений
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [quest, message, achievement, system, friend, guild, trade, combat]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        title:
+          type: string
+          maxLength: 200
+        content:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [unread, read, archived]
+          default: unread
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, websocket, email]
+          default: [in_game]
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateNotificationRequest:
+      type: object
+      required:
+        - account_id
+        - type
+        - title
+        - content
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [quest, message, achievement, system, friend, guild, trade, combat]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+        title:
+          type: string
+          maxLength: 200
+        content:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, websocket, email]
+          default: [in_game]
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateNotificationStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [read, archived]
+
+    NotificationListResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        total:
+          type: integer
+        unread:
+          type: integer
+
+    NotificationPreferences:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        quest_enabled:
+          type: boolean
+          default: true
+        message_enabled:
+          type: boolean
+          default: true
+        achievement_enabled:
+          type: boolean
+          default: true
+        system_enabled:
+          type: boolean
+          default: true
+        friend_enabled:
+          type: boolean
+          default: true
+        guild_enabled:
+          type: boolean
+          default: true
+        trade_enabled:
+          type: boolean
+          default: true
+        combat_enabled:
+          type: boolean
+          default: true
+        preferred_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - in_game
+              - websocket
+              - email
+          default:
+            - in_game
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateNotificationPreferencesRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        quest_enabled:
+          type: boolean
+        message_enabled:
+          type: boolean
+        achievement_enabled:
+          type: boolean
+        system_enabled:
+          type: boolean
+        friend_enabled:
+          type: boolean
+        guild_enabled:
+          type: boolean
+        trade_enabled:
+          type: boolean
+        combat_enabled:
+          type: boolean
+        preferred_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - in_game
+              - websocket
+              - email
+
+    BatchReadRequest:
+      type: object
+      required:
+        - account_id
+        - notification_ids
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        notification_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+
+security:
+  - BearerAuth: []
+
+
+
+

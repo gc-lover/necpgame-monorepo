@@ -17,10 +17,10 @@ if %ERRORLEVEL% NEQ 0 (
     echo.
 )
 
-echo Step 1: Starting Docker services (PostgreSQL, Redis, Keycloak, Gateway)...
+echo Step 1: Starting Docker services (PostgreSQL, Redis, Keycloak, Gateway, MCP GitHub)...
 echo.
 cd /d %~dp0..\..
-docker-compose up -d postgres redis keycloak realtime-gateway
+docker-compose up -d postgres redis keycloak realtime-gateway mcp-github
 
 echo.
 echo Waiting for services to be ready...
@@ -41,6 +41,7 @@ echo   - PostgreSQL: localhost:5432
 echo   - Redis: localhost:6379
 echo   - Keycloak: localhost:8080
 echo   - Gateway: localhost:18080
+echo   - MCP GitHub: запущен в Docker (stdio)
 echo   - UE5 Server: localhost:7777
 echo.
 echo To stop everything:

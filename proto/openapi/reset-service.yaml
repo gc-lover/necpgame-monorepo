@@ -25,14 +25,14 @@ paths:
       summary: Получить статистику сбросов
       operationId: getResetStats
       responses:
-        '200':
+        "200":
           description: Статистика сбросов
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResetStats'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ResetStats"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /reset/history:
     get:
@@ -44,7 +44,7 @@ paths:
         - name: type
           in: query
           schema:
-            $ref: '#/components/schemas/ResetType'
+            $ref: "#/components/schemas/ResetType"
           description: Тип сброса (daily или weekly)
         - name: limit
           in: query
@@ -62,14 +62,14 @@ paths:
             default: 0
           description: Смещение для пагинации
       responses:
-        '200':
+        "200":
           description: История сбросов
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResetListResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ResetListResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /reset/trigger:
     post:
@@ -82,22 +82,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TriggerResetRequest'
+              $ref: "#/components/schemas/TriggerResetRequest"
       responses:
-        '200':
+        "200":
           description: Сброс запущен
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "common.yaml#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
 
 components:
   schemas:
@@ -118,9 +114,9 @@ components:
           type: string
           format: uuid
         type:
-          $ref: '#/components/schemas/ResetType'
+          $ref: "#/components/schemas/ResetType"
         status:
-          $ref: '#/components/schemas/ResetStatus'
+          $ref: "#/components/schemas/ResetStatus"
         started_at:
           type: string
           format: date-time
@@ -160,37 +156,21 @@ components:
         - type
       properties:
         type:
-          $ref: '#/components/schemas/ResetType'
+          $ref: "#/components/schemas/ResetType"
 
     ResetListResponse:
-      type: object
-      properties:
-        resets:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResetRecord'
-        total:
-          type: integer
-
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
+      allOf:
+        - $ref: "common.yaml#/components/schemas/PaginationResponse"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResetRecord"
+              description: Список сбросов
 
   responses:
     BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
+      $ref: "common.yaml#/components/responses/BadRequest"
     InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-
+      $ref: "common.yaml#/components/responses/InternalServerError"

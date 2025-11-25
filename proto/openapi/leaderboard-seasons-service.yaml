@@ -1,0 +1,229 @@
+openapi: 3.0.3
+info:
+  title: Leaderboard Seasons Service API
+  description: API для сезонов лидербордов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Leaderboard Seasons
+    description: Сезоны лидербордов
+
+paths:
+  /world/leaderboards/seasons:
+    get:
+      tags:
+        - Leaderboard Seasons
+      summary: Получить список сезонов лидербордов
+      operationId: listSeasons
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, upcoming, completed]
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список сезонов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeasonListResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/leaderboards/seasons/{seasonId}:
+    get:
+      tags:
+        - Leaderboard Seasons
+      summary: Получить данные сезона
+      operationId: getSeason
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: seasonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Данные сезона
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Season"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/leaderboards/seasons/{seasonId}/reset:
+    post:
+      tags:
+        - Leaderboard Seasons
+      summary: Сбросить сезон лидерборда
+      operationId: resetSeason
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: seasonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Сезон сброшен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeasonResetResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /world/leaderboards/seasons/{seasonId}/rewards:
+    get:
+      tags:
+        - Leaderboard Seasons
+      summary: Получить награды сезона
+      operationId: getSeasonRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: seasonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: playerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Награды сезона
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeasonRewardsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    SeasonListResponse:
+      type: object
+      properties:
+        seasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/Season"
+        total:
+          type: integer
+
+    Season:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [upcoming, active, completed]
+        leaderboards:
+          type: array
+          items:
+            type: string
+            format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SeasonResetResult:
+      type: object
+      properties:
+        season_id:
+          type: string
+          format: uuid
+        reset_at:
+          type: string
+          format: date-time
+        leaderboards_reset:
+          type: integer
+        players_reset:
+          type: integer
+
+    SeasonRewardsResponse:
+      type: object
+      properties:
+        season_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+        rewards:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+security:
+  - BearerAuth: []
+
+
+
+

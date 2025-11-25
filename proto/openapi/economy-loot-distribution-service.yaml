@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Economy Loot Distribution Service API
+  description: API для распределения лута между игроками
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Loot Distribution
+    description: Распределение лута между игроками
+
+paths:
+  /economy/loot/distribute:
+    post:
+      tags:
+        - Loot Distribution
+      summary: Распределить лут между игроками
+      operationId: distributeLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributeLootRequest"
+      responses:
+        "200":
+          description: Лут распределён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootDistributionResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/distribution/{distribution_id}:
+    get:
+      tags:
+        - Loot Distribution
+      summary: Получить статус распределения лута
+      operationId: getLootDistribution
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: distribution_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус распределения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootDistributionStatus"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/boss/generate:
+    post:
+      tags:
+        - Loot Distribution
+      summary: Сгенерировать лут босса
+      operationId: generateBossLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateBossLootRequest"
+      responses:
+        "200":
+          description: Лут босса сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BossLootResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/boss/distribute:
+    post:
+      tags:
+        - Loot Distribution
+      summary: Распределить награды босса
+      operationId: distributeBossLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributeBossLootRequest"
+      responses:
+        "200":
+          description: Награды босса распределены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BossLootDistributionResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    DistributeLootRequest:
+      type: object
+      required:
+        - loot_id
+        - players
+      properties:
+        loot_id:
+          type: string
+          format: uuid
+        players:
+          type: array
+          items:
+            type: string
+            format: uuid
+        distribution_mode:
+          type: string
+          enum: [equal, weighted, random]
+
+    LootDistributionResult:
+      type: object
+      properties:
+        distribution_id:
+          type: string
+          format: uuid
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LootItem"
+
+    LootDistributionStatus:
+      type: object
+      properties:
+        distribution_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, distributing, completed, failed]
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              received:
+                type: boolean
+
+    GenerateBossLootRequest:
+      type: object
+      required:
+        - boss_id
+        - party_id
+      properties:
+        boss_id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+
+    BossLootResult:
+      type: object
+      properties:
+        loot_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+
+    DistributeBossLootRequest:
+      type: object
+      required:
+        - loot_id
+        - party_id
+      properties:
+        loot_id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+
+    BossLootDistributionResult:
+      type: object
+      properties:
+        distribution_id:
+          type: string
+          format: uuid
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LootItem"
+
+    LootItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+        quantity:
+          type: integer
+        rarity:
+          type: string
+
+security:
+  - BearerAuth: []
+

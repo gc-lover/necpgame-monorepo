@@ -1,0 +1,276 @@
+openapi: 3.0.3
+info:
+  title: Economy Loot World Drops Service API
+  description: API для мировых дропов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Loot World Drops
+    description: Мировые дропы
+
+paths:
+  /economy/loot/world-drops:
+    get:
+      tags:
+        - Loot World Drops
+      summary: Получить список мировых дропов
+      operationId: getWorldDrops
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список мировых дропов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drops:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WorldDrop"
+                  total:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/world-drops/create:
+    post:
+      tags:
+        - Loot World Drops
+      summary: Создать world drop на карте
+      operationId: createWorldDrop
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorldDropRequest"
+      responses:
+        "200":
+          description: World drop создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorldDrop"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/world-drops/{drop_id}/pickup:
+    post:
+      tags:
+        - Loot World Drops
+      summary: Подобрать world drop
+      operationId: pickupWorldDrop
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: drop_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PickupWorldDropRequest"
+      responses:
+        "200":
+          description: World drop подобран
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PickupResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/world-drops/nearby:
+    get:
+      tags:
+        - Loot World Drops
+      summary: Получить ближайшие world drops
+      operationId: getNearbyWorldDrops
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: x
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: y
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: z
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: radius
+          in: query
+          schema:
+            type: number
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - $ref: "common.yaml#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Ближайшие world drops
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drops:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WorldDrop"
+                  total:
+                    type: integer
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    WorldDrop:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        zone_id:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateWorldDropRequest:
+      type: object
+      required:
+        - zone_id
+        - position
+        - items
+      properties:
+        zone_id:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    PickupWorldDropRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    PickupResult:
+      type: object
+      properties:
+        drop_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        picked_up_at:
+          type: string
+          format: date-time
+
+    LootItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+        quantity:
+          type: integer
+        rarity:
+          type: string
+
+security:
+  - BearerAuth: []
+

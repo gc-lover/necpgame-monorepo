@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Social Reputation Recovery Service API
+  description: API для восстановления репутации
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Reputation Recovery
+    description: Восстановление репутации
+
+paths:
+  /social/reputation/{player_id}/recovery/start:
+    post:
+      tags:
+        - Reputation Recovery
+      summary: Начать восстановление репутации
+      operationId: startReputationRecovery
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRecoveryRequest'
+      responses:
+        '200':
+          description: Восстановление начато
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryStatus'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/reputation/{player_id}/recovery/status:
+    get:
+      tags:
+        - Reputation Recovery
+      summary: Получить статус восстановления репутации
+      operationId: getRecoveryStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус восстановления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryStatus'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    StartRecoveryRequest:
+      type: object
+      required:
+        - faction_id
+        - recovery_method
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        recovery_method:
+          type: string
+          enum: [quest, payment, time, reputation_improvement]
+        target_reputation:
+          type: integer
+          minimum: -100
+          maximum: 100
+          description: Целевая репутация для восстановления
+
+    RecoveryStatus:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        faction_id:
+          type: string
+          format: uuid
+        recovery_method:
+          type: string
+          enum: [quest, payment, time, reputation_improvement]
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, cancelled]
+        current_reputation:
+          type: integer
+        target_reputation:
+          type: integer
+        progress_percentage:
+          type: number
+          format: decimal
+        started_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+
+
+
+

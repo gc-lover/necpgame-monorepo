@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: Achievement Stats Service API
+  description: API для статистики достижений
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Statistics
+    description: Статистика достижений
+
+paths:
+  /achievements/{achievementId}/stats:
+    get:
+      tags:
+        - Statistics
+      summary: Получить статистику достижения
+      operationId: getAchievementStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: achievementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статистика достижения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AchievementStatsResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    AchievementStatsResponse:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        total_unlocks:
+          type: integer
+          minimum: 0
+        unlock_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        average_time:
+          type: number
+          format: float
+          nullable: true
+        first_player_id:
+          type: string
+          format: uuid
+          nullable: true
+        first_player_name:
+          type: string
+          nullable: true
+        first_unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+
+
+
+

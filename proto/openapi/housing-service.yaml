@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Housing Service API
-  description: API для системы жилья: покупка квартир, размещение мебели, управление престижем
+  description: "API для системы жилья: покупка квартир, размещение мебели, управление престижем"
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -52,8 +52,34 @@ paths:
               - standard
               - penthouse
               - guild_hall
+        - name: owner_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: owner_type
+          in: query
+          schema:
+            type: string
+        - name: is_public
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
-        '200':
+        "200":
           description: Список доступных квартир
           content:
             application/json:
@@ -63,9 +89,15 @@ paths:
                   apartments:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Apartment'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                      $ref: "#/components/schemas/Apartment"
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/purchase:
     post:
@@ -78,18 +110,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PurchaseApartmentRequest'
+              $ref: "#/components/schemas/PurchaseApartmentRequest"
       responses:
-        '201':
+        "201":
           description: Квартира куплена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Apartment'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Apartment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}:
     get:
@@ -105,16 +137,16 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Информация о квартире
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Apartment'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Apartment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     patch:
       tags:
@@ -133,20 +165,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateApartmentRequest'
+              $ref: "#/components/schemas/UpdateApartmentRequest"
       responses:
-        '200':
+        "200":
           description: Квартира обновлена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Apartment'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Apartment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}/visit:
     post:
@@ -174,18 +206,18 @@ paths:
                   type: string
                   format: uuid
       responses:
-        '200':
+        "200":
           description: Посещение зарегистрировано
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Apartment'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Apartment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /world/housing/apartments/{apartment_id}/guests:
     get:
@@ -201,7 +233,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Список гостей
           content:
             application/json:
@@ -211,9 +243,9 @@ paths:
                   guests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Guest'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                      $ref: "#/components/schemas/Guest"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     post:
       tags:
@@ -240,7 +272,7 @@ paths:
                   type: string
                   format: uuid
       responses:
-        '200':
+        "200":
           description: Гость добавлен
           content:
             application/json:
@@ -250,10 +282,10 @@ paths:
                   status:
                     type: string
                     example: success
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     delete:
       tags:
@@ -274,7 +306,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Гость удален
           content:
             application/json:
@@ -284,8 +316,8 @@ paths:
                   status:
                     type: string
                     example: success
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /world/housing/furniture/shop:
     get:
@@ -317,7 +349,7 @@ paths:
             minimum: 0
             default: 0
       responses:
-        '200':
+        "200":
           description: Каталог мебели
           content:
             application/json:
@@ -327,11 +359,11 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/FurnitureItem'
+                      $ref: "#/components/schemas/FurnitureItem"
                   total:
                     type: integer
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}/furniture:
     get:
@@ -347,7 +379,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Размещенная мебель
           content:
             application/json:
@@ -357,9 +389,9 @@ paths:
                   furniture:
                     type: array
                     items:
-                      $ref: '#/components/schemas/PlacedFurniture'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                      $ref: "#/components/schemas/PlacedFurniture"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     post:
       tags:
@@ -378,20 +410,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlaceFurnitureRequest'
+              $ref: "#/components/schemas/PlaceFurnitureRequest"
       responses:
-        '201':
+        "201":
           description: Мебель размещена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlacedFurniture'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/PlacedFurniture"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}/furniture/{furniture_id}:
     patch:
@@ -417,18 +449,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateFurniturePositionRequest'
+              $ref: "#/components/schemas/UpdateFurniturePositionRequest"
       responses:
-        '200':
+        "200":
           description: Позиция обновлена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlacedFurniture'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/PlacedFurniture"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     delete:
       tags:
@@ -449,7 +481,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Мебель удалена
           content:
             application/json:
@@ -459,8 +491,8 @@ paths:
                   status:
                     type: string
                     example: success
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /world/housing/prestige/leaderboard:
     get:
@@ -483,7 +515,7 @@ paths:
             minimum: 0
             default: 0
       responses:
-        '200':
+        "200":
           description: Лидерборд престижа
           content:
             application/json:
@@ -493,11 +525,11 @@ paths:
                   entries:
                     type: array
                     items:
-                      $ref: '#/components/schemas/PrestigeEntry'
+                      $ref: "#/components/schemas/PrestigeEntry"
                   total:
                     type: integer
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}/settings:
     post:
@@ -519,22 +551,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateApartmentSettingsRequest'
+              $ref: "#/components/schemas/UpdateApartmentSettingsRequest"
       responses:
-        '200':
+        "200":
           description: Настройки обновлены
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Apartment'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Apartment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/furniture/catalog:
     get:
@@ -568,16 +600,16 @@ paths:
             minimum: 0
             default: 0
       responses:
-        '200':
+        "200":
           description: Каталог мебели
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FurnitureCatalogResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/FurnitureCatalogResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/furniture/purchase:
     post:
@@ -592,20 +624,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PurchaseFurnitureRequest'
+              $ref: "#/components/schemas/PurchaseFurnitureRequest"
       responses:
-        '200':
+        "200":
           description: Мебель куплена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FurnitureItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/FurnitureItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/furniture/owned/{player_id}:
     get:
@@ -645,55 +677,18 @@ paths:
             minimum: 0
             default: 0
       responses:
-        '200':
+        "200":
           description: Мебель игрока
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OwnedFurnitureResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /world/housing/apartments/{apartment_id}/furniture/place:
-    post:
-      tags:
-        - Furniture Manager Placement
-      summary: Разместить мебель в квартире
-      operationId: placeFurniture
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PlaceFurnitureRequest'
-      responses:
-        '200':
-          description: Мебель размещена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlacedFurniture'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/OwnedFurnitureResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}/furniture/{furniture_id}/move:
     post:
@@ -721,65 +716,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MoveFurnitureRequest'
+              $ref: "#/components/schemas/MoveFurnitureRequest"
       responses:
-        '200':
+        "200":
           description: Мебель перемещена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlacedFurniture'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /world/housing/apartments/{apartment_id}/furniture/{furniture_id}/remove:
-    post:
-      tags:
-        - Furniture Manager Placement
-      summary: Удалить мебель из квартиры
-      operationId: removeFurniture
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: furniture_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RemoveFurnitureRequest'
-      responses:
-        '200':
-          description: Мебель удалена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlacedFurniture'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/PlacedFurniture"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}/prestige:
     get:
@@ -797,18 +749,18 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Престиж квартиры
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApartmentPrestigeResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ApartmentPrestigeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}/bonuses:
     get:
@@ -826,18 +778,18 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Бонусы квартиры
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApartmentBonusesResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ApartmentBonusesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/player/{player_id}/bonuses:
     get:
@@ -855,18 +807,18 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Бонусы игрока
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlayerBonusesResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/PlayerBonusesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/apartments/{apartment_id}/visits:
     get:
@@ -897,18 +849,18 @@ paths:
             minimum: 0
             default: 0
       responses:
-        '200':
+        "200":
           description: История посещений
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApartmentVisitsResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ApartmentVisitsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/player/{player_id}/visits:
     get:
@@ -939,18 +891,18 @@ paths:
             minimum: 0
             default: 0
       responses:
-        '200':
+        "200":
           description: Посещения игрока
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlayerVisitsResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/PlayerVisitsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/events/{apartment_id}:
     get:
@@ -991,18 +943,18 @@ paths:
             minimum: 0
             default: 0
       responses:
-        '200':
+        "200":
           description: События квартиры
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HousingEventsResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/HousingEventsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/shop/catalog:
     get:
@@ -1036,16 +988,16 @@ paths:
             minimum: 0
             default: 0
       responses:
-        '200':
+        "200":
           description: Каталог магазина
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HousingShopCatalogResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/HousingShopCatalogResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/shop/furniture/{furniture_id}:
     get:
@@ -1063,18 +1015,18 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Детали мебели
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FurnitureItem'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/FurnitureItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /world/housing/shop/purchase:
     post:
@@ -1089,22 +1041,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PurchaseFurnitureRequest'
+              $ref: "#/components/schemas/PurchaseFurnitureRequest"
       responses:
-        '200':
+        "200":
           description: Мебель куплена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FurnitureItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/FurnitureItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 components:
   securitySchemes:
@@ -1163,14 +1115,6 @@ components:
         purchased_at:
           type: string
           format: date-time
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-            type: string
-            format: uuid
         created_at:
           type: string
           format: date-time
@@ -1378,7 +1322,7 @@ components:
         furniture:
           type: array
           items:
-            $ref: '#/components/schemas/FurnitureItem'
+            $ref: "#/components/schemas/FurnitureItem"
         total:
           type: integer
         limit:
@@ -1412,62 +1356,13 @@ components:
         furniture:
           type: array
           items:
-            $ref: '#/components/schemas/PlayerFurnitureInventory'
+            $ref: "#/components/schemas/PlayerFurnitureInventory"
         total:
           type: integer
         limit:
           type: integer
         offset:
           type: integer
-
-    PlaceFurnitureRequest:
-      type: object
-      required:
-        - player_id
-        - furniture_item_id
-        - position_x
-        - position_y
-        - position_z
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        furniture_item_id:
-          type: string
-          format: uuid
-        position_x:
-          type: number
-          format: float
-        position_y:
-          type: number
-          format: float
-        position_z:
-          type: number
-          format: float
-        rotation_x:
-          type: number
-          format: float
-          default: 0
-        rotation_y:
-          type: number
-          format: float
-          default: 0
-        rotation_z:
-          type: number
-          format: float
-          default: 0
-        scale_x:
-          type: number
-          format: float
-          default: 1
-        scale_y:
-          type: number
-          format: float
-          default: 1
-        scale_z:
-          type: number
-          format: float
-          default: 1
 
     MoveFurnitureRequest:
       type: object
@@ -1513,51 +1408,6 @@ components:
         player_id:
           type: string
           format: uuid
-
-    PlacedFurniture:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        apartment_id:
-          type: string
-          format: uuid
-        furniture_item_id:
-          type: string
-          format: uuid
-        furniture_item:
-          $ref: '#/components/schemas/FurnitureItem'
-        position_x:
-          type: number
-          format: float
-        position_y:
-          type: number
-          format: float
-        position_z:
-          type: number
-          format: float
-        rotation_x:
-          type: number
-          format: float
-        rotation_y:
-          type: number
-          format: float
-        rotation_z:
-          type: number
-          format: float
-        scale_x:
-          type: number
-          format: float
-        scale_y:
-          type: number
-          format: float
-        scale_z:
-          type: number
-          format: float
-        placed_at:
-          type: string
-          format: date-time
 
     ApartmentPrestigeResponse:
       type: object
@@ -1642,7 +1492,7 @@ components:
         visits:
           type: array
           items:
-            $ref: '#/components/schemas/ApartmentVisit'
+            $ref: "#/components/schemas/ApartmentVisit"
         total:
           type: integer
         limit:
@@ -1659,7 +1509,7 @@ components:
         visits:
           type: array
           items:
-            $ref: '#/components/schemas/ApartmentVisit'
+            $ref: "#/components/schemas/ApartmentVisit"
         total:
           type: integer
         limit:
@@ -1697,7 +1547,7 @@ components:
         events:
           type: array
           items:
-            $ref: '#/components/schemas/HousingEvent'
+            $ref: "#/components/schemas/HousingEvent"
         total:
           type: integer
         limit:
@@ -1711,7 +1561,7 @@ components:
         furniture:
           type: array
           items:
-            $ref: '#/components/schemas/FurnitureItem'
+            $ref: "#/components/schemas/FurnitureItem"
         total:
           type: integer
         limit:
@@ -1732,7 +1582,7 @@ components:
           type: string
           format: uuid
         furniture_item:
-          $ref: '#/components/schemas/FurnitureItem'
+          $ref: "#/components/schemas/FurnitureItem"
         quantity:
           type: integer
           default: 1
@@ -1752,36 +1602,35 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
     Unauthorized:
       description: Требуется аутентификация
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
     Forbidden:
       description: Недостаточно прав доступа
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
     NotFound:
       description: Ресурс не найден
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
     InternalServerError:
       description: Внутренняя ошибка сервера
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
 security:
   - BearerAuth: []
-

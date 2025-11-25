@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Social Mentorship Reputation Service API
+  description: API для репутации и отзывов наставников
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Mentorship Reputation
+    description: Репутация и отзывы наставников
+
+paths:
+  /social/mentorship/reputation/{mentorId}:
+    get:
+      tags:
+        - Mentorship Reputation
+      summary: Получить репутацию наставника
+      operationId: getMentorReputation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mentorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Репутация наставника
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorReputation'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/reputation/{mentorId}/review:
+    post:
+      tags:
+        - Mentorship Reputation
+      summary: Оставить отзыв о наставнике
+      operationId: reviewMentor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mentorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorReviewRequest'
+      responses:
+        '201':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorReview'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    MentorReputation:
+      type: object
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        reputation_score:
+          type: number
+          format: decimal
+        total_reviews:
+          type: integer
+        average_rating:
+          type: number
+          format: decimal
+        positive_reviews:
+          type: integer
+        negative_reviews:
+          type: integer
+
+    CreateMentorReviewRequest:
+      type: object
+      required:
+        - rating
+        - comment
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 500
+
+    MentorReview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        reviewer_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+
+
+

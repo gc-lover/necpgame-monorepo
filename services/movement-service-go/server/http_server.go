@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/necpgame/movement-service-go/models"
+	"github.com/necpgame/movement-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,11 +40,10 @@ func NewHTTPServer(addr string, movementService MovementServiceInterface) *HTTPS
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	api := router.PathPrefix("/api/v1").Subrouter()
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 
-	api.HandleFunc("/movement/{characterId}/position", server.getPosition).Methods("GET")
-	api.HandleFunc("/movement/{characterId}/position", server.savePosition).Methods("POST")
-	api.HandleFunc("/movement/{characterId}/history", server.getPositionHistory).Methods("GET")
+	handlers := NewMovementHandlers(movementService)
+	HandlerFromMux(handlers, apiRouter)
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -82,89 +81,14 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) getPosition(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterIDStr := vars["characterId"]
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character id")
-		return
+func HandlerFromMux(si api.ServerInterface, r *mux.Router) {
+	wrapper := &api.ServerInterfaceWrapper{
+		Handler: si,
 	}
 
-	position, err := s.movementService.GetPosition(r.Context(), characterID)
-	if err != nil {
-		if err.Error() == "position not found" {
-			s.respondError(w, http.StatusNotFound, "position not found")
-			return
-		}
-		s.logger.WithError(err).Error("Failed to get position")
-		s.respondError(w, http.StatusInternalServerError, "failed to get position")
-		return
-	}
-
-	if position == nil {
-		s.respondError(w, http.StatusNotFound, "position not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, position)
-}
-
-func (s *HTTPServer) savePosition(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterIDStr := vars["characterId"]
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character id")
-		return
-	}
-
-	var req models.SavePositionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	position, err := s.movementService.SavePosition(r.Context(), characterID, &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to save position")
-		s.respondError(w, http.StatusInternalServerError, "failed to save position")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, position)
-}
-
-func (s *HTTPServer) getPositionHistory(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	characterIDStr := vars["characterId"]
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character id")
-		return
-	}
-
-	limitStr := r.URL.Query().Get("limit")
-	limit := 50
-	if limitStr != "" {
-		var err error
-		limit, err = strconv.Atoi(limitStr)
-		if err != nil || limit <= 0 || limit > 100 {
-			limit = 50
-		}
-	}
-
-	history, err := s.movementService.GetPositionHistory(r.Context(), characterID, limit)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get position history")
-		s.respondError(w, http.StatusInternalServerError, "failed to get position history")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, history)
+	r.HandleFunc("/movement/{characterId}/history", wrapper.GetPositionHistory).Methods("GET")
+	r.HandleFunc("/movement/{characterId}/position", wrapper.GetPosition).Methods("GET")
+	r.HandleFunc("/movement/{characterId}/position", wrapper.SavePosition).Methods("POST")
 }
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,574 @@
+metadata:
+  id: global-state-system-architecture
+  title: Архитектура системы глобального состояния
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T15:10:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - infrastructure
+    - state-management
+    - event-sourcing
+    - synchronization
+  related_systems:
+    - world-service
+    - event-bus
+    - redis-cluster
+    - postgresql
+  related_documents:
+    - id: global-state-overview
+      relation: implements
+    - id: global-state-management
+      relation: implements
+    - id: global-state-operations
+      relation: implements
+    - id: global-state-sync
+      relation: implements
+    - id: global-state-events
+      relation: implements
+  github_issue: 53
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - infrastructure
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы глобального состояния для синхронизации состояния игры между сервисами:
+    - Распределенное хранение состояния мира
+    - Синхронизация между сервисами через Event Bus
+    - Realtime обновления через Redis и WebSocket
+    - Event Sourcing для аудита и time travel
+    - Разрешение конфликтов при одновременных изменениях
+  goal: |
+    Создать архитектурную схему системы глобального состояния с определением:
+    - Микросервисов для управления состоянием
+    - Компонентов для синхронизации, событий и операций
+    - API endpoints (высокоуровнево)
+    - Интеграций с другими системами
+    - Структуры БД для состояния и событий
+    - Стратегий синхронизации и разрешения конфликтов
+    - Технического задания для реализации
+
+architecture:
+  overview: |
+    Система глобального состояния состоит из следующих компонентов:
+    1. Global State Manager - управление состоянием и операциями CRUD
+    2. Event Processing Pipeline - обработка событий изменения состояния
+    3. State Synchronization Manager - синхронизация между сервисами
+    4. Conflict Resolution Engine - разрешение конфликтов
+    5. Event Store Manager - хранение событий для Event Sourcing
+    6. State Replay Engine - восстановление состояния через replay событий
+    7. Query Service - запросы к состоянию (point, range, aggregate, time travel)
+    8. Projection Manager - создание read-моделей через проекции
+    9. WebSocket Sync Manager - realtime синхронизация через WebSocket
+
+  microservices:
+    - name: world-service
+      port: 8086
+      responsibility: |
+        Основной сервис для управления глобальным состоянием:
+        - Управление состоянием мира через Global State Manager
+        - Обработка событий через Event Processing Pipeline
+        - Синхронизация через State Synchronization Manager
+        - Разрешение конфликтов
+        - Event Sourcing и replay
+      components:
+        - Global State Manager
+        - Event Processing Pipeline
+        - State Synchronization Manager
+        - Conflict Resolution Engine
+        - Event Store Manager
+        - State Replay Engine
+        - Query Service
+        - Projection Manager
+        - WebSocket Sync Manager
+      endpoints:
+        - GET /api/v1/world/state/{key} - получить состояние по ключу
+        - GET /api/v1/world/state/{category} - получить состояние категории
+        - PUT /api/v1/world/state/{key} - обновить состояние
+        - POST /api/v1/world/state/batch - пакетное обновление
+        - GET /api/v1/world/state/{key}/history - история изменений
+        - GET /api/v1/world/state/{key}/at-time - состояние на момент времени
+        - POST /api/v1/world/state/replay - replay событий
+        - GET /api/v1/world/state/query - запросы к состоянию
+
+  components:
+    - name: Global State Manager
+      location: world-service
+      responsibility: |
+        Управление глобальным состоянием:
+        - CRUD операции над состоянием
+        - Кэширование в Redis
+        - Публикация StateChangedEvent через Event Bus
+        - Валидация изменений
+        - Оптимистичная блокировка (versioning)
+      dependencies:
+        - Database (PostgreSQL)
+        - Redis Cache
+        - Event Bus
+
+    - name: Event Processing Pipeline
+      location: world-service
+      responsibility: |
+        Обработка событий изменения состояния:
+        - Прием событий от сервисов
+        - Валидация событий
+        - Авторизация изменений
+        - Обогащение событий
+        - Запись в Event Store
+        - Публикация в Event Bus
+        - Обновление состояния
+        - Уведомления подписчиков
+        - Аналитика
+      dependencies:
+        - Event Store Manager
+        - Global State Manager
+        - Event Bus
+        - Analytics Service
+
+    - name: State Synchronization Manager
+      location: world-service
+      responsibility: |
+        Синхронизация состояния между сервисами:
+        - Server-wide синхронизация (мировые данные)
+        - Player-specific синхронизация (персональные данные)
+        - Phased синхронизация (сюжетные фазы, инстансы)
+        - Redis pub/sub для realtime обновлений
+        - WebSocket каналы для клиентов
+        - Инвалидация кэша
+      dependencies:
+        - Redis Cluster
+        - WebSocket Sync Manager
+        - Global State Manager
+
+    - name: Conflict Resolution Engine
+      location: world-service
+      responsibility: |
+        Разрешение конфликтов при одновременных изменениях:
+        - Last Write Wins стратегия
+        - Голосование для критичных изменений
+        - Event версионность
+        - Merge дельт для совместимых изменений
+        - Optimistic locking проверки
+      dependencies:
+        - Global State Manager
+        - Event Store Manager
+
+    - name: Event Store Manager
+      location: world-service
+      responsibility: |
+        Управление Event Store для Event Sourcing:
+        - Хранение всех событий изменения состояния
+        - Snapshot management для оптимизации
+        - Event replay для восстановления
+        - Time travel запросы
+        - Аудит изменений
+      dependencies:
+        - Database (PostgreSQL)
+        - State Replay Engine
+
+    - name: State Replay Engine
+      location: world-service
+      responsibility: |
+        Восстановление состояния через replay событий:
+        - Replay событий из Event Store
+        - Восстановление состояния на момент времени
+        - Batch replay для миграций
+        - Тестирование через replay
+        - Time travel функциональность
+      dependencies:
+        - Event Store Manager
+        - Global State Manager
+
+    - name: Query Service
+      location: world-service
+      responsibility: |
+        Запросы к состоянию:
+        - Point queries (получение по ключу)
+        - Range queries (диапазон значений)
+        - Aggregate queries (агрегации)
+        - Time travel queries (состояние на момент времени)
+        - Projection queries (read-модели)
+      dependencies:
+        - Global State Manager
+        - Event Store Manager
+        - Projection Manager
+
+    - name: Projection Manager
+      location: world-service
+      responsibility: |
+        Создание read-моделей через проекции:
+        - Event listeners для проекций
+        - Материализованные представления
+        - Агрегаты для аналитики
+        - Оптимизация запросов
+      dependencies:
+        - Event Store Manager
+        - Database (PostgreSQL)
+
+    - name: WebSocket Sync Manager
+      location: world-service
+      responsibility: |
+        Realtime синхронизация через WebSocket:
+        - WebSocket каналы для клиентов
+        - Подписка на изменения состояния
+        - Публикация обновлений в реальном времени
+        - Управление подключениями
+        - Heartbeat и переподключение
+      dependencies:
+        - Redis pub/sub
+        - Realtime Gateway
+        - State Synchronization Manager
+
+  integrations:
+    - service: event-bus
+      purpose: |
+        Публикация и подписка на события:
+        - Публикация StateChangedEvent при изменениях
+        - Подписка на события от других сервисов
+        - world:state-changed
+        - world:event-started
+        - world:faction-war-update
+        - combat:territory-captured
+        - guild:war-declared
+        - quest:world-quest-completed
+      events:
+        - world:state-changed
+        - world:event-started
+        - world:faction-war-update
+        - world:state-synced
+        - world:conflict-resolved
+
+    - service: redis-cluster
+      purpose: |
+        Кэширование и realtime синхронизация:
+        - Хранение актуального состояния (world:state:current)
+        - Redis pub/sub для обновлений
+        - Инвалидация кэша при изменениях
+        - Многоуровневый кэш
+      operations:
+        - GET world:state:{key}
+        - SET world:state:{key}
+        - PUBLISH world:state-changed
+        - SUBSCRIBE world:state-changed
+
+    - service: postgresql
+      purpose: |
+        Персистентное хранение:
+        - Хранение состояния в таблицах
+        - Event Store для Event Sourcing
+        - Snapshots для оптимизации
+        - Материализованные представления
+        - Индексы для производительности
+      tables:
+        - global_state
+        - event_store
+        - state_snapshots
+        - processed_events
+        - projections
+
+    - service: realtime-gateway
+      purpose: |
+        WebSocket синхронизация с клиентами:
+        - WebSocket каналы для клиентов
+        - Подписка на изменения состояния
+        - Публикация обновлений
+        - Управление подключениями
+      channels:
+        - world:state:global
+        - world:state:player:{playerId}
+        - world:state:phase:{phaseId}
+
+  data_models:
+    - name: GlobalState
+      fields:
+        - key: string
+        - category: enum (world, player, phase, territory, faction)
+        - value: json
+        - version: int
+        - updated_at: timestamp
+        - updated_by: UUID
+        - metadata: json
+
+    - name: StateEvent
+      fields:
+        - event_id: UUID
+        - event_type: string
+        - key: string
+        - old_value: json
+        - new_value: json
+        - version: int
+        - timestamp: timestamp
+        - actor_id: UUID
+        - metadata: json
+
+    - name: StateSnapshot
+      fields:
+        - snapshot_id: UUID
+        - key: string
+        - value: json
+        - version: int
+        - timestamp: timestamp
+        - event_id: UUID
+
+    - name: ProcessedEvent
+      fields:
+        - event_id: UUID
+        - processed_at: timestamp
+        - processor_id: string
+        - status: enum (success, failed, retry)
+
+  sync_models:
+    - name: server-wide
+      description: |
+        Глобальная синхронизация мировых данных:
+        - Территории и их владельцы
+        - Фракционные войны
+        - Экономические события
+        - Мировые события
+      consistency: strong
+      delivery: Event Bus + Redis pub/sub
+
+    - name: player-specific
+      description: |
+        Персональная синхронизация:
+        - Персональные квесты
+        - Репутация игрока
+        - Достижения
+        - Инвентарь
+      consistency: eventual
+      delivery: WebSocket + Redis pub/sub
+
+    - name: phased
+      description: |
+        Фазовая синхронизация:
+        - Сюжетные фазы
+        - Инстансы
+        - Временные события
+      consistency: strong
+      delivery: Event Bus + WebSocket
+
+  conflict_resolution_strategies:
+    - name: last_write_wins
+      description: Последняя запись побеждает
+      use_case: Некритичные изменения состояния
+      implementation: Сравнение timestamp
+
+    - name: voting
+      description: Голосование для критичных изменений
+      use_case: Критичные изменения (захват территорий, войны)
+      implementation: Консенсус между сервисами
+
+    - name: event_versioning
+      description: Версионность событий
+      use_case: Последовательные изменения
+      implementation: Optimistic locking с версиями
+
+    - name: merge_deltas
+      description: Слияние дельт для совместимых изменений
+      use_case: Совместимые изменения (статистика, метрики)
+      implementation: Merge алгоритмы
+
+  api_endpoints:
+    state_management:
+      - GET /api/v1/world/state/{key}
+        description: Получить состояние по ключу
+        response: GlobalState
+      - GET /api/v1/world/state/category/{category}
+        description: Получить состояние категории
+        response: array<GlobalState>
+      - PUT /api/v1/world/state/{key}
+        description: Обновить состояние
+        request: StateUpdateRequest
+        response: GlobalState
+      - POST /api/v1/world/state/batch
+        description: Пакетное обновление состояния
+        request: BatchStateUpdateRequest
+        response: array<GlobalState>
+      - DELETE /api/v1/world/state/{key}
+        description: Удалить состояние
+        response: void
+
+    history_and_time_travel:
+      - GET /api/v1/world/state/{key}/history
+        description: Получить историю изменений
+        response: array<StateEvent>
+      - GET /api/v1/world/state/{key}/at-time
+        description: Получить состояние на момент времени
+        query_params:
+          - timestamp: timestamp
+        response: GlobalState
+      - POST /api/v1/world/state/replay
+        description: Replay событий для восстановления
+        request: ReplayRequest
+        response: ReplayResponse
+
+    queries:
+      - POST /api/v1/world/state/query
+        description: Запросы к состоянию (point, range, aggregate)
+        request: StateQueryRequest
+        response: StateQueryResponse
+      - GET /api/v1/world/state/projections
+        description: Получить доступные проекции
+        response: array<Projection>
+
+    synchronization:
+      - GET /api/v1/world/state/sync/status
+        description: Статус синхронизации
+        response: SyncStatus
+      - POST /api/v1/world/state/sync/trigger
+        description: Триггер синхронизации (admin)
+        request: SyncTriggerRequest
+        response: SyncTriggerResponse
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Global State Manager и Event Processing Pipeline
+        tasks:
+          - Реализация Global State Manager
+          - CRUD операции
+          - Кэширование в Redis
+          - Публикация событий
+          - Event Processing Pipeline (10 этапов)
+        estimated_effort: 6 days
+
+      phase_2:
+        name: State Synchronization Manager
+        tasks:
+          - Реализация State Synchronization Manager
+          - Server-wide синхронизация
+          - Player-specific синхронизация
+          - Phased синхронизация
+          - Redis pub/sub интеграция
+        estimated_effort: 5 days
+
+      phase_3:
+        name: Conflict Resolution Engine
+        tasks:
+          - Реализация Conflict Resolution Engine
+          - Last Write Wins стратегия
+          - Голосование
+          - Event версионность
+          - Merge дельт
+          - Optimistic locking
+        estimated_effort: 4 days
+
+      phase_4:
+        name: Event Store и Replay Engine
+        tasks:
+          - Реализация Event Store Manager
+          - Snapshot management
+          - State Replay Engine
+          - Time travel функциональность
+          - Аудит изменений
+        estimated_effort: 5 days
+
+      phase_5:
+        name: Query Service и Projections
+        tasks:
+          - Реализация Query Service
+          - Point, range, aggregate queries
+          - Projection Manager
+          - Материализованные представления
+          - Оптимизация запросов
+        estimated_effort: 4 days
+
+      phase_6:
+        name: WebSocket Sync Manager
+        tasks:
+          - Реализация WebSocket Sync Manager
+          - WebSocket каналы
+          - Подписка на изменения
+          - Управление подключениями
+          - Heartbeat и переподключение
+        estimated_effort: 3 days
+
+      phase_7:
+        name: Интеграции и оптимизация
+        tasks:
+          - Интеграция с Event Bus
+          - Интеграция с Redis Cluster
+          - Интеграция с PostgreSQL
+          - Интеграция с Realtime Gateway
+          - Performance tuning
+          - Мониторинг и алерты
+        estimated_effort: 5 days
+
+    total_estimated_effort: 32 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> WorldService[World Service<br/>8086]
+        
+        WorldService --> GSM[Global State Manager]
+        WorldService --> EPP[Event Processing Pipeline]
+        WorldService --> SSM[State Synchronization Manager]
+        WorldService --> CRE[Conflict Resolution Engine]
+        WorldService --> ESM[Event Store Manager]
+        WorldService --> SRE[State Replay Engine]
+        WorldService --> QS[Query Service]
+        WorldService --> PM[Projection Manager]
+        WorldService --> WSSM[WebSocket Sync Manager]
+        
+        WorldService --> EventBus[Event Bus<br/>Kafka]
+        WorldService --> Redis[(Redis Cluster)]
+        WorldService --> DB[(PostgreSQL)]
+        
+        Redis --> WSSM
+        WSSM --> RealtimeGateway[Realtime Gateway]
+        RealtimeGateway --> Client
+        
+        WorldService --> OtherServices[Other Services]
+        OtherServices --> EventBus
+        EventBus --> WorldService
+    ```
+
+  event_processing_pipeline: |
+    ```mermaid
+    graph LR
+        A[Receive Event] --> B[Validate]
+        B --> C[Authorize]
+        C --> D[Enrich]
+        D --> E[Write Event Store]
+        E --> F[Publish Event Bus]
+        F --> G[Process Subscribers]
+        G --> H[Update State]
+        H --> I[Notifications]
+        I --> J[Analytics]
+    ```
+
+  sync_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant Service
+        participant WorldService
+        participant GlobalStateManager
+        participant Redis
+        participant EventBus
+        participant OtherServices
+        
+        Service->>WorldService: Update State
+        WorldService->>GlobalStateManager: Process Update
+        GlobalStateManager->>Redis: Update Cache
+        GlobalStateManager->>EventBus: Publish StateChangedEvent
+        EventBus->>OtherServices: Notify Subscribers
+        Redis->>Redis: PUBLISH world:state-changed
+        Redis->>WorldService: Notify Subscribers
+        WorldService->>RealtimeGateway: WebSocket Update
+    ```
+
+
+
