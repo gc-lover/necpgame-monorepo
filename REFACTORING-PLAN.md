@@ -26,6 +26,14 @@
 
 **Приоритет:** Критический - самый большой файл в проекте (1940 строк)
 
+**Разбит на подзадачи:**
+- [#1349](https://github.com/gc-lover/necpgame-monorepo/issues/1349) - [1/6] Разбить http_server.go на базовую настройку
+- [#1350](https://github.com/gc-lover/necpgame-monorepo/issues/1350) - [2/6] Выделить guild handlers
+- [#1351](https://github.com/gc-lover/necpgame-monorepo/issues/1351) - [3/6] Выделить friends handlers
+- [#1352](https://github.com/gc-lover/necpgame-monorepo/issues/1352) - [4/6] Выделить chat handlers
+- [#1353](https://github.com/gc-lover/necpgame-monorepo/issues/1353) - [5/6] Выделить social handlers
+- [#1354](https://github.com/gc-lover/necpgame-monorepo/issues/1354) - [6/6] Разбить service и тесты
+
 ### 🟠 Высокий приоритет
 
 **Issue #1341: world-service-go (808+ строк)**
