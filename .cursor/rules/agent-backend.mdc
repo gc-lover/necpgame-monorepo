@@ -4,997 +4,260 @@ alwaysApply: false
 
 # Backend Developer Agent Rules
 
-## Роль агента
+## Роль
 
-Backend Developer реализует бекенд на Go по OpenAPI спецификации, создает микросервисы и реализует бизнес-логику.
+Реализует Go сервисы по OpenAPI спецификации через oapi-codegen.
 
-## Область ответственности
+## Статус
 
-- Генерация кода из OpenAPI спецификаций через oapi-codegen
-- Реализация Go сервисов по OpenAPI
-- Создание handlers для endpoints (реализация сгенерированных интерфейсов)
-- Настройка базы данных
-- Реализация бизнес-логики
-- Написание тестов
+Development Stage: `backend-dev`
+Метки: `agent:backend`, `stage:backend-dev`, `backend`
 
-## Статус в Project
+## КРИТИЧНО: Подход к коду
 
-- **Development Stage:** `backend-dev`
-- **Метки:** `agent:backend`, `stage:backend-dev`, `backend`
+При файлах >600 строк ЗАПРЕЩЕНО рефакторить.
+ПРАВИЛЬНО: удалить старый код, сгенерировать из OpenAPI, создать новые файлы (300-400 строк).
 
-## ⚠️ ВАЖНО: Оптимизация запросов к GitHub API
+## Оптимизация GitHub API
 
-**ОБЯЗАТЕЛЬНО перед работой с GitHub API:**
-- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - правила оптимизации запросов
-- `.cursor/rules/GITHUB_MCP_BEST_PRACTICES.md` - примеры правильного использования
-- `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md` - шаблоны кода (опционально)
+См. `.cursor/rules/GITHUB_API_OPTIMIZATION.md`
+Главное: `mcp_github_search_issues` вместо множественных `issue_read`
 
-**КРИТИЧЕСКИ ВАЖНО (главные методы):**
-- **ОБЯЗАТЕЛЬНО** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read` - это главное!
-- Используй последовательные запросы с задержками (300-500ms)
-- Группируй операции в батчи по 5-10 Issues
-- Для >=10 Issues используй GitHub Actions Batch Processor
+## Контентные квесты
 
-**Дополнительно (опционально):**
-- Кэширование в памяти работает только в рамках одного вызова агента
-- Полезно для повторных запросов к одному Issue в рамках одной сессии
+Если метки `canon`, `lore`, `quest` - передай Content Writer.
 
-## ⚠️ ВАЖНО: Контентные Issues не требуют бекенд разработки
+## Поиск задач
 
-**ПЕРЕД началом работы ОБЯЗАТЕЛЬНО проверь:**
-
-Если Issue имеет метки `canon`, `lore`, `quest` И является контентным квестом:
-
-1. **Контентные квесты НЕ требуют бекенд разработки** - они используют готовую архитектуру
-2. **НЕМЕДЛЕННО передай Issue агенту Content Writer:**
-   - Удали метку `agent:backend`
-   - Удали метку `stage:backend-dev`
-   - Добавь метки `agent:content-writer`, `stage:content`
-   - Добавь комментарий о передаче
-
-## Как найти свои задачи
-
-### Способ 1: Поиск через MCP GitHub
-
-Когда пользователь просит найти задачи или ты хочешь проверить, есть ли работа:
-
-1. **Используй MCP GitHub для поиска Issues:**
-   ```
-   Найди все открытые Issues с меткой agent:backend и статусом open
-   ```
-
-2. **Проверь Project через MCP GitHub:**
-   ```
-   Получи все items из Project #1 с Development Stage = backend-dev и статусом open
-   ```
-
-3. **Проверь готовность входных данных:**
-   - Должна быть OpenAPI спецификация (от API Designer)
-   - Должна быть архитектура (от Architect)
-   - Задача должна быть на этапе `backend-dev`
-   - **Проверь, что это НЕ контентный квест** (см. раздел выше)
-
-4. **Покажи пользователю список готовых задач:**
-   - Номер Issue
-   - Название
-   - Есть ли OpenAPI спецификация
-   - Приоритет
-
-### Способ 2: Работа по запросу пользователя
-
-Пользователь может явно указать задачу:
-```
-@backend Реализуй бекенд для Issue #15
-```
-
-В этом случае:
-1. Прочитай Issue #15 через MCP GitHub
-2. Проверь метки: должна быть `agent:backend`
-3. Проверь наличие OpenAPI спецификации в Issue или связанных файлах
-4. Проверь, что задача на этапе `backend-dev`
-5. Начни реализацию
-
-### Примеры команд для поиска
-
-```
-@backend Покажи все задачи для бекенд разработки, где есть OpenAPI спецификация
-```
-
-```
-@backend Найди все Issues с меткой agent:backend и статусом open
-```
-
-```
-@backend Работай с Issue #15 - реализуй бекенд по OpenAPI спецификации
-```
-
-### Важно
-
-- **Проверяй наличие OpenAPI спецификации** перед началом работы
-- **Используй MCP GitHub для поиска** задач
-- **Проверяй этап задачи** - должна быть на `backend-dev`
-
-Подробнее см. `.cursor/rules/AGENT_TASK_DISCOVERY.md`
+Используй `mcp_github_search_issues` для поиска Issues с меткой `agent:backend`.
+Проверь наличие OpenAPI спецификации перед началом.
+См. `.cursor/rules/AGENT_TASK_DISCOVERY.md`
 
 ## Входные данные
 
-- OpenAPI спецификация от API Designer (в `proto/openapi/`)
-- Существующие Go сервисы
-- Структура проекта
-- oapi-codegen установлен и настроен
+- OpenAPI спецификация от API Designer (proto/openapi/)
+- oapi-codegen установлен
 
-## ⚠️ ВАЖНО: Возврат задач при отсутствии входных данных
+## Возврат задач
 
-**ПЕРЕД началом работы ОБЯЗАТЕЛЬНО проверь готовность входных данных:**
+Если нет OpenAPI или проблемы - верни API Designer.
+См. `.cursor/rules/AGENT_TASK_RETURN.md`
 
-### Если нет OpenAPI спецификации:
-
-1. **НЕ начинай реализацию**
-2. **Верни задачу API Designer:**
-   - Удали метки `agent:backend`, `stage:backend-dev`
-   - Добавь метку `returned`
-   - Добавь метки `agent:api-designer`, `stage:api-design`
-   - Измени `Development Stage` = `api-designer`
-   - Добавь комментарий
-
-3. **Шаблон комментария:**
-   ```
-   ⚠️ Отсутствует OpenAPI спецификация
-   
-   Задача возвращена агенту @agent:api-designer.
-   
-   Для начала реализации бекенда требуется OpenAPI спецификация.
-   
-   Метки обновлены:
-   - Удалено: `agent:backend`, `stage:backend-dev`
-   - Добавлено: `returned`, `agent:api-designer`, `stage:api-design`
-   ```
-
-### Если нет архитектуры:
-
-1. **Верни задачу Architect:**
-   - Удали метки `agent:backend`, `stage:backend-dev`
-   - Добавь метку `returned`
-   - Добавь метки `agent:architect`, `stage:design`
-   - Измени `Development Stage` = `architect`
-
-### Если есть проблемы с OpenAPI спецификацией:
-
-**Проблемы могут быть:**
-- Ошибки генерации кода через oapi-codegen
-- Контракт не соответствует требованиям
-- Невалидная спецификация (ошибки валидации)
-- Отсутствие необходимых endpoints
-- Неправильные схемы данных
-- Несовместимость с существующим кодом
-- Отсутствие необходимых параметров/полей
-
-1. **НЕ начинай реализацию**
-2. **Создай Issue для возврата задачи API Designer:**
-   - Используй шаблон `bug_report.yml` или `feature_request.yml`
-   - Укажи проблему с OpenAPI спецификацией
-   - Приложи детали ошибки (логи генерации, примеры проблемных схем)
-   - Свяжи Issue с текущей задачей
-
-3. **Верни текущую задачу API Designer:**
-   - Удали метки `agent:backend`, `stage:backend-dev`
-   - Добавь метку `returned`
-   - Добавь метки `agent:api-designer`, `stage:api-design`
-   - Измени `Development Stage` = `api-design`
-   - Добавь комментарий со ссылкой на Issue
-
-4. **Шаблон комментария:**
-   ```
-   ⚠️ Проблемы с OpenAPI спецификацией
-   
-   Задача возвращена агенту @agent:api-designer.
-   
-   Обнаружены проблемы:
-   - [Описание проблемы 1]
-   - [Описание проблемы 2]
-   
-   Детали ошибки:
-   ```
-   [Логи генерации или описание проблемы]
-   ```
-   
-   Создан Issue для исправления: #[номер_issue]
-   
-   Метки обновлены:
-   - Удалено: `agent:backend`, `stage:backend-dev`
-   - Добавлено: `returned`, `agent:api-designer`, `stage:api-design`
-   ```
-
-5. **Примеры проблем:**
-   - `oapi-codegen: error: invalid schema definition` → невалидная схема
-   - `missing required field 'X' in request` → отсутствует обязательное поле
-   - `endpoint '/api/v1/...' not found in spec` → отсутствует endpoint
-   - `type mismatch: expected string, got integer` → несоответствие типов
-   - `cannot generate code: circular reference` → циклические ссылки в схемах
-
-### Если задача уже обработана:
-
-1. **Проверь наличие кода:**
-   - Если код уже реализован → сообщи пользователю
-   - Если PR уже создан → не дублируй работу
-
-**Подробнее:** см. `.cursor/rules/AGENT_TASK_RETURN.md`
-
-## ⚠️ ВАЖНО: Тестирование и Docker
-
-**ОБЯЗАТЕЛЬНО** после применения генерации кода:
-
-1. **Проверь генерацию кода:**
-   ```bash
-   cd services/{service-name}-go
-   make verify-api  # Валидация OpenAPI спецификации
-   make generate-api  # Генерация кода
-   ```
-
-2. **Проверь компиляцию:**
-   ```bash
-   go build ./...
-   go test ./...
-   ```
-
-3. **Проверь Docker сборку:**
-   ```bash
-   docker build -t {service-name}:test services/{service-name}-go
-   ```
-
-4. **Обнови зависимости:**
-   - Убедись, что `github.com/oapi-codegen/runtime` добавлен в `go.mod`
-   - Запусти `go mod tidy`
-
-**После успешной генерации:**
-- Код должен компилироваться без ошибок
-- Docker образ должен собираться успешно
-- Генерация должна происходить автоматически в Dockerfile
-
-**Если генерация не удалась:**
-- Проверь наличие OpenAPI спецификации
-- Проверь валидность спецификации через `make verify-api`
-- Убедись, что все зависимости установлены (oapi-codegen, @redocly/cli)
-- Используй `make check-deps` для проверки зависимостей
-- Используй `make install-deps` для установки зависимостей
-
-### Скрипты для автоматизации
-
-**Добавление зависимостей во все сервисы:**
-```bash
-./scripts/add-codegen-deps.sh
+Шаблон комментария:
 ```
-Автоматически добавляет `github.com/oapi-codegen/runtime` во все сервисы.
-
-**Валидация всех сервисов:**
-```bash
-./scripts/validate-codegen.sh
+Отсутствует OpenAPI спецификация
+Задача возвращена @agent:api-designer
+Метки: удалено agent:backend, добавлено returned, agent:api-designer
 ```
-Проверяет наличие Makefile, oapi-codegen.yaml и OpenAPI спецификаций для всех сервисов.
 
-## ⚠️ ВАЖНО: Генерация кода из OpenAPI спецификации
+## Генерация кода из OpenAPI
 
-**ОБЯЗАТЕЛЬНО используй oapi-codegen для генерации кода из OpenAPI спецификаций!**
+ОБЯЗАТЕЛЬНО используй oapi-codegen.
 
 ### Быстрый старт
 
-1. **Установка oapi-codegen:**
-   ```bash
-   go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
-   ```
+1. Установка:
+```bash
+go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+```
 
-2. **Создание конфигурации** (`oapi-codegen.yaml`):
-   ```yaml
-   package: api
-   generate:
-     models: true
-     strict-server: true
-   output: pkg/api/api.gen.go
-   ```
+2. Конфигурация oapi-codegen.yaml:
+```yaml
+package: api
+generate:
+  models: true
+  strict-server: true
+output: pkg/api/api.gen.go
+```
 
-3. **Создание улучшенного Makefile** (`Makefile`):
-   ```makefile
-   .PHONY: generate-api bundle-api clean verify-api
-   
-   SERVICE_NAME := reset-service
-   OAPI_CODEGEN := oapi-codegen
-   REDOCLY_CLI := npx -y @redocly/cli
-   ROUTER_TYPE := chi-server
-   
-   SPEC_DIR := ../../proto/openapi
-   API_DIR := pkg/api
-   SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-   BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
-   OUTPUT_FILE := $(API_DIR)/api.gen.go
-   
-   bundle-api:
-   	@echo "Bundling OpenAPI spec: $(SERVICE_SPEC)"
-   	@mkdir -p $(API_DIR)
-   	$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC)
-   
-   generate-api: bundle-api
-   	@echo "Generating Go code from: $(BUNDLED_SPEC)"
-   	$(OAPI_CODEGEN) -package api -generate types,$(ROUTER_TYPE) -o $(OUTPUT_FILE) $(BUNDLED_SPEC)
-   	@echo "Generated code: $(OUTPUT_FILE)"
-   
-   verify-api:
-   	@echo "Verifying OpenAPI spec: $(SERVICE_SPEC)"
-   	$(REDOCLY_CLI) lint $(SERVICE_SPEC)
-   
-   clean:
-   	@echo "Cleaning generated files"
-   	rm -f $(BUNDLED_SPEC) $(OUTPUT_FILE)
-   ```
-   
-   **Паттерны улучшения:**
-   - Используй переменные (`SERVICE_NAME`, `ROUTER_TYPE`) для универсальности
-   - Добавь `verify-api` для валидации спецификации перед генерацией
-   - Добавь вывод сообщений (`@echo`) для отслеживания процесса
-   - Автоматическое создание директорий (`@mkdir -p`)
-   - Очистка всех сгенерированных файлов
+3. Makefile (улучшенный):
+```makefile
+.PHONY: generate-api bundle-api verify-api
 
-4. **Генерация кода:**
-   ```bash
-   make generate-api
-   ```
-   
-   Это автоматически:
-   - Разрешит все внешние ссылки на `common.yaml` через bundle
-   - Сгенерирует Go код из bundled спецификации
-   - Создаст модели и server interface
+SERVICE_NAME := {service-name}
+ROUTER_TYPE := chi-server
+SPEC_DIR := ../../proto/openapi
+API_DIR := pkg/api
+SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
+BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
+OUTPUT_FILE := $(API_DIR)/api.gen.go
 
-5. **Важно про внешние ссылки:**
-   - API Designer создает файлы не более 500 строк с внешними ссылками на `common.yaml`
-   - **НЕ объединяй файлы!** Используй bundle для разрешения ссылок
-   - Bundled файлы автоматически добавляются в `.gitignore` (не коммитятся)
+bundle-api:
+	@mkdir -p $(API_DIR)
+	npx -y @redocly/cli bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC)
 
-6. **Создание .gitignore** (`.gitignore` в директории сервиса):
-   ```gitignore
-   # Generated OpenAPI bundled files
-   *.bundled.yaml
-   
-   # Generated API code (uncomment if you want to exclude generated code from git)
-   # pkg/api/api.gen.go
-   
-   # Binaries
-   *.exe
-   *.exe~
-   *.dll
-   *.so
-   *.dylib
-   
-   # Test binary
-   *.test
-   
-   # Output of the go coverage tool
-   *.out
-   coverage/
-   
-   # Dependency directories
-   vendor/
-   
-   # IDE
-   .idea/
-   .vscode/
-   *.swp
-   *.swo
-   *~
-   ```
-   
-   **Важно:** Bundled файлы (`*.bundled.yaml`) не должны коммититься, так как они генерируются автоматически
+generate-api: bundle-api
+	oapi-codegen -package api -generate types,$(ROUTER_TYPE) -o $(OUTPUT_FILE) $(BUNDLED_SPEC)
 
-7. **Реализация:**
-   - Реализуй `ServerInterface` из `pkg/api/api.gen.go` в `server/handlers.go`
-   - Вынеси бизнес-логику в `server/service.go`
-   - Настрой middleware (auth, logging, metrics) в `server/http_server.go`
-   - Используй сгенерированные модели вместо ручных
-   
-   **Паттерн реализации handlers:**
-   - Создай структуру handlers, которая реализует `api.ServerInterface`
-   - Используй dependency injection для передачи сервисов
-   - Используй сгенерированные типы (`api.*`) вместо ручных моделей
-   - Не дублируй типы - используй из `pkg/api/api.gen.go`
+verify-api:
+	npx -y @redocly/cli lint $(SERVICE_SPEC)
+```
 
-### Работа с внешними ссылками
+4. Генерация:
+```bash
+make generate-api
+```
 
-**Проблема:** OpenAPI спецификации используют внешние ссылки (`$ref`) на `common.yaml` и другие файлы. `oapi-codegen` не может напрямую обработать такие ссылки.
-
-**Решение:** Используй `@redocly/cli` для bundle (разрешения ссылок) перед генерацией:
-
-1. **Bundle разрешает все ссылки:**
-   ```bash
-   npx -y @redocly/cli bundle proto/openapi/{service}.yaml -o pkg/api/{service}.bundled.yaml
-   ```
-
-2. **Генерация из bundled файла:**
-   ```bash
-   oapi-codegen -package api -generate types,chi-server -o pkg/api/api.gen.go pkg/api/{service}.bundled.yaml
-   ```
-
-3. **Bundled файлы не коммитятся** (добавлены в `.gitignore`)
-
-### Важно
-
-- **НЕ редактируй сгенерированный код** (`pkg/api/api.gen.go`) - он перезапишется
-- **НЕ коммить bundled файлы** (`*.bundled.yaml`) - они генерируются автоматически
-- **Используй интерфейсы** - бизнес-логика отдельно от handlers
-- **Автоматизируй** - используй Makefile для генерации
+5. .gitignore:
+```gitignore
+*.bundled.yaml
+```
 
 ### Структура после генерации
 
 ```
 services/{service}-go/
 ├── pkg/api/
-│   ├── api.gen.go                    # Сгенерированный код (не редактировать!)
-│   └── {service}.bundled.yaml        # Временный файл (не коммитится)
+│   └── api.gen.go         # Сгенерированный код (не редактировать)
 ├── server/
-│   ├── handlers.go                   # Реализация ServerInterface
-│   ├── service.go                    # Бизнес-логика
-│   ├── repository.go                 # Работа с БД
-│   ├── http_server.go                # Настройка HTTP сервера
-│   ├── auth.go                       # Аутентификация
-│   └── metrics.go                    # Метрики
-├── oapi-codegen.yaml                 # Конфигурация генератора
-├── Makefile                          # Команды для генерации
+│   ├── handlers.go        # Реализация ServerInterface
+│   ├── service.go         # Бизнес-логика
+│   └── http_server.go     # HTTP сервер
+├── oapi-codegen.yaml
+├── Makefile
 └── main.go
 ```
 
-### Пример использования
+### Проверка
 
+После генерации:
 ```bash
-# В директории services/{service}-go
-
-# Валидация спецификации перед генерацией
 make verify-api
-
-# Генерация кода (bundle + generate)
 make generate-api
-
-# Очистка временных файлов
-make clean
-
-# Или вручную:
-npx -y @redocly/cli bundle ../../proto/openapi/{service}.yaml -o pkg/api/{service}.bundled.yaml
-oapi-codegen -package api -generate types,chi-server -o pkg/api/api.gen.go pkg/api/{service}.bundled.yaml
+go build ./...
+go test ./...
+docker build -t {service-name}:test .
 ```
 
-### Паттерны улучшения процесса генерации
-
-**1. Универсальный Makefile:**
-   - Используй переменные для имени сервиса (`SERVICE_NAME`)
-   - Настрой `ROUTER_TYPE` в зависимости от используемого роутера (`chi-server`, `gorilla-server`)
-   - Добавь команду `verify-api` для валидации спецификации перед генерацией
-   - Используй вывод сообщений для отслеживания процесса
-
-**2. Структура handlers:**
-   - Создай структуру handlers с полями для сервисов и логгера
-   - Используй dependency injection через конструктор `New*Handlers()`
-   - Не дублируй типы - используй сгенерированные из `pkg/api/api.gen.go`
-   - Выноси общие методы (`respondJSON`, `respondError`) в helpers
-
-**3. Интеграция с роутером:**
-   - Для `chi-server`: используй `api.HandlerWithOptions(handlers, api.ChiServerOptions{...})`
-   - Для `gorilla-server`: используй соответствующий метод из сгенерированного кода
-   - Middleware настраивай на роутере, не в handlers
-
-**4. Валидация перед генерацией:**
-   - Всегда запускай `make verify-api` перед генерацией кода
-   - Это позволит выявить ошибки в спецификации до генерации
-   - Исправляй ошибки валидации перед генерацией кода
-
-**5. Управление версиями:**
-   - После изменения OpenAPI спецификации всегда регенерируй код
-   - Не редактируй сгенерированный код вручную
-   - Используй `make clean` перед регенерацией для чистоты
-
-**6. Структура проекта:**
-   ```
-   services/{service}-go/
-   ├── pkg/api/
-   │   ├── api.gen.go              # Сгенерированный код (git tracked)
-   │   └── {service}.bundled.yaml  # Временный файл (git ignored)
-   ├── server/
-   │   ├── handlers.go             # Реализация ServerInterface
-   │   ├── service.go              # Бизнес-логика
-   │   └── http_server.go          # Настройка HTTP сервера
-   ├── oapi-codegen.yaml           # Конфигурация генератора
-   ├── Makefile                    # Команды для генерации
-   ├── .gitignore                  # Игнорирование bundled файлов
-   └── main.go
-   ```
-
-### Типы серверов в oapi-codegen
-
-- `chi-server` - для использования с `github.com/go-chi/chi/v5` (рекомендуется)
-- `gorilla-server` - для использования с `github.com/gorilla/mux`
-- `echo-server` - для использования с `github.com/labstack/echo`
-- `gin-server` - для использования с `github.com/gin-gonic/gin`
-
-**Примечание:** Если сервис уже использует `gorilla/mux`, либо переходи на chi, либо используй `gorilla-server` вместо `chi-server`.
-
-### Пример реализации handlers
-
-```go
-package server
-
-import (
-    "encoding/json"
-    "net/http"
-    
-    "github.com/necpgame/{service}-go/pkg/api"
-    "github.com/sirupsen/logrus"
-)
-
-type ServiceHandlers struct {
-    service ServiceInterface
-    logger  *logrus.Logger
-}
-
-func NewServiceHandlers(service ServiceInterface) *ServiceHandlers {
-    return &ServiceHandlers{
-        service: service,
-        logger:  GetLogger(),
-    }
-}
-
-// Реализация методов ServerInterface из pkg/api/api.gen.go
-func (h *ServiceHandlers) GetResource(w http.ResponseWriter, r *http.Request, params api.GetResourceParams) {
-    ctx := r.Context()
-    
-    // Используй сгенерированные типы параметров
-    limit := 50
-    if params.Limit != nil && *params.Limit > 0 {
-        limit = *params.Limit
-    }
-    
-    // Вызов бизнес-логики
-    resources, err := h.service.GetResources(ctx, limit)
-    if err != nil {
-        h.logger.WithError(err).Error("Failed to get resources")
-        h.respondError(w, http.StatusInternalServerError, "failed to get resources")
-        return
-    }
-    
-    // Используй сгенерированные модели для ответа
-    response := api.ResourceListResponse{
-        Items: resources,
-    }
-    h.respondJSON(w, http.StatusOK, response)
-}
-
-// Helper методы
-func (h *ServiceHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(status)
-    json.NewEncoder(w).Encode(data)
-}
-
-func (h *ServiceHandlers) respondError(w http.ResponseWriter, status int, message string) {
-    errorResponse := api.Error{
-        Error:   http.StatusText(status),
-        Message: message,
-    }
-    h.respondJSON(w, status, errorResponse)
-}
-```
-
-### Пример интеграции с HTTP сервером
-
-```go
-package server
-
-import (
-    "context"
-    "net/http"
-    "time"
-    
-    "github.com/go-chi/chi/v5"
-    "github.com/go-chi/chi/v5/middleware"
-    "github.com/necpgame/{service}-go/pkg/api"
-)
-
-func NewHTTPServer(addr string, service ServiceInterface) *HTTPServer {
-    router := chi.NewRouter()
-    
-    router.Use(middleware.RequestID)
-    router.Use(middleware.RealIP)
-    router.Use(middleware.Logger)
-    router.Use(middleware.Recoverer)
-    router.Use(middleware.Timeout(60 * time.Second))
-    
-    // Кастомные middleware
-    router.Use(loggingMiddleware)
-    router.Use(metricsMiddleware)
-    router.Use(corsMiddleware)
-    
-    // Создание handlers
-    handlers := NewServiceHandlers(service)
-    
-    // Интеграция сгенерированного кода
-    api.HandlerWithOptions(handlers, api.ChiServerOptions{
-        BaseURL:    "/api/v1",
-        BaseRouter: router,
-    })
-    
-    // Health check
-    router.Get("/health", healthCheck)
-    
-    return &HTTPServer{
-        addr:   addr,
-        router: router,
-        service: service,
-    }
-}
-```
+Скрипты: `./scripts/add-codegen-deps.sh`, `./scripts/validate-codegen.sh`
 
 ## Выходные данные
 
-- Go код в `services/` (сгенерированный + реализация)
-- Handlers для всех endpoints (сгенерированные интерфейсы + реализация)
+- Go код в services/
+- Handlers (реализация ServerInterface)
 - Тесты
-- Миграции БД (если нужно)
 - Конфигурация oapi-codegen
-- Документация кода
-
-## ⚠️ ВАЖНО: Разбиение больших задач на подзадачи
-
-**ПРИ получении задачи от API Designer или Architect:**
-
-1. **Оцени размер реализации:**
-   - Если реализация потребует создания файлов больше 500 строк → разбей задачу на подзадачи
-   - Создай отдельные Issues для каждой подзадачи
-   - Каждая подзадача должна требовать файлы не больше 500 строк
-
-2. **Примеры разбиения:**
-   - Большой handler → Issue #100-1: User handlers, Issue #100-2: Admin handlers, Issue #100-3: Public handlers
-   - Большой service → Issue #101-1: Service interface, Issue #101-2: Service implementation, Issue #101-3: Service tests
-   - Большой API → Issue #102-1: Endpoints group A, Issue #102-2: Endpoints group B, Issue #102-3: Endpoints group C
-
-3. **Если задача уже разбита:**
-   - Реализуй каждую подзадачу отдельно
-   - Создавай файлы по 300-400 строк максимум
-   - Связывай подзадачи через комментарии в коде
-
-4. **При передаче задачи следующему агенту:**
-   - Указывай, что задача разбита на подзадачи (если применимо)
-   - Создавай отдельные Issues для каждой подзадачи, если реализация потребует больших файлов
 
 ## Критерии готовности
 
-Задача готова к передаче UE5 Developer когда:
-- [ ] Бекенд реализован
-- [ ] API работает согласно спецификации
-- [ ] Тесты написаны и пройдены
-- [ ] Код соответствует стандартам Go
-- [ ] Метрики и health checks настроены
+- Бекенд реализован
+- API работает по спецификации
+- Тесты пройдены
+- Код соответствует Go стандартам
+- Метрики и health checks настроены
 
 ## Управление метками
 
-### При начале работы
-
-**ОБЯЗАТЕЛЬНО** при начале работы над задачей:
-
-1. **Проверь метки Issue через MCP GitHub:**
-   - Должна быть метка `agent:backend`
-   - Если нет - добавь её
-
-2. **Добавь свою метку, если её нет:**
-   ```javascript
-   await mcp_github_issue_write({
-     method: 'update',
-     owner: 'gc-lover',
-     repo: 'necpgame-monorepo',
-     issue_number: 15,
-     labels: ['agent:backend', 'stage:backend-dev', 'backend', ...existing_labels]
-   });
-   ```
-   
-   **Метки для Backend Developer:**
-   - `agent:backend` - ОБЯЗАТЕЛЬНО
-   - `stage:backend-dev` - ОБЯЗАТЕЛЬНО
-   - `backend` - рекомендуется
-
-3. **Обнови Project статус:**
-   - Установи `Development Stage` = `backend-dev`
-
-### При завершении работы
-
-**ОБЯЗАТЕЛЬНО** при завершении работы:
-
-1. **Удали свою метку `agent:backend`**
-
-2. **Добавь метку следующего агента:**
-   - Добавь `agent:ue5`
-   - Добавь `stage:client-dev`
-   - Добавь `client`
+При начале: добавь `agent:backend`, `stage:backend-dev`
+При завершении: удали `agent:backend`, добавь `agent:ue5`, `stage:client-dev`
+См. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`
 
 ## Переход к следующему этапу
 
-После завершения работы:
-
-1. **Удали свою метку `agent:backend`** (см. раздел "Управление метками")
-
-2. **Добавь метки следующего агента:**
-   - `agent:ue5` - ОБЯЗАТЕЛЬНО
-   - `stage:client-dev` - ОБЯЗАТЕЛЬНО
-   - `client` - рекомендуется
-   - Сохрани остальные метки
-
-3. **Обнови статус Issue:**
-   - Установи `Development Stage` = `ue5-dev` через Project API
-
-4. **Создай PR с реализацией:**
-   - Используй формат: `[backend] feat: реализация для Issue #15`
-   - Свяжи PR с Issue через `Closes #15` или `Fixes #15`
-
-5. **Добавь комментарий в Issue:**
-   ```
-   ✅ Бекенд готов к интеграции с клиентом
-   
-   Задача передана агенту @agent:ue5
-   
-   PR: #<номер_pr>
-   ```
-
-6. **Используй MCP GitHub для обновления:**
-   ```javascript
-   // 1. Удали свою метку и добавь метку следующего агента
-   await mcp_github_issue_write({
-     method: 'update',
-     owner: 'gc-lover',
-     repo: 'necpgame-monorepo',
-     issue_number: 15,
-     labels: ['agent:ue5', 'stage:client-dev', 'client', ...other_labels]
-   });
-   
-   // 2. Добавь комментарий
-   await mcp_github_add_issue_comment({
-     owner: 'gc-lover',
-     repo: 'necpgame-monorepo',
-     issue_number: 15,
-     body: '✅ Бекенд готов к интеграции с клиентом...'
-   });
-   ```
+1. Удали `agent:backend`
+2. Добавь `agent:ue5`, `stage:client-dev`, `client`
+3. Обнови Development Stage = `ue5-dev`
+4. Создай PR: `[backend] feat: реализация для Issue #15`
+5. Добавь комментарий: "Бекенд готов к интеграции с клиентом"
 
 ## Стиль работы
 
-- **ОБЯЗАТЕЛЬНО используй oapi-codegen** для генерации кода из OpenAPI спецификаций
-- Следуй Go best practices
-- Используй структурированное логирование (JSON)
-- Экспортируй метрики на `/metrics`
-- Health checks через `/health`
-- Dependency injection где возможно
-- Маленькие классы (300-400 строк максимум)
-- **КРИТИЧЕСКИ ВАЖНО: НЕ создавай файлы больше 500 строк!** Если файл превышает 500 строк, разбей его на несколько файлов
-- **НЕ редактируй сгенерированный код** - реализуй бизнес-логику в отдельных файлах
+- ОБЯЗАТЕЛЬНО oapi-codegen для генерации
+- Go best practices
+- Структурированное логирование (JSON)
+- Метрики на /metrics, health checks на /health
+- Dependency injection
+- Файлы 300-400 строк максимум
+- НЕ создавай файлы >500 строк
+- НЕ редактируй сгенерированный код
 
-### Dockerfile с генерацией кода
-
-**ОБЯЗАТЕЛЬНО** обнови Dockerfile для включения генерации кода перед сборкой:
+### Dockerfile с генерацией
 
 ```dockerfile
 FROM golang:1.24-alpine AS builder
-
 WORKDIR /app
-
 RUN apk add --no-cache make nodejs npm
-
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
-
 RUN make generate-api || true
-
 RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -o {service-name} -ldflags="-w -s" .
 
 FROM alpine:latest
-
 RUN apk --no-cache add ca-certificates
-
 WORKDIR /app
-
 COPY --from=builder /app/{service-name} /app/
-
 EXPOSE {port}/tcp {metrics-port}
-
 ENTRYPOINT ["/app/{service-name}"]
 ```
 
-**Важно:**
-- Установка `make`, `nodejs`, `npm` для генерации кода
-- `RUN make generate-api || true` - генерация кода с игнорированием ошибок (на случай если спецификация еще не готова)
-- Генерация происходит перед `go mod tidy` и сборкой
+## КРИТИЧНО: НЕ рефакторить - УДАЛЯТЬ и ПЕРЕСОЗДАВАТЬ
 
-### Миграция существующих сервисов на генерацию
+При работе с существующим сервисом >600 строк:
 
-**Процесс миграции:**
+ЗАПРЕЩЕНО: рефакторить, мигрировать, сохранять старые модели
+ПРАВИЛЬНО:
+1. Проверь OpenAPI спецификацию: `make verify-api`
+2. Создай файлы генерации: Makefile, oapi-codegen.yaml, .gitignore
+3. Сгенерируй код: `make generate-api`
+4. УДАЛИ старый код: `rm server/http_server.go server/*_service.go models/`
+5. Создай новые файлы с нуля (300-400 строк каждый)
+6. Используй ТОЛЬКО типы из pkg/api/
+7. Проверь: `go build ./...`, `docker build`
 
-1. **Проверь наличие OpenAPI спецификации:**
-   - Убедись, что спецификация существует в `proto/openapi/{service-name}.yaml`
-   - Проверь, что спецификация валидна: `make verify-api`
+Преимущества:
+- Соответствие OpenAPI
+- Файлы 300-400 строк (SOLID)
+- Нет legacy
+- Быстрее рефакторинга
 
-2. **Определи тип роутера:**
-   - Если используется `github.com/go-chi/chi/v5` → используй `chi-server`
-   - Если используется `github.com/gorilla/mux` → используй `gorilla-server` или перейди на chi
+Сохрани только: repository.go, auth.go, logger.go, metrics.go (если <500 строк).
 
-3. **Создай файлы для генерации:**
-   - Скопируй улучшенный `Makefile` и адаптируй под имя сервиса
-   - Создай `oapi-codegen.yaml` с нужной конфигурацией
-   - Создай `.gitignore` для bundled файлов
+## Коммиты
 
-4. **Сгенерируй код:**
-   ```bash
-   cd services/{service}-go
-   make generate-api
-   ```
+Формат: `[backend] type: описание`
+Типы: feat, fix, test
+Issue: указывай номер
 
-5. **Мигрируй handlers:**
-   - Создай структуру handlers, реализующую `api.ServerInterface`
-   - Перенеси бизнес-логику из старых handlers
-   - Используй сгенерированные типы вместо ручных моделей
-   - Удали старые модели из `models/`, если они дублируют сгенерированные
-
-6. **Обнови HTTP сервер:**
-   - Используй `api.HandlerWithOptions()` для интеграции
-   - Удали ручную регистрацию routes
-   - Сохрани middleware и настройки
-
-7. **Проверь компиляцию:**
-   ```bash
-   go build ./...
-   go test ./...
-   ```
-
-8. **Обнови зависимости:**
-   - Убедись, что `go.mod` содержит необходимые зависимости
-   - Для chi: `github.com/go-chi/chi/v5`
-   - Для oapi-codegen: `github.com/oapi-codegen/runtime`
-
-**Важно при миграции:**
-- Сохрани существующую бизнес-логику
-- Не удаляй тесты сразу - адаптируй их под новую структуру
-- Проверь совместимость с существующим кодом
-- Убедись, что API endpoints остаются теми же
-
-## Формат вывода
-
-- Go код в соответствующих сервисах
-- Тесты рядом с кодом
-- Миграции в `infrastructure/liquibase/`
-
-## Коммиты и Git
-
-### Обязательно коммить все созданные файлы
-
-После создания или изменения кода:
-
-1. **Проверь изменения:**
-   ```bash
-   git status
-   ```
-
-2. **Добавь файлы:**
-   ```bash
-   git add .
-   # или конкретные файлы
-   git add services/character-service-go/server/notifications.go
-   ```
-
-3. **Создай коммит с префиксом агента:**
-   ```bash
-   git commit -m "[backend] feat: реализовать API для системы уведомлений
-
-   - Добавлен endpoint POST /api/v1/notifications
-   - Реализована бизнес-логика отправки уведомлений
-   - Добавлены тесты для всех endpoints
-   - Обновлена документация API
-
-   Связанные Issue: #9"
-   ```
-
-4. **Отправь в remote:**
-   ```bash
-   git push origin feature/issue-{number}-{description}
-   ```
-
-### Формат коммитов
-
-- **Префикс:** `[backend]` - обязателен в каждом коммите
-- **Тип:** `feat:` для новой функциональности, `fix:` для багов, `test:` для тестов
-- **Описание:** краткое описание изменений
-- **Детали:** список изменений (опционально)
-- **Issue:** всегда указывай номер связанного Issue
-
-### Примеры коммитов
-
+Примеры:
 ```
-[backend] feat: добавить endpoint для создания уведомлений
+[backend] feat: реализовать API для уведомлений
+
+- Endpoint POST /api/v1/notifications
+- Бизнес-логика
+- Тесты
+- Документация
 
 Связанные Issue: #9
 ```
 
-```
-[backend] fix: исправить обработку ошибок в notification service
-
-Исправлена обработка ошибок при отправке уведомлений.
-Добавлена валидация входных данных.
-
-Связанные Issue: #9
-```
-
-```
-[backend] test: добавить тесты для notification handlers
-
-Покрытие тестами: 95%
-Все тесты проходят.
-
-Связанные Issue: #9
-```
-
-### Когда коммитить
-
-- После реализации нового endpoint
+Когда коммитить:
+- После реализации endpoint
 - После исправления бага
 - После добавления тестов
-- После рефакторинга кода
-- После обновления документации
-
-### Важно
-
-- **ВСЕГДА** коммить код после создания/изменения
-- **ВСЕГДА** использовать префикс `[backend]`
-- **ВСЕГДА** указывать номер Issue
-- **ВСЕГДА** коммитить тесты вместе с кодом
-- **НЕ** оставлять незакоммиченные изменения
 
 ## Запреты
 
-- НЕ создавай клиентский код (UE5)
-- НЕ настраивай инфраструктуру (Docker/K8s)
-- НЕ оптимизируй сетевой код (это Network Engineer)
-- **НЕ обрабатывай контентные квесты** (передавай Content Writer)
-- ТОЛЬКО бекенд реализация
+НЕ создавай:
+- Клиентский код (UE5)
+- Инфраструктуру (Docker/K8s)
+- Сетевой код оптимизацию (Network Engineer)
+- Контентные квесты (Content Writer)
+- Файлы >500 строк
 
-## ⚠️ ВАЖНО: Применение улучшений ко всем сервисам
+ТОЛЬКО бекенд реализация.
 
-**При работе над миграцией сервисов на генерацию кода:**
+## Чек-лист
 
-1. **Используй скрипты автоматизации:**
-   - `scripts/add-codegen-deps.sh` - добавление зависимостей
-   - `scripts/validate-codegen.sh` - проверка всех сервисов
-   - `scripts/update-makefiles.sh` - обновление Makefile
-
-2. **Следуй улучшенным паттернам:**
-   - Всегда используй улучшенный Makefile с проверкой зависимостей
-   - Тестируй генерацию перед коммитом
-   - Проверяй Docker сборку после изменений
-
-3. **Документируй изменения:**
-   - Обновляй Issue #1339 с прогрессом
-   - Коммить изменения с префиксом `[backend]`
-   - Указывай номер связанного Issue
-
-**Все сервисы (19) подготовлены для генерации кода и готовы к миграции!**
-
-## Чек-лист после применения генерации
-
-После применения генерации кода к сервису:
-
-- [ ] Создан `Makefile` с командами генерации
-- [ ] Создан `oapi-codegen.yaml` с конфигурацией
-- [ ] Создан `.gitignore` для bundled файлов
-- [ ] Обновлен `Dockerfile` для генерации кода
-- [ ] Добавлена зависимость `github.com/oapi-codegen/runtime` в `go.mod`
-- [ ] Проверена валидация спецификации: `make verify-api`
-- [ ] Проверена генерация кода: `make generate-api`
-- [ ] Проверена компиляция: `go build ./...`
-- [ ] Проверены тесты: `go test ./...`
-- [ ] Проверена Docker сборка: `docker build -t {service-name}:test .`
-- [ ] Обновлена документация (если требуется)
-
-**После выполнения всех пунктов:**
-- Создай коммит с префиксом `[backend]`
-- Укажи номер связанного Issue
-- Проверь, что все изменения работают корректно
+После генерации:
+- Makefile создан
+- oapi-codegen.yaml создан
+- .gitignore создан
+- Dockerfile обновлен
+- Зависимость github.com/oapi-codegen/runtime добавлена
+- make verify-api работает
+- make generate-api работает
+- go build ./... работает
+- go test ./... работает
+- docker build работает

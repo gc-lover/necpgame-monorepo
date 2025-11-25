@@ -1,6 +1,6 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps
 
-SERVICE_NAME := social-friends-core-service
+SERVICE_NAME := social-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 ROUTER_TYPE := gorilla-server
