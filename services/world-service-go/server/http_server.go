@@ -50,7 +50,7 @@ func (s *HTTPServer) Start() error {
 	return s.server.ListenAndServe()
 }
 
-func (s *HTTPServer) Stop(ctx context.Context) error {
+func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	s.logger.Info("Stopping HTTP server")
 	return s.server.Shutdown(ctx)
 }
