@@ -1,0 +1,68 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/gorilla/websocket"
+)
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	addr := "ws://127.0.0.1:18080/ws?token=test"
+	fmt.Printf("Connecting to %s...\n", addr)
+
+	dialer := websocket.Dialer{
+		HandshakeTimeout: 10 * time.Second,
+	}
+
+	conn, _, err := dialer.DialContext(ctx, addr, nil)
+	if err != nil {
+		fmt.Printf("Failed to connect: %v\n", err)
+		return
+	}
+	defer conn.Close()
+
+	fmt.Println("✓ Connected successfully!")
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+
+	go func() {
+		<-sigChan
+		fmt.Println("\nClosing connection...")
+		cancel()
+		conn.Close()
+	}()
+
+	testMessage := []byte("Hello from test client!")
+	fmt.Printf("Sending message: %s\n", string(testMessage))
+
+	err = conn.WriteMessage(websocket.TextMessage, testMessage)
+	if err != nil {
+		fmt.Printf("Failed to write: %v\n", err)
+		return
+	}
+
+	fmt.Println("✓ Message sent, waiting for response...")
+
+	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	messageType, data, err := conn.ReadMessage()
+	if err != nil {
+		fmt.Printf("Failed to read: %v\n", err)
+		return
+	}
+
+	if messageType == websocket.TextMessage || messageType == websocket.BinaryMessage {
+		fmt.Printf("✓ Received response: %s\n", string(data))
+	} else {
+		fmt.Printf("Received unexpected message type: %d\n", messageType)
+	}
+
+	fmt.Println("Test completed successfully!")
+}
