@@ -1,0 +1,253 @@
+openapi: 3.0.3
+info:
+  title: Social Mail Core Service API
+  description: API для основных операций с почтой
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Mail Core
+    description: Основные операции с почтой
+
+paths:
+  /social/mail/send:
+    post:
+      tags:
+        - Mail Core
+      summary: Отправить письмо
+      operationId: sendMail
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMailRequest'
+      responses:
+        '201':
+          description: Письмо отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mail/inbox:
+    get:
+      tags:
+        - Mail Core
+      summary: Получить входящие письма
+      operationId: getInbox
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список писем
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mail/{mail_id}:
+    get:
+      tags:
+        - Mail Core
+      summary: Получить письмо
+      operationId: getMail
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/MailId'
+      responses:
+        '200':
+          description: Письмо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mail/{mail_id}/read:
+    put:
+      tags:
+        - Mail Core
+      summary: Отметить письмо как прочитанное
+      operationId: markMailAsRead
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/MailId'
+      responses:
+        '200':
+          description: Письмо отмечено как прочитанное
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailMessage'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mail/unread-count:
+    get:
+      tags:
+        - Mail Core
+      summary: Получить количество непрочитанных писем
+      operationId: getUnreadMailCount
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Количество непрочитанных писем
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadMailCountResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    MailMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+          nullable: true
+        sender_name:
+          type: string
+        recipient_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [player, system, quest, auction, trade]
+        subject:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        attachments:
+          type: object
+          additionalProperties: true
+        cod_amount:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [unread, read, claimed, expired, returned]
+        is_read:
+          type: boolean
+        is_claimed:
+          type: boolean
+        sent_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMailRequest:
+      type: object
+      required:
+        - recipient_id
+        - subject
+        - content
+      properties:
+        recipient_id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        attachments:
+          type: object
+          additionalProperties: true
+        cod_amount:
+          type: integer
+          nullable: true
+        expires_in:
+          type: integer
+          description: Количество дней до истечения
+          nullable: true
+
+    MailListResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/MailMessage'
+              description: Список писем
+            unread:
+              type: integer
+              description: Количество непрочитанных писем
+
+    UnreadMailCountResponse:
+      type: object
+      properties:
+        unread_count:
+          type: integer
+        total_count:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+

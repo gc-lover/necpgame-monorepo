@@ -1,0 +1,255 @@
+openapi: 3.0.3
+info:
+  title: Economy Loot Core Service API
+  description: API для генерации и подбора лута
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Loot
+    description: Генерация и распределение лута
+
+paths:
+  /economy/loot/generate:
+    post:
+      tags:
+        - Loot
+      summary: Сгенерировать лут
+      operationId: generateLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateLootRequest"
+      responses:
+        "200":
+          description: Лут сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/pickup:
+    post:
+      tags:
+        - Loot
+      summary: Подобрать лут
+      operationId: pickupLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PickupLootRequest"
+      responses:
+        "200":
+          description: Лут подобран
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  picked_up:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LootItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/tables/{table_id}:
+    get:
+      tags:
+        - Loot
+      summary: Получить loot table
+      operationId: getLootTable
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: table_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Loot table
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootTable"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/apply-luck:
+    post:
+      tags:
+        - Loot
+      summary: Применить luck модификатор к луту
+      operationId: applyLuckModifier
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplyLuckRequest"
+      responses:
+        "200":
+          description: Luck применён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    GenerateLootRequest:
+      type: object
+      required:
+        - source_type
+        - source_id
+        - character_id
+      properties:
+        source_type:
+          type: string
+          enum: [enemy, container, boss, quest]
+        source_id:
+          type: string
+        character_id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+          nullable: true
+        distribution_mode:
+          type: string
+          enum: [personal, party_roll, party_shared]
+          default: personal
+
+    LootResult:
+      type: object
+      properties:
+        loot_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        currency:
+          type: integer
+        generated_at:
+          type: string
+          format: date-time
+
+    LootItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+        quantity:
+          type: integer
+        rarity:
+          type: string
+        stats:
+          type: object
+          additionalProperties: true
+
+    PickupLootRequest:
+      type: object
+      required:
+        - loot_id
+        - character_id
+      properties:
+        loot_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+
+    LootTable:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              item_template_id:
+                type: string
+              weight:
+                type: number
+              min_quantity:
+                type: integer
+              max_quantity:
+                type: integer
+
+    ApplyLuckRequest:
+      type: object
+      required:
+        - loot_id
+        - luck_value
+      properties:
+        loot_id:
+          type: string
+          format: uuid
+        luck_value:
+          type: number
+          format: float
+
+security:
+  - BearerAuth: []
+

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/reset-service-go/models"
+	"github.com/necpgame/reset-service-go/pkg/api"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
@@ -255,7 +256,7 @@ func (s *ResetService) TriggerReset(ctx context.Context, resetType models.ResetT
 	}
 }
 
-func (s *ResetService) GetResetStats(ctx context.Context) (*models.ResetStats, error) {
+func (s *ResetService) GetResetStats(ctx context.Context) (*api.ResetStats, error) {
 	lastDaily, err := s.repo.GetLastReset(ctx, models.ResetTypeDaily)
 	if err != nil {
 		return nil, err
@@ -282,24 +283,31 @@ func (s *ResetService) GetResetStats(ctx context.Context) (*models.ResetStats, e
 		stats.LastWeeklyReset = lastWeekly.CompletedAt
 	}
 
-	return stats, nil
+	return toAPIResetStats(stats), nil
 }
 
-func (s *ResetService) GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*models.ResetListResponse, error) {
-	records, err := s.repo.List(ctx, resetType, limit, offset)
+func (s *ResetService) GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*api.ResetListResponse, error) {
+	var modelResetType *models.ResetType
+	if resetType != nil {
+		modelResetType = resetType
+	}
+
+	records, err := s.repo.List(ctx, modelResetType, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	total, err := s.repo.Count(ctx, resetType)
+	total, err := s.repo.Count(ctx, modelResetType)
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.ResetListResponse{
+	response := &models.ResetListResponse{
 		Resets: records,
 		Total:  total,
-	}, nil
+	}
+
+	return toAPIResetListResponse(response, limit, offset), nil
 }
 
 func getNextDailyReset(now time.Time, lastReset *models.ResetRecord) time.Time {

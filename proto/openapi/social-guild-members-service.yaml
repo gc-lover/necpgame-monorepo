@@ -1,0 +1,324 @@
+openapi: 3.0.3
+info:
+  title: Social Guild Members Service API
+  description: API для управления участниками гильдий
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Guild Members
+    description: Управление участниками гильдий
+
+paths:
+  /social/guilds/{guild_id}/invite:
+    post:
+      tags:
+        - Guild Members
+      summary: Пригласить в гильдию
+      operationId: inviteToGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteToGuildRequest'
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildInvitation'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/members:
+    get:
+      tags:
+        - Guild Members
+      summary: Получить список участников гильдии
+      operationId: getGuildMembers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMembersResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Guild Members
+      summary: Добавить участника в гильдию
+      operationId: addGuildMember
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddGuildMemberRequest'
+      responses:
+        '201':
+          description: Участник добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMember'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/members/{member_id}:
+    delete:
+      tags:
+        - Guild Members
+      summary: Удалить участника из гильдии
+      operationId: removeGuildMember
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+        - $ref: 'common.yaml#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: Участник удален
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+              example:
+                status: removed
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/members/{member_id}/rank:
+    put:
+      tags:
+        - Guild Members
+      summary: Установить ранг участника
+      operationId: setGuildMemberRank
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+        - $ref: 'common.yaml#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetGuildMemberRankRequest'
+      responses:
+        '200':
+          description: Ранг установлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMember'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/leader:
+    post:
+      tags:
+        - Guild Members
+      summary: Передать лидерство
+      operationId: transferGuildLeadership
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferGuildLeadershipRequest'
+      responses:
+        '200':
+          description: Лидерство передано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/guilds/{guild_id}/leave:
+    post:
+      tags:
+        - Guild Members
+      summary: Покинуть гильдию
+      operationId: leaveGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/GuildId'
+      responses:
+        '200':
+          description: Выход выполнен
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+              example:
+                status: left
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    InviteToGuildRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          maxLength: 200
+
+    GuildInvitation:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/InvitationBase'
+        - type: object
+          properties:
+            guild_id:
+              type: string
+              format: uuid
+
+    AddGuildMemberRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        rank_id:
+          type: string
+          format: uuid
+
+    GuildMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        rank_id:
+          type: string
+          format: uuid
+        rank_name:
+          type: string
+        joined_at:
+          type: string
+          format: date-time
+        last_active_at:
+          type: string
+          format: date-time
+
+    GuildMembersResponse:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+        total:
+          type: integer
+
+    SetGuildMemberRankRequest:
+      type: object
+      required:
+        - rank_id
+      properties:
+        rank_id:
+          type: string
+          format: uuid
+
+    TransferGuildLeadershipRequest:
+      type: object
+      required:
+        - new_leader_id
+      properties:
+        new_leader_id:
+          type: string
+          format: uuid
+
+security:
+  - BearerAuth: []
+
+

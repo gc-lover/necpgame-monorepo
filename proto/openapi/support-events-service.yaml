@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Support Events Service API
+  description: API для событий поддержки
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Support Events
+    description: События поддержки
+
+paths:
+  /support/tickets/events/{ticket_id}:
+    get:
+      tags:
+        - Support Events
+      summary: Получить события тикета
+      operationId: getTicketEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketEventsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    TicketEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticket_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [support:ticket-created, support:ticket-assigned, support:ticket-status-changed, support:response-added, support:ticket-resolved, support:ticket-rated, support:sla-violated]
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    TicketEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketEvent"
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

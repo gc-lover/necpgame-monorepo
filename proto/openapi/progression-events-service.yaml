@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: Progression Events Service API
+  description: API для событий прогрессии и валидации
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Events
+    description: События прогрессии
+  - name: Validation
+    description: Валидация прогрессии
+
+paths:
+  /progression/events/{player_id}:
+    get:
+      tags:
+        - Events
+      summary: Получить события прогрессии
+      operationId: getProgressionEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [level_up, attribute_distributed, skill_unlocked, experience_gained]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: События прогрессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressionEventsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /progression/validate:
+    post:
+      tags:
+        - Validation
+      summary: Валидировать прогрессию
+      operationId: validateProgression
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgressionValidationRequest'
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressionValidationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ProgressionEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [level_up, attribute_distributed, skill_unlocked, experience_gained]
+        event_data:
+          type: object
+          additionalProperties: true
+        occurred_at:
+          type: string
+          format: date-time
+
+    ProgressionEventsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgressionEvent'
+        total:
+          type: integer
+
+    ProgressionValidationRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        check_level:
+          type: boolean
+          default: true
+        check_attributes:
+          type: boolean
+          default: true
+        check_skills:
+          type: boolean
+          default: true
+
+    ProgressionValidationResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        is_valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+
+security:
+  - BearerAuth: []
+
+
+
+

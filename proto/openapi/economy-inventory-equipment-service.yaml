@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: Economy Inventory Equipment Service API
+  description: API для управления экипировкой
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Inventory Equipment
+    description: Управление экипировкой
+
+paths:
+  /economy/inventory/{characterId}/equipment:
+    get:
+      tags:
+        - Inventory Equipment
+      summary: Получить экипировку персонажа
+      operationId: getEquipment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Экипировка персонажа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipment"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/equipment/equip:
+    post:
+      tags:
+        - Inventory Equipment
+      summary: Экипировать предмет
+      operationId: equipItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipItemRequest"
+      responses:
+        "200":
+          description: Предмет экипирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipment"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/equipment/unequip:
+    post:
+      tags:
+        - Inventory Equipment
+      summary: Снять предмет с экипировки
+      operationId: unequipItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnequipItemRequest"
+      responses:
+        "200":
+          description: Предмет снят
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipment"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/inventory/{characterId}/equipment/stats:
+    get:
+      tags:
+        - Inventory Equipment
+      summary: Получить статы от экипировки
+      operationId: getEquipmentStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статы от экипировки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipmentStats"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Equipment:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        slots:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/EquipmentSlot"
+        updated_at:
+          type: string
+          format: date-time
+
+    EquipmentSlot:
+      type: object
+      properties:
+        slot_type:
+          type: string
+          enum: [weapon, armor_head, armor_body, armor_legs, armor_feet, implant, accessory]
+        item:
+          $ref: "#/components/schemas/InventoryItem"
+          nullable: true
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+          format: uuid
+        slot_index:
+          type: integer
+        quantity:
+          type: integer
+        properties:
+          type: object
+          additionalProperties: true
+
+    EquipItemRequest:
+      type: object
+      required:
+        - item_id
+        - slot_type
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        slot_type:
+          type: string
+          enum: [weapon, armor_head, armor_body, armor_legs, armor_feet, implant, accessory]
+
+    UnequipItemRequest:
+      type: object
+      required:
+        - slot_type
+      properties:
+        slot_type:
+          type: string
+          enum: [weapon, armor_head, armor_body, armor_legs, armor_feet, implant, accessory]
+
+    EquipmentStats:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        stats:
+          type: object
+          additionalProperties:
+            type: integer
+        bonuses:
+          type: object
+          additionalProperties:
+            type: number
+
+security:
+  - BearerAuth: []
+

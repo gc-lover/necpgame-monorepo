@@ -29,6 +29,14 @@ type SocialServiceInterface interface {
 	MarkMailAsRead(ctx context.Context, mailID uuid.UUID) error
 	ClaimAttachment(ctx context.Context, mailID uuid.UUID) (*models.ClaimAttachmentResponse, error)
 	DeleteMail(ctx context.Context, mailID uuid.UUID) error
+	GetUnreadMailCount(ctx context.Context, recipientID uuid.UUID) (*models.UnreadMailCountResponse, error)
+	GetMailAttachments(ctx context.Context, mailID uuid.UUID) (*models.MailAttachmentsResponse, error)
+	PayMailCOD(ctx context.Context, mailID uuid.UUID) (*models.ClaimAttachmentResponse, error)
+	DeclineMailCOD(ctx context.Context, mailID uuid.UUID) error
+	GetExpiringMails(ctx context.Context, recipientID uuid.UUID, days int, limit, offset int) (*models.MailListResponse, error)
+	ExtendMailExpiration(ctx context.Context, mailID uuid.UUID, days int) (*models.MailMessage, error)
+	SendSystemMail(ctx context.Context, req *models.SendSystemMailRequest) (*models.MailMessage, error)
+	BroadcastSystemMail(ctx context.Context, req *models.BroadcastSystemMailRequest) (*models.BroadcastResult, error)
 	CreateGuild(ctx context.Context, leaderID uuid.UUID, req *models.CreateGuildRequest) (*models.Guild, error)
 	ListGuilds(ctx context.Context, limit, offset int) (*models.GuildListResponse, error)
 	GetGuild(ctx context.Context, guildID uuid.UUID) (*models.GuildDetailResponse, error)
@@ -40,6 +48,13 @@ type SocialServiceInterface interface {
 	KickMember(ctx context.Context, guildID, leaderID, characterID uuid.UUID) error
 	RemoveMember(ctx context.Context, guildID, characterID uuid.UUID) error
 	GetGuildBank(ctx context.Context, guildID uuid.UUID) (*models.GuildBank, error)
+	DepositToGuildBank(ctx context.Context, guildID, accountID uuid.UUID, req *models.GuildBankDepositRequest) (*models.GuildBankTransaction, error)
+	WithdrawFromGuildBank(ctx context.Context, guildID, accountID uuid.UUID, req *models.GuildBankWithdrawRequest) (*models.GuildBankTransaction, error)
+	GetGuildBankTransactions(ctx context.Context, guildID uuid.UUID, limit, offset int) (*models.GuildBankTransactionsResponse, error)
+	GetGuildRanks(ctx context.Context, guildID uuid.UUID) (*models.GuildRanksResponse, error)
+	CreateGuildRank(ctx context.Context, guildID, leaderID uuid.UUID, req *models.CreateGuildRankRequest) (*models.GuildRankEntity, error)
+	UpdateGuildRank(ctx context.Context, guildID, rankID, leaderID uuid.UUID, req *models.UpdateGuildRankRequest) (*models.GuildRankEntity, error)
+	DeleteGuildRank(ctx context.Context, guildID, rankID, leaderID uuid.UUID) error
 	GetInvitationsByCharacter(ctx context.Context, characterID uuid.UUID) ([]models.GuildInvitation, error)
 	AcceptInvitation(ctx context.Context, invitationID, characterID uuid.UUID) error
 	RejectInvitation(ctx context.Context, invitationID uuid.UUID) error
@@ -58,6 +73,14 @@ type SocialServiceInterface interface {
 	BlockFriend(ctx context.Context, characterID uuid.UUID, targetID uuid.UUID) (*models.Friendship, error)
 	GetFriends(ctx context.Context, characterID uuid.UUID) (*models.FriendListResponse, error)
 	GetFriendRequests(ctx context.Context, characterID uuid.UUID) ([]models.Friendship, error)
+	CreatePlayerOrder(ctx context.Context, customerID uuid.UUID, req *models.CreatePlayerOrderRequest) (*models.PlayerOrder, error)
+	GetPlayerOrders(ctx context.Context, orderType *models.OrderType, status *models.OrderStatus, limit, offset int) (*models.PlayerOrdersResponse, error)
+	GetPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error)
+	AcceptPlayerOrder(ctx context.Context, orderID, executorID uuid.UUID) (*models.PlayerOrder, error)
+	StartPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error)
+	CompletePlayerOrder(ctx context.Context, orderID uuid.UUID, req *models.CompletePlayerOrderRequest) (*models.PlayerOrder, error)
+	CancelPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error)
+	ReviewPlayerOrder(ctx context.Context, orderID, reviewerID uuid.UUID, req *models.ReviewPlayerOrderRequest) (*models.PlayerOrderReview, error)
 }
 
 type HTTPServer struct {
@@ -119,12 +142,20 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidat
 	social.HandleFunc("/chat/reports", server.getReports).Methods("GET")
 	social.HandleFunc("/chat/reports/{id}/resolve", server.resolveReport).Methods("POST")
 
-	social.HandleFunc("/mail", server.sendMail).Methods("POST")
-	social.HandleFunc("/mail", server.getMails).Methods("GET")
-	social.HandleFunc("/mail/{id}", server.getMail).Methods("GET")
-	social.HandleFunc("/mail/{id}/read", server.markMailAsRead).Methods("PUT")
-	social.HandleFunc("/mail/{id}/claim", server.claimAttachment).Methods("POST")
-	social.HandleFunc("/mail/{id}", server.deleteMail).Methods("DELETE")
+	social.HandleFunc("/mail/send", server.sendMail).Methods("POST")
+	social.HandleFunc("/mail/inbox", server.getMails).Methods("GET")
+	social.HandleFunc("/mail/{mail_id}", server.getMail).Methods("GET")
+	social.HandleFunc("/mail/{mail_id}/read", server.markMailAsRead).Methods("PUT")
+	social.HandleFunc("/mail/{mail_id}/attachments/claim", server.claimAttachment).Methods("POST")
+	social.HandleFunc("/mail/{mail_id}", server.deleteMail).Methods("DELETE")
+	social.HandleFunc("/mail/unread-count", server.getUnreadMailCount).Methods("GET")
+	social.HandleFunc("/mail/{mail_id}/attachments", server.getMailAttachments).Methods("GET")
+	social.HandleFunc("/mail/{mail_id}/cod/pay", server.payMailCOD).Methods("POST")
+	social.HandleFunc("/mail/{mail_id}/cod/decline", server.declineMailCOD).Methods("POST")
+	social.HandleFunc("/mail/expiring", server.getExpiringMails).Methods("GET")
+	social.HandleFunc("/mail/{mail_id}/extend", server.extendMailExpiration).Methods("POST")
+	social.HandleFunc("/mail/system/send", server.sendSystemMail).Methods("POST")
+	social.HandleFunc("/mail/system/broadcast", server.broadcastSystemMail).Methods("POST")
 
 	social.HandleFunc("/guilds", server.createGuild).Methods("POST")
 	social.HandleFunc("/guilds", server.listGuilds).Methods("GET")
@@ -137,9 +168,25 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidat
 	social.HandleFunc("/guilds/{id}/members/{characterId}/rank", server.updateMemberRank).Methods("PUT")
 	social.HandleFunc("/guilds/{id}/members/{characterId}/kick", server.kickMember).Methods("DELETE")
 	social.HandleFunc("/guilds/{id}/members/{characterId}/leave", server.leaveGuild).Methods("POST")
-	social.HandleFunc("/guilds/{id}/bank", server.getGuildBank).Methods("GET")
+	social.HandleFunc("/guilds/{guild_id}/bank", server.getGuildBank).Methods("GET")
+	social.HandleFunc("/guilds/{guild_id}/bank/deposit", server.depositToGuildBank).Methods("POST")
+	social.HandleFunc("/guilds/{guild_id}/bank/withdraw", server.withdrawFromGuildBank).Methods("POST")
+	social.HandleFunc("/guilds/{guild_id}/bank/transactions", server.getGuildBankTransactions).Methods("GET")
+	social.HandleFunc("/guilds/{guild_id}/ranks", server.getGuildRanks).Methods("GET")
+	social.HandleFunc("/guilds/{guild_id}/ranks", server.createGuildRank).Methods("POST")
+	social.HandleFunc("/guilds/{guild_id}/ranks/{rank_id}", server.updateGuildRank).Methods("PUT")
+	social.HandleFunc("/guilds/{guild_id}/ranks/{rank_id}", server.deleteGuildRank).Methods("DELETE")
 	social.HandleFunc("/guilds/{id}", server.getGuild).Methods("GET")
 	social.HandleFunc("/guilds/{id}", server.updateGuild).Methods("PUT")
+
+	social.HandleFunc("/orders/create", server.createPlayerOrder).Methods("POST")
+	social.HandleFunc("/orders", server.getPlayerOrders).Methods("GET")
+	social.HandleFunc("/orders/{orderId}", server.getPlayerOrder).Methods("GET")
+	social.HandleFunc("/orders/{orderId}/accept", server.acceptPlayerOrder).Methods("POST")
+	social.HandleFunc("/orders/{orderId}/start", server.startPlayerOrder).Methods("POST")
+	social.HandleFunc("/orders/{orderId}/complete", server.completePlayerOrder).Methods("POST")
+	social.HandleFunc("/orders/{orderId}/cancel", server.cancelPlayerOrder).Methods("POST")
+	social.HandleFunc("/orders/{orderId}/review", server.reviewPlayerOrder).Methods("POST")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -795,15 +842,23 @@ func (s *HTTPServer) sendMail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) getMails(w http.ResponseWriter, r *http.Request) {
-	recipientIDStr := r.URL.Query().Get("recipient_id")
+	var recipientID uuid.UUID
+	var err error
+
+	recipientIDStr := r.URL.Query().Get("player_id")
 	if recipientIDStr == "" {
-		s.respondError(w, http.StatusBadRequest, "recipient_id query parameter is required")
+		if accountID := r.Context().Value("account_id"); accountID != nil {
+			recipientIDStr = accountID.(string)
+		}
+	}
+	if recipientIDStr == "" {
+		s.respondError(w, http.StatusBadRequest, "player_id query parameter is required")
 		return
 	}
 
-	recipientID, err := uuid.Parse(recipientIDStr)
+	recipientID, err = uuid.Parse(recipientIDStr)
 	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid recipient_id")
+		s.respondError(w, http.StatusBadRequest, "invalid player_id")
 		return
 	}
 
@@ -832,7 +887,7 @@ func (s *HTTPServer) getMails(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) getMail(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	mailIDStr := vars["id"]
+	mailIDStr := vars["mail_id"]
 
 	mailID, err := uuid.Parse(mailIDStr)
 	if err != nil {
@@ -857,7 +912,7 @@ func (s *HTTPServer) getMail(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) markMailAsRead(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	mailIDStr := vars["id"]
+	mailIDStr := vars["mail_id"]
 
 	mailID, err := uuid.Parse(mailIDStr)
 	if err != nil {
@@ -877,7 +932,7 @@ func (s *HTTPServer) markMailAsRead(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) claimAttachment(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	mailIDStr := vars["id"]
+	mailIDStr := vars["mail_id"]
 
 	mailID, err := uuid.Parse(mailIDStr)
 	if err != nil {
@@ -902,7 +957,7 @@ func (s *HTTPServer) claimAttachment(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) deleteMail(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	mailIDStr := vars["id"]
+	mailIDStr := vars["mail_id"]
 
 	mailID, err := uuid.Parse(mailIDStr)
 	if err != nil {
@@ -918,6 +973,228 @@ func (s *HTTPServer) deleteMail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+}
+
+func (s *HTTPServer) getUnreadMailCount(w http.ResponseWriter, r *http.Request) {
+	var recipientID uuid.UUID
+	var err error
+
+	recipientIDStr := r.URL.Query().Get("player_id")
+	if recipientIDStr == "" {
+		if accountID := r.Context().Value("account_id"); accountID != nil {
+			recipientIDStr = accountID.(string)
+		}
+	}
+	if recipientIDStr == "" {
+		s.respondError(w, http.StatusBadRequest, "player_id query parameter is required")
+		return
+	}
+
+	recipientID, err = uuid.Parse(recipientIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid player_id")
+		return
+	}
+
+	response, err := s.socialService.GetUnreadMailCount(r.Context(), recipientID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get unread mail count")
+		s.respondError(w, http.StatusInternalServerError, "failed to get unread mail count")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getMailAttachments(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	mailIDStr := vars["mail_id"]
+
+	mailID, err := uuid.Parse(mailIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid mail id")
+		return
+	}
+
+	response, err := s.socialService.GetMailAttachments(r.Context(), mailID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get mail attachments")
+		s.respondError(w, http.StatusInternalServerError, "failed to get mail attachments")
+		return
+	}
+
+	if response == nil {
+		s.respondError(w, http.StatusNotFound, "mail not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) payMailCOD(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	mailIDStr := vars["mail_id"]
+
+	mailID, err := uuid.Parse(mailIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid mail id")
+		return
+	}
+
+	response, err := s.socialService.PayMailCOD(r.Context(), mailID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to pay mail COD")
+		s.respondError(w, http.StatusInternalServerError, "failed to pay mail COD")
+		return
+	}
+
+	if !response.Success {
+		s.respondError(w, http.StatusBadRequest, "cannot pay COD")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) declineMailCOD(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	mailIDStr := vars["mail_id"]
+
+	mailID, err := uuid.Parse(mailIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid mail id")
+		return
+	}
+
+	err = s.socialService.DeclineMailCOD(r.Context(), mailID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to decline mail COD")
+		s.respondError(w, http.StatusInternalServerError, "failed to decline mail COD")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "declined"})
+}
+
+func (s *HTTPServer) getExpiringMails(w http.ResponseWriter, r *http.Request) {
+	var recipientID uuid.UUID
+	var err error
+
+	recipientIDStr := r.URL.Query().Get("player_id")
+	if recipientIDStr == "" {
+		if accountID := r.Context().Value("account_id"); accountID != nil {
+			recipientIDStr = accountID.(string)
+		}
+	}
+	if recipientIDStr == "" {
+		s.respondError(w, http.StatusBadRequest, "player_id query parameter is required")
+		return
+	}
+
+	recipientID, err = uuid.Parse(recipientIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid player_id")
+		return
+	}
+
+	days := 3
+	if daysStr := r.URL.Query().Get("days"); daysStr != "" {
+		if d, err := strconv.Atoi(daysStr); err == nil && d >= 1 && d <= 30 {
+			days = d
+		}
+	}
+
+	limit := 50
+	offset := 0
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
+	response, err := s.socialService.GetExpiringMails(r.Context(), recipientID, days, limit, offset)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get expiring mails")
+		s.respondError(w, http.StatusInternalServerError, "failed to get expiring mails")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) extendMailExpiration(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	mailIDStr := vars["mail_id"]
+
+	mailID, err := uuid.Parse(mailIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid mail id")
+		return
+	}
+
+	var req models.ExtendMailRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.Days < 1 || req.Days > 30 {
+		s.respondError(w, http.StatusBadRequest, "days must be between 1 and 30")
+		return
+	}
+
+	mail, err := s.socialService.ExtendMailExpiration(r.Context(), mailID, req.Days)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to extend mail expiration")
+		s.respondError(w, http.StatusInternalServerError, "failed to extend mail expiration")
+		return
+	}
+
+	if mail == nil {
+		s.respondError(w, http.StatusNotFound, "mail not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, mail)
+}
+
+func (s *HTTPServer) sendSystemMail(w http.ResponseWriter, r *http.Request) {
+	var req models.SendSystemMailRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	mail, err := s.socialService.SendSystemMail(r.Context(), &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to send system mail")
+		s.respondError(w, http.StatusInternalServerError, "failed to send system mail")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, mail)
+}
+
+func (s *HTTPServer) broadcastSystemMail(w http.ResponseWriter, r *http.Request) {
+	var req models.BroadcastSystemMailRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	result, err := s.socialService.BroadcastSystemMail(r.Context(), &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to broadcast system mail")
+		s.respondError(w, http.StatusInternalServerError, "failed to broadcast system mail")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, result)
 }
 
 func (s *HTTPServer) createGuild(w http.ResponseWriter, r *http.Request) {
@@ -1272,15 +1549,15 @@ func (s *HTTPServer) leaveGuild(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) getGuildBank(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	idStr := vars["id"]
+	guildIDStr := vars["guild_id"]
 
-	id, err := uuid.Parse(idStr)
+	guildID, err := uuid.Parse(guildIDStr)
 	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid guild id")
+		s.respondError(w, http.StatusBadRequest, "invalid guild_id")
 		return
 	}
 
-	bank, err := s.socialService.GetGuildBank(r.Context(), id)
+	bank, err := s.socialService.GetGuildBank(r.Context(), guildID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get guild bank")
 		s.respondError(w, http.StatusInternalServerError, "failed to get guild bank")
@@ -1293,6 +1570,277 @@ func (s *HTTPServer) getGuildBank(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.respondJSON(w, http.StatusOK, bank)
+}
+
+func (s *HTTPServer) depositToGuildBank(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	accountID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	guildIDStr := vars["guild_id"]
+
+	guildID, err := uuid.Parse(guildIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid guild_id")
+		return
+	}
+
+	var req models.GuildBankDepositRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	transaction, err := s.socialService.DepositToGuildBank(r.Context(), guildID, accountID, &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to deposit to guild bank")
+		s.respondError(w, http.StatusInternalServerError, "failed to deposit to guild bank")
+		return
+	}
+
+	if transaction == nil {
+		s.respondError(w, http.StatusForbidden, "guild not found or member not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, transaction)
+}
+
+func (s *HTTPServer) withdrawFromGuildBank(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	accountID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	guildIDStr := vars["guild_id"]
+
+	guildID, err := uuid.Parse(guildIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid guild_id")
+		return
+	}
+
+	var req models.GuildBankWithdrawRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	transaction, err := s.socialService.WithdrawFromGuildBank(r.Context(), guildID, accountID, &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to withdraw from guild bank")
+		s.respondError(w, http.StatusInternalServerError, "failed to withdraw from guild bank")
+		return
+	}
+
+	if transaction == nil {
+		s.respondError(w, http.StatusForbidden, "insufficient permissions or insufficient funds")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, transaction)
+}
+
+func (s *HTTPServer) getGuildBankTransactions(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	guildIDStr := vars["guild_id"]
+
+	guildID, err := uuid.Parse(guildIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid guild_id")
+		return
+	}
+
+	limit := 50
+	offset := 0
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
+	response, err := s.socialService.GetGuildBankTransactions(r.Context(), guildID, limit, offset)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get guild bank transactions")
+		s.respondError(w, http.StatusInternalServerError, "failed to get guild bank transactions")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getGuildRanks(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	guildIDStr := vars["guild_id"]
+
+	guildID, err := uuid.Parse(guildIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid guild_id")
+		return
+	}
+
+	response, err := s.socialService.GetGuildRanks(r.Context(), guildID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get guild ranks")
+		s.respondError(w, http.StatusInternalServerError, "failed to get guild ranks")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) createGuildRank(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	leaderID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	guildIDStr := vars["guild_id"]
+
+	guildID, err := uuid.Parse(guildIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid guild_id")
+		return
+	}
+
+	var req models.CreateGuildRankRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	rank, err := s.socialService.CreateGuildRank(r.Context(), guildID, leaderID, &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to create guild rank")
+		s.respondError(w, http.StatusInternalServerError, "failed to create guild rank")
+		return
+	}
+
+	if rank == nil {
+		s.respondError(w, http.StatusForbidden, "insufficient permissions or guild not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, rank)
+}
+
+func (s *HTTPServer) updateGuildRank(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	leaderID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	guildIDStr := vars["guild_id"]
+	rankIDStr := vars["rank_id"]
+
+	guildID, err := uuid.Parse(guildIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid guild_id")
+		return
+	}
+
+	rankID, err := uuid.Parse(rankIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid rank_id")
+		return
+	}
+
+	var req models.UpdateGuildRankRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	rank, err := s.socialService.UpdateGuildRank(r.Context(), guildID, rankID, leaderID, &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to update guild rank")
+		s.respondError(w, http.StatusInternalServerError, "failed to update guild rank")
+		return
+	}
+
+	if rank == nil {
+		s.respondError(w, http.StatusForbidden, "insufficient permissions or rank not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, rank)
+}
+
+func (s *HTTPServer) deleteGuildRank(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	leaderID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	guildIDStr := vars["guild_id"]
+	rankIDStr := vars["rank_id"]
+
+	guildID, err := uuid.Parse(guildIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid guild_id")
+		return
+	}
+
+	rankID, err := uuid.Parse(rankIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid rank_id")
+		return
+	}
+
+	err = s.socialService.DeleteGuildRank(r.Context(), guildID, rankID, leaderID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to delete guild rank")
+		s.respondError(w, http.StatusInternalServerError, "failed to delete guild rank")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
 func (s *HTTPServer) getInvitations(w http.ResponseWriter, r *http.Request) {
@@ -1571,4 +2119,219 @@ func (s *HTTPServer) resolveReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
+}
+
+func (s *HTTPServer) createPlayerOrder(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	customerID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	var req models.CreatePlayerOrderRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	order, err := s.socialService.CreatePlayerOrder(r.Context(), customerID, &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to create player order")
+		s.respondError(w, http.StatusInternalServerError, "failed to create order")
+		return
+	}
+
+	s.respondJSON(w, http.StatusCreated, order)
+}
+
+func (s *HTTPServer) getPlayerOrders(w http.ResponseWriter, r *http.Request) {
+	var orderType *models.OrderType
+	var status *models.OrderStatus
+
+	if orderTypeStr := r.URL.Query().Get("order_type"); orderTypeStr != "" {
+		ot := models.OrderType(orderTypeStr)
+		orderType = &ot
+	}
+
+	if statusStr := r.URL.Query().Get("status"); statusStr != "" {
+		st := models.OrderStatus(statusStr)
+		status = &st
+	}
+
+	limit := 50
+	offset := 0
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil {
+			limit = l
+		}
+	}
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil {
+			offset = o
+		}
+	}
+
+	response, err := s.socialService.GetPlayerOrders(r.Context(), orderType, status, limit, offset)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get player orders")
+		s.respondError(w, http.StatusInternalServerError, "failed to get orders")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+func (s *HTTPServer) getPlayerOrder(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	orderID, err := uuid.Parse(vars["orderId"])
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid order id")
+		return
+	}
+
+	order, err := s.socialService.GetPlayerOrder(r.Context(), orderID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get player order")
+		s.respondError(w, http.StatusInternalServerError, "failed to get order")
+		return
+	}
+
+	if order == nil {
+		s.respondError(w, http.StatusNotFound, "order not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, order)
+}
+
+func (s *HTTPServer) acceptPlayerOrder(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	executorID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	orderID, err := uuid.Parse(vars["orderId"])
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid order id")
+		return
+	}
+
+	order, err := s.socialService.AcceptPlayerOrder(r.Context(), orderID, executorID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to accept player order")
+		s.respondError(w, http.StatusInternalServerError, "failed to accept order")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, order)
+}
+
+func (s *HTTPServer) startPlayerOrder(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	orderID, err := uuid.Parse(vars["orderId"])
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid order id")
+		return
+	}
+
+	order, err := s.socialService.StartPlayerOrder(r.Context(), orderID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to start player order")
+		s.respondError(w, http.StatusInternalServerError, "failed to start order")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, order)
+}
+
+func (s *HTTPServer) completePlayerOrder(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	orderID, err := uuid.Parse(vars["orderId"])
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid order id")
+		return
+	}
+
+	var req models.CompletePlayerOrderRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	order, err := s.socialService.CompletePlayerOrder(r.Context(), orderID, &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to complete player order")
+		s.respondError(w, http.StatusInternalServerError, "failed to complete order")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, order)
+}
+
+func (s *HTTPServer) cancelPlayerOrder(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	orderID, err := uuid.Parse(vars["orderId"])
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid order id")
+		return
+	}
+
+	order, err := s.socialService.CancelPlayerOrder(r.Context(), orderID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to cancel player order")
+		s.respondError(w, http.StatusInternalServerError, "failed to cancel order")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, order)
+}
+
+func (s *HTTPServer) reviewPlayerOrder(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id")
+	if userID == nil {
+		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	reviewerID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	orderID, err := uuid.Parse(vars["orderId"])
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid order id")
+		return
+	}
+
+	var req models.ReviewPlayerOrderRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	review, err := s.socialService.ReviewPlayerOrder(r.Context(), orderID, reviewerID, &req)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to review player order")
+		s.respondError(w, http.StatusInternalServerError, "failed to review order")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, review)
 }

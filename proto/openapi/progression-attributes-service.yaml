@@ -1,0 +1,190 @@
+openapi: 3.0.3
+info:
+  title: Progression Attributes Service API
+  description: API для атрибутов персонажей
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Attributes
+    description: Управление атрибутами персонажей
+
+paths:
+  /progression/attributes/{player_id}:
+    get:
+      tags:
+        - Attributes
+      summary: Получить атрибуты персонажа
+      operationId: getPlayerAttributes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Атрибуты персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAttributesResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /progression/attributes/distribute:
+    post:
+      tags:
+        - Attributes
+      summary: Распределить очки атрибутов
+      operationId: distributeAttributePoints
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeDistributionRequest'
+      responses:
+        '200':
+          description: Очки распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAttributesResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /progression/attributes/points/{player_id}:
+    get:
+      tags:
+        - Attributes
+      summary: Получить доступные очки атрибутов
+      operationId: getAvailableAttributePoints
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Доступные очки атрибутов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableAttributePointsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerAttributesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            strength:
+              type: integer
+              minimum: 0
+            dexterity:
+              type: integer
+              minimum: 0
+            intelligence:
+              type: integer
+              minimum: 0
+            constitution:
+              type: integer
+              minimum: 0
+            charisma:
+              type: integer
+              minimum: 0
+        available_points:
+          type: integer
+        max_values:
+          type: object
+          additionalProperties:
+            type: integer
+
+    AttributeDistributionRequest:
+      type: object
+      required:
+        - player_id
+        - distribution
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        distribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributePoint'
+          minItems: 1
+
+    AttributePoint:
+      type: object
+      required:
+        - attribute
+        - points
+      properties:
+        attribute:
+          type: string
+          enum: [strength, dexterity, intelligence, constitution, charisma]
+        points:
+          type: integer
+          minimum: 1
+
+    AvailableAttributePointsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        available_points:
+          type: integer
+        total_points_earned:
+          type: integer
+        total_points_spent:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

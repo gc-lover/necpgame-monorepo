@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: Auth Session Heartbeat Service API
+  description: API для heartbeat и переподключения сессий
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Session Heartbeat
+    description: Heartbeat и переподключение сессий
+
+paths:
+  /auth/session/heartbeat:
+    post:
+      tags:
+        - Session Heartbeat
+      summary: Отправить heartbeat
+      operationId: sendHeartbeat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeartbeatRequest"
+      responses:
+        "200":
+          description: Heartbeat обработан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartbeatResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/heartbeat/status:
+    get:
+      tags:
+        - Session Heartbeat
+      summary: Получить статус heartbeat
+      operationId: getHeartbeatStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус heartbeat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartbeatStatusResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/reconnect:
+    post:
+      tags:
+        - Session Heartbeat
+      summary: Переподключиться к сессии
+      operationId: reconnectSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReconnectSessionRequest"
+      responses:
+        "200":
+          description: Переподключение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReconnectSessionResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/session/reconnect/status:
+    get:
+      tags:
+        - Session Heartbeat
+      summary: Получить статус переподключения
+      operationId: getReconnectStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус переподключения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReconnectStatusResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    HeartbeatRequest:
+      type: object
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        client_timestamp:
+          type: string
+          format: date-time
+        position:
+          $ref: "#/components/schemas/Position"
+        game_state:
+          type: string
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+        map_id:
+          type: string
+
+    HeartbeatResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        server_timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [OK, WARNING, CRITICAL]
+        warnings:
+          type: array
+          items:
+            type: string
+
+    HeartbeatStatusResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        last_heartbeat:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [ACTIVE, MISSING, TIMEOUT]
+        time_since_last_heartbeat:
+          type: integer
+
+    ReconnectSessionRequest:
+      type: object
+      required:
+        - session_id
+        - reconnect_token
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        reconnect_token:
+          type: string
+        client_info:
+          $ref: "#/components/schemas/ClientInfo"
+
+    ClientInfo:
+      type: object
+      properties:
+        client_version:
+          type: string
+        platform:
+          type: string
+          enum: [PC, CONSOLE, MOBILE]
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+
+    ReconnectSessionResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [RECONNECTED, EXPIRED, INVALID]
+        session:
+          $ref: "#/components/schemas/Session"
+        session_token:
+          type: string
+
+    Session:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        server_id:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, DISCONNECTED, TERMINATED]
+
+    ReconnectStatusResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        can_reconnect:
+          type: boolean
+        reconnect_token:
+          type: string
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+
+
+
+

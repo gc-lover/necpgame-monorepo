@@ -1,0 +1,451 @@
+metadata:
+  id: procedural-equipment-matrix-architecture
+  title: Архитектура процедурной матрицы снаряжения
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-23T23:50:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - loot
+    - procedural-generation
+    - equipment
+    - combat
+  related_systems:
+    - economy-service
+    - gameplay-service
+    - inventory-service
+    - crafting-service
+    - analytics-service
+  related_documents:
+    - id: analysis-ideas-2025-11-03-procedural-equipment-matrix
+      relation: implements
+    - id: loot-system-architecture
+      relation: extends
+  github_issue: 461
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - combat
+    - economy
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру процедурной матрицы снаряжения для генерации
+    оружия, имплантов и экипировки с учетом брендов, редкостей, характеристик и модификаторов:
+    - Процедурная генерация предметов по типу Borderlands
+    - Матрица характеристик на основе брендов и типов
+    - Детерминированные сиды для балансировки
+    - Интеграция с экономикой, крафтом и кибернетикой
+    - Балансировка по лигам, режимам PvE/PvP/экстракта
+  goal: |
+    Создать архитектурную схему процедурной матрицы снаряжения с определением:
+    - Компонентов для генерации предметов
+    - Матрицы характеристик и модификаторов
+    - API endpoints (высокоуровнево)
+    - Интеграций с системами лута, крафта и экономики
+    - Структуры БД для матрицы
+    - Технического задания для реализации
+  essence: |
+    Система процедурной генерации снаряжения с матрицей брендов, типов, редкостей,
+    характеристик и модификаторов, интегрированная с существующей системой лута.
+
+architecture:
+  overview: |
+    Процедурная матрица снаряжения состоит из следующих компонентов:
+    1. Equipment Matrix Manager - управление матрицей характеристик
+    2. Procedural Generator - процедурная генерация предметов
+    3. Brand Handler - обработчики брендов (корпораций)
+    4. Rarity Calculator - расчет редкости предметов
+    5. Stat Pool Manager - управление пулами характеристик
+    6. Modifier Generator - генерация модификаторов
+    7. Seed Manager - управление детерминированными сидами
+    8. Balance Validator - валидация баланса по лигам и режимам
+
+  microservices:
+    - name: economy-service
+      port: 8085
+      responsibility: |
+        Основной сервис для процедурной генерации снаряжения:
+        - Управление матрицей характеристик
+        - Процедурная генерация предметов
+        - Управление брендами и их идентичностями
+        - Расчет редкости и характеристик
+        - Генерация модификаторов
+        - Интеграция с системой лута
+      components:
+        - Equipment Matrix Manager
+        - Procedural Generator
+        - Brand Handler
+        - Rarity Calculator
+        - Stat Pool Manager
+        - Modifier Generator
+        - Seed Manager
+        - Balance Validator
+      endpoints:
+        - POST /api/v1/economy/equipment/generate - генерация предмета
+        - GET /api/v1/economy/equipment/matrix - матрица характеристик
+        - GET /api/v1/economy/equipment/brands - список брендов
+        - GET /api/v1/economy/equipment/rarities - список редкостей
+        - GET /api/v1/economy/equipment/stat-pools - пулы характеристик
+        - POST /api/v1/economy/equipment/validate-balance - валидация баланса
+
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Применение сгенерированного снаряжения в бою:
+        - Расчет боевых параметров
+        - Применение модификаторов
+        - Синергии имплантов
+        - Сет-бонусы
+        - Энергобюджет персонажа
+      components:
+        - Combat Stats Calculator
+        - Modifier Applier
+        - Synergy Handler
+      endpoints:
+        - POST /api/v1/gameplay/equipment/calculate-stats - расчет статов
+        - POST /api/v1/gameplay/equipment/apply-modifiers - применение модификаторов
+
+    - name: crafting-service
+      port: 8087
+      responsibility: |
+        Интеграция с крафтом:
+        - Процедурная генерация при крафте
+        - Использование матрицы для крафта
+        - Детерминированные сиды для крафта
+      components:
+        - Crafting Generator
+        - Craft Seed Manager
+      endpoints:
+        - POST /api/v1/crafting/generate - генерация при крафте
+        - GET /api/v1/crafting/matrix - матрица для крафта
+
+  components:
+    - name: Equipment Matrix Manager
+      location: economy-service
+      responsibility: |
+        Управление матрицей характеристик:
+        - Хранение матрицы брендов, типов, редкостей
+        - Управление пулами характеристик
+        - Управление модификаторами
+        - Версионирование матрицы
+        - Кэширование матрицы
+      dependencies:
+        - Database
+        - Redis Cache
+
+    - name: Procedural Generator
+      location: economy-service
+      responsibility: |
+        Процедурная генерация предметов:
+        - Выбор бренда и типа
+        - Расчет редкости
+        - Генерация характеристик из пулов
+        - Применение модификаторов
+        - Генерация слотов модов
+        - Использование детерминированных сидов
+      dependencies:
+        - Equipment Matrix Manager
+        - Brand Handler
+        - Rarity Calculator
+        - Stat Pool Manager
+        - Modifier Generator
+        - Seed Manager
+
+    - name: Brand Handler
+      location: economy-service
+      responsibility: |
+        Обработчики брендов (корпораций):
+        - Лорные идентичности брендов
+        - Специфичные характеристики брендов
+        - Бонусы брендов
+        - Фракционные эксклюзивы
+      dependencies:
+        - Equipment Matrix Manager
+
+    - name: Rarity Calculator
+      location: economy-service
+      responsibility: |
+        Расчет редкости предметов:
+        - Определение редкости на основе источника
+        - Модификаторы редкости
+        - Гарантированные редкости
+        - Балансировка редкостей
+      dependencies:
+        - Equipment Matrix Manager
+
+    - name: Stat Pool Manager
+      location: economy-service
+      responsibility: |
+        Управление пулами характеристик:
+        - Пулы характеристик по типам предметов
+        - Распределение характеристик
+        - Минимальные и максимальные значения
+        - Балансировка пулов
+      dependencies:
+        - Equipment Matrix Manager
+
+    - name: Modifier Generator
+      location: economy-service
+      responsibility: |
+        Генерация модификаторов:
+        - Пулы модификаторов
+        - Редкость модификаторов
+        - Совместимость модификаторов
+        - Балансировка модификаторов
+      dependencies:
+        - Equipment Matrix Manager
+
+    - name: Seed Manager
+      location: economy-service
+      responsibility: |
+        Управление детерминированными сидами:
+        - Генерация сидов для предметов
+        - Хранение сидов
+        - Воспроизводимость генерации
+        - Балансировка через сиды
+      dependencies:
+        - Database
+
+    - name: Balance Validator
+      location: economy-service
+      responsibility: |
+        Валидация баланса:
+        - Проверка баланса по лигам
+        - Проверка баланса по режимам (PvE/PvP/экстракт)
+        - Проверка температурных ограничений
+        - Проверка TTK
+        - Проверка рисков киберпсихоза
+      dependencies:
+        - Procedural Generator
+        - Gameplay Service
+
+  data_models:
+    equipment_matrix:
+      fields:
+        - id: UUID
+        - brand_id: UUID
+        - item_type: enum (WEAPON, IMPLANT, ARMOR, ACCESSORY)
+        - rarity: enum (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY)
+        - stat_pools: array of StatPool
+        - modifiers: array of Modifier
+        - brand_bonuses: json
+        - created_at: timestamp
+        - updated_at: timestamp
+        - version: integer
+
+    stat_pool:
+      fields:
+        - id: UUID
+        - name: string
+        - stat_type: enum (DAMAGE, ACCURACY, RANGE, FIRE_RATE, RELOAD_SPEED, etc.)
+        - min_value: float
+        - max_value: float
+        - distribution: enum (UNIFORM, NORMAL, EXPONENTIAL)
+        - rarity_modifiers: json
+
+    modifier:
+      fields:
+        - id: UUID
+        - name: string
+        - modifier_type: enum (DAMAGE_BOOST, CRIT_CHANCE, ELEMENTAL_DAMAGE, etc.)
+        - value: float
+        - rarity: enum (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY)
+        - compatibility: array of string
+        - restrictions: json
+
+    generated_item:
+      fields:
+        - id: UUID
+        - seed: string
+        - brand_id: UUID
+        - item_type: enum
+        - rarity: enum
+        - stats: json
+        - modifiers: array of UUID
+        - mod_slots: integer
+        - generated_at: timestamp
+
+  api_endpoints:
+    economy_service:
+      base_path: /api/v1/economy/equipment
+      endpoints:
+        - method: POST
+          path: /generate
+          description: Генерация предмета процедурно
+          request_body: GenerateEquipmentRequest
+          response: GeneratedItem
+
+        - method: GET
+          path: /matrix
+          description: Получение матрицы характеристик
+          query_params:
+            - brand_id: UUID (optional)
+            - item_type: enum (optional)
+            - rarity: enum (optional)
+          response: EquipmentMatrix
+
+        - method: GET
+          path: /brands
+          description: Список брендов
+          response: array of Brand
+
+        - method: GET
+          path: /rarities
+          description: Список редкостей
+          response: array of Rarity
+
+        - method: GET
+          path: /stat-pools
+          description: Пулы характеристик
+          query_params:
+            - item_type: enum (optional)
+          response: array of StatPool
+
+        - method: POST
+          path: /validate-balance
+          description: Валидация баланса предмета
+          request_body: ValidateBalanceRequest
+          response: BalanceValidationResult
+
+  integrations:
+    with_loot_system: |
+      - Использование процедурной генерации в системе лута
+      - Интеграция с Loot Generator
+      - Применение матрицы к дропам
+
+    with_crafting_system: |
+      - Процедурная генерация при крафте
+      - Использование матрицы для крафта
+      - Детерминированные сиды для крафта
+
+    with_gameplay_system: |
+      - Расчет боевых параметров
+      - Применение модификаторов
+      - Синергии имплантов
+      - Сет-бонусы
+
+    event_bus:
+      type: Kafka
+      topics:
+        - equipment.generated
+        - equipment.matrix-updated
+        - equipment.balance-validated
+
+    database:
+      type: PostgreSQL
+      schema: equipment_matrix
+      tables:
+        - equipment_matrix
+        - stat_pools
+        - modifiers
+        - generated_items
+        - brand_configs
+
+    cache:
+      type: Redis
+      keys:
+        - equipment-matrix:brands
+        - equipment-matrix:stat-pools
+        - equipment-matrix:modifiers
+      ttl: 3600 seconds
+
+  technical_specification:
+    implementation_phases:
+      phase_1:
+        name: Базовая матрица
+        tasks:
+          - Создание структуры БД для матрицы
+          - Реализация Equipment Matrix Manager
+          - Реализация Brand Handler
+          - Базовые CRUD endpoints
+        estimated_effort: 4 days
+
+      phase_2:
+        name: Процедурная генерация
+        tasks:
+          - Реализация Procedural Generator
+          - Реализация Rarity Calculator
+          - Реализация Stat Pool Manager
+          - Реализация Modifier Generator
+          - Интеграция с системой лута
+        estimated_effort: 5 days
+
+      phase_3:
+        name: Детерминированные сиды
+        tasks:
+          - Реализация Seed Manager
+          - Воспроизводимость генерации
+          - Балансировка через сиды
+        estimated_effort: 3 days
+
+      phase_4:
+        name: Балансировка
+        tasks:
+          - Реализация Balance Validator
+          - Интеграция с Gameplay Service
+          - Балансировка по лигам
+          - Балансировка по режимам
+        estimated_effort: 4 days
+
+      phase_5:
+        name: Интеграции
+        tasks:
+          - Интеграция с Crafting Service
+          - Интеграция с Gameplay Service
+          - Event Bus интеграция
+          - Кэширование
+        estimated_effort: 3 days
+
+    total_estimated_effort: 19 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> EconomyService[Economy Service<br/>8085]
+        
+        EconomyService --> EMM[Equipment Matrix Manager]
+        EconomyService --> PG[Procedural Generator]
+        EconomyService --> BH[Brand Handler]
+        EconomyService --> RC[Rarity Calculator]
+        EconomyService --> SPM[Stat Pool Manager]
+        EconomyService --> MG[Modifier Generator]
+        EconomyService --> SM[Seed Manager]
+        EconomyService --> BV[Balance Validator]
+        
+        EconomyService --> LootSystem[Loot System]
+        EconomyService --> CraftingService[Crafting Service<br/>8087]
+        EconomyService --> GameplayService[Gameplay Service<br/>8083]
+        
+        EconomyService --> EventBus[Event Bus<br/>Kafka]
+        EconomyService --> DB[(Equipment Matrix DB)]
+        EconomyService --> Cache[(Redis Cache)]
+    ```
+
+  generation_flow: |
+    ```mermaid
+    graph LR
+        Request[Generate Request] --> PG[Procedural Generator]
+        PG --> BH[Brand Handler]
+        PG --> RC[Rarity Calculator]
+        PG --> SPM[Stat Pool Manager]
+        PG --> MG[Modifier Generator]
+        PG --> SM[Seed Manager]
+        SM --> Item[Generated Item]
+        Item --> BV[Balance Validator]
+        BV --> Result[Final Item]
+    ```
+
+
+
+

@@ -1,0 +1,216 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Queue Service API
+  description: API для управления очередями матчмейкинга
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Queue
+    description: Управление очередями матчмейкинга
+
+paths:
+  /matchmaking/queue/join:
+    post:
+      tags:
+        - Queue
+      summary: Войти в очередь матчмейкинга
+      operationId: joinMatchmakingQueue
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinQueueRequest'
+      responses:
+        '200':
+          description: Игрок добавлен в очередь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStatus'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /matchmaking/queue/leave:
+    post:
+      tags:
+        - Queue
+      summary: Покинуть очередь матчмейкинга
+      operationId: leaveMatchmakingQueue
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveQueueRequest'
+      responses:
+        '200':
+          description: Игрок покинул очередь
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+              example:
+                status: left
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /matchmaking/queue/status:
+    get:
+      tags:
+        - Queue
+      summary: Получить статус очереди
+      operationId: getQueueStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: queue_type
+          in: query
+          schema:
+            type: string
+            enum: [pvp, pve, raid, ranked, casual]
+      responses:
+        '200':
+          description: Статус очереди
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStatus'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /matchmaking/queue/estimate:
+    get:
+      tags:
+        - Queue
+      summary: Получить оценку времени ожидания
+      operationId: getQueueEstimate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: queue_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pvp, pve, raid, ranked, casual]
+      responses:
+        '200':
+          description: Оценка времени ожидания
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueEstimate'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    JoinQueueRequest:
+      type: object
+      required:
+        - character_id
+        - queue_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        queue_type:
+          type: string
+          enum: [pvp, pve, raid, ranked, casual]
+        role:
+          type: string
+        party_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    LeaveQueueRequest:
+      type: object
+      required:
+        - character_id
+        - queue_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        queue_type:
+          type: string
+          enum: [pvp, pve, raid, ranked, casual]
+
+    QueueStatus:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        queue_type:
+          type: string
+        status:
+          type: string
+          enum: [queued, searching, found, not_queued]
+        position:
+          type: integer
+        estimated_wait_time:
+          type: integer
+        search_range_expanded:
+          type: boolean
+        queued_at:
+          type: string
+          format: date-time
+
+    QueueEstimate:
+      type: object
+      properties:
+        queue_type:
+          type: string
+        estimated_wait_time_seconds:
+          type: integer
+        players_in_queue:
+          type: integer
+        average_wait_time:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+

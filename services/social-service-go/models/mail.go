@@ -72,3 +72,52 @@ type ClaimAttachmentResponse struct {
 	Currency  map[string]int          `json:"currency,omitempty"`
 }
 
+type UnreadMailCountResponse struct {
+	UnreadCount int `json:"unread_count"`
+	TotalCount  int `json:"total_count"`
+}
+
+type MailAttachment struct {
+	Type     string                 `json:"type"`
+	ItemID   *string                `json:"item_id,omitempty"`
+	Quantity *int                    `json:"quantity,omitempty"`
+	Currency map[string]int          `json:"currency,omitempty"`
+	Data     map[string]interface{} `json:"data,omitempty"`
+}
+
+type MailAttachmentsResponse struct {
+	MailID      uuid.UUID        `json:"mail_id"`
+	Attachments []MailAttachment `json:"attachments"`
+	HasCOD      bool             `json:"has_cod"`
+	CODAmount   *int             `json:"cod_amount,omitempty"`
+}
+
+type ExtendMailRequest struct {
+	Days int `json:"days"`
+}
+
+type SendSystemMailRequest struct {
+	RecipientID uuid.UUID              `json:"recipient_id"`
+	Type        MailType               `json:"type"`
+	Title       string                 `json:"title"`
+	Content     string                 `json:"content"`
+	Attachments map[string]interface{} `json:"attachments,omitempty"`
+	ExpiresIn   *int                   `json:"expires_in,omitempty"`
+}
+
+type BroadcastSystemMailRequest struct {
+	Type        MailType               `json:"type"`
+	Title       string                 `json:"title"`
+	Content     string                 `json:"content"`
+	Attachments map[string]interface{} `json:"attachments,omitempty"`
+	RecipientIDs []uuid.UUID           `json:"recipient_ids,omitempty"`
+	Filter     map[string]interface{}  `json:"filter,omitempty"`
+	ExpiresIn   *int                   `json:"expires_in,omitempty"`
+}
+
+type BroadcastResult struct {
+	TotalSent       int      `json:"total_sent"`
+	TotalFailed     int      `json:"total_failed"`
+	FailedRecipients []string `json:"failed_recipients,omitempty"`
+}
+

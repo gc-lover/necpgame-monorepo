@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: Economy Loot Smart Service API
+  description: API для умного лута
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Loot Smart
+    description: Умный лут
+
+paths:
+  /economy/loot/smart/generate:
+    post:
+      tags:
+        - Loot Smart
+      summary: Сгенерировать умный лут
+      operationId: generateSmartLoot
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateSmartLootRequest"
+      responses:
+        "200":
+          description: Умный лут сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/loot/smart/history/{player_id}:
+    get:
+      tags:
+        - Loot Smart
+      summary: Получить историю лута игрока
+      operationId: getPlayerLootHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История лута игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LootHistoryResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    GenerateSmartLootRequest:
+      type: object
+      required:
+        - character_id
+        - source_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        source_type:
+          type: string
+          enum: [enemy, container, boss, quest]
+        source_id:
+          type: string
+        party_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    LootResult:
+      type: object
+      properties:
+        loot_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LootItem"
+        currency:
+          type: integer
+        generated_at:
+          type: string
+          format: date-time
+
+    LootItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_template_id:
+          type: string
+        quantity:
+          type: integer
+        rarity:
+          type: string
+
+    LootHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              loot_id:
+                type: string
+                format: uuid
+              items:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LootItem"
+              generated_at:
+                type: string
+                format: date-time
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+

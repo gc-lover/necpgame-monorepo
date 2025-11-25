@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-22T23:50:00Z
+  version: '1.1.0'
+  last_updated: 2025-11-23T12:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -50,6 +50,77 @@ summary:
     - Расследование временных аномалий в обсерватории.
     - Встреча с «Хранителем времени» — автономным ИИ.
     - Выбор влияет на глобальное состояние симуляции.
+quest_definition:
+  quest_type: main
+  level_min: 40
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: investigate_observatory
+      text: "Исследовать залы обсерватории и зафиксировать временные аномалии"
+      type: investigate
+      target: greenwich_observatory
+      count: 5
+      optional: false
+    - id: find_time_keeper
+      text: "Обнаружить ИИ-хранителя времени в центре симуляции"
+      type: interact
+      target: time_keeper_ai
+      count: 1
+      optional: false
+    - id: make_choice
+      text: "Принять решение о судьбе временной аномалии"
+      type: choice
+      target: time_anomaly
+      count: 1
+      optional: false
+  rewards:
+    experience: 10000
+    money: 0
+    items: []
+    reputation: {}
+    unlocks: []
+  branches:
+    - branch_id: fix_anomaly
+      branch_name: "Исправить сбой"
+      conditions:
+        flags: ["time_choice_fix"]
+      consequences:
+        reputation_changes:
+          London_Stability: 20
+        unlocks_quests: []
+        world_state:
+          - key: "time_stability_restored"
+            value: true
+            scope: server
+    - branch_id: use_anomaly
+      branch_name: "Использовать аномалию"
+      conditions:
+        flags: ["time_choice_use"]
+      consequences:
+        reputation_changes: {}
+        unlocks_quests: []
+        world_state:
+          - key: "player_time_manipulation_ability"
+            value: true
+            scope: player
+    - branch_id: reveal_truth
+      branch_name: "Раскрыть правду о симуляции"
+      conditions:
+        flags: ["time_choice_reveal"]
+      consequences:
+        reputation_changes:
+          Simulation_Skeptics: 50
+          Factions: -20
+        unlocks_quests: []
+        world_state:
+          - key: "simulation_revelation_level"
+            value_change: 1
+            scope: server
 content:
   sections:
     - id: setup
@@ -103,6 +174,10 @@ history:
     date: 2025-11-13
     author: Concept Director
     changes: Квест «Гринвич и Симуляция» перенесён из Markdown в YAML по шаблону знаний.
+  - version: '1.1.0'
+    date: 2025-11-23
+    author: content_writer
+    changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
   checksum: ''
   schema_version: '1.0'

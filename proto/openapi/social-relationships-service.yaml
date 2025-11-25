@@ -1,0 +1,1128 @@
+openapi: 3.0.3
+info:
+  title: Social Relationships Service API
+  description: API для системы отношений между игроками
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Relationships
+    description: Отношения между игроками
+
+paths:
+  /social/relationships/{player_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить отношения персонажа
+      operationId: getRelationships
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: relationship_type
+          in: query
+          schema:
+            type: string
+            enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Отношения персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipsResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id}/set:
+    post:
+      tags:
+        - Relationships
+      summary: Установить отношение
+      operationId: setRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRelationshipRequest'
+      responses:
+        '200':
+          description: Отношение установлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Relationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id1}/{player_id2}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить отношение между персонажами
+      operationId: getRelationshipBetween
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id1
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: player_id2
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Отношение между персонажами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Relationship'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id}/trust:
+    get:
+      tags:
+        - Relationships
+      summary: Получить уровень доверия
+      operationId: getTrustLevel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: target_player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уровень доверия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustLevel'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/{player_id}/trust/update:
+    post:
+      tags:
+        - Relationships
+      summary: Обновить доверие
+      operationId: updateTrust
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTrustRequest'
+      responses:
+        '200':
+          description: Доверие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustLevel'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/trust-contracts/create:
+    post:
+      tags:
+        - Relationships
+      summary: Создать договор доверия
+      operationId: createTrustContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrustContractRequest'
+      responses:
+        '201':
+          description: Договор создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/trust-contracts/{contract_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить договор доверия
+      operationId: getTrustContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Договор доверия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Relationships
+      summary: Расторгнуть договор доверия
+      operationId: terminateTrustContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateTrustContractRequest'
+      responses:
+        '200':
+          description: Договор расторгнут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustContract'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/create:
+    post:
+      tags:
+        - Relationships
+      summary: Создать альянс
+      operationId: createAlliance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAllianceRequest'
+      responses:
+        '201':
+          description: Альянс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alliance'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/alliances:
+    get:
+      tags:
+        - Relationships
+      summary: Получить список альянсов
+      operationId: getAlliances
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_type
+          in: query
+          schema:
+            type: string
+            enum: [combat, trade, clan, faction]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список альянсов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlliancesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/{alliance_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить информацию об альянсе
+      operationId: getAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация об альянсе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alliance'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Relationships
+      summary: Расторгнуть альянс
+      operationId: terminateAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateAllianceRequest'
+      responses:
+        '200':
+          description: Альянс расторгнут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alliance'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/{alliance_id}/invite:
+    post:
+      tags:
+        - Relationships
+      summary: Пригласить в альянс
+      operationId: inviteToAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteToAllianceRequest'
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceInvite'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/{alliance_id}/join:
+    post:
+      tags:
+        - Relationships
+      summary: Присоединиться к альянсу
+      operationId: joinAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinAllianceRequest'
+      responses:
+        '200':
+          description: Присоединение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alliance'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/alliances/{alliance_id}/leave:
+    post:
+      tags:
+        - Relationships
+      summary: Покинуть альянс
+      operationId: leaveAlliance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alliance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveAllianceRequest'
+      responses:
+        '200':
+          description: Выход выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: left
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/ratings/{player_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить рейтинги игрока
+      operationId: getPlayerRatings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Рейтинги игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRatings'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/ratings/{player_id}/update:
+    post:
+      tags:
+        - Relationships
+      summary: Обновить рейтинг игрока
+      operationId: updateRating
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRatingRequest'
+      responses:
+        '200':
+          description: Рейтинг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerRatings'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/social-capital/{player_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить социальный капитал
+      operationId: getSocialCapital
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Социальный капитал
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialCapital'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/history/{player_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить историю взаимодействий
+      operationId: getInteractionHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История взаимодействий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionHistoryResponse'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/arbitration/request:
+    post:
+      tags:
+        - Relationships
+      summary: Запросить арбитраж
+      operationId: requestArbitration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestArbitrationRequest'
+      responses:
+        '201':
+          description: Запрос на арбитраж создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/relationships/arbitration/{case_id}:
+    get:
+      tags:
+        - Relationships
+      summary: Получить информацию об арбитраже
+      operationId: getArbitrationCase
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация об арбитраже
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitrationCase'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Relationship:
+      type: object
+      properties:
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RelationshipsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relationship'
+        total:
+          type: integer
+
+    SetRelationshipRequest:
+      type: object
+      required:
+        - target_player_id
+        - relationship_type
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+
+    TrustLevel:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        target_player_id:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        trust_points:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    UpdateTrustRequest:
+      type: object
+      required:
+        - target_player_id
+        - trust_change
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        trust_change:
+          type: integer
+          description: Изменение доверия (может быть отрицательным)
+        reason:
+          type: string
+
+    CreateTrustContractRequest:
+      type: object
+      required:
+        - target_player_id
+        - trust_level
+        - terms
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        terms:
+          type: object
+          additionalProperties: true
+        duration_days:
+          type: integer
+          minimum: 1
+
+    TrustContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        terms:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [active, terminated, expired]
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TerminateTrustContractRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    CreateAllianceRequest:
+      type: object
+      required:
+        - alliance_type
+        - name
+      properties:
+        alliance_type:
+          type: string
+          enum: [combat, trade, clan, faction]
+        name:
+          type: string
+        description:
+          type: string
+        terms:
+          type: object
+          additionalProperties: true
+
+    Alliance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        alliance_type:
+          type: string
+          enum: [combat, trade, clan, faction]
+        name:
+          type: string
+        description:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+            format: uuid
+        terms:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [active, terminated, expired]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AlliancesResponse:
+      type: object
+      properties:
+        alliances:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alliance'
+        total:
+          type: integer
+
+    TerminateAllianceRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    InviteToAllianceRequest:
+      type: object
+      required:
+        - target_player_id
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+
+    AllianceInvite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        alliance_id:
+          type: string
+          format: uuid
+        inviter_id:
+          type: string
+          format: uuid
+        invitee_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, rejected, expired]
+        created_at:
+          type: string
+          format: date-time
+
+    JoinAllianceRequest:
+      type: object
+      properties:
+        invite_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    LeaveAllianceRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    PlayerRatings:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        combat_rating:
+          type: integer
+        trade_rating:
+          type: integer
+        social_rating:
+          type: integer
+        overall_rating:
+          type: integer
+        total_ratings:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    UpdateRatingRequest:
+      type: object
+      required:
+        - target_player_id
+        - rating_type
+        - rating_value
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        rating_type:
+          type: string
+          enum: [combat, trade, social, overall]
+        rating_value:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    SocialCapital:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        capital_value:
+          type: integer
+        network_size:
+          type: integer
+        influence_score:
+          type: number
+          format: decimal
+        trust_score:
+          type: number
+          format: decimal
+        last_update:
+          type: string
+          format: date-time
+
+    InteractionHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionEntry'
+        total:
+          type: integer
+
+    InteractionEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum: [quest, trade, combat, social, other]
+        description:
+          type: string
+        reputation_change:
+          type: integer
+        trust_change:
+          type: integer
+        occurred_at:
+          type: string
+          format: date-time
+
+    RequestArbitrationRequest:
+      type: object
+      required:
+        - target_player_id
+        - dispute_type
+        - description
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        dispute_type:
+          type: string
+          enum: [trade, contract, alliance, reputation, other]
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+
+    ArbitrationCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        dispute_type:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, dismissed]
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+
+
+
+

@@ -1,0 +1,221 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Quests Instances Service API
+  description: API для управления экземплярами квестов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Quest Instances
+    description: Управление экземплярами квестов
+
+paths:
+  /gameplay/quests/instances/{instanceId}/dialogue:
+    post:
+      tags:
+        - Quest Instances
+      summary: Выбрать вариант диалога
+      operationId: selectDialogueOption
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DialogueOptionRequest"
+      responses:
+        "200":
+          description: Вариант диалога выбран
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/instances/{instanceId}/skill-check:
+    post:
+      tags:
+        - Quest Instances
+      summary: Выполнить проверку навыка
+      operationId: performSkillCheck
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SkillCheckRequest"
+      responses:
+        "200":
+          description: Проверка навыка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillCheckResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/quests/instances/{instanceId}/complete:
+    post:
+      tags:
+        - Quest Instances
+      summary: Завершить квест
+      operationId: completeQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Квест завершен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestCompletionResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    QuestInstance:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestObjective"
+        started_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    QuestObjective:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+
+    DialogueOptionRequest:
+      type: object
+      required:
+        - option_id
+      properties:
+        option_id:
+          type: string
+
+    SkillCheckRequest:
+      type: object
+      required:
+        - skill_id
+        - difficulty
+      properties:
+        skill_id:
+          type: string
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 100
+
+    SkillCheckResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        skill_level:
+          type: integer
+        roll:
+          type: integer
+        difficulty:
+          type: integer
+        message:
+          type: string
+
+    QuestCompletionResult:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [completed, failed]
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+
+security:
+  - BearerAuth: []
+

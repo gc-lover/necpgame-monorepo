@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Social NPC Hiring Candidates Service API
+  description: API для поиска кандидатов NPC для найма
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: NPC Hiring Candidates
+    description: Поиск кандидатов NPC
+
+paths:
+  /social/npc-hiring/candidates:
+    get:
+      tags:
+        - NPC Hiring Candidates
+      summary: Поиск кандидатов для найма
+      operationId: searchNPCCandidates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hiring_type
+          in: query
+          schema:
+            type: string
+            enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        - name: min_reputation
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high]
+        - name: skills
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: max_salary
+          in: query
+          schema:
+            type: number
+            format: decimal
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список кандидатов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NPCCandidatesResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /social/npc-hiring/candidates/{npc_id}:
+    get:
+      tags:
+        - NPC Hiring Candidates
+      summary: Получить информацию о кандидате
+      operationId: getNPCCandidate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о кандидате
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NPCCandidate"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    NPCCandidate:
+      type: object
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hiring_type:
+          type: string
+          enum: [merchant, quest_giver, fixer, bodyguard, mercenary, diplomat, engineer, hacker]
+        reputation_level:
+          type: string
+          enum: [low, medium, high]
+        skills:
+          type: array
+          items:
+            type: string
+        skill_levels:
+          type: object
+          additionalProperties:
+            type: integer
+        base_salary:
+          type: number
+          format: decimal
+        availability:
+          type: boolean
+        requirements:
+          type: object
+          properties:
+            reputation:
+              type: string
+            skills:
+              type: array
+              items:
+                type: string
+            capital:
+              type: number
+              format: decimal
+              nullable: true
+        description:
+          type: string
+
+    NPCCandidatesResponse:
+      type: object
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/NPCCandidate"
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
+
+

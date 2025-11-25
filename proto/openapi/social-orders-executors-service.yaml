@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: Social Orders Executors Service API
+  description: API для управления исполнителями заказов
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Player Orders Executors
+    description: Управление исполнителями заказов
+
+paths:
+  /social/orders/multi-executor/create:
+    post:
+      tags:
+        - Player Orders Executors
+      summary: Создать заказ с несколькими исполнителями
+      operationId: createMultiExecutorOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMultiExecutorOrderRequest'
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/executors/invite:
+    post:
+      tags:
+        - Player Orders Executors
+      summary: Пригласить исполнителя в заказ
+      operationId: inviteExecutor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteExecutorRequest'
+      responses:
+        '200':
+          description: Исполнитель приглашен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/orders/{orderId}/executors/join:
+    post:
+      tags:
+        - Player Orders Executors
+      summary: Присоединиться к заказу как исполнитель
+      operationId: joinOrderAsExecutor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Присоединение к заказу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerOrder'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        executor_id:
+          type: string
+          format: uuid
+          nullable: true
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, accepted, in_progress, completed, cancelled]
+        reward:
+          type: object
+          properties:
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMultiExecutorOrderRequest:
+      type: object
+      required:
+        - order_type
+        - title
+        - description
+        - max_executors
+      properties:
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        max_executors:
+          type: integer
+          minimum: 2
+        reward:
+          type: object
+          properties:
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+
+    InviteExecutorRequest:
+      type: object
+      required:
+        - executor_id
+      properties:
+        executor_id:
+          type: string
+          format: uuid
+
+security:
+  - BearerAuth: []
+
+
+
+

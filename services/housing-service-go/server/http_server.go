@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/necpgame/housing-service-go/models"
+	"github.com/necpgame/housing-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -52,28 +53,16 @@ func NewHTTPServer(addr string, housingService HousingServiceInterface, jwtValid
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
+
 	if authEnabled {
-		router.Use(server.authMiddleware)
+		apiRouter.Use(server.authMiddleware)
 	}
 
-	api := router.PathPrefix("/api/v1/housing").Subrouter()
-
-	api.HandleFunc("/apartments", server.purchaseApartment).Methods("POST")
-	api.HandleFunc("/apartments", server.listApartments).Methods("GET")
-	api.HandleFunc("/apartments/{apartment_id}", server.getApartment).Methods("GET")
-	api.HandleFunc("/apartments/{apartment_id}/detail", server.getApartmentDetail).Methods("GET")
-	api.HandleFunc("/apartments/{apartment_id}/settings", server.updateApartmentSettings).Methods("PUT")
-
-	api.HandleFunc("/apartments/{apartment_id}/furniture", server.placeFurniture).Methods("POST")
-	api.HandleFunc("/apartments/{apartment_id}/furniture", server.listPlacedFurniture).Methods("GET")
-	api.HandleFunc("/apartments/{apartment_id}/furniture/{furniture_id}", server.removeFurniture).Methods("DELETE")
-
-	api.HandleFunc("/furniture", server.listFurnitureItems).Methods("GET")
-	api.HandleFunc("/furniture/{item_id}", server.getFurnitureItem).Methods("GET")
-
-	api.HandleFunc("/apartments/{apartment_id}/visit", server.visitApartment).Methods("POST")
-
-	api.HandleFunc("/leaderboard/prestige", server.getPrestigeLeaderboard).Methods("GET")
+	handlers := NewHousingHandlers(housingService)
+	api.HandlerWithOptions(handlers, api.GorillaServerOptions{
+		BaseRouter: apiRouter,
+	})
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

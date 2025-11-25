@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Inventory Service API
-  description: API для управления инвентарем персонажей: предметы, экипировка, слоты
+  description: "API для управления инвентарем персонажей: предметы, экипировка, слоты"
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -25,12 +25,7 @@ paths:
       summary: Получить инвентарь персонажа
       operationId: getInventory
       parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
       responses:
         '200':
           description: Инвентарь персонажа
@@ -39,11 +34,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/InventoryResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common.yaml#/components/responses/NotFound'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /inventory/{characterId}/items:
     post:
@@ -52,12 +47,7 @@ paths:
       summary: Добавить предмет в инвентарь
       operationId: addItem
       parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
       requestBody:
         required: true
         content:
@@ -70,15 +60,11 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common.yaml#/components/responses/BadRequest'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /inventory/{characterId}/items/{itemId}:
     delete:
@@ -87,35 +73,21 @@ paths:
       summary: Удалить предмет из инвентаря
       operationId: removeItem
       parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
+        - $ref: 'common.yaml#/components/parameters/ItemIdCamel'
       responses:
         '200':
           description: Предмет удален
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common.yaml#/components/responses/NotFound'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /inventory/{characterId}/equip:
     post:
@@ -124,12 +96,7 @@ paths:
       summary: Экипировать предмет
       operationId: equipItem
       parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
       requestBody:
         required: true
         content:
@@ -142,17 +109,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common.yaml#/components/responses/NotFound'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /inventory/{characterId}/unequip/{itemId}:
     post:
@@ -161,42 +124,26 @@ paths:
       summary: Снять предмет
       operationId: unequipItem
       parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: 'common.yaml#/components/parameters/CharacterIdCamel'
+        - $ref: 'common.yaml#/components/parameters/ItemIdCamel'
       responses:
         '200':
           description: Предмет снят
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common.yaml#/components/responses/NotFound'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: 'common.yaml#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
 
   schemas:
     Inventory:
@@ -312,40 +259,6 @@ components:
           items:
             $ref: '#/components/schemas/InventoryItem'
 
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Unauthorized:
-      description: Требуется аутентификация
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    NotFound:
-      description: Ресурс не найден
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
 
 security:
   - BearerAuth: []

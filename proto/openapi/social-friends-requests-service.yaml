@@ -1,0 +1,224 @@
+openapi: 3.0.3
+info:
+  title: Social Friends Requests Service API
+  description: API для запросов на дружбу
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Friends Requests
+    description: Запросы на дружбу
+
+paths:
+  /social/friends/requests:
+    post:
+      tags:
+        - Friends Requests
+      summary: Отправить запрос на дружбу
+      operationId: sendFriendRequest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendRequest'
+      responses:
+        '201':
+          description: Запрос отправлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/requests/{request_id}/accept:
+    post:
+      tags:
+        - Friends Requests
+      summary: Принять запрос на дружбу
+      operationId: acceptFriendRequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Запрос принят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/requests/{request_id}/decline:
+    post:
+      tags:
+        - Friends Requests
+      summary: Отклонить запрос на дружбу
+      operationId: declineFriendRequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Запрос отклонен
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+              example:
+                status: declined
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/requests/incoming:
+    get:
+      tags:
+        - Friends Requests
+      summary: Получить входящие запросы
+      operationId: getIncomingFriendRequests
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Входящие запросы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendRequestsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/requests/outgoing:
+    get:
+      tags:
+        - Friends Requests
+      summary: Получить исходящие запросы
+      operationId: getOutgoingFriendRequests
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Исходящие запросы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendRequestsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/friends/requests/{request_id}:
+    get:
+      tags:
+        - Friends Requests
+      summary: Получить запрос на дружбу
+      operationId: getFriendRequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Запрос на дружбу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Friendship:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_a_id:
+          type: string
+          format: uuid
+        character_b_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, blocked]
+        initiator_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FriendRequest:
+      type: object
+      required:
+        - to_character_id
+      properties:
+        to_character_id:
+          type: string
+          format: uuid
+
+    FriendRequestsResponse:
+      type: object
+      properties:
+        requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Friendship'
+        total:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+
