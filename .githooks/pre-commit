@@ -1,0 +1,66 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+source "$PROJECT_ROOT/.github/file-size-config.sh"
+
+echo "🔍 Checking file sizes before commit..."
+echo "Max lines per file: $MAX_LINES"
+echo ""
+
+FAILED_FILES=()
+CHECKED_COUNT=0
+
+while IFS= read -r file; do
+  if [ ! -f "$file" ]; then
+    continue
+  fi
+  
+  if ! check_file_extension "$file"; then
+    continue
+  fi
+  
+  if is_excluded "$file"; then
+    echo "⏭️  Skipping (excluded): $file"
+    continue
+  fi
+  
+  LINES=$(wc -l < "$file" 2>/dev/null || echo "0")
+  CHECKED_COUNT=$((CHECKED_COUNT + 1))
+  
+  if [ "$LINES" -gt "$MAX_LINES" ]; then
+    FAILED_FILES+=("$file:$LINES")
+    echo "❌ $file has $LINES lines (max: $MAX_LINES)"
+  else
+    echo "OK $file has $LINES lines (OK)"
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACMRT)
+
+echo ""
+echo "Files checked: $CHECKED_COUNT"
+
+if [ ${#FAILED_FILES[@]} -gt 0 ]; then
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "❌ COMMIT REJECTED: Files exceeding $MAX_LINES lines:"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  for entry in "${FAILED_FILES[@]}"; do
+    IFS=':' read -r file lines <<< "$entry"
+    echo "  • $file: $lines lines (exceeds by $((lines - MAX_LINES)) lines)"
+  done
+  echo ""
+  echo "💡 Please split these files into smaller files (max $MAX_LINES lines)."
+  echo "   Recommended: ~300-400 lines per file for better maintainability."
+  echo ""
+  echo "To bypass this check (NOT recommended):"
+  echo "   git commit --no-verify"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  exit 1
+else
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "OK All files are within the $MAX_LINES line limit"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  exit 0
+fi
+
