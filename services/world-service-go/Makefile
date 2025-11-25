@@ -3,13 +3,13 @@
 SERVICE_NAME := world-events-service
 OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
-ROUTER_TYPE := gorilla-server
+ROUTER_TYPE := chi-server
 
 SPEC_DIR := ../../proto/openapi
 API_DIR := pkg/api
 SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
 BUNDLED_SPEC := $(API_DIR)/$(SERVICE_NAME).bundled.yaml
-OUTPUT_FILE := $(API_DIR)/api.gen.go
+OUTPUT_FILE := $(API_DIR)/world.gen.go
 
 check-deps:
 	@echo "Checking dependencies..."
@@ -39,7 +39,7 @@ generate-api: bundle-api
 		echo "❌ Bundled spec not found: $(BUNDLED_SPEC)"; \
 		exit 1; \
 	fi
-	@$(OAPI_CODEGEN) -package api -generate types,$(ROUTER_TYPE) -o $(OUTPUT_FILE) $(BUNDLED_SPEC) || { echo "❌ Failed to generate code"; exit 1; }
+	@$(OAPI_CODEGEN) -config oapi-codegen.yaml $(BUNDLED_SPEC) || { echo "❌ Failed to generate code"; exit 1; }
 	@echo "✅ Generated code: $(OUTPUT_FILE)"
 
 verify-api: check-deps
