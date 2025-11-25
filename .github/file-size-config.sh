@@ -38,6 +38,13 @@ export EXCLUDED_PATTERNS=(
   "*/pkg/api/api.gen.go"
   "*.bundled.yaml"
   "*.merged.yaml"
+  "client/UE5/*"
+  "*.uasset"
+  "*.umap"
+  "*.upk"
+  "*.uexp"
+  "*.ubulk"
+  "*.ufont"
 )
 
 check_file_extension() {
