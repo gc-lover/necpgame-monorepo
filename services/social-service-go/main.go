@@ -19,9 +19,22 @@ func main() {
 	addr := getEnv("ADDR", "0.0.0.0:8084")
 	metricsAddr := getEnv("METRICS_ADDR", ":9094")
 
-	friendsService := server.NewMockFriendsService()
+	friendsService := &server.MockFriendsService{}
+	guildsService := &server.MockGuildsService{}
+	chatService := &server.MockChatService{}
+	mailService := &server.MockMailService{}
+	notificationsService := &server.MockNotificationsService{}
 
-	httpServer := server.NewHTTPServer(addr, friendsService)
+	config := &server.ServerConfig{
+		Addr:                 addr,
+		FriendsService:       friendsService,
+		GuildsService:        guildsService,
+		ChatService:          chatService,
+		MailService:          mailService,
+		NotificationsService: notificationsService,
+	}
+
+	httpServer := server.NewHTTPServer(config)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

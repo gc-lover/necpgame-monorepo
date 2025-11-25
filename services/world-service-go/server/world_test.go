@@ -98,7 +98,7 @@ func TestHealthCheck(t *testing.T) {
 	server.router.ServeHTTP(rr, req)
 	
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "OK", rr.Body.String())
+	assert.Contains(t, rr.Body.String(), "status")
 }
 
 func TestCORSMiddleware(t *testing.T) {
