@@ -1,0 +1,477 @@
+metadata:
+  id: player-market-system-architecture
+  title: Архитектура системы Player Market (P2P рынок)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-27T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - player-market
+    - economy
+    - p2p
+    - trading
+  related_systems:
+    - economy-service-go
+    - inventory-service-go
+    - social-service-go
+    - analytics-service-go
+  related_documents:
+    - id: player-market-core
+      relation: implements
+    - id: player-market-api
+      relation: implements
+    - id: player-market-database
+      relation: implements
+    - id: player-market-analytics
+      relation: implements
+  github_issue: 42
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать техническую архитектуру P2P торговой площадки
+    для мгновенной купли-продажи предметов по фиксированной цене без механики ставок.
+  goal: |
+    Создать архитектурную схему Player Market с определением:
+    - Компонентов системы (модули)
+    - API endpoints для объявлений и покупок
+    - Потоков данных и интеграций
+    - Социальных элементов (репутация, отзывы)
+  essence: |
+    Простая торговая площадка с фиксированными ценами (комиссия 1%),
+    прямой коммуникацией через чат и социальной репутацией продавцов.
+
+architecture:
+  overview: |
+    Player Market - это модуль в составе economy-service-go для P2P торговли.
+    
+    Основные возможности:
+    - Создание объявлений (до 20 активных на игрока)
+    - Поиск и фильтрация (полнотекстовый, фильтры, сортировка)
+    - Мгновенная покупка по фиксированной цене
+    - Репутация продавцов и отзывы
+    - Прямое общение через чат
+    
+    Отличия от Auction House:
+    - Фиксированные цены (нет ставок)
+    - Низкая комиссия (1% vs 5%)
+    - Мгновенная сделка (нет таймеров)
+    - Социальный элемент (чат, репутация)
+  
+  components:
+    listings_module:
+      name: Listings Module
+      responsibility: |
+        Управление объявлениями:
+        - Создание объявлений
+        - Редактирование цен
+        - Удаление объявлений
+        - Каталог и поиск
+      endpoints:
+        - POST /api/v1/market/listings
+        - PATCH /api/v1/market/listings/{listingId}
+        - DELETE /api/v1/market/listings/{listingId}
+        - GET /api/v1/market/listings
+        - GET /api/v1/market/listings/{listingId}
+        - GET /api/v1/market/my-listings
+      database:
+        - market_listings
+      size_estimate: 350 lines
+    
+    purchase_module:
+      name: Purchase Module
+      responsibility: |
+        Обработка покупок:
+        - Мгновенная покупка
+        - Частичная покупка (если quantity > 1)
+        - Атомарные транзакции
+        - История сделок
+      endpoints:
+        - POST /api/v1/market/listings/{listingId}/purchase
+        - GET /api/v1/market/purchase-history
+      database:
+        - market_transactions
+      size_estimate: 300 lines
+    
+    social_module:
+      name: Social Module
+      responsibility: |
+        Социальные элементы:
+        - Репутация продавцов
+        - Отзывы покупателей
+        - Избранные продавцы
+        - Черный список
+        - Чат с продавцом
+      endpoints:
+        - POST /api/v1/market/reviews
+        - GET /api/v1/market/sellers/{sellerId}/reputation
+        - POST /api/v1/market/sellers/{sellerId}/favorite
+        - POST /api/v1/market/sellers/{sellerId}/block
+      database:
+        - market_reviews
+        - seller_reputation
+      size_estimate: 250 lines
+
+  data_flow:
+    create_listing: |
+      1. Игрок создает объявление через Listings Module
+      2. Listings Module проверяет лимиты (≤20 активных)
+      3. Inventory Service блокирует предмет
+      4. Listings Module валидирует цену (1-999,999,999 ED)
+      5. Listings Module создает запись (status: active, expires_at: +7 days)
+      6. Analytics Service регистрирует событие
+    
+    purchase: |
+      1. Игрок покупает через Purchase Module
+      2. Purchase Module проверяет наличие товара
+      3. Wallet Service списывает средства с покупателя
+      4. Wallet Service удерживает комиссию 1%
+      5. Wallet Service начисляет продавцу 99%
+      6. Inventory Service передает предмет покупателю
+      7. Purchase Module обновляет listing (quantity -= purchased)
+      8. Purchase Module создает запись в market_transactions
+      9. Если quantity = 0 → status: sold
+      10. Notification Service уведомляет продавца
+      11. Analytics Service регистрирует сделку
+    
+    leave_review: |
+      1. Покупатель оставляет отзыв через Social Module
+      2. Social Module проверяет наличие покупки
+      3. Social Module создает запись в market_reviews
+      4. Social Module пересчитывает seller_reputation
+      5. Notification Service уведомляет продавца
+
+  database:
+    tables:
+      market_listings:
+        description: Объявления на рынке
+        columns:
+          - listing_id: UUID PRIMARY KEY
+          - seller_id: UUID NOT NULL REFERENCES players(player_id)
+          - item_id: UUID NOT NULL
+          - quantity: INT NOT NULL DEFAULT 1
+          - price_per_unit: NUMERIC(15,2) NOT NULL
+          - total_price: NUMERIC(15,2) NOT NULL
+          - status: ENUM(active, sold, expired, cancelled)
+          - expires_at: TIMESTAMP NOT NULL DEFAULT NOW() + INTERVAL '7 days'
+          - created_at: TIMESTAMP DEFAULT NOW()
+          - updated_at: TIMESTAMP DEFAULT NOW()
+        indexes:
+          - idx_market_status: (status)
+          - idx_market_seller: (seller_id)
+          - idx_market_item: (item_id)
+          - idx_market_expires: (expires_at) WHERE status = 'active'
+        constraints:
+          - CHECK (price_per_unit >= 1 AND price_per_unit <= 999999999)
+          - CHECK (quantity > 0)
+      
+      market_transactions:
+        description: История покупок
+        columns:
+          - transaction_id: UUID PRIMARY KEY
+          - listing_id: UUID NOT NULL
+          - seller_id: UUID NOT NULL
+          - buyer_id: UUID NOT NULL REFERENCES players(player_id)
+          - item_id: UUID NOT NULL
+          - quantity: INT NOT NULL
+          - price_per_unit: NUMERIC(15,2) NOT NULL
+          - total_amount: NUMERIC(15,2) NOT NULL
+          - commission: NUMERIC(15,2) NOT NULL
+          - created_at: TIMESTAMP DEFAULT NOW()
+        indexes:
+          - idx_transactions_buyer: (buyer_id, created_at DESC)
+          - idx_transactions_seller: (seller_id, created_at DESC)
+          - idx_transactions_item: (item_id)
+      
+      market_reviews:
+        description: Отзывы о продавцах
+        columns:
+          - review_id: UUID PRIMARY KEY
+          - transaction_id: UUID NOT NULL REFERENCES market_transactions(transaction_id)
+          - seller_id: UUID NOT NULL
+          - buyer_id: UUID NOT NULL
+          - rating: INT NOT NULL CHECK (rating >= 1 AND rating <= 5)
+          - comment: TEXT
+          - created_at: TIMESTAMP DEFAULT NOW()
+        indexes:
+          - idx_reviews_seller: (seller_id, created_at DESC)
+          - idx_reviews_buyer: (buyer_id)
+        constraints:
+          - UNIQUE (transaction_id)
+      
+      seller_reputation:
+        description: Репутация продавцов
+        columns:
+          - seller_id: UUID PRIMARY KEY REFERENCES players(player_id)
+          - total_sales: INT NOT NULL DEFAULT 0
+          - total_revenue: NUMERIC(20,2) NOT NULL DEFAULT 0
+          - average_rating: NUMERIC(3,2)
+          - reviews_count: INT NOT NULL DEFAULT 0
+          - updated_at: TIMESTAMP DEFAULT NOW()
+        indexes:
+          - idx_reputation_rating: (average_rating DESC)
+
+  api_endpoints:
+    listings:
+      - method: POST
+        path: /api/v1/market/listings
+        description: Создание объявления
+        auth: required
+        rate_limit: 20/hour
+        request:
+          item_id: UUID
+          quantity: int
+          price_per_unit: decimal
+        response:
+          listing_id: UUID
+          expires_at: timestamp
+      
+      - method: GET
+        path: /api/v1/market/listings
+        description: Каталог объявлений
+        auth: optional
+        rate_limit: 1000/hour
+        query:
+          search: string
+          item_type: string
+          min_price: decimal
+          max_price: decimal
+          seller_id: UUID
+          city: string
+          sort: string (price_asc, price_desc, newest, rating)
+          page: int
+          limit: int (max 50)
+        response:
+          listings: array
+          total: int
+      
+      - method: GET
+        path: /api/v1/market/listings/{listingId}
+        description: Детальная информация об объявлении
+        auth: optional
+        response:
+          listing: object
+          seller_reputation: object
+          similar_listings: array
+      
+      - method: DELETE
+        path: /api/v1/market/listings/{listingId}
+        description: Удаление объявления
+        auth: required
+        response:
+          success: boolean
+    
+    purchase:
+      - method: POST
+        path: /api/v1/market/listings/{listingId}/purchase
+        description: Покупка предмета
+        auth: required
+        rate_limit: 100/hour
+        request:
+          quantity: int (для частичной покупки)
+        response:
+          transaction_id: UUID
+          items: array
+          total_paid: decimal
+          commission: decimal
+      
+      - method: GET
+        path: /api/v1/market/purchase-history
+        description: История покупок
+        auth: required
+        query:
+          page: int
+          limit: int
+        response:
+          transactions: array
+          total: int
+    
+    social:
+      - method: POST
+        path: /api/v1/market/reviews
+        description: Оставить отзыв
+        auth: required
+        request:
+          transaction_id: UUID
+          rating: int (1-5)
+          comment: string (optional)
+        response:
+          review_id: UUID
+      
+      - method: GET
+        path: /api/v1/market/sellers/{sellerId}/reputation
+        description: Репутация продавца
+        auth: optional
+        response:
+          reputation: object
+          recent_reviews: array
+
+  security:
+    validation:
+      create_listing:
+        - Максимум 20 активных объявлений на игрока
+        - Цена: 1-999,999,999 ED
+        - Проверка владения предметом
+        - Предмет не заблокирован в других операциях
+      
+      purchase:
+        - Проверка баланса покупателя
+        - Нельзя купить свое объявление
+        - Проверка наличия quantity
+        - Listing в статусе active
+    
+    anti_fraud:
+      - Мониторинг множественных покупок между одними аккаунтами
+      - Алертинг при ценах > 150% от рыночной
+      - Проверка IP и device fingerprint
+      - Блокировка подозрительных сделок
+    
+    rate_limits:
+      - create_listing: 20/hour
+      - purchase: 100/hour
+      - search: 1000/hour
+      - reviews: 10/hour
+
+  integrations:
+    inventory_service:
+      - lockItem: блокировка при создании объявления
+      - transferItem: передача при покупке
+      - unlockItem: разблокировка при удалении/истечении
+    
+    wallet_service:
+      - chargeBuyer: списание с покупателя
+      - paySellerWithCommission: начисление продавцу минус 1%
+      - collectCommission: сбор комиссии
+    
+    social_service:
+      - sendMessage: чат с продавцом
+      - checkRelationship: проверка черного списка
+    
+    notification_service:
+      - listing.created
+      - listing.sold
+      - listing.expired
+      - purchase.completed
+      - review.received
+    
+    analytics_service:
+      - market.listing.created
+      - market.transaction.completed
+      - market.review.created
+
+  metrics:
+    - name: market.listings.active
+      type: gauge
+      description: Активные объявления
+    
+    - name: market.transactions.total
+      type: counter
+      description: Общее количество сделок
+    
+    - name: market.revenue.total
+      type: counter
+      description: Общая сумма продаж
+    
+    - name: market.commission.total
+      type: counter
+      description: Собранная комиссия
+    
+    - name: market.average_price
+      type: gauge
+      description: Средняя цена по категориям
+      labels: [item_type]
+
+technical_decisions:
+  low_commission:
+    decision: Комиссия 1% (vs 5% в Auction House)
+    rationale: |
+      - Стимулирует использование для быстрых продаж
+      - Конкурентное преимущество перед аукционом
+      - Минимальный порог входа для продавцов
+    status: approved
+  
+  social_features:
+    decision: Репутация, отзывы, избранные продавцы
+    rationale: |
+      - Повышает доверие между игроками
+      - Создает социальный аспект торговли
+      - Мотивирует честную игру
+    status: approved
+  
+  fixed_expiration:
+    decision: Срок жизни объявления 7 дней
+    rationale: |
+      - Баланс между удобством и актуальностью
+      - Предотвращает заброшенные объявления
+      - Мотивирует корректировать цены
+    status: approved
+
+implementation:
+  subtasks:
+    - id: player-market-listings-module
+      title: Реализация Listings Module
+      description: |
+        Создание, редактирование, удаление объявлений.
+        Каталог с фильтрацией и сортировкой.
+      estimated_lines: 350
+    
+    - id: player-market-purchase-module
+      title: Реализация Purchase Module
+      description: |
+        Мгновенная и частичная покупка.
+        История транзакций.
+      estimated_lines: 300
+    
+    - id: player-market-social-module
+      title: Реализация Social Module
+      description: |
+        Репутация, отзывы, избранное, черный список.
+      estimated_lines: 250
+    
+    - id: player-market-database
+      title: Схема БД для Player Market
+      description: |
+        Таблицы: market_listings, market_transactions, 
+        market_reviews, seller_reputation
+      estimated_lines: 150
+
+  roadmap:
+    mvp:
+      - Создание объявлений (до 20 активных)
+      - Поиск и фильтрация
+      - Мгновенная покупка
+      - Комиссия 1%
+      - Автоудаление через 7 дней
+    
+    phase_2:
+      - Репутация и отзывы
+      - Избранные продавцы
+      - Чат с продавцом
+      - Рекомендации похожих предложений
+      - История цен
+    
+    phase_3:
+      - Оповещения о снижении цен
+      - Сохраненные поиски
+      - Bulk операции
+      - Интеграция с guild банками
+      - API для внешних приложений
+
+next_steps:
+  - Передать API Designer для проверки OpenAPI спецификации
+  - Создать подзадачи для каждого модуля
+  - Начать реализацию после готовности Auction House
+
+validation:
+  checksum: ""
+  schema_version: "1.0"
+

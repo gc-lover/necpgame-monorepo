@@ -1,0 +1,600 @@
+metadata:
+  id: auction-house-system-architecture
+  title: Архитектура системы аукционного дома
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-27T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - auction-house
+    - economy
+    - trading
+    - backend
+  related_systems:
+    - economy-service-go
+    - inventory-service-go
+    - social-service-go
+    - world-service-go
+  related_documents:
+    - id: auction-house-mechanics
+      relation: implements
+    - id: auction-house-operations
+      relation: implements
+    - id: auction-house-database
+      relation: implements
+  github_issue: 42
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - api-designer
+    - database
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру системы аукционного дома
+    для обеспечения конкурентного ценообразования через ставки, таймеры и опцию buyout
+    с защитой от мошенничества и аудитом всех операций.
+  goal: |
+    Создать архитектурную схему системы аукционов с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints (высокоуровнево)
+    - Потоков данных и интеграций
+    - Антифрод механизмов
+    - Технического задания для реализации
+  essence: |
+    Система аукционного дома с конкурентными ставками, автоматическим продлением,
+    мгновенным выкупом, комиссиями и полным аудитом всех операций.
+
+architecture:
+  overview: |
+    Auction House System - это микросервис для управления аукционами предметов в игре.
+    
+    Система состоит из трех основных модулей:
+    1. Core Module - создание и управление лотами
+    2. Bidding Module - обработка ставок и автопродление
+    3. Settlement Module - завершение аукционов и расчеты
+    
+    Интеграции:
+    - Inventory Service - блокировка и передача предметов
+    - Wallet Service - резервирование и списание средств
+    - Notification Service - уведомления о событиях
+    - Analytics Service - метрики и аудит
+  
+  components:
+    core_module:
+      name: Auction Core Module
+      responsibility: |
+        Управление жизненным циклом аукционов:
+        - Создание лотов
+        - Валидация параметров
+        - Каталог и поиск
+        - Отмена лотов
+      endpoints:
+        - POST /api/v1/auctions
+        - GET /api/v1/auctions
+        - GET /api/v1/auctions/{auctionId}
+        - DELETE /api/v1/auctions/{auctionId}
+        - GET /api/v1/auctions/my
+      database:
+        - auctions
+      integrations:
+        - inventory-service: блокировка предметов
+        - wallet-service: валидация цен
+    
+    bidding_module:
+      name: Auction Bidding Module
+      responsibility: |
+        Обработка ставок и конкурентных торгов:
+        - Размещение ставок
+        - Валидация минимального шага
+        - Автоматическое продление
+        - Возврат средств прежнему лидеру
+        - Мгновенный выкуп (buyout)
+      endpoints:
+        - POST /api/v1/auctions/{auctionId}/bid
+        - POST /api/v1/auctions/{auctionId}/buyout
+        - GET /api/v1/auctions/{auctionId}/bids
+      database:
+        - auction_bids
+      integrations:
+        - wallet-service: резервирование средств
+        - notification-service: уведомления о ставках
+    
+    settlement_module:
+      name: Auction Settlement Module
+      responsibility: |
+        Завершение аукционов и финансовые расчеты:
+        - Обработка истекших лотов
+        - Определение победителя
+        - Расчеты с продавцом (95%)
+        - Передача предметов
+        - История сделок
+      endpoints:
+        - Internal: processExpiredAuctions()
+        - GET /api/v1/auctions/history
+      database:
+        - auctions
+        - auction_history
+      integrations:
+        - wallet-service: расчеты
+        - inventory-service: передача предметов
+        - analytics-service: история сделок
+
+  data_flow:
+    create_auction: |
+      1. Игрок создает аукцион через Core Module
+      2. Core Module валидирует параметры (цены, длительность)
+      3. Inventory Service блокирует предмет
+      4. Core Module создает запись в auctions (status: active)
+      5. Wallet Service валидирует buyout цену
+      6. Notification Service отправляет подтверждение
+    
+    place_bid: |
+      1. Игрок размещает ставку через Bidding Module
+      2. Bidding Module проверяет минимальный шаг (+5%)
+      3. Wallet Service резервирует средства
+      4. Bidding Module возвращает средства прежнему лидеру
+      5. Bidding Module обновляет current_bid и current_bidder_id
+      6. Bidding Module создает запись в auction_bids
+      7. Если ≤5 минут до окончания → авто-продление на 5 минут
+      8. Notification Service уведомляет продавца и прежнего лидера
+    
+    buyout: |
+      1. Игрок выкупает через Bidding Module
+      2. Wallet Service проверяет баланс
+      3. Wallet Service списывает buyout сумму
+      4. Settlement Module вызывает completeSale()
+      5. Settlement Module начисляет продавцу 95%
+      6. Inventory Service передает предмет покупателю
+      7. Settlement Module обновляет auction (status: sold, method: buyout)
+      8. Analytics Service фиксирует сделку
+      9. Notification Service уведомляет обе стороны
+    
+    settle_expired: |
+      1. Cron job запускает Settlement Module каждые 1 минуту
+      2. Settlement Module находит истекшие лоты (expires_at < now, status: active)
+      3. Для каждого лота:
+         a. Если есть ставки → определяет победителя
+         b. Wallet Service начисляет продавцу 95%
+         c. Inventory Service передает предмет победителю
+         d. Settlement Module обновляет auction (status: sold, method: won)
+         e. Analytics Service фиксирует сделку
+      4. Если нет ставок → status: expired, возврат предмета
+      5. Notification Service уведомляет участников
+
+  database:
+    tables:
+      auctions:
+        description: Основная таблица аукционов
+        columns:
+          - auction_id: UUID PRIMARY KEY
+          - seller_id: UUID NOT NULL REFERENCES players(player_id)
+          - item_id: UUID NOT NULL
+          - quantity: INT NOT NULL DEFAULT 1
+          - starting_price: NUMERIC(15,2) NOT NULL
+          - current_bid: NUMERIC(15,2)
+          - buyout_price: NUMERIC(15,2)
+          - current_bidder_id: UUID REFERENCES players(player_id)
+          - bid_count: INT NOT NULL DEFAULT 0
+          - duration_hours: INT NOT NULL
+          - expires_at: TIMESTAMP NOT NULL
+          - status: ENUM(active, sold, expired, cancelled)
+          - sale_price: NUMERIC(15,2)
+          - sale_method: ENUM(won, buyout)
+          - sold_at: TIMESTAMP
+          - created_at: TIMESTAMP DEFAULT NOW()
+        indexes:
+          - idx_auctions_status: (status)
+          - idx_auctions_expires: (expires_at) WHERE status = 'active'
+          - idx_auctions_item: (item_id)
+          - idx_auctions_seller: (seller_id)
+      
+      auction_bids:
+        description: История ставок
+        columns:
+          - bid_id: UUID PRIMARY KEY
+          - auction_id: UUID NOT NULL REFERENCES auctions(auction_id) ON DELETE CASCADE
+          - bidder_id: UUID NOT NULL REFERENCES players(player_id)
+          - bid_amount: NUMERIC(15,2) NOT NULL
+          - created_at: TIMESTAMP DEFAULT NOW()
+        indexes:
+          - idx_bids_auction: (auction_id, created_at DESC)
+          - idx_bids_bidder: (bidder_id)
+      
+      auction_history:
+        description: История завершенных аукционов
+        columns:
+          - history_id: UUID PRIMARY KEY
+          - auction_id: UUID NOT NULL
+          - seller_id: UUID NOT NULL
+          - buyer_id: UUID NOT NULL
+          - item_id: UUID NOT NULL
+          - quantity: INT NOT NULL
+          - final_price: NUMERIC(15,2) NOT NULL
+          - commission: NUMERIC(15,2) NOT NULL
+          - sale_method: ENUM(won, buyout)
+          - completed_at: TIMESTAMP DEFAULT NOW()
+        indexes:
+          - idx_history_seller: (seller_id, completed_at DESC)
+          - idx_history_buyer: (buyer_id, completed_at DESC)
+          - idx_history_item: (item_id)
+
+  api_endpoints:
+    auction_management:
+      - method: POST
+        path: /api/v1/auctions
+        description: Создание нового аукциона
+        auth: required
+        request:
+          item_id: UUID
+          quantity: int
+          starting_price: decimal
+          buyout_price: decimal (optional)
+          duration_hours: int (24/48/72)
+        response:
+          auction_id: UUID
+          expires_at: timestamp
+          status: string
+      
+      - method: GET
+        path: /api/v1/auctions
+        description: Каталог аукционов с фильтрами
+        auth: optional
+        query:
+          search: string
+          item_type: string
+          min_price: decimal
+          max_price: decimal
+          sort: string (ending_soon, price_asc, price_desc, newest)
+          page: int
+          limit: int (max 50)
+        response:
+          auctions: array
+          total: int
+          page: int
+      
+      - method: GET
+        path: /api/v1/auctions/{auctionId}
+        description: Детальная информация об аукционе
+        auth: optional
+        response:
+          auction: object
+          bids: array (последние 10)
+          is_owner: boolean
+          can_bid: boolean
+      
+      - method: DELETE
+        path: /api/v1/auctions/{auctionId}
+        description: Отмена аукциона (только без ставок)
+        auth: required
+        response:
+          success: boolean
+          refunded: boolean
+    
+    bidding:
+      - method: POST
+        path: /api/v1/auctions/{auctionId}/bid
+        description: Размещение ставки
+        auth: required
+        request:
+          bid_amount: decimal
+        response:
+          bid_id: UUID
+          current_bid: decimal
+          current_bidder: string
+          expires_at: timestamp (может измениться)
+          auto_extended: boolean
+      
+      - method: POST
+        path: /api/v1/auctions/{auctionId}/buyout
+        description: Мгновенный выкуп
+        auth: required
+        response:
+          success: boolean
+          transaction_id: UUID
+          item_id: UUID
+          final_price: decimal
+      
+      - method: GET
+        path: /api/v1/auctions/{auctionId}/bids
+        description: История ставок аукциона
+        auth: optional
+        query:
+          page: int
+          limit: int
+        response:
+          bids: array
+          total: int
+    
+    personal:
+      - method: GET
+        path: /api/v1/auctions/my
+        description: Мои аукционы и ставки
+        auth: required
+        query:
+          type: string (selling, bidding, won, lost)
+        response:
+          auctions: array
+    
+    history:
+      - method: GET
+        path: /api/v1/auctions/history
+        description: История завершенных аукционов
+        auth: required
+        query:
+          page: int
+          limit: int
+        response:
+          history: array
+          total: int
+
+  security:
+    validation:
+      create_auction: |
+        - Минимальная стартовая цена: 100 €$
+        - Buyout > starting_price
+        - Длительность: 24, 48 или 72 часа
+        - Максимум 10 активных лотов на игрока
+        - Проверка владения предметом
+        - Предмет не в активных сделках
+      
+      place_bid: |
+        - Ставка ≥ current_bid * 1.05 (минимум +5%)
+        - Ставка ≥ starting_price (если нет ставок)
+        - Нельзя ставить на свой аукцион
+        - Проверка баланса перед резервированием
+        - Лот в статусе active
+      
+      buyout: |
+        - Проверка наличия buyout_price
+        - Проверка баланса ≥ buyout_price
+        - Лот в статусе active
+        - Нельзя выкупить свой аукцион
+    
+    anti_fraud:
+      shill_bidding: |
+        Обнаружение подставных ставок:
+        - Мониторинг паттернов ставок между связанными аккаунтами
+        - Алертинг при ≥3 ставках между одними игроками за 24 часа
+        - Проверка IP адресов и device fingerprint
+      
+      price_manipulation: |
+        Защита от манипуляций:
+        - Алертинг при ценах > 150% рыночной
+        - Мониторинг резких изменений цен
+        - Проверка истории сделок
+      
+      auto_extension: |
+        Защита от снайпинга:
+        - Автопродление на 5 минут если ставка ≤5 минут до окончания
+        - Максимум 10 продлений на один аукцион
+        - Логирование всех продлений
+    
+    rate_limits:
+      - create_auction: 20 запросов / час
+      - place_bid: 100 запросов / час
+      - search: 1000 запросов / час
+
+  integrations:
+    inventory_service:
+      operations:
+        - lockItem: блокировка предмета при создании лота
+        - unlockItem: разблокировка при отмене или истечении
+        - transferItem: передача предмета победителю
+      events:
+        - item.locked
+        - item.unlocked
+        - item.transferred
+    
+    wallet_service:
+      operations:
+        - reserveFunds: резервирование средств при ставке
+        - releaseFunds: возврат средств прежнему лидеру
+        - transferFunds: финальные расчеты
+        - chargeFee: удержание комиссии (5%)
+      events:
+        - funds.reserved
+        - funds.released
+        - funds.transferred
+    
+    notification_service:
+      events:
+        - auction.created: уведомление продавцу
+        - auction.bid_placed: уведомление продавцу и прежнему лидеру
+        - auction.outbid: уведомление игроку о перебивании
+        - auction.won: уведомление победителю
+        - auction.sold: уведомление продавцу
+        - auction.expired: уведомление продавцу
+        - auction.buyout: уведомление обеим сторонам
+    
+    analytics_service:
+      metrics:
+        - auctions.active: количество активных лотов
+        - auctions.bids.daily: ставок в день
+        - auctions.sold.daily: продаж в день
+        - auctions.buyout.rate: процент buyout от продаж
+        - auctions.commission.total: общая комиссия
+      events:
+        - auction.completed: для истории сделок
+        - auction.cancelled: для аналитики отмен
+
+  metrics:
+    business:
+      - name: auctions.active
+        type: gauge
+        description: Количество активных аукционов
+      
+      - name: auctions.bids.total
+        type: counter
+        description: Общее количество ставок
+      
+      - name: auctions.sold.total
+        type: counter
+        description: Количество проданных лотов
+      
+      - name: auctions.buyout.rate
+        type: gauge
+        description: Процент buyout от общих продаж
+      
+      - name: auctions.commission.amount
+        type: counter
+        description: Общая сумма комиссий
+    
+    technical:
+      - name: auction_create_duration
+        type: histogram
+        description: Время создания аукциона
+      
+      - name: bid_processing_duration
+        type: histogram
+        description: Время обработки ставки
+      
+      - name: settlement_duration
+        type: histogram
+        description: Время завершения аукциона
+      
+      - name: auction_errors
+        type: counter
+        description: Количество ошибок
+        labels: [error_type, operation]
+
+  deployment:
+    service_name: auction-house-service-go
+    replicas: 3
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    
+    environment:
+      - DATABASE_URL
+      - REDIS_URL
+      - INVENTORY_SERVICE_URL
+      - WALLET_SERVICE_URL
+      - NOTIFICATION_SERVICE_URL
+      - ANALYTICS_SERVICE_URL
+    
+    healthcheck:
+      path: /health
+      port: 8080
+      interval: 10s
+      timeout: 5s
+    
+    metrics:
+      path: /metrics
+      port: 9090
+
+technical_decisions:
+  modular_design:
+    decision: Разбить систему на 3 модуля (Core, Bidding, Settlement)
+    rationale: |
+      - Каждый модуль не превышает 400 строк кода
+      - Упрощает тестирование и поддержку
+      - Позволяет независимое масштабирование
+    alternatives:
+      - Монолитный сервис: сложнее поддерживать
+    status: approved
+  
+  auto_extension:
+    decision: Автопродление на 5 минут при ставке ≤5 минут до окончания
+    rationale: |
+      - Защита от снайпинга
+      - Честная конкуренция между покупателями
+      - Ограничение 10 продлений предотвращает бесконечные аукционы
+    alternatives:
+      - Фиксированное время: уязвимо к снайпингу
+    status: approved
+  
+  commission_rate:
+    decision: Комиссия 5% с продавца
+    rationale: |
+      - Стимулирует использование buyout (мгновенная продажа)
+      - Контролирует инфляцию
+      - Баланс между player market (1%) и auction house (5%)
+    alternatives:
+      - Комиссия 2-3%: меньше контроля инфляции
+      - Комиссия 10%: слишком высокая, отпугивает игроков
+    status: approved
+
+implementation:
+  subtasks:
+    - id: auction-core-module
+      title: Реализация Auction Core Module
+      description: |
+        Создание, валидация, каталог и отмена аукционов.
+        Endpoints: POST/GET/DELETE /api/v1/auctions
+      estimated_lines: 350
+      dependencies: []
+    
+    - id: auction-bidding-module
+      title: Реализация Auction Bidding Module
+      description: |
+        Размещение ставок, автопродление, buyout.
+        Endpoints: POST /api/v1/auctions/{id}/bid, /buyout
+      estimated_lines: 400
+      dependencies: [auction-core-module]
+    
+    - id: auction-settlement-module
+      title: Реализация Auction Settlement Module
+      description: |
+        Завершение аукционов, расчеты, история.
+        Cron job для обработки истекших лотов.
+      estimated_lines: 350
+      dependencies: [auction-core-module, auction-bidding-module]
+    
+    - id: auction-database-schema
+      title: Создание схемы БД для Auction House
+      description: |
+        Таблицы: auctions, auction_bids, auction_history.
+        Индексы и миграции Liquibase.
+      estimated_lines: 200
+      dependencies: []
+    
+    - id: auction-integration-tests
+      title: Интеграционные тесты Auction House
+      description: |
+        Тестирование полного цикла аукциона:
+        создание, ставки, buyout, завершение.
+      estimated_lines: 300
+      dependencies: [auction-core-module, auction-bidding-module, auction-settlement-module]
+
+  roadmap:
+    mvp:
+      - Создание лотов (24/48/72 часа)
+      - Размещение ставок с минимальным шагом 5%
+      - Автопродление при ставках ≤5 минут
+      - Мгновенный выкуп (buyout)
+      - Автоматическое завершение истекших лотов
+      - Комиссия 5% с продавца
+      - История сделок
+    
+    phase_2:
+      - Резервная цена (reserve price)
+      - Списки отслеживания (watch list)
+      - Расширенная история ставок
+      - Персональные уведомления
+      - Аналитика цен по категориям
+      - Рекомендации похожих товаров
+    
+    phase_3:
+      - Групповые аукционы (bundle auctions)
+      - Обратные аукционы (покупатель создает запрос)
+      - Интеграция с guild контрактами
+      - Премиум листинги с приоритетом
+      - Аукционы редких предметов с особыми правилами
+
+next_steps:
+  - Создать подзадачи для каждого модуля
+  - Передать задачу API Designer для OpenAPI спецификации
+  - Создать Issue для Database Architect для схемы БД
+  - Начать реализацию Core Module после готовности API
+
