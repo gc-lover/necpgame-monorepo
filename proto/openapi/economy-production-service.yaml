@@ -1,0 +1,599 @@
+openapi: 3.0.3
+info:
+  title: Economy Production Service API
+  description: |
+    API для управления производственными цепочками.
+    
+    **Функциональность:**
+    - Многоэтапное производство предметов
+    - Производственные станции и лицензии
+    - Массовое производство
+    - Ускорители и rush-заказы
+    - Легендарный крафт
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8100/v1
+    description: Development server
+
+tags:
+  - name: Production Chains
+    description: Производственные цепочки
+  - name: Production Orders
+    description: Заказы на производство
+  - name: Stations
+    description: Производственные станции
+  - name: Licenses
+    description: Лицензии на производство
+
+paths:
+  /production/chains:
+    get:
+      summary: Получить список производственных цепочек
+      description: Возвращает доступные производственные цепочки
+      operationId: getProductionChains
+      tags:
+        - Production Chains
+      parameters:
+        - name: category
+          in: query
+          description: Категория предметов
+          schema:
+            type: string
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список производственных цепочек
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionChainListResponse"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /production/chains/{chain_id}:
+    get:
+      summary: Получить детали производственной цепочки
+      description: Возвращает детальную информацию о производственной цепочке
+      operationId: getProductionChain
+      tags:
+        - Production Chains
+      parameters:
+        - name: chain_id
+          in: path
+          required: true
+          description: ID производственной цепочки
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали цепочки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionChain"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /production/orders:
+    post:
+      summary: Создать заказ на производство
+      description: Создает новый заказ на производство предмета
+      operationId: createProductionOrder
+      tags:
+        - Production Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductionOrderRequest"
+      responses:
+        "201":
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    get:
+      summary: Получить список заказов
+      description: Возвращает заказы на производство игрока
+      operationId: getProductionOrders
+      tags:
+        - Production Orders
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            $ref: "#/components/schemas/ProductionStatus"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionOrderListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /production/orders/{order_id}:
+    get:
+      summary: Получить детали заказа
+      description: Возвращает информацию о заказе на производство
+      operationId: getProductionOrder
+      tags:
+        - Production Orders
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          description: ID заказа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали заказа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionOrder"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Отменить заказ
+      description: Отменяет заказ на производство
+      operationId: cancelProductionOrder
+      tags:
+        - Production Orders
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          description: ID заказа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Заказ отменен
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Заказ нельзя отменить
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /production/orders/{order_id}/rush:
+    post:
+      summary: Rush-заказ
+      description: Ускоряет производство за дополнительную плату
+      operationId: rushProductionOrder
+      tags:
+        - Production Orders
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          description: ID заказа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Rush применен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /production/stations:
+    get:
+      summary: Получить список станций
+      description: Возвращает производственные станции игрока
+      operationId: getStations
+      tags:
+        - Stations
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список станций
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StationListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /production/stations/{station_id}/upgrade:
+    post:
+      summary: Улучшить станцию
+      description: Улучшает производственную станцию на следующий уровень
+      operationId: upgradeStation
+      tags:
+        - Stations
+      parameters:
+        - name: station_id
+          in: path
+          required: true
+          description: ID станции
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Станция улучшена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Station"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /production/licenses:
+    get:
+      summary: Получить список лицензий
+      description: Возвращает лицензии на производство игрока
+      operationId: getLicenses
+      tags:
+        - Licenses
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список лицензий
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /production/licenses/{license_id}/purchase:
+    post:
+      summary: Купить лицензию
+      description: Покупает лицензию на производство
+      operationId: purchaseLicense
+      tags:
+        - Licenses
+      parameters:
+        - name: license_id
+          in: path
+          required: true
+          description: ID лицензии
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Лицензия куплена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/License"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    ProductionStatus:
+      type: string
+      enum:
+        - queued
+        - in_progress
+        - completed
+        - cancelled
+        - failed
+      description: Статус производства
+
+    ProductionStage:
+      type: object
+      required:
+        - stage_number
+        - name
+        - duration_minutes
+      properties:
+        stage_number:
+          type: integer
+        name:
+          type: string
+        duration_minutes:
+          type: integer
+        required_resources:
+          type: array
+          items:
+            type: object
+            properties:
+              resource_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+
+    ProductionChain:
+      type: object
+      required:
+        - chain_id
+        - item_id
+        - stages
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductionStage"
+        total_duration_minutes:
+          type: integer
+        requires_license:
+          type: boolean
+        required_station_level:
+          type: integer
+
+    CreateProductionOrderRequest:
+      type: object
+      required:
+        - chain_id
+        - player_id
+        - station_id
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        station_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          default: 1
+          description: Количество для массового производства
+
+    ProductionOrder:
+      type: object
+      required:
+        - order_id
+        - chain_id
+        - player_id
+        - status
+        - created_at
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        chain_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        station_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/ProductionStatus"
+        current_stage:
+          type: integer
+          description: Текущий этап
+        total_stages:
+          type: integer
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        estimated_completion:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    Station:
+      type: object
+      required:
+        - station_id
+        - player_id
+        - type
+        - level
+      properties:
+        station_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        efficiency_bonus:
+          type: number
+        quality_bonus:
+          type: number
+
+    License:
+      type: object
+      required:
+        - license_id
+        - name
+        - price
+      properties:
+        license_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: double
+        unlocks_chains:
+          type: array
+          description: ID цепочек, которые открывает лицензия
+          items:
+            type: string
+            format: uuid
+        owned:
+          type: boolean
+          description: Владеет ли игрок этой лицензией
+
+    ProductionChainListResponse:
+      type: object
+      required:
+        - chains
+        - pagination
+      properties:
+        chains:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductionChain"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    ProductionOrderListResponse:
+      type: object
+      required:
+        - orders
+        - pagination
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductionOrder"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    StationListResponse:
+      type: object
+      required:
+        - stations
+      properties:
+        stations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Station"
+
+    LicenseListResponse:
+      type: object
+      required:
+        - licenses
+      properties:
+        licenses:
+          type: array
+          items:
+            $ref: "#/components/schemas/License"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
