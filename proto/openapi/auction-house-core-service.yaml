@@ -1,0 +1,402 @@
+openapi: 3.0.3
+info:
+  title: Auction House Core Service API
+  description: |
+    API для управления жизненным циклом аукционов.
+    
+    **Функциональность:**
+    - Создание новых аукционов
+    - Каталог и поиск аукционов
+    - Получение деталей аукциона
+    - Отмена аукциона продавцом
+    - Мои аукционы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8090/v1
+    description: Development server
+
+tags:
+  - name: Auction Core
+    description: Управление аукционами
+
+paths:
+  /auctions:
+    get:
+      summary: Получить каталог аукционов
+      description: Возвращает список активных аукционов с фильтрацией и поиском
+      operationId: listAuctions
+      tags:
+        - Auction Core
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+        - name: item_id
+          in: query
+          description: Фильтр по ID предмета
+          schema:
+            type: string
+            format: uuid
+        - name: item_type
+          in: query
+          description: Фильтр по типу предмета
+          schema:
+            type: string
+            example: weapon
+        - name: rarity
+          in: query
+          description: Фильтр по редкости
+          schema:
+            type: string
+            enum: [common, uncommon, rare, epic, legendary]
+        - name: min_price
+          in: query
+          description: Минимальная цена (starting_price)
+          schema:
+            type: number
+            format: double
+            minimum: 0
+        - name: max_price
+          in: query
+          description: Максимальная цена (buyout_price или current_bid)
+          schema:
+            type: number
+            format: double
+            minimum: 0
+        - name: has_buyout
+          in: query
+          description: Только с возможностью мгновенного выкупа
+          schema:
+            type: boolean
+        - name: sort_by
+          in: query
+          description: Сортировка
+          schema:
+            type: string
+            enum: [price_asc, price_desc, time_left_asc, time_left_desc, recent]
+            default: recent
+      responses:
+        "200":
+          description: Каталог аукционов успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionListResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+    post:
+      summary: Создать новый аукцион
+      description: Создает аукцион предмета с блокировкой в инвентаре
+      operationId: createAuction
+      tags:
+        - Auction Core
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAuctionRequest"
+      responses:
+        "201":
+          description: Аукцион успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auction"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Предмет нельзя продать или недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          description: Предмет не найден в инвентаре
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auctions/{auction_id}:
+    get:
+      summary: Получить детали аукциона
+      description: Возвращает полную информацию об аукционе
+      operationId: getAuction
+      tags:
+        - Auction Core
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: ID аукциона
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали аукциона успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionDetails"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+    delete:
+      summary: Отменить аукцион
+      description: Отменяет аукцион (только продавец, только если нет ставок)
+      operationId: cancelAuction
+      tags:
+        - Auction Core
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: ID аукциона
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Аукцион успешно отменен
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Нельзя отменить (не продавец или есть ставки)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auctions/my:
+    get:
+      summary: Получить мои аукционы
+      description: Возвращает аукционы, созданные игроком
+      operationId: getMyAuctions
+      tags:
+        - Auction Core
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum: [active, sold, expired, cancelled]
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Мои аукционы успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    AuctionStatus:
+      type: string
+      enum:
+        - active
+        - sold
+        - expired
+        - cancelled
+      description: |
+        Статус аукциона:
+        - active: аукцион активен
+        - sold: продан (через ставку или buyout)
+        - expired: истек без ставок
+        - cancelled: отменен продавцом
+
+    SaleMethod:
+      type: string
+      enum:
+        - won
+        - buyout
+      description: |
+        Метод продажи:
+        - won: выигран через ставку
+        - buyout: мгновенный выкуп
+
+    Auction:
+      type: object
+      required:
+        - auction_id
+        - seller_id
+        - item_id
+        - quantity
+        - starting_price
+        - duration_hours
+        - status
+        - expires_at
+        - created_at
+      properties:
+        auction_id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор аукциона
+        seller_id:
+          type: string
+          format: uuid
+          description: ID продавца
+        item_id:
+          type: string
+          format: uuid
+          description: ID предмета
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Количество предметов
+        starting_price:
+          type: number
+          format: double
+          minimum: 0
+          description: Стартовая цена
+        current_bid:
+          type: number
+          format: double
+          minimum: 0
+          description: Текущая ставка (null если нет ставок)
+        buyout_price:
+          type: number
+          format: double
+          minimum: 0
+          description: Цена мгновенного выкупа (null если нет)
+        current_bidder_id:
+          type: string
+          format: uuid
+          description: ID текущего лидера ставок
+        bid_count:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Количество ставок
+        duration_hours:
+          type: integer
+          enum: [24, 48, 72]
+          description: Длительность аукциона в часах
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения аукциона
+        status:
+          $ref: "#/components/schemas/AuctionStatus"
+        sale_price:
+          type: number
+          format: double
+          description: Финальная цена продажи
+        sale_method:
+          $ref: "#/components/schemas/SaleMethod"
+        sold_at:
+          type: string
+          format: date-time
+          description: Время продажи
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+
+    AuctionDetails:
+      allOf:
+        - $ref: "#/components/schemas/Auction"
+        - type: object
+          properties:
+            item_details:
+              type: object
+              description: Детали предмета из inventory-service
+              additionalProperties: true
+            seller_name:
+              type: string
+              description: Имя продавца
+            time_left_seconds:
+              type: integer
+              description: Оставшееся время в секундах
+
+    CreateAuctionRequest:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - starting_price
+        - duration_hours
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: ID предмета из инвентаря
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Количество предметов
+        starting_price:
+          type: number
+          format: double
+          minimum: 1
+          description: Стартовая цена (минимум 1 единица валюты)
+        buyout_price:
+          type: number
+          format: double
+          minimum: 1
+          description: Цена мгновенного выкупа (опционально)
+        duration_hours:
+          type: integer
+          enum: [24, 48, 72]
+          description: Длительность аукциона (24, 48 или 72 часа)
+
+    AuctionListResponse:
+      type: object
+      required:
+        - auctions
+        - pagination
+      properties:
+        auctions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Auction"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

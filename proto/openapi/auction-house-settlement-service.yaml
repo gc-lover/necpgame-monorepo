@@ -1,0 +1,337 @@
+openapi: 3.0.3
+info:
+  title: Auction House Settlement Service API
+  description: |
+    API для завершения аукционов и финансовых расчетов.
+    
+    **Функциональность:**
+    - История завершенных аукционов
+    - Статистика продаж
+    - Обработка истекших лотов (internal cron job)
+    - Финансовые расчеты с продавцами (95%)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8090/v1
+    description: Development server
+
+tags:
+  - name: Auction Settlement
+    description: Завершение аукционов и расчеты
+
+paths:
+  /auctions/history:
+    get:
+      summary: Получить историю аукционов
+      description: Возвращает завершенные аукционы с фильтрацией
+      operationId: getAuctionHistory
+      tags:
+        - Auction Settlement
+      parameters:
+        - name: player_id
+          in: query
+          description: Фильтр по игроку (продавец или покупатель)
+          schema:
+            type: string
+            format: uuid
+        - name: role
+          in: query
+          description: Роль игрока
+          schema:
+            type: string
+            enum: [seller, buyer]
+        - name: item_id
+          in: query
+          description: Фильтр по предмету
+          schema:
+            type: string
+            format: uuid
+        - name: sale_method
+          in: query
+          description: Фильтр по методу продажи
+          schema:
+            type: string
+            enum: [won, buyout]
+        - name: date_from
+          in: query
+          description: Начальная дата (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          description: Конечная дата (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionHistoryResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auctions/history/{history_id}:
+    get:
+      summary: Получить детали завершенного аукциона
+      description: Возвращает детальную информацию о завершенной сделке
+      operationId: getAuctionHistoryDetails
+      tags:
+        - Auction Settlement
+      parameters:
+        - name: history_id
+          in: path
+          required: true
+          description: ID записи в истории
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали истории успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionHistoryDetails"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auctions/statistics:
+    get:
+      summary: Получить статистику продаж
+      description: Возвращает статистику продаж игрока
+      operationId: getAuctionStatistics
+      tags:
+        - Auction Settlement
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: period
+          in: query
+          description: Период статистики
+          schema:
+            type: string
+            enum: [day, week, month, all_time]
+            default: all_time
+      responses:
+        "200":
+          description: Статистика успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionStatisticsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    AuctionHistory:
+      type: object
+      required:
+        - history_id
+        - auction_id
+        - seller_id
+        - buyer_id
+        - item_id
+        - quantity
+        - final_price
+        - commission
+        - sale_method
+        - completed_at
+      properties:
+        history_id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор записи
+        auction_id:
+          type: string
+          format: uuid
+          description: ID оригинального аукциона
+        seller_id:
+          type: string
+          format: uuid
+          description: ID продавца
+        buyer_id:
+          type: string
+          format: uuid
+          description: ID покупателя
+        item_id:
+          type: string
+          format: uuid
+          description: ID предмета
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество предметов
+        final_price:
+          type: number
+          format: double
+          description: Финальная цена продажи
+        commission:
+          type: number
+          format: double
+          description: Комиссия аукционного дома (5%)
+        seller_received:
+          type: number
+          format: double
+          description: Сумма, полученная продавцом (95%)
+        sale_method:
+          type: string
+          enum: [won, buyout]
+          description: Метод продажи (ставка или выкуп)
+        completed_at:
+          type: string
+          format: date-time
+          description: Время завершения сделки
+
+    AuctionHistoryDetails:
+      allOf:
+        - $ref: "#/components/schemas/AuctionHistory"
+        - type: object
+          properties:
+            seller_name:
+              type: string
+              description: Имя продавца
+            buyer_name:
+              type: string
+              description: Имя покупателя
+            item_details:
+              type: object
+              description: Детали предмета
+              additionalProperties: true
+            starting_price:
+              type: number
+              format: double
+              description: Стартовая цена аукциона
+            bid_count:
+              type: integer
+              description: Количество ставок (для won)
+            duration_hours:
+              type: integer
+              description: Длительность аукциона
+
+    AuctionHistoryResponse:
+      type: object
+      required:
+        - history
+        - pagination
+      properties:
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuctionHistory"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    AuctionStatistics:
+      type: object
+      required:
+        - player_id
+        - period
+        - sales_as_seller
+        - purchases_as_buyer
+        - total_revenue
+        - total_spent
+        - average_sale_price
+        - average_purchase_price
+        - most_sold_item
+        - most_bought_item
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        period:
+          type: string
+          enum: [day, week, month, all_time]
+          description: Период статистики
+        sales_as_seller:
+          type: integer
+          description: Количество проданных лотов
+        purchases_as_buyer:
+          type: integer
+          description: Количество купленных лотов
+        total_revenue:
+          type: number
+          format: double
+          description: Общая выручка (после комиссии)
+        total_spent:
+          type: number
+          format: double
+          description: Общая сумма покупок
+        average_sale_price:
+          type: number
+          format: double
+          description: Средняя цена продажи
+        average_purchase_price:
+          type: number
+          format: double
+          description: Средняя цена покупки
+        most_sold_item:
+          type: object
+          description: Самый продаваемый предмет
+          properties:
+            item_id:
+              type: string
+              format: uuid
+            count:
+              type: integer
+        most_bought_item:
+          type: object
+          description: Самый покупаемый предмет
+          properties:
+            item_id:
+              type: string
+              format: uuid
+            count:
+              type: integer
+        sale_methods:
+          type: object
+          description: Разбивка по методам продажи
+          properties:
+            won_count:
+              type: integer
+            buyout_count:
+              type: integer
+
+    AuctionStatisticsResponse:
+      type: object
+      required:
+        - statistics
+      properties:
+        statistics:
+          $ref: "#/components/schemas/AuctionStatistics"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

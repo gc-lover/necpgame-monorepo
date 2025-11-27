@@ -1,0 +1,425 @@
+openapi: 3.0.3
+info:
+  title: Auction House Bidding Service API
+  description: |
+    API для обработки ставок на аукционах.
+    
+    **Функциональность:**
+    - Размещение ставок с валидацией минимального шага (+5%)
+    - Автоматическое продление при ставках в последние 5 минут
+    - Мгновенный выкуп (buyout)
+    - История ставок
+    - Возврат средств прежнему лидеру
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8090/v1
+    description: Development server
+
+tags:
+  - name: Auction Bidding
+    description: Обработка ставок
+
+paths:
+  /auctions/{auction_id}/bid:
+    post:
+      summary: Разместить ставку
+      description: |
+        Размещает ставку на аукцион.
+        
+        **Правила:**
+        - Ставка должна быть минимум +5% от текущей ставки (или starting_price)
+        - Средства резервируются на кошельке
+        - Прежнему лидеру возвращаются средства
+        - Если ≤5 минут до окончания → автопродление на 5 минут
+      operationId: placeBid
+      tags:
+        - Auction Bidding
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: ID аукциона
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceBidRequest"
+      responses:
+        "200":
+          description: Ставка успешно размещена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BidResponse"
+        "400":
+          description: Некорректная ставка (не достигает минимального шага)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Нельзя ставить на свой аукцион или недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Аукцион уже завершен или ставка устарела
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auctions/{auction_id}/buyout:
+    post:
+      summary: Мгновенный выкуп
+      description: |
+        Мгновенно выкупает предмет по buyout цене.
+        
+        **Правила:**
+        - Buyout цена должна быть установлена продавцом
+        - Средства списываются с кошелька
+        - Аукцион завершается немедленно
+        - Продавец получает 95% (5% комиссия)
+        - Предмет передается покупателю
+      operationId: buyout
+      tags:
+        - Auction Bidding
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: ID аукциона
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuyoutRequest"
+      responses:
+        "200":
+          description: Выкуп успешно выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuyoutResponse"
+        "400":
+          description: Buyout цена не установлена
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Нельзя выкупить свой аукцион или недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Аукцион уже завершен
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /auctions/{auction_id}/bids:
+    get:
+      summary: Получить историю ставок
+      description: Возвращает все ставки на аукцион в порядке убывания времени
+      operationId: getAuctionBids
+      tags:
+        - Auction Bidding
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          description: ID аукциона
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История ставок успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BidListResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /auctions/my-bids:
+    get:
+      summary: Получить мои ставки
+      description: Возвращает ставки игрока с указанием текущего статуса
+      operationId: getMyBids
+      tags:
+        - Auction Bidding
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Фильтр по статусу ставки
+          schema:
+            type: string
+            enum: [leading, outbid, won, lost]
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Мои ставки успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyBidsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    PlaceBidRequest:
+      type: object
+      required:
+        - bidder_id
+        - bid_amount
+      properties:
+        bidder_id:
+          type: string
+          format: uuid
+          description: ID игрока, размещающего ставку
+        bid_amount:
+          type: number
+          format: double
+          minimum: 1
+          description: Сумма ставки (минимум +5% от текущей)
+
+    BidResponse:
+      type: object
+      required:
+        - bid_id
+        - auction_id
+        - bid_amount
+        - is_leading
+        - min_next_bid
+        - time_extended
+        - created_at
+      properties:
+        bid_id:
+          type: string
+          format: uuid
+          description: ID созданной ставки
+        auction_id:
+          type: string
+          format: uuid
+          description: ID аукциона
+        bid_amount:
+          type: number
+          format: double
+          description: Сумма ставки
+        is_leading:
+          type: boolean
+          description: Является ли лидирующей ставкой
+        min_next_bid:
+          type: number
+          format: double
+          description: Минимальная следующая ставка (+5%)
+        time_extended:
+          type: boolean
+          description: Было ли продлено время аукциона
+        new_expires_at:
+          type: string
+          format: date-time
+          description: Новое время истечения (если продлено)
+        created_at:
+          type: string
+          format: date-time
+          description: Время размещения ставки
+
+    BuyoutRequest:
+      type: object
+      required:
+        - buyer_id
+      properties:
+        buyer_id:
+          type: string
+          format: uuid
+          description: ID покупателя
+
+    BuyoutResponse:
+      type: object
+      required:
+        - auction_id
+        - buyer_id
+        - buyout_price
+        - seller_received
+        - commission
+        - completed_at
+      properties:
+        auction_id:
+          type: string
+          format: uuid
+          description: ID аукциона
+        buyer_id:
+          type: string
+          format: uuid
+          description: ID покупателя
+        buyout_price:
+          type: number
+          format: double
+          description: Цена выкупа
+        seller_received:
+          type: number
+          format: double
+          description: Сумма, полученная продавцом (95%)
+        commission:
+          type: number
+          format: double
+          description: Комиссия аукционного дома (5%)
+        completed_at:
+          type: string
+          format: date-time
+          description: Время выкупа
+
+    Bid:
+      type: object
+      required:
+        - bid_id
+        - auction_id
+        - bidder_id
+        - bid_amount
+        - created_at
+      properties:
+        bid_id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор ставки
+        auction_id:
+          type: string
+          format: uuid
+          description: ID аукциона
+        bidder_id:
+          type: string
+          format: uuid
+          description: ID игрока, сделавшего ставку
+        bidder_name:
+          type: string
+          description: Имя игрока
+        bid_amount:
+          type: number
+          format: double
+          description: Сумма ставки
+        created_at:
+          type: string
+          format: date-time
+          description: Время размещения ставки
+
+    BidListResponse:
+      type: object
+      required:
+        - auction_id
+        - bids
+        - pagination
+      properties:
+        auction_id:
+          type: string
+          format: uuid
+          description: ID аукциона
+        bids:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bid"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    BidStatus:
+      type: string
+      enum:
+        - leading
+        - outbid
+        - won
+        - lost
+      description: |
+        Статус ставки:
+        - leading: лидирует сейчас
+        - outbid: перебита другой ставкой
+        - won: выиграна (аукцион завершен)
+        - lost: проиграна (аукцион завершен)
+
+    MyBid:
+      allOf:
+        - $ref: "#/components/schemas/Bid"
+        - type: object
+          required:
+            - status
+            - auction_status
+          properties:
+            status:
+              $ref: "#/components/schemas/BidStatus"
+            auction_status:
+              type: string
+              description: Статус аукциона
+            current_bid:
+              type: number
+              format: double
+              description: Текущая лидирующая ставка
+
+    MyBidsResponse:
+      type: object
+      required:
+        - bids
+        - pagination
+      properties:
+        bids:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyBid"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
