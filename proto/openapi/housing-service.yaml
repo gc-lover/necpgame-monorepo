@@ -1,110 +1,58 @@
 openapi: 3.0.3
 info:
   title: Housing Service API
-  description: "API для системы жилья: покупка квартир, размещение мебели, управление престижем"
+  description: API для управления квартирами, мебелью, престижем и посещениями.
   version: 1.0.0
-  contact:
-    name: NECPGAME API Support
-    email: api@necp.game
 
 servers:
-  - url: http://localhost:8090/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8104/v1
+    description: Development server
 
 tags:
-  - name: Apartment Manager
+  - name: Apartments
     description: Управление квартирами
-  - name: Furniture Manager
+  - name: Furniture
     description: Управление мебелью
-  - name: Furniture Placement
-    description: Размещение мебели
-  - name: Prestige Calculator
-    description: Расчёт престижа
-  - name: Functional Bonus Aggregator
-    description: Функциональные бонусы
-  - name: Visit Manager
-    description: Управление посещениями
-  - name: Housing Shop Manager
-    description: Магазин мебели
-  - name: Housing Events
-    description: События жилья
+  - name: Visits
+    description: Посещения квартир
 
 paths:
-  /world/housing/apartments/available:
+  /housing/apartments/available:
     get:
-      tags:
-        - Apartment Manager
-      summary: Получить список доступных квартир
+      summary: Получить доступные квартиры
+      description: Возвращает список доступных для покупки квартир
       operationId: getAvailableApartments
+      tags:
+        - Apartments
       parameters:
         - name: location
           in: query
           schema:
             type: string
-        - name: apartment_type
+        - name: type
           in: query
           schema:
-            type: string
-            enum:
-              - studio
-              - standard
-              - penthouse
-              - guild_hall
-        - name: owner_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: owner_type
-          in: query
-          schema:
-            type: string
-        - name: is_public
-          in: query
-          schema:
-            type: boolean
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+            $ref: "#/components/schemas/ApartmentType"
       responses:
         "200":
           description: Список доступных квартир
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  apartments:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Apartment"
-                  total:
-                    type: integer
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
+                $ref: "#/components/schemas/ApartmentListResponse"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
 
-  /world/housing/apartments/purchase:
+  /housing/apartments/purchase:
     post:
-      tags:
-        - Apartment Manager
       summary: Купить квартиру
+      description: Покупает квартиру для игрока
       operationId: purchaseApartment
+      tags:
+        - Apartments
       requestBody:
         required: true
         content:
@@ -119,16 +67,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/Apartment"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Недостаточно средств или квартира недоступна
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
 
-  /world/housing/apartments/{apartment_id}:
+  /housing/apartments/{apartment_id}:
     get:
-      tags:
-        - Apartment Manager
       summary: Получить информацию о квартире
+      description: Возвращает детали квартиры
       operationId: getApartment
+      tags:
+        - Apartments
       parameters:
         - name: apartment_id
           in: path
@@ -138,54 +97,25 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Информация о квартире
+          description: Детали квартиры
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Apartment"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "common.yaml#/components/responses/NotFound"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
 
-    patch:
-      tags:
-        - Apartment Manager
+  /housing/apartments/{apartment_id}/settings:
+    put:
       summary: Обновить настройки квартиры
-      operationId: updateApartment
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateApartmentRequest"
-      responses:
-        "200":
-          description: Квартира обновлена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Apartment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/apartments/{apartment_id}/visit:
-    post:
+      description: Обновляет настройки доступа к квартире
+      operationId: updateApartmentSettings
       tags:
-        - Visit Manager
-      summary: Посетить квартиру
-      operationId: visitApartment
+        - Apartments
       parameters:
         - name: apartment_id
           in: path
@@ -198,179 +128,94 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - visitor_id
-              properties:
-                visitor_id:
-                  type: string
-                  format: uuid
+              $ref: "#/components/schemas/ApartmentSettings"
       responses:
         "200":
-          description: Посещение зарегистрировано
+          description: Настройки обновлены
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Apartment"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/Forbidden"
+          $ref: "common.yaml#/components/responses/Forbidden"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
 
-  /world/housing/apartments/{apartment_id}/guests:
+  /housing/furniture/catalog:
     get:
-      tags:
-        - Apartment Manager
-      summary: Получить список гостей
-      operationId: getApartmentGuests
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Список гостей
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  guests:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Guest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-    post:
-      tags:
-        - Apartment Manager
-      summary: Добавить гостя
-      operationId: addGuest
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - character_id
-              properties:
-                character_id:
-                  type: string
-                  format: uuid
-      responses:
-        "200":
-          description: Гость добавлен
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-    delete:
-      tags:
-        - Apartment Manager
-      summary: Удалить гостя
-      operationId: removeGuest
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: player_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Гость удален
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  /world/housing/furniture/shop:
-    get:
-      tags:
-        - Furniture Manager
       summary: Получить каталог мебели
-      operationId: getFurnitureShop
+      description: Возвращает доступную для покупки мебель
+      operationId: getFurnitureCatalog
+      tags:
+        - Furniture
       parameters:
         - name: category
           in: query
           schema:
-            type: string
-            enum:
-              - decorative
-              - functional
-              - comfort
-              - storage
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+            $ref: "#/components/schemas/FurnitureCategory"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
       responses:
         "200":
           description: Каталог мебели
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/FurnitureItem"
-                  total:
-                    type: integer
+                $ref: "#/components/schemas/FurnitureListResponse"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
 
-  /world/housing/apartments/{apartment_id}/furniture:
-    get:
+  /housing/furniture/purchase:
+    post:
+      summary: Купить мебель
+      description: Покупает мебель для игрока
+      operationId: purchaseFurniture
       tags:
-        - Furniture Manager
-      summary: Получить размещенную мебель
-      operationId: getPlacedFurniture
+        - Furniture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseFurnitureRequest"
+      responses:
+        "201":
+          description: Мебель куплена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FurnitureItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /housing/apartments/{apartment_id}/furniture:
+    get:
+      summary: Получить мебель в квартире
+      description: Возвращает размещённую мебель в квартире
+      operationId: getApartmentFurniture
+      tags:
+        - Furniture
       parameters:
         - name: apartment_id
           in: path
@@ -380,24 +225,24 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Размещенная мебель
+          description: Размещённая мебель
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  furniture:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/PlacedFurniture"
+                $ref: "#/components/schemas/PlacedFurnitureListResponse"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
 
     post:
-      tags:
-        - Furniture Manager
       summary: Разместить мебель
+      description: Размещает мебель в квартире
       operationId: placeFurniture
+      tags:
+        - Furniture
       parameters:
         - name: apartment_id
           in: path
@@ -419,54 +264,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/PlacedFurniture"
         "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/apartments/{apartment_id}/furniture/{furniture_id}:
-    patch:
-      tags:
-        - Furniture Manager
-      summary: Обновить позицию мебели
-      operationId: updateFurniturePosition
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: furniture_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateFurniturePositionRequest"
-      responses:
-        "200":
-          description: Позиция обновлена
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "409":
+          description: Нет свободных слотов или позиция занята
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlacedFurniture"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
 
+  /housing/apartments/{apartment_id}/furniture/{furniture_id}:
     delete:
-      tags:
-        - Furniture Manager
-      summary: Удалить мебель
+      summary: Убрать мебель
+      description: Убирает мебель из квартиры
       operationId: removeFurniture
+      tags:
+        - Furniture
       parameters:
         - name: apartment_id
           in: path
@@ -481,64 +301,26 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          description: Мебель удалена
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
+        "204":
+          description: Мебель убрана
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
         "404":
-          $ref: "#/components/responses/NotFound"
-
-  /world/housing/prestige/leaderboard:
-    get:
-      tags:
-        - Prestige Calculator
-      summary: Получить лидерборд престижа
-      operationId: getPrestigeLeaderboard
-      parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        "200":
-          description: Лидерборд престижа
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  entries:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/PrestigeEntry"
-                  total:
-                    type: integer
+          $ref: "common.yaml#/components/responses/NotFound"
         "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/apartments/{apartment_id}/settings:
-    post:
-      tags:
-        - Apartment Manager
-      summary: Обновить настройки доступа квартиры
-      operationId: updateApartmentSettings
+          $ref: "common.yaml#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
+
+  /housing/apartments/{apartment_id}/visit:
+    post:
+      summary: Посетить квартиру
+      description: Посещает квартиру другого игрока
+      operationId: visitApartment
+      tags:
+        - Visits
       parameters:
         - name: apartment_id
           in: path
@@ -551,523 +333,68 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateApartmentSettingsRequest"
+              $ref: "#/components/schemas/VisitRequest"
       responses:
         "200":
-          description: Настройки обновлены
+          description: Квартира посещена
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Apartment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
+                $ref: "#/components/schemas/Visit"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Доступ запрещён
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "common.yaml#/components/responses/NotFound"
         "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/furniture/catalog:
-    get:
-      tags:
-        - Furniture Manager Manager
-      summary: Получить каталог мебели
-      operationId: getFurnitureCatalog
+          $ref: "common.yaml#/components/responses/InternalServerError"
       security:
         - BearerAuth: []
-      parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - DECORATIVE
-              - FUNCTIONAL
-              - COMFORT
-              - STORAGE
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        "200":
-          description: Каталог мебели
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FurnitureCatalogResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/furniture/purchase:
-    post:
-      tags:
-        - Furniture Manager Manager
-      summary: Купить мебель
-      operationId: purchaseFurniture
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PurchaseFurnitureRequest"
-      responses:
-        "200":
-          description: Мебель куплена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FurnitureItem"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/furniture/owned/{player_id}:
-    get:
-      tags:
-        - Furniture Manager Manager
-      summary: Получить мебель игрока
-      operationId: getOwnedFurniture
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - DECORATIVE
-              - FUNCTIONAL
-              - COMFORT
-              - STORAGE
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        "200":
-          description: Мебель игрока
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OwnedFurnitureResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/apartments/{apartment_id}/furniture/{furniture_id}/move:
-    post:
-      tags:
-        - Furniture Manager Placement
-      summary: Переместить мебель в квартире
-      operationId: moveFurniture
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: furniture_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MoveFurnitureRequest"
-      responses:
-        "200":
-          description: Мебель перемещена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PlacedFurniture"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/apartments/{apartment_id}/prestige:
-    get:
-      tags:
-        - Prestige Calculator Calculator
-      summary: Получить престиж квартиры
-      operationId: getApartmentPrestige
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Престиж квартиры
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApartmentPrestigeResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/apartments/{apartment_id}/bonuses:
-    get:
-      tags:
-        - Functional Bonus Aggregator
-      summary: Получить функциональные бонусы квартиры
-      operationId: getApartmentBonuses
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Бонусы квартиры
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApartmentBonusesResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/player/{player_id}/bonuses:
-    get:
-      tags:
-        - Functional Bonus Aggregator
-      summary: Получить функциональные бонусы игрока
-      operationId: getPlayerBonuses
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Бонусы игрока
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PlayerBonusesResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/apartments/{apartment_id}/visits:
-    get:
-      tags:
-        - Visit Manager
-      summary: Получить историю посещений квартиры
-      operationId: getApartmentVisits
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        "200":
-          description: История посещений
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApartmentVisitsResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/player/{player_id}/visits:
-    get:
-      tags:
-        - Visit Manager
-      summary: Получить посещения игрока
-      operationId: getPlayerVisits
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        "200":
-          description: Посещения игрока
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PlayerVisitsResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/events/{apartment_id}:
-    get:
-      tags:
-        - Housing Events
-      summary: Получить события квартиры
-      operationId: getHousingEvents
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: event_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - housing:apartment-purchased
-              - housing:furniture-placed
-              - housing:furniture-removed
-              - housing:prestige-updated
-              - housing:apartment-visited
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        "200":
-          description: События квартиры
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HousingEventsResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/shop/catalog:
-    get:
-      tags:
-        - Housing Shop Manager
-      summary: Получить каталог магазина мебели
-      operationId: getHousingShopCatalog
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - DECORATIVE
-              - FUNCTIONAL
-              - COMFORT
-              - STORAGE
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        "200":
-          description: Каталог магазина
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HousingShopCatalogResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/shop/furniture/{furniture_id}:
-    get:
-      tags:
-        - Housing Shop Manager
-      summary: Получить детали мебели в магазине
-      operationId: getHousingShopFurnitureDetails
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: furniture_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Детали мебели
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FurnitureItem"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/housing/shop/purchase:
-    post:
-      tags:
-        - Housing Shop Manager
-      summary: Купить мебель из магазина
-      operationId: purchaseFurnitureFromShop
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PurchaseFurnitureRequest"
-      responses:
-        "200":
-          description: Мебель куплена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FurnitureItem"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
 
 components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
   schemas:
+    ApartmentType:
+      type: string
+      enum:
+        - STUDIO
+        - STANDARD
+        - PENTHOUSE
+        - GUILD_HALL
+      description: Тип квартиры
+
+    FurnitureCategory:
+      type: string
+      enum:
+        - DECORATIVE
+        - FUNCTIONAL
+        - COMFORT
+        - STORAGE
+      description: Категория мебели
+
+    AccessType:
+      type: string
+      enum:
+        - PRIVATE
+        - FRIENDS_ONLY
+        - PUBLIC
+        - GUILD_ONLY
+      description: Тип доступа к квартире
+
     Apartment:
       type: object
+      required:
+        - id
+        - owner_id
+        - type
+        - location
+        - furniture_slots
+        - access_type
+        - prestige_rating
       properties:
         id:
           type: string
@@ -1075,562 +402,192 @@ components:
         owner_id:
           type: string
           format: uuid
-        apartment_type:
+        type:
+          $ref: "#/components/schemas/ApartmentType"
+        location:
           type: string
-          enum:
-            - STUDIO
-            - STANDARD
-            - PENTHOUSE
-            - GUILD_HALL
-        location_id:
-          type: string
-          maxLength: 100
-        price:
-          type: integer
-          format: int64
         furniture_slots:
+          type: object
+          properties:
+            total:
+              type: integer
+            used:
+              type: integer
+        access_type:
+          $ref: "#/components/schemas/AccessType"
+        prestige_rating:
           type: integer
-        used_slots:
-          type: integer
-          default: 0
-        prestige_score:
-          type: integer
-          default: 0
-        access_setting:
-          type: string
-          enum:
-            - PRIVATE
-            - FRIENDS_ONLY
-            - PUBLIC
-            - GUILD_ONLY
-        guild_id:
-          type: string
-          format: uuid
-          nullable: true
-        guests:
+        functional_bonuses:
           type: array
           items:
-            type: string
-            format: uuid
-        purchased_at:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: number
 
     PurchaseApartmentRequest:
       type: object
       required:
+        - player_id
         - apartment_type
         - location
-      properties:
-        apartment_type:
-          type: string
-          enum:
-            - studio
-            - standard
-            - penthouse
-            - guild_hall
-        location:
-          type: string
-
-    UpdateApartmentRequest:
-      type: object
-      properties:
-        is_public:
-          type: boolean
-
-    Guest:
-      type: object
-      properties:
-        character_id:
-          type: string
-          format: uuid
-        character_name:
-          type: string
-        added_at:
-          type: string
-          format: date-time
-
-    FurnitureItem:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        category:
-          type: string
-          enum:
-            - DECORATIVE
-            - FUNCTIONAL
-            - COMFORT
-            - STORAGE
-        description:
-          type: string
-        price:
-          type: integer
-          format: int64
-        prestige_points:
-          type: integer
-          default: 0
-        slot_cost:
-          type: integer
-          default: 1
-        is_unique:
-          type: boolean
-          default: false
-        function_bonus:
-          type: object
-          additionalProperties: true
-          nullable: true
-        is_active:
-          type: boolean
-          default: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    PlacedFurniture:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        apartment_id:
-          type: string
-          format: uuid
-        furniture_item_id:
-          type: string
-        position_x:
-          type: number
-          format: float
-        position_y:
-          type: number
-          format: float
-        position_z:
-          type: number
-          format: float
-        rotation_yaw:
-          type: number
-          format: float
-        scale:
-          type: number
-          format: float
-          default: 1.0
-        placed_at:
-          type: string
-          format: date-time
-
-    PlaceFurnitureRequest:
-      type: object
-      required:
-        - furniture_item_id
-        - position_x
-        - position_y
-        - position_z
-      properties:
-        furniture_item_id:
-          type: string
-        position_x:
-          type: number
-          format: float
-        position_y:
-          type: number
-          format: float
-        position_z:
-          type: number
-          format: float
-        rotation_yaw:
-          type: number
-          format: float
-          default: 0.0
-        scale:
-          type: number
-          format: float
-          default: 1.0
-
-    UpdateFurniturePositionRequest:
-      type: object
-      properties:
-        position_x:
-          type: number
-          format: float
-        position_y:
-          type: number
-          format: float
-        position_z:
-          type: number
-          format: float
-        rotation_yaw:
-          type: number
-          format: float
-        scale:
-          type: number
-          format: float
-
-    PrestigeEntry:
-      type: object
-      properties:
-        rank:
-          type: integer
-        apartment_id:
-          type: string
-          format: uuid
-        owner_id:
-          type: string
-          format: uuid
-        owner_name:
-          type: string
-        prestige_score:
-          type: integer
-        apartment_type:
-          type: string
-
-    UpdateApartmentSettingsRequest:
-      type: object
-      required:
-        - player_id
-        - access_setting
       properties:
         player_id:
           type: string
           format: uuid
-        access_setting:
+        apartment_type:
+          $ref: "#/components/schemas/ApartmentType"
+        location:
           type: string
-          enum:
-            - PRIVATE
-            - FRIENDS_ONLY
-            - PUBLIC
-            - GUILD_ONLY
-        guests:
-          type: array
-          items:
-            type: string
-            format: uuid
 
-    FurnitureCatalogResponse:
+    ApartmentSettings:
       type: object
       properties:
-        furniture:
-          type: array
-          items:
-            $ref: "#/components/schemas/FurnitureItem"
-        total:
+        access_type:
+          $ref: "#/components/schemas/AccessType"
+
+    FurnitureItem:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - price
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          $ref: "#/components/schemas/FurnitureCategory"
+        price:
+          type: number
+          format: double
+        prestige_value:
           type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+        functional_bonus:
+          type: object
 
     PurchaseFurnitureRequest:
       type: object
       required:
         - player_id
-        - furniture_item_id
+        - furniture_id
+        - quantity
       properties:
         player_id:
           type: string
           format: uuid
-        furniture_item_id:
+        furniture_id:
           type: string
           format: uuid
         quantity:
           type: integer
-          default: 1
           minimum: 1
 
-    OwnedFurnitureResponse:
-      type: object
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        furniture:
-          type: array
-          items:
-            $ref: "#/components/schemas/PlayerFurnitureInventory"
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-
-    MoveFurnitureRequest:
+    PlacedFurniture:
       type: object
       required:
-        - player_id
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        position_x:
-          type: number
-          format: float
-        position_y:
-          type: number
-          format: float
-        position_z:
-          type: number
-          format: float
-        rotation_x:
-          type: number
-          format: float
-        rotation_y:
-          type: number
-          format: float
-        rotation_z:
-          type: number
-          format: float
-        scale_x:
-          type: number
-          format: float
-        scale_y:
-          type: number
-          format: float
-        scale_z:
-          type: number
-          format: float
-
-    RemoveFurnitureRequest:
-      type: object
-      required:
-        - player_id
-      properties:
-        player_id:
-          type: string
-          format: uuid
-
-    ApartmentPrestigeResponse:
-      type: object
-      properties:
-        apartment_id:
-          type: string
-          format: uuid
-        prestige_score:
-          type: integer
-        base_prestige:
-          type: integer
-        furniture_prestige:
-          type: integer
-        location_multiplier:
-          type: number
-          format: float
-        uniqueness_bonus:
-          type: integer
-
-    ApartmentBonusesResponse:
-      type: object
-      properties:
-        apartment_id:
-          type: string
-          format: uuid
-        bonuses:
-          type: object
-          properties:
-            CRAFT_SPEED:
-              type: number
-              format: float
-            STORAGE_SLOTS:
-              type: integer
-            HUMANITY_REGENERATION:
-              type: number
-              format: float
-            WEAPON_STORAGE:
-              type: integer
-
-    PlayerBonusesResponse:
-      type: object
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        bonuses:
-          type: object
-          properties:
-            CRAFT_SPEED:
-              type: number
-              format: float
-            STORAGE_SLOTS:
-              type: integer
-            HUMANITY_REGENERATION:
-              type: number
-              format: float
-            WEAPON_STORAGE:
-              type: integer
-
-    ApartmentVisit:
-      type: object
+        - id
+        - furniture_id
+        - position
+        - rotation
       properties:
         id:
           type: string
           format: uuid
-        apartment_id:
+        furniture_id:
           type: string
           format: uuid
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        rotation:
+          type: number
+
+    PlaceFurnitureRequest:
+      type: object
+      required:
+        - furniture_id
+        - position
+        - rotation
+      properties:
+        furniture_id:
+          type: string
+          format: uuid
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        rotation:
+          type: number
+
+    VisitRequest:
+      type: object
+      required:
+        - visitor_id
+      properties:
         visitor_id:
           type: string
           format: uuid
-        visited_at:
+
+    Visit:
+      type: object
+      properties:
+        visitor_id:
+          type: string
+          format: uuid
+        timestamp:
           type: string
           format: date-time
 
-    ApartmentVisitsResponse:
+    ApartmentListResponse:
       type: object
+      required:
+        - apartments
       properties:
-        apartment_id:
-          type: string
-          format: uuid
-        visits:
+        apartments:
           type: array
           items:
-            $ref: "#/components/schemas/ApartmentVisit"
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+            $ref: "#/components/schemas/Apartment"
 
-    PlayerVisitsResponse:
+    FurnitureListResponse:
       type: object
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        visits:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApartmentVisit"
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-
-    HousingEvent:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        apartment_id:
-          type: string
-          format: uuid
-        event_type:
-          type: string
-          enum:
-            - housing:apartment-purchased
-            - housing:furniture-placed
-            - housing:furniture-removed
-            - housing:prestige-updated
-            - housing:apartment-visited
-        event_data:
-          type: object
-          additionalProperties: true
-        created_at:
-          type: string
-          format: date-time
-
-    HousingEventsResponse:
-      type: object
-      properties:
-        events:
-          type: array
-          items:
-            $ref: "#/components/schemas/HousingEvent"
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-
-    HousingShopCatalogResponse:
-      type: object
+      required:
+        - furniture
+        - pagination
       properties:
         furniture:
           type: array
           items:
             $ref: "#/components/schemas/FurnitureItem"
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
 
-    PlayerFurnitureInventory:
+    PlacedFurnitureListResponse:
       type: object
+      required:
+        - furniture
       properties:
-        id:
-          type: string
-          format: uuid
-        player_id:
-          type: string
-          format: uuid
-        furniture_item_id:
-          type: string
-          format: uuid
-        furniture_item:
-          $ref: "#/components/schemas/FurnitureItem"
-        quantity:
-          type: integer
-          default: 1
-        purchased_at:
-          type: string
-          format: date-time
+        furniture:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlacedFurniture"
 
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-    Unauthorized:
-      description: Требуется аутентификация
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-    Forbidden:
-      description: Недостаточно прав доступа
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-    NotFound:
-      description: Ресурс не найден
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-security:
-  - BearerAuth: []
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
