@@ -1,0 +1,465 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Service API
+  description: API для подбора игроков в PvP, PvE и рейды с учётом рейтинга.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8090/v1
+    description: Development server
+
+tags:
+  - name: Queue
+    description: Очереди матчмейкинга
+  - name: Matchmaking
+    description: Подбор игроков
+  - name: Rating
+    description: Рейтинг игроков
+
+paths:
+  /matchmaking/queue/join:
+    post:
+      summary: Войти в очередь
+      description: Добавляет игрока или группу в очередь матчмейкинга
+      operationId: joinQueue
+      tags:
+        - Queue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinQueueRequest"
+      responses:
+        "200":
+          description: Игрок добавлен в очередь
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatus"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Игрок уже в очереди
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /matchmaking/queue/leave:
+    delete:
+      summary: Выйти из очереди
+      description: Удаляет игрока из очереди матчмейкинга
+      operationId: leaveQueue
+      tags:
+        - Queue
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Игрок удалён из очереди
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /matchmaking/queue/status:
+    get:
+      summary: Получить статус очереди
+      description: Возвращает текущий статус игрока в очереди
+      operationId: getQueueStatus
+      tags:
+        - Queue
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус очереди
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatus"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Игрок не в очереди
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /matchmaking/queue/estimate:
+    get:
+      summary: Оценка времени ожидания
+      description: Возвращает оценку времени ожидания матча
+      operationId: getQueueEstimate
+      tags:
+        - Queue
+      parameters:
+        - name: mode
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/GameMode"
+        - name: rating
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Оценка времени ожидания
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueEstimate"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /matchmaking/match/find:
+    post:
+      summary: Найти матч
+      description: Запускает поиск матча для игрока
+      operationId: findMatch
+      tags:
+        - Matchmaking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindMatchRequest"
+      responses:
+        "200":
+          description: Матч найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchFound"
+        "202":
+          description: Поиск матча продолжается
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /matchmaking/match/{match_id}/accept:
+    post:
+      summary: Принять матч
+      description: Подтверждает участие в найденном матче
+      operationId: acceptMatch
+      tags:
+        - Matchmaking
+      parameters:
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Матч принят
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchAcceptance"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Время принятия истекло
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /matchmaking/rating/{player_id}:
+    get:
+      summary: Получить рейтинг игрока
+      description: Возвращает рейтинг игрока по всем режимам
+      operationId: getPlayerRating
+      tags:
+        - Rating
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Рейтинг игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerRating"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /matchmaking/rating/{player_id}/history:
+    get:
+      summary: Получить историю рейтинга
+      description: Возвращает историю изменений рейтинга
+      operationId: getRatingHistory
+      tags:
+        - Rating
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mode
+          in: query
+          schema:
+            $ref: "#/components/schemas/GameMode"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История рейтинга
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RatingHistoryEntry"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    GameMode:
+      type: string
+      enum:
+        - PVP
+        - PVE
+        - RAID
+        - RANKED
+        - CASUAL
+
+    JoinQueueRequest:
+      type: object
+      required:
+        - player_id
+        - mode
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        mode:
+          $ref: "#/components/schemas/GameMode"
+        party_id:
+          type: string
+          format: uuid
+          nullable: true
+        preferred_role:
+          type: string
+
+    QueueStatus:
+      type: object
+      required:
+        - player_id
+        - mode
+        - status
+        - wait_time
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        mode:
+          $ref: "#/components/schemas/GameMode"
+        status:
+          type: string
+          enum:
+            - QUEUED
+            - SEARCHING
+            - FOUND
+            - CANCELLED
+        wait_time:
+          type: integer
+          description: Время ожидания в секундах
+        estimated_time:
+          type: integer
+          nullable: true
+
+    QueueEstimate:
+      type: object
+      properties:
+        mode:
+          $ref: "#/components/schemas/GameMode"
+        estimated_wait_time:
+          type: integer
+        queue_size:
+          type: integer
+
+    FindMatchRequest:
+      type: object
+      required:
+        - player_id
+        - mode
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        mode:
+          $ref: "#/components/schemas/GameMode"
+        rating:
+          type: integer
+
+    MatchFound:
+      type: object
+      required:
+        - match_id
+        - mode
+        - players
+      properties:
+        match_id:
+          type: string
+          format: uuid
+        mode:
+          $ref: "#/components/schemas/GameMode"
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              rating:
+                type: integer
+              team:
+                type: string
+        match_quality:
+          type: number
+          format: float
+        accept_deadline:
+          type: string
+          format: date-time
+
+    MatchAcceptance:
+      type: object
+      properties:
+        match_id:
+          type: string
+          format: uuid
+        accepted:
+          type: boolean
+        all_accepted:
+          type: boolean
+        session_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    PlayerRating:
+      type: object
+      required:
+        - player_id
+        - ratings
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        ratings:
+          type: array
+          items:
+            type: object
+            properties:
+              mode:
+                $ref: "#/components/schemas/GameMode"
+              rating:
+                type: integer
+              rank:
+                type: string
+              matches_played:
+                type: integer
+              win_rate:
+                type: number
+                format: float
+
+    RatingHistoryEntry:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        rating:
+          type: integer
+        rating_change:
+          type: integer
+        match_id:
+          type: string
+          format: uuid
+        result:
+          type: string
+          enum:
+            - WIN
+            - LOSS
+            - DRAW
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
