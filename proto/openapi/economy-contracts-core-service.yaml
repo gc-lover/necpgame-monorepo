@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: Economy Contracts Core Service API
+  description: |
+    API для управления контрактами между игроками.
+    
+    **Типы контрактов:**
+    - Exchange - обмен предметами/валютой
+    - Delivery - доставка предметов
+    - Craft - крафт предметов
+    - Service - услуги
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8097/v1
+    description: Development server
+
+tags:
+  - name: Contracts
+    description: Управление контрактами
+
+paths:
+  /contracts:
+    post:
+      summary: Создать контракт
+      description: Создает новый контракт между игроками
+      operationId: createContract
+      tags:
+        - Contracts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContractRequest"
+      responses:
+        "201":
+          description: Контракт создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    get:
+      summary: Получить список контрактов
+      description: Возвращает список контрактов с фильтрацией
+      operationId: listContracts
+      tags:
+        - Contracts
+      parameters:
+        - name: player_id
+          in: query
+          description: ID игрока (участник контракта)
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            $ref: "#/components/schemas/ContractStatus"
+        - name: type
+          in: query
+          description: Фильтр по типу
+          schema:
+            $ref: "#/components/schemas/ContractType"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список контрактов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /contracts/{contract_id}:
+    get:
+      summary: Получить детали контракта
+      description: Возвращает детальную информацию о контракте
+      operationId: getContract
+      tags:
+        - Contracts
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: ID контракта
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали контракта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Отменить контракт
+      description: Отменяет контракт (только в статусе DRAFT или NEGOTIATION)
+      operationId: cancelContract
+      tags:
+        - Contracts
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: ID контракта
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Контракт отменен
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Контракт нельзя отменить в текущем статусе
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /contracts/{contract_id}/negotiate:
+    post:
+      summary: Предложить изменения в контракте
+      description: Отправляет предложение по изменению условий контракта
+      operationId: negotiateContract
+      tags:
+        - Contracts
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: ID контракта
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NegotiationProposal"
+      responses:
+        "200":
+          description: Предложение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /contracts/{contract_id}/accept:
+    post:
+      summary: Принять контракт
+      description: Принимает условия контракта и переводит в эскроу
+      operationId: acceptContract
+      tags:
+        - Contracts
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: ID контракта
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Контракт принят
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Контракт нельзя принять в текущем статусе
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /contracts/{contract_id}/complete:
+    post:
+      summary: Завершить контракт
+      description: Завершает исполнение контракта и освобождает эскроу
+      operationId: completeContract
+      tags:
+        - Contracts
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: ID контракта
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Контракт завершен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Контракт нельзя завершить в текущем статусе
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    ContractType:
+      type: string
+      enum:
+        - exchange
+        - delivery
+        - craft
+        - service
+      description: |
+        Тип контракта:
+        - exchange: обмен предметами/валютой
+        - delivery: доставка предметов
+        - craft: крафт предметов
+        - service: услуги
+
+    ContractStatus:
+      type: string
+      enum:
+        - draft
+        - negotiation
+        - escrow_pending
+        - active
+        - completed
+        - cancelled
+        - disputed
+      description: Статус контракта
+
+    ContractAssets:
+      type: object
+      description: Активы в контракте
+      properties:
+        currency:
+          type: number
+          format: double
+          description: Количество валюты
+        items:
+          type: array
+          description: Предметы
+          items:
+            type: object
+            required:
+              - item_id
+              - quantity
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+
+    ContractTerms:
+      type: object
+      description: Условия контракта
+      properties:
+        initiator_gives:
+          $ref: "#/components/schemas/ContractAssets"
+        counterparty_gives:
+          $ref: "#/components/schemas/ContractAssets"
+        delivery_location:
+          type: string
+          description: Место доставки
+        craft_recipe_id:
+          type: string
+          format: uuid
+          description: ID рецепта крафта
+        service_description:
+          type: string
+          description: Описание услуги
+        collateral_required:
+          type: boolean
+          description: Требуется ли залог
+        collateral_amount:
+          type: number
+          format: double
+          description: Размер залога
+
+    CreateContractRequest:
+      type: object
+      required:
+        - type
+        - initiator_id
+        - counterparty_id
+        - terms
+      properties:
+        type:
+          $ref: "#/components/schemas/ContractType"
+        initiator_id:
+          type: string
+          format: uuid
+          description: ID инициатора
+        counterparty_id:
+          type: string
+          format: uuid
+          description: ID контрагента
+        terms:
+          $ref: "#/components/schemas/ContractTerms"
+        expires_at:
+          type: string
+          format: date-time
+          description: Срок действия
+
+    Contract:
+      type: object
+      required:
+        - contract_id
+        - type
+        - status
+        - initiator_id
+        - counterparty_id
+        - terms
+        - created_at
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/ContractType"
+        status:
+          $ref: "#/components/schemas/ContractStatus"
+        initiator_id:
+          type: string
+          format: uuid
+        counterparty_id:
+          type: string
+          format: uuid
+        terms:
+          $ref: "#/components/schemas/ContractTerms"
+        escrow_id:
+          type: string
+          format: uuid
+          description: ID эскроу
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    NegotiationProposal:
+      type: object
+      required:
+        - terms
+      properties:
+        terms:
+          $ref: "#/components/schemas/ContractTerms"
+        message:
+          type: string
+          maxLength: 500
+          description: Сообщение к предложению
+
+    ContractListResponse:
+      type: object
+      required:
+        - contracts
+        - pagination
+      properties:
+        contracts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Contract"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

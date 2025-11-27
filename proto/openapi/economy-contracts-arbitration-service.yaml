@@ -1,0 +1,209 @@
+openapi: 3.0.3
+info:
+  title: Economy Contracts Arbitration Service API
+  description: |
+    API для арбитража и разрешения споров по контрактам.
+    
+    **Функциональность:**
+    - Создание споров
+    - Добавление доказательств
+    - AI-модерация
+    - Разрешение споров
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8099/v1
+    description: Development server
+
+tags:
+  - name: Arbitration
+    description: Арбитраж и споры
+
+paths:
+  /arbitration/disputes:
+    post:
+      summary: Создать спор
+      description: Создает спор по контракту для арбитража
+      operationId: createDispute
+      tags:
+        - Arbitration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDisputeRequest"
+      responses:
+        "201":
+          description: Спор создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dispute"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /arbitration/disputes/{dispute_id}:
+    get:
+      summary: Получить детали спора
+      description: Возвращает информацию о споре
+      operationId: getDispute
+      tags:
+        - Arbitration
+      parameters:
+        - name: dispute_id
+          in: path
+          required: true
+          description: ID спора
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали спора
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dispute"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /arbitration/disputes/{dispute_id}/evidence:
+    post:
+      summary: Добавить доказательства
+      description: Добавляет доказательства к спору
+      operationId: addEvidence
+      tags:
+        - Arbitration
+      parameters:
+        - name: dispute_id
+          in: path
+          required: true
+          description: ID спора
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddEvidenceRequest"
+      responses:
+        "200":
+          description: Доказательства добавлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dispute"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    CreateDisputeRequest:
+      type: object
+      required:
+        - contract_id
+        - reason
+        - description
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [non_delivery, wrong_items, quality_issues, other]
+        description:
+          type: string
+          minLength: 50
+          maxLength: 2000
+        evidence:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Ссылки на доказательства
+
+    AddEvidenceRequest:
+      type: object
+      required:
+        - evidence
+      properties:
+        evidence:
+          type: array
+          items:
+            type: string
+            format: uri
+        description:
+          type: string
+          maxLength: 500
+
+    Dispute:
+      type: object
+      required:
+        - dispute_id
+        - contract_id
+        - status
+        - created_by
+        - reason
+        - created_at
+      properties:
+        dispute_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, investigating, resolved]
+        created_by:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+            format: uri
+        resolution:
+          type: string
+          description: Решение арбитража
+        resolution_date:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

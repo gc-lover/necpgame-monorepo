@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: Economy Analytics Portfolio Service API
+  description: |
+    API для портфельной аналитики.
+    
+    **Функциональность:**
+    - Аналитика портфеля игрока
+    - Метрики производительности
+    - История портфеля
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8095/v1
+    description: Development server
+
+tags:
+  - name: Portfolio
+    description: Портфельная аналитика
+
+paths:
+  /analytics/portfolio/{player_id}:
+    get:
+      summary: Получить аналитику портфеля
+      description: Возвращает аналитику портфеля игрока
+      operationId: getPortfolioAnalytics
+      tags:
+        - Portfolio
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Аналитика портфеля
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioAnalytics"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /analytics/portfolio/{player_id}/metrics:
+    get:
+      summary: Получить метрики портфеля
+      description: Возвращает метрики производительности портфеля
+      operationId: getPortfolioMetrics
+      tags:
+        - Portfolio
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Метрики портфеля
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioMetrics"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    PortfolioAnalytics:
+      type: object
+      required:
+        - player_id
+        - total_value
+        - positions
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        total_value:
+          type: number
+          format: double
+          description: Общая стоимость портфеля
+        positions:
+          type: array
+          items:
+            type: object
+            properties:
+              symbol:
+                type: string
+              quantity:
+                type: number
+              current_price:
+                type: number
+              cost_basis:
+                type: number
+              unrealized_pnl:
+                type: number
+              unrealized_pnl_percent:
+                type: number
+        allocation:
+          type: object
+          description: Распределение по секторам
+          additionalProperties:
+            type: number
+
+    PortfolioMetrics:
+      type: object
+      required:
+        - total_return
+        - total_return_percent
+      properties:
+        total_return:
+          type: number
+          format: double
+          description: Общая прибыль/убыток
+        total_return_percent:
+          type: number
+          description: Процент доходности
+        sharpe_ratio:
+          type: number
+          description: Коэффициент Шарпа
+        max_drawdown:
+          type: number
+          description: Максимальная просадка
+        win_rate:
+          type: number
+          description: Процент прибыльных сделок
+        average_win:
+          type: number
+          description: Средняя прибыль
+        average_loss:
+          type: number
+          description: Средний убыток
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

@@ -1,0 +1,265 @@
+openapi: 3.0.3
+info:
+  title: Economy Analytics Indicators Service API
+  description: |
+    API для технических индикаторов рынка.
+    
+    **Технические индикаторы:**
+    - MA (Moving Average) - скользящие средние
+    - RSI (Relative Strength Index) - индекс относительной силы
+    - MACD (Moving Average Convergence Divergence)
+    - Bollinger Bands - полосы Боллинджера
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8095/v1
+    description: Development server
+
+tags:
+  - name: Indicators
+    description: Технические индикаторы
+
+paths:
+  /analytics/indicators/{symbol}:
+    get:
+      summary: Получить технические индикаторы
+      description: Возвращает рассчитанные технические индикаторы для актива
+      operationId: getIndicators
+      tags:
+        - Indicators
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          description: Символ актива
+          schema:
+            type: string
+        - name: indicators
+          in: query
+          description: Список индикаторов (comma-separated)
+          schema:
+            type: string
+            example: "MA,RSI,MACD"
+        - name: timeframe
+          in: query
+          description: Таймфрейм
+          schema:
+            $ref: "#/components/schemas/Timeframe"
+      responses:
+        "200":
+          description: Технические индикаторы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorsResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /analytics/sentiment/{symbol}:
+    get:
+      summary: Получить анализ настроений
+      description: Возвращает анализ настроений рынка для актива
+      operationId: getSentiment
+      tags:
+        - Indicators
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          description: Символ актива
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Анализ настроений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SentimentResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /analytics/heatmap:
+    get:
+      summary: Получить тепловую карту рынка
+      description: Возвращает тепловую карту для визуализации рынка по секторам
+      operationId: getMarketHeatmap
+      tags:
+        - Indicators
+      parameters:
+        - name: sector
+          in: query
+          description: Фильтр по сектору
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Тепловая карта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeatmapResponse"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Timeframe:
+      type: string
+      enum:
+        - '1m'
+        - '5m'
+        - '15m'
+        - '30m'
+        - '1h'
+        - '4h'
+        - '1d'
+        - '1w'
+        - '1M'
+      description: Таймфрейм
+
+    MovingAverage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [SMA, EMA, WMA]
+        period:
+          type: integer
+        values:
+          type: array
+          items:
+            type: number
+
+    RSI:
+      type: object
+      properties:
+        period:
+          type: integer
+        current_value:
+          type: number
+          minimum: 0
+          maximum: 100
+        values:
+          type: array
+          items:
+            type: number
+
+    MACD:
+      type: object
+      properties:
+        macd_line:
+          type: array
+          items:
+            type: number
+        signal_line:
+          type: array
+          items:
+            type: number
+        histogram:
+          type: array
+          items:
+            type: number
+
+    BollingerBands:
+      type: object
+      properties:
+        upper_band:
+          type: array
+          items:
+            type: number
+        middle_band:
+          type: array
+          items:
+            type: number
+        lower_band:
+          type: array
+          items:
+            type: number
+
+    IndicatorsResponse:
+      type: object
+      required:
+        - symbol
+        - timeframe
+      properties:
+        symbol:
+          type: string
+        timeframe:
+          $ref: "#/components/schemas/Timeframe"
+        ma:
+          $ref: "#/components/schemas/MovingAverage"
+        rsi:
+          $ref: "#/components/schemas/RSI"
+        macd:
+          $ref: "#/components/schemas/MACD"
+        bollinger_bands:
+          $ref: "#/components/schemas/BollingerBands"
+
+    SentimentResponse:
+      type: object
+      required:
+        - symbol
+        - sentiment_score
+      properties:
+        symbol:
+          type: string
+        sentiment_score:
+          type: number
+          minimum: -1
+          maximum: 1
+          description: От -1 (медвежий) до +1 (бычий)
+        fear_greed_index:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Индекс страха и жадности
+        bullish_percentage:
+          type: number
+          description: Процент бычьих сигналов
+        bearish_percentage:
+          type: number
+          description: Процент медвежьих сигналов
+
+    HeatmapResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              symbol:
+                type: string
+              name:
+                type: string
+              sector:
+                type: string
+              change_percent:
+                type: number
+              volume:
+                type: number
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

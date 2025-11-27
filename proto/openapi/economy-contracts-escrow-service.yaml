@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: Economy Contracts Escrow Service API
+  description: |
+    API для управления эскроу и залогами в контрактах.
+    
+    **Функциональность:**
+    - Блокировка активов в эскроу
+    - Управление залогами (collateral)
+    - Освобождение эскроу при завершении
+    - Распределение эскроу при спорах
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8098/v1
+    description: Development server
+
+tags:
+  - name: Escrow
+    description: Эскроу и залоги
+
+paths:
+  /escrow/{escrow_id}:
+    get:
+      summary: Получить детали эскроу
+      description: Возвращает информацию об эскроу
+      operationId: getEscrow
+      tags:
+        - Escrow
+      parameters:
+        - name: escrow_id
+          in: path
+          required: true
+          description: ID эскроу
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали эскроу
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Escrow"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /collateral/{collateral_id}:
+    get:
+      summary: Получить детали залога
+      description: Возвращает информацию о залоге
+      operationId: getCollateral
+      tags:
+        - Escrow
+      parameters:
+        - name: collateral_id
+          in: path
+          required: true
+          description: ID залога
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали залога
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collateral"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    ContractAssets:
+      type: object
+      description: Активы в контракте
+      properties:
+        currency:
+          type: number
+          format: double
+          description: Количество валюты
+        items:
+          type: array
+          description: Предметы
+          items:
+            type: object
+            required:
+              - item_id
+              - quantity
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+
+    Escrow:
+      type: object
+      required:
+        - escrow_id
+        - contract_id
+        - status
+        - created_at
+      properties:
+        escrow_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [locked, released, distributed]
+        initiator_locked:
+          $ref: "#/components/schemas/ContractAssets"
+        counterparty_locked:
+          $ref: "#/components/schemas/ContractAssets"
+        created_at:
+          type: string
+          format: date-time
+        released_at:
+          type: string
+          format: date-time
+
+    Collateral:
+      type: object
+      required:
+        - collateral_id
+        - contract_id
+        - player_id
+        - amount
+        - status
+      properties:
+        collateral_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [locked, released, forfeited]
+        created_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

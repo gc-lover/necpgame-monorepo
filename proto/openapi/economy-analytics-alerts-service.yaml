@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Economy Analytics Alerts Service API
+  description: |
+    API для системы оповещений о ценах.
+    
+    **Функциональность:**
+    - Создание оповещений о ценах
+    - Удаление оповещений
+    - Список активных оповещений
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8095/v1
+    description: Development server
+
+tags:
+  - name: Alerts
+    description: Оповещения о ценах
+
+paths:
+  /analytics/alerts:
+    get:
+      summary: Получить список оповещений
+      description: Возвращает список оповещений о ценах для игрока
+      operationId: getAlerts
+      tags:
+        - Alerts
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список оповещений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    post:
+      summary: Создать оповещение
+      description: Создает новое оповещение о цене
+      operationId: createAlert
+      tags:
+        - Alerts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAlertRequest"
+      responses:
+        "201":
+          description: Оповещение создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /analytics/alerts/{alert_id}:
+    delete:
+      summary: Удалить оповещение
+      description: Удаляет оповещение о цене
+      operationId: deleteAlert
+      tags:
+        - Alerts
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          description: ID оповещения
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Оповещение удалено
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    AlertCondition:
+      type: string
+      enum:
+        - price_above
+        - price_below
+        - price_crosses_above
+        - price_crosses_below
+        - rsi_above
+        - rsi_below
+      description: Условие срабатывания оповещения
+
+    Alert:
+      type: object
+      required:
+        - alert_id
+        - player_id
+        - symbol
+        - condition
+        - threshold
+        - is_active
+      properties:
+        alert_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        condition:
+          $ref: "#/components/schemas/AlertCondition"
+        threshold:
+          type: number
+          description: Пороговое значение
+        is_active:
+          type: boolean
+        triggered_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    CreateAlertRequest:
+      type: object
+      required:
+        - player_id
+        - symbol
+        - condition
+        - threshold
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        condition:
+          $ref: "#/components/schemas/AlertCondition"
+        threshold:
+          type: number
+
+    AlertListResponse:
+      type: object
+      required:
+        - alerts
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Alert"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
