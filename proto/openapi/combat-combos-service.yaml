@@ -1,0 +1,481 @@
+openapi: 3.0.3
+info:
+  title: Combat Combos & Synergies Service API
+  description: |
+    API для системы комбо и синергий в NECPGAME.
+    
+    **Основные возможности:**
+    - Каталог комбо (соло, командные, легендарные)
+    - Активация комбо
+    - Система синергий
+    - Scoring система
+    - Chain комбо
+    - Лоадауты комбо
+    
+    **Типы комбо:**
+    - Solo - соло комбо (1 игрок)
+    - Team - командные комбо (2-5 игроков)
+    - Legendary - легендарные сценарии (3-5 игроков)
+    
+    **Типы синергий:**
+    - Ability - синергии способностей
+    - Team - командные синергии
+    - Equipment - синергии экипировки
+    - Implant - синергии имплантов
+    - Timing - тайминговые синергии
+    
+    **Scoring категории:**
+    - Bronze (1000-2499)
+    - Silver (2500-4999)
+    - Gold (5000-7499)
+    - Platinum (7500-9999)
+    - Legendary (10000+)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Catalog
+    description: Каталог комбо
+  - name: Activation
+    description: Активация комбо
+  - name: Synergies
+    description: Синергии
+  - name: Scoring
+    description: Система оценки
+  - name: Loadout
+    description: Лоадауты комбо
+  - name: Analytics
+    description: Аналитика
+
+paths:
+  /api/v1/gameplay/combat/combos/catalog:
+    get:
+      tags:
+        - Catalog
+      summary: Каталог комбо
+      description: |
+        Возвращает каталог доступных комбо.
+        
+        **Фильтры:**
+        - По типу (solo, team, legendary)
+        - По сложности (bronze, silver, gold, platinum, legendary)
+        - По категории (combat, stealth, freerun, mixed)
+      operationId: getCombosCatalog
+      parameters:
+        - name: combo_type
+          in: query
+          schema:
+            type: string
+            enum: [solo, team, legendary]
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [bronze, silver, gold, platinum, legendary]
+      responses:
+        "200":
+          description: Каталог комбо
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  combos:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Combo"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/combos/{combo_id}:
+    get:
+      tags:
+        - Catalog
+      summary: Информация о комбо
+      description: Возвращает детальную информацию о комбо
+      operationId: getCombo
+      parameters:
+        - name: combo_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о комбо
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboDetailed"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/combos/activate:
+    post:
+      tags:
+        - Activation
+      summary: Активация комбо
+      description: |
+        Активирует комбо.
+        
+        **Проверки:**
+        - Последовательность действий
+        - Требования комбо
+        - Участники (для team/legendary)
+        - Временное окно
+      operationId: activateCombo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateComboRequest"
+      responses:
+        "200":
+          description: Комбо активировано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboActivationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/combos/synergy:
+    post:
+      tags:
+        - Synergies
+      summary: Применение синергии
+      description: Применяет синергию к комбо
+      operationId: applySynergy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplySynergyRequest"
+      responses:
+        "200":
+          description: Синергия применена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SynergyResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/combos/score:
+    post:
+      tags:
+        - Scoring
+      summary: Отправка результатов scoring
+      description: Отправляет результаты выполнения комбо для оценки
+      operationId: submitComboScore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComboScoreRequest"
+      responses:
+        "200":
+          description: Результаты обработаны
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboScoreResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/combos/loadout:
+    get:
+      tags:
+        - Loadout
+      summary: Лоадаут комбо
+      description: Возвращает текущий лоадаут комбо
+      operationId: getComboLoadout
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        "200":
+          description: Лоадаут комбо
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboLoadout"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - Loadout
+      summary: Обновление лоадаута
+      description: Обновляет лоадаут комбо
+      operationId: updateComboLoadout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLoadoutRequest"
+      responses:
+        "200":
+          description: Лоадаут обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboLoadout"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/combos/analytics:
+    get:
+      tags:
+        - Analytics
+      summary: Метрики эффективности
+      description: Возвращает аналитику по комбо
+      operationId: getComboAnalytics
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        "200":
+          description: Аналитика комбо
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboAnalytics"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Combo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        combo_type:
+          type: string
+          enum: [solo, team, legendary]
+        difficulty:
+          type: string
+          enum: [bronze, silver, gold, platinum, legendary]
+        category:
+          type: string
+          enum: [combat, stealth, freerun, mixed]
+        participants_required:
+          type: integer
+
+    ComboDetailed:
+      allOf:
+        - $ref: "#/components/schemas/Combo"
+        - type: object
+          properties:
+            actions_sequence:
+              type: array
+              items:
+                type: object
+            requirements:
+              type: object
+            synergies:
+              type: array
+              items:
+                type: string
+
+    ActivateComboRequest:
+      type: object
+      required:
+        - character_id
+        - combo_id
+        - actions
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        combo_id:
+          type: string
+          format: uuid
+        actions:
+          type: array
+          items:
+            type: object
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ComboActivationResult:
+      type: object
+      properties:
+        combo_id:
+          type: string
+        success:
+          type: boolean
+        synergies_triggered:
+          type: array
+          items:
+            type: string
+        score:
+          type: integer
+        category:
+          type: string
+
+    ApplySynergyRequest:
+      type: object
+      required:
+        - character_id
+        - synergy_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        synergy_type:
+          type: string
+          enum: [ability, team, equipment, implant, timing]
+        combo_id:
+          type: string
+          format: uuid
+
+    SynergyResult:
+      type: object
+      properties:
+        synergy_type:
+          type: string
+        bonus_effects:
+          type: object
+        multiplier:
+          type: number
+
+    ComboScoreRequest:
+      type: object
+      required:
+        - character_id
+        - combo_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        combo_id:
+          type: string
+          format: uuid
+        execution_difficulty:
+          type: number
+        damage_output:
+          type: integer
+        visual_impact:
+          type: number
+        team_coordination:
+          type: number
+
+    ComboScoreResult:
+      type: object
+      properties:
+        total_score:
+          type: integer
+        category:
+          type: string
+          enum: [bronze, silver, gold, platinum, legendary]
+        breakdown:
+          type: object
+
+    ComboLoadout:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        favorite_combos:
+          type: array
+          items:
+            type: string
+            format: uuid
+        auto_activate:
+          type: boolean
+
+    UpdateLoadoutRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        favorite_combos:
+          type: array
+          items:
+            type: string
+        auto_activate:
+          type: boolean
+
+    ComboAnalytics:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        total_combos:
+          type: integer
+        success_rate:
+          type: number
+        average_score:
+          type: integer
+        best_combo:
+          type: string
+
