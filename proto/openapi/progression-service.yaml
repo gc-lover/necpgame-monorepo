@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: Progression Service API
+  description: API для управления прогрессией персонажа (опыт, уровни, атрибуты).
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8087/v1
+    description: Development server
+
+tags:
+  - name: Experience
+    description: Опыт персонажа
+  - name: Levels
+    description: Уровни персонажа
+  - name: Attributes
+    description: Атрибуты и очки навыков
+
+paths:
+  /gameplay/progression/experience/add:
+    post:
+      summary: Начислить опыт
+      description: Начисляет опыт персонажу
+      operationId: addExperience
+      tags:
+        - Experience
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddExperienceRequest"
+      responses:
+        "200":
+          description: Опыт начислен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperienceResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/progression/level/{player_id}:
+    get:
+      summary: Получить уровень игрока
+      description: Возвращает текущий уровень и прогресс игрока
+      operationId: getPlayerLevel
+      tags:
+        - Levels
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Уровень игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerLevel"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/progression/level/{player_id}/up:
+    post:
+      summary: Повысить уровень
+      description: Повышает уровень персонажа
+      operationId: levelUp
+      tags:
+        - Levels
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Уровень повышен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LevelUpResult"
+        "400":
+          description: Недостаточно опыта
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/progression/attributes/{player_id}:
+    get:
+      summary: Получить атрибуты игрока
+      description: Возвращает атрибуты и доступные очки
+      operationId: getPlayerAttributes
+      tags:
+        - Attributes
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Атрибуты игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAttributes"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/progression/attributes/{player_id}/assign:
+    post:
+      summary: Распределить очки атрибутов
+      description: Распределяет очки по атрибутам
+      operationId: assignAttributePoints
+      tags:
+        - Attributes
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignAttributesRequest"
+      responses:
+        "200":
+          description: Очки распределены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAttributes"
+        "400":
+          description: Недостаточно очков или неверное распределение
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/progression/attributes/{player_id}/reset:
+    post:
+      summary: Сбросить атрибуты
+      description: Сбрасывает атрибуты и возвращает очки
+      operationId: resetAttributes
+      tags:
+        - Attributes
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Атрибуты сброшены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAttributes"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/progression/skills/{player_id}:
+    get:
+      summary: Получить навыки игрока
+      description: Возвращает навыки и доступные очки
+      operationId: getPlayerSkills
+      tags:
+        - Attributes
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Навыки игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerSkills"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/progression/skills/{player_id}/upgrade:
+    post:
+      summary: Улучшить навык
+      description: Улучшает навык персонажа
+      operationId: upgradeSkill
+      tags:
+        - Attributes
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpgradeSkillRequest"
+      responses:
+        "200":
+          description: Навык улучшен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerSkills"
+        "400":
+          description: Недостаточно очков или требований не выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    AddExperienceRequest:
+      type: object
+      required:
+        - player_id
+        - amount
+        - source
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          minimum: 1
+        source:
+          $ref: "#/components/schemas/ExperienceSource"
+
+    ExperienceSource:
+      type: string
+      enum:
+        - COMBAT
+        - QUEST
+        - SKILL_USE
+        - EXPLORATION
+        - ACHIEVEMENT
+        - EVENT
+
+    ExperienceResult:
+      type: object
+      properties:
+        total_experience:
+          type: integer
+        level:
+          type: integer
+        leveled_up:
+          type: boolean
+        new_level:
+          type: integer
+          nullable: true
+
+    PlayerLevel:
+      type: object
+      required:
+        - player_id
+        - level
+        - current_experience
+        - experience_to_next_level
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+        current_experience:
+          type: integer
+        experience_to_next_level:
+          type: integer
+        total_experience:
+          type: integer
+
+    LevelUpResult:
+      type: object
+      properties:
+        new_level:
+          type: integer
+        attribute_points_gained:
+          type: integer
+        skill_points_gained:
+          type: integer
+        unlocked_features:
+          type: array
+          items:
+            type: string
+
+    PlayerAttributes:
+      type: object
+      required:
+        - player_id
+        - available_points
+        - attributes
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        available_points:
+          type: integer
+        attributes:
+          type: object
+          properties:
+            strength:
+              type: integer
+            intelligence:
+              type: integer
+            reflexes:
+              type: integer
+            technical:
+              type: integer
+            cool:
+              type: integer
+
+    AssignAttributesRequest:
+      type: object
+      required:
+        - attributes
+      properties:
+        attributes:
+          type: object
+          additionalProperties:
+            type: integer
+
+    PlayerSkills:
+      type: object
+      required:
+        - player_id
+        - available_points
+        - skills
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        available_points:
+          type: integer
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Skill"
+
+    Skill:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        level:
+          type: integer
+        max_level:
+          type: integer
+        category:
+          type: string
+
+    UpgradeSkillRequest:
+      type: object
+      required:
+        - skill_id
+      properties:
+        skill_id:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
