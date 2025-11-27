@@ -1,0 +1,481 @@
+openapi: 3.0.3
+info:
+  title: Quest Service API
+  description: API для управления квестами игроков.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8087/v1
+    description: Development server
+
+tags:
+  - name: Quests
+    description: Управление квестами
+
+paths:
+  /gameplay/quests/available:
+    get:
+      summary: Получить доступные квесты
+      description: Возвращает доступные квесты для игрока
+      operationId: getAvailableQuests
+      tags:
+        - Quests
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: quest_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/QuestType"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список доступных квестов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/quests/active:
+    get:
+      summary: Получить активные квесты
+      description: Возвращает активные квесты игрока
+      operationId: getActiveQuests
+      tags:
+        - Quests
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список активных квестов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveQuestListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/quests/start:
+    post:
+      summary: Начать квест
+      description: Начинает квест для игрока
+      operationId: startQuest
+      tags:
+        - Quests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartQuestRequest"
+      responses:
+        "201":
+          description: Квест начат
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Квест уже активен или недоступен
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/quests/{quest_id}/state:
+    get:
+      summary: Получить состояние квеста
+      description: Возвращает состояние квеста игрока
+      operationId: getQuestState
+      tags:
+        - Quests
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние квеста
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/quests/{quest_id}/update-progress:
+    post:
+      summary: Обновить прогресс квеста
+      description: Обновляет прогресс квеста
+      operationId: updateQuestProgress
+      tags:
+        - Quests
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProgressRequest"
+      responses:
+        "200":
+          description: Прогресс обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/quests/{quest_id}/complete-objective:
+    post:
+      summary: Завершить цель квеста
+      description: Завершает цель квеста
+      operationId: completeObjective
+      tags:
+        - Quests
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteObjectiveRequest"
+      responses:
+        "200":
+          description: Цель завершена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestInstance"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/quests/{quest_id}/complete:
+    post:
+      summary: Завершить квест
+      description: Завершает квест и выдаёт награды
+      operationId: completeQuest
+      tags:
+        - Quests
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Квест завершён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestCompletionResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /gameplay/quests/{quest_id}/abandon:
+    post:
+      summary: Отказаться от квеста
+      description: Отказывается от квеста
+      operationId: abandonQuest
+      tags:
+        - Quests
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        "204":
+          description: Квест отменён
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Quest:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - quest_type
+        - level_requirement
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        quest_type:
+          $ref: "#/components/schemas/QuestType"
+        level_requirement:
+          type: integer
+        faction:
+          type: string
+          nullable: true
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestObjective"
+        rewards:
+          type: object
+
+    QuestType:
+      type: string
+      enum:
+        - MAIN
+        - SIDE
+        - DAILY
+        - WEEKLY
+        - FACTION
+        - GUILD
+        - DYNAMIC
+        - EVENT
+        - SOCIAL
+
+    QuestObjective:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        objective_type:
+          type: string
+        target:
+          type: integer
+        optional:
+          type: boolean
+
+    QuestInstance:
+      type: object
+      required:
+        - id
+        - quest_id
+        - player_id
+        - status
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/QuestStatus"
+        progress:
+          type: object
+          additionalProperties:
+            type: integer
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    QuestStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - COMPLETED
+        - FAILED
+        - ABANDONED
+
+    StartQuestRequest:
+      type: object
+      required:
+        - player_id
+        - quest_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+
+    UpdateProgressRequest:
+      type: object
+      required:
+        - objective_id
+        - progress
+      properties:
+        objective_id:
+          type: string
+        progress:
+          type: integer
+
+    CompleteObjectiveRequest:
+      type: object
+      required:
+        - player_id
+        - objective_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        objective_id:
+          type: string
+
+    QuestCompletionResult:
+      type: object
+      properties:
+        quest_instance:
+          $ref: "#/components/schemas/QuestInstance"
+        rewards:
+          type: object
+          properties:
+            experience:
+              type: integer
+            currency:
+              type: number
+            items:
+              type: array
+              items:
+                type: object
+
+    QuestListResponse:
+      type: object
+      required:
+        - quests
+        - pagination
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: "#/components/schemas/Quest"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    ActiveQuestListResponse:
+      type: object
+      required:
+        - quests
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestInstance"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
