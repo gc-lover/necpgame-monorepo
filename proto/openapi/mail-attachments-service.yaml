@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: Mail Attachments Service API
+  description: API для управления вложениями в письмах.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8086/v1
+    description: Development server
+
+tags:
+  - name: Attachments
+    description: Вложения в письма
+
+paths:
+  /social/mail/{mail_id}/attachments:
+    get:
+      summary: Получить список вложений
+      description: Возвращает список вложений письма
+      operationId: getAttachments
+      tags:
+        - Attachments
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список вложений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachmentListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/mail/{mail_id}/attachments/claim:
+    post:
+      summary: Получить вложения
+      description: Получает вложения из письма
+      operationId: claimAttachments
+      tags:
+        - Attachments
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimAttachmentsRequest"
+      responses:
+        "200":
+          description: Вложения получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Недостаточно места или средств
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Attachment:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/AttachmentType"
+        item_id:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: integer
+          nullable: true
+        currency_type:
+          type: string
+          nullable: true
+        currency_amount:
+          type: number
+          format: double
+          nullable: true
+
+    AttachmentType:
+      type: string
+      enum:
+        - ITEM
+        - CURRENCY
+        - QUEST_REWARD
+        - ACHIEVEMENT_REWARD
+
+    ClaimAttachmentsRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    ClaimResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        claimed_attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+
+    AttachmentListResponse:
+      type: object
+      required:
+        - attachments
+      properties:
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

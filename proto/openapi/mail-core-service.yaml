@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: Mail Core Service API
+  description: API для управления письмами (CRUD, чтение, удаление).
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8086/v1
+    description: Development server
+
+tags:
+  - name: Mail
+    description: Управление письмами
+
+paths:
+  /social/mail/send:
+    post:
+      summary: Отправить письмо
+      description: Отправляет письмо игроку
+      operationId: sendMail
+      tags:
+        - Mail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMailRequest"
+      responses:
+        "201":
+          description: Письмо отправлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mail"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Получатель не найден
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/mail/inbox:
+    get:
+      summary: Получить входящие письма
+      description: Возвращает входящие письма игрока
+      operationId: getInbox
+      tags:
+        - Mail
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/MailStatus"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список писем
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MailListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/mail/{mail_id}:
+    get:
+      summary: Получить письмо
+      description: Возвращает содержимое письма
+      operationId: getMail
+      tags:
+        - Mail
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Содержимое письма
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mail"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Удалить письмо
+      description: Удаляет письмо
+      operationId: deleteMail
+      tags:
+        - Mail
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Письмо удалено
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/mail/{mail_id}/read:
+    put:
+      summary: Пометить письмо как прочитанное
+      description: Помечает письмо как прочитанное
+      operationId: markMailAsRead
+      tags:
+        - Mail
+      parameters:
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Письмо помечено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mail"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/mail/unread-count:
+    get:
+      summary: Получить количество непрочитанных писем
+      description: Возвращает количество непрочитанных писем
+      operationId: getUnreadCount
+      tags:
+        - Mail
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Количество непрочитанных
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Mail:
+      type: object
+      required:
+        - id
+        - recipient_id
+        - subject
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: null для системных писем
+        recipient_id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+        body:
+          type: string
+        status:
+          $ref: "#/components/schemas/MailStatus"
+        has_attachments:
+          type: boolean
+        cod_amount:
+          type: number
+          format: double
+          nullable: true
+          description: COD сумма
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+
+    MailStatus:
+      type: string
+      enum:
+        - UNREAD
+        - READ
+        - CLAIMED
+        - EXPIRED
+
+    SendMailRequest:
+      type: object
+      required:
+        - recipient_id
+        - subject
+        - body
+      properties:
+        sender_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: null для системных писем
+        recipient_id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+          maxLength: 100
+        body:
+          type: string
+          maxLength: 1000
+        cod_amount:
+          type: number
+          format: double
+          minimum: 0
+          nullable: true
+        expires_in_hours:
+          type: integer
+          minimum: 1
+          maximum: 720
+          default: 168
+          description: Срок хранения (часы)
+
+    MailListResponse:
+      type: object
+      required:
+        - mails
+        - pagination
+      properties:
+        mails:
+          type: array
+          items:
+            $ref: "#/components/schemas/Mail"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
