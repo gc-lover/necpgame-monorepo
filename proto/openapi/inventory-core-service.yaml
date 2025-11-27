@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: Inventory Service API
-  description: API для управления инвентарём, экипировкой и хранилищем персонажа.
+  title: Inventory Core Service API
+  description: API для управления основным инвентарём персонажа (backpack).
   version: 1.0.0
 
 servers:
@@ -12,11 +12,7 @@ servers:
 
 tags:
   - name: Inventory
-    description: Инвентарь персонажа
-  - name: Equipment
-    description: Экипировка персонажа
-  - name: Storage
-    description: Банк и хранилище
+    description: Основной инвентарь персонажа
 
 paths:
   /economy/inventory/{character_id}:
@@ -270,13 +266,63 @@ paths:
       security:
         - BearerAuth: []
 
-  /economy/inventory/{character_id}/equipment:
+  /economy/inventory/{character_id}/items/{item_id}/merge:
+    post:
+      summary: Объединить стеки
+      description: Объединяет два стека одинаковых предметов
+      operationId: mergeStacks
+      tags:
+        - Inventory
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_item_id
+              properties:
+                target_item_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Стеки объединены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/inventory/{character_id}/free-slots:
     get:
-      summary: Получить экипировку
-      description: Возвращает всю экипировку персонажа
-      operationId: getEquipment
+      summary: Получить свободные слоты
+      description: Возвращает количество свободных слотов в инвентаре
+      operationId: getFreeSlots
       tags:
-        - Equipment
+        - Inventory
       parameters:
         - name: character_id
           in: path
@@ -286,226 +332,16 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Экипировка персонажа
+          description: Количество свободных слотов
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Equipment"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /economy/inventory/{character_id}/equipment/equip:
-    post:
-      summary: Экипировать предмет
-      description: Экипирует предмет в соответствующий слот
-      operationId: equipItem
-      tags:
-        - Equipment
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - item_id
-              properties:
-                item_id:
-                  type: string
-                  format: uuid
-                slot:
-                  type: string
-      responses:
-        "200":
-          description: Предмет экипирован
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Equipment"
-        "400":
-          description: Не выполнены требования для экипировки
-          content:
-            application/json:
-              schema:
-                $ref: "common.yaml#/components/schemas/Error"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /economy/inventory/{character_id}/equipment/unequip:
-    post:
-      summary: Снять предмет
-      description: Снимает экипированный предмет
-      operationId: unequipItem
-      tags:
-        - Equipment
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - slot
-              properties:
-                slot:
-                  type: string
-      responses:
-        "200":
-          description: Предмет снят
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Equipment"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /economy/inventory/{character_id}/storage:
-    get:
-      summary: Получить хранилище
-      description: Возвращает банк/стэш персонажа
-      operationId: getStorage
-      tags:
-        - Storage
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Хранилище персонажа
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Storage"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /economy/inventory/{character_id}/storage/deposit:
-    post:
-      summary: Положить в хранилище
-      description: Перемещает предмет из инвентаря в хранилище
-      operationId: depositToStorage
-      tags:
-        - Storage
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - item_id
-              properties:
-                item_id:
-                  type: string
-                  format: uuid
-                quantity:
-                  type: integer
-      responses:
-        "200":
-          description: Предмет помещён в хранилище
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Storage"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /economy/inventory/{character_id}/storage/withdraw:
-    post:
-      summary: Взять из хранилища
-      description: Перемещает предмет из хранилища в инвентарь
-      operationId: withdrawFromStorage
-      tags:
-        - Storage
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - item_id
-              properties:
-                item_id:
-                  type: string
-                  format: uuid
-                quantity:
-                  type: integer
-      responses:
-        "200":
-          description: Предмет взят из хранилища
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Inventory"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
+                type: object
+                properties:
+                  free_slots:
+                    type: integer
+                  total_slots:
+                    type: integer
         "401":
           $ref: "common.yaml#/components/responses/Unauthorized"
         "404":
@@ -561,6 +397,10 @@ components:
           type: boolean
         tradeable:
           type: boolean
+        stackable:
+          type: boolean
+        max_stack:
+          type: integer
 
     AddItemRequest:
       type: object
@@ -584,33 +424,7 @@ components:
         slot:
           type: integer
 
-    Equipment:
-      type: object
-      properties:
-        character_id:
-          type: string
-          format: uuid
-        slots:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/InventoryItem"
-
-    Storage:
-      type: object
-      required:
-        - character_id
-        - items
-      properties:
-        character_id:
-          type: string
-          format: uuid
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/InventoryItem"
-        capacity:
-          type: integer
-
   securitySchemes:
     BearerAuth:
       $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

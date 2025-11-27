@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: Inventory Equipment Service API
+  description: API для управления экипировкой персонажа.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8086/v1
+    description: Development server
+
+tags:
+  - name: Equipment
+    description: Экипировка персонажа
+
+paths:
+  /economy/inventory/{character_id}/equipment:
+    get:
+      summary: Получить экипировку
+      description: Возвращает всю экипировку персонажа
+      operationId: getEquipment
+      tags:
+        - Equipment
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Экипировка персонажа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipment"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/inventory/{character_id}/equipment/equip:
+    post:
+      summary: Экипировать предмет
+      description: Экипирует предмет в соответствующий слот
+      operationId: equipItem
+      tags:
+        - Equipment
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipItemRequest"
+      responses:
+        "200":
+          description: Предмет экипирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipment"
+        "400":
+          description: Не выполнены требования для экипировки
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/inventory/{character_id}/equipment/unequip:
+    post:
+      summary: Снять предмет
+      description: Снимает экипированный предмет
+      operationId: unequipItem
+      tags:
+        - Equipment
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - slot
+              properties:
+                slot:
+                  type: string
+      responses:
+        "200":
+          description: Предмет снят
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipment"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/inventory/{character_id}/equipment/stats:
+    get:
+      summary: Получить статы от экипировки
+      description: Возвращает суммарные статы от всей экипировки
+      operationId: getEquipmentStats
+      tags:
+        - Equipment
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статы от экипировки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipmentStats"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Equipment:
+      type: object
+      required:
+        - character_id
+        - slots
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        slots:
+          type: object
+          properties:
+            weapon:
+              $ref: "#/components/schemas/EquippedItem"
+            armor:
+              $ref: "#/components/schemas/EquippedItem"
+            helmet:
+              $ref: "#/components/schemas/EquippedItem"
+            gloves:
+              $ref: "#/components/schemas/EquippedItem"
+            boots:
+              $ref: "#/components/schemas/EquippedItem"
+            implant_1:
+              $ref: "#/components/schemas/EquippedItem"
+            implant_2:
+              $ref: "#/components/schemas/EquippedItem"
+
+    EquippedItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_type:
+          type: string
+        stats:
+          type: object
+          additionalProperties:
+            type: number
+
+    EquipItemRequest:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+
+    EquipmentStats:
+      type: object
+      properties:
+        total_stats:
+          type: object
+          additionalProperties:
+            type: number
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
