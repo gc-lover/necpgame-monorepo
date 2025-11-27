@@ -1,0 +1,242 @@
+openapi: 3.0.3
+info:
+  title: Chat Messages Service API
+  description: API для отправки и получения сообщений чата.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8084/v1
+    description: Development server
+
+tags:
+  - name: Messages
+    description: Сообщения чата
+
+paths:
+  /social/chat/messages/send:
+    post:
+      summary: Отправить сообщение
+      description: Отправляет сообщение в канал
+      operationId: sendMessage
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "201":
+          description: Сообщение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Игрок забанен или нет доступа
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "429":
+          description: Слишком много сообщений
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/chat/messages/history:
+    get:
+      summary: Получить историю сообщений
+      description: Возвращает историю сообщений канала
+      operationId: getMessageHistory
+      tags:
+        - Messages
+      parameters:
+        - name: channel_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: before_timestamp
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: "common.yaml#/components/parameters/Limit"
+      responses:
+        "200":
+          description: История сообщений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageHistoryResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Нет доступа к каналу
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/chat/messages/{message_id}:
+    delete:
+      summary: Удалить сообщение
+      description: Удаляет сообщение (для модераторов или автора)
+      operationId: deleteMessage
+      tags:
+        - Messages
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Сообщение удалено
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/chat/whisper:
+    post:
+      summary: Отправить приватное сообщение
+      description: Отправляет приватное сообщение игроку
+      operationId: sendWhisper
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WhisperRequest"
+      responses:
+        "201":
+          description: Сообщение отправлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Получатель заблокировал отправителя
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          description: Получатель не найден
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    ChatMessage:
+      type: object
+      required:
+        - id
+        - sender_id
+        - channel_id
+        - content
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    SendMessageRequest:
+      type: object
+      required:
+        - sender_id
+        - channel_id
+        - content
+      properties:
+        sender_id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+        content:
+          type: string
+          maxLength: 500
+
+    WhisperRequest:
+      type: object
+      required:
+        - sender_id
+        - recipient_id
+        - content
+      properties:
+        sender_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+          maxLength: 500
+
+    MessageHistoryResponse:
+      type: object
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+        has_more:
+          type: boolean
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

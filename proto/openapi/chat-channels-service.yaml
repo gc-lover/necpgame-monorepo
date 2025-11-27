@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: Chat Channels Service API
+  description: API для управления каналами чата.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8084/v1
+    description: Development server
+
+tags:
+  - name: Channels
+    description: Управление каналами
+
+paths:
+  /social/chat/channels:
+    get:
+      summary: Получить список каналов
+      description: Возвращает доступные каналы чата
+      operationId: getChannels
+      tags:
+        - Channels
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список каналов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/chat/channels/{channel_id}/join:
+    post:
+      summary: Присоединиться к каналу
+      description: Присоединяет игрока к каналу
+      operationId: joinChannel
+      tags:
+        - Channels
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Присоединён к каналу
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Нет доступа к каналу
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/chat/channels/{channel_id}/leave:
+    post:
+      summary: Покинуть канал
+      description: Игрок покидает канал
+      operationId: leaveChannel
+      tags:
+        - Channels
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        "204":
+          description: Покинул канал
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/chat/channels/{channel_id}/members:
+    get:
+      summary: Получить участников канала
+      description: Возвращает список участников канала
+      operationId: getChannelMembers
+      tags:
+        - Channels
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberListResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Channel:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/ChannelType"
+        member_count:
+          type: integer
+
+    ChannelType:
+      type: string
+      enum:
+        - GLOBAL
+        - TRADE
+        - NEWBIE
+        - LOCAL
+        - PARTY
+        - RAID
+        - GUILD
+        - GUILD_OFFICER
+        - WHISPER
+        - SYSTEM
+        - COMBAT_LOG
+        - RP_EMOTE
+
+    ChannelMember:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        joined_at:
+          type: string
+          format: date-time
+
+    ChannelListResponse:
+      type: object
+      required:
+        - channels
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Channel"
+
+    MemberListResponse:
+      type: object
+      required:
+        - members
+        - pagination
+      properties:
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChannelMember"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
