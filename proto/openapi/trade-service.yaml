@@ -1,0 +1,438 @@
+openapi: 3.0.3
+info:
+  title: Trade Service API
+  description: API для P2P торговли между игроками с защитой от мошенничества.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8086/v1
+    description: Development server
+
+tags:
+  - name: Trade Sessions
+    description: Управление торговыми сессиями
+  - name: Trade Offers
+    description: Предложения в торговой сессии
+
+paths:
+  /economy/trade/sessions:
+    post:
+      summary: Создать торговую сессию
+      description: Создаёт новую сессию P2P торговли между игроками
+      operationId: createTradeSession
+      tags:
+        - Trade Sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTradeSessionRequest"
+      responses:
+        "201":
+          description: Торговая сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Игрок уже находится в торговой сессии
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/trade/sessions/{session_id}:
+    get:
+      summary: Получить торговую сессию
+      description: Возвращает детали торговой сессии
+      operationId: getTradeSession
+      tags:
+        - Trade Sessions
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали торговой сессии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Отменить торговую сессию
+      description: Отменяет торговую сессию
+      operationId: cancelTradeSession
+      tags:
+        - Trade Sessions
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Торговая сессия отменена
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Торговая сессия не может быть отменена в текущем статусе
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/trade/sessions/{session_id}/offer:
+    put:
+      summary: Обновить предложение
+      description: Добавляет или обновляет предложение в торговой сессии
+      operationId: updateTradeOffer
+      tags:
+        - Trade Offers
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeOfferRequest"
+      responses:
+        "200":
+          description: Предложение обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "400":
+          description: Неверные предметы или валюта
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Предложение заблокировано после подтверждения
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/trade/sessions/{session_id}/confirm:
+    put:
+      summary: Подтвердить обмен
+      description: Подтверждает готовность к обмену
+      operationId: confirmTrade
+      tags:
+        - Trade Sessions
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+                - confirmed
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                confirmed:
+                  type: boolean
+      responses:
+        "200":
+          description: Подтверждение обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/trade/sessions/{session_id}/execute:
+    post:
+      summary: Выполнить обмен
+      description: Выполняет обмен предметами и валютой после двойного подтверждения
+      operationId: executeTrade
+      tags:
+        - Trade Sessions
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Обмен успешно выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeExecutionResult"
+        "400":
+          description: Не все стороны подтвердили обмен
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Валидация предметов не прошла
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /economy/trade/validate-items:
+    post:
+      summary: Валидировать предметы
+      description: Проверяет владение и доступность предметов для торговли
+      operationId: validateTradeItems
+      tags:
+        - Trade Offers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateItemsRequest"
+      responses:
+        "200":
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    CreateTradeSessionRequest:
+      type: object
+      required:
+        - initiator_id
+        - recipient_id
+      properties:
+        initiator_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+
+    TradeSession:
+      type: object
+      required:
+        - session_id
+        - initiator_id
+        - recipient_id
+        - status
+        - created_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/TradeSessionStatus"
+        initiator_offer:
+          $ref: "#/components/schemas/TradeOffer"
+        recipient_offer:
+          $ref: "#/components/schemas/TradeOffer"
+        initiator_confirmed:
+          type: boolean
+        recipient_confirmed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    TradeSessionStatus:
+      type: string
+      enum:
+        - CREATED
+        - ACTIVE
+        - CONFIRMED
+        - COMPLETED
+        - CANCELLED
+        - EXPIRED
+
+    TradeOffer:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        currency:
+          type: object
+          additionalProperties:
+            type: integer
+
+    TradeItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+
+    TradeOfferRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        currency:
+          type: object
+          additionalProperties:
+            type: integer
+
+    TradeExecutionResult:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/TradeSessionStatus"
+        completed_at:
+          type: string
+          format: date-time
+
+    ValidateItemsRequest:
+      type: object
+      required:
+        - player_id
+        - items
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+
+    ValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+              error_code:
+                type: string
+              message:
+                type: string
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
