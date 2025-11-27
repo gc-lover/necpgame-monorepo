@@ -1,0 +1,245 @@
+openapi: 3.0.3
+info:
+  title: Guild Bank Service API
+  description: API для управления банком гильдии.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8084/v1
+    description: Development server
+
+tags:
+  - name: Guild Bank
+    description: Управление банком гильдии
+
+paths:
+  /social/guilds/{guild_id}/bank/balance:
+    get:
+      summary: Получить баланс банка
+      description: Возвращает баланс банка гильдии
+      operationId: getGuildBankBalance
+      tags:
+        - Guild Bank
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Баланс банка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildBankBalance"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/guilds/{guild_id}/bank/deposit:
+    post:
+      summary: Внести средства в банк
+      description: Вносит средства в банк гильдии
+      operationId: depositToGuildBank
+      tags:
+        - Guild Bank
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BankTransactionRequest"
+      responses:
+        "200":
+          description: Средства внесены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BankTransaction"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/guilds/{guild_id}/bank/withdraw:
+    post:
+      summary: Снять средства из банка
+      description: Снимает средства из банка гильдии
+      operationId: withdrawFromGuildBank
+      tags:
+        - Guild Bank
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BankTransactionRequest"
+      responses:
+        "200":
+          description: Средства сняты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BankTransaction"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "409":
+          description: Недостаточно средств в банке
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/guilds/{guild_id}/bank/transactions:
+    get:
+      summary: Получить историю транзакций
+      description: Возвращает историю транзакций банка
+      operationId: getGuildBankTransactions
+      tags:
+        - Guild Bank
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BankTransactionListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    GuildBankBalance:
+      type: object
+      required:
+        - guild_id
+        - balance
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        balance:
+          type: number
+          format: double
+
+    BankTransactionRequest:
+      type: object
+      required:
+        - player_id
+        - amount
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+
+    BankTransaction:
+      type: object
+      required:
+        - id
+        - guild_id
+        - player_id
+        - type
+        - amount
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/TransactionType"
+        amount:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+
+    TransactionType:
+      type: string
+      enum:
+        - DEPOSIT
+        - WITHDRAW
+
+    BankTransactionListResponse:
+      type: object
+      required:
+        - transactions
+        - pagination
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/BankTransaction"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

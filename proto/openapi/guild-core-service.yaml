@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Guild Core Service API
+  description: API для управления гильдиями (CRUD, поиск).
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8084/v1
+    description: Development server
+
+tags:
+  - name: Guilds
+    description: Управление гильдиями
+
+paths:
+  /social/guilds:
+    post:
+      summary: Создать гильдию
+      description: Создает новую гильдию
+      operationId: createGuild
+      tags:
+        - Guilds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGuildRequest"
+      responses:
+        "201":
+          description: Гильдия создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guild"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Гильдия с таким именем уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    get:
+      summary: Поиск гильдий
+      description: Возвращает список гильдий по фильтрам
+      operationId: searchGuilds
+      tags:
+        - Guilds
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список гильдий
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildListResponse"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /social/guilds/{guild_id}:
+    get:
+      summary: Получить гильдию
+      description: Возвращает информацию о гильдии
+      operationId: getGuild
+      tags:
+        - Guilds
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о гильдии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guild"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+    put:
+      summary: Обновить гильдию
+      description: Обновляет информацию о гильдии
+      operationId: updateGuild
+      tags:
+        - Guilds
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGuildRequest"
+      responses:
+        "200":
+          description: Гильдия обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guild"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Распустить гильдию
+      description: Распускает гильдию
+      operationId: disbandGuild
+      tags:
+        - Guilds
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Гильдия распущена
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Guild:
+      type: object
+      required:
+        - id
+        - name
+        - tag
+        - leader_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        tag:
+          type: string
+        description:
+          type: string
+        leader_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/GuildStatus"
+        level:
+          type: integer
+        member_count:
+          type: integer
+        max_members:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    GuildStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - DISBANDED
+        - SUSPENDED
+
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - tag
+        - leader_id
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        tag:
+          type: string
+          minLength: 2
+          maxLength: 5
+        description:
+          type: string
+          maxLength: 500
+        leader_id:
+          type: string
+          format: uuid
+
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        tag:
+          type: string
+        description:
+          type: string
+
+    GuildListResponse:
+      type: object
+      required:
+        - guilds
+        - pagination
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Guild"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
