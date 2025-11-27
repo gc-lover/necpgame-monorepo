@@ -1,141 +1,96 @@
 openapi: 3.0.3
 info:
-  title: Admin Auth Service API
-  description: |
-    API для аутентификации и авторизации администраторов.
-    
-    **Функциональность:**
-    - Вход/выход администраторов
-    - Управление сессиями
-    - Информация о текущем администраторе
-    - Проверка прав доступа
+  title: Admin Authentication Service API
+  description: API для аутентификации и авторизации администраторов
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
 
 servers:
-  - url: https://api.necp.game/v1
-    description: Production server
-  - url: http://localhost:9000/v1
-    description: Development server
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
 
 tags:
-  - name: Admin Auth
-    description: Аутентификация администраторов
+  - name: Authentication
+    description: Аутентификация и авторизация администраторов
 
 paths:
-  /admin/auth/login:
+  /auth/login:
     post:
-      summary: Вход в админ-панель
-      description: Аутентифицирует администратора и создает сессию
-      operationId: adminLogin
       tags:
-        - Admin Auth
+        - Authentication
+      summary: Вход в админ-панель
+      operationId: adminLogin
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/AdminLoginRequest"
+            example:
+              username: admin
+              password: secure_password
       responses:
         "200":
-          description: Успешная аутентификация
+          description: Успешный вход
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminLoginResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          description: Неверные учетные данные
-          content:
-            application/json:
-              schema:
-                $ref: "common.yaml#/components/schemas/Error"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security: []
-
-  /admin/auth/logout:
-    post:
-      summary: Выход из админ-панели
-      description: Завершает сессию администратора
-      operationId: adminLogout
-      tags:
-        - Admin Auth
-      responses:
-        "204":
-          description: Успешный выход
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /admin/auth/me:
-    get:
-      summary: Получить информацию о текущем администраторе
-      description: Возвращает профиль текущего администратора
-      operationId: getAdminMe
-      tags:
-        - Admin Auth
-      responses:
-        "200":
-          description: Информация успешно получена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AdminProfile"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /admin/dashboard:
-    get:
-      summary: Получить данные главной панели
-      description: Возвращает статистику и метрики для главной админ-панели
-      operationId: getAdminDashboard
-      tags:
-        - Admin Auth
-      responses:
-        "200":
-          description: Данные панели успешно получены
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AdminDashboard"
         "401":
           $ref: "common.yaml#/components/responses/Unauthorized"
         "403":
           $ref: "common.yaml#/components/responses/Forbidden"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Выход из админ-панели
+      operationId: adminLogout
       security:
         - BearerAuth: []
+      responses:
+        "200":
+          description: Успешный выход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: logged_out
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Информация о текущем администраторе
+      operationId: getCurrentAdmin
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Информация об администраторе
+          content:
+            application/json:
+              schema:
+                $ref: "admin-common.yaml#/components/schemas/AdminUser"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
 
 components:
-  schemas:
-    AdminRole:
-      type: string
-      enum:
-        - super_admin
-        - admin
-        - moderator
-        - support
-        - analyst
-      description: |
-        Роль администратора:
-        - super_admin: суперадминистратор (полный доступ)
-        - admin: администратор (управление игроками, экономикой)
-        - moderator: модератор (модерация контента, чат)
-        - support: поддержка (просмотр игроков, тикеты)
-        - analyst: аналитик (только чтение метрик)
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
 
+  schemas:
     AdminLoginRequest:
       type: object
       required:
@@ -144,153 +99,24 @@ components:
       properties:
         username:
           type: string
-          minLength: 3
-          maxLength: 50
-          description: Имя пользователя администратора
+          minLength: 1
+          maxLength: 100
         password:
           type: string
           minLength: 8
-          description: Пароль администратора
-        mfa_code:
-          type: string
-          pattern: '^\d{6}$'
-          description: Код двухфакторной аутентификации (если включена)
+          format: password
 
     AdminLoginResponse:
       type: object
-      required:
-        - token
-        - admin
-        - expires_at
       properties:
         token:
           type: string
-          description: JWT токен для авторизации
+          description: JWT токен для последующих запросов
         admin:
-          $ref: "#/components/schemas/AdminProfile"
+          $ref: "admin-common.yaml#/components/schemas/AdminUser"
         expires_at:
           type: string
           format: date-time
-          description: Время истечения токена
 
-    AdminProfile:
-      type: object
-      required:
-        - admin_id
-        - username
-        - role
-        - created_at
-      properties:
-        admin_id:
-          type: string
-          format: uuid
-          description: Уникальный идентификатор администратора
-        username:
-          type: string
-          description: Имя пользователя
-        email:
-          type: string
-          format: email
-          description: Email администратора
-        role:
-          $ref: "#/components/schemas/AdminRole"
-        permissions:
-          type: array
-          items:
-            type: string
-          description: Список разрешений
-          example: ["player.view", "player.edit", "economy.view"]
-        is_active:
-          type: boolean
-          description: Активен ли аккаунт
-        mfa_enabled:
-          type: boolean
-          description: Включена ли двухфакторная аутентификация
-        last_login_at:
-          type: string
-          format: date-time
-          description: Время последнего входа
-        created_at:
-          type: string
-          format: date-time
-          description: Дата создания аккаунта
-
-    AdminDashboard:
-      type: object
-      required:
-        - stats
-        - recent_actions
-      properties:
-        stats:
-          type: object
-          description: Общая статистика
-          properties:
-            total_players:
-              type: integer
-              description: Всего игроков
-            online_players:
-              type: integer
-              description: Игроков онлайн
-            new_players_today:
-              type: integer
-              description: Новых игроков сегодня
-            active_sessions:
-              type: integer
-              description: Активных сессий
-            pending_tickets:
-              type: integer
-              description: Тикетов в ожидании
-            economy_health:
-              type: string
-              enum: [healthy, warning, critical]
-              description: Состояние экономики
-        recent_actions:
-          type: array
-          items:
-            $ref: "#/components/schemas/AdminAction"
-          description: Последние действия администраторов
-
-    AdminAction:
-      type: object
-      required:
-        - action_id
-        - admin_id
-        - admin_username
-        - action_type
-        - target_type
-        - created_at
-      properties:
-        action_id:
-          type: string
-          format: uuid
-          description: ID действия
-        admin_id:
-          type: string
-          format: uuid
-          description: ID администратора
-        admin_username:
-          type: string
-          description: Имя администратора
-        action_type:
-          type: string
-          description: Тип действия
-          example: "player.ban"
-        target_type:
-          type: string
-          description: Тип цели
-          example: "player"
-        target_id:
-          type: string
-          description: ID цели
-        description:
-          type: string
-          description: Описание действия
-        created_at:
-          type: string
-          format: date-time
-          description: Время действия
-
-  securitySchemes:
-    BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+security:
+  - BearerAuth: []

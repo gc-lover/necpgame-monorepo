@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: Admin Audit Service API
+  description: API для аудита действий администраторов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Audit
+    description: Аудит действий администраторов
+
+paths:
+  /audit/logs:
+    get:
+      tags:
+        - Audit
+      summary: Список логов аудита
+      operationId: getAuditLogs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: admin_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: action_type
+          in: query
+          schema:
+            type: string
+        - name: target_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - player
+              - economy
+              - content
+              - moderation
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Логи аудита
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: 'admin-common.yaml#/components/schemas/AuditLog'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /audit/logs/{log_id}:
+    get:
+      tags:
+        - Audit
+      summary: Детали лога аудита
+      operationId: getAuditLogDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: log_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали лога
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-common.yaml#/components/schemas/AuditLog'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /audit/logs/search:
+    get:
+      tags:
+        - Audit
+      summary: Поиск по логам аудита
+      operationId: searchAuditLogs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: 'admin-common.yaml#/components/schemas/AuditLog'
+                  total:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /audit/logs/export:
+    get:
+      tags:
+        - Audit
+      summary: Экспорт логов аудита
+      operationId: exportAuditLogs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum:
+              - json
+              - csv
+            default: json
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Экспортированные логи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: 'admin-common.yaml#/components/schemas/AuditLog'
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

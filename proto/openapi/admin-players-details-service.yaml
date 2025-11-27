@@ -1,0 +1,364 @@
+openapi: 3.0.3
+info:
+  title: Admin Players Details Service API
+  description: API для детальной информации об игроках (сессии, транзакции, инвентарь, достижения, санкции)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Player Management
+    description: Детальная информация об игроках
+
+paths:
+  /players/{player_id}/sessions:
+    get:
+      tags:
+        - Player Management
+      summary: История сессий игрока
+      operationId: getPlayerSessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: История сессий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerSession'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/transactions:
+    get:
+      tags:
+        - Player Management
+      summary: История транзакций игрока
+      operationId: getPlayerTransactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/inventory:
+    get:
+      tags:
+        - Player Management
+      summary: Инвентарь игрока
+      operationId: getPlayerInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Инвентарь игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InventoryItem'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/achievements:
+    get:
+      tags:
+        - Player Management
+      summary: Достижения игрока
+      operationId: getPlayerAchievements
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Достижения игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Achievement'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/sanctions:
+    post:
+      tags:
+        - Player Management
+      summary: Выдача санкции игроку
+      operationId: createSanction
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSanctionRequest'
+      responses:
+        '201':
+          description: Санкция выдана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sanction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}/sanctions/{sanction_id}:
+    delete:
+      tags:
+        - Player Management
+      summary: Отзыв санкции
+      operationId: revokeSanction
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: sanction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeSanctionRequest'
+      responses:
+        '200':
+          description: Санкция отозвана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: revoked
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: integer
+          nullable: true
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum:
+            - purchase
+            - sale
+            - reward
+            - penalty
+            - transfer
+        currency_type:
+          type: string
+        amount:
+          type: integer
+        balance_after:
+          type: integer
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        quantity:
+          type: integer
+        slot:
+          type: integer
+          nullable: true
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        achievement_id:
+          type: string
+          format: uuid
+        achievement_name:
+          type: string
+        unlocked_at:
+          type: string
+          format: date-time
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    CreateSanctionRequest:
+      type: object
+      required:
+        - sanction_type
+        - reason
+      properties:
+        sanction_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - MUTE
+            - KICK
+        duration:
+          type: integer
+          description: Длительность в секундах (NULL для постоянных)
+          nullable: true
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    Sanction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        admin_id:
+          type: string
+          format: uuid
+        sanction_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - MUTE
+            - KICK
+        duration:
+          type: integer
+          nullable: true
+        reason:
+          type: string
+        is_active:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    RevokeSanctionRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+security:
+  - BearerAuth: []
+

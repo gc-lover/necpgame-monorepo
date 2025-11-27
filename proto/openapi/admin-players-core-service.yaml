@@ -1,0 +1,204 @@
+openapi: 3.0.3
+info:
+  title: Admin Players Core Service API
+  description: API для основных операций управления игроками
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Player Management
+    description: Управление игроками
+
+paths:
+  /players:
+    get:
+      tags:
+        - Player Management
+      summary: Список игроков
+      operationId: listPlayers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Поиск по имени или email
+      responses:
+        '200':
+          description: Список игроков
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerProfile'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /players/{player_id}:
+    get:
+      tags:
+        - Player Management
+      summary: Профиль игрока
+      operationId: getPlayerProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Профиль игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfile'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - Player Management
+      summary: Обновление профиля игрока
+      operationId: updatePlayerProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlayerRequest'
+      responses:
+        '200':
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerProfile'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Player Management
+      summary: Удаление игрока
+      operationId: deletePlayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeletePlayerRequest'
+      responses:
+        '200':
+          description: Игрок удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        email:
+          type: string
+          format: email
+        level:
+          type: integer
+        status:
+          type: string
+          enum:
+            - active
+            - banned
+            - muted
+            - deleted
+        created_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdatePlayerRequest:
+      type: object
+      properties:
+        character_name:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum:
+            - active
+            - banned
+            - muted
+
+    DeletePlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+security:
+  - BearerAuth: []
+

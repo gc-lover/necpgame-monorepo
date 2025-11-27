@@ -1,0 +1,434 @@
+openapi: 3.0.3
+info:
+  title: Admin Economy Service API
+  description: API для управления экономикой в админ-панели
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Economy Management
+    description: Управление экономикой
+
+paths:
+  /economy/players/{player_id}/balance:
+    get:
+      tags:
+        - Economy Management
+      summary: Баланс игрока
+      operationId: getPlayerBalance
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Баланс игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBalance'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - Economy Management
+      summary: Изменение баланса игрока
+      operationId: updatePlayerBalance
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBalanceRequest'
+      responses:
+        '200':
+          description: Баланс изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBalance'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/market/activity:
+    get:
+      tags:
+        - Economy Management
+      summary: Активность рынка
+      operationId: getMarketActivity
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Активность рынка
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketActivity'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/market/suspicious:
+    get:
+      tags:
+        - Economy Management
+      summary: Подозрительные операции
+      operationId: getSuspiciousOperations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Подозрительные операции
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  operations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SuspiciousOperation'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/reports/rmt:
+    get:
+      tags:
+        - Economy Management
+      summary: Отчёты по RMT
+      operationId: getRMTReports
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Отчёты по RMT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RMTReport'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/items:
+    get:
+      tags:
+        - Economy Management
+      summary: Список предметов
+      operationId: listItems
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список предметов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Economy Management
+      summary: Создание предмета
+      operationId: createItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemRequest'
+      responses:
+        '201':
+          description: Предмет создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/items/{item_id}:
+    get:
+      tags:
+        - Economy Management
+      summary: Информация о предмете
+      operationId: getItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о предмете
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - Economy Management
+      summary: Обновление предмета
+      operationId: updateItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemRequest'
+      responses:
+        '200':
+          description: Предмет обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PlayerBalance:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        currencies:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Тип валюты -> баланс
+
+    UpdateBalanceRequest:
+      type: object
+      required:
+        - currency_type
+        - amount
+        - reason
+      properties:
+        currency_type:
+          type: string
+        amount:
+          type: integer
+          description: Может быть отрицательным для уменьшения
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    MarketActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+          nullable: true
+        price:
+          type: integer
+        quantity:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    SuspiciousOperation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        operation_type:
+          type: string
+        player_id:
+          type: string
+          format: uuid
+        details:
+          type: object
+          additionalProperties: true
+        risk_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        detected_at:
+          type: string
+          format: date-time
+
+    RMTReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateItemRequest:
+      type: object
+      required:
+        - name
+        - item_type
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        item_type:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+
+    UpdateItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        rarity:
+          type: string
+        value:
+          type: integer
+
+security:
+  - BearerAuth: []
+

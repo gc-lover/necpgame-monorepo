@@ -1,0 +1,299 @@
+openapi: 3.0.3
+info:
+  title: Admin Content Events & NPCs Service API
+  description: API для управления глобальными событиями и диалогами NPC
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Content Management
+    description: Управление событиями и диалогами NPC
+
+paths:
+  /content/events:
+    get:
+      tags:
+        - Content Management
+      summary: Список глобальных событий
+      operationId: listEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GlobalEvent'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание глобального события
+      operationId: createEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/events/{event_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление глобального события
+      operationId: updateEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Событие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/npcs/{npc_id}/dialogues:
+    get:
+      tags:
+        - Content Management
+      summary: Диалоги NPC
+      operationId: getNPCDialogues
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Диалоги NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dialogues:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NPCDialogue'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/npcs/{npc_id}/dialogues/{dialogue_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление диалога NPC
+      operationId: updateNPCDialogue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: dialogue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDialogueRequest'
+      responses:
+        '200':
+          description: Диалог обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NPCDialogue'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    GlobalEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - scheduled
+            - active
+            - completed
+            - cancelled
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateEventRequest:
+      type: object
+      required:
+        - name
+        - description
+        - start_time
+        - end_time
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - scheduled
+            - active
+            - completed
+            - cancelled
+
+    NPCDialogue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        dialogue_text:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateDialogueRequest:
+      type: object
+      properties:
+        dialogue_text:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+
+security:
+  - BearerAuth: []
+

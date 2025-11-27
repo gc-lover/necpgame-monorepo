@@ -1,0 +1,354 @@
+openapi: 3.0.3
+info:
+  title: Admin Analytics Service API
+  description: API для аналитики и мониторинга
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Analytics
+    description: Аналитика и мониторинг
+
+paths:
+  /analytics/players/online:
+    get:
+      tags:
+        - Analytics
+      summary: Онлайн игроки
+      operationId: getOnlinePlayers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Онлайн игроки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OnlinePlayer'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /analytics/matches/active:
+    get:
+      tags:
+        - Analytics
+      summary: Активные матчи
+      operationId: getActiveMatches
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Активные матчи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  matches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveMatch'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /analytics/trade/operations:
+    get:
+      tags:
+        - Analytics
+      summary: Операции торговли
+      operationId: getTradeOperations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Операции торговли
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  operations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradeOperation'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /analytics/servers/load:
+    get:
+      tags:
+        - Analytics
+      summary: Нагрузка серверов
+      operationId: getServerLoad
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Нагрузка серверов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  servers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServerLoad'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /analytics/chat/activity:
+    get:
+      tags:
+        - Analytics
+      summary: Активность чатов
+      operationId: getChatActivity
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Активность чатов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activity:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatActivity'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /analytics/anomalies:
+    get:
+      tags:
+        - Analytics
+      summary: Аномалии
+      operationId: getAnomalies
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Аномалии
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  anomalies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Anomaly'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /analytics/notifications:
+    get:
+      tags:
+        - Analytics
+      summary: Уведомления
+      operationId: getNotifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Уведомления
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    OnlinePlayer:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        level:
+          type: integer
+        server:
+          type: string
+        connected_at:
+          type: string
+          format: date-time
+
+    ActiveMatch:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        match_type:
+          type: string
+        players_count:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        server:
+          type: string
+
+    TradeOperation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        price:
+          type: integer
+        quantity:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    ServerLoad:
+      type: object
+      properties:
+        server_id:
+          type: string
+        server_name:
+          type: string
+        cpu_usage:
+          type: number
+          minimum: 0
+          maximum: 100
+        memory_usage:
+          type: number
+          minimum: 0
+          maximum: 100
+        players_online:
+          type: integer
+        status:
+          type: string
+          enum:
+            - healthy
+            - warning
+            - critical
+
+    ChatActivity:
+      type: object
+      properties:
+        channel:
+          type: string
+        messages_count:
+          type: integer
+        unique_senders:
+          type: integer
+        period:
+          type: string
+
+    Anomaly:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        anomaly_type:
+          type: string
+        severity:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+        description:
+          type: string
+        detected_at:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+            - info
+            - warning
+            - error
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - BearerAuth: []
+

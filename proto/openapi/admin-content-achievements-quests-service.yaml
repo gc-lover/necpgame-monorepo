@@ -1,0 +1,352 @@
+openapi: 3.0.3
+info:
+  title: Admin Content Achievements & Quests Service API
+  description: API для управления достижениями и ежедневными квестами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Content Management
+    description: Управление достижениями и квестами
+
+paths:
+  /content/achievements:
+    get:
+      tags:
+        - Content Management
+      summary: Список достижений
+      operationId: listAchievements
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список достижений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AchievementDefinition'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание достижения
+      operationId: createAchievement
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAchievementRequest'
+      responses:
+        '201':
+          description: Достижение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinition'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/achievements/{achievement_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление достижения
+      operationId: updateAchievement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAchievementRequest'
+      responses:
+        '200':
+          description: Достижение обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementDefinition'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Content Management
+      summary: Удаление достижения
+      operationId: deleteAchievement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Достижение удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/daily-quests:
+    get:
+      tags:
+        - Content Management
+      summary: Список ежедневных заданий
+      operationId: listDailyQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Список ежедневных заданий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailyQuest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание ежедневного задания
+      operationId: createDailyQuest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDailyQuestRequest'
+      responses:
+        '201':
+          description: Задание создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyQuest'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/daily-quests/{quest_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление ежедневного задания
+      operationId: updateDailyQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDailyQuestRequest'
+      responses:
+        '200':
+          description: Задание обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyQuest'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    AchievementDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateAchievementRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+
+    UpdateAchievementRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+
+    DailyQuest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateDailyQuestRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+
+    UpdateDailyQuestRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: object
+          additionalProperties: true
+        rewards:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+
+security:
+  - BearerAuth: []
+

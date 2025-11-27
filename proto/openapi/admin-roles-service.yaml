@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: Admin Roles & Permissions Service API
+  description: API для управления ролями и правами доступа администраторов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Roles & Permissions
+    description: Управление ролями и правами доступа
+
+paths:
+  /roles:
+    get:
+      tags:
+        - Roles & Permissions
+      summary: Список ролей
+      operationId: listRoles
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список ролей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /roles/{role_id}/permissions:
+    get:
+      tags:
+        - Roles & Permissions
+      summary: Права роли
+      operationId: getRolePermissions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Права роли
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /admins:
+    get:
+      tags:
+        - Roles & Permissions
+      summary: Список администраторов
+      operationId: listAdmins
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список администраторов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admins:
+                    type: array
+                    items:
+                      $ref: 'admin-common.yaml#/components/schemas/AdminUser'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Roles & Permissions
+      summary: Создание администратора
+      operationId: createAdmin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdminRequest'
+      responses:
+        '201':
+          description: Администратор создан
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-common.yaml#/components/schemas/AdminUser'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /admins/{admin_id}:
+    put:
+      tags:
+        - Roles & Permissions
+      summary: Обновление администратора
+      operationId: updateAdmin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminRequest'
+      responses:
+        '200':
+          description: Администратор обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-common.yaml#/components/schemas/AdminUser'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Roles & Permissions
+      summary: Удаление администратора
+      operationId: deleteAdmin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Администратор удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+            - MODERATOR
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    CreateAdminRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - role
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          format: password
+        role:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+            - MODERATOR
+
+    UpdateAdminRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+            - MODERATOR
+        is_active:
+          type: boolean
+
+security:
+  - BearerAuth: []
+
