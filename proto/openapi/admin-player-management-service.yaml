@@ -1,0 +1,480 @@
+openapi: 3.0.3
+info:
+  title: Admin Player Management Service API
+  description: |
+    API для управления игроками администраторами.
+    
+    **Функциональность:**
+    - Поиск и просмотр игроков
+    - Редактирование профилей
+    - Выдача/отзыв санкций
+    - Просмотр истории
+    - Удаление аккаунтов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:9000/v1
+    description: Development server
+
+tags:
+  - name: Admin Player Management
+    description: Управление игроками
+
+paths:
+  /admin/players:
+    get:
+      summary: Получить список игроков
+      description: Возвращает список игроков с фильтрацией и поиском
+      operationId: listPlayers
+      tags:
+        - Admin Player Management
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+        - name: search
+          in: query
+          description: Поиск по имени, email, ID
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum: [active, banned, suspended]
+        - name: online
+          in: query
+          description: Только онлайн игроки
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Список игроков успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /admin/players/{player_id}:
+    get:
+      summary: Получить профиль игрока
+      description: Возвращает детальную информацию об игроке
+      operationId: getPlayer
+      tags:
+        - Admin Player Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Профиль успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerProfile"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    put:
+      summary: Обновить профиль игрока
+      description: Обновляет параметры профиля игрока
+      operationId: updatePlayer
+      tags:
+        - Admin Player Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePlayerRequest"
+      responses:
+        "200":
+          description: Профиль успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerProfile"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Удалить игрока
+      description: Удаляет учетную запись игрока (необратимо)
+      operationId: deletePlayer
+      tags:
+        - Admin Player Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Игрок успешно удален
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /admin/players/{player_id}/sanctions:
+    post:
+      summary: Выдать санкцию игроку
+      description: Выдает бан или приостановку игроку
+      operationId: createSanction
+      tags:
+        - Admin Player Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSanctionRequest"
+      responses:
+        "201":
+          description: Санкция успешно выдана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sanction"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    get:
+      summary: Получить санкции игрока
+      description: Возвращает историю санкций игрока
+      operationId: getPlayerSanctions
+      tags:
+        - Admin Player Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: История санкций получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SanctionListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /admin/players/{player_id}/sanctions/{sanction_id}:
+    delete:
+      summary: Отозвать санкцию
+      description: Отменяет активную санкцию игрока
+      operationId: revokeSanction
+      tags:
+        - Admin Player Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: sanction_id
+          in: path
+          required: true
+          description: ID санкции
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Санкция успешно отозвана
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    PlayerStatus:
+      type: string
+      enum:
+        - active
+        - banned
+        - suspended
+      description: |
+        Статус игрока:
+        - active: активен
+        - banned: забанен (постоянно)
+        - suspended: приостановлен (временно)
+
+    Player:
+      type: object
+      required:
+        - player_id
+        - username
+        - email
+        - status
+        - created_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        username:
+          type: string
+          description: Имя пользователя
+        email:
+          type: string
+          format: email
+          description: Email
+        status:
+          $ref: "#/components/schemas/PlayerStatus"
+        level:
+          type: integer
+          description: Уровень персонажа
+        is_online:
+          type: boolean
+          description: Онлайн статус
+        last_login_at:
+          type: string
+          format: date-time
+          description: Последний вход
+        created_at:
+          type: string
+          format: date-time
+          description: Дата регистрации
+
+    PlayerProfile:
+      allOf:
+        - $ref: "#/components/schemas/Player"
+        - type: object
+          properties:
+            total_playtime_hours:
+              type: number
+              format: double
+              description: Всего часов игры
+            balance:
+              type: number
+              format: double
+              description: Баланс валюты
+            inventory_items_count:
+              type: integer
+              description: Предметов в инвентаре
+            achievements_count:
+              type: integer
+              description: Получено достижений
+            active_sanctions:
+              type: array
+              items:
+                $ref: "#/components/schemas/Sanction"
+              description: Активные санкции
+
+    UpdatePlayerRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Новое имя пользователя
+        email:
+          type: string
+          format: email
+          description: Новый email
+
+    SanctionType:
+      type: string
+      enum:
+        - ban
+        - suspension
+        - mute
+        - warning
+      description: |
+        Тип санкции:
+        - ban: постоянный бан
+        - suspension: временная приостановка
+        - mute: отключение чата
+        - warning: предупреждение
+
+    CreateSanctionRequest:
+      type: object
+      required:
+        - sanction_type
+        - reason
+      properties:
+        sanction_type:
+          $ref: "#/components/schemas/SanctionType"
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+          description: Причина санкции
+        duration_hours:
+          type: integer
+          minimum: 1
+          description: Длительность в часах (null - постоянно)
+        internal_notes:
+          type: string
+          maxLength: 1000
+          description: Внутренние заметки (не видны игроку)
+
+    Sanction:
+      type: object
+      required:
+        - sanction_id
+        - player_id
+        - sanction_type
+        - reason
+        - issued_by
+        - issued_at
+        - is_active
+      properties:
+        sanction_id:
+          type: string
+          format: uuid
+          description: ID санкции
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        sanction_type:
+          $ref: "#/components/schemas/SanctionType"
+        reason:
+          type: string
+          description: Причина санкции
+        issued_by:
+          type: string
+          format: uuid
+          description: ID администратора, выдавшего санкцию
+        issued_at:
+          type: string
+          format: date-time
+          description: Время выдачи
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения (null - постоянно)
+        revoked_at:
+          type: string
+          format: date-time
+          description: Время отзыва
+        revoked_by:
+          type: string
+          format: uuid
+          description: ID администратора, отозвавшего санкцию
+        is_active:
+          type: boolean
+          description: Активна ли санкция
+
+    PlayerListResponse:
+      type: object
+      required:
+        - players
+        - pagination
+      properties:
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/Player"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    SanctionListResponse:
+      type: object
+      required:
+        - sanctions
+      properties:
+        sanctions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sanction"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

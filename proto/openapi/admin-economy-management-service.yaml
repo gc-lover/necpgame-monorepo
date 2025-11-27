@@ -1,0 +1,481 @@
+openapi: 3.0.3
+info:
+  title: Admin Economy Management Service API
+  description: |
+    API для управления экономикой игры администраторами.
+    
+    **Функциональность:**
+    - Управление балансом игроков
+    - Управление инвентарем
+    - Мониторинг рынка
+    - Отслеживание подозрительных операций
+    - Отчеты по RMT
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:9000/v1
+    description: Development server
+
+tags:
+  - name: Admin Economy Management
+    description: Управление экономикой
+
+paths:
+  /admin/economy/players/{player_id}/balance:
+    get:
+      summary: Получить баланс игрока
+      description: Возвращает баланс всех валют игрока
+      operationId: getPlayerBalance
+      tags:
+        - Admin Economy Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Баланс успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerBalanceResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    put:
+      summary: Изменить баланс игрока
+      description: Добавляет или списывает валюту с баланса игрока
+      operationId: updatePlayerBalance
+      tags:
+        - Admin Economy Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBalanceRequest"
+      responses:
+        "200":
+          description: Баланс успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerBalanceResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /admin/economy/players/{player_id}/inventory:
+    get:
+      summary: Получить инвентарь игрока
+      description: Возвращает все предметы в инвентаре игрока
+      operationId: getPlayerInventory
+      tags:
+        - Admin Economy Management
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Инвентарь успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerInventoryResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /admin/economy/market/activity:
+    get:
+      summary: Получить активность рынка
+      description: Возвращает метрики активности рынка
+      operationId: getMarketActivity
+      tags:
+        - Admin Economy Management
+      parameters:
+        - name: period
+          in: query
+          description: Период статистики
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+      responses:
+        "200":
+          description: Активность рынка успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketActivityResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /admin/economy/market/suspicious:
+    get:
+      summary: Получить подозрительные операции
+      description: Возвращает список подозрительных транзакций
+      operationId: getSuspiciousTransactions
+      tags:
+        - Admin Economy Management
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+        - name: min_amount
+          in: query
+          description: Минимальная сумма транзакции
+          schema:
+            type: number
+            format: double
+        - name: risk_level
+          in: query
+          description: Уровень риска
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+      responses:
+        "200":
+          description: Подозрительные операции получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuspiciousTransactionsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /admin/economy/reports/rmt:
+    get:
+      summary: Получить отчеты по RMT
+      description: Возвращает отчеты о реальных денежных транзакциях (RMT)
+      operationId: getRMTReports
+      tags:
+        - Admin Economy Management
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+        - name: status
+          in: query
+          description: Статус отчета
+          schema:
+            type: string
+            enum: [pending, investigating, confirmed, false_positive]
+      responses:
+        "200":
+          description: Отчеты RMT получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RMTReportsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    CurrencyType:
+      type: string
+      enum:
+        - eurodollars
+        - credits
+        - premium
+      description: Тип валюты
+
+    PlayerBalance:
+      type: object
+      required:
+        - currency_type
+        - amount
+      properties:
+        currency_type:
+          $ref: "#/components/schemas/CurrencyType"
+        amount:
+          type: number
+          format: double
+          description: Количество валюты
+
+    PlayerBalanceResponse:
+      type: object
+      required:
+        - player_id
+        - balances
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        balances:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerBalance"
+
+    UpdateBalanceRequest:
+      type: object
+      required:
+        - currency_type
+        - amount
+        - reason
+      properties:
+        currency_type:
+          $ref: "#/components/schemas/CurrencyType"
+        amount:
+          type: number
+          format: double
+          description: Сумма изменения (положительная - добавить, отрицательная - списать)
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+          description: Причина изменения баланса
+
+    InventoryItem:
+      type: object
+      required:
+        - item_id
+        - item_name
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: ID предмета
+        item_name:
+          type: string
+          description: Название предмета
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+          description: Редкость
+        estimated_value:
+          type: number
+          format: double
+          description: Оценочная стоимость
+
+    PlayerInventoryResponse:
+      type: object
+      required:
+        - player_id
+        - items
+        - pagination
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+        total_value:
+          type: number
+          format: double
+          description: Общая стоимость инвентаря
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    MarketActivityResponse:
+      type: object
+      required:
+        - period
+        - transactions_count
+        - total_volume
+      properties:
+        period:
+          type: string
+          description: Период статистики
+        transactions_count:
+          type: integer
+          description: Количество транзакций
+        total_volume:
+          type: number
+          format: double
+          description: Общий объем торгов
+        average_transaction:
+          type: number
+          format: double
+          description: Средняя сумма транзакции
+        top_traded_items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              item_name:
+                type: string
+              trade_count:
+                type: integer
+
+    SuspiciousTransaction:
+      type: object
+      required:
+        - transaction_id
+        - from_player_id
+        - to_player_id
+        - amount
+        - risk_level
+        - detected_at
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+          description: ID транзакции
+        from_player_id:
+          type: string
+          format: uuid
+          description: ID отправителя
+        to_player_id:
+          type: string
+          format: uuid
+          description: ID получателя
+        amount:
+          type: number
+          format: double
+          description: Сумма транзакции
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Уровень риска
+        risk_reasons:
+          type: array
+          items:
+            type: string
+          description: Причины подозрений
+        detected_at:
+          type: string
+          format: date-time
+          description: Время обнаружения
+
+    SuspiciousTransactionsResponse:
+      type: object
+      required:
+        - transactions
+        - pagination
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SuspiciousTransaction"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    RMTReport:
+      type: object
+      required:
+        - report_id
+        - player_id
+        - status
+        - detected_at
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          description: ID отчета
+        player_id:
+          type: string
+          format: uuid
+          description: ID подозреваемого игрока
+        status:
+          type: string
+          enum: [pending, investigating, confirmed, false_positive]
+          description: Статус расследования
+        evidence:
+          type: array
+          items:
+            type: string
+          description: Свидетельства RMT
+        detected_at:
+          type: string
+          format: date-time
+          description: Время обнаружения
+        investigated_by:
+          type: string
+          format: uuid
+          description: ID администратора, расследующего
+
+    RMTReportsResponse:
+      type: object
+      required:
+        - reports
+        - pagination
+      properties:
+        reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/RMTReport"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
