@@ -1,0 +1,301 @@
+metadata:
+  id: player-feedback-system-backend
+  title: Бекенд сервис для системы обратной связи (Go)
+  document_type: analysis
+  category: ideas
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-27T22:10:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-23T13:00:00Z
+  processed_by: idea-writer
+  processed_at: 2025-11-23T12:00:00Z
+  github_issue_number: 1335
+  owners:
+    - role: idea_writer
+      contact: idea-writer@necp.game
+  tags:
+    - player-feedback
+    - backend
+    - go
+    - github-integration
+  topics:
+    - backend
+    - api
+    - automation
+  related_systems:
+    - session-service
+    - notification-service
+    - character-service
+  related_documents:
+    - id: player-feedback-system-main
+      title: Система обратной связи от игроков
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system-main.yaml
+      relation: part_of
+    - id: github-issue-1335
+      title: GitHub Issue #1335
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+      relation: migrated_to
+  source: user_request
+  visibility: internal
+  audience:
+    - backend
+    - api
+  risk_level: medium
+review:
+  chain:
+    - role: idea_writer
+      reviewer: idea-writer
+      reviewed_at: 2025-11-23T13:00:00Z
+      status: completed
+  next_actions: []
+summary:
+  problem: Нужен бекенд сервис для приема обращений от игроков, их валидации, сохранения и интеграции с GitHub API.
+  goal: Создать микросервис feedback-service на Go для обработки обращений и автоматического создания GitHub Issues.
+  essence: REST API с endpoints для отправки обращений, получения статусов, голосования и управления доской идей. Интеграция с GitHub API для создания Issues.
+  key_points:
+    - Новый микросервис feedback-service
+    - REST API с 8 основными endpoints
+    - Интеграция с GitHub API
+    - Rate limiting и безопасность
+    - Анонимизация данных игроков
+content:
+  sections:
+    - id: service-overview
+      title: Обзор сервиса
+      body: |
+        **Новый микросервис: `feedback-service`**
+        
+        **Основные функции:**
+        - Прием данных от клиента через REST API
+        - Валидация и санитизация данных
+        - Сохранение обращений в БД
+        - Интеграция с GitHub API для создания Issues
+        - Управление статусами обращений
+        - Уведомления игрокам о статусе
+        - Rate limiting для предотвращения спама
+        - Анонимизация данных игрока
+      mechanics_links: []
+      assets: []
+    - id: api-endpoints
+      title: API Endpoints
+      body: |
+        **1. POST /api/v1/feedback/submit**
+        - Отправка нового обращения
+        - Требует аутентификации (сессия игрока)
+        - Request body:
+          ```json
+          {
+            "type": "feature_request|bug_report|wishlist|feedback",
+            "category": "gameplay|balance|content|technical|lore|ui|other",
+            "title": "string (max 100 chars)",
+            "description": "string (max 2000 chars)",
+            "priority": "low|medium|high|critical",
+            "screenshots": ["base64_encoded_images"],
+            "game_context": {
+              "version": "string",
+              "location": "string",
+              "level": "int",
+              "active_quests": ["string"],
+              "playtime": "duration"
+            }
+          }
+          ```
+        - Response:
+          ```json
+          {
+            "id": "uuid",
+            "status": "pending",
+            "github_issue_number": 1234,
+            "github_issue_url": "https://github.com/...",
+            "created_at": "timestamp"
+          }
+          ```
+        - Rate limit: 5 обращений в час на игрока
+        
+        **2. GET /api/v1/feedback/{id}**
+        - Получение статуса обращения по ID
+        - Требует аутентификации
+        - Response:
+          ```json
+          {
+            "id": "uuid",
+            "type": "string",
+            "category": "string",
+            "title": "string",
+            "status": "pending|in_review|assigned|in_progress|resolved|rejected|duplicate",
+            "github_issue_number": 1234,
+            "github_issue_url": "https://github.com/...",
+            "created_at": "timestamp",
+            "updated_at": "timestamp"
+          }
+          ```
+        
+        **3. GET /api/v1/feedback/player/{player_id}**
+        - История обращений игрока
+        - Требует аутентификации (только свои обращения)
+        - Query params:
+          - `status` - фильтр по статусу
+          - `type` - фильтр по типу
+          - `limit` - количество результатов (default: 20)
+          - `offset` - пагинация
+        - Response:
+          ```json
+          {
+            "items": [...],
+            "total": 100,
+            "limit": 20,
+            "offset": 0
+          }
+          ```
+        
+        **4. POST /api/v1/feedback/{id}/update-status**
+        - Обновление статуса обращения (только для агентов/админов)
+        - Требует специальной аутентификации
+        - Request body:
+          ```json
+          {
+            "status": "string",
+            "comment": "string (optional)"
+          }
+          ```
+        
+        **5. GET /api/v1/feedback/board**
+        - Получение доски идей (публичные предложения)
+        - Не требует аутентификации (публичный доступ)
+        - Query params:
+          - `category` - фильтр по категории
+          - `status` - фильтр по статусу
+          - `sort` - сортировка (popularity|newest|status)
+          - `limit` - количество результатов (default: 20)
+          - `offset` - пагинация
+          - `search` - поиск по тексту
+        - Response:
+          ```json
+          {
+            "items": [
+              {
+                "id": "uuid",
+                "title": "string",
+                "description": "string",
+                "category": "string",
+                "author_id": "uuid (анонимный)",
+                "votes_count": 42,
+                "status": "string",
+                "github_issue_number": 1234,
+                "created_at": "timestamp",
+                "user_voted": false
+              }
+            ],
+            "total": 100,
+            "limit": 20,
+            "offset": 0
+          }
+          ```
+        
+        **6. POST /api/v1/feedback/{id}/vote**
+        - Голосование за предложение
+        - Требует аутентификации
+        - Request body: пустой (ID предложения в URL)
+        - Response:
+          ```json
+          {
+            "id": "uuid",
+            "votes_count": 43,
+            "user_voted": true
+          }
+          ```
+        - Rate limit: 10 голосов в минуту
+        
+        **7. DELETE /api/v1/feedback/{id}/vote**
+        - Отзыв голоса
+        - Требует аутентификации
+        - Response:
+          ```json
+          {
+            "id": "uuid",
+            "votes_count": 42,
+            "user_voted": false
+          }
+          ```
+        
+        **8. GET /api/v1/feedback/stats**
+        - Статистика обращений (для админов)
+        - Требует специальной аутентификации
+      mechanics_links: []
+      assets: []
+    - id: github-integration
+      title: Интеграция с GitHub
+      body: |
+        **Интеграция с GitHub:**
+        - Использование GitHub API (REST или GraphQL)
+        - GitHub App для аутентификации
+        - Автоматическое создание Issue при отправке обращения
+        - Шаблон Issue:
+          ```markdown
+          ## Обращение от игрока
+          
+          **Тип:** {type}
+          **Категория:** {category}
+          **Приоритет:** {priority}
+          **Голосов:** {votes_count}
+          
+          ### Описание
+          {description}
+          
+          ### Контекст игры
+          - Версия: {version}
+          - Локация: {location}
+          - Уровень: {level}
+          - Активные квесты: {quests}
+          
+          ### Скриншоты
+          {screenshots if any}
+          
+          ### Авторы
+          - Основной автор: {primary_author_id}
+          - Все авторы: {all_authors_ids} (при объединении дубликатов)
+          
+          ---
+          *Обращение ID: {id}*
+          *Создано: {created_at}*
+          *Голосов: {votes_count}*
+          ```
+        - Автоматическое добавление меток:
+          - `player-feedback` - все обращения
+          - `agent:idea-writer` - для feature_request
+          - `agent:qa` - для bug_report
+          - `priority-{priority}` - приоритет
+          - `{category}` - категория
+      mechanics_links: []
+      assets: []
+    - id: security
+      title: Безопасность
+      body: |
+        **Безопасность:**
+        - Rate limiting: 5 обращений/час на игрока
+        - Валидация всех входных данных
+        - Санитизация текста (защита от XSS)
+        - Анонимизация player_id в Issues
+        - Аутентификация через session token
+        - Логирование всех операций
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1335
+  needs_task: true
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-27
+    author: idea-writer
+    changes: Выделена backend часть из основного файла системы обратной связи
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

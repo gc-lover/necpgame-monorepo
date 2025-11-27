@@ -1,0 +1,172 @@
+metadata:
+  id: player-feedback-system
+  title: Система обратной связи от игроков - in-game форма для создания Issues
+  document_type: analysis
+  category: ideas
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-11-27T22:10:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-23T13:00:00Z
+  processed_by: idea-writer
+  processed_at: 2025-11-23T12:00:00Z
+  github_issue_number: 1335
+  owners:
+    - role: idea_writer
+      contact: idea-writer@necp.game
+  tags:
+    - player-feedback
+    - in-game-ui
+    - github-integration
+    - community
+    - workflow
+  topics:
+    - game-design
+    - backend
+    - client
+    - automation
+  related_systems:
+    - character-service
+    - session-service
+    - notification-service
+  related_documents:
+    - id: github-issue-1335
+      title: GitHub Issue #1335
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+      relation: migrated_to
+      migrated_at: 2025-11-23T12:00:00Z
+    - id: player-feedback-ui
+      title: In-Game UI форма (UE5)
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system-ui.yaml
+      relation: part_of
+    - id: player-feedback-backend
+      title: Бекенд сервис (Go)
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system-backend.yaml
+      relation: part_of
+    - id: player-feedback-agent
+      title: Агент для обработки предложений
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system-agent.yaml
+      relation: part_of
+    - id: player-feedback-technical
+      title: Технические детали
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system-technical.yaml
+      relation: part_of
+  source: user_request
+  visibility: internal
+  audience:
+    - game-design
+    - backend
+    - client
+    - community
+  risk_level: medium
+review:
+  chain:
+    - role: idea_writer
+      reviewer: idea-writer
+      reviewed_at: 2025-11-23T13:00:00Z
+      status: completed
+  next_actions:
+    - ✅ Передано Architect для проектирования архитектуры
+    - ✅ Проработан детальный UI/UX дизайн
+    - ⏳ Создание OpenAPI спецификации (Architect → API Designer)
+summary:
+  problem: |
+    Игроки не имеют возможности напрямую из игры отправлять предложения, идеи и пожелания разработчикам.
+    Вся обратная связь происходит через внешние каналы (Discord, форумы, email), что создает барьер для игроков
+    и усложняет сбор и обработку обратной связи. Нет автоматизации процесса создания задач из обращений игроков.
+  goal: |
+    Создать интегрированную систему обратной связи, которая позволяет игрокам:
+    - Отправлять предложения, идеи и пожелания прямо из игры
+    - Видеть статус своих предложений
+    - Получать уведомления о рассмотрении предложений
+    - Автоматически создавать GitHub Issues для обработки предложений агентами
+  essence: |
+    Система состоит из трех основных компонентов:
+    1. In-Game UI форма в стиле Cyberpunk для отправки обращений
+    2. Бекенд сервис (Go) для приема данных и создания GitHub Issues
+    3. Агент для обработки предложений и маршрутизации к соответствующим агентам
+  key_points:
+    - In-game форма с полями для типа обращения, категории, заголовка, описания
+    - Автоматический сбор контекста игры (локация, уровень, активные квесты)
+    - Бекенд сервис feedback-service для обработки обращений
+    - Интеграция с GitHub API для автоматического создания Issues
+    - Агент для классификации и маршрутизации обращений
+    - Система уведомлений игрокам о статусе обращений
+content:
+  sections:
+    - id: overview
+      title: Обзор системы
+      body: |
+        Система обратной связи от игроков состоит из нескольких компонентов, каждый из которых описан в отдельном файле:
+        
+        - **In-Game UI форма (UE5)** - пользовательский интерфейс для отправки обращений
+        - **Бекенд сервис (Go)** - обработка данных и интеграция с GitHub API
+        - **Агент для обработки** - классификация и маршрутизация обращений
+        - **Технические детали** - БД схема, безопасность, интеграции
+        
+        Подробное описание каждого компонента находится в соответствующих файлах.
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary:
+    - term: player-feedback
+      definition: Обращение от игрока через in-game форму
+    - term: feedback-service
+      definition: Микросервис для обработки обращений игроков
+    - term: player-feedback-agent
+      definition: Агент для классификации и маршрутизации обращений
+  references:
+    - title: GitHub Issue #1335
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+    - title: AGENT_WORKFLOW.md
+      link: .github/AGENT_WORKFLOW.md
+  decisions:
+    - date: 2025-11-23
+      decision: Создать отдельный микросервис feedback-service вместо интеграции в существующие сервисы
+      rationale: Изоляция функциональности, независимое масштабирование
+    - date: 2025-11-23
+      decision: Создать отдельный агент agent:player-feedback
+      rationale: Специализированная обработка обращений от игроков, не расширение Idea Writer
+    - date: 2025-11-23
+      decision: Реализовать систему голосования за предложения
+      rationale: Позволяет игрокам выражать поддержку идеям, помогает приоритизировать обращения
+    - date: 2025-11-23
+      decision: Добавить доску идей в игре
+      rationale: Прозрачность процесса, возможность видеть популярные предложения, вовлечение сообщества
+    - date: 2025-11-23
+      decision: Объединять дубликаты вместо простого отклонения
+      rationale: Сохраняет всех авторов, переносит голоса, улучшает качество обращений
+    - date: 2025-11-23
+      decision: Обязательно фиксировать авторов предложений
+      rationale: Необходимо для отслеживания вклада игроков, но уведомления не требуются
+    - date: 2025-11-23
+      decision: Автоматическая модерация с опциональной ручной
+      rationale: Баланс между защитой от спама и гибкостью процесса
+implementation:
+  github_issue: 1335
+  needs_task: true
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: idea-writer
+    changes: Создана детальная концепция системы обратной связи от игроков
+  - version: '1.1.0'
+    date: 2025-11-23
+    author: idea-writer
+    changes: |
+      Добавлена система голосования за предложения
+      Добавлена доска идей в игре
+      Детализирована логика объединения дубликатов
+      Добавлена обязательная фиксация авторов
+      Проработана система модерации (автоматическая + опциональная ручная)
+      Обновлена БД схема с таблицами для голосов и авторов
+  - version: '1.2.0'
+    date: 2025-11-27
+    author: idea-writer
+    changes: Разбит файл на несколько частей по SOLID принципам (максимум 500 строк на файл)
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

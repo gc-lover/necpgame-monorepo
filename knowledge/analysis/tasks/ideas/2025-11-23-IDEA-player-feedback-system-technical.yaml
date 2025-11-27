@@ -1,0 +1,262 @@
+metadata:
+  id: player-feedback-system-technical
+  title: Технические детали системы обратной связи
+  document_type: analysis
+  category: ideas
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-27T22:10:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-23T13:00:00Z
+  processed_by: idea-writer
+  processed_at: 2025-11-23T12:00:00Z
+  github_issue_number: 1335
+  owners:
+    - role: idea_writer
+      contact: idea-writer@necp.game
+  tags:
+    - player-feedback
+    - technical
+    - database
+    - security
+  topics:
+    - backend
+    - database
+    - security
+  related_systems:
+    - session-service
+    - notification-service
+    - character-service
+  related_documents:
+    - id: player-feedback-system-main
+      title: Система обратной связи от игроков
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system-main.yaml
+      relation: part_of
+    - id: github-issue-1335
+      title: GitHub Issue #1335
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+      relation: migrated_to
+  source: user_request
+  visibility: internal
+  audience:
+    - backend
+    - database
+    - security
+  risk_level: medium
+review:
+  chain:
+    - role: idea_writer
+      reviewer: idea-writer
+      reviewed_at: 2025-11-23T13:00:00Z
+      status: completed
+  next_actions: []
+summary:
+  problem: Нужны технические детали реализации: БД схема, безопасность, модерация, интеграции.
+  goal: Описать БД структуру, механизмы безопасности, модерацию и интеграции с другими сервисами.
+  essence: Детальное описание таблиц БД, rate limiting, валидации, санитизации, аутентификации, модерации и интеграций.
+  key_points:
+    - БД схема с тремя основными таблицами
+    - Rate limiting и валидация данных
+    - Санитизация и защита от XSS
+    - Аутентификация через session token
+    - Автоматическая и ручная модерация
+    - Интеграции с другими сервисами
+content:
+  sections:
+    - id: database-schema
+      title: БД схема
+      body: |
+        **Таблица `player_feedback`:**
+        - id (UUID, PRIMARY KEY)
+        - player_id (UUID, NOT NULL) - автор обращения
+        - type (VARCHAR, NOT NULL)
+        - category (VARCHAR, NOT NULL)
+        - title (VARCHAR, NOT NULL, max 100)
+        - description (TEXT, NOT NULL, max 2000)
+        - priority (VARCHAR)
+        - game_context (JSONB)
+        - screenshots (TEXT[])
+        - github_issue_number (INT)
+        - github_issue_url (TEXT)
+        - status (VARCHAR, NOT NULL)
+        - votes_count (INT, DEFAULT 0) - количество голосов
+        - merged_into (UUID) - ID обращения, с которым объединено
+        - authors (UUID[]) - массив авторов (при объединении)
+        - created_at (TIMESTAMP, DEFAULT NOW())
+        - updated_at (TIMESTAMP, DEFAULT NOW())
+        - INDEX на player_id, status, votes_count, created_at
+        
+        **Таблица `feedback_votes`:**
+        - id (UUID, PRIMARY KEY)
+        - feedback_id (UUID, NOT NULL, FOREIGN KEY)
+        - player_id (UUID, NOT NULL)
+        - created_at (TIMESTAMP, DEFAULT NOW())
+        - UNIQUE (feedback_id, player_id) - один голос на игрока
+        
+        **Таблица `feedback_authors`:**
+        - id (UUID, PRIMARY KEY)
+        - feedback_id (UUID, NOT NULL, FOREIGN KEY)
+        - player_id (UUID, NOT NULL)
+        - is_primary (BOOLEAN, DEFAULT false) - основной автор
+        - created_at (TIMESTAMP, DEFAULT NOW())
+        - INDEX на feedback_id, player_id
+      mechanics_links: []
+      assets: []
+    - id: security-measures
+      title: Безопасность
+      body: |
+        **Rate Limiting:**
+        - 5 обращений в час на игрока (настраиваемо)
+        - 20 обращений в день на игрока
+        - Глобальный лимит: 1000 обращений в час
+        - Использование токенов (token bucket algorithm)
+        - Возврат HTTP 429 при превышении лимита
+        - Retry-After заголовок с временем ожидания
+        
+        **Валидация данных:**
+        - Валидация на клиенте (UE5) перед отправкой
+        - Строгая валидация на сервере (Go)
+        - Проверка типов данных
+        - Проверка длины строк
+        - Валидация форматов файлов
+        - Проверка размера файлов (макс 10MB)
+        
+        **Санитизация:**
+        - Очистка HTML тегов из текста
+        - Экранирование специальных символов
+        - Защита от XSS атак
+        - Защита от SQL injection (prepared statements)
+        - Валидация URL в описаниях
+        
+        **Аутентификация:**
+        - Аутентификация через session token
+        - Проверка валидности сессии через session-service
+        - Проверка прав доступа (только свои обращения)
+        - JWT токены для API агентов
+        
+        **Анонимизация и фиксация авторов:**
+        - Player ID не отображается публично в GitHub Issues
+        - **Обязательная фиксация авторов предложений** в метаданных Issue
+        - Использование анонимного ID для публичного отображения
+        - Сохранение связи player_id → feedback_id в БД для отслеживания авторов
+        - При объединении дубликатов сохраняются все авторы
+        - Контекст игры без личных данных
+        - Логирование с маскированием чувствительных данных
+        - Авторы могут быть указаны в Issue (опционально, с согласия игрока)
+        
+        **Мониторинг:**
+        - Логирование всех операций
+        - Метрики для rate limiting
+        - Алерты при подозрительной активности
+        - Аудит доступа к данным
+        
+        **Защита от злоупотреблений:**
+        - Автоматическое обнаружение спама
+        - Блокировка подозрительных аккаунтов
+        - Система репутации игроков
+      mechanics_links: []
+      assets: []
+    - id: moderation
+      title: Модерация обращений
+      body: |
+        **Модерация обращений:**
+        - **Автоматическая модерация:**
+          * Проверка на запрещенные слова
+          * Проверка на спам (повторяющийся текст)
+          * Проверка на оскорбления
+          * Валидация контента
+        - **Ручная модерация (опционально):**
+          * Модераторы могут просматривать обращения перед созданием Issues
+          * Модераторы могут отклонять неподходящие обращения
+          * Модераторы могут редактировать обращения перед публикацией
+        - **Формат модерации:**
+          * Очередь модерации для новых обращений
+          * Статус `pending_moderation` до проверки
+          * После модерации → `approved` или `rejected`
+          * Только `approved` обращения создают Issues
+          * Отклоненные обращения сохраняются с причиной
+        - **Настройки:**
+          * Можно включить/выключить модерацию
+          * Можно настроить автоматические правила
+          * Можно назначить модераторов
+      mechanics_links: []
+      assets: []
+    - id: integrations
+      title: Интеграции
+      body: |
+        **Интеграции:**
+        - GitHub API - создание Issues
+        - Character Service - получение данных игрока
+        - Session Service - валидация сессии
+        - Notification Service - уведомления игрокам
+      mechanics_links: []
+      assets: []
+    - id: workflow-statuses
+      title: Workflow и статусы
+      body: |
+        **Поток данных:**
+        1. Игрок заполняет форму в игре
+        2. Клиент отправляет данные на `feedback-service`
+        3. Сервис валидирует и сохраняет в БД
+        4. Сервис создает GitHub Issue через API
+        5. Агент `player-feedback` мониторит новые Issues
+        6. Агент классифицирует и маршрутизирует обращение
+        7. Соответствующий агент обрабатывает обращение
+        8. Статус обновляется в БД и уведомляется игрок
+        
+        **Статусы обращений:**
+        - `pending_moderation` - ожидает модерации (если включена)
+        - `pending` - ожидает обработки
+        - `in_review` - рассматривается агентом
+        - `assigned` - назначено агенту
+        - `in_progress` - в работе
+        - `resolved` - решено
+        - `rejected` - отклонено
+        - `duplicate` - дубликат
+        - `merged` - объединено с другим обращением
+        
+        **Уведомления игроков:**
+        - **Фиксация авторов обязательна**, но уведомления не требуются
+        - Авторы фиксируются в метаданных Issue
+        - Авторы могут отслеживать статус через доску идей
+        - Опционально: email уведомления (если игрок включил)
+        - In-game уведомления не требуются по умолчанию
+      mechanics_links: []
+      assets: []
+    - id: lore-integration
+      title: Лор для системы
+      body: |
+        **В игровом мире:**
+        Система обратной связи представлена как "Корпоративный канал связи" или "Система обращений к администрации".
+        Игроки могут отправлять обращения через терминалы в игровом мире или через интерфейс персонажа.
+        
+        **Визуальный стиль:**
+        - Неоновые элементы интерфейса
+        - Голографические эффекты
+        - Cyberpunk эстетика
+        - Анимации передачи данных
+        
+        **Локации:**
+        - Терминалы в основных хабах города
+        - Интерфейс персонажа (меню)
+        - Горячая клавиша для быстрого доступа
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1335
+  needs_task: true
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-27
+    author: idea-writer
+    changes: Выделена technical часть из основного файла системы обратной связи
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

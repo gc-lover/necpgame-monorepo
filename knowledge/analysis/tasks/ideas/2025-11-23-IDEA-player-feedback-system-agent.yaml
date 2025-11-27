@@ -1,0 +1,179 @@
+metadata:
+  id: player-feedback-system-agent
+  title: Агент для обработки предложений от игроков
+  document_type: analysis
+  category: ideas
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-27T22:10:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-23T13:00:00Z
+  processed_by: idea-writer
+  processed_at: 2025-11-23T12:00:00Z
+  github_issue_number: 1335
+  owners:
+    - role: idea_writer
+      contact: idea-writer@necp.game
+  tags:
+    - player-feedback
+    - agent
+    - automation
+    - workflow
+  topics:
+    - automation
+    - workflow
+    - ai-agents
+  related_systems:
+    - notification-service
+  related_documents:
+    - id: player-feedback-system-main
+      title: Система обратной связи от игроков
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system-main.yaml
+      relation: part_of
+    - id: github-issue-1335
+      title: GitHub Issue #1335
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+      relation: migrated_to
+  source: user_request
+  visibility: internal
+  audience:
+    - automation
+    - workflow
+  risk_level: medium
+review:
+  chain:
+    - role: idea_writer
+      reviewer: idea-writer
+      reviewed_at: 2025-11-23T13:00:00Z
+      status: completed
+  next_actions: []
+summary:
+  problem: Нужен автоматический агент для классификации обращений от игроков и их маршрутизации к соответствующим агентам.
+  goal: Создать агента agent:player-feedback для мониторинга Issues, классификации обращений и передачи их соответствующим агентам.
+  essence: Агент мониторит Issues с меткой player-feedback, классифицирует обращения, проверяет на дубликаты, объединяет их и маршрутизирует к соответствующим агентам.
+  key_points:
+    - Отдельный агент agent:player-feedback
+    - Мониторинг Issues с меткой player-feedback
+    - Классификация и структурирование обращений
+    - Проверка на дубликаты и объединение
+    - Маршрутизация к соответствующим агентам
+    - Обновление статусов и уведомления
+content:
+  sections:
+    - id: agent-overview
+      title: Обзор агента
+      body: |
+        **Отдельный агент: `agent:player-feedback`**
+        
+        **Важно:** Агент создается как отдельная сущность, не расширение Idea Writer.
+        
+        **Ответственность:**
+        - Мониторинг Issues с меткой `player-feedback`
+        - Классификация обращений по типу и категории
+        - Первичная обработка и структурирование
+        - Проверка на дубликаты
+        - Маршрутизация к соответствующим агентам
+        - Обновление статусов обращений в БД
+        - Уведомление игроков о рассмотрении
+        - Отслеживание прогресса обработки
+      mechanics_links: []
+      assets: []
+    - id: workflow-processing
+      title: Workflow обработки
+      body: |
+        **1. Обнаружение нового обращения:**
+        - Агент периодически проверяет Issues с меткой `player-feedback` и статусом `open`
+        - Использует GitHub API для получения списка Issues
+        - Фильтрует по метке и дате создания (последние 24 часа)
+        
+        **2. Классификация:**
+        - Анализирует тип обращения из Issue body
+        - Определяет категорию
+        - Извлекает приоритет
+        - Проверяет контекст игры
+        
+        **3. Проверка на дубликаты и объединение:**
+        - Поиск похожих Issues по заголовку и описанию
+        - Использование семантического поиска
+        - Если найден дубликат:
+          * Агент объединяет обращения в одно
+          * Сохраняет всех авторов в метаданных Issue
+          * Переносит голоса с дубликата на основное обращение
+          * Комментирует Issue со списком объединенных обращений
+          * Обновляет статус дубликата в БД на `merged`
+          * Обновляет основное обращение с информацией об объединении
+          * Фиксирует всех авторов предложения
+        
+        **4. Структурирование:**
+        - Форматирует Issue для лучшей читаемости
+        - Добавляет структурированные секции
+        - Выделяет ключевые моменты
+        
+        **5. Маршрутизация:**
+        - **feature_request** → `agent:idea-writer` + `stage:idea`
+        - **bug_report** → `agent:qa` + `stage:testing`
+        - **wishlist** → `agent:idea-writer` + `stage:idea`
+        - **feedback** → `agent:idea-writer` + `stage:idea`
+        
+        Дополнительная маршрутизация по категории:
+        - **balance** → добавляет `agent:game-balance`
+        - **technical** → добавляет `agent:backend` или `agent:ue5`
+        - **content** → добавляет `agent:content-writer`
+        - **lore** → добавляет `agent:content-writer`
+        
+        **6. Обновление меток:**
+        - Удаляет метку `player-feedback` (или оставляет для отслеживания)
+        - Добавляет метки соответствующего агента
+        - Добавляет метку этапа разработки
+        - Сохраняет приоритет
+        
+        **7. Обновление статуса:**
+        - Обновляет статус в БД через API feedback-service
+        - Статус меняется на `in_review` → `assigned` → `in_progress`
+        
+        **8. Уведомление игрока:**
+        - Отправляет уведомление через notification-service
+        - Тип уведомления: "Ваше обращение получено и передано на рассмотрение"
+        - Включает ссылку на GitHub Issue
+        
+        **9. Отслеживание прогресса:**
+        - Периодически проверяет статус Issue
+        - При изменении статуса Issue обновляет БД
+        - Обновляет счетчик голосов в Issue (опционально)
+        - Фиксирует всех авторов в метаданных Issue
+        
+        **10. Работа с голосованием:**
+        - Мониторинг популярных предложений (высокий votes_count)
+        - Приоритизация обращений на основе голосов
+        - Обновление меток Issue при достижении порога голосов
+        - Автоматическое повышение приоритета популярных предложений
+      mechanics_links: []
+      assets: []
+    - id: processing-rules
+      title: Правила обработки
+      body: |
+        **Правила обработки:**
+        - Обработка в порядке приоритета (critical → high → medium → low)
+        - Максимум 10 обращений в час (rate limiting агента)
+        - Логирование всех действий
+        - Обработка ошибок с retry механизмом
+      mechanics_links: []
+      assets: []
+appendix:
+  glossary: []
+  references: []
+  decisions: []
+implementation:
+  github_issue: 1335
+  needs_task: true
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-27
+    author: idea-writer
+    changes: Выделена agent часть из основного файла системы обратной связи
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
