@@ -1,0 +1,418 @@
+openapi: 3.0.3
+info:
+  title: Achievement Service API
+  description: API для управления достижениями и титулами игроков.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8085/v1
+    description: Development server
+
+tags:
+  - name: Achievements
+    description: Достижения игроков
+  - name: Titles
+    description: Титулы игроков
+
+paths:
+  /achievements:
+    get:
+      summary: Получить список достижений
+      description: Возвращает список всех достижений
+      operationId: getAchievements
+      tags:
+        - Achievements
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/AchievementCategory"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список достижений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AchievementListResponse"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /achievements/{achievement_id}:
+    get:
+      summary: Получить достижение
+      description: Возвращает детали достижения
+      operationId: getAchievement
+      tags:
+        - Achievements
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали достижения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Achievement"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /achievements/players/{player_id}:
+    get:
+      summary: Получить достижения игрока
+      description: Возвращает все достижения игрока с прогрессом
+      operationId: getPlayerAchievements
+      tags:
+        - Achievements
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/AchievementCategory"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Достижения игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAchievementListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /achievements/players/{player_id}/progress:
+    get:
+      summary: Получить прогресс игрока
+      description: Возвращает прогресс по всем достижениям
+      operationId: getPlayerProgress
+      tags:
+        - Achievements
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Прогресс игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummary"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /achievements/players/{player_id}/unlocked:
+    get:
+      summary: Получить разблокированные достижения
+      description: Возвращает только разблокированные достижения игрока
+      operationId: getUnlockedAchievements
+      tags:
+        - Achievements
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Разблокированные достижения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnlockedAchievementListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /achievements/players/{player_id}/titles:
+    get:
+      summary: Получить титулы игрока
+      description: Возвращает доступные титулы игрока
+      operationId: getPlayerTitles
+      tags:
+        - Titles
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Титулы игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /achievements/players/{player_id}/titles/{title_id}/equip:
+    post:
+      summary: Экипировать титул
+      description: Экипирует титул игроку
+      operationId: equipTitle
+      tags:
+        - Titles
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: title_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Титул экипирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerTitle"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Титул не разблокирован
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Achievement:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - category
+        - points
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: "#/components/schemas/AchievementCategory"
+        points:
+          type: integer
+        hidden:
+          type: boolean
+        criteria:
+          type: object
+          properties:
+            type:
+              type: string
+            target:
+              type: integer
+        rewards:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              amount:
+                type: integer
+
+    AchievementCategory:
+      type: string
+      enum:
+        - COMBAT
+        - EXPLORATION
+        - SOCIAL
+        - ECONOMY
+        - COLLECTION
+        - STORY
+        - PVP
+        - PVE
+
+    PlayerAchievement:
+      type: object
+      required:
+        - achievement_id
+        - unlocked
+        - progress
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        achievement:
+          $ref: "#/components/schemas/Achievement"
+        unlocked:
+          type: boolean
+        progress:
+          type: object
+          properties:
+            current:
+              type: integer
+            target:
+              type: integer
+            percentage:
+              type: number
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UnlockedAchievement:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        achievement:
+          $ref: "#/components/schemas/Achievement"
+        unlocked_at:
+          type: string
+          format: date-time
+
+    ProgressSummary:
+      type: object
+      properties:
+        total_achievements:
+          type: integer
+        unlocked_count:
+          type: integer
+        total_points:
+          type: integer
+        completion_percentage:
+          type: number
+
+    PlayerTitle:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        equipped:
+          type: boolean
+        unlocked_at:
+          type: string
+          format: date-time
+
+    AchievementListResponse:
+      type: object
+      required:
+        - achievements
+        - pagination
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Achievement"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    PlayerAchievementListResponse:
+      type: object
+      required:
+        - achievements
+        - pagination
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerAchievement"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    UnlockedAchievementListResponse:
+      type: object
+      required:
+        - achievements
+        - pagination
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnlockedAchievement"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    TitleListResponse:
+      type: object
+      required:
+        - titles
+      properties:
+        titles:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerTitle"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
