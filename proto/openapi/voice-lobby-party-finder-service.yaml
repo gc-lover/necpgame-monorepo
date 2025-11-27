@@ -1,0 +1,472 @@
+openapi: 3.0.3
+info:
+  title: Voice Lobby Party Finder Service API
+  description: |
+    API для системы поиска групп (Party Finder) в голосовых лобби.
+    
+    **Функциональность:**
+    - Поиск группы по критериям
+    - Управление активным поиском
+    - Получение результатов поиска
+    - Матчмейкинг по ролям, рейтингу, региону
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8096/v1
+    description: Development server
+
+tags:
+  - name: Party Finder
+    description: Система поиска групп
+
+paths:
+  /party-finder/search:
+    post:
+      summary: Начать поиск группы
+      description: Запускает поиск группы по указанным критериям
+      operationId: startPartySearch
+      tags:
+        - Party Finder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartPartySearchRequest"
+      responses:
+        "201":
+          description: Поиск успешно начат
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartySearch"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Конфликт (персонаж уже в активном поиске)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /party-finder/active:
+    get:
+      summary: Получить активный поиск
+      description: Возвращает информацию об активном поиске персонажа
+      operationId: getActivePartySearch
+      tags:
+        - Party Finder
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Активный поиск найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartySearch"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Активный поиск не найден
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /party-finder/cancel:
+    post:
+      summary: Отменить поиск группы
+      description: Отменяет активный поиск группы персонажа
+      operationId: cancelPartySearch
+      tags:
+        - Party Finder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelPartySearchRequest"
+      responses:
+        "200":
+          description: Поиск успешно отменен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelPartySearchResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Активный поиск не найден
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /party-finder/matches:
+    get:
+      summary: Получить найденные совпадения
+      description: Возвращает список найденных групп/игроков
+      operationId: getPartyMatches
+      tags:
+        - Party Finder
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список совпадений получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartyMatchesResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Активный поиск не найден
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /party-finder/accept-match:
+    post:
+      summary: Принять совпадение
+      description: Принимает найденную группу и присоединяется к лобби
+      operationId: acceptPartyMatch
+      tags:
+        - Party Finder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptMatchRequest"
+      responses:
+        "200":
+          description: Совпадение принято, присоединение к лобби
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptMatchResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Совпадение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "409":
+          description: Конфликт (лобби заполнено или больше не существует)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    PlayerRole:
+      type: string
+      enum:
+        - tank
+        - healer
+        - dps
+        - support
+        - flex
+      description: |
+        Роль игрока в группе:
+        - tank: танк
+        - healer: лекарь
+        - dps: урон
+        - support: поддержка
+        - flex: любая роль
+
+    SearchState:
+      type: string
+      enum:
+        - searching
+        - found
+        - cancelled
+        - timeout
+      description: |
+        Состояние поиска:
+        - searching: поиск активен
+        - found: группа найдена
+        - cancelled: поиск отменен
+        - timeout: таймаут поиска
+
+    SearchCriteria:
+      type: object
+      required:
+        - role
+        - activity
+      properties:
+        role:
+          $ref: "#/components/schemas/PlayerRole"
+        rating_min:
+          type: integer
+          minimum: 0
+          description: Минимальный рейтинг группы
+        rating_max:
+          type: integer
+          minimum: 0
+          description: Максимальный рейтинг группы (±100 от rating_min)
+        activity:
+          type: string
+          description: Тип активности
+          example: raid-strike
+        region:
+          type: string
+          description: Предпочитаемый регион
+          example: eu-west
+        language:
+          type: string
+          description: Предпочитаемый язык
+          example: en
+        min_level:
+          type: integer
+          minimum: 1
+          description: Минимальный уровень игроков
+        max_level:
+          type: integer
+          minimum: 1
+          description: Максимальный уровень игроков (±5 от min_level)
+        require_voice:
+          type: boolean
+          description: Требуется голосовая связь
+          default: true
+
+    PartySearch:
+      type: object
+      required:
+        - search_id
+        - character_id
+        - criteria
+        - state
+        - started_at
+      properties:
+        search_id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор поиска
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        criteria:
+          $ref: "#/components/schemas/SearchCriteria"
+        state:
+          $ref: "#/components/schemas/SearchState"
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала поиска
+        estimated_wait_time:
+          type: integer
+          description: Оценочное время ожидания в секундах
+        matches_found:
+          type: integer
+          description: Количество найденных совпадений
+
+    StartPartySearchRequest:
+      type: object
+      required:
+        - character_id
+        - criteria
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        criteria:
+          $ref: "#/components/schemas/SearchCriteria"
+
+    CancelPartySearchRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+
+    CancelPartySearchResponse:
+      type: object
+      required:
+        - search_id
+        - cancelled_at
+      properties:
+        search_id:
+          type: string
+          format: uuid
+          description: ID отмененного поиска
+        cancelled_at:
+          type: string
+          format: date-time
+          description: Время отмены
+
+    PartyMatch:
+      type: object
+      required:
+        - match_id
+        - lobby_id
+        - lobby_name
+        - match_score
+        - created_at
+      properties:
+        match_id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор совпадения
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID голосового лобби
+        lobby_name:
+          type: string
+          description: Название лобби
+        lobby_description:
+          type: string
+          description: Описание лобби
+        region:
+          type: string
+          description: Регион лобби
+        activity:
+          type: string
+          description: Тип активности
+        current_participants:
+          type: integer
+          description: Текущее количество участников
+        max_participants:
+          type: integer
+          description: Максимальное количество участников
+        average_rating:
+          type: integer
+          description: Средний рейтинг участников
+        match_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Оценка совпадения (0-1, чем выше - тем лучше)
+        required_roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerRole"
+          description: Требуемые роли
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания совпадения
+
+    PartyMatchesResponse:
+      type: object
+      required:
+        - search_id
+        - matches
+        - pagination
+      properties:
+        search_id:
+          type: string
+          format: uuid
+          description: ID поиска
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/PartyMatch"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    AcceptMatchRequest:
+      type: object
+      required:
+        - character_id
+        - match_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        match_id:
+          type: string
+          format: uuid
+          description: ID принимаемого совпадения
+
+    AcceptMatchResponse:
+      type: object
+      required:
+        - match_id
+        - lobby_id
+        - voice_token
+        - joined_at
+      properties:
+        match_id:
+          type: string
+          format: uuid
+          description: ID совпадения
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID лобби
+        voice_token:
+          type: string
+          description: Токен для подключения к голосовому провайдеру
+        voice_server_url:
+          type: string
+          format: uri
+          description: URL голосового сервера
+        joined_at:
+          type: string
+          format: date-time
+          description: Время присоединения к лобби
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

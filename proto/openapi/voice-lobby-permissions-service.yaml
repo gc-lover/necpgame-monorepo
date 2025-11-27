@@ -1,0 +1,485 @@
+openapi: 3.0.3
+info:
+  title: Voice Lobby Permissions Service API
+  description: |
+    API для управления правами доступа в голосовых лобби.
+    
+    **Функциональность:**
+    - Назначение и изменение ролей участников
+    - Управление правами доступа
+    - Kick и Mute участников
+    - Получение списка прав
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8096/v1
+    description: Development server
+
+tags:
+  - name: Voice Lobby Permissions
+    description: Управление правами доступа в голосовых лобби
+
+paths:
+  /voice-lobbies/{lobby_id}/permissions:
+    get:
+      summary: Получить права доступа
+      description: Возвращает список ролей и прав в лобби
+      operationId: getPermissions
+      tags:
+        - Voice Lobby Permissions
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Права доступа успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    post:
+      summary: Изменить права доступа
+      description: Изменяет роль или права участника лобби
+      operationId: updatePermissions
+      tags:
+        - Voice Lobby Permissions
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePermissionsRequest"
+      responses:
+        "200":
+          description: Права успешно изменены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdatePermissionsResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/kick:
+    post:
+      summary: Исключить участника
+      description: Исключает участника из голосового лобби
+      operationId: kickParticipant
+      tags:
+        - Voice Lobby Permissions
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KickParticipantRequest"
+      responses:
+        "200":
+          description: Участник успешно исключен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KickParticipantResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/mute:
+    post:
+      summary: Отключить/включить микрофон участника
+      description: Управление микрофоном участника (принудительное mute/unmute)
+      operationId: muteParticipant
+      tags:
+        - Voice Lobby Permissions
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MuteParticipantRequest"
+      responses:
+        "200":
+          description: Микрофон успешно отключен/включен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MuteParticipantResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/transfer-ownership:
+    post:
+      summary: Передать владение лобби
+      description: Передает права владельца лобби другому участнику
+      operationId: transferOwnership
+      tags:
+        - Voice Lobby Permissions
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferOwnershipRequest"
+      responses:
+        "200":
+          description: Владение успешно передано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferOwnershipResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    ParticipantRole:
+      type: string
+      enum:
+        - leader
+        - commander
+        - party_leader
+        - officer
+        - member
+      description: |
+        Роль участника в лобби:
+        - leader: лидер (владелец) - полный контроль
+        - commander: командир - управление рейдом
+        - party_leader: лидер группы - управление группой
+        - officer: офицер - модерация
+        - member: участник - базовые права
+
+    PermissionAction:
+      type: string
+      enum:
+        - manage_lobby
+        - manage_subchannels
+        - manage_permissions
+        - kick
+        - mute
+        - move
+        - speak
+        - listen
+      description: |
+        Действия в лобби:
+        - manage_lobby: управление настройками лобби
+        - manage_subchannels: управление подканалами
+        - manage_permissions: управление правами участников
+        - kick: исключение участников
+        - mute: отключение микрофонов
+        - move: перемещение участников между подканалами
+        - speak: разговаривать в голосовом канале
+        - listen: слушать голосовой канал
+
+    RolePermissions:
+      type: object
+      required:
+        - role
+        - permissions
+      properties:
+        role:
+          $ref: "#/components/schemas/ParticipantRole"
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PermissionAction"
+          description: Список разрешенных действий для роли
+
+    ParticipantPermissions:
+      type: object
+      required:
+        - character_id
+        - character_name
+        - role
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        character_name:
+          type: string
+          description: Имя персонажа
+        role:
+          $ref: "#/components/schemas/ParticipantRole"
+        custom_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PermissionAction"
+          description: Дополнительные права (если отличаются от роли)
+
+    PermissionsResponse:
+      type: object
+      required:
+        - lobby_id
+        - role_permissions
+        - participants
+      properties:
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID лобби
+        role_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RolePermissions"
+          description: Права по ролям
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParticipantPermissions"
+          description: Права участников
+
+    UpdatePermissionsRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        new_role:
+          $ref: "#/components/schemas/ParticipantRole"
+        custom_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PermissionAction"
+          description: Дополнительные права (null - сбросить)
+
+    UpdatePermissionsResponse:
+      type: object
+      required:
+        - character_id
+        - previous_role
+        - new_role
+        - updated_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        previous_role:
+          $ref: "#/components/schemas/ParticipantRole"
+        new_role:
+          $ref: "#/components/schemas/ParticipantRole"
+        custom_permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PermissionAction"
+        updated_at:
+          type: string
+          format: date-time
+          description: Время обновления
+
+    KickParticipantRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID исключаемого персонажа
+        reason:
+          type: string
+          maxLength: 256
+          description: Причина исключения
+        ban_duration:
+          type: integer
+          minimum: 0
+          maximum: 86400
+          description: Длительность бана в секундах (0 - без бана, макс 24 часа)
+
+    KickParticipantResponse:
+      type: object
+      required:
+        - character_id
+        - kicked_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID исключенного персонажа
+        reason:
+          type: string
+          description: Причина исключения
+        ban_until:
+          type: string
+          format: date-time
+          description: Время окончания бана (если применен)
+        kicked_at:
+          type: string
+          format: date-time
+          description: Время исключения
+
+    MuteParticipantRequest:
+      type: object
+      required:
+        - character_id
+        - mute
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        mute:
+          type: boolean
+          description: true - отключить микрофон, false - включить
+        duration:
+          type: integer
+          minimum: 0
+          maximum: 3600
+          description: Длительность mute в секундах (0 - постоянно, макс 1 час)
+        reason:
+          type: string
+          maxLength: 256
+          description: Причина отключения микрофона
+
+    MuteParticipantResponse:
+      type: object
+      required:
+        - character_id
+        - is_muted
+        - updated_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        is_muted:
+          type: boolean
+          description: Статус микрофона
+        mute_until:
+          type: string
+          format: date-time
+          description: Время окончания mute (если временное)
+        reason:
+          type: string
+          description: Причина отключения микрофона
+        updated_at:
+          type: string
+          format: date-time
+          description: Время обновления
+
+    TransferOwnershipRequest:
+      type: object
+      required:
+        - new_owner_id
+      properties:
+        new_owner_id:
+          type: string
+          format: uuid
+          description: ID нового владельца лобби
+
+    TransferOwnershipResponse:
+      type: object
+      required:
+        - previous_owner_id
+        - new_owner_id
+        - transferred_at
+      properties:
+        previous_owner_id:
+          type: string
+          format: uuid
+          description: ID предыдущего владельца
+        new_owner_id:
+          type: string
+          format: uuid
+          description: ID нового владельца
+        transferred_at:
+          type: string
+          format: date-time
+          description: Время передачи владения
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: Voice Lobby Participants Service API
+  description: |
+    API для управления участниками голосовых лобби.
+    
+    **Функциональность:**
+    - Присоединение к лобби
+    - Выход из лобби
+    - Получение списка участников
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8096/v1
+    description: Development server
+
+tags:
+  - name: Voice Lobby Participants
+    description: Управление участниками голосовых лобби
+
+paths:
+  /voice-lobbies/{lobby_id}/join:
+    post:
+      summary: Присоединиться к лобби
+      description: Присоединяет персонажа к голосовому лобби
+      operationId: joinVoiceLobby
+      tags:
+        - Voice Lobby Participants
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinVoiceLobbyRequest"
+      responses:
+        "200":
+          description: Успешное присоединение к лобби
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceLobbyJoinResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Конфликт (лобби заполнено или персонаж уже в лобби)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/leave:
+    post:
+      summary: Покинуть лобби
+      description: Отключает персонажа от голосового лобби
+      operationId: leaveVoiceLobby
+      tags:
+        - Voice Lobby Participants
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveVoiceLobbyRequest"
+      responses:
+        "204":
+          description: Успешный выход из лобби
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/participants:
+    get:
+      summary: Получить участников лобби
+      description: Возвращает список участников голосового лобби
+      operationId: getVoiceLobbyParticipants
+      tags:
+        - Voice Lobby Participants
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список участников успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceLobbyParticipantsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    JoinVoiceLobbyRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        password:
+          type: string
+          description: Пароль для входа (если требуется)
+
+    VoiceLobbyJoinResponse:
+      type: object
+      required:
+        - lobby_id
+        - voice_token
+      properties:
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID лобби
+        voice_token:
+          type: string
+          description: Токен для подключения к голосовому провайдеру
+        voice_server_url:
+          type: string
+          format: uri
+          description: URL голосового сервера
+
+    LeaveVoiceLobbyRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+
+    LobbyParticipant:
+      type: object
+      required:
+        - character_id
+        - character_name
+        - joined_at
+        - is_speaking
+        - is_muted
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        character_name:
+          type: string
+          description: Имя персонажа
+        role:
+          type: string
+          enum: [leader, commander, party_leader, officer, member]
+          description: Роль в лобби
+        subchannel_id:
+          type: string
+          format: uuid
+          description: ID подканала (null - основной канал)
+        joined_at:
+          type: string
+          format: date-time
+          description: Время присоединения
+        is_speaking:
+          type: boolean
+          description: Говорит сейчас
+        is_muted:
+          type: boolean
+          description: Отключен микрофон
+
+    VoiceLobbyParticipantsResponse:
+      type: object
+      required:
+        - lobby_id
+        - participants
+        - total_count
+      properties:
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID лобби
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/LobbyParticipant"
+        total_count:
+          type: integer
+          description: Общее количество участников
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

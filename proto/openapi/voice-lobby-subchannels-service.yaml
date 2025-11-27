@@ -1,0 +1,550 @@
+openapi: 3.0.3
+info:
+  title: Voice Lobby Subchannels Service API
+  description: |
+    API для управления подканалами в голосовых лобби.
+    
+    **Функциональность:**
+    - Создание и удаление подканалов
+    - Перемещение участников между подканалами
+    - Управление настройками подканалов
+    - Получение списка подканалов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8096/v1
+    description: Development server
+
+tags:
+  - name: Voice Lobby Subchannels
+    description: Управление подканалами в голосовых лобби
+
+paths:
+  /voice-lobbies/{lobby_id}/subchannels:
+    get:
+      summary: Получить список подканалов
+      description: Возвращает список всех подканалов голосового лобби
+      operationId: listSubchannels
+      tags:
+        - Voice Lobby Subchannels
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список подканалов успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubchannelListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    post:
+      summary: Создать подканал
+      description: Создает новый подканал в голосовом лобби
+      operationId: createSubchannel
+      tags:
+        - Voice Lobby Subchannels
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubchannelRequest"
+      responses:
+        "201":
+          description: Подканал успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subchannel"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Конфликт (достигнут лимит подканалов)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/subchannels/{subchannel_id}:
+    get:
+      summary: Получить информацию о подканале
+      description: Возвращает детальную информацию о подканале
+      operationId: getSubchannel
+      tags:
+        - Voice Lobby Subchannels
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          description: ID подканала
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о подканале успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subchannel"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    put:
+      summary: Обновить подканал
+      description: Обновляет настройки подканала
+      operationId: updateSubchannel
+      tags:
+        - Voice Lobby Subchannels
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          description: ID подканала
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubchannelRequest"
+      responses:
+        "200":
+          description: Подканал успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subchannel"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Удалить подканал
+      description: Удаляет подканал и перемещает участников в основной канал
+      operationId: deleteSubchannel
+      tags:
+        - Voice Lobby Subchannels
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          description: ID подканала
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Подканал успешно удален
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Конфликт (нельзя удалить основной канал)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/subchannels/{subchannel_id}/move:
+    post:
+      summary: Переместить участника в подканал
+      description: Перемещает участника в указанный подканал
+      operationId: moveToSubchannel
+      tags:
+        - Voice Lobby Subchannels
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          description: ID подканала
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveToSubchannelRequest"
+      responses:
+        "200":
+          description: Участник успешно перемещен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MoveToSubchannelResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Конфликт (подканал заполнен или нет прав)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/subchannels/{subchannel_id}/participants:
+    get:
+      summary: Получить участников подканала
+      description: Возвращает список участников в подканале
+      operationId: getSubchannelParticipants
+      tags:
+        - Voice Lobby Subchannels
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          description: ID подканала
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список участников успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubchannelParticipantsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    SubchannelType:
+      type: string
+      enum:
+        - main
+        - role_based
+        - commander
+        - party
+      description: |
+        Тип подканала:
+        - main: основной канал (создается автоматически)
+        - role_based: ролевой канал (для определенных ролей)
+        - commander: командирский канал (для командиров, макс 8)
+        - party: групповой канал (для групп, макс 8)
+
+    Subchannel:
+      type: object
+      required:
+        - subchannel_id
+        - lobby_id
+        - name
+        - subchannel_type
+        - created_at
+        - current_participants
+      properties:
+        subchannel_id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор подканала
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID родительского лобби
+        name:
+          type: string
+          minLength: 2
+          maxLength: 32
+          description: Название подканала
+          example: "Tank Group"
+        description:
+          type: string
+          maxLength: 128
+          description: Описание подканала
+        subchannel_type:
+          $ref: "#/components/schemas/SubchannelType"
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Максимальное количество участников (null - без лимита)
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Текущее количество участников
+        required_role:
+          type: string
+          enum: [leader, commander, party_leader, officer, member]
+          description: Требуемая роль для входа (null - без ограничений)
+        is_locked:
+          type: boolean
+          description: Подканал заблокирован для входа
+          default: false
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания подканала
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата последнего обновления
+
+    CreateSubchannelRequest:
+      type: object
+      required:
+        - name
+        - subchannel_type
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 32
+          description: Название подканала
+          example: "Tank Group"
+        description:
+          type: string
+          maxLength: 128
+          description: Описание подканала
+        subchannel_type:
+          $ref: "#/components/schemas/SubchannelType"
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Максимальное количество участников
+        required_role:
+          type: string
+          enum: [leader, commander, party_leader, officer, member]
+          description: Требуемая роль для входа
+        is_locked:
+          type: boolean
+          description: Подканал заблокирован для входа
+          default: false
+
+    UpdateSubchannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 32
+          description: Новое название подканала
+        description:
+          type: string
+          maxLength: 128
+          description: Новое описание подканала
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Новый лимит участников
+        required_role:
+          type: string
+          enum: [leader, commander, party_leader, officer, member]
+          description: Новая требуемая роль для входа
+        is_locked:
+          type: boolean
+          description: Заблокировать/разблокировать подканал
+
+    MoveToSubchannelRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID перемещаемого персонажа
+        force:
+          type: boolean
+          description: Принудительное перемещение (игнорирует role check)
+          default: false
+
+    MoveToSubchannelResponse:
+      type: object
+      required:
+        - subchannel_id
+        - character_id
+        - moved_at
+      properties:
+        subchannel_id:
+          type: string
+          format: uuid
+          description: ID подканала
+        character_id:
+          type: string
+          format: uuid
+          description: ID перемещенного персонажа
+        moved_at:
+          type: string
+          format: date-time
+          description: Время перемещения
+
+    SubchannelParticipant:
+      type: object
+      required:
+        - character_id
+        - character_name
+        - joined_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        character_name:
+          type: string
+          description: Имя персонажа
+        role:
+          type: string
+          enum: [leader, commander, party_leader, officer, member]
+          description: Роль в лобби
+        joined_at:
+          type: string
+          format: date-time
+          description: Время присоединения к подканалу
+
+    SubchannelParticipantsResponse:
+      type: object
+      required:
+        - subchannel_id
+        - participants
+        - total_count
+      properties:
+        subchannel_id:
+          type: string
+          format: uuid
+          description: ID подканала
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubchannelParticipant"
+        total_count:
+          type: integer
+          description: Общее количество участников
+
+    SubchannelListResponse:
+      type: object
+      required:
+        - lobby_id
+        - subchannels
+        - total_count
+      properties:
+        lobby_id:
+          type: string
+          format: uuid
+          description: ID лобби
+        subchannels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subchannel"
+        total_count:
+          type: integer
+          description: Общее количество подканалов
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

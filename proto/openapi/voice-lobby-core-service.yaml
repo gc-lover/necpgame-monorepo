@@ -1,0 +1,410 @@
+openapi: 3.0.3
+info:
+  title: Voice Lobby Core Service API
+  description: |
+    API для управления голосовыми лобби.
+    
+    **Функциональность:**
+    - Создание, обновление, удаление лобби
+    - Присоединение и выход из лобби
+    - Управление участниками лобби
+    - Получение списка лобби
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8096/v1
+    description: Development server
+
+tags:
+  - name: Voice Lobby Core
+    description: Основные операции с голосовыми лобби
+
+paths:
+  /voice-lobbies:
+    get:
+      summary: Получить список лобби
+      description: Возвращает список доступных голосовых лобби с фильтрацией
+      operationId: listVoiceLobbies
+      tags:
+        - Voice Lobby Core
+      parameters:
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+        - name: lobby_type
+          in: query
+          description: Фильтр по типу лобби
+          schema:
+            $ref: "#/components/schemas/LobbyType"
+        - name: region
+          in: query
+          description: Фильтр по региону
+          schema:
+            type: string
+            example: eu-west
+        - name: activity
+          in: query
+          description: Фильтр по активности
+          schema:
+            type: string
+            example: raid-strike
+        - name: only_public
+          in: query
+          description: Только публичные лобби
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Список лобби успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceLobbyListResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    post:
+      summary: Создать голосовое лобби
+      description: Создает новое голосовое лобби с указанными параметрами
+      operationId: createVoiceLobby
+      tags:
+        - Voice Lobby Core
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVoiceLobbyRequest"
+      responses:
+        "201":
+          description: Лобби успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceLobby"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}:
+    get:
+      summary: Получить информацию о лобби
+      description: Возвращает детальную информацию о голосовом лобби
+      operationId: getVoiceLobby
+      tags:
+        - Voice Lobby Core
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о лобби успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceLobby"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    put:
+      summary: Обновить лобби
+      description: Обновляет настройки голосового лобби
+      operationId: updateVoiceLobby
+      tags:
+        - Voice Lobby Core
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVoiceLobbyRequest"
+      responses:
+        "200":
+          description: Лобби успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceLobby"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Удалить лобби
+      description: Удаляет голосовое лобби и отключает всех участников
+      operationId: deleteVoiceLobby
+      tags:
+        - Voice Lobby Core
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Лобби успешно удалено
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/my-lobbies:
+    get:
+      summary: Получить мои лобби
+      description: Возвращает список лобби, в которых участвует персонаж
+      operationId: getMyVoiceLobbies
+      tags:
+        - Voice Lobby Core
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список лобби успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceLobbyListResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    LobbyType:
+      type: string
+      enum:
+        - activity
+        - clan
+        - guild
+        - raid
+        - tournament
+      description: |
+        Тип голосового лобби:
+        - activity: для игровых активностей (макс 8 участников, 4 подканала)
+        - clan: для клановых лобби (макс 50 участников, 10 подканалов)
+        - guild: для гильдийных лобби (макс 100 участников, 20 подканалов)
+        - raid: для рейдовых лобби (макс 24 участника, 6 подканалов)
+        - tournament: для турнирных лобби (макс 16 участников, 4 подканала)
+
+    VoiceLobby:
+      type: object
+      required:
+        - lobby_id
+        - name
+        - lobby_type
+        - owner_id
+        - region
+        - created_at
+        - is_public
+        - max_participants
+        - current_participants
+      properties:
+        lobby_id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор лобби
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+          description: Название лобби
+          example: "Raid Team Alpha"
+        description:
+          type: string
+          maxLength: 256
+          description: Описание лобби
+          example: "Looking for experienced players for raid"
+        lobby_type:
+          $ref: "#/components/schemas/LobbyType"
+        owner_id:
+          type: string
+          format: uuid
+          description: ID владельца лобби
+        region:
+          type: string
+          description: Регион лобби
+          example: eu-west
+        activity:
+          type: string
+          description: Связанная активность
+          example: raid-strike
+        is_public:
+          type: boolean
+          description: Публичное лобби
+          default: true
+        password_protected:
+          type: boolean
+          description: Защищено паролем
+          default: false
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+          description: Максимальное количество участников
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Текущее количество участников
+        voice_provider_id:
+          type: string
+          description: ID канала у голосового провайдера
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания лобби
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата последнего обновления
+
+    CreateVoiceLobbyRequest:
+      type: object
+      required:
+        - name
+        - lobby_type
+        - region
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+          description: Название лобби
+          example: "Raid Team Alpha"
+        description:
+          type: string
+          maxLength: 256
+          description: Описание лобби
+        lobby_type:
+          $ref: "#/components/schemas/LobbyType"
+        region:
+          type: string
+          description: Регион лобби
+          example: eu-west
+        activity:
+          type: string
+          description: Связанная активность
+          example: raid-strike
+        is_public:
+          type: boolean
+          description: Публичное лобби
+          default: true
+        password:
+          type: string
+          minLength: 4
+          maxLength: 32
+          description: Пароль для входа (если не публичное)
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+          description: Максимальное количество участников
+
+    UpdateVoiceLobbyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+          description: Новое название лобби
+        description:
+          type: string
+          maxLength: 256
+          description: Новое описание лобби
+        is_public:
+          type: boolean
+          description: Публичное лобби
+        password:
+          type: string
+          minLength: 4
+          maxLength: 32
+          description: Новый пароль (null - убрать пароль)
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+          description: Новый лимит участников
+
+    VoiceLobbyListResponse:
+      type: object
+      required:
+        - lobbies
+        - pagination
+      properties:
+        lobbies:
+          type: array
+          items:
+            $ref: "#/components/schemas/VoiceLobby"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
