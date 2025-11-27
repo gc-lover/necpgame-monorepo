@@ -1,0 +1,440 @@
+openapi: 3.0.3
+info:
+  title: Reputation Service API
+  description: API для управления репутацией с фракциями и системой Heat.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8084/v1
+    description: Development server
+
+tags:
+  - name: Reputation
+    description: Репутация с фракциями
+  - name: Heat
+    description: Система Heat
+
+paths:
+  /social/reputation/{character_id}:
+    get:
+      summary: Получить репутацию персонажа
+      description: Возвращает репутацию со всеми фракциями
+      operationId: getCharacterReputation
+      tags:
+        - Reputation
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Репутация персонажа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterReputationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/reputation/{character_id}/faction/{faction_id}:
+    get:
+      summary: Получить репутацию с фракцией
+      description: Возвращает репутацию персонажа с конкретной фракцией
+      operationId: getFactionReputation
+      tags:
+        - Reputation
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Репутация с фракцией
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FactionReputation"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/reputation/{character_id}/change:
+    post:
+      summary: Изменить репутацию
+      description: Изменяет репутацию персонажа с фракцией
+      operationId: changeReputation
+      tags:
+        - Reputation
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeReputationRequest"
+      responses:
+        "200":
+          description: Репутация изменена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FactionReputation"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/reputation/{character_id}/tier:
+    get:
+      summary: Получить уровень репутации
+      description: Возвращает уровни репутации со всеми фракциями
+      operationId: getReputationTiers
+      tags:
+        - Reputation
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Уровни репутации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReputationTiersResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/reputation/{character_id}/heat:
+    get:
+      summary: Получить уровень Heat
+      description: Возвращает текущий уровень Heat персонажа
+      operationId: getHeatLevel
+      tags:
+        - Heat
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Уровень Heat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeatLevel"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/reputation/{character_id}/heat/reduce:
+    post:
+      summary: Снизить Heat
+      description: Снижает уровень Heat (через оплату или время)
+      operationId: reduceHeat
+      tags:
+        - Heat
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReduceHeatRequest"
+      responses:
+        "200":
+          description: Heat снижен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeatLevel"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "409":
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/reputation/{character_id}/access:
+    get:
+      summary: Проверить доступ
+      description: Проверяет доступ к контенту на основе репутации
+      operationId: checkAccess
+      tags:
+        - Reputation
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: content_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Результат проверки доступа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessCheckResult"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/reputation/{character_id}/discounts:
+    get:
+      summary: Получить скидки
+      description: Возвращает скидки на основе репутации
+      operationId: getDiscounts
+      tags:
+        - Reputation
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Скидки персонажа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    FactionReputation:
+      type: object
+      required:
+        - faction_id
+        - value
+        - tier
+      properties:
+        faction_id:
+          type: string
+        value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        tier:
+          $ref: "#/components/schemas/ReputationTier"
+
+    ReputationTier:
+      type: string
+      enum:
+        - HATED
+        - HOSTILE
+        - UNFRIENDLY
+        - NEUTRAL
+        - FRIENDLY
+        - HONORED
+        - LEGENDARY
+
+    CharacterReputationResponse:
+      type: object
+      required:
+        - character_id
+        - factions
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        factions:
+          type: array
+          items:
+            $ref: "#/components/schemas/FactionReputation"
+
+    ChangeReputationRequest:
+      type: object
+      required:
+        - faction_id
+        - change
+        - reason
+      properties:
+        faction_id:
+          type: string
+        change:
+          type: integer
+        reason:
+          type: string
+
+    ReputationTiersResponse:
+      type: object
+      properties:
+        tiers:
+          type: array
+          items:
+            type: object
+            properties:
+              faction_id:
+                type: string
+              tier:
+                $ref: "#/components/schemas/ReputationTier"
+
+    HeatLevel:
+      type: object
+      required:
+        - character_id
+        - heat_value
+        - heat_tier
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        heat_value:
+          type: integer
+          minimum: 0
+          maximum: 100
+        heat_tier:
+          $ref: "#/components/schemas/HeatTier"
+        decay_rate:
+          type: number
+        next_decay_at:
+          type: string
+          format: date-time
+
+    HeatTier:
+      type: string
+      enum:
+        - NONE
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+
+    ReduceHeatRequest:
+      type: object
+      required:
+        - method
+      properties:
+        method:
+          type: string
+          enum:
+            - PAY
+            - WAIT
+        amount:
+          type: integer
+          description: Количество Heat для снижения
+
+    AccessCheckResult:
+      type: object
+      properties:
+        has_access:
+          type: boolean
+        required_tier:
+          $ref: "#/components/schemas/ReputationTier"
+        current_tier:
+          $ref: "#/components/schemas/ReputationTier"
+
+    DiscountsResponse:
+      type: object
+      properties:
+        discounts:
+          type: array
+          items:
+            type: object
+            properties:
+              faction_id:
+                type: string
+              discount_percentage:
+                type: number
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
