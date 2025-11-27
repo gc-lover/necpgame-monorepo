@@ -1,0 +1,451 @@
+openapi: 3.0.3
+info:
+  title: Economy Investments Service API
+  description: |
+    API для инвестиций и управления портфелем.
+    
+    **Функциональность:**
+    - Покупка акций компаний
+    - Управление портфелем
+    - Дивиденды и выплаты
+    - Аналитика инвестиций
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8103/v1
+    description: Development server
+
+tags:
+  - name: Stocks
+    description: Покупка и продажа акций
+  - name: Portfolio
+    description: Управление портфелем
+  - name: Dividends
+    description: Дивиденды
+
+paths:
+  /investments/stocks:
+    get:
+      summary: Получить список акций
+      description: Возвращает доступные акции компаний
+      operationId: getStocks
+      tags:
+        - Stocks
+      parameters:
+        - name: sector
+          in: query
+          schema:
+            type: string
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список акций
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockListResponse"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /investments/stocks/{symbol}:
+    get:
+      summary: Получить информацию об акции
+      description: Возвращает детали акции
+      operationId: getStock
+      tags:
+        - Stocks
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Детали акции
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stock"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /investments/orders/buy:
+    post:
+      summary: Купить акции
+      description: Покупает акции компании
+      operationId: buyStock
+      tags:
+        - Stocks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuyStockRequest"
+      responses:
+        "201":
+          description: Акции куплены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /investments/orders/sell:
+    post:
+      summary: Продать акции
+      description: Продает акции из портфеля
+      operationId: sellStock
+      tags:
+        - Stocks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SellStockRequest"
+      responses:
+        "201":
+          description: Акции проданы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /investments/portfolio/{player_id}:
+    get:
+      summary: Получить портфель
+      description: Возвращает инвестиционный портфель игрока
+      operationId: getPortfolio
+      tags:
+        - Portfolio
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Портфель игрока
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Portfolio"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /investments/portfolio/{player_id}/history:
+    get:
+      summary: Получить историю сделок
+      description: Возвращает историю операций с акциями
+      operationId: getTransactionHistory
+      tags:
+        - Portfolio
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История сделок
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionHistoryResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /investments/dividends/{player_id}:
+    get:
+      summary: Получить дивиденды
+      description: Возвращает информацию о дивидендах
+      operationId: getDividends
+      tags:
+        - Dividends
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Дивиденды
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DividendListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Stock:
+      type: object
+      required:
+        - symbol
+        - name
+        - sector
+        - current_price
+        - change_percent
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        sector:
+          type: string
+        current_price:
+          type: number
+          format: double
+        change_percent:
+          type: number
+          format: double
+        volume:
+          type: integer
+        market_cap:
+          type: number
+          format: double
+        dividend_yield:
+          type: number
+          format: double
+
+    BuyStockRequest:
+      type: object
+      required:
+        - player_id
+        - symbol
+        - quantity
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+
+    SellStockRequest:
+      type: object
+      required:
+        - player_id
+        - symbol
+        - quantity
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+
+    StockOrder:
+      type: object
+      required:
+        - order_id
+        - player_id
+        - symbol
+        - type
+        - quantity
+        - price
+        - total_amount
+        - executed_at
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        type:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: double
+        total_amount:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+        executed_at:
+          type: string
+          format: date-time
+
+    Portfolio:
+      type: object
+      required:
+        - player_id
+        - total_value
+        - cash_balance
+        - holdings
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        total_value:
+          type: number
+          format: double
+        cash_balance:
+          type: number
+          format: double
+        total_invested:
+          type: number
+          format: double
+        total_return:
+          type: number
+          format: double
+        holdings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Holding"
+
+    Holding:
+      type: object
+      required:
+        - symbol
+        - quantity
+        - avg_price
+        - current_price
+        - total_value
+      properties:
+        symbol:
+          type: string
+        quantity:
+          type: integer
+        avg_price:
+          type: number
+          format: double
+        current_price:
+          type: number
+          format: double
+        total_value:
+          type: number
+          format: double
+        unrealized_profit:
+          type: number
+          format: double
+
+    Dividend:
+      type: object
+      required:
+        - dividend_id
+        - symbol
+        - amount
+        - payment_date
+      properties:
+        dividend_id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        amount:
+          type: number
+          format: double
+        shares_owned:
+          type: integer
+        payment_date:
+          type: string
+          format: date-time
+
+    StockListResponse:
+      type: object
+      required:
+        - stocks
+        - pagination
+      properties:
+        stocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stock"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    TransactionHistoryResponse:
+      type: object
+      required:
+        - transactions
+        - pagination
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockOrder"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    DividendListResponse:
+      type: object
+      required:
+        - dividends
+        - pagination
+      properties:
+        dividends:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dividend"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

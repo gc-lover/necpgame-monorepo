@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: Economy Logistics Service API
+  description: |
+    API для логистики и транспортировки товаров.
+    
+    **Функциональность:**
+    - Доставка товаров между локациями
+    - Маршруты и транспортные средства
+    - Отслеживание грузов
+    - Безопасность доставки
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8102/v1
+    description: Development server
+
+tags:
+  - name: Deliveries
+    description: Доставка товаров
+  - name: Routes
+    description: Маршруты доставки
+  - name: Tracking
+    description: Отслеживание грузов
+
+paths:
+  /logistics/deliveries:
+    post:
+      summary: Создать доставку
+      description: Создает новую доставку товаров
+      operationId: createDelivery
+      tags:
+        - Deliveries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeliveryRequest"
+      responses:
+        "201":
+          description: Доставка создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Delivery"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    get:
+      summary: Получить список доставок
+      description: Возвращает доставки игрока
+      operationId: getDeliveries
+      tags:
+        - Deliveries
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/DeliveryStatus"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список доставок
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /logistics/deliveries/{delivery_id}:
+    get:
+      summary: Получить детали доставки
+      description: Возвращает информацию о доставке
+      operationId: getDelivery
+      tags:
+        - Deliveries
+      parameters:
+        - name: delivery_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали доставки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Delivery"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /logistics/deliveries/{delivery_id}/track:
+    get:
+      summary: Отследить доставку
+      description: Возвращает текущий статус и местоположение груза
+      operationId: trackDelivery
+      tags:
+        - Tracking
+      parameters:
+        - name: delivery_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация об отслеживании
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingInfo"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /logistics/routes:
+    get:
+      summary: Получить доступные маршруты
+      description: Возвращает маршруты между локациями
+      operationId: getRoutes
+      tags:
+        - Routes
+      parameters:
+        - name: from_location
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: to_location
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Доступные маршруты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteListResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    DeliveryStatus:
+      type: string
+      enum:
+        - pending
+        - in_transit
+        - delivered
+        - failed
+        - cancelled
+      description: Статус доставки
+
+    TransportType:
+      type: string
+      enum:
+        - ground
+        - air
+        - courier
+      description: Тип транспорта
+
+    CreateDeliveryRequest:
+      type: object
+      required:
+        - player_id
+        - from_location
+        - to_location
+        - items
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        from_location:
+          type: string
+        to_location:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        transport_type:
+          $ref: "#/components/schemas/TransportType"
+        insurance:
+          type: boolean
+
+    Delivery:
+      type: object
+      required:
+        - delivery_id
+        - player_id
+        - from_location
+        - to_location
+        - status
+        - created_at
+      properties:
+        delivery_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        from_location:
+          type: string
+        to_location:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        transport_type:
+          $ref: "#/components/schemas/TransportType"
+        status:
+          $ref: "#/components/schemas/DeliveryStatus"
+        cost:
+          type: number
+          format: double
+        insurance_cost:
+          type: number
+          format: double
+        estimated_delivery:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        delivered_at:
+          type: string
+          format: date-time
+
+    TrackingInfo:
+      type: object
+      required:
+        - delivery_id
+        - status
+        - current_location
+      properties:
+        delivery_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/DeliveryStatus"
+        current_location:
+          type: string
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        estimated_arrival:
+          type: string
+          format: date-time
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              location:
+                type: string
+              event:
+                type: string
+
+    Route:
+      type: object
+      required:
+        - route_id
+        - from_location
+        - to_location
+        - transport_type
+        - duration_minutes
+        - cost
+      properties:
+        route_id:
+          type: string
+          format: uuid
+        from_location:
+          type: string
+        to_location:
+          type: string
+        transport_type:
+          $ref: "#/components/schemas/TransportType"
+        duration_minutes:
+          type: integer
+        cost:
+          type: number
+          format: double
+        risk_level:
+          type: string
+          enum: [low, medium, high]
+
+    DeliveryListResponse:
+      type: object
+      required:
+        - deliveries
+        - pagination
+      properties:
+        deliveries:
+          type: array
+          items:
+            $ref: "#/components/schemas/Delivery"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    RouteListResponse:
+      type: object
+      required:
+        - routes
+      properties:
+        routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Route"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+

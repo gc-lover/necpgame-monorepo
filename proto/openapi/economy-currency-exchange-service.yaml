@@ -1,0 +1,557 @@
+openapi: 3.0.3
+info:
+  title: Economy Currency Exchange Service API
+  description: |
+    API для валютной биржи и обмена региональных валют.
+    
+    **Функциональность:**
+    - Текущие курсы валют
+    - Instant обмен (немедленный)
+    - Limit ордера
+    - История сделок
+    - WebSocket для real-time котировок
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8101/v1
+    description: Development server
+
+tags:
+  - name: Exchange Rates
+    description: Курсы валют
+  - name: Orders
+    description: Обмен валют
+  - name: Trades
+    description: История сделок
+
+paths:
+  /currency-exchange/rates:
+    get:
+      summary: Получить текущие курсы валют
+      description: Возвращает курсы всех валютных пар
+      operationId: getExchangeRates
+      tags:
+        - Exchange Rates
+      responses:
+        "200":
+          description: Текущие курсы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeRatesResponse"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /currency-exchange/rates/{pair}:
+    get:
+      summary: Получить курс валютной пары
+      description: Возвращает курс конкретной валютной пары
+      operationId: getExchangeRate
+      tags:
+        - Exchange Rates
+      parameters:
+        - name: pair
+          in: path
+          required: true
+          description: Валютная пара (например, EUR_USD)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Курс валютной пары
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeRate"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /currency-exchange/quote:
+    post:
+      summary: Рассчитать котировку
+      description: Рассчитывает предварительную котировку для обмена
+      operationId: calculateQuote
+      tags:
+        - Exchange Rates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "200":
+          description: Котировка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /currency-exchange/orders/instant:
+    post:
+      summary: Instant обмен
+      description: Выполняет немедленный обмен валюты по текущему курсу
+      operationId: instantExchange
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstantExchangeRequest"
+      responses:
+        "201":
+          description: Обмен выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /currency-exchange/orders/limit:
+    post:
+      summary: Создать лимитный ордер
+      description: Создает лимитный ордер для обмена по указанному курсу
+      operationId: createLimitOrder
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LimitOrderRequest"
+      responses:
+        "201":
+          description: Ордер создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeOrder"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /currency-exchange/orders:
+    get:
+      summary: Получить список ордеров
+      description: Возвращает ордера игрока
+      operationId: getOrders
+      tags:
+        - Orders
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список ордеров
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /currency-exchange/orders/{order_id}:
+    get:
+      summary: Получить детали ордера
+      description: Возвращает информацию об ордере
+      operationId: getOrder
+      tags:
+        - Orders
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали ордера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeOrder"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Отменить ордер
+      description: Отменяет лимитный ордер
+      operationId: cancelOrder
+      tags:
+        - Orders
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Ордер отменен
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Ордер нельзя отменить
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /currency-exchange/trades:
+    get:
+      summary: Получить историю сделок
+      description: Возвращает историю обменов игрока
+      operationId: getTrades
+      tags:
+        - Trades
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История сделок
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    CurrencyPair:
+      type: string
+      description: Валютная пара (например, EUR_USD, JPY_USD)
+      example: EUR_USD
+
+    OrderType:
+      type: string
+      enum:
+        - instant
+        - limit
+      description: Тип ордера
+
+    OrderStatus:
+      type: string
+      enum:
+        - pending
+        - partially_filled
+        - filled
+        - cancelled
+        - expired
+      description: Статус ордера
+
+    ExchangeRate:
+      type: object
+      required:
+        - pair
+        - bid
+        - ask
+        - timestamp
+      properties:
+        pair:
+          $ref: "#/components/schemas/CurrencyPair"
+        bid:
+          type: number
+          format: double
+          description: Курс покупки
+        ask:
+          type: number
+          format: double
+          description: Курс продажи
+        spread:
+          type: number
+          format: double
+          description: Спред (ask - bid)
+        timestamp:
+          type: string
+          format: date-time
+
+    ExchangeRatesResponse:
+      type: object
+      required:
+        - rates
+      properties:
+        rates:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExchangeRate"
+        updated_at:
+          type: string
+          format: date-time
+
+    QuoteRequest:
+      type: object
+      required:
+        - from_currency
+        - to_currency
+        - amount
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount:
+          type: number
+          format: double
+
+    Quote:
+      type: object
+      required:
+        - from_currency
+        - to_currency
+        - from_amount
+        - to_amount
+        - exchange_rate
+        - fee
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        from_amount:
+          type: number
+          format: double
+        to_amount:
+          type: number
+          format: double
+        exchange_rate:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+        expires_at:
+          type: string
+          format: date-time
+
+    InstantExchangeRequest:
+      type: object
+      required:
+        - player_id
+        - from_currency
+        - to_currency
+        - amount
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount:
+          type: number
+          format: double
+
+    LimitOrderRequest:
+      type: object
+      required:
+        - player_id
+        - from_currency
+        - to_currency
+        - amount
+        - target_rate
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount:
+          type: number
+          format: double
+        target_rate:
+          type: number
+          format: double
+        expires_at:
+          type: string
+          format: date-time
+
+    ExchangeOrder:
+      type: object
+      required:
+        - order_id
+        - player_id
+        - type
+        - from_currency
+        - to_currency
+        - from_amount
+        - status
+        - created_at
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/OrderType"
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        from_amount:
+          type: number
+          format: double
+        to_amount:
+          type: number
+          format: double
+        filled_amount:
+          type: number
+          format: double
+        target_rate:
+          type: number
+          format: double
+        actual_rate:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        created_at:
+          type: string
+          format: date-time
+        executed_at:
+          type: string
+          format: date-time
+
+    Trade:
+      type: object
+      required:
+        - trade_id
+        - order_id
+        - from_currency
+        - to_currency
+        - from_amount
+        - to_amount
+        - rate
+        - executed_at
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        from_amount:
+          type: number
+          format: double
+        to_amount:
+          type: number
+          format: double
+        rate:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+        executed_at:
+          type: string
+          format: date-time
+
+    OrderListResponse:
+      type: object
+      required:
+        - orders
+        - pagination
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExchangeOrder"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    TradeListResponse:
+      type: object
+      required:
+        - trades
+        - pagination
+      properties:
+        trades:
+          type: array
+          items:
+            $ref: "#/components/schemas/Trade"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
