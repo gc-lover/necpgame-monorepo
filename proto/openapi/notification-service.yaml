@@ -1,0 +1,411 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API
+  description: API для управления уведомлениями игроков.
+  version: 1.0.0
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8084/v1
+    description: Development server
+
+tags:
+  - name: Notifications
+    description: Уведомления
+  - name: Preferences
+    description: Настройки уведомлений
+
+paths:
+  /social/notifications:
+    get:
+      summary: Получить список уведомлений
+      description: Возвращает уведомления игрока
+      operationId: getNotifications
+      tags:
+        - Notifications
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/NotificationStatus"
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/NotificationType"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    post:
+      summary: Создать уведомление
+      description: Создает новое уведомление
+      operationId: createNotification
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotificationRequest"
+      responses:
+        "201":
+          description: Уведомление создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/notifications/{notification_id}:
+    get:
+      summary: Получить уведомление
+      description: Возвращает детали уведомления
+      operationId: getNotification
+      tags:
+        - Notifications
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали уведомления
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    delete:
+      summary: Удалить уведомление
+      description: Удаляет уведомление
+      operationId: deleteNotification
+      tags:
+        - Notifications
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Уведомление удалено
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/notifications/{notification_id}/status:
+    put:
+      summary: Обновить статус уведомления
+      description: Обновляет статус уведомления (прочитано/не прочитано)
+      operationId: updateNotificationStatus
+      tags:
+        - Notifications
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusRequest"
+      responses:
+        "200":
+          description: Статус обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/notifications/batch/read:
+    post:
+      summary: Пометить все как прочитанные
+      description: Помечает все уведомления игрока как прочитанные
+      operationId: markAllAsRead
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+      responses:
+        "204":
+          description: Все уведомления помечены
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /social/notifications/preferences:
+    get:
+      summary: Получить настройки уведомлений
+      description: Возвращает настройки уведомлений игрока
+      operationId: getNotificationPreferences
+      tags:
+        - Preferences
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Настройки уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPreferences"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+    put:
+      summary: Обновить настройки уведомлений
+      description: Обновляет настройки уведомлений игрока
+      operationId: updateNotificationPreferences
+      tags:
+        - Preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationPreferences"
+      responses:
+        "200":
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPreferences"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    Notification:
+      type: object
+      required:
+        - id
+        - player_id
+        - type
+        - title
+        - message
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/NotificationType"
+        title:
+          type: string
+        message:
+          type: string
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        priority:
+          $ref: "#/components/schemas/NotificationPriority"
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              action:
+                type: string
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NotificationType:
+      type: string
+      enum:
+        - SYSTEM
+        - SOCIAL
+        - ACHIEVEMENT
+        - QUEST
+        - COMBAT
+        - ECONOMY
+        - GUILD
+        - PARTY
+        - MAIL
+
+    NotificationStatus:
+      type: string
+      enum:
+        - UNREAD
+        - READ
+        - DISMISSED
+
+    NotificationPriority:
+      type: string
+      enum:
+        - LOW
+        - NORMAL
+        - HIGH
+        - URGENT
+
+    CreateNotificationRequest:
+      type: object
+      required:
+        - player_id
+        - type
+        - title
+        - message
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/NotificationType"
+        title:
+          type: string
+        message:
+          type: string
+        priority:
+          $ref: "#/components/schemas/NotificationPriority"
+        actions:
+          type: array
+          items:
+            type: object
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+
+    NotificationPreferences:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        enabled_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationType"
+        sound_enabled:
+          type: boolean
+          default: true
+        vibration_enabled:
+          type: boolean
+          default: true
+
+    NotificationListResponse:
+      type: object
+      required:
+        - notifications
+        - pagination
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
