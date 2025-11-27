@@ -1,0 +1,589 @@
+openapi: 3.0.3
+info:
+  title: Player Feedback Service API
+  description: |
+    API для системы обратной связи от игроков.
+    
+    **Функциональность:**
+    - Создание обращений (bug reports, feature requests, feedback, wishlist)
+    - История обращений игрока
+    - Доска идей с голосованием
+    - Статистика обращений
+    - Модерация
+    - Интеграция с GitHub Issues
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8080/v1
+    description: Development server
+
+tags:
+  - name: Feedback
+    description: Управление обращениями
+  - name: Voting
+    description: Голосование за предложения
+  - name: Statistics
+    description: Статистика обращений
+
+paths:
+  /feedback/submit:
+    post:
+      summary: Создать новое обращение
+      description: Создает обращение игрока и опционально создает GitHub Issue
+      operationId: submitFeedback
+      tags:
+        - Feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitFeedbackRequest"
+      responses:
+        "201":
+          description: Обращение успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - SessionAuth: []
+
+  /feedback/{feedback_id}:
+    get:
+      summary: Получить обращение по ID
+      description: Возвращает полную информацию об обращении
+      operationId: getFeedback
+      tags:
+        - Feedback
+      parameters:
+        - name: feedback_id
+          in: path
+          required: true
+          description: ID обращения
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Обращение найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feedback"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - SessionAuth: []
+
+  /feedback/{feedback_id}/update-status:
+    post:
+      summary: Обновить статус обращения
+      description: Обновляет статус обращения (только для модераторов/агентов)
+      operationId: updateFeedbackStatus
+      tags:
+        - Feedback
+      parameters:
+        - name: feedback_id
+          in: path
+          required: true
+          description: ID обращения
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusRequest"
+      responses:
+        "200":
+          description: Статус успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feedback"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - JWTAuth: []
+
+  /feedback/player/{player_id}:
+    get:
+      summary: Получить историю обращений игрока
+      description: Возвращает список обращений игрока с фильтрацией
+      operationId: getPlayerFeedback
+      tags:
+        - Feedback
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            $ref: "#/components/schemas/FeedbackStatus"
+        - name: type
+          in: query
+          description: Фильтр по типу
+          schema:
+            $ref: "#/components/schemas/FeedbackType"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История обращений получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackListResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - SessionAuth: []
+
+  /feedback/board:
+    get:
+      summary: Получить доску идей
+      description: Возвращает список публичных предложений с сортировкой и фильтрацией
+      operationId: getFeedbackBoard
+      tags:
+        - Feedback
+      parameters:
+        - name: category
+          in: query
+          description: Фильтр по категории
+          schema:
+            $ref: "#/components/schemas/FeedbackCategory"
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            $ref: "#/components/schemas/FeedbackStatus"
+        - name: sort
+          in: query
+          description: Сортировка
+          schema:
+            type: string
+            enum: [votes_desc, votes_asc, created_desc, created_asc]
+            default: votes_desc
+        - name: search
+          in: query
+          description: Поиск по заголовку и описанию
+          schema:
+            type: string
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Доска идей получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackListResponse"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /feedback/{feedback_id}/vote:
+    post:
+      summary: Проголосовать за предложение
+      description: Добавляет голос игрока за предложение
+      operationId: voteFeedback
+      tags:
+        - Voting
+      parameters:
+        - name: feedback_id
+          in: path
+          required: true
+          description: ID обращения
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Голос успешно добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoteResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Игрок уже проголосовал
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - SessionAuth: []
+
+    delete:
+      summary: Отозвать голос
+      description: Удаляет голос игрока за предложение
+      operationId: unvoteFeedback
+      tags:
+        - Voting
+      parameters:
+        - name: feedback_id
+          in: path
+          required: true
+          description: ID обращения
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Голос успешно отозван
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoteResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - SessionAuth: []
+
+  /feedback/stats:
+    get:
+      summary: Получить статистику обращений
+      description: Возвращает статистику по всем обращениям (только для админов)
+      operationId: getFeedbackStats
+      tags:
+        - Statistics
+      responses:
+        "200":
+          description: Статистика получена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackStats"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - JWTAuth: []
+
+components:
+  schemas:
+    FeedbackType:
+      type: string
+      enum:
+        - feature_request
+        - bug_report
+        - wishlist
+        - feedback
+      description: |
+        Тип обращения:
+        - feature_request: запрос новой функции
+        - bug_report: сообщение об ошибке
+        - wishlist: пожелание
+        - feedback: общий отзыв
+
+    FeedbackCategory:
+      type: string
+      enum:
+        - gameplay
+        - balance
+        - content
+        - technical
+        - lore
+        - ui
+        - other
+      description: Категория обращения
+
+    FeedbackStatus:
+      type: string
+      enum:
+        - pending_moderation
+        - pending
+        - in_review
+        - assigned
+        - in_progress
+        - resolved
+        - rejected
+        - duplicate
+        - merged
+      description: Статус обращения
+
+    FeedbackPriority:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+        - critical
+      description: Приоритет обращения
+
+    GameContext:
+      type: object
+      description: Контекст игры на момент создания обращения
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        location:
+          type: string
+        quest_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        client_version:
+          type: string
+        session_id:
+          type: string
+          format: uuid
+
+    SubmitFeedbackRequest:
+      type: object
+      required:
+        - type
+        - category
+        - title
+        - description
+      properties:
+        type:
+          $ref: "#/components/schemas/FeedbackType"
+        category:
+          $ref: "#/components/schemas/FeedbackCategory"
+        title:
+          type: string
+          minLength: 10
+          maxLength: 200
+          description: Заголовок обращения
+        description:
+          type: string
+          minLength: 20
+          maxLength: 5000
+          description: Описание обращения
+        priority:
+          $ref: "#/components/schemas/FeedbackPriority"
+        screenshots:
+          type: array
+          items:
+            type: string
+            format: uri
+          maxItems: 5
+          description: Ссылки на скриншоты
+        game_context:
+          $ref: "#/components/schemas/GameContext"
+
+    Feedback:
+      type: object
+      required:
+        - feedback_id
+        - player_id
+        - type
+        - category
+        - title
+        - description
+        - status
+        - priority
+        - votes_count
+        - created_at
+      properties:
+        feedback_id:
+          type: string
+          format: uuid
+          description: ID обращения
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        player_name:
+          type: string
+          description: Имя игрока
+        type:
+          $ref: "#/components/schemas/FeedbackType"
+        category:
+          $ref: "#/components/schemas/FeedbackCategory"
+        title:
+          type: string
+          description: Заголовок
+        description:
+          type: string
+          description: Описание
+        status:
+          $ref: "#/components/schemas/FeedbackStatus"
+        priority:
+          $ref: "#/components/schemas/FeedbackPriority"
+        votes_count:
+          type: integer
+          description: Количество голосов
+        has_voted:
+          type: boolean
+          description: Проголосовал ли текущий игрок
+        screenshots:
+          type: array
+          items:
+            type: string
+            format: uri
+        game_context:
+          $ref: "#/components/schemas/GameContext"
+        github_issue_url:
+          type: string
+          format: uri
+          description: Ссылка на GitHub Issue
+        assigned_to:
+          type: string
+          description: Кому назначено
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FeedbackResponse:
+      type: object
+      required:
+        - feedback_id
+        - status
+      properties:
+        feedback_id:
+          type: string
+          format: uuid
+          description: ID созданного обращения
+        status:
+          $ref: "#/components/schemas/FeedbackStatus"
+        github_issue_url:
+          type: string
+          format: uri
+          description: Ссылка на созданный GitHub Issue
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/FeedbackStatus"
+        comment:
+          type: string
+          maxLength: 1000
+          description: Комментарий к изменению статуса
+
+    FeedbackListResponse:
+      type: object
+      required:
+        - feedbacks
+        - pagination
+      properties:
+        feedbacks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feedback"
+        pagination:
+          $ref: "common.yaml#/components/schemas/PaginationResponse"
+
+    VoteResponse:
+      type: object
+      required:
+        - feedback_id
+        - votes_count
+        - has_voted
+      properties:
+        feedback_id:
+          type: string
+          format: uuid
+        votes_count:
+          type: integer
+          description: Обновленное количество голосов
+        has_voted:
+          type: boolean
+          description: Проголосовал ли текущий игрок
+
+    FeedbackStats:
+      type: object
+      required:
+        - total_count
+        - by_status
+        - by_type
+        - by_category
+      properties:
+        total_count:
+          type: integer
+          description: Всего обращений
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Разбивка по статусам
+        by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Разбивка по типам
+        by_category:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Разбивка по категориям
+        top_voted:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feedback"
+          description: Топ 10 по голосам
+
+  securitySchemes:
+    SessionAuth:
+      type: apiKey
+      in: header
+      name: X-Session-Token
+      description: Session token игрока
+    JWTAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для агентов/админов
+
