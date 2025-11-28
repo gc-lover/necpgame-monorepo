@@ -76,8 +76,10 @@ func (s *MovementService) SavePosition(ctx context.Context, characterID uuid.UUI
 	posJSON, err := json.Marshal(pos)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to marshal position JSON")
-	} else {
-		s.cache.Set(ctx, cacheKey, posJSON, 5*time.Minute)
+		return nil, err
+	}
+	if err := s.cache.Set(ctx, cacheKey, posJSON, 5*time.Minute).Err(); err != nil {
+		s.logger.WithError(err).Error("Failed to cache position")
 	}
 
 	RecordPositionSaved()
@@ -216,9 +218,13 @@ func (s *MovementService) saveAllPositions(ctx context.Context) {
 		cacheKey := "position:" + characterID.String()
 		posJSON, err := json.Marshal(req)
 		if err != nil {
-			s.logger.WithError(err).Error("Failed to marshal position JSON")
-		} else {
-			s.cache.Set(ctx, cacheKey, posJSON, 5*time.Minute)
+			s.logger.WithError(err).WithField("character_id", characterID).Error("Failed to marshal position JSON")
+			RecordError("marshal_position_failed")
+			continue
+		}
+		if err := s.cache.Set(ctx, cacheKey, posJSON, 5*time.Minute).Err(); err != nil {
+			s.logger.WithError(err).WithField("character_id", characterID).Error("Failed to cache position")
+			RecordError("cache_position_failed")
 		}
 	}
 
