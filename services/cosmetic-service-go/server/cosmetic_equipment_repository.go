@@ -1,0 +1,241 @@
+package server
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/necpgame/cosmetic-service-go/models"
+	"github.com/sirupsen/logrus"
+)
+
+type CosmeticEquipmentRepository struct {
+	db     *pgxpool.Pool
+	logger *logrus.Logger
+}
+
+func NewCosmeticEquipmentRepository(db *pgxpool.Pool) *CosmeticEquipmentRepository {
+	return &CosmeticEquipmentRepository{
+		db:     db,
+		logger: GetLogger(),
+	}
+}
+
+func (r *CosmeticEquipmentRepository) GetEquippedCosmetics(ctx context.Context, playerID uuid.UUID) (*models.EquippedCosmetics, error) {
+	query := `
+		SELECT player_id, character_skin_id, weapon_skin_id, title_id,
+			name_plate_id, emote_1_id, emote_2_id, emote_3_id, emote_4_id, updated_at
+		FROM monetization.equipped_cosmetics
+		WHERE player_id = $1`
+
+	var equipped models.EquippedCosmetics
+	err := r.db.QueryRow(ctx, query, playerID).Scan(
+		&equipped.PlayerID, &equipped.CharacterSkinID, &equipped.WeaponSkinID,
+		&equipped.TitleID, &equipped.NamePlateID, &equipped.Emote1ID,
+		&equipped.Emote2ID, &equipped.Emote3ID, &equipped.Emote4ID, &equipped.UpdatedAt,
+	)
+
+	if err == pgx.ErrNoRows {
+		return &models.EquippedCosmetics{
+			PlayerID: playerID,
+		}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get equipped cosmetics: %w", err)
+	}
+
+	if equipped.CharacterSkinID != nil {
+		skin, err := r.getCosmeticItem(ctx, *equipped.CharacterSkinID)
+		if err != nil {
+			r.logger.WithError(err).Warn("Failed to get character skin")
+		} else {
+			equipped.CharacterSkin = skin
+		}
+	}
+
+	if equipped.WeaponSkinID != nil {
+		skin, err := r.getCosmeticItem(ctx, *equipped.WeaponSkinID)
+		if err != nil {
+			r.logger.WithError(err).Warn("Failed to get weapon skin")
+		} else {
+			equipped.WeaponSkin = skin
+		}
+	}
+
+	if equipped.TitleID != nil {
+		title, err := r.getCosmeticItem(ctx, *equipped.TitleID)
+		if err != nil {
+			r.logger.WithError(err).Warn("Failed to get title")
+		} else {
+			equipped.Title = title
+		}
+	}
+
+	if equipped.NamePlateID != nil {
+		namePlate, err := r.getCosmeticItem(ctx, *equipped.NamePlateID)
+		if err != nil {
+			r.logger.WithError(err).Warn("Failed to get name plate")
+		} else {
+			equipped.NamePlate = namePlate
+		}
+	}
+
+	if equipped.Emote1ID != nil {
+		emote, err := r.getCosmeticItem(ctx, *equipped.Emote1ID)
+		if err != nil {
+			r.logger.WithError(err).Warn("Failed to get emote 1")
+		} else {
+			equipped.Emote1 = emote
+		}
+	}
+
+	if equipped.Emote2ID != nil {
+		emote, err := r.getCosmeticItem(ctx, *equipped.Emote2ID)
+		if err != nil {
+			r.logger.WithError(err).Warn("Failed to get emote 2")
+		} else {
+			equipped.Emote2 = emote
+		}
+	}
+
+	if equipped.Emote3ID != nil {
+		emote, err := r.getCosmeticItem(ctx, *equipped.Emote3ID)
+		if err != nil {
+			r.logger.WithError(err).Warn("Failed to get emote 3")
+		} else {
+			equipped.Emote3 = emote
+		}
+	}
+
+	if equipped.Emote4ID != nil {
+		emote, err := r.getCosmeticItem(ctx, *equipped.Emote4ID)
+		if err != nil {
+			r.logger.WithError(err).Warn("Failed to get emote 4")
+		} else {
+			equipped.Emote4 = emote
+		}
+	}
+
+	return &equipped, nil
+}
+
+func (r *CosmeticEquipmentRepository) EquipCosmetic(ctx context.Context, playerID, cosmeticID uuid.UUID, slot models.CosmeticSlot) error {
+	var columnName string
+	switch slot {
+	case models.CosmeticSlotCharacterSkin:
+		columnName = "character_skin_id"
+	case models.CosmeticSlotWeaponSkin:
+		columnName = "weapon_skin_id"
+	case models.CosmeticSlotTitle:
+		columnName = "title_id"
+	case models.CosmeticSlotNamePlate:
+		columnName = "name_plate_id"
+	case models.CosmeticSlotEmote1:
+		columnName = "emote_1_id"
+	case models.CosmeticSlotEmote2:
+		columnName = "emote_2_id"
+	case models.CosmeticSlotEmote3:
+		columnName = "emote_3_id"
+	case models.CosmeticSlotEmote4:
+		columnName = "emote_4_id"
+	default:
+		return fmt.Errorf("invalid slot: %s", slot)
+	}
+
+	query := fmt.Sprintf(`
+		INSERT INTO monetization.equipped_cosmetics (player_id, %s, updated_at)
+		VALUES ($1, $2, NOW())
+		ON CONFLICT (player_id) DO UPDATE SET %s = $2, updated_at = NOW()`,
+		columnName, columnName)
+
+	_, err := r.db.Exec(ctx, query, playerID, cosmeticID)
+	if err != nil {
+		return fmt.Errorf("failed to equip cosmetic: %w", err)
+	}
+
+	return nil
+}
+
+func (r *CosmeticEquipmentRepository) UnequipCosmetic(ctx context.Context, playerID uuid.UUID, slot models.CosmeticSlot) error {
+	var columnName string
+	switch slot {
+	case models.CosmeticSlotCharacterSkin:
+		columnName = "character_skin_id"
+	case models.CosmeticSlotWeaponSkin:
+		columnName = "weapon_skin_id"
+	case models.CosmeticSlotTitle:
+		columnName = "title_id"
+	case models.CosmeticSlotNamePlate:
+		columnName = "name_plate_id"
+	case models.CosmeticSlotEmote1:
+		columnName = "emote_1_id"
+	case models.CosmeticSlotEmote2:
+		columnName = "emote_2_id"
+	case models.CosmeticSlotEmote3:
+		columnName = "emote_3_id"
+	case models.CosmeticSlotEmote4:
+		columnName = "emote_4_id"
+	default:
+		return fmt.Errorf("invalid slot: %s", slot)
+	}
+
+	query := fmt.Sprintf(`
+		UPDATE monetization.equipped_cosmetics
+		SET %s = NULL, updated_at = NOW()
+		WHERE player_id = $1`,
+		columnName)
+
+	_, err := r.db.Exec(ctx, query, playerID)
+	if err != nil {
+		return fmt.Errorf("failed to unequip cosmetic: %w", err)
+	}
+
+	return nil
+}
+
+func (r *CosmeticEquipmentRepository) getCosmeticItem(ctx context.Context, cosmeticID uuid.UUID) (*models.CosmeticItem, error) {
+	var item models.CosmeticItem
+	var visualEffectsJSON []byte
+	var assetsJSON []byte
+
+	query := `
+		SELECT id, code, name, category, cosmetic_type, rarity, description,
+			cost, currency_type, is_exclusive, source, visual_effects, assets,
+			is_active, created_at, updated_at
+		FROM monetization.cosmetic_items
+		WHERE id = $1`
+
+	err := r.db.QueryRow(ctx, query, cosmeticID).Scan(
+		&item.ID, &item.Code, &item.Name, &item.Category, &item.CosmeticType,
+		&item.Rarity, &item.Description, &item.Cost, &item.CurrencyType,
+		&item.IsExclusive, &item.Source, &visualEffectsJSON, &assetsJSON,
+		&item.IsActive, &item.CreatedAt, &item.UpdatedAt,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, fmt.Errorf("cosmetic item not found: %s", cosmeticID)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cosmetic item: %w", err)
+	}
+
+	if len(visualEffectsJSON) > 0 {
+		if err := json.Unmarshal(visualEffectsJSON, &item.VisualEffects); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal visual_effects JSON")
+			return nil, fmt.Errorf("failed to unmarshal visual_effects JSON: %w", err)
+		}
+	}
+
+	if len(assetsJSON) > 0 {
+		if err := json.Unmarshal(assetsJSON, &item.Assets); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal assets JSON")
+			return nil, fmt.Errorf("failed to unmarshal assets JSON: %w", err)
+		}
+	}
+
+	return &item, nil
+}
+

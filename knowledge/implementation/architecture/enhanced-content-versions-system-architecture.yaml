@@ -1,0 +1,167 @@
+metadata:
+  id: enhanced-content-versions-system-architecture
+  title: Архитектура системы усиленных версий контента
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - gameplay
+    - enhanced-content
+    - elite
+    - champion
+    - mythic-plus
+    - hardcore
+  related_systems:
+    - gameplay-service
+    - world-service
+    - progression-service
+  related_documents:
+    - id: enhanced-content-idea
+      relation: implements
+    - id: combat-ai-enemies-architecture
+      relation: extends
+  github_issue: 1504
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Существующий контент становится предсказуемым после многократного прохождения.
+    Не хватает усиленных версий контента, которые бы предоставляли новые вызовы.
+  goal: |
+    Создать архитектуру усиленных версий контента, которая:
+    - Предоставляет усиленные версии существующего контента
+    - Добавляет новые механики и вызовы
+    - Масштабирует сложность динамически
+    - Награждает игроков за прохождение
+  essence: |
+    Система усиленных версий контента предоставляет три типа усилений: Elite World Bosses,
+    Champion Raids и Mythic+ Dungeons. Каждый тип имеет уникальные механики и награды.
+
+architecture:
+  overview: |
+    Система усиленных версий контента состоит из следующих компонентов:
+    1. Enhanced Content Manager - управление усиленными версиями
+    2. Elite Boss Spawner - управление появлением Elite боссов
+    3. Champion Raid Manager - управление Champion рейдами
+    4. MythicPlus Scaler - масштабирование Mythic+ подземелий
+    5. Enhanced Reward Calculator - расчёт наград для усиленного контента
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка усиленного контента:
+        - Управление усиленными версиями
+        - Применение модификаторов
+        - Отслеживание прогресса
+      components:
+        - enhanced-content-manager: управление усиленными версиями
+        - elite-boss-spawner: управление Elite боссами
+        - champion-raid-manager: управление Champion рейдами
+        - mythicplus-scaler: масштабирование Mythic+
+        - enhanced-reward-calculator: расчёт наград
+      endpoints:
+        - GET /api/v1/gameplay/enhanced/elite-bosses/active - активные Elite боссы
+        - GET /api/v1/gameplay/enhanced/champion-raids/available - доступные Champion рейды
+        - GET /api/v1/gameplay/enhanced/mythicplus/{dungeonId}/levels - уровни Mythic+
+        - POST /api/v1/gameplay/enhanced/mythicplus/{dungeonId}/start - начало Mythic+
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/enhanced/elite-bosses - события Elite боссов
+      events_published:
+        - gameplay.enhanced.elite-boss.spawned: появление Elite босса
+        - gameplay.enhanced.champion-raid.completed: завершение Champion рейда
+        - gameplay.enhanced.mythicplus.completed: завершение Mythic+
+
+  data_flows:
+    elite_boss_spawn_flow: |
+      1. Elite Boss Spawner проверяет условия появления
+      2. Elite Boss Spawner создает Elite версию босса
+      3. Enhanced Content Manager применяет усиления (+200% HP, +100% урон)
+      4. Enhanced Content Manager добавляет новые механики
+      5. World Service публикует событие gameplay.enhanced.elite-boss.spawned
+      6. Realtime Gateway отправляет уведомление игрокам
+
+    mythicplus_scaling_flow: |
+      1. Игрок выбирает уровень Mythic+
+      2. MythicPlus Scaler рассчитывает модификаторы для уровня
+      3. MythicPlus Scaler применяет модификаторы (+8% HP, +5% урон за уровень)
+      4. Enhanced Content Manager активирует усиленные механики
+      5. Gameplay Service запускает подземелье с модификаторами
+
+  database_structure:
+    tables:
+      - name: enhanced_content_versions
+        description: Усиленные версии контента
+        columns:
+          - id: UUID PRIMARY KEY
+          - content_id: UUID FOREIGN KEY
+          - version_type: ENUM (elite, champion, mythicplus)
+          - hp_modifier: DECIMAL(5,2)
+          - damage_modifier: DECIMAL(5,2)
+          - mechanics: JSONB
+          - rewards: JSONB
+          - created_at: TIMESTAMP
+
+      - name: elite_boss_spawns
+        description: Появления Elite боссов
+        columns:
+          - id: UUID PRIMARY KEY
+          - boss_id: UUID FOREIGN KEY
+          - spawn_time: TIMESTAMP
+          - despawn_time: TIMESTAMP
+          - defeated: BOOLEAN
+          - defeated_by: UUID FOREIGN KEY (nullable)
+
+      - name: mythicplus_sessions
+        description: Сессии Mythic+ подземелий
+        columns:
+          - id: UUID PRIMARY KEY
+          - dungeon_id: UUID FOREIGN KEY
+          - mythicplus_level: INTEGER
+          - completion_time: INTEGER (nullable)
+          - success: BOOLEAN
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+
+  integrations:
+    world_service: |
+      - Управление появлением Elite боссов
+      - Интеграция с событиями мира
+
+    progression_service: |
+      - Начисление наград
+      - Обновление прогресса
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Enhanced Content Manager и Elite Boss Spawner
+        tasks:
+          - Реализация Enhanced Content Manager
+          - Реализация Elite Boss Spawner
+          - Управление усиленными версиями
+          - Появление Elite боссов
+          - Интеграция с World Service
+        estimated_effort: 4 days
+
+      phase_2:
+        name: Champion Raid Manager и MythicPlus Scaler
+        tasks:
+          - Реализация Champion Raid Manager
+          - Реализация MythicPlus Scaler
+          - Управление Champion рейдами
+          - Масштабирование Mythic+
+          - Интеграция с Combat Service
+        estimated_effort: 4 days
+

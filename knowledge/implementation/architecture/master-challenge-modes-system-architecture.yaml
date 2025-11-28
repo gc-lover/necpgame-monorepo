@@ -1,0 +1,209 @@
+metadata:
+  id: master-challenge-modes-system-architecture
+  title: Архитектура системы мастер-режимов и Challenge modes
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - gameplay
+    - difficulty
+    - master-modes
+    - challenge-modes
+    - hardcore
+  related_systems:
+    - gameplay-service
+    - progression-service
+    - achievement-service
+    - leaderboard-service
+  related_documents:
+    - id: master-challenge-modes-idea
+      relation: implements
+    - id: combat-ai-enemies-architecture
+      relation: extends
+  github_issue: 1496
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Текущая система сложности не предоставляет достаточно вызовов для опытных игроков.
+    Не хватает фиксированных режимов повышенной сложности с уникальными наградами.
+  goal: |
+    Создать архитектуру мастер-режимов, которая:
+    - Предоставляет фиксированные уровни повышенной сложности
+    - Добавляет уникальные ограничения и механики
+    - Награждает игроков уникальными достижениями и предметами
+    - Интегрируется с системой достижений и лидербордов
+  essence: |
+    Система мастер-режимов добавляет три уровня сложности (Master, Grandmaster, Legendary)
+    с фиксированными усилениями врагов, ограничениями и уникальными наградами.
+
+architecture:
+  overview: |
+    Система мастер-режимов состоит из следующих компонентов:
+    1. Difficulty Mode Manager - управление режимами сложности
+    2. Restriction Controller - управление ограничениями (время, респавн, чекпоинты)
+    3. Difficulty Modifier Engine - применение модификаторов сложности
+    4. Achievement Tracker - отслеживание достижений режимов
+    5. Reward Calculator - расчёт наград по режимам
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка мастер-режимов:
+        - Управление режимами сложности
+        - Применение модификаторов
+        - Отслеживание ограничений
+      components:
+        - difficulty-mode-manager: управление режимами
+        - restriction-controller: управление ограничениями
+        - difficulty-modifier-engine: применение модификаторов
+        - achievement-tracker: отслеживание достижений
+        - reward-calculator: расчёт наград
+      endpoints:
+        - POST /api/v1/gameplay/instances/{instanceId}/difficulty - выбор режима
+        - GET /api/v1/gameplay/content/{contentId}/difficulty-modes - доступные режимы
+        - GET /api/v1/gameplay/difficulty-modes/stats - статистика режимов
+        - GET /api/v1/gameplay/difficulty-modes/{mode}/requirements - требования режима
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/instances/{instanceId}/difficulty - события режима
+      events_published:
+        - gameplay.difficulty.mode.selected: выбор режима
+        - gameplay.difficulty.completion: завершение контента
+        - gameplay.difficulty.restriction.warning: предупреждение об ограничении
+        - gameplay.difficulty.telemetry: телеметрия режимов
+
+  data_flows:
+    difficulty_selection_flow: |
+      1. Игрок выбирает режим сложности при входе в контент
+      2. Difficulty Mode Manager проверяет требования для режима
+      3. Difficulty Mode Manager применяет режим к инстансу
+      4. Difficulty Modifier Engine применяет модификаторы (HP, урон, механики)
+      5. Restriction Controller активирует ограничения (время, респавн, чекпоинты)
+      6. Gameplay Service публикует событие gameplay.difficulty.mode.selected
+      7. Realtime Gateway отправляет информацию о режиме клиентам
+
+    restriction_tracking_flow: |
+      1. Restriction Controller отслеживает ограничения в реальном времени
+      2. При приближении к лимиту Restriction Controller отправляет предупреждение
+      3. При превышении лимита Restriction Controller завершает контент неудачей
+      4. Gameplay Service публикует событие gameplay.difficulty.restriction.warning
+      5. Realtime Gateway отправляет предупреждение клиентам
+
+    completion_flow: |
+      1. При завершении контента Difficulty Mode Manager проверяет режим
+      2. Reward Calculator рассчитывает награды на основе режима
+      3. Achievement Tracker проверяет достижения для режима
+      4. Progression Service начисляет награды
+      5. Achievement Service выдает достижения и титулы
+      6. Leaderboard Service обновляет рейтинги
+      7. Gameplay Service публикует событие gameplay.difficulty.completion
+
+  database_structure:
+    tables:
+      - name: difficulty_modes
+        description: Режимы сложности
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(100)
+          - level: ENUM (master, grandmaster, legendary)
+          - hp_modifier: DECIMAL(5,2)
+          - damage_modifier: DECIMAL(5,2)
+          - time_limit_multiplier: DECIMAL(5,2)
+          - respawn_limit: INTEGER
+          - checkpoint_limit: INTEGER
+          - reward_modifier: DECIMAL(5,2)
+          - created_at: TIMESTAMP
+
+      - name: content_difficulty_modes
+        description: Доступные режимы для контента
+        columns:
+          - id: UUID PRIMARY KEY
+          - content_id: UUID FOREIGN KEY
+          - difficulty_mode_id: UUID FOREIGN KEY
+          - requirements: JSONB
+          - created_at: TIMESTAMP
+
+      - name: instance_difficulty_sessions
+        description: Сессии с режимами сложности
+        columns:
+          - id: UUID PRIMARY KEY
+          - instance_id: UUID FOREIGN KEY
+          - difficulty_mode_id: UUID FOREIGN KEY
+          - time_remaining: INTEGER
+          - respawns_remaining: INTEGER
+          - checkpoints_used: INTEGER
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+          - status: ENUM (in_progress, completed, failed)
+
+      - name: difficulty_telemetry
+        description: Телеметрия режимов
+        columns:
+          - id: UUID PRIMARY KEY
+          - instance_id: UUID FOREIGN KEY
+          - difficulty_mode_id: UUID FOREIGN KEY
+          - completion_time: INTEGER
+          - success: BOOLEAN
+          - deaths_count: INTEGER
+          - player_count: INTEGER
+          - timestamp: TIMESTAMP
+
+  integrations:
+    progression_service: |
+      - Проверка требований для доступа к режимам
+      - Начисление наград
+      - Обновление прогресса
+
+    achievement_service: |
+      - Отслеживание достижений режимов
+      - Выдача титулов
+      - Уведомления о достижениях
+
+    leaderboard_service: |
+      - Рейтинги по режимам сложности
+      - Сезонные лидерборды
+      - Рекорды по времени
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Difficulty Mode Manager и Modifier Engine
+        tasks:
+          - Реализация Difficulty Mode Manager
+          - Реализация Difficulty Modifier Engine
+          - Управление режимами сложности
+          - Применение модификаторов
+          - Интеграция с Combat Service
+        estimated_effort: 4 days
+
+      phase_2:
+        name: Restriction Controller
+        tasks:
+          - Реализация Restriction Controller
+          - Отслеживание ограничений времени
+          - Отслеживание ограничений респавна
+          - Управление чекпоинтами
+          - Интеграция с Gameplay Service
+        estimated_effort: 3 days
+
+      phase_3:
+        name: Achievement Tracker и Reward Calculator
+        tasks:
+          - Реализация Achievement Tracker
+          - Реализация Reward Calculator
+          - Интеграция с Achievement Service
+          - Интеграция с Progression Service
+        estimated_effort: 3 days
+

@@ -1,0 +1,217 @@
+metadata:
+  id: endgame-progression-system-architecture
+  title: Архитектура системы эндгейм-прогрессии (Paragon/Prestige)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - progression
+    - endgame
+    - paragon
+    - prestige
+    - mastery
+    - hardcore
+  related_systems:
+    - progression-service
+    - character-service
+    - achievement-service
+    - leaderboard-service
+  related_documents:
+    - id: endgame-progression-idea
+      relation: implements
+  github_issue: 1497
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - progression
+    - api-designer
+
+summary:
+  problem: |
+    После достижения максимального уровня (50) игроки теряют мотивацию к прогрессии.
+    Не хватает системы бесконечной прогрессии, которая бы мотивировала игроков продолжать играть.
+  goal: |
+    Создать архитектуру эндгейм-прогрессии, которая:
+    - Предоставляет бесконечную прогрессию после уровня 50
+    - Добавляет специализацию по типам контента
+    - Награждает игроков за долгосрочную игру
+    - Интегрируется с существующими системами прогрессии
+  essence: |
+    Система эндгейм-прогрессии объединяет три подсистемы: Paragon Levels (бесконечные уровни),
+    Prestige System (сброс прогресса за бонусы) и Mastery System (специализация по контенту).
+
+architecture:
+  overview: |
+    Система эндгейм-прогрессии состоит из следующих компонентов:
+    1. Paragon Level Manager - управление Paragon Levels
+    2. Prestige Manager - управление Prestige System
+    3. Mastery Manager - управление Mastery System
+    4. Progression Calculator - расчёт прогрессии и наград
+    5. Bonus Applicator - применение бонусов престижа
+
+  microservices:
+    - name: progression-service
+      port: 8084
+      responsibility: |
+        Обработка эндгейм-прогрессии:
+        - Управление Paragon Levels
+        - Управление Prestige System
+        - Управление Mastery System
+        - Начисление опыта и наград
+      components:
+        - paragon-level-manager: управление Paragon Levels
+        - prestige-manager: управление Prestige System
+        - mastery-manager: управление Mastery System
+        - progression-calculator: расчёт прогрессии
+        - bonus-applicator: применение бонусов
+      endpoints:
+        - GET /api/v1/progression/paragon/levels - получение Paragon Levels
+        - POST /api/v1/progression/paragon/distribute - распределение очков
+        - GET /api/v1/progression/paragon/stats - статистика Paragon
+        - GET /api/v1/progression/prestige/info - информация о престиже
+        - POST /api/v1/progression/prestige/reset - сброс престижа
+        - GET /api/v1/progression/prestige/bonuses - бонусы престижа
+        - GET /api/v1/progression/mastery/levels - уровни мастерства
+        - GET /api/v1/progression/mastery/{type}/progress - прогресс мастерства
+        - GET /api/v1/progression/mastery/rewards - награды мастерства
+      websocket_channels:
+        - wss://api.necp.game/v1/progression/paragon - события Paragon
+        - wss://api.necp.game/v1/progression/prestige - события Prestige
+        - wss://api.necp.game/v1/progression/mastery - события Mastery
+      events_published:
+        - progression.paragon.leveled: повышение Paragon Level
+        - progression.paragon.points.distributed: распределение очков
+        - progression.prestige.reset: сброс престижа
+        - progression.prestige.bonus.applied: применение бонуса
+        - progression.mastery.leveled: повышение уровня мастерства
+        - progression.mastery.reward.unlocked: разблокировка награды
+
+  data_flows:
+    paragon_progression_flow: |
+      1. Игрок получает опыт после уровня 50
+      2. Paragon Level Manager проверяет накопленный опыт
+      3. При достижении порога Paragon Level Manager повышает Paragon Level
+      4. Paragon Level Manager начисляет Paragon Points
+      5. Progression Service публикует событие progression.paragon.leveled
+      6. Realtime Gateway отправляет уведомление игроку
+      7. Character Service обновляет характеристики
+
+    prestige_reset_flow: |
+      1. Игрок запрашивает сброс престижа
+      2. Prestige Manager проверяет требования для престижа
+      3. Prestige Manager сбрасывает уровень до 1
+      4. Prestige Manager сбрасывает Paragon Levels
+      5. Prestige Manager сбрасывает часть Mastery
+      6. Prestige Manager увеличивает Prestige Level
+      7. Bonus Applicator применяет бонусы престижа
+      8. Progression Service публикует событие progression.prestige.reset
+      9. Character Service обновляет характеристики с бонусами
+
+    mastery_progression_flow: |
+      1. Игрок завершает контент определенного типа
+      2. Mastery Manager начисляет опыт мастерства
+      3. При достижении порога Mastery Manager повышает уровень мастерства
+      4. Mastery Manager проверяет награды за уровень
+      5. Progression Service публикует событие progression.mastery.leveled
+      6. Realtime Gateway отправляет уведомление игроку
+
+  database_structure:
+    tables:
+      - name: paragon_levels
+        description: Paragon Levels игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - paragon_level: INTEGER
+          - paragon_points_total: INTEGER
+          - paragon_points_spent: INTEGER
+          - experience_current: BIGINT
+          - experience_required: BIGINT
+          - updated_at: TIMESTAMP
+
+      - name: paragon_allocations
+        description: Распределение Paragon Points
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - stat_type: VARCHAR(50)
+          - points_allocated: INTEGER
+          - updated_at: TIMESTAMP
+
+      - name: prestige_levels
+        description: Prestige Levels игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - prestige_level: INTEGER
+          - bonuses_applied: JSONB
+          - reset_count: INTEGER
+          - last_reset_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: mastery_levels
+        description: Mastery Levels игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - mastery_type: VARCHAR(50)
+          - mastery_level: INTEGER
+          - experience_current: BIGINT
+          - experience_required: BIGINT
+          - updated_at: TIMESTAMP
+
+  integrations:
+    character_service: |
+      - Хранение прогрессии
+      - Применение бонусов
+      - Синхронизация характеристик
+
+    achievement_service: |
+      - Отслеживание достижений
+      - Выдача титулов
+      - Уведомления о достижениях
+
+    leaderboard_service: |
+      - Рейтинги по Paragon Levels
+      - Рейтинги по Prestige
+      - Рейтинги по Mastery
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Paragon Level Manager
+        tasks:
+          - Реализация Paragon Level Manager
+          - Управление Paragon Levels
+          - Начисление Paragon Points
+          - Распределение очков
+          - Интеграция с Character Service
+        estimated_effort: 4 days
+
+      phase_2:
+        name: Prestige Manager
+        tasks:
+          - Реализация Prestige Manager
+          - Управление Prestige System
+          - Сброс прогресса
+          - Применение бонусов
+          - Интеграция с Character Service
+        estimated_effort: 4 days
+
+      phase_3:
+        name: Mastery Manager
+        tasks:
+          - Реализация Mastery Manager
+          - Управление Mastery System
+          - Начисление опыта мастерства
+          - Награды мастерства
+          - Интеграция с Gameplay Service
+        estimated_effort: 4 days
+

@@ -1,0 +1,172 @@
+metadata:
+  id: seasonal-challenges-system-architecture
+  title: Архитектура системы сезонных испытаний
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - gameplay
+    - seasonal
+    - challenges
+    - liveops
+    - hardcore
+  related_systems:
+    - world-service
+    - gameplay-service
+    - economy-service
+  related_documents:
+    - id: seasonal-challenges-idea
+      relation: implements
+  github_issue: 1500
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - liveops
+    - api-designer
+
+summary:
+  problem: |
+    Не хватает временного контента, который бы мотивировал игроков возвращаться в игру.
+    Сезонные события требуют уникальных механик и наград.
+  goal: |
+    Создать архитектуру сезонных испытаний, которая:
+    - Предоставляет временный контент с уникальными механиками
+    - Интегрируется с сезонной системой
+    - Награждает игроков сезонными валютами и предметами
+    - Поддерживает ротацию контента
+  essence: |
+    Система сезонных испытаний предоставляет временный контент с уникальными механиками,
+    боссами и наградами. Каждый сезон добавляет новые испытания и уникальные награды.
+
+architecture:
+  overview: |
+    Система сезонных испытаний состоит из следующих компонентов:
+    1. Season Manager - управление сезонами
+    2. Seasonal Challenge Manager - управление сезонными испытаниями
+    3. Seasonal Affix Manager - управление сезонными аффиксами
+    4. Seasonal Currency Manager - управление сезонной валютой
+    5. Seasonal Reward Calculator - расчёт сезонных наград
+
+  microservices:
+    - name: world-service
+      port: 8085
+      responsibility: |
+        Управление сезонными событиями:
+        - Управление сезонами
+        - Ротация сезонного контента
+        - Применение сезонных аффиксов
+      components:
+        - season-manager: управление сезонами
+        - seasonal-affix-manager: управление сезонными аффиксами
+      endpoints:
+        - GET /api/v1/seasons/current - текущий сезон
+        - GET /api/v1/seasons/{seasonId}/challenges - испытания сезона
+        - GET /api/v1/seasons/{seasonId}/rewards - награды сезона
+      websocket_channels:
+        - wss://api.necp.game/v1/world/seasons - события сезонов
+      events_published:
+        - world.season.started: начало сезона
+        - world.season.ending: окончание сезона
+        - world.season.challenge.completed: завершение испытания
+        - world.season.currency.earned: получение валюты
+
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка сезонных испытаний:
+        - Управление сезонными испытаниями
+        - Отслеживание прогресса
+        - Начисление сезонной валюты
+      components:
+        - seasonal-challenge-manager: управление испытаниями
+        - seasonal-currency-manager: управление валютой
+        - seasonal-reward-calculator: расчёт наград
+      endpoints:
+        - GET /api/v1/gameplay/seasonal/challenges/active - активные испытания
+        - POST /api/v1/gameplay/seasonal/challenges/{id}/complete - завершение испытания
+        - GET /api/v1/gameplay/seasonal/currency/balance - баланс валюты
+        - POST /api/v1/gameplay/seasonal/currency/exchange - обмен валюты
+
+  data_flows:
+    season_start_flow: |
+      1. Season Manager запускает новый сезон
+      2. Seasonal Challenge Manager активирует сезонные испытания
+      3. Seasonal Affix Manager применяет сезонные аффиксы
+      4. World Service публикует событие world.season.started
+      5. Realtime Gateway отправляет уведомление всем игрокам
+
+    challenge_completion_flow: |
+      1. Игрок завершает сезонное испытание
+      2. Seasonal Challenge Manager проверяет условия
+      3. Seasonal Currency Manager начисляет сезонную валюту
+      4. Seasonal Reward Calculator рассчитывает награды
+      5. Economy Service выдает награды
+      6. World Service публикует событие world.season.challenge.completed
+
+  database_structure:
+    tables:
+      - name: seasons
+        description: Сезоны
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP
+          - seasonal_affix_id: UUID FOREIGN KEY (nullable)
+          - status: ENUM (upcoming, active, ended)
+
+      - name: seasonal_challenges
+        description: Сезонные испытания
+        columns:
+          - id: UUID PRIMARY KEY
+          - season_id: UUID FOREIGN KEY
+          - challenge_type: VARCHAR(100)
+          - content_id: UUID FOREIGN KEY
+          - conditions: JSONB
+          - rewards: JSONB
+          - created_at: TIMESTAMP
+
+      - name: player_seasonal_currency
+        description: Сезонная валюта игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - season_id: UUID FOREIGN KEY
+          - currency_amount: INTEGER
+          - updated_at: TIMESTAMP
+
+  integrations:
+    economy_service: |
+      - Обмен сезонной валюты
+      - Сезонные предметы
+      - Сезонные награды
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Season Manager и Seasonal Challenge Manager
+        tasks:
+          - Реализация Season Manager
+          - Реализация Seasonal Challenge Manager
+          - Управление сезонами
+          - Управление испытаниями
+          - Интеграция с World Service
+        estimated_effort: 4 days
+
+      phase_2:
+        name: Seasonal Affix Manager и Currency Manager
+        tasks:
+          - Реализация Seasonal Affix Manager
+          - Реализация Seasonal Currency Manager
+          - Применение сезонных аффиксов
+          - Управление сезонной валютой
+          - Интеграция с Economy Service
+        estimated_effort: 3 days
+

@@ -1,0 +1,303 @@
+components:
+  schemas:
+    VoiceChannelType:
+      type: string
+      enum: [PARTY, GUILD, RAID, PROXIMITY]
+      description: Тип голосового канала
+
+    ParticipantStatus:
+      type: string
+      enum: [MUTED, DEAFENED, SPEAKING, IDLE]
+      description: Статус участника
+
+    VoiceChannel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel_type:
+          type: string
+          enum:
+            - PARTY
+            - GUILD
+            - RAID
+            - PROXIMITY
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          maxLength: 255
+        max_participants:
+          type: integer
+        quality_preset:
+          type: string
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+            - ADAPTIVE
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    VoiceParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        webrtc_token:
+          type: string
+          maxLength: 255
+        is_muted:
+          type: boolean
+          default: false
+        is_deafened:
+          type: boolean
+          default: false
+        is_speaking:
+          type: boolean
+          default: false
+        position_x:
+          type: number
+          format: float
+          nullable: true
+        position_y:
+          type: number
+          format: float
+          nullable: true
+        position_z:
+          type: number
+          format: float
+          nullable: true
+        joined_at:
+          type: string
+          format: date-time
+        last_activity_at:
+          type: string
+          format: date-time
+
+    CreateChannelRequest:
+      type: object
+      required:
+        - player_id
+        - channel_type
+        - name
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        channel_type:
+          type: string
+          enum:
+            - PARTY
+            - GUILD
+            - RAID
+            - PROXIMITY
+        name:
+          type: string
+          maxLength: 255
+        max_participants:
+          type: integer
+        quality_preset:
+          type: string
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+            - ADAPTIVE
+
+    JoinChannelRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+          nullable: true
+        position_y:
+          type: number
+          format: float
+          nullable: true
+        position_z:
+          type: number
+          format: float
+          nullable: true
+
+    LeaveChannelRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    UpdateParticipantStatusRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        is_muted:
+          type: boolean
+        is_deafened:
+          type: boolean
+
+    UpdateParticipantPositionRequest:
+      type: object
+      required:
+        - player_id
+        - position_x
+        - position_y
+        - position_z
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+
+    ChannelListResponse:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceChannel'
+        total:
+          type: integer
+
+    ParticipantListResponse:
+      type: object
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+        total:
+          type: integer
+
+    ChannelDetailResponse:
+      type: object
+      properties:
+        channel:
+          $ref: '#/components/schemas/VoiceChannel'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+
+    WebRTCTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        server_url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    GetWebRTCTokenRequest:
+      type: object
+      required:
+        - channel_id
+        - player_id
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+
+    ConnectWebRTCRequest:
+      type: object
+      required:
+        - channel_id
+        - player_id
+        - token
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        token:
+          type: string
+
+    DisconnectWebRTCRequest:
+      type: object
+      required:
+        - channel_id
+        - player_id
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+
+    WebRTCConnectionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        connection_status:
+          type: string
+          enum:
+            - INITIATING
+            - CONNECTING
+            - CONNECTED
+            - DISCONNECTED
+            - RECONNECTING
+
+    WebRTCDisconnectResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        channel_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+

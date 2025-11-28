@@ -1,0 +1,215 @@
+metadata:
+  id: raid-dungeon-affixes-system-architecture
+  title: Архитектура системы аффиксов для рейдов и подземелий
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - gameplay
+    - difficulty
+    - affixes
+    - raids
+    - dungeons
+    - hardcore
+  related_systems:
+    - gameplay-service
+    - world-service
+    - combat-service
+    - analytics-service
+    - leaderboard-service
+  related_documents:
+    - id: raid-dungeon-affixes-idea
+      relation: implements
+    - id: combat-ai-enemies-architecture
+      relation: extends
+  github_issue: 1495
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Текущая система сложности рейдов и подземелий ограничена базовыми слоями.
+    Не хватает динамических модификаторов, которые бы меняли механики боя и повышали реиграбельность.
+  goal: |
+    Создать архитектуру системы аффиксов, которая:
+    - Добавляет динамическую сложность через модификаторы механик
+    - Повышает реиграбельность контента
+    - Интегрируется с существующими системами рейдов и подземелий
+    - Поддерживает еженедельную ротацию аффиксов
+  essence: |
+    Система аффиксов добавляет 2-4 случайных модификатора к каждому инстансу рейда или подземелья.
+    Аффиксы меняют механики боя, требуют адаптации тактики и влияют на награды.
+    Ротация аффиксов происходит еженедельно.
+
+architecture:
+  overview: |
+    Система аффиксов состоит из следующих компонентов:
+    1. Affix Manager - управление аффиксами и их конфигурациями
+    2. Affix Rotation Controller - управление еженедельной ротацией
+    3. Affix Applicator - применение аффиксов к инстансам
+    4. Affix Effect Engine - обработка эффектов аффиксов в бою
+    5. Affix Telemetry Collector - сбор телеметрии для балансировки
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка аффиксов:
+        - Управление аффиксами и их конфигурациями
+        - Применение аффиксов к инстансам
+        - Обработка эффектов аффиксов в бою
+        - Сбор телеметрии
+      components:
+        - affix-manager: управление аффиксами
+        - affix-rotation-controller: управление ротацией
+        - affix-applicator: применение аффиксов
+        - affix-effect-engine: обработка эффектов
+        - affix-telemetry-collector: сбор телеметрии
+      endpoints:
+        - GET /api/v1/gameplay/affixes/active - список активных аффиксов
+        - GET /api/v1/gameplay/affixes/{id} - информация об аффиксе
+        - GET /api/v1/gameplay/instances/{instanceId}/affixes - аффиксы инстанса
+        - GET /api/v1/gameplay/affixes/rotation/history - история ротаций
+        - POST /api/v1/gameplay/affixes/rotation/trigger - триггер ротации (admin)
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/affixes/rotation - события ротации
+      events_published:
+        - gameplay.affixes.rotation.changed: смена ротации аффиксов
+        - gameplay.affixes.applied: применение аффиксов к инстансу
+        - gameplay.affixes.telemetry: телеметрия аффиксов
+
+  data_flows:
+    affix_application_flow: |
+      1. Игрок создает инстанс рейда/подземелья
+      2. Affix Applicator запрашивает активные аффиксы через Affix Manager
+      3. Affix Applicator выбирает 2-4 случайных аффикса из активных
+      4. Affix Applicator проверяет совместимость аффиксов
+      5. Affix Applicator применяет аффиксы к инстансу
+      6. Affix Effect Engine инициализирует эффекты аффиксов
+      7. Gameplay Service публикует событие gameplay.affixes.applied
+      8. Realtime Gateway отправляет информацию об аффиксах клиентам
+
+    affix_rotation_flow: |
+      1. Еженедельно (понедельник 00:00 UTC) запускается Affix Rotation Controller
+      2. Affix Rotation Controller выбирает новый набор активных аффиксов (8-10 из пула)
+      3. Affix Rotation Controller проверяет сезонные аффиксы
+      4. Affix Rotation Controller сохраняет новую ротацию в БД
+      5. Affix Rotation Controller публикует событие gameplay.affixes.rotation.changed
+      6. Realtime Gateway отправляет уведомление всем игрокам
+      7. Analytics Service логирует смену ротации
+
+    affix_effect_flow: |
+      1. В бою Affix Effect Engine отслеживает триггеры аффиксов
+      2. При срабатывании триггера Affix Effect Engine применяет эффект
+      3. Combat Service обрабатывает модификаторы (урон, HP, способности)
+      4. Affix Effect Engine обновляет визуальные эффекты
+      5. Realtime Gateway синхронизирует эффекты с клиентами
+      6. Affix Telemetry Collector записывает использование аффикса
+
+  database_structure:
+    tables:
+      - name: affixes
+        description: Каталог аффиксов
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - category: ENUM (combat, environmental, debuff, defensive)
+          - description: TEXT
+          - mechanics: JSONB
+          - visual_effects: JSONB
+          - reward_modifier: DECIMAL(5,2)
+          - difficulty_modifier: DECIMAL(5,2)
+          - created_at: TIMESTAMP
+
+      - name: affix_rotations
+        description: Ротации аффиксов
+        columns:
+          - id: UUID PRIMARY KEY
+          - week_start: TIMESTAMP
+          - week_end: TIMESTAMP
+          - active_affixes: JSONB
+          - seasonal_affix_id: UUID (nullable)
+          - created_at: TIMESTAMP
+
+      - name: instance_affixes
+        description: Аффиксы инстансов
+        columns:
+          - id: UUID PRIMARY KEY
+          - instance_id: UUID FOREIGN KEY
+          - affix_id: UUID FOREIGN KEY
+          - applied_at: TIMESTAMP
+
+      - name: affix_telemetry
+        description: Телеметрия аффиксов
+        columns:
+          - id: UUID PRIMARY KEY
+          - instance_id: UUID FOREIGN KEY
+          - affix_id: UUID FOREIGN KEY
+          - completion_time: INTEGER
+          - success: BOOLEAN
+          - player_count: INTEGER
+          - deaths_count: INTEGER
+          - timestamp: TIMESTAMP
+
+  integrations:
+    combat_service: |
+      - Применение боевых модификаторов (HP, урон, способности)
+      - Обработка механик аффиксов в бою
+      - Синхронизация с combat session
+
+    world_service: |
+      - Хранение конфигураций аффиксов
+      - Ротация аффиксов
+      - Интеграция с событиями мира
+
+    analytics_service: |
+      - Отслеживание успешности комбинаций аффиксов
+      - Метрики сложности и наград
+      - Балансировка аффиксов
+
+    leaderboard_service: |
+      - Рейтинги по сложности аффиксов
+      - Сезонные лидерборды
+      - Достижения за прохождение с аффиксами
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Affix Manager и Rotation Controller
+        tasks:
+          - Реализация Affix Manager
+          - Реализация Affix Rotation Controller
+          - Управление каталогом аффиксов
+          - Еженедельная ротация
+          - Интеграция с World Service
+        estimated_effort: 4 days
+
+      phase_2:
+        name: Affix Applicator и Effect Engine
+        tasks:
+          - Реализация Affix Applicator
+          - Реализация Affix Effect Engine
+          - Применение аффиксов к инстансам
+          - Обработка эффектов в бою
+          - Интеграция с Combat Service
+        estimated_effort: 5 days
+
+      phase_3:
+        name: Telemetry и балансировка
+        tasks:
+          - Реализация Affix Telemetry Collector
+          - Сбор метрик использования
+          - Анализ баланса аффиксов
+          - Интеграция с Analytics Service
+        estimated_effort: 3 days
+
