@@ -1,0 +1,192 @@
+openapi: 3.0.3
+info:
+  title: Economy Currency Exchange Rates Service API
+  description: |
+    API для получения курсов валют и расчета котировок.
+    
+    **Функциональность:**
+    - Текущие курсы валют
+    - Расчет котировок для обмена
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8101/v1
+    description: Development server
+
+tags:
+  - name: Exchange Rates
+    description: Курсы валют
+
+paths:
+  /currency-exchange/rates:
+    get:
+      summary: Получить текущие курсы валют
+      description: Возвращает курсы всех валютных пар
+      operationId: getExchangeRates
+      tags:
+        - Exchange Rates
+      responses:
+        "200":
+          description: Текущие курсы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeRatesResponse"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /currency-exchange/rates/{pair}:
+    get:
+      summary: Получить курс валютной пары
+      description: Возвращает курс конкретной валютной пары
+      operationId: getExchangeRate
+      tags:
+        - Exchange Rates
+      parameters:
+        - name: pair
+          in: path
+          required: true
+          description: Валютная пара (например, EUR_USD)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Курс валютной пары
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeRate"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security: []
+
+  /currency-exchange/quote:
+    post:
+      summary: Рассчитать котировку
+      description: Рассчитывает предварительную котировку для обмена
+      operationId: calculateQuote
+      tags:
+        - Exchange Rates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "200":
+          description: Котировка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    CurrencyPair:
+      type: string
+      description: Валютная пара (например, EUR_USD, JPY_USD)
+      example: EUR_USD
+
+    ExchangeRate:
+      type: object
+      required:
+        - pair
+        - bid
+        - ask
+        - timestamp
+      properties:
+        pair:
+          $ref: "#/components/schemas/CurrencyPair"
+        bid:
+          type: number
+          format: double
+          description: Курс покупки
+        ask:
+          type: number
+          format: double
+          description: Курс продажи
+        spread:
+          type: number
+          format: double
+          description: Спред (ask - bid)
+        timestamp:
+          type: string
+          format: date-time
+
+    ExchangeRatesResponse:
+      type: object
+      required:
+        - rates
+      properties:
+        rates:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExchangeRate"
+        updated_at:
+          type: string
+          format: date-time
+
+    QuoteRequest:
+      type: object
+      required:
+        - from_currency
+        - to_currency
+        - amount
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount:
+          type: number
+          format: double
+
+    Quote:
+      type: object
+      required:
+        - from_currency
+        - to_currency
+        - from_amount
+        - to_amount
+        - exchange_rate
+        - fee
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        from_amount:
+          type: number
+          format: double
+        to_amount:
+          type: number
+          format: double
+        exchange_rate:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+        expires_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
