@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -25,24 +26,26 @@ type TradeServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr          string
-	router        *mux.Router
-	tradeService  TradeServiceInterface
-	logger        *logrus.Logger
-	server        *http.Server
-	jwtValidator  *JwtValidator
-	authEnabled   bool
+	addr                   string
+	router                 *mux.Router
+	tradeService           TradeServiceInterface
+	currencyExchangeService CurrencyExchangeServiceInterface
+	logger                 *logrus.Logger
+	server                 *http.Server
+	jwtValidator           *JwtValidator
+	authEnabled            bool
 }
 
-func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, tradeService TradeServiceInterface, currencyExchangeService CurrencyExchangeServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
-		addr:         addr,
-		router:       router,
-		tradeService: tradeService,
-		logger:       GetLogger(),
-		jwtValidator: jwtValidator,
-		authEnabled:  authEnabled,
+		addr:                    addr,
+		router:                  router,
+		tradeService:            tradeService,
+		currencyExchangeService: currencyExchangeService,
+		logger:                  GetLogger(),
+		jwtValidator:           jwtValidator,
+		authEnabled:            authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -65,6 +68,16 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 	economy.HandleFunc("/trade/{id}/confirm", server.confirmTrade).Methods("POST")
 	economy.HandleFunc("/trade/{id}/complete", server.completeTrade).Methods("POST")
 	economy.HandleFunc("/trade/{id}/cancel", server.cancelTrade).Methods("POST")
+
+	economy.HandleFunc("/currency-exchange/rates", server.getExchangeRates).Methods("GET")
+	economy.HandleFunc("/currency-exchange/rates/{pair}", server.getExchangeRate).Methods("GET")
+	economy.HandleFunc("/currency-exchange/quote", server.calculateQuote).Methods("POST")
+	economy.HandleFunc("/currency-exchange/orders/instant", server.instantExchange).Methods("POST")
+	economy.HandleFunc("/currency-exchange/orders/limit", server.createLimitOrder).Methods("POST")
+	economy.HandleFunc("/currency-exchange/orders", server.getOrders).Methods("GET")
+	economy.HandleFunc("/currency-exchange/orders/{order_id}", server.getOrder).Methods("GET")
+	economy.HandleFunc("/currency-exchange/orders/{order_id}", server.deleteOrder).Methods("DELETE")
+	economy.HandleFunc("/currency-exchange/trades", server.getTrades).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -367,10 +380,17 @@ func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(data); err != nil {
+		s.logger.WithError(err).Error("Failed to encode JSON response")
+		s.respondError(w, http.StatusInternalServerError, "Failed to encode JSON response")
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		s.logger.WithError(err).Error("Failed to encode JSON response")
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		s.logger.WithError(err).Error("Failed to write JSON response")
 	}
 }
 

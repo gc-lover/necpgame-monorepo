@@ -30,6 +30,11 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize trade service")
 	}
 
+	currencyExchangeService, err := server.NewCurrencyExchangeServiceFromDB(dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize currency exchange service")
+	}
+
 	var jwtValidator *server.JwtValidator
 	if authEnabled && keycloakURL != "" {
 		issuer := keycloakURL + "/realms/" + keycloakRealm
@@ -43,7 +48,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, tradeService, jwtValidator, authEnabled)
+	httpServer := server.NewHTTPServer(addr, tradeService, currencyExchangeService, jwtValidator, authEnabled)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
