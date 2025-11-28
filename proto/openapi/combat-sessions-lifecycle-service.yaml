@@ -1,0 +1,404 @@
+openapi: 3.0.3
+info:
+  title: Combat Sessions Lifecycle Service API
+  description: |
+    API для управления участниками и жизненным циклом боевых сессий.
+    
+    **Основные возможности:**
+    - Присоединение и выход участников
+    - Запуск и завершение боевых сессий
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Combat Sessions Participants
+    description: Управление участниками боевых сессий
+  - name: Combat Sessions Lifecycle
+    description: Жизненный цикл боевых сессий
+
+paths:
+  /api/v1/gameplay/combat/sessions/{session_id}/join:
+    put:
+      tags:
+        - Combat Sessions Participants
+      summary: Присоединение к бою
+      description: |
+        Добавляет участника (игрока/NPC/врага) в боевую сессию.
+        
+        **Типы участников:**
+        - `player` - игрок (управляется пользователем)
+        - `npc` - NPC (союзник игрока)
+        - `enemy` - враг (управляется AI)
+        
+        **Команды:**
+        - `1` - команда игрока
+        - `2` - команда противника
+        
+        **Позиция:**
+        - Координаты на поле боя (x, y, z)
+        - Влияет на дальность атак и LoS
+      operationId: joinCombatSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinCombatRequest'
+      responses:
+        '200':
+          description: Успешно присоединён к бою
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatParticipant'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/sessions/{session_id}/leave:
+    put:
+      tags:
+        - Combat Sessions Participants
+      summary: Выход из боя
+      description: |
+        Удаляет участника из боевой сессии.
+        
+        **Последствия:**
+        - Статус участника меняется на `escaped`
+        - Участник теряет право на награды
+        - Если вышел последний игрок - бой завершается поражением
+      operationId: leaveCombatSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - participant_id
+              properties:
+                participant_id:
+                  type: string
+                  format: uuid
+                  description: ID участника который покидает бой
+      responses:
+        '200':
+          description: Успешно покинул бой
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatParticipant'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/sessions/{session_id}/start:
+    post:
+      tags:
+        - Combat Sessions Lifecycle
+      summary: Запуск боя
+      description: |
+        Запускает боевую сессию и начинает бой.
+        
+        **Автоматически:**
+        - Определяет порядок ходов на основе инициативы
+        - Меняет статус сессии с `created` на `active`
+        - Начинает первый ход
+        - Публикует событие `combat:session:started`
+        - Синхронизирует состояние через Realtime Gateway
+      operationId: startCombatSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Бой запущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/sessions/{session_id}/end:
+    post:
+      tags:
+        - Combat Sessions Lifecycle
+      summary: Завершение боя
+      description: |
+        Завершает боевую сессию, рассчитывает и распределяет награды.
+        
+        **Результаты боя:**
+        - `victory` - победа игрока/команды
+        - `defeat` - поражение игрока/команды
+        - `draw` - ничья (таймаут, обоюдное уничтожение)
+        
+        **Автоматически:**
+        - Рассчитывает награды (опыт, лут, валюта)
+        - Интегрируется с Economy Service для распределения лута
+        - Интегрируется с Quest Service для прогресса квестов
+        - Публикует событие `combat:session:completed`
+        - Меняет статус сессии на `completed`
+        - Сохраняет статистику боя
+      operationId: endCombatSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - result
+              properties:
+                result:
+                  type: string
+                  enum: [victory, defeat, draw]
+                  description: Результат боя
+      responses:
+        '200':
+          description: Бой завершён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionEndResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  parameters:
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      description: Уникальный идентификатор боевой сессии
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    CombatSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID сессии
+        session_type:
+          type: string
+          enum: [pve, pvp, raid, arena]
+          description: Тип сессии
+        status:
+          type: string
+          enum: [created, active, paused, completed, cancelled]
+          description: |
+            Статус сессии:
+            - `created` - создана, ожидает участников
+            - `active` - идёт бой
+            - `paused` - бой на паузе
+            - `completed` - бой завершён
+            - `cancelled` - бой отменён
+        current_turn:
+          type: integer
+          description: Номер текущего хода
+        turn_order:
+          type: array
+          description: Порядок ходов участников (IDs)
+          items:
+            type: string
+            format: uuid
+        participants:
+          type: array
+          description: Список участников боя
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+        settings:
+          type: object
+          description: Настройки боя
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        started_at:
+          type: string
+          format: date-time
+          description: Время запуска
+        ended_at:
+          type: string
+          format: date-time
+          description: Время завершения
+
+    CombatParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID участника в бою
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        participant_type:
+          type: string
+          enum: [player, npc, enemy]
+          description: Тип участника
+        participant_id:
+          type: string
+          format: uuid
+          description: ID персонажа/NPC из соответствующей системы
+        team:
+          type: integer
+          description: Номер команды (1 или 2)
+          minimum: 1
+          maximum: 2
+        initiative:
+          type: integer
+          description: Инициатива для определения порядка ходов
+        health:
+          type: integer
+          description: Текущее здоровье
+        max_health:
+          type: integer
+          description: Максимальное здоровье
+        status:
+          type: string
+          enum: [alive, defeated, escaped]
+          description: |
+            Статус участника:
+            - `alive` - жив, участвует в бою
+            - `defeated` - повержен
+            - `escaped` - сбежал из боя
+        position:
+          type: object
+          description: Позиция на поле боя (для тактического боя)
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+        effects:
+          type: array
+          description: Активные эффекты на участнике
+          items:
+            type: string
+            format: uuid
+            description: ID эффектов (см. Combat Damage API)
+        created_at:
+          type: string
+          format: date-time
+
+    JoinCombatRequest:
+      type: object
+      required:
+        - participant_type
+        - participant_id
+        - team
+      properties:
+        participant_type:
+          type: string
+          enum: [player, npc, enemy]
+          description: Тип участника
+        participant_id:
+          type: string
+          format: uuid
+          description: ID персонажа/NPC
+        team:
+          type: integer
+          description: Номер команды (1 или 2)
+          minimum: 1
+          maximum: 2
+        position:
+          type: object
+          description: Начальная позиция на поле боя
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+
+    CombatSessionEndResult:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: ID завершённой сессии
+        result:
+          type: string
+          enum: [victory, defeat, draw]
+          description: Результат боя
+        rewards:
+          type: array
+          description: Награды за бой для каждого участника
+          items:
+            type: object
+            properties:
+              participant_id:
+                type: string
+                format: uuid
+                description: ID участника
+              reward_type:
+                type: string
+                enum: [experience, loot, currency, quest_progress]
+                description: Тип награды
+              reward_data:
+                type: object
+                description: Данные награды (зависит от типа)
+        completed_at:
+          type: string
+          format: date-time
+          description: Время завершения
+
+security:
+  - BearerAuth: []
+
