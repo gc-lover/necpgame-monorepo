@@ -217,15 +217,24 @@ func (s *LobbyServer) broadcastToRoom(roomName string, message []byte) {
 	}
 
 	room.mu.RLock()
+	clientsToRemove := make([]*Client, 0)
 	for client := range room.clients {
 		select {
 		case client.send <- message:
 		default:
 			close(client.send)
-			delete(room.clients, client)
+			clientsToRemove = append(clientsToRemove, client)
 		}
 	}
 	room.mu.RUnlock()
+
+	if len(clientsToRemove) > 0 {
+		room.mu.Lock()
+		for _, client := range clientsToRemove {
+			delete(room.clients, client)
+		}
+		room.mu.Unlock()
+	}
 }
 
 func (c *Client) readPump() {
