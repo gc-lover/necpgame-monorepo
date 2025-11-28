@@ -1,0 +1,347 @@
+openapi: 3.0.3
+info:
+  title: Blackwall Breach Layers Service API
+  description: |
+    API для работы со слоями защиты при взломе Blackwall.
+    
+    **Основные возможности:**
+    - Начало прохождения слоя
+    - Попытка прохождения (мини-игры)
+    - Успешное завершение слоя
+    - Обработка провала слоя
+    
+    **Слои защиты:**
+    1. Анализ сигнатур (DC 18-24)
+    2. Анализ поведения (DC 20-26)
+    3. Ловушки-приманки (DC 18-24)
+    4. Физический воздушный разрыв (DC 22-28)
+    5. Квантовое шифрование (DC 24-30)
+    
+    Каждый слой имеет уникальную механику мини-игры и проверки навыков.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Layers
+    description: Слои защиты Blackwall
+
+paths:
+  /api/v1/blackwall/breach/{breach_id}/layer/{layer_number}/start:
+    post:
+      tags:
+        - Layers
+      summary: Начало прохождения слоя
+      description: |
+        Начинает прохождение определённого слоя защиты.
+        
+        Возвращает конфигурацию мини-игры и временные ограничения.
+      operationId: startLayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: breach_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: layer_number
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+      responses:
+        "200":
+          description: Слой начат
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LayerSession"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/blackwall/breach/{breach_id}/layer/{layer_number}/attempt:
+    post:
+      tags:
+        - Layers
+      summary: Попытка прохождения слоя
+      description: |
+        Выполняет попытку прохождения слоя (мини-игра).
+        
+        Каждый слой имеет уникальную механику и проверки навыков.
+      operationId: attemptLayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: breach_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: layer_number
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LayerAttemptRequest"
+      responses:
+        "200":
+          description: Результат попытки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LayerAttemptResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/blackwall/breach/{breach_id}/layer/{layer_number}/complete:
+    post:
+      tags:
+        - Layers
+      summary: Успешное прохождение слоя
+      description: |
+        Завершает успешное прохождение слоя.
+        
+        Начисляет награды и открывает доступ к следующему слою.
+      operationId: completeLayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: breach_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: layer_number
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+      responses:
+        "200":
+          description: Слой пройден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LayerCompleteResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/blackwall/breach/{breach_id}/layer/{layer_number}/fail:
+    post:
+      tags:
+        - Layers
+      summary: Провал слоя
+      description: |
+        Обрабатывает провал прохождения слоя.
+        
+        Применяет последствия и определяет возможность повторной попытки.
+      operationId: failLayer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: breach_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: layer_number
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+      responses:
+        "200":
+          description: Провал обработан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LayerFailResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+  schemas:
+    LayerSession:
+      type: object
+      required:
+        - layer_info
+        - time_limit
+        - current_stress
+      properties:
+        layer_info:
+          $ref: "#/components/schemas/LayerInfo"
+        minigame_config:
+          type: object
+          description: Конфигурация мини-игры для слоя
+        time_limit:
+          type: integer
+          description: Временной лимит в секундах
+        current_stress:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    LayerInfo:
+      type: object
+      required:
+        - layer_number
+        - layer_name
+        - difficulty_dc
+      properties:
+        layer_number:
+          type: integer
+          minimum: 1
+          maximum: 5
+        layer_name:
+          type: string
+          example: "Анализ сигнатур"
+        difficulty_dc:
+          type: integer
+          description: Класс сложности
+          example: 18
+
+    LayerAttemptRequest:
+      type: object
+      required:
+        - action_data
+        - skill_check
+      properties:
+        action_data:
+          type: object
+          description: Данные действий для мини-игры (зависит от типа слоя)
+        skill_check:
+          $ref: "#/components/schemas/SkillCheck"
+
+    SkillCheck:
+      type: object
+      required:
+        - skill_name
+        - skill_value
+        - difficulty_class
+      properties:
+        skill_name:
+          type: string
+          example: "NETRUN"
+        skill_value:
+          type: integer
+        difficulty_class:
+          type: integer
+
+    LayerAttemptResult:
+      type: object
+      required:
+        - success
+        - progress
+        - stress_change
+      properties:
+        success:
+          type: boolean
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        stress_change:
+          type: integer
+          description: Изменение уровня стресса
+        consequences:
+          type: object
+          description: Последствия попытки (если есть)
+        next_layer_available:
+          type: boolean
+
+    LayerCompleteResult:
+      type: object
+      required:
+        - layer_reward
+        - accumulated_stress
+      properties:
+        layer_reward:
+          $ref: "#/components/schemas/LayerReward"
+        next_layer_info:
+          $ref: "#/components/schemas/LayerInfo"
+        accumulated_stress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        warnings:
+          type: array
+          items:
+            type: string
+
+    LayerReward:
+      type: object
+      properties:
+        experience:
+          type: integer
+        next_layer_bonus:
+          type: integer
+          description: Бонус к сложности следующего слоя (отрицательный = снижение сложности)
+
+    LayerFailResult:
+      type: object
+      required:
+        - consequences
+        - can_retry
+      properties:
+        consequences:
+          $ref: "#/components/schemas/BreachConsequences"
+        can_retry:
+          type: boolean
+        rollback_options:
+          type: object
+        mortality_risk:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    BreachConsequences:
+      type: object
+      properties:
+        detection_risk_increase:
+          type: integer
+        stress_increase:
+          type: integer
+        system_adaptation:
+          type: boolean
+          description: Адаптировалась ли система защиты
+        trap_activation:
+          type: boolean
+        cyberpsychosis_increase:
+          type: integer
+        data_loss:
+          type: integer
+          description: Процент потери данных (0-100)
+        deck_damage:
+          type: integer
+          description: Процент повреждения деки (0-100)
+

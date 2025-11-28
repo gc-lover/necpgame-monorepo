@@ -1,0 +1,343 @@
+openapi: 3.0.3
+info:
+  title: Blackwall Breach Core Service API
+  description: |
+    API для основных операций взлома Blackwall (создание сессии, статус, завершение).
+    
+    **Основные возможности:**
+    - Создание сессии взлома
+    - Получение статуса активного взлома
+    - Завершение успешного взлома
+    - Экстренное прерывание
+    
+    **Уровни риска:**
+    - Barrier interaction - смертность 10-25%
+    - Penetration - смертность 40-60%
+    - Deep expedition - смертность 70-90%
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Breach
+    description: Основные операции взлома Blackwall
+
+paths:
+  /api/v1/blackwall/breach/start:
+    post:
+      tags:
+        - Breach
+      summary: Начало взлома
+      description: |
+        Начинает попытку взлома Blackwall через многослойную защиту.
+        
+        **Требования:**
+        - Высокие навыки хакерства (NETRUN, HACKING, INT)
+        - Специальное оборудование (кибердека высокого уровня)
+        - Карта слабых зон (опционально, снижает риск)
+        
+        **Риски:**
+        - Обнаружение NetWatch (15-30%)
+        - Контакт с rogue AI (5-20%)
+        - Цифровое заражение (10-25%)
+        - Критический провал с возможной смертью (2-5%)
+      operationId: startBreach
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartBreachRequest"
+      responses:
+        "200":
+          description: Взлом начат
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BreachSession"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/blackwall/breach/{breach_id}/abort:
+    post:
+      tags:
+        - Breach
+      summary: Экстренное прерывание
+      description: |
+        Экстренное прерывание взлома (откат).
+        
+        Сохраняет жизнь, но приводит к потере прогресса и возможным повреждениям.
+      operationId: abortBreach
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: breach_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Взлом прерван
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbortBreachResult"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/blackwall/breach/{breach_id}/status:
+    get:
+      tags:
+        - Breach
+      summary: Статус взлома
+      description: |
+        Возвращает текущий статус активного взлома.
+        
+        Включает текущий слой, прогресс, уровень стресса и предупреждения.
+      operationId: getBreachStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: breach_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус взлома
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BreachStatus"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/blackwall/breach/{breach_id}/complete:
+    post:
+      tags:
+        - Breach
+      summary: Успешное завершение всех слоёв
+      description: |
+        Завершает успешный взлом всех 5 слоёв защиты.
+        
+        Создаёт временный проход за Blackwall и предоставляет доступ к уникальным локациям и наградам.
+      operationId: completeBreach
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: breach_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Взлом успешен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BreachCompleteResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+  schemas:
+    StartBreachRequest:
+      type: object
+      required:
+        - character_id
+        - location_id
+        - preparation_level
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        location_id:
+          type: string
+          format: uuid
+        map_id:
+          type: string
+          format: uuid
+          description: ID карты слабых зон (опционально)
+        equipment_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        preparation_level:
+          type: string
+          enum: [none, basic, good, excellent]
+
+    BreachSession:
+      type: object
+      required:
+        - breach_id
+        - risk_assessment
+        - estimated_mortality
+      properties:
+        breach_id:
+          type: string
+          format: uuid
+        risk_assessment:
+          $ref: "#/components/schemas/RiskAssessment"
+        estimated_mortality:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Оценка смертности в процентах
+        warnings:
+          type: array
+          items:
+            type: string
+        recommended_abort:
+          type: boolean
+
+    RiskAssessment:
+      type: object
+      properties:
+        detection_risk:
+          type: integer
+          minimum: 0
+          maximum: 100
+        ai_contact_risk:
+          type: integer
+          minimum: 0
+          maximum: 100
+        infection_risk:
+          type: integer
+          minimum: 0
+          maximum: 100
+        critical_failure_risk:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    AbortBreachResult:
+      type: object
+      properties:
+        rollback_layer:
+          type: integer
+        partial_rewards:
+          type: object
+        consequences:
+          $ref: "#/components/schemas/BreachConsequences"
+        experience_partial:
+          type: integer
+
+    BreachConsequences:
+      type: object
+      properties:
+        detection_risk_increase:
+          type: integer
+        stress_increase:
+          type: integer
+        system_adaptation:
+          type: boolean
+        trap_activation:
+          type: boolean
+        cyberpsychosis_increase:
+          type: integer
+        data_loss:
+          type: integer
+          minimum: 0
+          maximum: 100
+        deck_damage:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    BreachStatus:
+      type: object
+      required:
+        - current_layer
+        - progress
+        - stress_level
+      properties:
+        current_layer:
+          type: integer
+          minimum: 0
+          maximum: 5
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        stress_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+        time_remaining:
+          type: integer
+        warnings:
+          type: array
+          items:
+            type: string
+        consequences_risk:
+          $ref: "#/components/schemas/RiskAssessment"
+
+    BreachCompleteResult:
+      type: object
+      required:
+        - breach_reward
+        - temporary_passage
+      properties:
+        breach_reward:
+          $ref: "#/components/schemas/BreachReward"
+        temporary_passage:
+          $ref: "#/components/schemas/TemporaryPassage"
+        access_granted:
+          type: object
+        experience:
+          type: integer
+        reputation_changes:
+          type: object
+          additionalProperties:
+            type: integer
+
+    BreachReward:
+      type: object
+      properties:
+        rare_data:
+          type: array
+          items:
+            type: string
+        unique_items:
+          type: array
+          items:
+            type: object
+        soulkiller_protocols:
+          type: boolean
+
+    TemporaryPassage:
+      type: object
+      required:
+        - passage_id
+        - duration_minutes
+      properties:
+        passage_id:
+          type: string
+          format: uuid
+        duration_minutes:
+          type: integer
+          minimum: 15
+          maximum: 60
+        expires_at:
+          type: string
+          format: date-time
+
