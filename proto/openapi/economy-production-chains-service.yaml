@@ -1,15 +1,14 @@
 openapi: 3.0.3
 info:
-  title: Economy Production Service API
+  title: Economy Production Chains Service API
   description: |
-    API для управления производственными цепочками.
+    API для управления производственными цепочками и заказами.
     
     **Функциональность:**
     - Многоэтапное производство предметов
-    - Производственные станции и лицензии
+    - Создание и управление заказами
     - Массовое производство
     - Ускорители и rush-заказы
-    - Легендарный крафт
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -26,10 +25,6 @@ tags:
     description: Производственные цепочки
   - name: Production Orders
     description: Заказы на производство
-  - name: Stations
-    description: Производственные станции
-  - name: Licenses
-    description: Лицензии на производство
 
 paths:
   /production/chains:
@@ -246,130 +241,6 @@ paths:
       security:
         - BearerAuth: []
 
-  /production/stations:
-    get:
-      summary: Получить список станций
-      description: Возвращает производственные станции игрока
-      operationId: getStations
-      tags:
-        - Stations
-      parameters:
-        - name: player_id
-          in: query
-          required: true
-          description: ID игрока
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Список станций
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StationListResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /production/stations/{station_id}/upgrade:
-    post:
-      summary: Улучшить станцию
-      description: Улучшает производственную станцию на следующий уровень
-      operationId: upgradeStation
-      tags:
-        - Stations
-      parameters:
-        - name: station_id
-          in: path
-          required: true
-          description: ID станции
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Станция улучшена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Station"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /production/licenses:
-    get:
-      summary: Получить список лицензий
-      description: Возвращает лицензии на производство игрока
-      operationId: getLicenses
-      tags:
-        - Licenses
-      parameters:
-        - name: player_id
-          in: query
-          required: true
-          description: ID игрока
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Список лицензий
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LicenseListResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
-  /production/licenses/{license_id}/purchase:
-    post:
-      summary: Купить лицензию
-      description: Покупает лицензию на производство
-      operationId: purchaseLicense
-      tags:
-        - Licenses
-      parameters:
-        - name: license_id
-          in: path
-          required: true
-          description: ID лицензии
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Лицензия куплена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/License"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-      security:
-        - BearerAuth: []
-
 components:
   schemas:
     ProductionStatus:
@@ -495,58 +366,6 @@ components:
           type: string
           format: date-time
 
-    Station:
-      type: object
-      required:
-        - station_id
-        - player_id
-        - type
-        - level
-      properties:
-        station_id:
-          type: string
-          format: uuid
-        player_id:
-          type: string
-          format: uuid
-        type:
-          type: string
-        level:
-          type: integer
-          minimum: 1
-          maximum: 10
-        efficiency_bonus:
-          type: number
-        quality_bonus:
-          type: number
-
-    License:
-      type: object
-      required:
-        - license_id
-        - name
-        - price
-      properties:
-        license_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        price:
-          type: number
-          format: double
-        unlocks_chains:
-          type: array
-          description: ID цепочек, которые открывает лицензия
-          items:
-            type: string
-            format: uuid
-        owned:
-          type: boolean
-          description: Владеет ли игрок этой лицензией
-
     ProductionChainListResponse:
       type: object
       required:
@@ -572,26 +391,6 @@ components:
             $ref: "#/components/schemas/ProductionOrder"
         pagination:
           $ref: "common.yaml#/components/schemas/PaginationResponse"
-
-    StationListResponse:
-      type: object
-      required:
-        - stations
-      properties:
-        stations:
-          type: array
-          items:
-            $ref: "#/components/schemas/Station"
-
-    LicenseListResponse:
-      type: object
-      required:
-        - licenses
-      properties:
-        licenses:
-          type: array
-          items:
-            $ref: "#/components/schemas/License"
 
   securitySchemes:
     BearerAuth:
