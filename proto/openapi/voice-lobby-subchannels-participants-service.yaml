@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: Voice Lobby Subchannels Participants Service API
+  description: |
+    API для управления участниками подканалов в голосовых лобби.
+    
+    **Функциональность:**
+    - Перемещение участников между подканалами
+    - Получение списка участников подканала
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8096/v1
+    description: Development server
+
+tags:
+  - name: Voice Lobby Subchannels Participants
+    description: Управление участниками подканалов в голосовых лобби
+
+paths:
+  /voice-lobbies/{lobby_id}/subchannels/{subchannel_id}/move:
+    post:
+      summary: Переместить участника в подканал
+      description: Перемещает участника в указанный подканал
+      operationId: moveToSubchannel
+      tags:
+        - Voice Lobby Subchannels Participants
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          description: ID подканала
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveToSubchannelRequest"
+      responses:
+        "200":
+          description: Участник успешно перемещен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MoveToSubchannelResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "409":
+          description: Конфликт (подканал заполнен или нет прав)
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+  /voice-lobbies/{lobby_id}/subchannels/{subchannel_id}/participants:
+    get:
+      summary: Получить участников подканала
+      description: Возвращает список участников в подканале
+      operationId: getSubchannelParticipants
+      tags:
+        - Voice Lobby Subchannels Participants
+      parameters:
+        - name: lobby_id
+          in: path
+          required: true
+          description: ID голосового лобби
+          schema:
+            type: string
+            format: uuid
+        - name: subchannel_id
+          in: path
+          required: true
+          description: ID подканала
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список участников успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubchannelParticipantsResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    MoveToSubchannelRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID перемещаемого персонажа
+        force:
+          type: boolean
+          description: Принудительное перемещение (игнорирует role check)
+          default: false
+
+    MoveToSubchannelResponse:
+      type: object
+      required:
+        - subchannel_id
+        - character_id
+        - moved_at
+      properties:
+        subchannel_id:
+          type: string
+          format: uuid
+          description: ID подканала
+        character_id:
+          type: string
+          format: uuid
+          description: ID перемещенного персонажа
+        moved_at:
+          type: string
+          format: date-time
+          description: Время перемещения
+
+    SubchannelParticipant:
+      type: object
+      required:
+        - character_id
+        - character_name
+        - joined_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        character_name:
+          type: string
+          description: Имя персонажа
+        role:
+          type: string
+          enum: [leader, commander, party_leader, officer, member]
+          description: Роль в лобби
+        joined_at:
+          type: string
+          format: date-time
+          description: Время присоединения к подканалу
+
+    SubchannelParticipantsResponse:
+      type: object
+      required:
+        - subchannel_id
+        - participants
+        - total_count
+      properties:
+        subchannel_id:
+          type: string
+          format: uuid
+          description: ID подканала
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubchannelParticipant"
+        total_count:
+          type: integer
+          description: Общее количество участников
+
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
