@@ -1,0 +1,188 @@
+metadata:
+  id: adaptive-ai-system-architecture
+  title: Архитектура системы адаптивного AI
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - ai
+    - adaptive-ai
+    - machine-learning
+    - difficulty
+    - hardcore
+  related_systems:
+    - gameplay-service
+    - analytics-service
+    - ai-service
+  related_documents:
+    - id: adaptive-ai-idea
+      relation: implements
+    - id: combat-ai-enemies-architecture
+      relation: extends
+  github_issue: 1501
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - ai
+    - api-designer
+
+summary:
+  problem: |
+    Текущий AI использует фиксированные паттерны поведения, что делает бои предсказуемыми.
+    Не хватает адаптивности AI, которая бы подстраивалась под тактики игроков.
+  goal: |
+    Создать архитектуру адаптивного AI, которая:
+    - Анализирует тактики игроков в реальном времени
+    - Адаптирует паттерны атак и защиту
+    - Использует контр-стратегии против игроков
+    - Усиливает слабые места команды
+  essence: |
+    Система адаптивного AI анализирует действия игроков и адаптирует поведение врагов
+    в реальном времени. AI изучает тактики команды и применяет контр-стратегии.
+
+architecture:
+  overview: |
+    Система адаптивного AI состоит из следующих компонентов:
+    1. Tactics Analyzer - анализ тактик игроков
+    2. Adaptation Engine - адаптация поведения AI
+    3. Counter-Strategy Controller - применение контр-стратегий
+    4. ML Training Pipeline - обучение моделей
+    5. Adaptation Telemetry Collector - сбор телеметрии адаптаций
+
+  microservices:
+    - name: ai-service
+      port: 8090
+      responsibility: |
+        Обработка адаптивного AI:
+        - Анализ тактик игроков
+        - Адаптация поведения AI
+        - Обучение моделей
+      components:
+        - tactics-analyzer: анализ тактик
+        - adaptation-engine: адаптация поведения
+        - counter-strategy-controller: контр-стратегии
+        - ml-training-pipeline: обучение моделей
+        - adaptation-telemetry-collector: сбор телеметрии
+      endpoints:
+        - POST /api/v1/ai/analyze/tactics - анализ тактик команды
+        - GET /api/v1/ai/adaptations/{encounterId} - текущие адаптации
+        - POST /api/v1/ai/training/data - отправка данных для обучения
+        - GET /api/v1/ai/models/status - статус моделей
+      websocket_channels:
+        - wss://api.necp.game/v1/ai/adaptations/{encounterId} - события адаптаций
+      events_published:
+        - ai.adaptation.applied: применение адаптации
+        - ai.strategy.changed: изменение стратегии
+        - ai.training.completed: завершение обучения
+
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Сбор данных о действиях игроков:
+        - Отслеживание позиций и способностей
+        - Сбор данных для анализа
+        - Применение адаптаций AI
+      components:
+        - player-action-tracker: отслеживание действий
+        - adaptation-applicator: применение адаптаций
+
+  data_flows:
+    tactics_analysis_flow: |
+      1. Player Action Tracker собирает данные о действиях игроков
+      2. Tactics Analyzer анализирует позиции, способности и паттерны
+      3. Tactics Analyzer определяет слабые места команды
+      4. Tactics Analyzer передает данные в Adaptation Engine
+      5. AI Service публикует событие ai.tactics.analyzed
+
+    adaptation_flow: |
+      1. Adaptation Engine получает результаты анализа тактик
+      2. Adaptation Engine определяет необходимые адаптации
+      3. Counter-Strategy Controller выбирает контр-стратегии
+      4. Adaptation Engine применяет адаптации к AI врагам
+      5. AI Service публикует событие ai.adaptation.applied
+      6. Gameplay Service применяет адаптации в бою
+
+    training_flow: |
+      1. Adaptation Telemetry Collector собирает данные за период
+      2. ML Training Pipeline анализирует эффективность адаптаций
+      3. ML Training Pipeline обучает модели на исторических данных
+      4. ML Training Pipeline обновляет модели AI
+      5. AI Service публикует событие ai.training.completed
+
+  database_structure:
+    tables:
+      - name: player_tactics_data
+        description: Данные о тактиках игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - encounter_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - position_data: JSONB
+          - ability_usage: JSONB
+          - pattern_data: JSONB
+          - timestamp: TIMESTAMP
+
+      - name: ai_adaptations
+        description: Адаптации AI
+        columns:
+          - id: UUID PRIMARY KEY
+          - encounter_id: UUID FOREIGN KEY
+          - enemy_id: UUID FOREIGN KEY
+          - adaptation_type: VARCHAR(100)
+          - adaptation_data: JSONB
+          - applied_at: TIMESTAMP
+
+      - name: ai_training_data
+        description: Данные для обучения AI
+        columns:
+          - id: UUID PRIMARY KEY
+          - encounter_id: UUID FOREIGN KEY
+          - tactics_data: JSONB
+          - adaptation_data: JSONB
+          - effectiveness: DECIMAL(5,2)
+          - timestamp: TIMESTAMP
+
+  integrations:
+    analytics_service: |
+      - Анализ данных о тактиках
+      - Обучение моделей
+      - Оптимизация AI
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Tactics Analyzer и Player Action Tracker
+        tasks:
+          - Реализация Tactics Analyzer
+          - Реализация Player Action Tracker
+          - Анализ тактик игроков
+          - Определение слабых мест
+          - Интеграция с Gameplay Service
+        estimated_effort: 5 days
+
+      phase_2:
+        name: Adaptation Engine и Counter-Strategy Controller
+        tasks:
+          - Реализация Adaptation Engine
+          - Реализация Counter-Strategy Controller
+          - Адаптация поведения AI
+          - Применение контр-стратегий
+          - Интеграция с AI Service
+        estimated_effort: 6 days
+
+      phase_3:
+        name: ML Training Pipeline
+        tasks:
+          - Реализация ML Training Pipeline
+          - Обучение моделей
+          - Оптимизация AI
+          - Интеграция с Analytics Service
+        estimated_effort: 5 days
+

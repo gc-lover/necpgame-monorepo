@@ -1,0 +1,164 @@
+metadata:
+  id: restricted-modes-system-architecture
+  title: Архитектура системы режимов с ограничениями
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - gameplay
+    - restricted-modes
+    - hardcore
+    - permadeath
+    - challenge
+  related_systems:
+    - gameplay-service
+    - character-service
+    - achievement-service
+  related_documents:
+    - id: restricted-modes-idea
+      relation: implements
+  github_issue: 1502
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Не хватает экстремальных режимов сложности для игроков, ищущих максимальный вызов.
+    Режимы с ограничениями могут предоставить уникальный опыт для хардкорных игроков.
+  goal: |
+    Создать архитектуру режимов с ограничениями, которая:
+    - Предоставляет экстремальные вызовы для игроков
+    - Добавляет уникальные ограничения и механики
+    - Награждает игроков за успешное прохождение
+    - Интегрируется с системой достижений
+  essence: |
+    Система режимов с ограничениями предоставляет экстремальные вызовы через различные
+    типы ограничений: перманентная смерть, ограниченные ресурсы, одиночное прохождение
+    и прохождение без смертей.
+
+architecture:
+  overview: |
+    Система режимов с ограничениями состоит из следующих компонентов:
+    1. Restricted Mode Manager - управление режимами с ограничениями
+    2. Permadeath Handler - обработка перманентной смерти
+    3. Resource Limiter - ограничение ресурсов
+    4. Solo Challenge Controller - управление одиночными испытаниями
+    5. No-Death Tracker - отслеживание прохождения без смертей
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка режимов с ограничениями:
+        - Управление режимами
+        - Отслеживание ограничений
+        - Применение механик режимов
+      components:
+        - restricted-mode-manager: управление режимами
+        - permadeath-handler: обработка перманентной смерти
+        - resource-limiter: ограничение ресурсов
+        - solo-challenge-controller: управление одиночными испытаниями
+        - no-death-tracker: отслеживание без смертей
+      endpoints:
+        - POST /api/v1/gameplay/restricted-modes/select - выбор режима
+        - GET /api/v1/gameplay/restricted-modes/available - доступные режимы
+        - GET /api/v1/gameplay/restricted-modes/status - статус режима
+        - POST /api/v1/gameplay/restricted-modes/ironman/create - создание Ironman персонажа
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/restricted-modes/{modeId} - события режима
+      events_published:
+        - gameplay.restricted-mode.activated: активация режима
+        - gameplay.restricted-mode.failed: провал режима
+        - gameplay.restricted-mode.completed: завершение режима
+        - gameplay.restricted-mode.permadeath: перманентная смерть
+
+  data_flows:
+    restricted_mode_activation_flow: |
+      1. Игрок выбирает режим с ограничениями
+      2. Restricted Mode Manager проверяет требования
+      3. Restricted Mode Manager активирует режим
+      4. В зависимости от режима активируются соответствующие контроллеры
+      5. Gameplay Service публикует событие gameplay.restricted-mode.activated
+      6. Realtime Gateway отправляет информацию о режиме клиентам
+
+    permadeath_flow: |
+      1. Игрок умирает в Ironman Mode
+      2. Permadeath Handler обрабатывает смерть
+      3. Permadeath Handler удаляет персонажа
+      4. Permadeath Handler сохраняет достижения Ironman
+      5. Character Service удаляет персонажа
+      6. Gameplay Service публикует событие gameplay.restricted-mode.permadeath
+
+  database_structure:
+    tables:
+      - name: restricted_mode_sessions
+        description: Сессии режимов с ограничениями
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - mode_type: ENUM (ironman, hardcore, solo, nodeath)
+          - status: ENUM (active, completed, failed)
+          - restrictions: JSONB
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP (nullable)
+
+      - name: ironman_characters
+        description: Ironman персонажи
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - created_at: TIMESTAMP
+          - died_at: TIMESTAMP (nullable)
+          - achievements: JSONB
+
+  integrations:
+    character_service: |
+      - Хранение статуса режимов
+      - Обработка смертей
+      - Удаление персонажей (Ironman)
+
+    achievement_service: |
+      - Отслеживание достижений
+      - Выдача титулов
+      - Уведомления о достижениях
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Restricted Mode Manager и Permadeath Handler
+        tasks:
+          - Реализация Restricted Mode Manager
+          - Реализация Permadeath Handler
+          - Управление режимами
+          - Обработка перманентной смерти
+          - Интеграция с Character Service
+        estimated_effort: 4 days
+
+      phase_2:
+        name: Resource Limiter и Solo Challenge Controller
+        tasks:
+          - Реализация Resource Limiter
+          - Реализация Solo Challenge Controller
+          - Ограничение ресурсов
+          - Управление одиночными испытаниями
+          - Интеграция с Gameplay Service
+        estimated_effort: 3 days
+
+      phase_3:
+        name: No-Death Tracker
+        tasks:
+          - Реализация No-Death Tracker
+          - Отслеживание прохождения без смертей
+          - Интеграция с Achievement Service
+        estimated_effort: 2 days
+

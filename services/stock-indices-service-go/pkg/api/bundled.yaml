@@ -1,0 +1,790 @@
+openapi: 3.0.3
+info:
+  title: Stock Indices Service API
+  description: |
+    API для управления фондовыми индексами.
+
+    Функционал:
+    - Список индексов (CORP100, NC50, региональные, секторные)
+    - История значений индексов
+    - Состав индексов (constituents)
+    - Ребаланс индексов (admin)
+    - Интеграция с analytics, index funds
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+tags:
+  - name: indices
+    description: Операции с фондовыми индексами
+  - name: constituents
+    description: Состав индексов
+  - name: admin
+    description: Административные операции
+paths:
+  /stocks/indices:
+    get:
+      tags:
+        - indices
+      summary: Получить список всех индексов
+      description: |
+        Возвращает все фондовые индексы с текущими значениями.
+        Включает глобальные, региональные и секторные индексы.
+      operationId: getAllIndices
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Фильтр по типу индекса
+          schema:
+            type: string
+            enum:
+              - global
+              - regional
+              - sector
+      responses:
+        '200':
+          description: Список индексов успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StockIndex'
+              example:
+                data:
+                  - code: CORP100
+                    name: Corporate 100 Index
+                    type: global
+                    description: 100 крупнейших корпораций
+                    current_value: 15234.56
+                    change_24h: 234.12
+                    change_24h_percent: 1.56
+                    constituents_count: 100
+                    market_cap_total: 125000000000
+                    last_rebalance: '2025-11-01T00:00:00Z'
+                    updated_at: '2025-11-26T19:00:00Z'
+                  - code: NC50
+                    name: Night City 50
+                    type: regional
+                    description: 50 лучших корпораций Night City
+                    current_value: 8456.23
+                    change_24h: -45.67
+                    change_24h_percent: -0.54
+                    constituents_count: 50
+                    market_cap_total: 45000000000
+                    last_rebalance: '2025-11-01T00:00:00Z'
+                    updated_at: '2025-11-26T19:00:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /stocks/indices/{code}:
+    get:
+      tags:
+        - indices
+      summary: Получить данные индекса
+      description: |
+        Возвращает детальную информацию о конкретном индексе.
+      operationId: getIndex
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса (CORP100, NC50, TECH, etc.)
+          schema:
+            type: string
+            pattern: ^[A-Z0-9]+$
+          example: CORP100
+      responses:
+        '200':
+          description: Данные индекса успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockIndexDetailed'
+              example:
+                code: CORP100
+                name: Corporate 100 Index
+                type: global
+                description: 100 крупнейших корпораций по капитализации
+                calculation_method: market_cap_weighted
+                base_value: 1000
+                base_date: '2020-01-01T00:00:00Z'
+                current_value: 15234.56
+                change_24h: 234.12
+                change_24h_percent: 1.56
+                change_7d_percent: 3.45
+                change_30d_percent: 8.23
+                all_time_high: 16234.89
+                all_time_low: 945.23
+                constituents_count: 100
+                market_cap_total: 125000000000
+                last_rebalance: '2025-11-01T00:00:00Z'
+                next_rebalance: '2026-02-01T00:00:00Z'
+                rebalance_frequency: quarterly
+                created_at: '2020-01-01T00:00:00Z'
+                updated_at: '2025-11-26T19:00:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /stocks/indices/{code}/history:
+    get:
+      tags:
+        - indices
+      summary: Получить историю значений индекса
+      description: |
+        Возвращает исторические значения индекса за указанный период.
+      operationId: getIndexHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса
+          schema:
+            type: string
+            pattern: ^[A-Z0-9]+$
+        - name: from_date
+          in: query
+          required: false
+          description: Начало периода (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          description: Конец периода (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: interval
+          in: query
+          required: false
+          description: Интервал агрегации
+          schema:
+            type: string
+            enum:
+              - 1m
+              - 5m
+              - 15m
+              - 1h
+              - 4h
+              - 1d
+              - 1w
+            default: 1h
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История индекса успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IndexHistoryEntry'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+              example:
+                data:
+                  - timestamp: '2025-11-26T19:00:00Z'
+                    value: 15234.56
+                    change: 234.12
+                    change_percent: 1.56
+                    volume: 125000000000
+                  - timestamp: '2025-11-26T18:00:00Z'
+                    value: 15000.44
+                    change: -100.23
+                    change_percent: -0.66
+                    volume: 118000000000
+                pagination:
+                  total: 168
+                  limit: 10
+                  offset: 0
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /stocks/indices/{code}/constituents:
+    get:
+      tags:
+        - constituents
+      summary: Получить состав индекса
+      description: |
+        Возвращает список акций входящих в индекс с весами.
+      operationId: getIndexConstituents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса
+          schema:
+            type: string
+            pattern: ^[A-Z0-9]+$
+        - name: sort_by
+          in: query
+          required: false
+          description: Поле для сортировки
+          schema:
+            type: string
+            enum:
+              - weight
+              - market_cap
+              - price_change
+            default: weight
+        - name: order
+          in: query
+          required: false
+          description: Порядок сортировки
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Состав индекса успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IndexConstituent'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+              example:
+                data:
+                  - stock_id: 550e8400-e29b-41d4-a716-446655440000
+                    stock_symbol: ARASAKA
+                    stock_name: Arasaka Corporation
+                    weight: 12.5
+                    market_cap: 15625000000
+                    price: 1250.5
+                    price_change_24h: 23.45
+                    price_change_24h_percent: 1.91
+                    shares_in_index: 12500000
+                  - stock_id: 660e8400-e29b-41d4-a716-446655440001
+                    stock_symbol: MILITECH
+                    stock_name: Militech Industries
+                    weight: 10.8
+                    market_cap: 13500000000
+                    price: 890.75
+                    price_change_24h: -12.3
+                    price_change_24h_percent: -1.36
+                    shares_in_index: 15200000
+                pagination:
+                  total: 100
+                  limit: 10
+                  offset: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/indices/{code}/rebalance:
+    post:
+      tags:
+        - admin
+      summary: Выполнить ребаланс индекса
+      description: |
+        Админ endpoint для ребаланса индекса.
+        Пересчитывает состав и веса на основе текущей капитализации.
+        Требуется роль admin.
+      operationId: rebalanceIndex
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса для ребаланса
+          schema:
+            type: string
+            pattern: ^[A-Z0-9]+$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                effective_date:
+                  type: string
+                  format: date-time
+                  description: Дата вступления в силу (опционально, default = now)
+                max_weight:
+                  type: number
+                  format: double
+                  description: Максимальный вес акции (%)
+                  minimum: 0
+                  maximum: 100
+                  default: 15
+                reason:
+                  type: string
+                  description: Причина ребаланса
+              example:
+                effective_date: '2025-12-01T00:00:00Z'
+                max_weight: 15
+                reason: Quarterly rebalance Q4 2025
+      responses:
+        '200':
+          description: Ребаланс выполнен успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RebalanceResult'
+              example:
+                index_code: CORP100
+                effective_date: '2025-12-01T00:00:00Z'
+                previous_value: 15234.56
+                new_value: 15289.34
+                divisor_adjustment: 1.0036
+                added_stocks:
+                  - stock_symbol: NEWCORP
+                    weight: 0.8
+                removed_stocks:
+                  - stock_symbol: OLDCORP
+                    weight: 0.5
+                weight_changes:
+                  - stock_symbol: ARASAKA
+                    old_weight: 12.5
+                    new_weight: 11.8
+                    change: -0.7
+                total_changes: 15
+                executed_at: '2025-11-26T20:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    StockIndex:
+      type: object
+      description: Фондовый индекс (краткая информация)
+      required:
+        - code
+        - name
+        - type
+        - current_value
+        - change_24h
+        - change_24h_percent
+        - constituents_count
+        - updated_at
+      properties:
+        code:
+          type: string
+          description: Код индекса (CORP100, NC50, TECH, etc.)
+          pattern: ^[A-Z0-9]+$
+        name:
+          type: string
+          description: Название индекса
+        type:
+          type: string
+          enum:
+            - global
+            - regional
+            - sector
+          description: |
+            Тип индекса:
+            - global: Глобальный (CORP100)
+            - regional: Региональный (NC50, ASIA25, EURO30)
+            - sector: Секторный (TECH, DEFENSE, ENERGY, MEDICAL, CYBER)
+        description:
+          type: string
+          description: Описание индекса
+        current_value:
+          type: number
+          format: double
+          description: Текущее значение индекса
+        change_24h:
+          type: number
+          format: double
+          description: Изменение за 24 часа (абсолютное)
+        change_24h_percent:
+          type: number
+          format: double
+          description: Изменение за 24 часа (%)
+        constituents_count:
+          type: integer
+          description: Количество акций в индексе
+        market_cap_total:
+          type: number
+          format: double
+          description: Общая капитализация акций в индексе
+        last_rebalance:
+          type: string
+          format: date-time
+          description: Дата последнего ребаланса
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+    StockIndexDetailed:
+      allOf:
+        - $ref: '#/components/schemas/StockIndex'
+        - type: object
+          required:
+            - calculation_method
+            - base_value
+            - base_date
+            - rebalance_frequency
+          properties:
+            calculation_method:
+              type: string
+              enum:
+                - market_cap_weighted
+                - price_weighted
+                - equal_weighted
+              description: |
+                Метод расчета:
+                - market_cap_weighted: По капитализации
+                - price_weighted: По цене (deprecated)
+                - equal_weighted: Равновзвешенный
+            base_value:
+              type: number
+              format: double
+              description: Базовое значение индекса
+            base_date:
+              type: string
+              format: date-time
+              description: Базовая дата индекса
+            change_7d_percent:
+              type: number
+              format: double
+              description: Изменение за 7 дней (%)
+            change_30d_percent:
+              type: number
+              format: double
+              description: Изменение за 30 дней (%)
+            all_time_high:
+              type: number
+              format: double
+              description: Максимальное значение за все время
+            all_time_low:
+              type: number
+              format: double
+              description: Минимальное значение за все время
+            next_rebalance:
+              type: string
+              format: date-time
+              description: Дата следующего ребаланса
+            rebalance_frequency:
+              type: string
+              enum:
+                - monthly
+                - quarterly
+                - semi_annual
+                - annual
+                - event_based
+              description: Частота ребаланса
+            created_at:
+              type: string
+              format: date-time
+    IndexHistoryEntry:
+      type: object
+      description: Запись истории индекса
+      required:
+        - timestamp
+        - value
+        - change
+        - change_percent
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Время записи
+        value:
+          type: number
+          format: double
+          description: Значение индекса
+        change:
+          type: number
+          format: double
+          description: Изменение с предыдущего периода (абсолютное)
+        change_percent:
+          type: number
+          format: double
+          description: Изменение с предыдущего периода (%)
+        volume:
+          type: number
+          format: double
+          description: Объем торгов акций в индексе
+    IndexConstituent:
+      type: object
+      description: Акция в составе индекса
+      required:
+        - stock_id
+        - stock_symbol
+        - stock_name
+        - weight
+        - market_cap
+        - price
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+        stock_name:
+          type: string
+          description: Название корпорации
+        weight:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Вес в индексе (%)
+        market_cap:
+          type: number
+          format: double
+          description: Рыночная капитализация
+        price:
+          type: number
+          format: double
+          description: Текущая цена акции
+        price_change_24h:
+          type: number
+          format: double
+          description: Изменение цены за 24ч (абсолютное)
+        price_change_24h_percent:
+          type: number
+          format: double
+          description: Изменение цены за 24ч (%)
+        shares_in_index:
+          type: integer
+          description: Количество акций в индексе
+    RebalanceResult:
+      type: object
+      description: Результат ребаланса индекса
+      properties:
+        index_code:
+          type: string
+          description: Код индекса
+        effective_date:
+          type: string
+          format: date-time
+          description: Дата вступления в силу
+        previous_value:
+          type: number
+          format: double
+          description: Значение до ребаланса
+        new_value:
+          type: number
+          format: double
+          description: Значение после ребаланса
+        divisor_adjustment:
+          type: number
+          format: double
+          description: Корректировка divisor для непрерывности
+        added_stocks:
+          type: array
+          description: Добавленные акции
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              weight:
+                type: number
+                format: double
+        removed_stocks:
+          type: array
+          description: Удаленные акции
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              weight:
+                type: number
+                format: double
+        weight_changes:
+          type: array
+          description: Изменения весов существующих акций
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              old_weight:
+                type: number
+                format: double
+              new_weight:
+                type: number
+                format: double
+              change:
+                type: number
+                format: double
+        total_changes:
+          type: integer
+          description: Общее количество изменений
+        executed_at:
+          type: string
+          format: date-time
+          description: Время выполнения
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    PaginationResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          description: Список элементов
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество элементов
+        limit:
+          type: integer
+          minimum: 1
+          description: Количество элементов на странице
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение для пагинации
+        has_more:
+          type: boolean
+          description: Есть ли еще элементы
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden
+            message: Доступ запрещен
+            code: ACCESS_DENIED
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации

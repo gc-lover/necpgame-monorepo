@@ -1,0 +1,328 @@
+openapi: 3.0.3
+info:
+  title: Progression Mastery Service API
+  description: |
+    API для системы Mastery: специализация по типам контента (Raid, Dungeon, World Boss, PvP, Exploration),
+    уровни мастерства 1-100, награды за прогресс.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1/progression
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/progression
+    description: Продакшен сервер
+
+tags:
+  - name: Mastery
+    description: Mastery System - специализация по контенту
+
+paths:
+  /mastery/levels:
+    get:
+      tags:
+        - Mastery
+      summary: Получить уровни мастерства
+      description: |
+        Возвращает информацию о всех типах мастерства персонажа: текущие уровни,
+        прогресс до следующего уровня и разблокированные награды.
+      operationId: getMasteryLevels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+      responses:
+        '200':
+          description: Уровни мастерства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryLevels'
+              example:
+                character_id: '110e8400-e29b-41d4-a716-446655440000'
+                masteries:
+                  - mastery_type: raid
+                    mastery_level: 45
+                    experience_current: 125000
+                    experience_required: 150000
+                    rewards_unlocked:
+                      - level: 25
+                        reward_type: title
+                        reward_id: 'raid_master_25'
+                      - level: 50
+                        reward_type: cosmetic
+                        reward_id: 'raid_master_cosmetic_50'
+                  - mastery_type: dungeon
+                    mastery_level: 32
+                    experience_current: 85000
+                    experience_required: 100000
+                    rewards_unlocked: []
+                  - mastery_type: world_boss
+                    mastery_level: 28
+                    experience_current: 60000
+                    experience_required: 75000
+                    rewards_unlocked: []
+                  - mastery_type: pvp
+                    mastery_level: 15
+                    experience_current: 20000
+                    experience_required: 30000
+                    rewards_unlocked: []
+                  - mastery_type: exploration
+                    mastery_level: 20
+                    experience_current: 40000
+                    experience_required: 50000
+                    rewards_unlocked: []
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /mastery/{type}/progress:
+    get:
+      tags:
+        - Mastery
+      summary: Получить прогресс мастерства по типу
+      description: |
+        Возвращает детальный прогресс мастерства для конкретного типа контента:
+        текущий уровень, опыт, история прогресса и награды.
+      operationId: getMasteryProgress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [raid, dungeon, world_boss, pvp, exploration]
+          description: Тип мастерства
+      responses:
+        '200':
+          description: Прогресс мастерства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryProgress'
+              example:
+                character_id: '110e8400-e29b-41d4-a716-446655440000'
+                mastery_type: raid
+                mastery_level: 45
+                experience_current: 125000
+                experience_required: 150000
+                progress_percent: 83.33
+                total_experience_earned: 2250000
+                completions_count: 125
+                rewards_unlocked:
+                  - level: 25
+                    reward_type: title
+                    reward_id: 'raid_master_25'
+                    unlocked_at: '2025-10-15T00:00:00Z'
+                  - level: 50
+                    reward_type: cosmetic
+                    reward_id: 'raid_master_cosmetic_50'
+                    unlocked_at: '2025-11-20T00:00:00Z'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /mastery/rewards:
+    get:
+      tags:
+        - Mastery
+      summary: Получить награды мастерства
+      description: |
+        Возвращает список всех доступных наград мастерства и статус их разблокировки.
+      operationId: getMasteryRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор персонажа
+        - name: mastery_type
+          in: query
+          schema:
+            type: string
+            enum: [raid, dungeon, world_boss, pvp, exploration]
+          description: Фильтр по типу мастерства (опционально)
+      responses:
+        '200':
+          description: Награды мастерства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryRewards'
+              example:
+                character_id: '110e8400-e29b-41d4-a716-446655440000'
+                rewards:
+                  - mastery_type: raid
+                    level: 25
+                    reward_type: title
+                    reward_id: 'raid_master_25'
+                    reward_name: 'Raid Master'
+                    unlocked: true
+                    unlocked_at: '2025-10-15T00:00:00Z'
+                  - mastery_type: raid
+                    level: 50
+                    reward_type: cosmetic
+                    reward_id: 'raid_master_cosmetic_50'
+                    reward_name: 'Elite Raider Armor'
+                    unlocked: true
+                    unlocked_at: '2025-11-20T00:00:00Z'
+                  - mastery_type: raid
+                    level: 100
+                    reward_type: cosmetic
+                    reward_id: 'raid_master_cosmetic_100'
+                    reward_name: 'Legendary Raider Armor'
+                    unlocked: false
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    Mastery:
+      type: object
+      properties:
+        mastery_type:
+          type: string
+          enum: [raid, dungeon, world_boss, pvp, exploration]
+        mastery_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+        experience_current:
+          type: integer
+          minimum: 0
+        experience_required:
+          type: integer
+          minimum: 1
+        rewards_unlocked:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: integer
+              reward_type:
+                type: string
+              reward_id:
+                type: string
+
+    MasteryLevels:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        masteries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mastery'
+          maxItems: 5
+
+    MasteryProgress:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        mastery_type:
+          type: string
+          enum: [raid, dungeon, world_boss, pvp, exploration]
+        mastery_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+        experience_current:
+          type: integer
+          minimum: 0
+        experience_required:
+          type: integer
+          minimum: 1
+        progress_percent:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+        total_experience_earned:
+          type: integer
+          minimum: 0
+        completions_count:
+          type: integer
+          minimum: 0
+        rewards_unlocked:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: integer
+              reward_type:
+                type: string
+              reward_id:
+                type: string
+              unlocked_at:
+                type: string
+                format: date-time
+
+    MasteryRewards:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            type: object
+            properties:
+              mastery_type:
+                type: string
+                enum: [raid, dungeon, world_boss, pvp, exploration]
+              level:
+                type: integer
+              reward_type:
+                type: string
+              reward_id:
+                type: string
+              reward_name:
+                type: string
+              unlocked:
+                type: boolean
+              unlocked_at:
+                type: string
+                format: date-time
+                nullable: true
+

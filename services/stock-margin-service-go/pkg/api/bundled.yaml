@@ -1,0 +1,561 @@
+openapi: 3.0.3
+info:
+  title: Stock Margin Service API
+  description: |
+    API для маржинальной торговли и коротких продаж NECPGAME.
+
+    **Основные возможности:**
+    - Маржинальная торговля (плечо 2x-10x)
+    - Короткие продажи (short selling)
+    - Управление займами
+    - Маржин-коллы и ликвидация
+    - Контроль рисков
+
+    **Требования к доступу:**
+    - Margin trading: уровень 40+, положительная кредитная история, min баланс 10K
+    - Short selling: уровень 45+, объём 500K+/мес, коллатерал 150%
+
+    **Риски:**
+    - Маржин-коллы при падении equity <30%
+    - Автоматическая ликвидация позиций
+    - Потенциально неограниченные убытки (short)
+    - Margin health пересчитывается каждые 5 секунд
+
+    **Ограничения:**
+    - Short interest limit: 30% float
+    - Высокая волатильность временно отключает новые шорты и высокое плечо
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8080
+    description: Margin Service (локальная разработка)
+  - url: https://trading.necpgame.com
+    description: Margin Service (продакшн)
+tags:
+  - name: Margin Accounts
+    description: Маржинальные счета
+  - name: Short Selling
+    description: Короткие продажи
+  - name: Risk Management
+    description: Управление рисками
+paths:
+  /api/v1/margin/account:
+    get:
+      tags:
+        - Margin Accounts
+      summary: Информация о маржинальном счёте
+      description: Возвращает баланс, equity, leverage и margin health
+      operationId: getMarginAccount
+      responses:
+        '200':
+          description: Маржинальный счёт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarginAccount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+    post:
+      tags:
+        - Margin Accounts
+      summary: Открыть маржинальный счёт
+      description: Требования - уровень 40+, кредитная история, min 10K баланс
+      operationId: openMarginAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenMarginAccountRequest'
+      responses:
+        '201':
+          description: Счёт открыт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarginAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+  /api/v1/margin/borrow:
+    post:
+      tags:
+        - Margin Accounts
+      summary: Занять средства
+      description: Займ с проверкой margin health, плечо 2x-10x
+      operationId: borrowMargin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BorrowMarginRequest'
+      responses:
+        '200':
+          description: Средства заняты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowMarginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+  /api/v1/margin/repay:
+    post:
+      tags:
+        - Margin Accounts
+      summary: Погасить займ
+      description: Погашение с освобождением коллатерала
+      operationId: repayMargin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RepayMarginRequest'
+      responses:
+        '200':
+          description: Займ погашен
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+  /api/v1/margin/history:
+    get:
+      tags:
+        - Margin Accounts
+      summary: История маржин-коллов
+      description: История с timestamp, суммой, статусом
+      operationId: getMarginCallHistory
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  margin_calls:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarginCall'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+  /api/v1/short:
+    post:
+      tags:
+        - Short Selling
+      summary: Открыть короткую позицию
+      description: Short selling - уровень 45+, объём 500K+, коллатерал 150%, лимит 30% float
+      operationId: openShortPosition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShortPositionRequest'
+      responses:
+        '201':
+          description: Позиция открыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortPosition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+    get:
+      tags:
+        - Short Selling
+      summary: Список коротких позиций
+      description: Позиции с сортировкой по PnL или дате
+      operationId: listShortPositions
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список позиций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  positions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShortPosition'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+  /api/v1/short/{position_id}:
+    get:
+      tags:
+        - Short Selling
+      summary: Информация о короткой позиции
+      description: Возвращает детали короткой позиции
+      operationId: getShortPosition
+      parameters:
+        - name: position_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortPosition'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+  /api/v1/short/{position_id}/close:
+    post:
+      tags:
+        - Short Selling
+      summary: Закрыть короткую позицию
+      description: Выкуп акций, возврат брокеру, расчёт PnL
+      operationId: closeShortPosition
+      parameters:
+        - name: position_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Позиция закрыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClosePositionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: []
+  /api/v1/risk/health:
+    get:
+      tags:
+        - Risk Management
+      summary: Уровень риска
+      description: Margin health (5 сек), liquidation price, warnings
+      operationId: getRiskHealth
+      responses:
+        '200':
+          description: Показатели риска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskHealth'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    MarginAccount:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          description: ID счёта
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        balance:
+          type: number
+          description: Баланс
+        equity:
+          type: number
+          description: Equity (баланс + PnL позиций)
+        leverage:
+          type: number
+          description: Плечо (2-10x)
+        margin_health:
+          type: number
+          description: Уровень маржи (%)
+        maintenance_margin:
+          type: number
+          description: Минимальная маржа
+        available_credit:
+          type: number
+          description: Доступный кредит
+        borrowed_amount:
+          type: number
+          description: Занятая сумма
+    OpenMarginAccountRequest:
+      type: object
+      required:
+        - initial_deposit
+      properties:
+        initial_deposit:
+          type: number
+          minimum: 10000
+          description: Начальный депозит (min 10K)
+    BorrowMarginRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          description: Сумма займа
+    BorrowMarginResponse:
+      type: object
+      properties:
+        borrowed_amount:
+          type: number
+          description: Занятая сумма
+        collateral_required:
+          type: number
+          description: Требуемый коллатерал
+        interest_rate:
+          type: number
+          description: Процентная ставка
+        leverage:
+          type: number
+          description: Применённое плечо
+    RepayMarginRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          description: Сумма погашения
+    MarginCall:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        required_amount:
+          type: number
+          description: Требуемая сумма
+        status:
+          type: string
+          enum:
+            - active
+            - fulfilled
+            - liquidated
+        triggered_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+    ShortPositionRequest:
+      type: object
+      required:
+        - ticker
+        - quantity
+      properties:
+        ticker:
+          type: string
+          description: Тикер акции
+        quantity:
+          type: integer
+          description: Количество акций
+    ShortPosition:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        ticker:
+          type: string
+        quantity:
+          type: integer
+        entry_price:
+          type: number
+          description: Цена открытия
+        current_price:
+          type: number
+          description: Текущая цена
+        pnl:
+          type: number
+          description: Unrealized PnL
+        collateral:
+          type: number
+          description: Удержанный коллатерал (150%)
+        opened_at:
+          type: string
+          format: date-time
+    ClosePositionResponse:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        realized_pnl:
+          type: number
+          description: Realized PnL
+        closed_at:
+          type: string
+          format: date-time
+    RiskHealth:
+      type: object
+      properties:
+        margin_health:
+          type: number
+          description: Уровень маржи (%)
+        maintenance_margin:
+          type: number
+          description: Минимальная маржа
+        liquidation_price:
+          type: number
+          description: Цена ликвидации
+        at_risk:
+          type: boolean
+          description: Флаг риска (equity <30%)
+        margin_call_warning:
+          type: boolean
+          description: Предупреждение (equity <35%)
+        open_positions_risk:
+          type: object
+          description: Риски открытых позиций
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    PaginationResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          description: Список элементов
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество элементов
+        limit:
+          type: integer
+          minimum: 1
+          description: Количество элементов на странице
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение для пагинации
+        has_more:
+          type: boolean
+          description: Есть ли еще элементы
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации

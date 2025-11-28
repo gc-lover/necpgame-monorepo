@@ -1,0 +1,177 @@
+metadata:
+  id: time-trials-system-architecture
+  title: Архитектура системы временных испытаний (Time Trials)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - gameplay
+    - time-trials
+    - speedrun
+    - competitive
+    - hardcore
+  related_systems:
+    - gameplay-service
+    - leaderboard-service
+    - achievement-service
+  related_documents:
+    - id: time-trials-idea
+      relation: implements
+  github_issue: 1498
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Не хватает соревновательных элементов, связанных со скоростью прохождения контента.
+    Игроки не имеют возможности соревноваться в скорости прохождения рейдов и подземелий.
+  goal: |
+    Создать архитектуру временных испытаний, которая:
+    - Предоставляет соревнование на скорость прохождения
+    - Интегрируется с системой лидербордов
+    - Награждает игроков за рекорды
+    - Поддерживает еженедельные испытания
+  essence: |
+    Система временных испытаний позволяет игрокам соревноваться в скорости прохождения
+    рейдов, подземелий и других контентов. Результаты отслеживаются в лидербордах.
+
+architecture:
+  overview: |
+    Система временных испытаний состоит из следующих компонентов:
+    1. Time Trial Manager - управление временными испытаниями
+    2. Timer Controller - отслеживание времени прохождения
+    3. Validation Engine - валидация результатов
+    4. Leaderboard Updater - обновление лидербордов
+    5. Weekly Challenge Manager - управление еженедельными испытаниями
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка временных испытаний:
+        - Отслеживание времени прохождения
+        - Валидация результатов
+        - Применение бонусов
+      components:
+        - time-trial-manager: управление испытаниями
+        - timer-controller: отслеживание времени
+        - validation-engine: валидация результатов
+        - weekly-challenge-manager: управление еженедельными испытаниями
+      endpoints:
+        - POST /api/v1/gameplay/time-trials/start - начало испытания
+        - POST /api/v1/gameplay/time-trials/complete - завершение с временем
+        - GET /api/v1/gameplay/time-trials/weekly/current - текущее испытание
+        - GET /api/v1/gameplay/time-trials/weekly/history - история испытаний
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/time-trials/{trialId} - события испытания
+      events_published:
+        - gameplay.time-trials.completed: завершение испытания
+        - gameplay.time-trials.record.broken: новый рекорд
+        - gameplay.time-trials.telemetry: телеметрия
+
+  data_flows:
+    time_trial_start_flow: |
+      1. Игрок начинает временное испытание
+      2. Time Trial Manager создает сессию испытания
+      3. Timer Controller запускает отсчет времени
+      4. Gameplay Service публикует событие gameplay.time-trials.started
+      5. Realtime Gateway отправляет информацию об испытании клиентам
+
+    time_trial_complete_flow: |
+      1. Игрок завершает контент
+      2. Timer Controller останавливает отсчет времени
+      3. Validation Engine проверяет валидность результата
+      4. Time Trial Manager сохраняет результат
+      5. Leaderboard Updater обновляет лидерборды
+      6. При новом рекорде Achievement Service выдает достижения
+      7. Gameplay Service публикует событие gameplay.time-trials.completed
+
+  database_structure:
+    tables:
+      - name: time_trial_sessions
+        description: Сессии временных испытаний
+        columns:
+          - id: UUID PRIMARY KEY
+          - trial_type: VARCHAR(100)
+          - content_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - team_id: UUID FOREIGN KEY (nullable)
+          - start_time: TIMESTAMP
+          - end_time: TIMESTAMP (nullable)
+          - completion_time: INTEGER (nullable)
+          - status: ENUM (in_progress, completed, failed)
+
+      - name: time_trial_records
+        description: Рекорды временных испытаний
+        columns:
+          - id: UUID PRIMARY KEY
+          - trial_type: VARCHAR(100)
+          - content_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - team_id: UUID FOREIGN KEY (nullable)
+          - completion_time: INTEGER
+          - rank: INTEGER
+          - validated: BOOLEAN
+          - created_at: TIMESTAMP
+
+      - name: weekly_time_challenges
+        description: Еженедельные испытания
+        columns:
+          - id: UUID PRIMARY KEY
+          - week_start: TIMESTAMP
+          - week_end: TIMESTAMP
+          - challenge_type: VARCHAR(100)
+          - content_id: UUID FOREIGN KEY
+          - conditions: JSONB
+          - rewards: JSONB
+          - created_at: TIMESTAMP
+
+  integrations:
+    leaderboard_service: |
+      - Обновление лидербордов по времени
+      - Рейтинги игроков
+      - История рекордов
+
+    achievement_service: |
+      - Отслеживание достижений
+      - Выдача титулов
+      - Уведомления о рекордах
+
+  technical_tasks:
+    phases:
+      phase_1:
+        name: Time Trial Manager и Timer Controller
+        tasks:
+          - Реализация Time Trial Manager
+          - Реализация Timer Controller
+          - Отслеживание времени прохождения
+          - Интеграция с Gameplay Service
+        estimated_effort: 3 days
+
+      phase_2:
+        name: Validation Engine и Leaderboard Integration
+        tasks:
+          - Реализация Validation Engine
+          - Валидация результатов
+          - Интеграция с Leaderboard Service
+          - Обновление лидербордов
+        estimated_effort: 3 days
+
+      phase_3:
+        name: Weekly Challenge Manager
+        tasks:
+          - Реализация Weekly Challenge Manager
+          - Управление еженедельными испытаниями
+          - Интеграция с World Service
+        estimated_effort: 2 days
+

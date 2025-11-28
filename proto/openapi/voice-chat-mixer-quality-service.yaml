@@ -1,0 +1,265 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Mixer & Quality Service API
+  description: |
+    API для управления микшером аудио и качеством звука в голосовых каналах.
+    
+    Система поддерживает:
+    - Настройку микшера аудио
+    - Управление качеством звука
+    - Пресеты качества
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Audio Mixer
+    description: Микширование аудио
+  - name: Quality Manager
+    description: Управление качеством звука
+
+paths:
+  /social/voice/mixer/configure:
+    post:
+      tags:
+        - Audio Mixer
+      summary: Настроить микшер аудио
+      operationId: configureAudioMixer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigureMixerRequest'
+      responses:
+        '200':
+          description: Микшер настроен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MixerStatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/mixer/status:
+    get:
+      tags:
+        - Audio Mixer
+      summary: Получить статус микшера
+      operationId: getMixerStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус микшера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MixerStatusResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/quality/presets:
+    get:
+      tags:
+        - Quality Manager
+      summary: Получить пресеты качества звука
+      operationId: getQualityPresets
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Пресеты качества
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityPresetsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/quality/set:
+    post:
+      tags:
+        - Quality Manager
+      summary: Установить качество звука
+      operationId: setQuality
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetQualityRequest'
+      responses:
+        '200':
+          description: Качество установлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityStatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/voice/quality/status:
+    get:
+      tags:
+        - Quality Manager
+      summary: Получить статус качества звука
+      operationId: getQualityStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: participant_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус качества
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityStatusResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ConfigureMixerRequest:
+      type: object
+      required:
+        - channel_id
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        mixing_strategy:
+          type: string
+          enum:
+            - MIX_ALL
+            - SELECTIVE
+        audio_effects:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    MixerStatusResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        mixing_strategy:
+          type: string
+        active_streams:
+          type: integer
+        audio_latency_ms:
+          type: integer
+
+    QualityPresetsResponse:
+      type: object
+      properties:
+        presets:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityPreset'
+
+    QualityPreset:
+      type: object
+      properties:
+        name:
+          type: string
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+            - ADAPTIVE
+        sample_rate:
+          type: integer
+        channels:
+          type: integer
+        bitrate:
+          type: integer
+
+    SetQualityRequest:
+      type: object
+      required:
+        - channel_id
+        - quality_preset
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+          nullable: true
+        quality_preset:
+          type: string
+          enum:
+            - HIGH
+            - MEDIUM
+            - LOW
+            - ADAPTIVE
+
+    QualityStatusResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+          nullable: true
+        quality_preset:
+          type: string
+        audio_latency_ms:
+          type: integer
+        packet_loss_percent:
+          type: number
+          format: float
+        quality_score:
+          type: number
+          format: float
+
