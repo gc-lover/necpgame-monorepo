@@ -1,0 +1,298 @@
+openapi: 3.0.3
+info:
+  title: Combat Combos Catalog Service API
+  description: |
+    API для каталога комбо.
+    
+    **Функциональность:**
+    - Получение списка доступных комбо
+    - Детальная информация о комбо
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083
+    description: Локальный сервер разработки
+  - url: https://api.necp.game
+    description: Продакшен сервер
+
+tags:
+  - name: Combo Catalog
+    description: Каталог комбо
+
+paths:
+  /api/v1/gameplay/combat/combos/catalog:
+    get:
+      tags:
+        - Combo Catalog
+      summary: Получить каталог комбо
+      description: Возвращает список всех доступных комбо с фильтрацией
+      operationId: getComboCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: combo_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - solo
+              - team
+              - legendary
+          description: Фильтр по типу комбо
+        - name: complexity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - Bronze
+              - Silver
+              - Gold
+              - Platinum
+              - Legendary
+          description: Фильтр по сложности
+        - name: character_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа для проверки доступности
+      responses:
+        "200":
+          description: Каталог комбо
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboCatalogResponse"
+              examples:
+                catalog:
+                  summary: Пример каталога
+                  value:
+                    combos:
+                      - combo_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                        name: "Aerial Devastation"
+                        description: "Devastating aerial attack combo"
+                        combo_type: "solo"
+                        complexity: "Gold"
+                        requirements:
+                          min_level: 15
+                          required_abilities: ["ability-dash", "ability-slam"]
+                        cooldown: 30
+                        chain_compatible: true
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/combos/{comboId}:
+    get:
+      tags:
+        - Combo Catalog
+      summary: Получить информацию о комбо
+      description: Возвращает детальную информацию о конкретном комбо
+      operationId: getComboById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: comboId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID комбо
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      responses:
+        "200":
+          description: Информация о комбо
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboDetail"
+              examples:
+                combo_detail:
+                  summary: Детали комбо
+                  value:
+                    combo_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                    name: "Aerial Devastation"
+                    description: "Devastating aerial attack combo"
+                    combo_type: "solo"
+                    complexity: "Gold"
+                    requirements:
+                      min_level: 15
+                      required_abilities:
+                        - "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                    sequence:
+                      - action_type: "ability"
+                        action_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                        timing_window: 2000
+                      - action_type: "ability"
+                        action_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                        timing_window: 1500
+                    bonuses:
+                      damage_multiplier: 2.5
+                      cooldown_reduction: 10
+                    cooldown: 30
+                    chain_compatible: true
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ComboCatalogResponse:
+      type: object
+      required:
+        - combos
+      properties:
+        combos:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComboSummary"
+          description: Список комбо
+
+    ComboSummary:
+      type: object
+      required:
+        - combo_id
+        - name
+        - combo_type
+        - complexity
+        - cooldown
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+          description: ID комбо
+        name:
+          type: string
+          description: Название комбо
+        description:
+          type: string
+          description: Описание комбо
+        combo_type:
+          type: string
+          enum:
+            - solo
+            - team
+            - legendary
+          description: Тип комбо
+        complexity:
+          type: string
+          enum:
+            - Bronze
+            - Silver
+            - Gold
+            - Platinum
+            - Legendary
+          description: Сложность комбо
+        requirements:
+          type: object
+          description: Требования для активации
+          additionalProperties: true
+        cooldown:
+          type: integer
+          minimum: 0
+          description: Кулдаун комбо (секунды)
+        chain_compatible:
+          type: boolean
+          default: false
+          description: Совместимость с chain-комбо
+
+    ComboDetail:
+      type: object
+      required:
+        - combo_id
+        - name
+        - combo_type
+        - complexity
+        - sequence
+        - cooldown
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+          description: ID комбо
+        name:
+          type: string
+          description: Название комбо
+        description:
+          type: string
+          description: Описание комбо
+        combo_type:
+          type: string
+          enum:
+            - solo
+            - team
+            - legendary
+          description: Тип комбо
+        complexity:
+          type: string
+          enum:
+            - Bronze
+            - Silver
+            - Gold
+            - Platinum
+            - Legendary
+          description: Сложность
+        requirements:
+          type: object
+          description: Требования для активации
+          additionalProperties: true
+        sequence:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComboAction"
+          description: Последовательность действий
+        bonuses:
+          type: object
+          description: Бонусы от комбо
+          additionalProperties:
+            type: number
+        cooldown:
+          type: integer
+          minimum: 0
+          description: Кулдаун (секунды)
+        chain_compatible:
+          type: boolean
+          default: false
+          description: Совместимость с chain-комбо
+
+    ComboAction:
+      type: object
+      required:
+        - action_type
+        - action_id
+      properties:
+        action_type:
+          type: string
+          enum:
+            - ability
+            - attack
+            - movement
+            - stealth
+          description: Тип действия
+        action_id:
+          type: string
+          format: uuid
+          description: ID действия
+        timing_window:
+          type: integer
+          minimum: 0
+          description: Временное окно для выполнения (миллисекунды)
+
+security:
+  - BearerAuth: []
+
