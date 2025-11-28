@@ -102,3 +102,73 @@ type WebRTCTokenResponse struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
+type SubchannelType string
+
+const (
+	SubchannelTypeMain      SubchannelType = "main"
+	SubchannelTypeRoleBased SubchannelType = "role_based"
+	SubchannelTypeCommander SubchannelType = "commander"
+	SubchannelTypeParty     SubchannelType = "party"
+)
+
+type Subchannel struct {
+	SubchannelID      uuid.UUID `json:"subchannel_id" db:"subchannel_id"`
+	LobbyID           uuid.UUID `json:"lobby_id" db:"lobby_id"`
+	Name              string    `json:"name" db:"name"`
+	Description       *string   `json:"description,omitempty" db:"description"`
+	SubchannelType    SubchannelType `json:"subchannel_type" db:"subchannel_type"`
+	MaxParticipants   *int      `json:"max_participants,omitempty" db:"max_participants"`
+	CurrentParticipants int     `json:"current_participants" db:"current_participants"`
+	RequiredRole      *string   `json:"required_role,omitempty" db:"required_role"`
+	IsLocked          bool      `json:"is_locked" db:"is_locked"`
+	CreatedAt         time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type CreateSubchannelRequest struct {
+	Name            string        `json:"name"`
+	Description     *string       `json:"description,omitempty"`
+	SubchannelType  SubchannelType `json:"subchannel_type"`
+	MaxParticipants *int          `json:"max_participants,omitempty"`
+	RequiredRole    *string       `json:"required_role,omitempty"`
+	IsLocked        bool          `json:"is_locked"`
+}
+
+type UpdateSubchannelRequest struct {
+	Name            *string `json:"name,omitempty"`
+	Description     *string `json:"description,omitempty"`
+	MaxParticipants *int    `json:"max_participants,omitempty"`
+	RequiredRole    *string `json:"required_role,omitempty"`
+	IsLocked        *bool   `json:"is_locked,omitempty"`
+}
+
+type SubchannelListResponse struct {
+	LobbyID     uuid.UUID   `json:"lobby_id"`
+	Subchannels []Subchannel `json:"subchannels"`
+	TotalCount  int         `json:"total_count"`
+}
+
+type MoveToSubchannelRequest struct {
+	CharacterID uuid.UUID `json:"character_id"`
+	Force       bool      `json:"force"`
+}
+
+type MoveToSubchannelResponse struct {
+	SubchannelID uuid.UUID `json:"subchannel_id"`
+	CharacterID  uuid.UUID `json:"character_id"`
+	MovedAt      time.Time `json:"moved_at"`
+}
+
+type SubchannelParticipant struct {
+	CharacterID  uuid.UUID `json:"character_id"`
+	CharacterName string   `json:"character_name"`
+	Role         *string   `json:"role,omitempty"`
+	JoinedAt     time.Time `json:"joined_at"`
+}
+
+type SubchannelParticipantsResponse struct {
+	SubchannelID uuid.UUID              `json:"subchannel_id"`
+	Participants []SubchannelParticipant `json:"participants"`
+	TotalCount   int                    `json:"total_count"`
+}
+

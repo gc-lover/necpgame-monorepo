@@ -27,24 +27,26 @@ type VoiceServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr         string
-	router       *mux.Router
-	voiceService VoiceServiceInterface
-	logger       *logrus.Logger
-	server       *http.Server
-	jwtValidator *JwtValidator
-	authEnabled  bool
+	addr             string
+	router           *mux.Router
+	voiceService     VoiceServiceInterface
+	subchannelService SubchannelServiceInterface
+	logger           *logrus.Logger
+	server           *http.Server
+	jwtValidator     *JwtValidator
+	authEnabled      bool
 }
 
-func NewHTTPServer(addr string, voiceService VoiceServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, voiceService VoiceServiceInterface, subchannelService SubchannelServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
-		addr:         addr,
-		router:       router,
-		voiceService: voiceService,
-		logger:       GetLogger(),
-		jwtValidator: jwtValidator,
-		authEnabled:  authEnabled,
+		addr:              addr,
+		router:            router,
+		voiceService:      voiceService,
+		subchannelService: subchannelService,
+		logger:            GetLogger(),
+		jwtValidator:      jwtValidator,
+		authEnabled:       authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -66,6 +68,14 @@ func NewHTTPServer(addr string, voiceService VoiceServiceInterface, jwtValidator
 	api.HandleFunc("/channels/{channel_id}/participants", server.getParticipants).Methods("GET")
 	api.HandleFunc("/channels/{channel_id}/participants/{character_id}/status", server.updateParticipantStatus).Methods("PUT")
 	api.HandleFunc("/channels/{channel_id}/participants/{character_id}/position", server.updateParticipantPosition).Methods("PUT")
+
+	api.HandleFunc("/lobbies/{lobby_id}/subchannels", server.listSubchannels).Methods("GET")
+	api.HandleFunc("/lobbies/{lobby_id}/subchannels", server.createSubchannel).Methods("POST")
+	api.HandleFunc("/lobbies/{lobby_id}/subchannels/{subchannel_id}", server.getSubchannel).Methods("GET")
+	api.HandleFunc("/lobbies/{lobby_id}/subchannels/{subchannel_id}", server.updateSubchannel).Methods("PUT")
+	api.HandleFunc("/lobbies/{lobby_id}/subchannels/{subchannel_id}", server.deleteSubchannel).Methods("DELETE")
+	api.HandleFunc("/lobbies/{lobby_id}/subchannels/{subchannel_id}/move", server.moveToSubchannel).Methods("POST")
+	api.HandleFunc("/lobbies/{lobby_id}/subchannels/{subchannel_id}/participants", server.getSubchannelParticipants).Methods("GET")
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

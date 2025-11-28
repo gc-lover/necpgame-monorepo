@@ -34,8 +34,13 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize voice service")
 	}
 
+	subchannelService, err := server.NewSubchannelServiceFromDB(dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize subchannel service")
+	}
+
 	jwtValidator := server.NewJwtValidator(keycloakIssuer, jwksURL, logger)
-	httpServer := server.NewHTTPServer(addr, voiceService, jwtValidator, authEnabled)
+	httpServer := server.NewHTTPServer(addr, voiceService, subchannelService, jwtValidator, authEnabled)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
