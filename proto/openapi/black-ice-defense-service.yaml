@@ -1,0 +1,332 @@
+openapi: 3.0.3
+info:
+  title: Black ICE Defense Service API
+  description: |
+    API для системы защиты от Black ICE.
+    
+    **Основные возможности:**
+    - Демоны защиты (Shield, Counter, Escape, Analyze, Purge, Decoy)
+    - Импланты защиты (Neural Buffer, Overload Limiter, Detector, Emergency Eject)
+    - Оборудование защиты (Scanner, Disruptor, Protection Module)
+    - Тактические приёмы
+    
+    **Эффективность защиты:**
+    - Зависит от типа Black ICE
+    - Требует правильного выбора защиты
+    - Ограниченное использование (кулердауны)
+    
+    **Типы Black ICE:**
+    - Killer - прямая атака, быстрая перегрузка
+    - Hunter - долгосрочная охота, адаптация
+    - Deception - маскировка, неожиданная атака
+    - Corruption - медленное заражение
+    - Collective - роевой интеллект, координация
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Defense
+    description: Защита от Black ICE
+  - name: Demons
+    description: Демоны защиты
+  - name: Equipment
+    description: Оборудование защиты
+
+paths:
+  /api/v1/hacking/blackice/{ice_id}/defend:
+    post:
+      tags:
+        - Defense
+      summary: Активация защиты
+      description: |
+        Активирует защиту от Black ICE (демон, имплант или оборудование).
+        
+        Эффективность зависит от типа защиты и типа Black ICE.
+      operationId: defendAgainstBlackICE
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ice_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DefendRequest"
+      responses:
+        "200":
+          description: Защита активирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefenseResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/hacking/blackice/defense/available:
+    get:
+      tags:
+        - Defense
+      summary: Доступные защиты
+      description: |
+        Возвращает список доступных защит для персонажа.
+        
+        Включает демоны, импланты и оборудование.
+      operationId: getAvailableDefenses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список доступных защит
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailableDefenses"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/hacking/blackice/defense/effectiveness:
+    get:
+      tags:
+        - Defense
+      summary: Эффективность защиты
+      description: |
+        Возвращает матрицу эффективности защиты против различных типов Black ICE.
+      operationId: getDefenseEffectiveness
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: defense_type
+          in: query
+          schema:
+            type: string
+            enum: [shield_demon, counter_demon, escape_demon, analyze_demon, purge_demon, decoy_demon, neural_buffer, overload_limiter, blackice_detector, emergency_eject, scanner, disruptor, protection_module]
+        - name: ice_type
+          in: query
+          schema:
+            type: string
+            enum: [killer, hunter, deception, corruption, collective]
+      responses:
+        "200":
+          description: Матрица эффективности
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EffectivenessMatrix"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+  schemas:
+    DefendRequest:
+      type: object
+      required:
+        - character_id
+        - defense_type
+        - defense_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        defense_type:
+          type: string
+          enum: [demon, implant, equipment]
+        defense_id:
+          type: string
+          format: uuid
+
+    DefenseResult:
+      type: object
+      required:
+        - defense_active
+        - effectiveness
+      properties:
+        defense_active:
+          type: boolean
+        effectiveness:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Эффективность защиты (0-100%)
+        overload_reduction:
+          type: integer
+          description: Снижение скорости перегрузки
+        warnings:
+          type: array
+          items:
+            type: string
+        cooldown_remaining:
+          type: integer
+          format: int64
+          description: Оставшееся время кулердауна в секундах
+
+    AvailableDefenses:
+      type: object
+      properties:
+        demons:
+          type: array
+          items:
+            $ref: "#/components/schemas/DefenseDemon"
+        implants:
+          type: array
+          items:
+            $ref: "#/components/schemas/DefenseImplant"
+        equipment:
+          type: array
+          items:
+            $ref: "#/components/schemas/DefenseEquipment"
+        effectiveness_matrix:
+          type: object
+          description: Матрица эффективности для всех типов Black ICE
+
+    DefenseDemon:
+      type: object
+      required:
+        - demon_id
+        - demon_type
+        - cooldown
+      properties:
+        demon_id:
+          type: string
+          format: uuid
+        demon_type:
+          type: string
+          enum: [shield, counter, escape, analyze, purge, decoy]
+        name:
+          type: string
+          description: Название демона
+        effect:
+          type: string
+          description: Описание эффекта
+        cooldown:
+          type: integer
+          format: int64
+          description: Кулердаун в секундах
+        requirements:
+          type: object
+          properties:
+            netrun_level:
+              type: integer
+            skill_name:
+              type: string
+
+    DefenseImplant:
+      type: object
+      required:
+        - implant_id
+        - implant_type
+        - slot
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+        implant_type:
+          type: string
+          enum: [neural_buffer, overload_limiter, blackice_detector, emergency_eject]
+        name:
+          type: string
+        slot:
+          type: string
+          enum: [neural, cybernetic, sensor, system]
+        effect:
+          type: string
+          description: Описание эффекта
+        drawback:
+          type: string
+          description: Недостаток импланта
+
+    DefenseEquipment:
+      type: object
+      required:
+        - equipment_id
+        - equipment_type
+      properties:
+        equipment_id:
+          type: string
+          format: uuid
+        equipment_type:
+          type: string
+          enum: [scanner, disruptor, protection_module]
+        name:
+          type: string
+        effect:
+          type: string
+        durability:
+          type: integer
+          description: Прочность (для одноразовых - количество)
+        requirements:
+          type: object
+          properties:
+            tech_level:
+              type: integer
+
+    EffectivenessMatrix:
+      type: object
+      description: Матрица эффективности защиты против типов Black ICE
+      additionalProperties:
+        type: object
+        description: Эффективность против каждого типа Black ICE
+        additionalProperties:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Эффективность в процентах
+      example:
+        shield_demon:
+          killer: 85
+          hunter: 45
+          deception: 30
+          corruption: 20
+          collective: 50
+        counter_demon:
+          killer: 60
+          hunter: 55
+          deception: 50
+          corruption: 45
+          collective: 65
+        escape_demon:
+          killer: 100
+          hunter: 100
+          deception: 100
+          corruption: 100
+          collective: 100
+        analyze_demon:
+          killer: 40
+          hunter: 50
+          deception: 80
+          corruption: 60
+          collective: 55
+        purge_demon:
+          killer: 10
+          hunter: 15
+          deception: 20
+          corruption: 90
+          collective: 25
+        decoy_demon:
+          killer: 30
+          hunter: 85
+          deception: 40
+          corruption: 25
+          collective: 70
+

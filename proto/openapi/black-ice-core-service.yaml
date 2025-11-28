@@ -1,0 +1,388 @@
+openapi: 3.0.3
+info:
+  title: Black ICE Core Service API
+  description: |
+    API для основной механики Black ICE - летальных ICE-программ.
+    
+    **Основные возможности:**
+    - Обработка встреч с Black ICE
+    - Система перегрузки нейроимплантов
+    - Типы Black ICE (Killer, Hunter, Deception, Corruption, Collective)
+    - Уровни сложности (Alpha, Beta, Gamma)
+    
+    **Механика перегрузки:**
+    - 30% - лёгкие искажения
+    - 60% - серьёзные помехи
+    - 90% - критическое состояние
+    - 100% - смерть или критические повреждения
+    
+    **Смертность:**
+    - Без защиты: 80-95%
+    - С базовой защитой: 40-60%
+    - С хорошей защитой: 10-25%
+    - С отличной защитой: 2-5%
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: BlackICE
+    description: Black ICE встречи
+  - name: Overload
+    description: Перегрузка нейроимплантов
+  - name: Defense
+    description: Защита от Black ICE
+
+paths:
+  /api/v1/hacking/blackice/encounter:
+    post:
+      tags:
+        - BlackICE
+      summary: Встреча с Black ICE
+      description: |
+        Регистрирует встречу с Black ICE в киберпространстве.
+        
+        Автоматически начинает процесс перегрузки, если не активирована защита.
+      operationId: encounterBlackICE
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EncounterRequest"
+      responses:
+        "200":
+          description: Встреча зарегистрирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EncounterResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/hacking/blackice/{ice_id}/interact:
+    post:
+      tags:
+        - BlackICE
+      summary: Взаимодействие с Black ICE
+      description: |
+        Выполняет взаимодействие с Black ICE (обнаружение, анализ, обход, атака).
+        
+        Каждое взаимодействие может привести к адаптации ICE или увеличению перегрузки.
+      operationId: interactWithBlackICE
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ice_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InteractRequest"
+      responses:
+        "200":
+          description: Результат взаимодействия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InteractionResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/hacking/blackice/{ice_id}/analysis:
+    get:
+      tags:
+        - BlackICE
+      summary: Анализ Black ICE
+      description: |
+        Анализирует тип и характеристики Black ICE.
+        
+        Требует специальных демонов или высоких навыков анализа.
+      operationId: analyzeBlackICE
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ice_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: analysis_demon
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ID демона анализа (опционально)
+      responses:
+        "200":
+          description: Результат анализа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ICEAnalysis"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+
+  /api/v1/hacking/blackice/{ice_id}/overload:
+    post:
+      tags:
+        - Overload
+      summary: Обработка перегрузки
+      description: |
+        Обрабатывает прогресс перегрузки от Black ICE.
+        
+        Возвращает текущий уровень перегрузки и предупреждения.
+      operationId: processOverload
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ice_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OverloadProcessRequest"
+      responses:
+        "200":
+          description: Статус перегрузки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OverloadStatus"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+  /api/v1/hacking/blackice/{ice_id}/escape:
+    post:
+      tags:
+        - Defense
+      summary: Экстренное отключение
+      description: |
+        Выполняет экстренное отключение (выдергивание шнура).
+        
+        Сохраняет жизнь, но приводит к потере прогресса и возможным повреждениям.
+      operationId: escapeBlackICE
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ice_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Отключение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EscapeResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+  schemas:
+    EncounterRequest:
+      type: object
+      required:
+        - character_id
+        - location_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        location_id:
+          type: string
+          format: uuid
+        ice_type:
+          type: string
+          enum: [killer, hunter, deception, corruption, collective]
+          description: Тип Black ICE (определяется автоматически, если не указан)
+
+    EncounterResult:
+      type: object
+      required:
+        - ice_id
+        - ice_type
+        - overload_started
+      properties:
+        ice_id:
+          type: string
+          format: uuid
+        ice_type:
+          type: string
+          enum: [killer, hunter, deception, corruption, collective]
+        level:
+          type: string
+          enum: [alpha, beta, gamma]
+        overload_started:
+          type: boolean
+          description: Началась ли перегрузка
+        warnings:
+          type: array
+          items:
+            type: string
+
+    InteractRequest:
+      type: object
+      required:
+        - action
+        - character_id
+      properties:
+        action:
+          type: string
+          enum: [detect, analyze, bypass, attack]
+        character_id:
+          type: string
+          format: uuid
+        skill_check:
+          type: object
+
+    InteractionResult:
+      type: object
+      required:
+        - success
+        - ice_response
+      properties:
+        success:
+          type: boolean
+        interaction_result:
+          type: object
+        ice_response:
+          type: object
+          description: Ответ Black ICE на взаимодействие
+        adaptation_triggered:
+          type: boolean
+          description: Адаптировалась ли ICE
+        consequences:
+          type: object
+
+    ICEAnalysis:
+      type: object
+      required:
+        - ice_type
+        - level
+        - stats
+      properties:
+        ice_type:
+          type: string
+          enum: [killer, hunter, deception, corruption, collective]
+        level:
+          type: string
+          enum: [alpha, beta, gamma]
+        stats:
+          type: object
+          properties:
+            attack_speed:
+              type: string
+              enum: [very_slow, slow, medium, fast, very_fast]
+            defense:
+              type: string
+              enum: [low, medium, high, very_high]
+            adaptation_rate:
+              type: string
+              enum: [low, medium, high, very_high]
+            aggression:
+              type: string
+              enum: [low, medium, high, very_high]
+        weaknesses:
+          type: array
+          items:
+            type: string
+          description: Слабые точки Black ICE
+        recommended_tactics:
+          type: array
+          items:
+            type: string
+          description: Рекомендуемые тактики противодействия
+
+    OverloadProcessRequest:
+      type: object
+      required:
+        - character_id
+        - current_overload
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        current_overload:
+          type: integer
+          minimum: 0
+          maximum: 100
+        defense_active:
+          type: boolean
+          description: Активна ли защита
+
+    OverloadStatus:
+      type: object
+      required:
+        - current_overload
+        - overload_rate
+      properties:
+        current_overload:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Текущий уровень перегрузки (0-100%)
+        overload_rate:
+          type: integer
+          description: Скорость перегрузки в %/сек
+        critical_points:
+          type: array
+          items:
+            type: integer
+          description: Критические точки (30, 60, 90, 100)
+        warnings:
+          type: array
+          items:
+            type: string
+        time_to_critical:
+          type: integer
+          description: Время до критической точки в секундах
+
+    EscapeResult:
+      type: object
+      properties:
+        escaped:
+          type: boolean
+        data_lost:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Процент потерянных данных
+        damage_taken:
+          type: object
+          description: Полученные повреждения
+
