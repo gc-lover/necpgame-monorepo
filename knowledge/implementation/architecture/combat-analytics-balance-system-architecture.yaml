@@ -1,0 +1,514 @@
+metadata:
+  id: combat-analytics-balance-system-architecture
+  title: Архитектура системы сбора статистики и балансировки боевых механик
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - analytics
+    - balance
+    - statistics
+    - telemetry
+  related_systems:
+    - analytics-service
+    - gameplay-service
+    - combat-sessions-service
+    - combat-abilities-service
+    - combat-ai-service
+  related_documents:
+    - id: combat-analytics-balance-idea
+      relation: implements
+    - id: combat-shooting-architecture
+      relation: extends
+    - id: combat-ai-enemies-architecture
+      relation: extends
+    - id: faction-analytics-balance
+      relation: references
+  github_issue: 1518
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - analytics
+    - combat
+    - api-designer
+
+summary:
+  problem: |
+    В проекте отсутствует единая система для сбора статистики по всем боевым механикам.
+    Каждая система (стрельба, способности, AI, паркур) собирает свою телеметрию отдельно,
+    что затрудняет анализ баланса навыков и боевых механик. Нет централизованного места
+    для запросов статистики и автоматической балансировки на основе данных.
+  goal: |
+    Создать архитектурную схему системы сбора статистики и балансировки боевых механик с определением:
+    - Микросервисов для управления аналитикой боевых систем
+    - Компонентов для сбора телеметрии, агрегации метрик, анализа баланса
+    - API endpoints (высокоуровнево)
+    - Интеграций с существующими боевыми системами
+    - Структуры БД для хранения телеметрии и метрик
+    - Технического задания для реализации
+  essence: |
+    Система собирает телеметрию от всех боевых систем, агрегирует метрики и предоставляет
+    инструменты для анализа баланса. Позволяет автоматически корректировать параметры
+    навыков и боевых механик на основе реальной статистики использования и эффективности.
+
+architecture:
+  overview: |
+    Система состоит из следующих компонентов:
+    1. Combat Telemetry Collector - сбор событий от всех боевых систем
+    2. Combat Metrics Aggregator - агрегация метрик по различным измерениям
+    3. Combat Balance Analyzer - анализ баланса и выявление дисбалансов
+    4. Combat Balance Tuner - автоматическая корректировка параметров баланса
+    5. Combat Analytics API - REST API для запросов статистики
+    6. Combat Analytics Cache Manager - кэширование агрегированных данных
+
+  microservices:
+    - name: analytics-service
+      location: services/analytics-service
+      responsibility: |
+        Расширение существующего analytics-service для боевой аналитики:
+        - Сбор телеметрии от всех боевых систем
+        - Агрегация метрик для балансировки
+        - Анализ баланса и выявление проблем
+        - Автоматическая балансировка (опционально)
+        - API для запросов статистики
+      components:
+        - Combat Telemetry Collector
+        - Combat Metrics Aggregator
+        - Combat Balance Analyzer
+        - Combat Balance Tuner
+        - Combat Analytics API Gateway
+        - Combat Analytics Cache Manager
+      endpoints:
+        - GET /api/v1/analytics/combat/overview - общая статистика
+        - GET /api/v1/analytics/combat/metrics - метрики с фильтрами
+        - GET /api/v1/analytics/combat/trends - тренды по времени
+        - GET /api/v1/analytics/combat/shooting/stats - статистика стрельбы
+        - GET /api/v1/analytics/combat/shooting/ttk - TTK метрики
+        - GET /api/v1/analytics/combat/shooting/weapons - статистика по оружию
+        - GET /api/v1/analytics/combat/abilities/stats - статистика способностей
+        - GET /api/v1/analytics/combat/abilities/usage - использование способностей
+        - GET /api/v1/analytics/combat/abilities/effectiveness - эффективность
+        - GET /api/v1/analytics/combat/implants/stats - статистика имплантов
+        - GET /api/v1/analytics/combat/implants/usage - использование имплантов
+        - GET /api/v1/analytics/combat/combos/stats - статистика комбо
+        - GET /api/v1/analytics/combat/combos/popular - популярные комбо
+        - GET /api/v1/analytics/combat/balance/issues - проблемы баланса
+        - GET /api/v1/analytics/combat/balance/recommendations - рекомендации
+        - POST /api/v1/analytics/combat/balance/apply - применить изменения
+
+  components:
+    - name: Combat Telemetry Collector
+      location: analytics-service
+      responsibility: |
+        Сбор телеметрии от всех боевых систем:
+        - Подписка на события от боевых систем через Event Bus
+        - Сохранение событий в БД
+        - Валидация и нормализация данных
+        - Партиционирование данных по времени
+      methods:
+        - collectShootingEvent(event)
+        - collectAbilityEvent(event)
+        - collectImplantEvent(event)
+        - collectComboEvent(event)
+        - collectHackingEvent(event)
+        - collectFreerunEvent(event)
+        - collectAIEvent(event)
+        - collectSessionEvent(event)
+        - storeTelemetryEvent(event)
+
+    - name: Combat Metrics Aggregator
+      location: analytics-service
+      responsibility: |
+        Агрегация метрик по различным измерениям:
+        - Агрегация по временным измерениям (час, день, неделя, месяц)
+        - Агрегация по игровым измерениям (режим, зона, уровень, класс, лига)
+        - Агрегация по боевым измерениям (оружие, способности, импланты, комбо)
+        - Расчет TTK, DPS, точности, эффективности
+        - Кэширование агрегированных данных
+      methods:
+        - aggregateByTime(metricType, timeBucket, filters)
+        - aggregateByGameDimension(metricType, dimension, filters)
+        - aggregateByCombatDimension(metricType, dimension, filters)
+        - calculateTTKMetrics(weaponId, mode, filters)
+        - calculateDPSMetrics(abilityId, filters)
+        - calculateEffectivenessMetrics(skillId, filters)
+        - cacheAggregatedMetrics(metrics)
+
+    - name: Combat Balance Analyzer
+      location: analytics-service
+      responsibility: |
+        Анализ баланса и выявление дисбалансов:
+        - Выявление сверхэффективных навыков
+        - Выявление слабоэффективных навыков
+        - Анализ дисбалансов между классами
+        - Генерация рекомендаций по балансировке
+        - Определение приоритета проблем
+      methods:
+        - analyzeSkillBalance(skillId, timeRange)
+        - detectOverpoweredSkills(thresholds)
+        - detectUnderpoweredSkills(thresholds)
+        - analyzeClassBalance(classId, timeRange)
+        - generateRecommendations(issueId)
+        - prioritizeIssues(issues)
+
+    - name: Combat Balance Tuner
+      location: analytics-service
+      responsibility: |
+        Автоматическая корректировка параметров баланса:
+        - Применение рекомендаций (с подтверждением)
+        - Режимы работы (ручной/полуавтоматический/автоматический)
+        - Правила автоматической балансировки
+        - Откат изменений при ухудшении метрик
+        - История изменений баланса
+      methods:
+        - applyBalanceChange(change, mode)
+        - validateChange(change)
+        - rollbackChange(changeId, reason)
+        - monitorChangeImpact(changeId)
+        - getChangeHistory(skillId)
+
+    - name: Combat Analytics API Gateway
+      location: analytics-service
+      responsibility: |
+        API Gateway для боевой аналитики:
+        - Маршрутизация запросов
+        - Агрегация данных из разных источников
+        - Форматирование ответов
+        - Применение фильтров
+        - Кэширование ответов
+      methods:
+        - routeRequest(endpoint, parameters)
+        - aggregateData(sources)
+        - formatResponse(data, format)
+        - applyFilters(data, filters)
+        - cacheResponse(endpoint, parameters, data)
+
+    - name: Combat Analytics Cache Manager
+      location: analytics-service
+      responsibility: |
+        Кэширование агрегированных данных:
+        - Кэширование метрик
+        - Кэширование статистики
+        - Кэширование рекомендаций
+        - Инвалидация кэша при обновлении данных
+      methods:
+        - cacheMetrics(metricType, filters, data)
+        - getCachedMetrics(metricType, filters)
+        - cacheStatistics(endpoint, parameters, data)
+        - invalidateCache(pattern)
+        - clearExpiredCache()
+
+  data_flow:
+    telemetry_collection: |
+      1. Боевая система публикует событие в Event Bus
+      2. Combat Telemetry Collector подписывается на событие
+      3. Collector валидирует и нормализует данные
+      4. Collector сохраняет событие в БД (combat_telemetry_events)
+      5. Collector публикует событие analytics.combat.telemetry.collected
+
+    metrics_aggregation: |
+      1. Combat Metrics Aggregator периодически запускается (каждый час)
+      2. Aggregator читает события из combat_telemetry_events за период
+      3. Aggregator агрегирует данные по измерениям
+      4. Aggregator рассчитывает метрики (TTK, DPS, эффективность)
+      5. Aggregator сохраняет агрегированные данные в combat_metrics_aggregated
+      6. Aggregator кэширует данные через Cache Manager
+      7. Aggregator публикует событие analytics.combat.metrics.aggregated
+
+    balance_analysis: |
+      1. Combat Balance Analyzer периодически запускается (каждый день)
+      2. Analyzer читает агрегированные метрики
+      3. Analyzer анализирует баланс и выявляет проблемы
+      4. Analyzer генерирует рекомендации
+      5. Analyzer сохраняет проблемы в combat_balance_issues
+      6. Analyzer публикует событие analytics.combat.balance.issue.detected
+
+    balance_tuning: |
+      1. Баланс-команда или система запрашивает применение изменения
+      2. Combat Balance Tuner валидирует изменение
+      3. Tuner применяет изменение (в зависимости от режима)
+      4. Tuner сохраняет изменение в combat_balance_changes
+      5. Tuner публикует событие analytics.combat.balance.change.applied
+      6. Tuner мониторит влияние изменения
+      7. При ухудшении метрик Tuner может откатить изменение
+
+    api_request: |
+      1. Клиент запрашивает статистику через Combat Analytics API Gateway
+      2. API Gateway проверяет кэш через Cache Manager
+      3. Если данных нет: API Gateway запрашивает данные из Aggregator
+      4. Aggregator читает данные из БД или пересчитывает
+      5. API Gateway форматирует ответ
+      6. API Gateway кэширует ответ
+      7. API Gateway возвращает данные клиенту
+
+  integrations:
+    with_gameplay_service: |
+      - Подписка на события combat.shooting.*
+      - Подписка на события combat.ability.*
+      - Подписка на события combat.combo.*
+      - Подписка на события combat.session.*
+
+    with_combat_ai_service: |
+      - Подписка на события combat.ai.*
+      - Получение данных о встречах с AI
+
+    with_combat_abilities_service: |
+      - Подписка на события combat.ability.*
+      - Получение данных о способностях
+
+    with_combat_sessions_service: |
+      - Подписка на события combat.session.*
+      - Получение данных о сессиях
+
+    with_character_service: |
+      - Получение данных о персонажах для фильтрации
+      - Получение данных о классах и уровнях
+
+    with_event_bus: |
+      - Подписка на события от всех боевых систем
+      - Публикация аналитических событий
+
+  event_bus_events:
+    published:
+      - analytics.combat.telemetry.collected
+      - analytics.combat.metrics.aggregated
+      - analytics.combat.balance.issue.detected
+      - analytics.combat.balance.recommendation.generated
+      - analytics.combat.balance.change.applied
+      - analytics.combat.balance.change.reverted
+    subscribed:
+      - combat.shooting.* (события стрельбы)
+      - combat.ability.* (события способностей)
+      - combat.implant.* (события имплантов)
+      - combat.combo.* (события комбо)
+      - combat.hacking.* (события хакинга)
+      - combat.freerun.* (события паркура)
+      - combat.ai.* (события AI)
+      - combat.session.* (события сессий)
+
+  database_schema:
+    tables:
+      - name: combat_telemetry_events
+        description: Сырые события от боевых систем
+        fields:
+          - id: UUID (PK)
+          - event_type: VARCHAR(100) NOT NULL
+          - system_type: VARCHAR(50) NOT NULL (shooting, ability, implant, combo, hacking, freerun, ai, session)
+          - character_id: UUID
+          - session_id: UUID
+          - zone_id: UUID
+          - mode: VARCHAR(50) (PvE, PvP, Arena)
+          - data: JSONB NOT NULL
+          - timestamp: TIMESTAMPTZ NOT NULL
+        indexes:
+          - event_type, system_type, timestamp
+          - character_id, timestamp
+          - session_id
+          - timestamp (для партиционирования)
+
+      - name: combat_metrics_aggregated
+        description: Агрегированные метрики
+        fields:
+          - id: UUID (PK)
+          - metric_type: VARCHAR(100) NOT NULL (ttk, dps, accuracy, effectiveness, usage)
+          - metric_name: VARCHAR(100) NOT NULL
+          - dimension_type: VARCHAR(50) (time, mode, zone, level, class, league, weapon, ability, implant)
+          - dimension_value: VARCHAR(100)
+          - time_bucket: TIMESTAMPTZ NOT NULL
+          - value: NUMERIC(15,4) NOT NULL
+          - sample_count: INTEGER NOT NULL
+          - metadata: JSONB
+          - created_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        indexes:
+          - metric_type, metric_name, dimension_type, dimension_value, time_bucket (UNIQUE)
+          - time_bucket
+          - metric_type, metric_name
+
+      - name: combat_balance_issues
+        description: Выявленные проблемы баланса
+        fields:
+          - id: UUID (PK)
+          - issue_type: VARCHAR(100) NOT NULL (overpowered, underpowered, class_imbalance)
+          - skill_id: VARCHAR(100)
+          - severity: VARCHAR(50) (low, medium, high, critical)
+          - description: TEXT
+          - metrics: JSONB
+          - recommendations: JSONB
+          - status: VARCHAR(50) DEFAULT 'open' (open, in_review, resolved, dismissed)
+          - created_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          - resolved_at: TIMESTAMPTZ
+        indexes:
+          - status, severity
+          - skill_id
+          - issue_type
+
+      - name: combat_balance_changes
+        description: История изменений баланса
+        fields:
+          - id: UUID (PK)
+          - skill_id: VARCHAR(100) NOT NULL
+          - parameter_name: VARCHAR(100) NOT NULL
+          - old_value: NUMERIC(15,4)
+          - new_value: NUMERIC(15,4)
+          - change_reason: TEXT
+          - applied_by: VARCHAR(100)
+          - applied_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          - reverted_at: TIMESTAMPTZ
+          - revert_reason: TEXT
+        indexes:
+          - skill_id, applied_at
+          - applied_at
+
+  implementation_phases:
+    phase_1:
+      title: Базовая инфраструктура
+      tasks:
+        - Создание таблиц БД (Liquibase миграции)
+        - Базовый Combat Telemetry Collector
+        - Подписка на события от основных систем (shooting, ability, session)
+        - Базовое API для запросов статистики (overview, metrics)
+      estimated_time: 5-7 дней
+
+    phase_2:
+      title: Агрегация метрик
+      tasks:
+        - Combat Metrics Aggregator
+        - Агрегация по временным измерениям
+        - Агрегация по игровым измерениям
+        - Кэширование агрегированных данных
+        - Расширенное API (shooting, abilities, implants)
+      estimated_time: 7-10 дней
+
+    phase_3:
+      title: Анализ баланса
+      tasks:
+        - Combat Balance Analyzer
+        - Выявление проблем баланса
+        - Генерация рекомендаций
+        - API для проблем баланса и рекомендаций
+        - Базовый дашборд для просмотра статистики
+      estimated_time: 7-10 дней
+
+    phase_4:
+      title: Автоматическая балансировка
+      tasks:
+        - Combat Balance Tuner
+        - Режимы работы (ручной/полуавтоматический/автоматический)
+        - Правила автоматической балансировки
+        - Система отката изменений
+        - Мониторинг влияния изменений
+      estimated_time: 10-14 дней
+
+    phase_5:
+      title: Расширенная аналитика
+      tasks:
+        - ML модели для предсказания баланса (опционально)
+        - A/B тестирование изменений
+        - Интеграция с дашбордами
+        - Расширенные отчеты
+      estimated_time: 14-21 день
+
+  total_estimated_effort: 43-62 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Analytics Service"
+            CTC[Combat Telemetry Collector]
+            CMA[Combat Metrics Aggregator]
+            CBA[Combat Balance Analyzer]
+            CBT[Combat Balance Tuner]
+            CAAG[Combat Analytics API Gateway]
+            CACM[Combat Analytics Cache Manager]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>combat_telemetry_events<br/>combat_metrics_aggregated<br/>combat_balance_issues<br/>combat_balance_changes)]
+        end
+
+        subgraph "Cache"
+            REDIS[(Redis Cache)]
+        end
+
+        subgraph "Event Bus"
+            EB[Kafka/Event Bus]
+        end
+
+        subgraph "Combat Systems"
+            GS[Gameplay Service]
+            CAS[Combat Abilities Service]
+            CAIS[Combat AI Service]
+            CSS[Combat Sessions Service]
+        end
+
+        subgraph "External Services"
+            CS[Character Service]
+        end
+
+        CAAG --> CMA
+        CAAG --> CBA
+        CAAG --> CBT
+        CAAG --> CACM
+        CMA --> CTC
+        CMA --> CACM
+        CBA --> CMA
+        CBT --> CBA
+        CTC --> EB
+        CTC --> DB
+        CMA --> DB
+        CBA --> DB
+        CBT --> DB
+        CACM --> REDIS
+        EB --> GS
+        EB --> CAS
+        EB --> CAIS
+        EB --> CSS
+        CAAG --> CS
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CS as Combat System
+        participant EB as Event Bus
+        participant CTC as Telemetry Collector
+        participant DB as Database
+        participant CMA as Metrics Aggregator
+        participant CBA as Balance Analyzer
+        participant CAAG as API Gateway
+        participant Client as Client
+
+        CS->>EB: Publish combat event
+        EB->>CTC: Subscribe to event
+        CTC->>CTC: Validate & normalize
+        CTC->>DB: Store event
+        CTC->>EB: Publish collected event
+
+        Note over CMA: Periodic (hourly)
+        CMA->>DB: Read events
+        CMA->>CMA: Aggregate metrics
+        CMA->>DB: Store aggregated
+        CMA->>EB: Publish aggregated
+
+        Note over CBA: Periodic (daily)
+        CBA->>DB: Read metrics
+        CBA->>CBA: Analyze balance
+        CBA->>DB: Store issues
+        CBA->>EB: Publish issue detected
+
+        Client->>CAAG: Request statistics
+        CAAG->>CMA: Get metrics
+        CMA->>DB: Read aggregated
+        CMA->>CAAG: Return metrics
+        CAAG->>Client: Return statistics
+    ```
+
