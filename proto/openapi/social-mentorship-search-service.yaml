@@ -1,0 +1,134 @@
+openapi: 3.0.3
+info:
+  title: Social Mentorship Search Service API
+  description: |
+    API для поиска наставников и учеников, а также получения профилей.
+    
+    **Функциональность:**
+    - Поиск наставников и учеников
+    - Получение информации о наставниках
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Mentorship Search
+    description: Поиск наставников и учеников
+
+paths:
+  /social/mentorship/mentors:
+    get:
+      tags:
+        - Mentorship Search
+      summary: Поиск наставников
+      operationId: searchMentors
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: min_reputation
+          in: query
+          schema:
+            type: integer
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список наставников
+          content:
+            application/json:
+              schema:
+                $ref: 'social-mentorship-schemas.yaml#/components/schemas/MentorsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/mentees:
+    get:
+      tags:
+        - Mentorship Search
+      summary: Поиск учеников
+      operationId: searchMentees
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill
+          in: query
+          schema:
+            type: string
+        - name: max_level
+          in: query
+          schema:
+            type: integer
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список учеников
+          content:
+            application/json:
+              schema:
+                $ref: 'social-mentorship-schemas.yaml#/components/schemas/MenteesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /social/mentorship/mentors/{mentorId}:
+    get:
+      tags:
+        - Mentorship Search
+      summary: Получить информацию о наставнике
+      operationId: getMentor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mentorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о наставнике
+          content:
+            application/json:
+              schema:
+                $ref: 'social-mentorship-schemas.yaml#/components/schemas/Mentor'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    MentorsResponse:
+      $ref: 'social-mentorship-schemas.yaml#/components/schemas/MentorsResponse'
+    Mentor:
+      $ref: 'social-mentorship-schemas.yaml#/components/schemas/Mentor'
+    MenteesResponse:
+      $ref: 'social-mentorship-schemas.yaml#/components/schemas/MenteesResponse'
+    Mentee:
+      $ref: 'social-mentorship-schemas.yaml#/components/schemas/Mentee'
+
+security:
+  - BearerAuth: []
+

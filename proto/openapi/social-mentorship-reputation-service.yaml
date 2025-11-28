@@ -1,7 +1,12 @@
 openapi: 3.0.3
 info:
   title: Social Mentorship Reputation Service API
-  description: API для репутации и отзывов наставников
+  description: |
+    API для управления репутацией и отзывами наставников.
+    
+    **Функциональность:**
+    - Получение репутации наставников
+    - Создание отзывов о наставниках
   version: 2.0.0
   contact:
     name: NECPGAME API Support
@@ -39,7 +44,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MentorReputation'
+                $ref: 'social-mentorship-schemas.yaml#/components/schemas/MentorReputation'
         '404':
           $ref: 'common.yaml#/components/responses/NotFound'
         '401':
@@ -67,14 +72,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateMentorReviewRequest'
+              $ref: 'social-mentorship-schemas.yaml#/components/schemas/CreateMentorReviewRequest'
       responses:
-        '201':
+        '200':
           description: Отзыв создан
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MentorReview'
+                $ref: 'social-mentorship-schemas.yaml#/components/schemas/MentorReview'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
@@ -89,65 +94,11 @@ components:
 
   schemas:
     MentorReputation:
-      type: object
-      properties:
-        mentor_id:
-          type: string
-          format: uuid
-        reputation_score:
-          type: number
-          format: decimal
-        total_reviews:
-          type: integer
-        average_rating:
-          type: number
-          format: decimal
-        positive_reviews:
-          type: integer
-        negative_reviews:
-          type: integer
-
+      $ref: 'social-mentorship-schemas.yaml#/components/schemas/MentorReputation'
     CreateMentorReviewRequest:
-      type: object
-      required:
-        - rating
-        - comment
-      properties:
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        comment:
-          type: string
-          maxLength: 500
-
+      $ref: 'social-mentorship-schemas.yaml#/components/schemas/CreateMentorReviewRequest'
     MentorReview:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        mentor_id:
-          type: string
-          format: uuid
-        reviewer_id:
-          type: string
-          format: uuid
-        rating:
-          type: integer
-        comment:
-          type: string
-        created_at:
-          type: string
-          format: date-time
+      $ref: 'social-mentorship-schemas.yaml#/components/schemas/MentorReview'
 
 security:
   - BearerAuth: []
-
-
-
-
-
-
-
-
