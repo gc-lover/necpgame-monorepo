@@ -276,7 +276,11 @@ func (c *Client) writePump() {
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+					logger := GetLogger()
+					logger.WithError(err).Warn("Failed to send close message")
+					RecordWebSocketError("write_close_message_failed")
+				}
 				return
 			}
 
@@ -296,20 +300,45 @@ func (c *Client) writePump() {
 
 			w, err := c.conn.NextWriter(messageType)
 			if err != nil {
+				logger := GetLogger()
+				logger.WithError(err).Error("Failed to get next writer, closing connection")
+				RecordWebSocketError("next_writer_failed")
 				return
 			}
-			w.Write(message)
+			
+			if _, err := w.Write(message); err != nil {
+				logger := GetLogger()
+				logger.WithError(err).Error("Failed to write message, closing connection")
+				RecordWebSocketError("write_message_failed")
+				w.Close()
+				return
+			}
 
 			n := len(c.send)
 			for i := 0; i < n; i++ {
 				nextMsg := <-c.send
 				if messageType == websocket.TextMessage {
-					w.Write([]byte{'\n'})
+					if _, err := w.Write([]byte{'\n'}); err != nil {
+						logger := GetLogger()
+						logger.WithError(err).Error("Failed to write newline, closing connection")
+						RecordWebSocketError("write_newline_failed")
+						w.Close()
+						return
+					}
 				}
-				w.Write(nextMsg)
+				if _, err := w.Write(nextMsg); err != nil {
+					logger := GetLogger()
+					logger.WithError(err).Error("Failed to write next message, closing connection")
+					RecordWebSocketError("write_next_message_failed")
+					w.Close()
+					return
+				}
 			}
 
 			if err := w.Close(); err != nil {
+				logger := GetLogger()
+				logger.WithError(err).Error("Failed to close writer, closing connection")
+				RecordWebSocketError("close_writer_failed")
 				return
 			}
 		case <-ticker.C:
