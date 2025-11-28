@@ -25,7 +25,11 @@ func NewAdminRepository(db *pgxpool.Pool) *AdminRepository {
 }
 
 func (r *AdminRepository) CreateAuditLog(ctx context.Context, log *models.AdminAuditLog) error {
-	detailsJSON, _ := json.Marshal(log.Details)
+	detailsJSON, err := json.Marshal(log.Details)
+	if err != nil {
+		r.logger.WithError(err).WithField("admin_id", log.AdminID).Error("Failed to marshal audit log details JSON")
+		return fmt.Errorf("failed to marshal audit log details: %w", err)
+	}
 
 	query := `
 		INSERT INTO admin.admin_audit_log (
@@ -35,7 +39,7 @@ func (r *AdminRepository) CreateAuditLog(ctx context.Context, log *models.AdminA
 			gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, NOW()
 		) RETURNING id, created_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		log.AdminID, log.ActionType, log.TargetID, log.TargetType,
 		detailsJSON, log.IPAddress, log.UserAgent,
 	).Scan(&log.ID, &log.CreatedAt)
@@ -67,7 +71,10 @@ func (r *AdminRepository) GetAuditLog(ctx context.Context, logID uuid.UUID) (*mo
 	}
 
 	if len(detailsJSON) > 0 {
-		json.Unmarshal(detailsJSON, &log.Details)
+		if err := json.Unmarshal(detailsJSON, &log.Details); err != nil {
+			r.logger.WithError(err).WithField("log_id", log.ID).Error("Failed to unmarshal audit log details JSON")
+			return nil, fmt.Errorf("failed to unmarshal audit log details: %w", err)
+		}
 	} else {
 		log.Details = make(map[string]interface{})
 	}
@@ -120,7 +127,10 @@ func (r *AdminRepository) ListAuditLogs(ctx context.Context, adminID *uuid.UUID,
 		}
 
 		if len(detailsJSON) > 0 {
-			json.Unmarshal(detailsJSON, &log.Details)
+			if err := json.Unmarshal(detailsJSON, &log.Details); err != nil {
+				r.logger.WithError(err).WithField("log_id", log.ID).Error("Failed to unmarshal audit log details JSON")
+				return nil, fmt.Errorf("failed to unmarshal audit log details for log %s: %w", log.ID, err)
+			}
 		} else {
 			log.Details = make(map[string]interface{})
 		}
