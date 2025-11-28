@@ -25,7 +25,11 @@ func NewVoiceRepository(db *pgxpool.Pool) *VoiceRepository {
 }
 
 func (r *VoiceRepository) CreateChannel(ctx context.Context, channel *models.VoiceChannel) error {
-	settingsJSON, _ := json.Marshal(channel.Settings)
+	settingsJSON, err := json.Marshal(channel.Settings)
+	if err != nil {
+		r.logger.WithError(err).WithField("channel_name", channel.Name).Error("Failed to marshal channel settings JSON")
+		return fmt.Errorf("failed to marshal channel settings: %w", err)
+	}
 
 	query := `
 		INSERT INTO social.voice_channels (
@@ -35,7 +39,7 @@ func (r *VoiceRepository) CreateChannel(ctx context.Context, channel *models.Voi
 			gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, NOW(), NOW()
 		) RETURNING id, created_at, updated_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		channel.Type, channel.OwnerID, channel.OwnerType, channel.Name,
 		channel.MaxMembers, channel.QualityPreset, settingsJSON,
 	).Scan(&channel.ID, &channel.CreatedAt, &channel.UpdatedAt)
@@ -67,7 +71,10 @@ func (r *VoiceRepository) GetChannel(ctx context.Context, channelID uuid.UUID) (
 	}
 
 	if len(settingsJSON) > 0 {
-		json.Unmarshal(settingsJSON, &channel.Settings)
+		if err := json.Unmarshal(settingsJSON, &channel.Settings); err != nil {
+			r.logger.WithError(err).WithField("channel_id", channel.ID).Error("Failed to unmarshal channel settings JSON")
+			return nil, fmt.Errorf("failed to unmarshal channel settings: %w", err)
+		}
 	} else {
 		channel.Settings = make(map[string]interface{})
 	}
@@ -117,7 +124,10 @@ func (r *VoiceRepository) ListChannels(ctx context.Context, channelType *models.
 		}
 
 		if len(settingsJSON) > 0 {
-			json.Unmarshal(settingsJSON, &channel.Settings)
+			if err := json.Unmarshal(settingsJSON, &channel.Settings); err != nil {
+				r.logger.WithError(err).WithField("channel_id", channel.ID).Error("Failed to unmarshal channel settings JSON")
+				return nil, fmt.Errorf("failed to unmarshal channel settings for channel %s: %w", channel.ID, err)
+			}
 		} else {
 			channel.Settings = make(map[string]interface{})
 		}
@@ -129,8 +139,17 @@ func (r *VoiceRepository) ListChannels(ctx context.Context, channelType *models.
 }
 
 func (r *VoiceRepository) AddParticipant(ctx context.Context, participant *models.VoiceParticipant) error {
-	positionJSON, _ := json.Marshal(participant.Position)
-	statsJSON, _ := json.Marshal(participant.Stats)
+	positionJSON, err := json.Marshal(participant.Position)
+	if err != nil {
+		r.logger.WithError(err).WithField("character_id", participant.CharacterID).Error("Failed to marshal participant position JSON")
+		return fmt.Errorf("failed to marshal participant position: %w", err)
+	}
+	
+	statsJSON, err := json.Marshal(participant.Stats)
+	if err != nil {
+		r.logger.WithError(err).WithField("character_id", participant.CharacterID).Error("Failed to marshal participant stats JSON")
+		return fmt.Errorf("failed to marshal participant stats: %w", err)
+	}
 
 	query := `
 		INSERT INTO social.voice_participants (
@@ -140,7 +159,7 @@ func (r *VoiceRepository) AddParticipant(ctx context.Context, participant *model
 			gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW(), NOW()
 		) RETURNING id, joined_at, updated_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		participant.ChannelID, participant.CharacterID, participant.Status,
 		participant.WebRTCToken, positionJSON, statsJSON,
 	).Scan(&participant.ID, &participant.JoinedAt, &participant.UpdatedAt)
@@ -181,13 +200,25 @@ func (r *VoiceRepository) GetParticipant(ctx context.Context, channelID, charact
 	}
 
 	if len(positionJSON) > 0 {
-		json.Unmarshal(positionJSON, &participant.Position)
+		if err := json.Unmarshal(positionJSON, &participant.Position); err != nil {
+			r.logger.WithError(err).WithFields(map[string]interface{}{
+				"channel_id":   channelID,
+				"character_id": characterID,
+			}).Error("Failed to unmarshal participant position JSON")
+			return nil, fmt.Errorf("failed to unmarshal participant position: %w", err)
+		}
 	} else {
 		participant.Position = make(map[string]interface{})
 	}
 
 	if len(statsJSON) > 0 {
-		json.Unmarshal(statsJSON, &participant.Stats)
+		if err := json.Unmarshal(statsJSON, &participant.Stats); err != nil {
+			r.logger.WithError(err).WithFields(map[string]interface{}{
+				"channel_id":   channelID,
+				"character_id": characterID,
+			}).Error("Failed to unmarshal participant stats JSON")
+			return nil, fmt.Errorf("failed to unmarshal participant stats: %w", err)
+		}
 	} else {
 		participant.Stats = make(map[string]interface{})
 	}
@@ -224,13 +255,25 @@ func (r *VoiceRepository) ListParticipants(ctx context.Context, channelID uuid.U
 		}
 
 		if len(positionJSON) > 0 {
-			json.Unmarshal(positionJSON, &participant.Position)
+			if err := json.Unmarshal(positionJSON, &participant.Position); err != nil {
+				r.logger.WithError(err).WithFields(map[string]interface{}{
+					"channel_id":   channelID,
+					"participant_id": participant.ID,
+				}).Error("Failed to unmarshal participant position JSON")
+				return nil, fmt.Errorf("failed to unmarshal participant position for participant %s: %w", participant.ID, err)
+			}
 		} else {
 			participant.Position = make(map[string]interface{})
 		}
 
 		if len(statsJSON) > 0 {
-			json.Unmarshal(statsJSON, &participant.Stats)
+			if err := json.Unmarshal(statsJSON, &participant.Stats); err != nil {
+				r.logger.WithError(err).WithFields(map[string]interface{}{
+					"channel_id":   channelID,
+					"participant_id": participant.ID,
+				}).Error("Failed to unmarshal participant stats JSON")
+				return nil, fmt.Errorf("failed to unmarshal participant stats for participant %s: %w", participant.ID, err)
+			}
 		} else {
 			participant.Stats = make(map[string]interface{})
 		}
@@ -252,9 +295,16 @@ func (r *VoiceRepository) UpdateParticipantStatus(ctx context.Context, channelID
 }
 
 func (r *VoiceRepository) UpdateParticipantPosition(ctx context.Context, channelID, characterID uuid.UUID, position map[string]interface{}) error {
-	positionJSON, _ := json.Marshal(position)
+	positionJSON, err := json.Marshal(position)
+	if err != nil {
+		r.logger.WithError(err).WithFields(map[string]interface{}{
+			"channel_id":   channelID,
+			"character_id": characterID,
+		}).Error("Failed to marshal participant position JSON")
+		return fmt.Errorf("failed to marshal participant position: %w", err)
+	}
 
-	_, err := r.db.Exec(ctx,
+	_, err = r.db.Exec(ctx,
 		`UPDATE social.voice_participants
 		 SET position = $1, updated_at = NOW()
 		 WHERE channel_id = $2 AND character_id = $3`,

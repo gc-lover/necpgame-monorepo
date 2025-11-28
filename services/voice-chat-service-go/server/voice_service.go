@@ -256,7 +256,11 @@ func (s *VoiceService) publishChannelCreatedEvent(ctx context.Context, channel *
 		"timestamp":  time.Now().Format(time.RFC3339),
 	}
 
-	eventData, _ := json.Marshal(payload)
+	eventData, err := json.Marshal(payload)
+	if err != nil {
+		s.logger.WithError(err).WithField("channel_id", channel.ID).Error("Failed to marshal channel created event")
+		return
+	}
 	s.cache.Publish(ctx, "events:voice:channel-created", eventData)
 }
 
@@ -267,7 +271,14 @@ func (s *VoiceService) publishParticipantJoinedEvent(ctx context.Context, partic
 		"timestamp":    time.Now().Format(time.RFC3339),
 	}
 
-	eventData, _ := json.Marshal(payload)
+	eventData, err := json.Marshal(payload)
+	if err != nil {
+		s.logger.WithError(err).WithFields(map[string]interface{}{
+			"channel_id":   participant.ChannelID,
+			"character_id": participant.CharacterID,
+		}).Error("Failed to marshal participant joined event")
+		return
+	}
 	s.cache.Publish(ctx, "events:voice:participant-joined", eventData)
 }
 
@@ -278,7 +289,14 @@ func (s *VoiceService) publishParticipantLeftEvent(ctx context.Context, channelI
 		"timestamp":    time.Now().Format(time.RFC3339),
 	}
 
-	eventData, _ := json.Marshal(payload)
+	eventData, err := json.Marshal(payload)
+	if err != nil {
+		s.logger.WithError(err).WithFields(map[string]interface{}{
+			"channel_id":   channelID,
+			"character_id": characterID,
+		}).Error("Failed to marshal participant left event")
+		return
+	}
 	s.cache.Publish(ctx, "events:voice:participant-left", eventData)
 }
 
