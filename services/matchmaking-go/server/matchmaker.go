@@ -86,15 +86,29 @@ func (m *Matchmaker) popTickets(ctx context.Context, count int) []string {
 
 func (m *Matchmaker) allocate(ctx context.Context, tickets []string) {
 	instanceId := uuid.New().String()
+	logger := GetLogger()
 
-	playersJson, _ := json.Marshal(tickets)
+	playersJson, err := json.Marshal(tickets)
+	if err != nil {
+		logger.WithError(err).WithField("tickets_count", len(tickets)).Error("Failed to marshal tickets JSON, returning tickets to queue")
+		m.returnTicketsToQueue(ctx, tickets)
+		RecordError("marshal_tickets_failed")
+		return
+	}
+
 	payload := map[string]interface{}{
 		"instance": instanceId,
 		"mode":     m.config.Mode,
 		"players":  string(playersJson),
 	}
 
-	payloadJson, _ := json.Marshal(payload)
+	payloadJson, err := json.Marshal(payload)
+	if err != nil {
+		logger.WithError(err).WithField("instance_id", instanceId).Error("Failed to marshal payload JSON, returning tickets to queue")
+		m.returnTicketsToQueue(ctx, tickets)
+		RecordError("marshal_payload_failed")
+		return
+	}
 
 	args := redis.XAddArgs{
 		Stream: redisKeys.allocations(),
@@ -105,7 +119,6 @@ func (m *Matchmaker) allocate(ctx context.Context, tickets []string) {
 		},
 	}
 
-	logger := GetLogger()
 	if err := m.client.XAdd(ctx, &args).Err(); err != nil {
 		logger.WithError(err).Error("Error allocating match")
 		RecordError("allocate_match")
@@ -116,6 +129,17 @@ func (m *Matchmaker) allocate(ctx context.Context, tickets []string) {
 			"players":     len(tickets),
 		}).Info("Allocated match")
 	}
+}
+
+func (m *Matchmaker) returnTicketsToQueue(ctx context.Context, tickets []string) {
+	for _, ticket := range tickets {
+		if err := m.client.LPush(ctx, redisKeys.queue(m.config.Mode), ticket).Err(); err != nil {
+			logger := GetLogger()
+			logger.WithError(err).WithField("ticket", ticket).Error("Failed to return ticket to queue")
+			RecordError("return_ticket_failed")
+		}
+	}
+	RecordTicket("pushed_back")
 }
 
 type redisKeysType struct{}
