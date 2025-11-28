@@ -1,0 +1,206 @@
+components:
+  schemas:
+    CreatePlayerOrderRequest:
+      type: object
+      required:
+        - order_type
+        - title
+        - description
+        - reward
+      properties:
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        reward:
+          type: object
+          properties:
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        requirements:
+          type: object
+          additionalProperties: true
+
+    PlayerOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        executor_id:
+          type: string
+          format: uuid
+          nullable: true
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, accepted, in_progress, completed, cancelled]
+        reward:
+          type: object
+          properties:
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+        created_at:
+          type: string
+          format: date-time
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    PlayerOrdersResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerOrder'
+        total:
+          type: integer
+
+    CompletePlayerOrderRequest:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        evidence:
+          type: array
+          items:
+            type: string
+
+    ReviewPlayerOrderRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    PlayerOrderReview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        reviewer_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMultiExecutorOrderRequest:
+      type: object
+      required:
+        - order_type
+        - title
+        - description
+        - max_executors
+      properties:
+        order_type:
+          type: string
+          enum: [combat, hacking, trade, political, research, social]
+        title:
+          type: string
+        description:
+          type: string
+        max_executors:
+          type: integer
+          minimum: 2
+        reward:
+          type: object
+          properties:
+            currency:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+
+    InviteExecutorRequest:
+      type: object
+      required:
+        - executor_id
+      properties:
+        executor_id:
+          type: string
+          format: uuid
+
+    OrderRatingsResponse:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        ratings:
+          type: object
+          properties:
+            as_customer:
+              type: number
+              format: decimal
+            as_executor:
+              type: number
+              format: decimal
+        total_orders:
+          type: integer
+        completed_orders:
+          type: integer
+
+    OrderReputation:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        reputation_score:
+          type: integer
+        reputation_tier:
+          type: string
+        completed_orders:
+          type: integer
+        successful_orders:
+          type: integer
+        failed_orders:
+          type: integer
+

@@ -9,7 +9,7 @@ metadata:
   location: Boston
   period: 2020-2029
   year: 2027
-  version: "1.0.0"
+  version: "1.1.0"
   status: design
   created_at: 2025-11-26T00:00:00Z
   owner:
@@ -352,6 +352,105 @@ rewards:
       -40
     riley_supported: Pragmatists +60, smugglers +40, poor +50, legality -30
     sabotage: Extremists +70, public -60, Biotechnica -100, FBI -80
+
+quest_definition:
+  quest_type: side
+  level_min: 10
+  level_max: 15
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements: []
+  objectives:
+    - id: obj-001
+      text: "Встретиться с Riley Tide и получить задание на протест"
+      type: dialogue
+      target: riley_recruitment
+      optional: false
+    - id: obj-002
+      text: "Проникнуть на объект Biotechnica и получить образцы TeaSynth"
+      type: move
+      target: biotechnica_infiltration
+      optional: false
+    - id: obj-003
+      text: "Участвовать в символическом сбросе TeaSynth в Boston Harbor"
+      type: interact
+      target: harbor_dumping
+      optional: false
+    - id: obj-004
+      text: "Обнаружить контрабанду и принять решение"
+      type: choice
+      target: smuggling_decision
+      optional: false
+  rewards:
+    experience: 4500
+    currency: 18000
+    reputation:
+      boston: 30
+    unlocks:
+      - type: achievement
+        id: tea_party_activist
+  branches:
+    - id: protest_pure
+      condition: decision == "protest"
+      consequences:
+        environmental_heroism: true
+        smuggling_discovered: false
+      rewards:
+        currency: 18000
+        reputation:
+          green_wave: 60
+          biotechnica: -70
+          epa: 40
+    - id: riley_supported
+      condition: decision == "support_smuggling"
+      consequences:
+        smuggling_operation: true
+        profit_good_cause: true
+      rewards:
+        currency: 30000
+        reputation:
+          pragmatists: 60
+          smugglers: 40
+          poor: 50
+          legality: -30
+    - id: riley_exposed
+      condition: decision == "expose"
+      consequences:
+        riley_arrested: true
+        smuggling_stopped: true
+      rewards:
+        currency: 18000
+        reputation:
+          idealists: 40
+          riley_faction: -70
+          biotechnica: 30
+          activists: -40
+    - id: sabotage
+      condition: decision == "sabotage"
+      consequences:
+        biotechnica_permanently: true
+        escalation_violence: true
+      rewards:
+        currency: 18000
+        reputation:
+          extremists: 70
+          public: -60
+          biotechnica: -100
+          fbi: -80
+    - id: negotiate
+      condition: decision == "negotiate"
+      consequences:
+        corporate_reform: true
+        compromise_unlikely: true
+      rewards:
+        currency: 20000
+        reputation:
+          moderates: 50
+          biotechnica: 20
+          activists: 30
 
 integrations:
   quest_engine: Boston Tea Party branching five outcomes player agency moral complexity

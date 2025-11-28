@@ -1,0 +1,329 @@
+components:
+  schemas:
+    Party:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        leader_id:
+          type: string
+          format: uuid
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyMember'
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 5
+        loot_mode:
+          type: string
+          enum:
+            - free_for_all
+            - round_robin
+            - need_before_greed
+            - master_looter
+          default: free_for_all
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PartyMember:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - leader
+            - member
+        joined_at:
+          type: string
+          format: date-time
+
+    CreatePartyRequest:
+      type: object
+      properties:
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 5
+        loot_mode:
+          type: string
+          enum:
+            - free_for_all
+            - round_robin
+            - need_before_greed
+            - master_looter
+
+    InviteToPartyRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+
+    TransferLeadershipRequest:
+      type: object
+      required:
+        - new_leader_id
+      properties:
+        new_leader_id:
+          type: string
+          format: uuid
+
+    PartyInvitationsResponse:
+      type: object
+      properties:
+        invitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInvitation'
+        total:
+          type: integer
+
+    PartyInvitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        party_id:
+          type: string
+          format: uuid
+        inviter_id:
+          type: string
+          format: uuid
+        invitee_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - declined
+            - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    AddPartyMemberRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - leader
+            - member
+          default: member
+
+    ChangeMemberRoleRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum:
+            - leader
+            - member
+
+    LootModeResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        loot_mode:
+          type: string
+          enum:
+            - free_for_all
+            - round_robin
+            - need_before_greed
+            - master_looter
+
+    ChangeLootModeRequest:
+      type: object
+      required:
+        - loot_mode
+      properties:
+        loot_mode:
+          type: string
+          enum:
+            - free_for_all
+            - round_robin
+            - need_before_greed
+            - master_looter
+
+    DistributeLootRequest:
+      type: object
+      required:
+        - item_id
+        - target_account_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        target_account_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+
+    LootDistributionResult:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        distributed_to:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        mode:
+          type: string
+        distributed_at:
+          type: string
+          format: date-time
+
+    RollForLootRequest:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        min_roll:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 1
+        max_roll:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 100
+
+    RollResult:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        roll_value:
+          type: integer
+        winner:
+          type: boolean
+        rolls:
+          type: array
+          items:
+            type: object
+            properties:
+              account_id:
+                type: string
+                format: uuid
+              roll_value:
+                type: integer
+
+    PartyQuestsResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyQuest'
+        total:
+          type: integer
+
+    PartyQuest:
+      type: object
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        quest_name:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - failed
+        progress:
+          type: integer
+        progress_max:
+          type: integer
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    QuestSyncResult:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        synced:
+          type: boolean
+        participants_synced:
+          type: array
+          items:
+            type: string
+            format: uuid
+        synced_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+

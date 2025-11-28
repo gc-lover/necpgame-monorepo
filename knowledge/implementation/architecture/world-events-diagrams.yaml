@@ -1,0 +1,65 @@
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> WorldService[World Service<br/>8086]
+        
+        WorldService --> WEM[World Events Manager]
+        WorldService --> EEC[Event Effects Coordinator]
+        WorldService --> ESM[Event State Manager]
+        WorldService --> ESCM[Event Scale Manager]
+        WorldService --> ETH[Event Type Handler]
+        
+        Gateway --> EventScheduler[Event Scheduler Service<br/>8090]
+        
+        EventScheduler --> ES[Event Scheduler]
+        EventScheduler --> TM[Trigger Manager]
+        EventScheduler --> CV[Constraint Validator]
+        EventScheduler --> FM[Frequency Manager]
+        
+        WorldService --> EconomyService[Economy Service<br/>8085]
+        WorldService --> SocialService[Social Service<br/>8084]
+        WorldService --> GameplayService[Gameplay Service<br/>8083]
+        WorldService --> NotificationService[Notification Service<br/>8092]
+        WorldService --> AnalyticsService[Analytics Service<br/>8095]
+        
+        WorldService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        WorldService --> DB[(World Events DB)]
+        WorldService --> Cache[(Redis Cache)]
+        
+        Client --> WSWorld[WebSocket<br/>World Events]
+        WSWorld --> WorldService
+    ```
+
+  event_lifecycle_diagram: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> PLANNED: Create Event
+        PLANNED --> ANNOUNCED: Announce
+        ANNOUNCED --> ACTIVE: Activate
+        ACTIVE --> COOLDOWN: Complete
+        COOLDOWN --> ARCHIVED: Archive
+        ACTIVE --> ARCHIVED: Cancel
+        ANNOUNCED --> PLANNED: Cancel Announcement
+        COOLDOWN --> ACTIVE: Reactivate (Periodic)
+    ```
+
+  event_effects_flow: |
+    ```mermaid
+    graph LR
+        Event[World Event] --> Coordinator[Event Effects Coordinator]
+        Coordinator --> Economy[Economy Service]
+        Coordinator --> Social[Social Service]
+        Coordinator --> Gameplay[Gameplay Service]
+        Economy --> Prices[Price Changes]
+        Economy --> Currency[Currency Changes]
+        Social --> Reputation[Reputation Changes]
+        Social --> Relations[Faction Relations]
+        Gameplay --> TTK[TTK Changes]
+        Gameplay --> Content[Content Availability]
+    ```
+

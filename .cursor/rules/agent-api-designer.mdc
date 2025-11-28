@@ -15,8 +15,7 @@ Development Stage: `api-designer`
 - OpenAPI 3.0 спецификация, endpoints описание, request/response схемы, документирование API, валидация спецификации
 
 ## Оптимизация GitHub API
-См. `.cursor/rules/GITHUB_API_OPTIMIZATION.md`
-Главное: `mcp_github_search_issues` вместо множественных `issue_read`. Задержка 2-3 сек для поиска (лимит 30/мин).
+Поиск задач: `list_issues` с `labels` (5000/час) или `list_project_items` с `query` (5000/час). `search_issues` только для текста (1800/час).
 
 ## Разделение ответственности
 API Designer - схемы данных на уровне API (request/response в OpenAPI)
@@ -150,10 +149,15 @@ Development Stage: `design`
 ## ОБЯЗАТЕЛЬНАЯ программная валидация
 **КРИТИЧЕСКИ ВАЖНО:** Перед передачей Backend ОБЯЗАТЕЛЬНО выполни программную валидацию!
 
-### Инструменты (в порядке приоритета)
+### Инструменты валидации (в порядке приоритета)
 1. **Redocly CLI** (рекомендуется): `npx -y @redocly/cli lint proto/openapi/{service}.yaml`
 2. **Swagger CLI**: `npx -y @apidevtools/swagger-cli validate proto/openapi/{service}.yaml`
 3. **Bundling + Validation** (для $ref): `npx -y @redocly/cli bundle {file}.yaml -o /tmp/bundled.yaml && npx -y @redocly/cli lint /tmp/bundled.yaml`
+4. **Spectral** - линтинг OpenAPI с кастомными правилами (опционально)
+
+### Дополнительные инструменты (опционально)
+- **Swagger UI / Redoc** - для генерации интерактивной документации из OpenAPI
+- **OpenAPI Generator** - для проверки совместимости спецификации с различными генераторами
 
 ### Workflow валидации
 Создана спецификация → Программная валидация → OK? → Коммит → Обновить Issue → Передать Backend

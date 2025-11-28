@@ -435,11 +435,12 @@ jobs:
             const stage = '${{ steps.determine_stage.outputs.stage }}';
             
             if (issueNumber && agent) {
+              const readyLabel = `ready:${agent}`;
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
-                labels: [`agent:${agent}`]
+                labels: [`agent:${agent}`, readyLabel, 'ready']
               });
               
               const agentNames = {
@@ -551,12 +552,13 @@ jobs:
                 };
                 
                 const nextLabels = nextAgentLabels[nextStage] || [`stage:${nextStage}`];
+                const readyLabel = `ready:${nextStage}`;
                 
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issueNumber,
-                  labels: nextLabels
+                  labels: [...nextLabels, readyLabel, 'ready']
                 });
                 
                 const agentNames = {

@@ -12,7 +12,7 @@
 - ❌ НЕ работает: между перезапусками Cursor
 
 **Основные методы оптимизации (работают всегда):**
-1. **Использование поиска** вместо множественных `issue_read` - это главное!
+1. **Использование list_issues** с `labels` вместо `search_issues` - это главное! (обходит Search API лимит)
 2. **Батчинг** для массовых операций - это главное!
 3. **Кэширование** - дополнительная оптимизация для повторных запросов в одной сессии
 
@@ -21,12 +21,12 @@
 ```javascript
 // Инициализируй кэш в начале работы агента
 const issueCache = new Map();
-const searchCache = new Map();
+const issuesListCache = new Map();
 const projectCache = new Map();
 
 // TTL для разных типов данных
 const ISSUE_TTL = 5 * 60 * 1000; // 5 минут
-const SEARCH_TTL = 2 * 60 * 1000; // 2 минуты
+const ISSUES_LIST_TTL = 2 * 60 * 1000; // 2 минуты
 const PROJECT_TTL = 3 * 60 * 1000; // 3 минуты
 ```
 
@@ -69,34 +69,36 @@ async function getCachedIssue(issueNumber) {
 ## 2. Поиск Issues с кэшированием
 
 ```javascript
-async function searchIssuesCached(query, options = {}) {
-  const { perPage = 100, page = 1 } = options;
-  const cacheKey = `search:${query}:${perPage}:${page}`;
+async function listIssuesCached(agentLabel, stageLabel, options = {}) {
+  const { perPage = 100 } = options;
+  const cacheKey = `issues:${agentLabel}:${stageLabel}:${perPage}`;
   
-  // Проверяем кэш поиска
-  if (searchCache.has(cacheKey)) {
-    const cached = searchCache.get(cacheKey);
-    if (Date.now() - cached.timestamp < SEARCH_TTL) {
+  // Проверяем кэш
+  if (issuesListCache.has(cacheKey)) {
+    const cached = issuesListCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < ISSUES_LIST_TTL) {
       return cached.data;
     }
   }
   
-  // Запрашиваем через поиск
-  const searchResult = await mcp_github_search_issues({
-    query: query,
-    perPage: perPage,
-    page: page
+  // Запрашиваем через list_issues (обходит Search API лимит)
+  const result = await mcp_github_list_issues({
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    labels: [agentLabel, stageLabel].filter(Boolean),
+    state: 'OPEN',
+    perPage: perPage
   });
   
-  // Кэшируем результаты поиска
-  searchCache.set(cacheKey, {
-    data: searchResult,
+  // Кэшируем результаты
+  issuesListCache.set(cacheKey, {
+    data: result,
     timestamp: Date.now()
   });
   
   // Кэшируем каждое Issue отдельно
-  if (searchResult.items) {
-    searchResult.items.forEach(issue => {
+  if (result.issues) {
+    result.issues.forEach(issue => {
       issueCache.set(issue.number, {
         data: issue,
         timestamp: Date.now()
@@ -106,7 +108,12 @@ async function searchIssuesCached(query, options = {}) {
   
   await delay(500);
   
-  return searchResult;
+  // Фильтрация готовых задач через метки ready:*
+  const readyIssues = result.issues.filter(issue => 
+    issue.labels.some(label => label.name.startsWith('ready:'))
+  );
+  
+  return readyIssues.length > 0 ? { ...result, issues: readyIssues } : result;
 }
 ```
 
@@ -273,22 +280,20 @@ function delay(ms) {
 ```javascript
 // Инициализация
 const issueCache = new Map();
-const searchCache = new Map();
+const issuesListCache = new Map();
 const ISSUE_TTL = 5 * 60 * 1000;
-const SEARCH_TTL = 2 * 60 * 1000;
+const ISSUES_LIST_TTL = 2 * 60 * 1000;
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // Поиск задач агента
-async function findMyTasks(agentLabel) {
-  const query = `is:issue is:open label:${agentLabel}`;
+async function findMyTasks(agentLabel, stageLabel) {
+  // Используем кэшированный list_issues (обходит Search API лимит)
+  const result = await listIssuesCached(agentLabel, stageLabel);
   
-  // Используем кэшированный поиск
-  const result = await searchIssuesCached(query);
-  
-  return result.items || [];
+  return result.issues || [];
 }
 
 // Чтение Issue

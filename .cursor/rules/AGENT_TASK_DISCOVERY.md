@@ -6,13 +6,22 @@
 
 ## Способ 1: Поиск через MCP GitHub (рекомендуется)
 
+**Выбор метода:** См. `.cursor/rules/GITHUB_API_METHOD_SELECTION.md` для выбора между `list_issues` и `search_issues`.
+
 ### ⚠️ ОБЯЗАТЕЛЬНО: Использование поиска
 
-**КРИТИЧЕСКИ ВАЖНО:** ВСЕГДА используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read`. Это главный метод избежания rate limit. Задержка 2-3 сек для поиска (лимит 30/мин, secondary rate limit блокирует ВСЕ запросы).
+**КРИТИЧЕСКИ ВАЖНО:** ВСЕГДА используй `mcp_github_list_issues` с `labels` вместо `mcp_github_search_issues`. Это обходит Search API лимит (30/мин) и использует GraphQL (5000/час). Задержка 200-300ms.
 
 **Перед поиском задач ОБЯЗАТЕЛЬНО:**
-1. **Используй поиск** - `mcp_github_search_issues` вместо множественных `mcp_github_issue_read`
-2. (Опционально) Инициализируй кэш в памяти для повторных запросов в рамках одной сессии (см. `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md`)
+
+1. **Выбери правильный метод:**
+   - **Фильтрация по меткам/статусу** → `mcp_github_list_issues` с `labels` (5000/час)
+   - **Структурированный поиск через Projects** → `mcp_github_list_project_items` с `query` (5000/час)
+   - **Поиск по тексту/датам** → `mcp_github_search_issues` (1800/час, только если нужно)
+
+2. **Проверяй готовность через метки** - метка `ready:idea-writer` вместо комментариев
+
+3. (Опционально) Инициализируй кэш в памяти для повторных запросов в рамках одной сессии (см. `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md`)
 
 ### Для Idea Writer агента
 
@@ -34,11 +43,28 @@ async function findIdeaWriterTasks() {
     }
   }
   
-  // Используем поиск вместо множественных запросов
-  const result = await mcp_github_search_issues({
-    query: query,
+  // Вариант 1: list_issues по меткам (5000/час)
+  const issues = await mcp_github_list_issues({
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    labels: ['agent:idea-writer', 'stage:idea'],
+    state: 'OPEN',
     perPage: 100
   });
+  
+  // Вариант 2: list_project_items через Projects (5000/час, структурированные поля)
+  const projectItems = await mcp_github_list_project_items({
+    owner_type: 'user',
+    owner: 'gc-lover',
+    project_number: 1,
+    query: 'Development Stage:idea-writer status:Todo',
+    per_page: 100
+  });
+  
+  // Фильтрация готовых задач через метки ready:*
+  const readyTasks = issues.issues.filter(issue => 
+    issue.labels.some(label => label.name.startsWith('ready:'))
+  );
   
   // Кэшируем результаты
   searchCache.set(cacheKey, { data: result, timestamp: Date.now() });
@@ -120,11 +146,19 @@ async function findIdeaWriterTasks() {
        }
      }
      
-     // Используем поиск (НЕ list_issues для множественных запросов)
-     const result = await mcp_github_search_issues({
-       query: query,
-       perPage: 100
-     });
+  // Сценарий: поиск по меткам агента → используем list_issues
+  const result = await mcp_github_list_issues({
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    labels: [agentLabel, 'stage:idea'].filter(Boolean),
+    state: 'OPEN',
+    perPage: 100
+  });
+  
+  // Фильтрация готовых задач
+  const readyTasks = result.issues.filter(issue => 
+    issue.labels.some(label => label.name.startsWith('ready:'))
+  );
      
      // Кэшируем
      searchCache.set(cacheKey, { data: result, timestamp: Date.now() });
@@ -138,12 +172,10 @@ async function findIdeaWriterTasks() {
    
    **❌ НЕПРАВИЛЬНО:**
    ```javascript
-   // Множественные запросы вместо поиска
-   const issues = await mcp_github_list_issues({
-     owner: 'gc-lover',
-     repo: 'necpgame-monorepo',
-     labels: ['agent:idea-writer'],
-     state: 'OPEN'
+   // Использование search_issues (лимит 30/мин, блокирует все запросы)
+   const issues = await mcp_github_search_issues({
+     query: 'is:issue is:open label:agent:idea-writer',
+     perPage: 100
    });
    ```
 
@@ -273,15 +305,16 @@ Workflow `project-status-automation.yml` автоматически:
 - Устанавливает `Development Stage` на основе меток
 - Комментирует в Issue, когда задача готова
 
-**Агент должен проверять комментарии:**
-- Если есть комментарий от `github-actions[bot]` с текстом "Ready for {agent}" → задача готова
+**Агент должен проверять готовность через метки:**
+- Если есть метка `ready:idea-writer` или `ready` → задача готова (вместо комментариев)
+- Метки уже есть в ответе `list_issues`, не нужен отдельный запрос
 
 ## Рекомендации
 
-1. **ОБЯЗАТЕЛЬНО: Использование поиска (главное!):**
-   - **ВСЕГДА** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read`
-   - Это главный метод избежания rate limit
-   - Один запрос поиска заменяет 100+ запросов `issue_read`
+1. **ОБЯЗАТЕЛЬНО: Использование list_issues (главное!):**
+   - **ВСЕГДА** используй `mcp_github_list_issues` с `labels` вместо `mcp_github_search_issues`
+   - Это обходит Search API лимит (30/мин) и использует GraphQL (5000/час)
+   - Один запрос list_issues заменяет search_issues и обходит лимиты
 
 2. **ОБЯЗАТЕЛЬНО: Батчинг для массовых операций:**
    - Для >=3 Issues используй батчинг с задержками

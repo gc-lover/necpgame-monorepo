@@ -75,13 +75,19 @@ func (r *worldRepository) GetTravelEventsByEpoch(ctx context.Context, epochID st
 		}
 		
 		if len(skillChecksJSON) > 0 {
-			json.Unmarshal(skillChecksJSON, &event.SkillChecks)
+			if err := json.Unmarshal(skillChecksJSON, &event.SkillChecks); err != nil {
+				continue
+			}
 		}
 		if len(rewardsJSON) > 0 {
-			json.Unmarshal(rewardsJSON, &event.Rewards)
+			if err := json.Unmarshal(rewardsJSON, &event.Rewards); err != nil {
+				continue
+			}
 		}
 		if len(penaltiesJSON) > 0 {
-			json.Unmarshal(penaltiesJSON, &event.Penalties)
+			if err := json.Unmarshal(penaltiesJSON, &event.Penalties); err != nil {
+				continue
+			}
 		}
 		
 		events = append(events, event)
@@ -124,13 +130,19 @@ func (r *worldRepository) GetAvailableTravelEvents(ctx context.Context, zoneID u
 		}
 		
 		if len(skillChecksJSON) > 0 {
-			json.Unmarshal(skillChecksJSON, &event.SkillChecks)
+			if err := json.Unmarshal(skillChecksJSON, &event.SkillChecks); err != nil {
+				continue
+			}
 		}
 		if len(rewardsJSON) > 0 {
-			json.Unmarshal(rewardsJSON, &event.Rewards)
+			if err := json.Unmarshal(rewardsJSON, &event.Rewards); err != nil {
+				continue
+			}
 		}
 		if len(penaltiesJSON) > 0 {
-			json.Unmarshal(penaltiesJSON, &event.Penalties)
+			if err := json.Unmarshal(penaltiesJSON, &event.Penalties); err != nil {
+				continue
+			}
 		}
 		
 		events = append(events, event)

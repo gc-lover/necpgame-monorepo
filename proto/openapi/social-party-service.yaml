@@ -20,93 +20,63 @@ tags:
 paths:
   /social/party:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Создать группу
       operationId: createParty
-      security:
-        - BearerAuth: []
+      security: [BearerAuth: []]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePartyRequest'
+            schema: { $ref: 'social-party-schemas.yaml#/components/schemas/CreatePartyRequest' }
       responses:
         '201':
           description: Группа создана
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' } }
+        '400': { $ref: 'social-party-responses.yaml#/components/responses/BadRequest' }
+        '500': { $ref: 'social-party-responses.yaml#/components/responses/InternalServerError' }
     get:
-      tags:
-        - Party
+      tags: [Party]
       summary: Получить информацию о группе
       operationId: getParty
-      security:
-        - BearerAuth: []
+      security: [BearerAuth: []]
       parameters:
         - name: character_id
           in: query
           required: true
-          schema:
-            type: string
-            format: uuid
+          schema: { type: string, format: uuid }
       responses:
         '200':
           description: Информация о группе
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
-        '404':
-          $ref: '#/components/responses/NotFound'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' } }
+        '404': { $ref: 'social-party-responses.yaml#/components/responses/NotFound' }
 
   /social/party/{partyId}:
     get:
-      tags:
-        - Party
+      tags: [Party]
       summary: Получить группу по ID
       operationId: getPartyById
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Информация о группе
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
 
     delete:
-      tags:
-        - Party
+      tags: [Party]
       summary: Распустить группу
       operationId: disbandParty
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Группа распущена
@@ -115,89 +85,56 @@ paths:
               schema:
                 type: object
                 properties:
-                  status:
-                    type: string
-                    example: disbanded
+                  status: { type: string, example: disbanded }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/invite:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/invite:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Пригласить игрока в группу
       operationId: inviteToParty
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/InviteToPartyRequest'
+            schema: { $ref: 'social-party-schemas.yaml#/components/schemas/InviteToPartyRequest' }
       responses:
         '200':
           description: Приглашение отправлено
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+            application/json: }              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/join:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/join:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Присоединиться к группе
       operationId: joinParty
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Присоединился к группе
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/leave:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/leave:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Покинуть группу
       operationId: leaveParty
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Покинул группу
@@ -206,29 +143,18 @@ paths:
               schema:
                 type: object
                 properties:
-                  status:
-                    type: string
-                    example: left
+                  status: { type: string, example: left }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/kick:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/kick:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Исключить игрока из группы
       operationId: kickFromParty
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
         - name: character_id
           in: query
           required: true
@@ -240,28 +166,18 @@ paths:
           description: Игрок исключен
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/transfer-leadership:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/transfer-leadership:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Передать лидерство
       operationId: transferLeadership
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
         - name: character_id
           in: query
           required: true
@@ -273,113 +189,71 @@ paths:
           description: Лидерство передано
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/player/{accountId}:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/player/{accountId}:
     get:
-      tags:
-        - Party
+      tags: [Party]
       summary: Получить группу игрока
       operationId: getPlayerParty
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: accountId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Группа игрока
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/leader:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/leader:
     put:
-      tags:
-        - Party
+      tags: [Party]
       summary: Сменить лидера группы
       operationId: transferLeadership
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/TransferLeadershipRequest'
+            schema: { $ref: 'social-party-schemas.yaml#/components/schemas/TransferLeadershipRequest' }
       responses:
         '200':
           description: Лидер изменён
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+            application/json: }              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/invitations/{invitationId}/accept:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/invitations/{invitationId}/accept:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Принять приглашение в группу
       operationId: acceptPartyInvitation
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: invitationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: invitationId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Приглашение принято
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/invitations/{invitationId}/decline:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/invitations/{invitationId}/decline:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Отклонить приглашение в группу
       operationId: declinePartyInvitation
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: invitationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: invitationId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Приглашение отклонено
@@ -392,83 +266,51 @@ paths:
                     type: string
                     example: declined
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/invitations/player/{accountId}:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/invitations/player/{accountId}:
     get:
-      tags:
-        - Party
+      tags: [Party]
       summary: Получить приглашения игрока
       operationId: getPlayerInvitations
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: accountId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Приглашения игрока
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/PartyInvitationsResponse'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/PartyInvitationsResponse' }
         '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /social/party/{partyId}/members:
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest' } }  /social/party/{partyId}/members:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Добавить участника в группу
       operationId: addPartyMember
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/AddPartyMemberRequest'
+            schema: { $ref: 'social-party-schemas.yaml#/components/schemas/AddPartyMemberRequest' }
       responses:
         '200':
           description: Участник добавлен
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+            application/json: }              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/members/{accountId}:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/members/{accountId}:
     delete:
-      tags:
-        - Party
+      tags: [Party]
       summary: Удалить участника из группы
       operationId: removePartyMember
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
         - name: accountId
           in: path
           required: true
@@ -480,27 +322,18 @@ paths:
           description: Участник удалён
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
 
     put:
-      tags:
-        - Party
+      tags: [Party]
       summary: Изменить роль участника
       operationId: changePartyMemberRole
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
         - name: accountId
           in: path
           required: true
@@ -511,183 +344,115 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/ChangeMemberRoleRequest'
+            schema: { $ref: 'social-party-schemas.yaml#/components/schemas/ChangeMemberRoleRequest' }
       responses:
         '200':
           description: Роль изменена
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+            application/json: }              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/loot-mode:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/loot-mode:
     get:
-      tags:
-        - Party
+      tags: [Party]
       summary: Получить текущий режим распределения лута
       operationId: getLootMode
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Режим распределения лута
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/LootModeResponse'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/LootModeResponse' }
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
 
     put:
-      tags:
-        - Party
+      tags: [Party]
       summary: Изменить режим распределения лута
       operationId: changeLootMode
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/ChangeLootModeRequest'
+            schema: { $ref: 'social-party-schemas.yaml#/components/schemas/ChangeLootModeRequest' }
       responses:
         '200':
           description: Режим изменен
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Party'
+            application/json: }              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/loot/distribute:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
+ }  /social/party/{partyId}/loot/distribute:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Распределить лут между участниками группы
       operationId: distributeLoot
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/DistributeLootRequest'
+            schema: { $ref: 'social-party-schemas.yaml#/components/schemas/DistributeLootRequest' }
       responses:
         '200':
           description: Лут распределён
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/LootDistributionResult'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/LootDistributionResult' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/loot/roll:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound' } }  /social/party/{partyId}/loot/roll:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Бросок кубика для лута
       operationId: rollForLoot
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/RollForLootRequest'
+            schema: { $ref: 'social-party-schemas.yaml#/components/schemas/RollForLootRequest' }
       responses:
         '200':
           description: Результат броска
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/RollResult'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/RollResult' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/quests:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound' } }  /social/party/{partyId}/quests:
     get:
-      tags:
-        - Party
+      tags: [Party]
       summary: Получить задания группы
       operationId: getPartyQuests
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200':
           description: Задания группы
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/PartyQuestsResponse'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/PartyQuestsResponse' }
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /social/party/{partyId}/quests/{questId}/sync:
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound' } }  /social/party/{partyId}/quests/{questId}/sync:
     post:
-      tags:
-        - Party
+      tags: [Party]
       summary: Синхронизировать прогресс задания группы
       operationId: syncPartyQuest
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: partyId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      security: [BearerAuth: []]
+      parameters: [{ name: partyId, in: path, required: true, schema: { type: string, format: uuid } }]
         - name: questId
           in: path
           required: true
@@ -699,12 +464,11 @@ paths:
           description: Прогресс синхронизирован
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/QuestSyncResult'
+              schema: { $ref: 'social-party-schemas.yaml#/components/schemas/QuestSyncResult' }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'social-party-responses.yaml#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'social-party-responses.yaml#/components/responses/NotFound'
 
 components:
   securitySchemes:
@@ -712,369 +476,28 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
-  schemas:
-    Party:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        leader_id:
-          type: string
-          format: uuid
-        members:
-          type: array
-          items:
-            $ref: '#/components/schemas/PartyMember'
-        max_size:
-          type: integer
-          minimum: 2
-          maximum: 5
-          default: 5
-        loot_mode:
-          type: string
-          enum:
-            - free_for_all
-            - round_robin
-            - need_before_greed
-            - master_looter
-          default: free_for_all
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    PartyMember:
-      type: object
-      properties:
-        character_id:
-          type: string
-          format: uuid
-        role:
-          type: string
-          enum:
-            - leader
-            - member
-        joined_at:
-          type: string
-          format: date-time
-
-    CreatePartyRequest:
-      type: object
-      properties:
-        max_size:
-          type: integer
-          minimum: 2
-          maximum: 5
-          default: 5
-        loot_mode:
-          type: string
-          enum:
-            - free_for_all
-            - round_robin
-            - need_before_greed
-            - master_looter
-
-    InviteToPartyRequest:
-      type: object
-      required:
-        - character_id
-      properties:
-        character_id:
-          type: string
-          format: uuid
-
-    TransferLeadershipRequest:
-      type: object
-      required:
-        - new_leader_id
-      properties:
-        new_leader_id:
-          type: string
-          format: uuid
-
-    PartyInvitationsResponse:
-      type: object
-      properties:
-        invitations:
-          type: array
-          items:
-            $ref: '#/components/schemas/PartyInvitation'
-        total:
-          type: integer
-
-    PartyInvitation:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        party_id:
-          type: string
-          format: uuid
-        inviter_id:
-          type: string
-          format: uuid
-        invitee_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-            - pending
-            - accepted
-            - declined
-            - expired
-        created_at:
-          type: string
-          format: date-time
-        expires_at:
-          type: string
-          format: date-time
-
-    AddPartyMemberRequest:
-      type: object
-      required:
-        - account_id
-      properties:
-        account_id:
-          type: string
-          format: uuid
-        role:
-          type: string
-          enum:
-            - leader
-            - member
-          default: member
-
-    ChangeMemberRoleRequest:
-      type: object
-      required:
-        - role
-      properties:
-        role:
-          type: string
-          enum:
-            - leader
-            - member
-
-    LootModeResponse:
-      type: object
-      properties:
-        party_id:
-          type: string
-          format: uuid
-        loot_mode:
-          type: string
-          enum:
-            - free_for_all
-            - round_robin
-            - need_before_greed
-            - master_looter
-
-    ChangeLootModeRequest:
-      type: object
-      required:
-        - loot_mode
-      properties:
-        loot_mode:
-          type: string
-          enum:
-            - free_for_all
-            - round_robin
-            - need_before_greed
-            - master_looter
-
-    DistributeLootRequest:
-      type: object
-      required:
-        - item_id
-        - target_account_id
-      properties:
-        item_id:
-          type: string
-          format: uuid
-        target_account_id:
-          type: string
-          format: uuid
-        quantity:
-          type: integer
-          minimum: 1
-          default: 1
-
-    LootDistributionResult:
-      type: object
-      properties:
-        party_id:
-          type: string
-          format: uuid
-        item_id:
-          type: string
-          format: uuid
-        distributed_to:
-          type: string
-          format: uuid
-        quantity:
-          type: integer
-        mode:
-          type: string
-        distributed_at:
-          type: string
-          format: date-time
-
-    RollForLootRequest:
-      type: object
-      required:
-        - item_id
-      properties:
-        item_id:
-          type: string
-          format: uuid
-        min_roll:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 1
-        max_roll:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 100
-
-    RollResult:
-      type: object
-      properties:
-        party_id:
-          type: string
-          format: uuid
-        item_id:
-          type: string
-          format: uuid
-        account_id:
-          type: string
-          format: uuid
-        roll_value:
-          type: integer
-        winner:
-          type: boolean
-        rolls:
-          type: array
-          items:
-            type: object
-            properties:
-              account_id:
-                type: string
-                format: uuid
-              roll_value:
-                type: integer
-
-    PartyQuestsResponse:
-      type: object
-      properties:
-        party_id:
-          type: string
-          format: uuid
-        quests:
-          type: array
-          items:
-            $ref: '#/components/schemas/PartyQuest'
-        total:
-          type: integer
-
-    PartyQuest:
-      type: object
-      properties:
-        quest_id:
-          type: string
-          format: uuid
-        quest_name:
-          type: string
-        status:
-          type: string
-          enum:
-            - active
-            - completed
-            - failed
-        progress:
-          type: integer
-        progress_max:
-          type: integer
-        participants:
-          type: array
-          items:
-            type: string
-            format: uuid
-        started_at:
-          type: string
-          format: date-time
-        completed_at:
-          type: string
-          format: date-time
-          nullable: true
-
-    QuestSyncResult:
-      type: object
-      properties:
-        party_id:
-          type: string
-          format: uuid
-        quest_id:
-          type: string
-          format: uuid
-        synced:
-          type: boolean
-        participants_synced:
-          type: array
-          items:
-            type: string
-            format: uuid
-        synced_at:
-          type: string
-          format: date-time
-
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    Unauthorized:
-      description: Требуется аутентификация
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    NotFound:
-      description: Ресурс не найден
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-security:
-  - BearerAuth: []
+ }  schemas: }    Party: { $ref: 'social-party-schemas.yaml#/components/schemas/Party' }
+    PartyMember: { $ref: 'social-party-schemas.yaml#/components/schemas/PartyMember' }
+    CreatePartyRequest: { $ref: 'social-party-schemas.yaml#/components/schemas/CreatePartyRequest' }
+    InviteToPartyRequest: { $ref: 'social-party-schemas.yaml#/components/schemas/InviteToPartyRequest' }
+    TransferLeadershipRequest: { $ref: 'social-party-schemas.yaml#/components/schemas/TransferLeadershipRequest' }
+    PartyInvitationsResponse: { $ref: 'social-party-schemas.yaml#/components/schemas/PartyInvitationsResponse' }
+    PartyInvitation: { $ref: 'social-party-schemas.yaml#/components/schemas/PartyInvitation' }
+    AddPartyMemberRequest: { $ref: 'social-party-schemas.yaml#/components/schemas/AddPartyMemberRequest' }
+    ChangeMemberRoleRequest: { $ref: 'social-party-schemas.yaml#/components/schemas/ChangeMemberRoleRequest' }
+    LootModeResponse: { $ref: 'social-party-schemas.yaml#/components/schemas/LootModeResponse' }
+    ChangeLootModeRequest: { $ref: 'social-party-schemas.yaml#/components/schemas/ChangeLootModeRequest' }
+    DistributeLootRequest: { $ref: 'social-party-schemas.yaml#/components/schemas/DistributeLootRequest' }
+    LootDistributionResult: { $ref: 'social-party-schemas.yaml#/components/schemas/LootDistributionResult' }
+    RollForLootRequest: { $ref: 'social-party-schemas.yaml#/components/schemas/RollForLootRequest' }
+    RollResult: { $ref: 'social-party-schemas.yaml#/components/schemas/RollResult' }
+    PartyQuestsResponse: { $ref: 'social-party-schemas.yaml#/components/schemas/PartyQuestsResponse' }
+    PartyQuest: { $ref: 'social-party-schemas.yaml#/components/schemas/PartyQuest' }
+    QuestSyncResult: { $ref: 'social-party-schemas.yaml#/components/schemas/QuestSyncResult' }
+    Error: { $ref: 'social-party-schemas.yaml#/components/schemas/Error' }
 
 
-
+security: [BearerAuth: []]
 
 
 

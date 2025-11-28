@@ -1,0 +1,142 @@
+components:
+  - name: NPC Type Manager
+    location: social-service
+    responsibility: |
+      Управление типами NPC:
+      - Реестр типов NPC (Fixer, Trader, Trainer, Gang Leader, Corporate Director и др.)
+      - Функционал каждого типа
+      - Специализация NPC
+      - Связь с фракциями
+    npc_types:
+      - Fixer: посредник, контракты, квесты, контакты
+      - Trader: торговля, ремонт, модификация, аукционы
+      - Trainer: обучение навыкам, тренировки, симуляции
+      - Gang Leader: банды, задания, территория, войны
+      - Corporate Director: корпорации, контракты, карьера, политика
+      - Medic: лечение, импланты, киберимпланты
+      - Engineer: крафт, модификация оружия, создание предметов
+      - Hacker: взлом, доступ к данным, кибербезопасность
+      - Informant: информация, слухи, разведка
+      - Bartender: социальный хаб, слухи, встречи
+      - Guard: контроль доступа, безопасность территорий
+    dependencies:
+      - Database
+      - Social Service (фракции)
+
+  - name: NPC Interaction Manager
+    location: social-service
+    responsibility: |
+      Управление взаимодействиями:
+      - Инициализация взаимодействия
+      - Определение доступных действий
+      - Переключение между интерфейсами
+      - Завершение взаимодействия
+      - История взаимодействий
+    dependencies:
+      - NPC Type Manager
+      - Dialogue System
+      - Trading Interface Manager
+      - Training Interface Manager
+      - Faction Interface Manager
+
+  - name: Dialogue System
+    location: social-service
+    responsibility: |
+      Система диалогов:
+      - Дерево диалогов с ветвлением
+      - Выбор ответов игрока
+      - Условия доступности реплик
+      - Влияние на репутацию
+      - Триггеры квестов и событий
+      - Сохранение прогресса диалогов
+    dependencies:
+      - NPC State Manager
+      - NPC Reputation Tracker
+      - Quest Service
+
+  - name: Trading Interface Manager
+    location: economy-service
+    responsibility: |
+      Управление торговыми интерфейсами:
+      - Каталог товаров NPC
+      - Фильтрация и поиск
+      - Покупка/продажа предметов
+      - Обмен валют
+      - Ремонт оборудования
+      - Специальные предложения
+      - Аукционы
+    dependencies:
+      - Inventory Service
+      - Wallet Service
+      - NPC Trader Catalog
+
+  - name: Training Interface Manager
+    location: gameplay-service
+    responsibility: |
+      Управление интерфейсами обучения:
+      - Дерево навыков
+      - Доступные навыки для обучения
+      - Стоимость обучения
+      - Требования к обучению
+      - Тренировочные режимы
+      - Симуляции
+    dependencies:
+      - Skill System
+      - Progression Service
+      - Wallet Service
+
+  - name: Faction Interface Manager
+    location: social-service
+    responsibility: |
+      Управление фракционными интерфейсами:
+      - Вступление в банду/корпорацию
+      - Получение заданий
+      - Доступ к ресурсам
+      - Управление территорией
+      - Войны между фракциями
+      - Карьерная лестница
+    dependencies:
+      - Faction System
+      - Quest Service
+      - World Service (территории)
+
+  - name: NPC Quest Provider
+    location: quest-service
+    responsibility: |
+      Предоставление квестов от NPC:
+      - Список доступных квестов
+      - Условия доступности
+      - Цепочки квестов
+      - Выдача наград
+      - Прогресс квестов
+    dependencies:
+      - Quest System
+      - NPC Reputation Tracker
+      - NPC State Manager
+
+  - name: NPC Reputation Tracker
+    location: social-service
+    responsibility: |
+      Отслеживание репутации:
+      - Репутация с каждым NPC
+      - Влияние действий на репутацию
+      - Уровни репутации (Hostile, Neutral, Friendly, Trusted)
+      - Разблокировка контента по репутации
+      - История изменений репутации
+    dependencies:
+      - Database
+      - Relationship System
+
+  - name: NPC State Manager
+    location: social-service
+    responsibility: |
+      Управление состоянием NPC:
+      - Текущее состояние (Available, Busy, Unavailable)
+      - Расположение NPC
+      - Активность NPC
+      - История взаимодействий
+      - Сохранение прогресса диалогов
+    dependencies:
+      - Database
+      - World Service (локации)
+

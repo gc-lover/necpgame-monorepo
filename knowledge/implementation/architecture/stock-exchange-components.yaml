@@ -1,0 +1,208 @@
+components:
+  - name: Stock Trading Engine
+    location: economy-service
+    responsibility: |
+      Исполнение ордеров на покупку/продажу:
+      - Matching buy и sell ордеров
+      - Исполнение сделок по best price
+      - Обновление портфелей игроков
+      - Расчет комиссий
+      - Логирование всех сделок
+    dependencies:
+      - Order Book Manager
+      - Portfolio Manager
+      - Wallet Service
+      - Event Bus
+
+  - name: Stock Pricing Engine
+    location: economy-service
+    responsibility: |
+      Расчет цен на акции:
+      - Цена на основе спроса/предложения
+      - Реакция на события (price impact)
+      - Волатильность и spread
+      - Обновление цен в реальном времени
+      - История цен
+    dependencies:
+      - Order Book Manager
+      - Stock Events Handler
+      - Event Bus
+
+  - name: Portfolio Manager
+    location: economy-service
+    responsibility: |
+      Управление портфелями игроков:
+      - Хранение позиций игроков
+      - Расчет стоимости портфеля
+      - История транзакций
+      - P&L (прибыль/убыток)
+      - Средняя цена покупки
+    dependencies:
+      - Stock Pricing Engine
+      - Database
+
+  - name: Corporation Registry
+    location: economy-service
+    responsibility: |
+      Реестр корпораций и их акций:
+      - Список корпораций на бирже
+      - Типы акций (Common, Preferred)
+      - IPO и делистинг
+      - Базовая информация о корпорациях
+      - Связь с фракциями
+    dependencies:
+      - Database
+      - Social Service (фракции)
+
+  - name: Order Book Manager
+    location: economy-service
+    responsibility: |
+      Управление ордербуком:
+      - Хранение активных ордеров
+      - Сортировка по цене и времени
+      - Matching логика
+      - Частичное исполнение
+      - Time-in-force (GTC, IOC, FOK)
+    dependencies:
+      - Database
+      - Redis (для realtime)
+
+  - name: Trade Executor
+    location: economy-service
+    responsibility: |
+      Исполнение сделок:
+      - Создание trade records
+      - Обновление балансов
+      - Расчет комиссий
+      - Публикация событий
+      - Уведомления игрокам
+    dependencies:
+      - Wallet Service
+      - Notification Service
+      - Event Bus
+
+  - name: Dividend Calculator
+    location: dividend-service
+    responsibility: |
+      Расчет дивидендов:
+      - Формулы расчета (фиксированные/переменные)
+      - Учет прибыльности корпорации
+      - Распределение по акциям
+      - Налоговые вычеты
+    dependencies:
+      - Corporation Registry
+      - Portfolio Manager
+
+  - name: Dividend Scheduler
+    location: dividend-service
+    responsibility: |
+      Расписание выплат:
+      - Квартальные и годовые графики
+      - Declaration, ex-dividend, record, payment даты
+      - Автоматические выплаты
+      - Уведомления игрокам
+    dependencies:
+      - Event Scheduler Service
+      - Notification Service
+
+  - name: DRIP Manager
+    location: dividend-service
+    responsibility: |
+      Dividend Reinvestment Plan:
+      - Автоматическое реинвестирование
+      - Настройки игроков
+      - Покупка акций на дивиденды
+      - Расчет количества акций
+    dependencies:
+      - Dividend Calculator
+      - Stock Trading Engine
+
+  - name: Stock Events Handler
+    location: economy-service
+    responsibility: |
+      Обработка влияния событий на цены:
+      - Подписка на игровые события
+      - Расчет price impact
+      - Применение модификаторов
+      - Длительность эффектов
+      - История влияний
+    dependencies:
+      - World Service (события)
+      - Quest Service (квесты)
+      - Social Service (фракции)
+      - Event Bus
+
+  - name: Index Calculator
+    location: stock-analytics-service
+    responsibility: |
+      Расчет биржевых индексов:
+      - Методики расчета (price-weighted, market-cap weighted)
+      - Перебалансировка
+      - История индексов
+      - Состав индексов
+    dependencies:
+      - Stock Pricing Engine
+      - Market Cap Calculator
+
+  - name: Metrics Calculator
+    location: stock-analytics-service
+    responsibility: |
+      Расчет финансовых метрик:
+      - P/E (Price-to-Earnings)
+      - P/B (Price-to-Book)
+      - Dividend Yield
+      - Market Cap
+      - Volume и turnover
+    dependencies:
+      - Stock Pricing Engine
+      - Dividend Service
+
+  - name: Technical Analyzer
+    location: stock-analytics-service
+    responsibility: |
+      Технический анализ:
+      - Moving averages
+      - RSI, MACD
+      - Support/Resistance уровни
+      - Тренды
+      - Паттерны
+    dependencies:
+      - Stock Pricing Engine (история цен)
+
+  - name: Trade Monitor
+    location: compliance-service
+    responsibility: |
+      Мониторинг сделок:
+      - Обнаружение подозрительных паттернов
+      - Аномальные объемы
+      - Wash trading detection
+      - Price manipulation detection
+    dependencies:
+      - Stock Trading Engine
+      - Analytics Service
+
+  - name: Insider Trading Detector
+    location: compliance-service
+    responsibility: |
+      Обнаружение инсайдерской торговли:
+      - Корреляция сделок с событиями
+      - Анализ timing сделок
+      - Связь с квестами и фракциями
+      - Алерты и блокировки
+    dependencies:
+      - Stock Trading Engine
+      - Quest Service
+      - Social Service
+
+  - name: Circuit Breaker Manager
+    location: compliance-service
+    responsibility: |
+      Circuit breakers:
+      - Автоматическая остановка торговли
+      - Пороги падения цен
+      - Временные ограничения
+      - Восстановление торговли
+    dependencies:
+      - Stock Pricing Engine
+      - Stock Trading Engine
+

@@ -9,7 +9,7 @@ metadata:
   location: Atlanta
   period: 2020-2029
   year: 2024
-  version: "1.0.0"
+  version: "1.1.0"
   status: design
   created_at: 2025-11-26T00:00:00Z
   owner:
@@ -73,6 +73,89 @@ rewards:
     release_tragic: Animal rights +30 questioned, guilt profound -40, freedom safety tension unresolved
     abort_return: Safety +40, activism -60 defeated, aquarium +30 wins, consequences avoided captive unchanged
     sabotage: Animal rights -100 harmed, public -80 backlash, activism condemned catastrophe guilt moral disaster
+
+quest_definition:
+  quest_type: side
+  level_min: 6
+  level_max: 10
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements: []
+  objectives:
+    - id: obj-001
+      text: "Встретиться с Dr. Ocean Blue и обсудить план освобождения"
+      type: dialogue
+      target: dr_ocean_briefing
+      optional: false
+    - id: obj-002
+      text: "Провести разведку Georgia Aquarium и системы безопасности"
+      type: investigate
+      target: aquarium_reconnaissance
+      optional: false
+    - id: obj-003
+      text: "Проникнуть в аквариум ночью и добраться до китовой акулы Freedom"
+      type: move
+      target: aquarium_infiltration
+      optional: false
+    - id: obj-004
+      text: "Принять решение о судьбе Freedom после обнаружения утечки"
+      type: choice
+      target: freedom_decision
+      optional: false
+  rewards:
+    experience: 3000
+    currency: 0
+    reputation:
+      atlanta: 20
+    unlocks:
+      - type: achievement
+        id: animal_rights_activist
+  branches:
+    - id: liberation_success
+      condition: decision == "repair_release"
+      consequences:
+        freedom_survives: true
+        activism_vindicated: true
+      rewards:
+        currency: 0
+        reputation:
+          animal_rights: 90
+          aquarium: -80
+          illegal: 40
+    - id: release_tragic
+      condition: decision == "release_immediate"
+      consequences:
+        freedom_dies: true
+        guilt_profound: true
+      rewards:
+        currency: 0
+        reputation:
+          animal_rights: 30
+          guilt: -40
+    - id: abort_return
+      condition: decision == "abort"
+      consequences:
+        captivity_continues: true
+        safety_secured: true
+      rewards:
+        currency: 0
+        reputation:
+          safety: 40
+          activism: -60
+          aquarium: 30
+    - id: sabotage_catastrophic
+      condition: decision == "sabotage"
+      consequences:
+        animals_endangered: true
+        multiple_deaths: true
+      rewards:
+        currency: 0
+        reputation:
+          animal_rights: -100
+          public: -80
 
 integrations:
   quest_engine: Animal liberation mission player choices free sabotage expose negotiate abort moral complexity captivity entertainment ethics

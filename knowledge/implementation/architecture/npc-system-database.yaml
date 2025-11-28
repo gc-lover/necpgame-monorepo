@@ -1,0 +1,99 @@
+database:
+  tables:
+    - name: npc_types
+      description: Типы NPC
+      columns:
+        - id: UUID PRIMARY KEY
+        - name: VARCHAR(100) UNIQUE
+        - display_name: VARCHAR(255)
+        - description: TEXT
+        - functionality: JSONB
+        - default_interfaces: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: npcs
+      description: NPC в игре
+      columns:
+        - id: UUID PRIMARY KEY
+        - npc_type_id: UUID REFERENCES npc_types(id)
+        - name: VARCHAR(255)
+        - location_id: UUID
+        - faction_id: UUID NULL
+        - state: VARCHAR(50) (AVAILABLE, BUSY, UNAVAILABLE)
+        - metadata: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: npc_dialogues
+      description: Диалоги с NPC
+      columns:
+        - id: UUID PRIMARY KEY
+        - npc_id: UUID REFERENCES npcs(id)
+        - dialogue_tree: JSONB
+        - conditions: JSONB
+        - reputation_requirements: JSONB
+        - quest_triggers: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: npc_dialogue_progress
+      description: Прогресс диалогов игроков
+      columns:
+        - id: UUID PRIMARY KEY
+        - player_id: UUID
+        - npc_id: UUID REFERENCES npcs(id)
+        - dialogue_id: UUID REFERENCES npc_dialogues(id)
+        - current_node: VARCHAR(255)
+        - visited_nodes: JSONB
+        - choices_made: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: npc_trader_catalogs
+      description: Каталоги товаров торговцев
+      columns:
+        - id: UUID PRIMARY KEY
+        - npc_id: UUID REFERENCES npcs(id)
+        - item_template_id: UUID
+        - price: DECIMAL(20, 4)
+        - stock: INTEGER
+        - restock_timer: INTEGER
+        - special_offer: BOOLEAN DEFAULT FALSE
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: npc_trainer_skills
+      description: Навыки, доступные у тренеров
+      columns:
+        - id: UUID PRIMARY KEY
+        - npc_id: UUID REFERENCES npcs(id)
+        - skill_id: UUID
+        - training_cost: DECIMAL(20, 4)
+        - requirements: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: npc_reputation
+      description: Репутация игроков с NPC
+      columns:
+        - id: UUID PRIMARY KEY
+        - player_id: UUID
+        - npc_id: UUID REFERENCES npcs(id)
+        - reputation_value: INTEGER
+        - reputation_level: VARCHAR(50) (HOSTILE, NEUTRAL, FRIENDLY, TRUSTED)
+        - last_interaction: TIMESTAMP
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+
+    - name: npc_interaction_history
+      description: История взаимодействий с NPC
+      columns:
+        - id: UUID PRIMARY KEY
+        - player_id: UUID
+        - npc_id: UUID REFERENCES npcs(id)
+        - interaction_type: VARCHAR(50)
+        - interaction_data: JSONB
+        - timestamp: TIMESTAMP
+        - created_at: TIMESTAMP
+

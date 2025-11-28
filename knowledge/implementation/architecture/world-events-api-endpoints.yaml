@@ -1,0 +1,105 @@
+api_endpoints:
+  world_service:
+    base_path: /api/v1/world/events
+    endpoints:
+      - method: GET
+        path: /
+        description: Список всех событий с фильтрацией
+        query_params:
+          - status: enum (PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED)
+          - type: enum (STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL)
+          - scale: enum (GLOBAL, REGIONAL, CITY, LOCAL)
+          - frequency: enum (ONE_TIME, PERIODIC, REGULAR)
+          - limit: integer
+          - offset: integer
+        response: array of WorldEvent
+
+      - method: GET
+        path: /{id}
+        description: Детали конкретного события
+        response: WorldEvent
+
+      - method: POST
+        path: /
+        description: Создание нового события
+        request_body: CreateWorldEventRequest
+        response: WorldEvent
+
+      - method: PUT
+        path: /{id}
+        description: Обновление события
+        request_body: UpdateWorldEventRequest
+        response: WorldEvent
+
+      - method: DELETE
+        path: /{id}
+        description: Удаление события
+        response: void
+
+      - method: POST
+        path: /{id}/announce
+        description: Анонс события
+        response: WorldEvent
+
+      - method: POST
+        path: /{id}/activate
+        description: Активация события
+        response: WorldEvent
+
+      - method: POST
+        path: /{id}/deactivate
+        description: Деактивация события
+        response: WorldEvent
+
+      - method: GET
+        path: /active
+        description: Список активных событий
+        response: array of WorldEvent
+
+      - method: GET
+        path: /planned
+        description: Список запланированных событий
+        response: array of WorldEvent
+
+      - method: GET
+        path: /by-scale/{scale}
+        description: События по масштабу
+        response: array of WorldEvent
+
+      - method: GET
+        path: /by-type/{type}
+        description: События по типу
+        response: array of WorldEvent
+
+      - method: GET
+        path: /by-frequency/{frequency}
+        description: События по частоте
+        response: array of WorldEvent
+
+  event_scheduler_service:
+    base_path: /api/v1/scheduler/world-events
+    endpoints:
+      - method: POST
+        path: /schedule
+        description: Запланировать событие
+        request_body: ScheduleWorldEventRequest
+        response: EventSchedule
+
+      - method: GET
+        path: /scheduled
+        description: Запланированные события
+        response: array of EventSchedule
+
+      - method: POST
+        path: /{id}/trigger
+        description: Ручной запуск события
+        response: WorldEvent
+
+      - method: GET
+        path: /calendar
+        description: Календарь событий
+        query_params:
+          - start_date: date
+          - end_date: date
+        response: array of EventSchedule
+

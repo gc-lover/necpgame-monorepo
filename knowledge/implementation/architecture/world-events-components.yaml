@@ -1,0 +1,130 @@
+components:
+  - name: World Events Manager
+    location: world-service
+    responsibility: |
+      Управление жизненным циклом событий:
+      - Создание, обновление, удаление событий
+      - Переходы между состояниями (PLANNED → ANNOUNCED → ACTIVE → COOLDOWN → ARCHIVED)
+      - Валидация данных событий
+      - Управление версиями событий
+      - Управление зависимостями между событиями
+    dependencies:
+      - Event State Manager
+      - Event Type Handler
+      - Event Scale Manager
+
+  - name: Event Scheduler
+    location: event-scheduler-service
+    responsibility: |
+      Планирование и автоматический запуск событий:
+      - Cron-задачи для запланированных событий
+      - Триггеры от квестов и симуляции
+      - Ограничения на количество активных событий
+      - Минимальные перерывы между событиями
+      - Управление периодическими и регулярными событиями
+    dependencies:
+      - World Events Manager
+      - Constraint Validator
+      - Frequency Manager
+
+  - name: Event Effects Coordinator
+    location: world-service
+    responsibility: |
+      Координация применения эффектов к различным системам:
+      - Определение целевых систем для эффектов
+      - Последовательное применение эффектов
+      - Откат эффектов при завершении события
+      - Управление конфликтами между эффектами
+    dependencies:
+      - Economy Service
+      - Social Service
+      - Gameplay Service
+      - Event State Manager
+
+  - name: Event Monitor
+    location: world-service
+    responsibility: |
+      Мониторинг активных событий и метрик:
+      - Отслеживание состояния событий
+      - Сбор метрик производительности
+      - Мониторинг влияния на системы
+      - Алерты при проблемах
+    dependencies:
+      - Analytics Service
+      - Event State Manager
+
+  - name: Event Communication Manager
+    location: notification-service
+    responsibility: |
+      Коммуникация с игроками о мировых событиях:
+      - Генерация баннеров и уведомлений
+      - Создание новостей и объявлений
+      - In-game сообщения
+      - Push-уведомления
+    dependencies:
+      - World Events Manager
+      - Notification Dispatcher
+
+  - name: Event Analytics Collector
+    location: analytics-service
+    responsibility: |
+      Сбор аналитики по событиям:
+      - Player Engagement метрики
+      - Economic Impact метрики
+      - Social Impact метрики
+      - Event Uptime метрики
+      - Генерация отчетов
+    dependencies:
+      - World Events Manager
+      - Event Monitor
+
+  - name: Event Integration Manager
+    location: world-service
+    responsibility: |
+      Интеграция с другими сервисами:
+      - Синхронизация через Event Bus
+      - Управление зависимостями
+      - Обработка ошибок интеграции
+      - Retry логика
+    dependencies:
+      - Event Bus (Kafka)
+      - All related services
+
+  - name: Event State Manager
+    location: world-service
+    responsibility: |
+      Управление состоянием событий:
+      - Хранение состояния событий
+      - Переходы между состояниями
+      - Валидация переходов
+      - История изменений состояния
+    dependencies:
+      - Database
+
+  - name: Event Scale Manager
+    location: world-service
+    responsibility: |
+      Управление масштабом событий:
+      - Глобальные события (весь мир)
+      - Региональные события (регион)
+      - Городские события (город)
+      - Локальные события (область)
+      - Определение целевых регионов
+    dependencies:
+      - World Events Manager
+
+  - name: Event Type Handler
+    location: world-service
+    responsibility: |
+      Обработчики для разных типов событий:
+      - Сюжетные события
+      - Технологические события
+      - Экономические события
+      - Политические события
+      - Военные события
+      - Спортивные события
+      - Экологические события
+    dependencies:
+      - World Events Manager
+      - Event Effects Coordinator
+

@@ -9,7 +9,7 @@ metadata:
   location: Atlanta
   period: 2020-2029
   year: 2027
-  version: "1.0.0"
+  version: "1.1.0"
   status: design
   created_at: 2025-11-26T00:00:00Z
   owner:
@@ -75,6 +75,103 @@ rewards:
     silence: CNN +70 managed, journalism -90 dies, Sarah -80 devastated, guilt profound amoral wealthy
     steal: Competitor +60, CNN -60, journalism -70 dies spectacle, mercenary +80 wealthy amoral
     escape: Sarah +80 grateful, journalism +50 defended patience, survival +60 secured exposure delayed
+
+quest_definition:
+  quest_type: side
+  level_min: 9
+  level_max: 13
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements: []
+  objectives:
+    - id: obj-001
+      text: "Встретиться с журналистом Sarah Anchor"
+      type: dialogue
+      target: sarah_contact
+      optional: false
+    - id: obj-002
+      text: "Проникнуть в CNN Center и получить доступ к цифровым архивам"
+      type: move
+      target: cnn_infiltration
+      optional: false
+    - id: obj-003
+      text: "Скачать документы о корпоративной цензуре"
+      type: interact
+      target: download_documents
+      optional: false
+    - id: obj-004
+      text: "Принять решение о судьбе документов"
+      type: choice
+      target: documents_decision
+      optional: false
+  rewards:
+    experience: 4000
+    currency: 0
+    reputation:
+      atlanta: 30
+    unlocks:
+      - type: achievement
+        id: whistleblower_ally
+  branches:
+    - id: leak_expose
+      condition: decision == "leak"
+      consequences:
+        cnn_scandal: true
+        sarah_hero: true
+      rewards:
+        currency: 0
+        reputation:
+          whistleblowers: 90
+          cnn: -100
+          journalism: 80
+          public: 60
+    - id: negotiate
+      condition: decision == "negotiate"
+      consequences:
+        transparency_partial: true
+        reform_cosmetic: true
+      rewards:
+        currency: 20000
+        reputation:
+          moderates: 40
+          cnn: 20
+          journalism: 30
+    - id: silence_betray
+      condition: decision == "silence"
+      consequences:
+        journalism_dies: true
+        documents_destroyed: true
+      rewards:
+        currency: 150000
+        reputation:
+          cnn: 70
+          journalism: -90
+          sarah: -80
+    - id: steal_competitor
+      condition: decision == "steal"
+      consequences:
+        media_war: true
+        propaganda_both_sides: true
+      rewards:
+        currency: 200000
+        reputation:
+          competitor: 60
+          cnn: -60
+          journalism: -70
+    - id: escape_survival
+      condition: decision == "escape"
+      consequences:
+        documents_preserved: true
+        exposure_delayed: true
+      rewards:
+        currency: 10000
+        reputation:
+          sarah: 80
+          journalism: 50
+          survival: 60
 
 integrations:
   quest_engine: CNN whistleblower infiltration player choices leak negotiate silence steal escape moral complexity journalism integrity media manipulation

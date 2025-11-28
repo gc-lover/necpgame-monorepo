@@ -1,0 +1,219 @@
+components:
+  schemas:
+    MentorsResponse:
+      type: object
+      properties:
+        mentors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mentor'
+        total:
+          type: integer
+
+    Mentor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        reputation:
+          type: integer
+        skills:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+          format: float
+
+    MentorshipContractsResponse:
+      type: object
+      properties:
+        contracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/MentorshipContract'
+        total:
+          type: integer
+
+    CreateMentorshipContractRequest:
+      type: object
+      required:
+        - mentor_id
+        - mentee_id
+        - skills
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        payment:
+          type: object
+          additionalProperties: true
+
+    MentorshipContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, completed, terminated]
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    MenteesResponse:
+      type: object
+      properties:
+        mentees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mentee'
+        total:
+          type: integer
+
+    Mentee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        level:
+          type: integer
+        skills:
+          type: array
+          items:
+            type: string
+        looking_for:
+          type: array
+          items:
+            type: string
+
+    CreateMentorshipProposalRequest:
+      type: object
+      required:
+        - mentor_id
+        - mentee_id
+        - skills
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+        payment:
+          type: object
+          additionalProperties: true
+
+    MentorshipProposal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        created_at:
+          type: string
+          format: date-time
+
+    TerminateContractRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+
+    MentorReputation:
+      type: object
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        rating:
+          type: number
+          format: float
+        total_reviews:
+          type: integer
+        total_mentees:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+
+    CreateMentorReviewRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    MentorReview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        reviewer_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+

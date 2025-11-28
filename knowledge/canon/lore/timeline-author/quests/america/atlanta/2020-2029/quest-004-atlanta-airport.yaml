@@ -9,7 +9,7 @@ metadata:
   location: Atlanta
   period: 2020-2029
   year: 2022
-  version: "1.0.0"
+  version: "1.1.0"
   status: design
   created_at: 2025-11-26T00:00:00Z
   owner:
@@ -75,6 +75,89 @@ rewards:
     expose: FBI +70, whistleblower +80, Biotechnica -100 hunted, smugglers -90
     sell: Black market +90, humanity -100, bioterrorism facilitated, hunted governments terrorists
     confront: Insufficient clarity moral burden remains choices unresolved
+
+quest_definition:
+  quest_type: side
+  level_min: 10
+  level_max: 14
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements: []
+  objectives:
+    - id: obj-001
+      text: "Встретиться с Delta Dash и получить задание на контрабанду"
+      type: dialogue
+      target: delta_dash_briefing
+      optional: false
+    - id: obj-002
+      text: "Выбрать маршрут проникновения через аэропорт"
+      type: choice
+      target: infiltration_route
+      optional: false
+    - id: obj-003
+      text: "Проникнуть через безопасность и доставить посылку"
+      type: move
+      target: airport_infiltration
+      optional: false
+    - id: obj-004
+      text: "Обнаружить, что посылка содержит биологическое оружие, и принять решение"
+      type: choice
+      target: bioweapon_decision
+      optional: false
+  rewards:
+    experience: 4500
+    currency: 50000
+    reputation:
+      atlanta: 30
+    unlocks:
+      - type: achievement
+        id: airport_smuggler
+  branches:
+    - id: deliver_complete
+      condition: decision == "deliver"
+      consequences:
+        bioweapon_smuggled: true
+        conscience_guilty: true
+      rewards:
+        currency: 50000
+        reputation:
+          smugglers: 60
+          conscience: -40
+          biotechnica: 30
+    - id: abort_destroy
+      condition: decision == "abort"
+      consequences:
+        safety_prioritized: true
+        bioweapon_eliminated: true
+      rewards:
+        currency: 0
+        reputation:
+          safety: 50
+          smugglers: -70
+    - id: expose_authorities
+      condition: decision == "expose"
+      consequences:
+        fbi_intervenes: true
+        network_raided: true
+      rewards:
+        currency: 0
+        reputation:
+          fbi: 70
+          whistleblower: 80
+          biotechnica: -100
+    - id: steal_sell
+      condition: decision == "sell"
+      consequences:
+        auction_bidding: true
+        bioterrorism_facilitated: true
+      rewards:
+        currency: 2000000
+        reputation:
+          black_market: 90
+          humanity: -100
 
 integrations:
   quest_engine: Airport smuggling heist branching bioweapon revelation moral crisis player agency consequences severe bioterrorism potential

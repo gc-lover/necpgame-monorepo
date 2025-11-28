@@ -2,7 +2,9 @@
 
 ## ⚠️ КРИТИЧНО: Secondary Rate Limit
 
-**Search API лимит: 30 запросов/минуту.** При превышении GitHub блокирует ВСЕ типы запросов (REST, GraphQL, Search) на 1 час. Используй задержки 2-3 секунды для `search_issues` и кэширование результатов.
+**Search API лимит: 30 запросов/минуту.** При превышении GitHub блокирует ВСЕ типы запросов (REST, GraphQL, Search) на 1 час. 
+
+**РЕШЕНИЕ: Используй правильный метод в зависимости от сценария** - см. `.cursor/rules/GITHUB_API_METHOD_SELECTION.md` для выбора между `list_issues` и `search_issues`.
 
 ## Система очередей
 
@@ -14,11 +16,78 @@
 
 ## ОСНОВНЫЕ МЕТОДЫ
 
-Главное: поиск и батчинг, не кэширование.
+Главное: выбор правильного метода и батчинг, не кэширование.
 
-### 1. Поиск (ОБЯЗАТЕЛЬНО)
+### 1. Выбор метода поиска (ОБЯЗАТЕЛЬНО)
 
-ВСЕГДА `mcp_github_search_issues` вместо множественных `issue_read`:
+**Два способа работы с Issues:**
+
+#### Способ 1: `list_issues` с `labels` (РЕКОМЕНДУЕТСЯ)
+
+**Используй когда:**
+- Фильтрация по меткам (`agent:*`, `stage:*`)
+- Фильтрация по статусу (`OPEN`, `CLOSED`)
+- Работа с конкретным репозиторием
+- Нужно получить все issues с определенными метками
+
+**Преимущества:**
+- Лимит: 5000 запросов/час (REST API) или 5000 очков/час (GraphQL)
+- Нет secondary rate limit (не блокирует другие запросы)
+- Фильтрация на стороне API
+
+**Пример:**
+```javascript
+// Фильтрация по меткам агента и этапа
+const result = await mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  labels: ['agent:idea-writer', 'stage:idea'],
+  state: 'OPEN',
+  perPage: 100
+});
+```
+
+#### Способ 2: `search_issues` (ТОЛЬКО при необходимости)
+
+**Используй ТОЛЬКО когда:**
+- Нужен поиск по тексту в title/body
+- Нужен поиск по датам (created, updated)
+- Нужен поиск по assignee
+- Нужен поиск по комбинации сложных условий
+- Нужен поиск по нескольким репозиториям одновременно
+
+**Ограничения:**
+- Лимит: 30 запросов/мин (1800/час)
+- При превышении блокирует ВСЕ типы запросов на 1 час (secondary rate limit)
+- Задержка 2-3 секунды между запросами ОБЯЗАТЕЛЬНА
+
+**Пример:**
+```javascript
+// Поиск по тексту в title (НЕ МОЖЕТ быть через list_issues)
+const result = await mcp_github_search_issues({
+  query: 'is:issue is:open repo:gc-lover/necpgame-monorepo "система транспорта" in:title',
+  perPage: 100
+});
+await delay(2000); // ОБЯЗАТЕЛЬНО 2-3 сек задержка
+```
+
+### 2. Правила выбора метода
+
+**ВСЕГДА используй `list_issues` если:**
+- Фильтрация только по меткам → `list_issues` с `labels`
+- Фильтрация только по статусу → `list_issues` с `state`
+- Комбинация меток + статус → `list_issues` с `labels` и `state`
+- Работа с одним репозиторием → `list_issues`
+
+**Используй `search_issues` ТОЛЬКО если:**
+- Нужен поиск по тексту (title/body) → `search_issues`
+- Нужен поиск по датам → `search_issues`
+- Нужен поиск по assignee → `search_issues`
+- Нужен поиск по нескольким репозиториям → `search_issues`
+
+### 3. Поиск задач агента (ОБЯЗАТЕЛЬНО)
+
+ВСЕГДА `mcp_github_list_issues` с `labels` для поиска задач агента:
 
 ```javascript
 // НЕПРАВИЛЬНО: 100 запросов
@@ -26,14 +95,23 @@ for (let i = 1; i <= 100; i++) {
   await mcp_github_issue_read({ issue_number: i });
 }
 
-// ПРАВИЛЬНО: 1 запрос
+// НЕПРАВИЛЬНО: использует Search API (лимит 30/мин)
 const result = await mcp_github_search_issues({
   query: 'is:issue is:open label:agent:content-writer',
   perPage: 100
 });
+
+// ПРАВИЛЬНО: использует GraphQL (лимит 5000/час)
+const result = await mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  labels: ['agent:content-writer'],
+  state: 'OPEN',
+  perPage: 100
+});
 ```
 
-### 2. Батчинг (ОБЯЗАТЕЛЬНО)
+### 4. Батчинг (ОБЯЗАТЕЛЬНО)
 
 Для >=3 Issues:
 
@@ -51,7 +129,7 @@ for (let i = 0; i < issues.length; i += batchSize) {
 }
 ```
 
-### 3. Кэширование (дополнительно)
+### 5. Кэширование (дополнительно)
 
 Кэш работает только в рамках одной сессии агента.
 
@@ -83,7 +161,41 @@ TTL:
 
 ## Правила оптимизации
 
-### 1. Последовательные запросы с задержками
+### 1. Выбор метода по сценарию
+
+**Сценарий: Поиск задач агента по меткам**
+```javascript
+// ✅ ПРАВИЛЬНО: list_issues (фильтрация по меткам)
+const issues = await mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  labels: ['agent:idea-writer', 'stage:idea'],
+  state: 'OPEN',
+  perPage: 100
+});
+```
+
+**Сценарий: Поиск по тексту в названии**
+```javascript
+// ✅ ПРАВИЛЬНО: search_issues (поиск по тексту)
+const issues = await mcp_github_search_issues({
+  query: 'is:issue is:open repo:gc-lover/necpgame-monorepo "транспорт" in:title',
+  perPage: 100
+});
+await delay(2000); // ОБЯЗАТЕЛЬНО
+```
+
+**Сценарий: Поиск по дате создания**
+```javascript
+// ✅ ПРАВИЛЬНО: search_issues (поиск по дате)
+const issues = await mcp_github_search_issues({
+  query: 'is:issue is:open repo:gc-lover/necpgame-monorepo created:>2025-11-01',
+  perPage: 100
+});
+await delay(2000); // ОБЯЗАТЕЛЬНО
+```
+
+### 2. Последовательные запросы с задержками
 
 ```javascript
 // ПРАВИЛЬНО
@@ -98,9 +210,10 @@ for (const num of [1, 2, 3]) {
 Задержки:
 - Одиночные: 200-300ms
 - Массовые: 300-500ms
-- Поиск: 2000-3000ms (КРИТИЧНО: Search API лимит 30/мин, secondary rate limit блокирует ВСЕ запросы)
+- list_issues: 200-300ms (GraphQL, лимит 5000/час)
+- search_issues: НЕ ИСПОЛЬЗУЙ (лимит 30/мин, блокирует все запросы)
 
-### 2. Группирование (батчинг)
+### 3. Группирование (батчинг)
 
 ```javascript
 // ПРАВИЛЬНО
@@ -127,7 +240,7 @@ for (let i = 0; i < issuesToUpdate.length; i += batchSize) {
 }
 ```
 
-### 3. Кэширование (ОБЯЗАТЕЛЬНО)
+### 4. Кэширование (ОБЯЗАТЕЛЬНО)
 
 ```javascript
 const issueCache = new Map();
@@ -147,34 +260,40 @@ async function getCachedIssue(issueNumber) {
 }
 ```
 
-### 4. Поиск вместо множественных запросов
+### 5. Поиск через list_issues (для меток)
 
 ```javascript
-// ПРАВИЛЬНО
-const searchCache = new Map();
-const SEARCH_TTL = 2 * 60 * 1000;
+// ПРАВИЛЬНО: list_issues с кэшированием
+const issuesCache = new Map();
+const ISSUES_TTL = 2 * 60 * 1000;
 
-async function searchIssuesCached(query) {
-  const cacheKey = `search:${query}`;
-  if (searchCache.has(cacheKey)) {
-    const cached = searchCache.get(cacheKey);
-    if (Date.now() - cached.timestamp < SEARCH_TTL) {
+async function getIssuesCached(agentLabel, stageLabel) {
+  const cacheKey = `issues:${agentLabel}:${stageLabel}`;
+  if (issuesCache.has(cacheKey)) {
+    const cached = issuesCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < ISSUES_TTL) {
       return cached.data;
     }
   }
-  const searchResult = await mcp_github_search_issues({
-    query: query,
+  const result = await mcp_github_list_issues({
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    labels: [agentLabel, stageLabel].filter(Boolean),
+    state: 'OPEN',
     perPage: 100
   });
-  searchCache.set(cacheKey, { data: searchResult, timestamp: Date.now() });
-  searchResult.items.forEach(issue => {
+  issuesCache.set(cacheKey, { data: result, timestamp: Date.now() });
+  result.issues.forEach(issue => {
     issueCache.set(issue.number, { data: issue, timestamp: Date.now() });
   });
-  await delay(2000);
-  return searchResult;
+  await delay(300);
+  return result;
 }
 
-const result = await searchIssuesCached('is:issue is:open label:agent:content-writer');
+const result = await getIssuesCached('agent:content-writer', 'stage:content');
+const readyIssues = result.issues.filter(issue => 
+  issue.labels.some(label => label.name.startsWith('ready:'))
+);
 ```
 
 ## Паттерны для агентов
@@ -210,14 +329,20 @@ async function transferToQA(issueNumbers) {
 
 ```javascript
 async function findIdeaWriterTasks() {
-  const searchResult = await mcp_github_search_issues({
-    query: 'is:issue is:open label:agent:idea-writer label:stage:idea',
+  const result = await mcp_github_list_issues({
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    labels: ['agent:idea-writer', 'stage:idea'],
+    state: 'OPEN',
     perPage: 100
   });
-  searchResult.items.forEach(issue => {
+  result.issues.forEach(issue => {
     issueCache.set(issue.number, { data: issue, timestamp: Date.now() });
   });
-  return searchResult.items;
+  const readyTasks = result.issues.filter(issue => 
+    issue.labels.some(label => label.name.startsWith('ready:'))
+  );
+  return readyTasks.length > 0 ? readyTasks : result.issues;
 }
 ```
 
@@ -255,7 +380,8 @@ async function safeApiCall(apiFunction, retries = 3) {
 |----------|----------|--------------|
 | Чтение Issue | 200-300ms | - |
 | Обновление Issue | 300-500ms | 5-10 |
-| Поиск Issues | 2000-3000ms | - |
+| list_issues (GraphQL) | 200-300ms | - |
+| search_issues (НЕ ИСПОЛЬЗУЙ) | - | - |
 | Комментарии | 300-500ms | 5-10 |
 | Метки | 300-500ms | 5-10 |
 | Массовые | 500-1000ms | 5 |
@@ -276,18 +402,21 @@ async function safeApiCall(apiFunction, retries = 3) {
 
 ## Чеклист
 
-- ОБЯЗАТЕЛЬНО: `mcp_github_search_issues` вместо множественных `issue_read`
+- ОБЯЗАТЕЛЬНО: `mcp_github_list_issues` с `labels` вместо `search_issues` (обходит Search API лимит)
+- НЕ ИСПОЛЬЗУЙ `search_issues` - лимит 30/мин, блокирует все запросы
 - Определи: Batch Processor или прямые запросы
   - <3 Issues: прямые с задержками
   - 3-9 Issues: батчинг
   - >=10 Issues: GitHub Actions
 - Группируй в батчи по 5-10
 - Задержки между запросами (300-500ms)
-- Задержки для Search API (2000-3000ms) - КРИТИЧНО
+- Задержки для list_issues (200-300ms) - GraphQL, лимит 5000/час
 - Задержки между батчами (1000ms)
 - Последовательно, не параллельно
 - Обрабатывай rate limit с повторами
-- Кэширование результатов поиска (TTL: 1-2 мин) - ОБЯЗАТЕЛЬНО
+- Кэширование результатов list_issues (TTL: 1-2 мин) - ОБЯЗАТЕЛЬНО
+- Используй метки `ready:*` для определения готовности (вместо комментариев)
+- Используй метки `stage:*` для фильтрации (вместо Project статуса)
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

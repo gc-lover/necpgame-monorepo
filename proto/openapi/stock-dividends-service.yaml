@@ -65,7 +65,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/DividendSchedule'
+                      $ref: 'stock-dividends-schemas.yaml#/components/schemas/DividendSchedule'
                   pagination:
                     $ref: 'common.yaml#/components/schemas/PaginationResponse'
               example:
@@ -149,11 +149,11 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/DividendPayment'
+                      $ref: 'stock-dividends-schemas.yaml#/components/schemas/DividendPayment'
                   pagination:
                     $ref: 'common.yaml#/components/schemas/PaginationResponse'
                   summary:
-                    $ref: '#/components/schemas/PaymentSummary'
+                    $ref: 'stock-dividends-schemas.yaml#/components/schemas/PaymentSummary'
               example:
                 data:
                   - id: "p1234567-89ab-cdef-0123-456789abcdef"
@@ -211,7 +211,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DRIPSettings'
+                $ref: 'stock-dividends-schemas.yaml#/components/schemas/DRIPSettings'
               example:
                 player_id: "123e4567-e89b-12d3-a456-426614174000"
                 global_enabled: true
@@ -250,7 +250,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DRIPSettingsUpdate'
+              $ref: 'stock-dividends-schemas.yaml#/components/schemas/DRIPSettingsUpdate'
             example:
               global_enabled: true
               stocks:
@@ -266,7 +266,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DRIPSettings'
+                $ref: 'stock-dividends-schemas.yaml#/components/schemas/DRIPSettings'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
@@ -292,7 +292,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DividendScheduleCreate'
+              $ref: 'stock-dividends-schemas.yaml#/components/schemas/DividendScheduleCreate'
             example:
               stock_id: "550e8400-e29b-41d4-a716-446655440000"
               frequency: "quarterly"
@@ -392,306 +392,19 @@ components:
 
   schemas:
     DividendSchedule:
-      type: object
-      description: Расписание выплаты дивидендов
-      required:
-        - id
-        - stock_id
-        - stock_symbol
-        - frequency
-        - amount_per_share
-        - declaration_date
-        - ex_dividend_date
-        - record_date
-        - payment_date
-        - status
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: ID расписания
-        stock_id:
-          type: string
-          format: uuid
-          description: ID акции
-        stock_symbol:
-          type: string
-          description: Тикер акции
-          minLength: 1
-          maxLength: 10
-        frequency:
-          type: string
-          enum: [quarterly, annual, special]
-          description: |
-            Частота выплаты:
-            - quarterly: квартальная
-            - annual: годовая
-            - special: специальная (разовая)
-        amount_per_share:
-          type: number
-          format: double
-          minimum: 0
-          exclusiveMinimum: true
-          description: Сумма дивидендов на одну акцию
-        declaration_date:
-          type: string
-          format: date-time
-          description: Дата объявления дивидендов
-        ex_dividend_date:
-          type: string
-          format: date-time
-          description: |
-            Ex-dividend дата. Акции купленные после этой даты 
-            не имеют права на дивиденды
-        record_date:
-          type: string
-          format: date-time
-          description: Дата фиксации акционеров
-        payment_date:
-          type: string
-          format: date-time
-          description: Дата выплаты дивидендов
-        status:
-          type: string
-          enum: [scheduled, processing, processed, cancelled]
-          description: Статус выплаты
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
+      $ref: 'stock-dividends-schemas.yaml#/components/schemas/DividendSchedule'
     DividendScheduleCreate:
-      type: object
-      description: Данные для создания расписания дивидендов
-      required:
-        - stock_id
-        - frequency
-        - amount_per_share
-        - declaration_date
-        - ex_dividend_date
-        - record_date
-        - payment_date
-      properties:
-        stock_id:
-          type: string
-          format: uuid
-        frequency:
-          type: string
-          enum: [quarterly, annual, special]
-        amount_per_share:
-          type: number
-          format: double
-          minimum: 0
-          exclusiveMinimum: true
-        declaration_date:
-          type: string
-          format: date-time
-        ex_dividend_date:
-          type: string
-          format: date-time
-        record_date:
-          type: string
-          format: date-time
-        payment_date:
-          type: string
-          format: date-time
-
+      $ref: 'stock-dividends-schemas.yaml#/components/schemas/DividendScheduleCreate'
     DividendPayment:
-      type: object
-      description: Выплата дивидендов игроку
-      required:
-        - id
-        - player_id
-        - schedule_id
-        - stock_id
-        - stock_symbol
-        - shares_owned
-        - amount_per_share
-        - gross_amount
-        - tax_amount
-        - net_amount
-        - drip_enabled
-        - status
-        - payment_date
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: ID выплаты
-        player_id:
-          type: string
-          format: uuid
-          description: ID игрока
-        schedule_id:
-          type: string
-          format: uuid
-          description: ID расписания
-        stock_id:
-          type: string
-          format: uuid
-          description: ID акции
-        stock_symbol:
-          type: string
-          description: Тикер акции
-        shares_owned:
-          type: integer
-          minimum: 0
-          description: Количество акций у игрока на record_date
-        amount_per_share:
-          type: number
-          format: double
-          description: Дивиденды на акцию
-        gross_amount:
-          type: number
-          format: double
-          description: Сумма до налогов
-        tax_amount:
-          type: number
-          format: double
-          description: Сумма налога (15%)
-        net_amount:
-          type: number
-          format: double
-          description: Сумма после налогов
-        drip_enabled:
-          type: boolean
-          description: DRIP активирован для этой выплаты
-        drip_amount:
-          type: number
-          format: double
-          nullable: true
-          description: Сумма реинвестированная через DRIP
-        drip_shares:
-          type: number
-          format: double
-          nullable: true
-          description: Количество акций приобретенных через DRIP
-        status:
-          type: string
-          enum: [pending, processed, failed]
-          description: Статус выплаты
-        payment_date:
-          type: string
-          format: date-time
-          description: Дата выплаты (из расписания)
-        processed_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: Фактическое время обработки
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
+      $ref: 'stock-dividends-schemas.yaml#/components/schemas/DividendPayment'
     PaymentSummary:
-      type: object
-      description: Сводная статистика по выплатам
-      properties:
-        total_gross:
-          type: number
-          format: double
-          description: Всего до налогов
-        total_tax:
-          type: number
-          format: double
-          description: Всего налогов
-        total_net:
-          type: number
-          format: double
-          description: Всего после налогов
-        total_drip_shares:
-          type: number
-          format: double
-          description: Всего акций через DRIP
-
+      $ref: 'stock-dividends-schemas.yaml#/components/schemas/PaymentSummary'
     DRIPSettings:
-      type: object
-      description: Настройки DRIP (Dividend Reinvestment Plan) игрока
-      required:
-        - player_id
-        - global_enabled
-        - stocks
-      properties:
-        player_id:
-          type: string
-          format: uuid
-          description: ID игрока
-        global_enabled:
-          type: boolean
-          description: |
-            Глобальное включение DRIP.
-            Если false, DRIP отключен для всех акций.
-        stocks:
-          type: array
-          description: Настройки DRIP для конкретных акций
-          items:
-            $ref: '#/components/schemas/DRIPStockSettings'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
+      $ref: 'stock-dividends-schemas.yaml#/components/schemas/DRIPSettings'
     DRIPStockSettings:
-      type: object
-      description: Настройки DRIP для конкретной акции
-      required:
-        - stock_id
-        - stock_symbol
-        - enabled
-        - threshold
-      properties:
-        stock_id:
-          type: string
-          format: uuid
-          description: ID акции
-        stock_symbol:
-          type: string
-          description: Тикер акции
-        enabled:
-          type: boolean
-          description: DRIP включен для этой акции
-        threshold:
-          type: number
-          format: double
-          minimum: 0
-          description: |
-            Минимальная сумма дивидендов для DRIP.
-            Если выплата меньше, идёт на кошелёк вместо реинвестирования.
-
+      $ref: 'stock-dividends-schemas.yaml#/components/schemas/DRIPStockSettings'
     DRIPSettingsUpdate:
-      type: object
-      description: Обновление настроек DRIP
-      required:
-        - global_enabled
-        - stocks
-      properties:
-        global_enabled:
-          type: boolean
-        stocks:
-          type: array
-          items:
-            type: object
-            required:
-              - stock_id
-              - enabled
-              - threshold
-            properties:
-              stock_id:
-                type: string
-                format: uuid
-              enabled:
-                type: boolean
-              threshold:
-                type: number
-                format: double
-                minimum: 0
+      $ref: 'stock-dividends-schemas.yaml#/components/schemas/DRIPSettingsUpdate'
 
 
 

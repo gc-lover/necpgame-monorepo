@@ -38,7 +38,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FreerunComboRequest"
+              $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/FreerunComboRequest"
             examples:
               basic_combo:
                 summary: Базовое комбо
@@ -56,7 +56,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FreerunComboResponse"
+                $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/FreerunComboResponse"
               examples:
                 success:
                   summary: Успешное выполнение
@@ -89,7 +89,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MobileAbilityRequest"
+              $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/MobileAbilityRequest"
             examples:
               dash_ability:
                 summary: Способность рывка
@@ -104,7 +104,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MobileAbilityResponse"
+                $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/MobileAbilityResponse"
               examples:
                 success:
                   summary: Успешная активация
@@ -142,7 +142,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateRouteRequest"
+              $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/CreateRouteRequest"
             examples:
               rooftop_route:
                 summary: Маршрут по крышам
@@ -168,7 +168,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateRouteResponse"
+                $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/CreateRouteResponse"
               examples:
                 success:
                   summary: Успешное создание
@@ -209,7 +209,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FreerunRoute"
+                $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/FreerunRoute"
               examples:
                 route:
                   summary: Пример маршрута
@@ -289,7 +289,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FreerunTelemetryResponse"
+                $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/FreerunTelemetryResponse"
               examples:
                 telemetry:
                   summary: Пример телеметрии
@@ -326,333 +326,27 @@ components:
 
   schemas:
     FreerunComboRequest:
-      type: object
-      required:
-        - character_id
-        - session_id
-        - action_sequence
-      properties:
-        character_id:
-          type: string
-          format: uuid
-          description: ID персонажа
-        session_id:
-          type: string
-          format: uuid
-          description: ID боевой сессии
-        action_sequence:
-          type: array
-          items:
-            type: string
-            enum:
-              - roof_jump
-              - wall_climb
-              - wire_slide
-              - rock_climb
-              - hook_grab
-              - gravibot
-              - leg_implant
-          minItems: 2
-          description: Последовательность действий комбо
-        combat_integration:
-          type: boolean
-          default: false
-          description: Интегрировать с боевыми комбо
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/FreerunComboRequest"
     FreerunComboResponse:
-      type: object
-      required:
-        - success
-        - combo_id
-      properties:
-        success:
-          type: boolean
-          description: Успешность выполнения комбо
-        combo_id:
-          type: string
-          format: uuid
-          description: ID выполненного комбо
-        bonuses_applied:
-          type: object
-          description: Примененные бонусы
-          additionalProperties:
-            type: number
-        combat_integrated:
-          type: boolean
-          description: Было ли интегрировано с боевой системой
-        message:
-          type: string
-          description: Дополнительное сообщение
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/FreerunComboResponse"
     MobileAbilityRequest:
-      type: object
-      required:
-        - character_id
-        - session_id
-        - ability_id
-        - current_action
-      properties:
-        character_id:
-          type: string
-          format: uuid
-          description: ID персонажа
-        session_id:
-          type: string
-          format: uuid
-          description: ID боевой сессии
-        ability_id:
-          type: string
-          format: uuid
-          description: ID активируемой способности
-        current_action:
-          type: string
-          enum:
-            - roof_jump
-            - wall_climb
-            - wire_slide
-            - rock_climb
-            - hook_grab
-            - gravibot
-            - leg_implant
-          description: Текущее действие паркура
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/MobileAbilityRequest"
     MobileAbilityResponse:
-      type: object
-      required:
-        - success
-        - activation_id
-        - mobile_version_used
-      properties:
-        success:
-          type: boolean
-          description: Успешность активации
-        activation_id:
-          type: string
-          format: uuid
-          description: ID активации способности
-        mobile_version_used:
-          type: boolean
-          description: Использована ли мобильная версия способности
-        cost_adjusted:
-          type: integer
-          minimum: 0
-          description: Скорректированная стоимость способности
-        original_cost:
-          type: integer
-          minimum: 0
-          description: Оригинальная стоимость способности
-        message:
-          type: string
-          description: Дополнительное сообщение
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/MobileAbilityResponse"
     CreateRouteRequest:
-      type: object
-      required:
-        - character_id
-        - name
-        - route_points
-      properties:
-        character_id:
-          type: string
-          format: uuid
-          description: ID персонажа-создателя
-        name:
-          type: string
-          minLength: 3
-          maxLength: 100
-          description: Название маршрута
-        route_points:
-          type: array
-          items:
-            $ref: "#/components/schemas/RoutePoint"
-          minItems: 2
-          description: Точки маршрута
-        difficulty:
-          type: string
-          enum:
-            - easy
-            - medium
-            - hard
-            - expert
-          default: medium
-          description: Сложность маршрута
-        is_public:
-          type: boolean
-          default: false
-          description: Публичный ли маршрут
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/CreateRouteRequest"
     CreateRouteResponse:
-      type: object
-      required:
-        - success
-        - route_id
-        - validation_passed
-      properties:
-        success:
-          type: boolean
-          description: Успешность создания
-        route_id:
-          type: string
-          format: uuid
-          description: ID созданного маршрута
-        validation_passed:
-          type: boolean
-          description: Прошла ли валидация маршрута
-        estimated_time:
-          type: integer
-          minimum: 0
-          description: Предполагаемое время прохождения (секунды)
-        message:
-          type: string
-          description: Дополнительное сообщение
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/CreateRouteResponse"
     FreerunRoute:
-      type: object
-      required:
-        - route_id
-        - character_id
-        - name
-        - route_points
-        - difficulty
-        - is_public
-        - created_at
-      properties:
-        route_id:
-          type: string
-          format: uuid
-          description: ID маршрута
-        character_id:
-          type: string
-          format: uuid
-          description: ID создателя
-        name:
-          type: string
-          description: Название маршрута
-        route_points:
-          type: array
-          items:
-            $ref: "#/components/schemas/RoutePoint"
-          description: Точки маршрута
-        difficulty:
-          type: string
-          enum:
-            - easy
-            - medium
-            - hard
-            - expert
-          description: Сложность
-        is_public:
-          type: boolean
-          description: Публичный ли маршрут
-        completion_count:
-          type: integer
-          minimum: 0
-          description: Количество прохождений
-        created_at:
-          type: string
-          format: date-time
-          description: Дата создания
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/FreerunRoute"
     RoutePoint:
-      type: object
-      required:
-        - position
-        - action_type
-      properties:
-        position:
-          $ref: "#/components/schemas/Position3D"
-        action_type:
-          type: string
-          enum:
-            - roof_jump
-            - wall_climb
-            - wire_slide
-            - rock_climb
-            - hook_grab
-            - gravibot
-            - leg_implant
-          description: Тип действия в этой точке
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/RoutePoint"
     Position3D:
-      type: object
-      required:
-        - x
-        - y
-        - z
-      properties:
-        x:
-          type: number
-          format: double
-          description: Координата X
-        y:
-          type: number
-          format: double
-          description: Координата Y
-        z:
-          type: number
-          format: double
-          description: Координата Z
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D"
     FreerunTelemetryResponse:
-      type: object
-      required:
-        - character_id
-        - telemetry_records
-      properties:
-        character_id:
-          type: string
-          format: uuid
-          description: ID персонажа
-        telemetry_records:
-          type: array
-          items:
-            $ref: "#/components/schemas/TelemetryRecord"
-          description: Записи телеметрии
-        pagination:
-          type: object
-          properties:
-            page:
-              type: integer
-              minimum: 1
-            page_size:
-              type: integer
-              minimum: 1
-            total_records:
-              type: integer
-              minimum: 0
-
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/FreerunTelemetryResponse"
     TelemetryRecord:
-      type: object
-      required:
-        - action_type
-        - duration
-        - distance
-        - stamina_used
-        - timestamp
-      properties:
-        action_type:
-          type: string
-          description: Тип действия паркура
-        duration:
-          type: integer
-          minimum: 0
-          description: Длительность действия (миллисекунды)
-        distance:
-          type: number
-          format: double
-          minimum: 0
-          description: Пройденная дистанция (метры)
-        stamina_used:
-          type: integer
-          minimum: 0
-          description: Потрачена выносливость
-        combo_triggered:
-          type: boolean
-          description: Было ли активировано комбо
-        timestamp:
-          type: string
-          format: date-time
-          description: Время выполнения действия
+      $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/TelemetryRecord"
 
 security:
   - BearerAuth: []

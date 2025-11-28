@@ -1,0 +1,262 @@
+components:
+  schemas:
+    StockIndex:
+      type: object
+      description: Фондовый индекс (краткая информация)
+      required:
+        - code
+        - name
+        - type
+        - current_value
+        - change_24h
+        - change_24h_percent
+        - constituents_count
+        - updated_at
+      properties:
+        code:
+          type: string
+          description: Код индекса (CORP100, NC50, TECH, etc.)
+          pattern: "^[A-Z0-9]+$"
+        name:
+          type: string
+          description: Название индекса
+        type:
+          type: string
+          enum: [global, regional, sector]
+          description: |
+            Тип индекса:
+            - global: Глобальный (CORP100)
+            - regional: Региональный (NC50, ASIA25, EURO30)
+            - sector: Секторный (TECH, DEFENSE, ENERGY, MEDICAL, CYBER)
+        description:
+          type: string
+          description: Описание индекса
+        current_value:
+          type: number
+          format: double
+          description: Текущее значение индекса
+        change_24h:
+          type: number
+          format: double
+          description: Изменение за 24 часа (абсолютное)
+        change_24h_percent:
+          type: number
+          format: double
+          description: Изменение за 24 часа (%)
+        constituents_count:
+          type: integer
+          description: Количество акций в индексе
+        market_cap_total:
+          type: number
+          format: double
+          description: Общая капитализация акций в индексе
+        last_rebalance:
+          type: string
+          format: date-time
+          description: Дата последнего ребаланса
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+
+    StockIndexDetailed:
+      allOf:
+        - $ref: "#/components/schemas/StockIndex"
+        - type: object
+          required:
+            - calculation_method
+            - base_value
+            - base_date
+            - rebalance_frequency
+          properties:
+            calculation_method:
+              type: string
+              enum: [market_cap_weighted, price_weighted, equal_weighted]
+              description: |
+                Метод расчета:
+                - market_cap_weighted: По капитализации
+                - price_weighted: По цене (deprecated)
+                - equal_weighted: Равновзвешенный
+            base_value:
+              type: number
+              format: double
+              description: Базовое значение индекса
+            base_date:
+              type: string
+              format: date-time
+              description: Базовая дата индекса
+            change_7d_percent:
+              type: number
+              format: double
+              description: Изменение за 7 дней (%)
+            change_30d_percent:
+              type: number
+              format: double
+              description: Изменение за 30 дней (%)
+            all_time_high:
+              type: number
+              format: double
+              description: Максимальное значение за все время
+            all_time_low:
+              type: number
+              format: double
+              description: Минимальное значение за все время
+            next_rebalance:
+              type: string
+              format: date-time
+              description: Дата следующего ребаланса
+            rebalance_frequency:
+              type: string
+              enum: [monthly, quarterly, semi_annual, annual, event_based]
+              description: Частота ребаланса
+            created_at:
+              type: string
+              format: date-time
+
+    IndexHistoryEntry:
+      type: object
+      description: Запись истории индекса
+      required:
+        - timestamp
+        - value
+        - change
+        - change_percent
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Время записи
+        value:
+          type: number
+          format: double
+          description: Значение индекса
+        change:
+          type: number
+          format: double
+          description: Изменение с предыдущего периода (абсолютное)
+        change_percent:
+          type: number
+          format: double
+          description: Изменение с предыдущего периода (%)
+        volume:
+          type: number
+          format: double
+          description: Объем торгов акций в индексе
+
+    IndexConstituent:
+      type: object
+      description: Акция в составе индекса
+      required:
+        - stock_id
+        - stock_symbol
+        - stock_name
+        - weight
+        - market_cap
+        - price
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+        stock_name:
+          type: string
+          description: Название корпорации
+        weight:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Вес в индексе (%)
+        market_cap:
+          type: number
+          format: double
+          description: Рыночная капитализация
+        price:
+          type: number
+          format: double
+          description: Текущая цена акции
+        price_change_24h:
+          type: number
+          format: double
+          description: Изменение цены за 24ч (абсолютное)
+        price_change_24h_percent:
+          type: number
+          format: double
+          description: Изменение цены за 24ч (%)
+        shares_in_index:
+          type: integer
+          description: Количество акций в индексе
+
+    RebalanceResult:
+      type: object
+      description: Результат ребаланса индекса
+      properties:
+        index_code:
+          type: string
+          description: Код индекса
+        effective_date:
+          type: string
+          format: date-time
+          description: Дата вступления в силу
+        previous_value:
+          type: number
+          format: double
+          description: Значение до ребаланса
+        new_value:
+          type: number
+          format: double
+          description: Значение после ребаланса
+        divisor_adjustment:
+          type: number
+          format: double
+          description: Корректировка divisor для непрерывности
+        added_stocks:
+          type: array
+          description: Добавленные акции
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              weight:
+                type: number
+                format: double
+        removed_stocks:
+          type: array
+          description: Удаленные акции
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              weight:
+                type: number
+                format: double
+        weight_changes:
+          type: array
+          description: Изменения весов существующих акций
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              old_weight:
+                type: number
+                format: double
+              new_weight:
+                type: number
+                format: double
+              change:
+                type: number
+                format: double
+        total_changes:
+          type: integer
+          description: Общее количество изменений
+        executed_at:
+          type: string
+          format: date-time
+          description: Время выполнения
+

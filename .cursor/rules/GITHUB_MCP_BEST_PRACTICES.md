@@ -6,12 +6,14 @@
 
 ## ⚠️ КРИТИЧНО: Secondary Rate Limit
 
-**Search API лимит: 30 запросов/минуту.** При превышении GitHub блокирует ВСЕ типы запросов на 1 час. Используй задержки 2-3 секунды для `search_issues` и кэширование результатов.
+**Search API лимит: 30 запросов/минуту.** При превышении GitHub блокирует ВСЕ типы запросов на 1 час. 
+
+**РЕШЕНИЕ: Выбирай правильный метод по сценарию** - см. `.cursor/rules/GITHUB_API_METHOD_SELECTION.md` для выбора между `list_issues` и `search_issues`.
 
 ## ⚠️ ВАЖНО: Основные методы оптимизации
 
 **Главные методы избежания rate limit (работают всегда):**
-1. **Использование поиска** - вместо множественных `issue_read` используй `search_issues`
+1. **Использование list_issues** - вместо `search_issues` используй `list_issues` с `labels` (обходит Search API лимит)
 2. **Батчинг** - группируй операции в батчи с задержками
 3. **GitHub Actions** - для массовых операций (>10 Issues)
 
@@ -19,18 +21,26 @@
 
 ## ✅ Правильные практики
 
-### 1. Использование поиска (ГЛАВНОЕ!)
+### 1. Использование list_issues (ГЛАВНОЕ!)
 
 ```javascript
-// ✅ ПРАВИЛЬНО: Используем поиск вместо множественных запросов
-async function findTasks(agentLabel) {
-  // Один запрос поиска вместо 100 запросов
-  const result = await mcp_github_search_issues({
-    query: `is:issue is:open label:${agentLabel}`,
+// ✅ ПРАВИЛЬНО: Используем list_issues вместо search_issues (обходит Search API лимит)
+async function findTasks(agentLabel, stageLabel) {
+  // Один запрос list_issues вместо search_issues (лимит 5000/час вместо 30/мин)
+  const result = await mcp_github_list_issues({
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    labels: [agentLabel, stageLabel].filter(Boolean),
+    state: 'OPEN',
     perPage: 100
   });
   
-  return result.items;
+  // Фильтрация готовых задач через метки ready:*
+  const readyTasks = result.issues.filter(issue => 
+    issue.labels.some(label => label.name.startsWith('ready:'))
+  );
+  
+  return readyTasks.length > 0 ? readyTasks : result.issues;
 }
 ```
 
@@ -257,12 +267,15 @@ for (let i = 1; i <= 200; i++) {
 
 **✅ ПРАВИЛЬНО:**
 ```javascript
-// Один запрос поиска
-const result = await mcp_github_search_issues({
-  query: 'is:issue is:open label:agent:content-writer',
+// Один запрос list_issues (обходит Search API лимит)
+const result = await mcp_github_list_issues({
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  labels: ['agent:content-writer'],
+  state: 'OPEN',
   perPage: 100
 });
-// = 1 запрос, ~0.5 секунды
+// = 1 запрос GraphQL, ~0.3 секунды, лимит 5000/час
 ```
 
 ### Обновление меток
@@ -326,7 +339,8 @@ if (issueNumbers.length > 10) {
 | Операция | Задержка | Размер батча | Использовать Batch Processor |
 |----------|----------|--------------|------------------------------|
 | Чтение Issue | 200-300ms | - | Нет |
-| Поиск Issues | 2000-3000ms | - | Нет |
+| list_issues (GraphQL) | 200-300ms | - | Нет |
+| search_issues (НЕ ИСПОЛЬЗУЙ) | - | - | Нет |
 | Обновление 1-2 Issues | 300-500ms | - | Нет |
 | Обновление 3-9 Issues | 300-500ms | 5 | Нет |
 | Обновление 10+ Issues | - | - | Да |

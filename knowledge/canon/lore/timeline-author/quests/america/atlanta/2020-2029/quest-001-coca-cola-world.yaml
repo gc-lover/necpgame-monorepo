@@ -9,7 +9,7 @@ metadata:
   location: Atlanta
   period: 2020-2029
   year: 2021
-  version: "1.0.0"
+  version: "1.1.0"
   status: design
   created_at: 2025-11-26T00:00:00Z
   owner:
@@ -84,6 +84,89 @@ rewards:
     abort: Cautious +30, clients -40, survival prioritized
     expose: Whistleblower +70, corporations -60 both, public +40
     sell: Mercenary +80, corporations -100 both hunted, wealth maximum
+
+quest_definition:
+  quest_type: side
+  level_min: 8
+  level_max: 12
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements: []
+  objectives:
+    - id: obj-001
+      text: "Встретиться с Mr. Pepper и получить задание на кражу формулы"
+      type: dialogue
+      target: mr_pepper_recruitment
+      optional: false
+    - id: obj-002
+      text: "Провести разведку музея World of Coca-Cola"
+      type: investigate
+      target: museum_reconnaissance
+      optional: false
+    - id: obj-003
+      text: "Проникнуть в музей и добраться до хранилища формулы"
+      type: move
+      target: museum_vault
+      optional: false
+    - id: obj-004
+      text: "Обнаружить, что формула - подделка, и принять решение о дальнейших действиях"
+      type: choice
+      target: formula_decision
+      optional: false
+  rewards:
+    experience: 3800
+    currency: 100000
+    reputation:
+      atlanta: 20
+    unlocks:
+      - type: achievement
+        id: corporate_espionage
+  branches:
+    - id: headquarters_success
+      condition: action == "infiltrate_hq"
+      consequences:
+        formula_stolen: true
+        corporate_war: true
+      rewards:
+        currency: 100000
+        reputation:
+          corporate_espionage: 50
+          coca_cola: -80
+          pepsi: 60
+    - id: abort_escape
+      condition: action == "abort"
+      consequences:
+        safety_secured: true
+        payment_lost: true
+      rewards:
+        currency: 0
+        reputation:
+          cautious: 30
+          clients: -40
+    - id: expose_client
+      condition: action == "expose"
+      consequences:
+        pepsi_scandal: true
+        mr_pepper_arrested: true
+      rewards:
+        currency: 50000
+        reputation:
+          whistleblower: 70
+          corporations: -60
+          public: 40
+    - id: keep_formula_sell
+      condition: action == "sell"
+      consequences:
+        auction_bidding: true
+        corporations_furious: true
+      rewards:
+        currency: 500000
+        reputation:
+          mercenary: 80
+          corporations: -100
 
 integrations:
   quest_engine: Heist branching outcomes player agency corporate espionage moral complexity

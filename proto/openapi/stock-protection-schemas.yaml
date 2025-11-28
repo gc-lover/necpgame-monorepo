@@ -1,0 +1,263 @@
+components:
+  schemas:
+    CircuitBreakerStatus:
+      type: object
+      description: Статус circuit breaker
+      required:
+        - stock_id
+        - stock_symbol
+        - status
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        stock_symbol:
+          type: string
+        status:
+          type: string
+          enum: [active, halted]
+          description: |
+            Статус торгов:
+            - active: Торги активны
+            - halted: Торги приостановлены
+        reason:
+          type: string
+          nullable: true
+          enum: [price_volatility, daily_limit, manual, investigation]
+          description: Причина остановки
+        triggered_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время остановки
+        estimated_resume_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Ожидаемое время возобновления
+        price_change_percent:
+          type: number
+          format: double
+          nullable: true
+          description: Изменение цены которое вызвало остановку
+        threshold_breached:
+          type: number
+          format: double
+          nullable: true
+          description: Порог который был превышен
+        halt_duration_minutes:
+          type: integer
+          nullable: true
+          description: Длительность остановки
+
+    SurveillanceAlert:
+      type: object
+      description: Алерт о подозрительной активности
+      required:
+        - id
+        - alert_type
+        - severity
+        - status
+        - triggered_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        alert_type:
+          type: string
+          enum:
+            - insider_trading
+            - spoofing
+            - wash_trading
+            - pump_and_dump
+            - price_manipulation
+            - collusion
+          description: |
+            Типы алертов:
+            - insider_trading: Инсайдерская торговля
+            - spoofing: Ложные заявки
+            - wash_trading: Фиктивные сделки
+            - pump_and_dump: Искусственное раздувание цены
+            - price_manipulation: Манипулирование ценой
+            - collusion: Сговор
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [new, under_review, confirmed, dismissed, escalated]
+        stock_id:
+          type: string
+          format: uuid
+          nullable: true
+        stock_symbol:
+          type: string
+          nullable: true
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+        triggered_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        reviewed_by:
+          type: string
+          nullable: true
+          description: ID модератора/админа
+        notes:
+          type: string
+          nullable: true
+          description: Комментарии расследования
+
+    SurveillanceAlertDetailed:
+      allOf:
+        - $ref: "#/components/schemas/SurveillanceAlert"
+        - type: object
+          properties:
+            trigger_details:
+              type: object
+              description: Детали триггера
+              properties:
+                pattern_detected:
+                  type: string
+                confidence_score:
+                  type: number
+                  format: double
+                  minimum: 0
+                  maximum: 1
+                related_accounts:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                suspicious_transactions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      transaction_id:
+                        type: string
+                        format: uuid
+                      timestamp:
+                        type: string
+                        format: date-time
+                      amount:
+                        type: number
+                        format: double
+            enforcement_actions:
+              type: array
+              description: Применённые санкции
+              items:
+                $ref: "#/components/schemas/EnforcementAction"
+
+    EnforcementAction:
+      type: object
+      description: Санкция применённая к игроку
+      required:
+        - id
+        - action_type
+        - player_id
+        - reason
+        - applied_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        alert_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Связанный алерт
+        player_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [warning, suspension, ban, confiscation, fine]
+          description: |
+            Типы санкций:
+            - warning: Предупреждение
+            - suspension: Временная блокировка
+            - ban: Постоянная блокировка
+            - confiscation: Конфискация активов
+            - fine: Штраф
+        duration_hours:
+          type: integer
+          nullable: true
+          description: Длительность (для suspension)
+        reason:
+          type: string
+          description: Причина санкции
+        confiscated_assets:
+          type: array
+          nullable: true
+          description: Конфискованные активы
+          items:
+            type: object
+            properties:
+              stock_id:
+                type: string
+                format: uuid
+              shares:
+                type: integer
+              value:
+                type: number
+                format: double
+        fine_amount:
+          type: number
+          format: double
+          nullable: true
+          description: Сумма штрафа
+        applied_at:
+          type: string
+          format: date-time
+        applied_by:
+          type: string
+          description: ID админа
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время окончания (для suspension)
+        appeal_status:
+          type: string
+          nullable: true
+          enum: [pending, approved, rejected]
+          description: Статус апелляции
+
+    EnforcementActionCreate:
+      type: object
+      description: Создание санкции
+      required:
+        - player_id
+        - action_type
+        - reason
+      properties:
+        alert_id:
+          type: string
+          format: uuid
+          description: Связанный алерт
+        player_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [warning, suspension, ban, confiscation, fine]
+        duration_hours:
+          type: integer
+          description: Длительность (для suspension)
+        reason:
+          type: string
+          minLength: 10
+        confiscate_assets:
+          type: boolean
+          description: Конфисковать акции игрока
+        fine_amount:
+          type: number
+          format: double
+          description: Сумма штрафа
+

@@ -1,0 +1,103 @@
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SocialService[Social Service<br/>8084]
+        Gateway --> EconomyService[Economy Service<br/>8085]
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        Gateway --> QuestService[Quest Service<br/>8087]
+        
+        SocialService --> NTM[NPC Type Manager]
+        SocialService --> NIM[NPC Interaction Manager]
+        SocialService --> DS[Dialogue System]
+        SocialService --> NRT[NPC Reputation Tracker]
+        SocialService --> NSM[NPC State Manager]
+        SocialService --> FIM[Faction Interface Manager]
+        
+        EconomyService --> TIM[Trading Interface Manager]
+        EconomyService --> NTC[NPC Trader Catalog]
+        EconomyService --> CEH[Currency Exchange Handler]
+        EconomyService --> ERH[Equipment Repair Handler]
+        
+        GameplayService --> TrIM[Training Interface Manager]
+        GameplayService --> STM[Skill Tree Manager]
+        GameplayService --> ST[Skill Trainer]
+        GameplayService --> TS[Training Simulator]
+        
+        QuestService --> NQP[NPC Quest Provider]
+        QuestService --> QCM[Quest Chain Manager]
+        QuestService --> QCV[Quest Condition Validator]
+        
+        SocialService --> EventBus[Event Bus<br/>Kafka]
+        EconomyService --> EventBus
+        GameplayService --> EventBus
+        QuestService --> EventBus
+        
+        SocialService --> DB[(NPC System DB)]
+        EconomyService --> DB
+        GameplayService --> DB
+        QuestService --> DB
+        
+        SocialService --> Cache[(Redis Cache)]
+        SocialService --> FactionService[Faction System]
+        SocialService --> RelationshipService[Relationship System]
+        
+        Client --> WSNPC[WebSocket<br/>NPC Interactions]
+        WSNPC --> SocialService
+    ```
+
+  interaction_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant Client
+        participant SocialService
+        participant NPCTypeManager
+        participant InteractionManager
+        participant DialogueSystem
+        participant TradingInterface
+        participant TrainingInterface
+        
+        Client->>SocialService: GET /npc/{id}/interact
+        SocialService->>NPCTypeManager: Get NPC type
+        NPCTypeManager->>InteractionManager: Get available actions
+        InteractionManager->>Client: Available actions (dialogue, trade, train, etc.)
+        
+        Client->>SocialService: POST /npc/{id}/dialogue/start
+        SocialService->>DialogueSystem: Start dialogue
+        DialogueSystem->>Client: Dialogue tree
+        
+        Client->>SocialService: POST /npc/{id}/dialogue/response
+        SocialService->>DialogueSystem: Process response
+        DialogueSystem->>DialogueSystem: Update reputation
+        DialogueSystem->>DialogueSystem: Check quest triggers
+        DialogueSystem->>Client: Next dialogue node
+    ```
+
+  npc_type_functionality: |
+    ```mermaid
+    graph LR
+        Fixer[Fixer] --> Contracts[Контракты]
+        Fixer --> Quests[Квесты]
+        Fixer --> Contacts[Контакты]
+        Fixer --> Locations[Скрытые локации]
+        
+        Trader[Trader] --> Shop[Магазин]
+        Trader --> Repair[Ремонт]
+        Trader --> Currency[Обмен валют]
+        Trader --> Auctions[Аукционы]
+        
+        Trainer[Trainer] --> Skills[Навыки]
+        Trainer --> Training[Тренировки]
+        Trainer --> Simulations[Симуляции]
+        
+        GangLeader[Gang Leader] --> GangQuests[Задания банды]
+        GangLeader --> Territory[Территория]
+        GangLeader --> Wars[Войны]
+        
+        CorporateDirector[Corporate Director] --> CorpContracts[Контракты]
+        CorporateDirector --> Career[Карьера]
+        CorporateDirector --> Politics[Политика]
+    ```
+

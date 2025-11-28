@@ -9,7 +9,7 @@ metadata:
   location: Atlanta
   period: 2020-2029
   year: 2024
-  version: "1.0.0"
+  version: "1.1.0"
   status: design
   created_at: 2025-11-26T00:00:00Z
   owner:
@@ -75,6 +75,97 @@ rewards:
     steal: Mercenary +50, homeless -80, guilt permanent
     confront: Activists +30, corporate -20, awareness raised minimal
     give_radical: Homeless +100, compassion +80, sacrifice nobility reputation hero poor
+
+quest_definition:
+  quest_type: side
+  level_min: 4
+  level_max: 8
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements: []
+  objectives:
+    - id: obj-001
+      text: "Принять задание на доставку от Peachtree Premium"
+      type: dialogue
+      target: delivery_job_accept
+      optional: false
+    - id: obj-002
+      text: "Пройти по Peachtree Street и наблюдать контраст богатства и бедности"
+      type: explore
+      target: peachtree_street_journey
+      optional: false
+    - id: obj-003
+      text: "Встретиться с бездомным ветераном James"
+      type: dialogue
+      target: james_encounter
+      optional: false
+    - id: obj-004
+      text: "Принять решение о судьбе посылки после нападения"
+      type: choice
+      target: package_decision
+      optional: false
+  rewards:
+    experience: 2800
+    currency: 5000
+    reputation:
+      atlanta: 15
+    unlocks:
+      - type: achievement
+        id: peachtree_delivery
+  branches:
+    - id: deliver_complete
+      condition: decision == "deliver"
+      consequences:
+        payment_received: true
+        indifference_maintained: true
+      rewards:
+        currency: 5000
+        reputation:
+          pragmatic: 20
+          compassion: -10
+    - id: share_james
+      condition: decision == "share"
+      consequences:
+        community_survives: true
+        charity_direct: true
+      rewards:
+        currency: 7500
+        reputation:
+          homeless_community: 60
+          compassion: 40
+    - id: steal_solo
+      condition: decision == "steal"
+      consequences:
+        profit_maximum: true
+        james_betrayed: true
+      rewards:
+        currency: 25000
+        reputation:
+          mercenary: 50
+          homeless: -80
+    - id: confront_vanessa
+      condition: decision == "confront"
+      consequences:
+        privilege_uncomfortable: true
+        donations_promised: true
+      rewards:
+        currency: 5000
+        reputation:
+          activists: 30
+          corporate: -20
+    - id: give_james
+      condition: decision == "give"
+      consequences:
+        radical_generosity: true
+        payment_lost: true
+      rewards:
+        currency: 0
+        reputation:
+          homeless: 100
+          compassion: 80
 
 integrations:
   quest_engine: Peachtree delivery moral choices wealth inequality player agency consequences immediate personal

@@ -1,0 +1,412 @@
+components:
+  schemas:
+    Relationship:
+      type: object
+      properties:
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RelationshipsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relationship'
+        total:
+          type: integer
+
+    SetRelationshipRequest:
+      type: object
+      required:
+        - target_player_id
+        - relationship_type
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        relationship_type:
+          type: string
+          enum: [friends, close_allies, pact, neutral, enemies, nemesis]
+        reputation_value:
+          type: integer
+          minimum: -100
+          maximum: 100
+
+    TrustLevel:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        target_player_id:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        trust_points:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    UpdateTrustRequest:
+      type: object
+      required:
+        - target_player_id
+        - trust_change
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        trust_change:
+          type: integer
+          description: Изменение доверия (может быть отрицательным)
+        reason:
+          type: string
+
+    CreateTrustContractRequest:
+      type: object
+      required:
+        - target_player_id
+        - trust_level
+        - terms
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        terms:
+          type: object
+          additionalProperties: true
+        duration_days:
+          type: integer
+          minimum: 1
+
+    TrustContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        trust_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        terms:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [active, terminated, expired]
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TerminateTrustContractRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    CreateAllianceRequest:
+      type: object
+      required:
+        - alliance_type
+        - name
+      properties:
+        alliance_type:
+          type: string
+          enum: [combat, trade, clan, faction]
+        name:
+          type: string
+        description:
+          type: string
+        terms:
+          type: object
+          additionalProperties: true
+
+    Alliance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        alliance_type:
+          type: string
+          enum: [combat, trade, clan, faction]
+        name:
+          type: string
+        description:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+            format: uuid
+        terms:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [active, terminated, expired]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AlliancesResponse:
+      type: object
+      properties:
+        alliances:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alliance'
+        total:
+          type: integer
+
+    TerminateAllianceRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    InviteToAllianceRequest:
+      type: object
+      required:
+        - target_player_id
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+
+    AllianceInvite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        alliance_id:
+          type: string
+          format: uuid
+        inviter_id:
+          type: string
+          format: uuid
+        invitee_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, accepted, rejected, expired]
+        created_at:
+          type: string
+          format: date-time
+
+    JoinAllianceRequest:
+      type: object
+      properties:
+        invite_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    LeaveAllianceRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+
+    PlayerRatings:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        combat_rating:
+          type: integer
+        trade_rating:
+          type: integer
+        social_rating:
+          type: integer
+        overall_rating:
+          type: integer
+        total_ratings:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    UpdateRatingRequest:
+      type: object
+      required:
+        - target_player_id
+        - rating_type
+        - rating_value
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        rating_type:
+          type: string
+          enum: [combat, trade, social, overall]
+        rating_value:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    SocialCapital:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        capital_value:
+          type: integer
+        network_size:
+          type: integer
+        influence_score:
+          type: number
+          format: decimal
+        trust_score:
+          type: number
+          format: decimal
+        last_update:
+          type: string
+          format: date-time
+
+    InteractionHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionEntry'
+        total:
+          type: integer
+
+    InteractionEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        interaction_type:
+          type: string
+          enum: [quest, trade, combat, social, other]
+        description:
+          type: string
+        reputation_change:
+          type: integer
+        trust_change:
+          type: integer
+        occurred_at:
+          type: string
+          format: date-time
+
+    RequestArbitrationRequest:
+      type: object
+      required:
+        - target_player_id
+        - dispute_type
+        - description
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+        dispute_type:
+          type: string
+          enum: [trade, contract, alliance, reputation, other]
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+
+    ArbitrationCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id1:
+          type: string
+          format: uuid
+        player_id2:
+          type: string
+          format: uuid
+        dispute_type:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, dismissed]
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+

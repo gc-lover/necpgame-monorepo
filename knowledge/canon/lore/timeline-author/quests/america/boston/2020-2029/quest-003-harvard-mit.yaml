@@ -9,7 +9,7 @@ metadata:
   location: Boston
   period: 2020-2029
   year: 2025
-  version: "1.0.0"
+  version: "1.1.0"
   status: design
   created_at: 2025-11-26T00:00:00Z
   owner:
@@ -368,6 +368,107 @@ rewards:
       whistleblower hero
     mediation_success: Harvard +70, MIT +70, Arasaka +20, academia +80, reputation
       mediator peacemaker
+
+quest_definition:
+  quest_type: side
+  level_min: 8
+  level_max: 12
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements: []
+  objectives:
+    - id: obj-001
+      text: "Получить задание от Harvard (украсть исследование MIT)"
+      type: dialogue
+      target: harvard_mission
+      optional: false
+    - id: obj-002
+      text: "Получить задание от MIT (саботировать презентацию Harvard)"
+      type: dialogue
+      target: mit_mission
+      optional: false
+    - id: obj-003
+      text: "Обнаружить, что работаешь на обе стороны одновременно"
+      type: choice
+      target: double_agent_decision
+      optional: false
+    - id: obj-004
+      text: "Принять решение о финальной стратегии"
+      type: choice
+      target: final_strategy
+      optional: false
+  rewards:
+    experience: 5000
+    currency: 25000
+    reputation:
+      boston: 30
+    unlocks:
+      - type: achievement
+        id: academic_saboteur
+  branches:
+    - id: harvard_sabotaged
+      condition: strategy == "harvard"
+      consequences:
+        harvard_presentation_ruined: true
+        circuit_vindicated: true
+      rewards:
+        currency: 25000
+        reputation:
+          mit: 60
+          harvard: -80
+          arasaka: 30
+          academia_mercenary: -40
+    - id: mit_sabotaged
+      condition: strategy == "mit"
+      consequences:
+        mit_research_stolen: true
+        crimson_vindicated: true
+      rewards:
+        currency: 25000
+        reputation:
+          harvard: 60
+          mit: -80
+          arasaka: 30
+          academia_mercenary: -40
+    - id: both_sabotaged
+      condition: strategy == "both"
+      consequences:
+        both_universities_damaged: true
+        chaos_maximized: true
+      rewards:
+        currency: 40000
+        reputation:
+          harvard: -100
+          mit: -100
+          arasaka: -50
+          academia: -70
+    - id: arasaka_exposed
+      condition: strategy == "expose"
+      consequences:
+        corruption_revealed: true
+        grant_canceled: true
+      rewards:
+        currency: 25000
+        reputation:
+          harvard: 50
+          mit: 50
+          arasaka: -80
+          academia: 60
+    - id: mediation_success
+      condition: strategy == "mediate"
+      consequences:
+        reconciliation: true
+        grant_shared: true
+      rewards:
+        currency: 35000
+        reputation:
+          harvard: 70
+          mit: 70
+          arasaka: 20
+          academia: 80
 
 integrations:
   quest_engine: Harvard MIT rivalry branching five outcomes player agency moral

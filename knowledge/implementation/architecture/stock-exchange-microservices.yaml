@@ -1,0 +1,95 @@
+microservices:
+  - name: economy-service
+    port: 8085
+    responsibility: |
+      Основной сервис для системы фондовой биржи:
+      - Управление корпорациями и их акциями
+      - Торговля акциями (matching engine)
+      - Расчет цен на основе спроса/предложения
+      - Управление портфелями игроков
+      - Интеграция с другими экономическими системами
+    components:
+      - Stock Trading Engine
+      - Stock Pricing Engine
+      - Portfolio Manager
+      - Corporation Registry
+      - Order Book Manager
+      - Trade Executor
+    endpoints:
+      - GET /api/v1/economy/stocks - список акций
+      - GET /api/v1/economy/stocks/{symbol} - детали акции
+      - GET /api/v1/economy/stocks/{symbol}/price - текущая цена
+      - GET /api/v1/economy/stocks/{symbol}/history - история цен
+      - POST /api/v1/economy/stocks/orders - создать ордер
+      - GET /api/v1/economy/stocks/orders/{id} - детали ордера
+      - DELETE /api/v1/economy/stocks/orders/{id} - отменить ордер
+      - GET /api/v1/economy/stocks/portfolio - портфель игрока
+      - GET /api/v1/economy/stocks/portfolio/history - история портфеля
+      - GET /api/v1/economy/stocks/corporations - список корпораций
+      - GET /api/v1/economy/stocks/corporations/{id} - детали корпорации
+
+  - name: dividend-service
+    port: 8088
+    responsibility: |
+      Управление дивидендами:
+      - Расчет дивидендов по корпорациям
+      - Распределение выплат игрокам
+      - Управление DRIP (Dividend Reinvestment Plan)
+      - Налоговый учет дивидендов
+      - Уведомления о выплатах
+    components:
+      - Dividend Calculator
+      - Dividend Scheduler
+      - DRIP Manager
+      - Dividend Distributor
+      - Tax Calculator
+    endpoints:
+      - GET /api/v1/dividends/schedule - расписание дивидендов
+      - GET /api/v1/dividends/pending - ожидающие выплаты
+      - GET /api/v1/dividends/history - история выплат
+      - POST /api/v1/dividends/{id}/reinvest - реинвестировать дивиденды
+      - GET /api/v1/dividends/player/{player_id} - дивиденды игрока
+
+  - name: stock-analytics-service
+    port: 8089
+    responsibility: |
+      Аналитика и метрики биржи:
+      - Расчет индексов (S&P 500 аналог)
+      - P/E, P/B и другие метрики
+      - Технический анализ
+      - Тренды и прогнозы
+      - Рыночная капитализация
+    components:
+      - Index Calculator
+      - Metrics Calculator
+      - Technical Analyzer
+      - Trend Analyzer
+      - Market Cap Calculator
+    endpoints:
+      - GET /api/v1/analytics/stocks/indices - список индексов
+      - GET /api/v1/analytics/stocks/indices/{id} - детали индекса
+      - GET /api/v1/analytics/stocks/{symbol}/metrics - метрики акции
+      - GET /api/v1/analytics/stocks/{symbol}/technical - технический анализ
+      - GET /api/v1/analytics/stocks/trends - рыночные тренды
+
+  - name: compliance-service
+    port: 8091
+    responsibility: |
+      Защита от манипуляций:
+      - Мониторинг подозрительных сделок
+      - Обнаружение инсайдерской торговли
+      - Circuit breakers
+      - Лимиты на позиции
+      - Временные ограничения
+    components:
+      - Trade Monitor
+      - Insider Trading Detector
+      - Circuit Breaker Manager
+      - Position Limit Enforcer
+      - Suspicious Activity Reporter
+    endpoints:
+      - GET /api/v1/compliance/alerts - алерты о нарушениях
+      - POST /api/v1/compliance/circuit-breaker/{symbol} - активировать circuit breaker
+      - GET /api/v1/compliance/limits/{player_id} - лимиты игрока
+      - POST /api/v1/compliance/report - сообщить о нарушении
+

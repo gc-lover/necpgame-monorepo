@@ -53,7 +53,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/QuestEventPayload"
+              $ref: "stock-integration-schemas.yaml#/components/schemas/QuestEventPayload"
             example:
               event_id: "quest_completed_12345"
               quest_id: "corp_espionage_001"
@@ -117,7 +117,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FactionEventPayload"
+              $ref: "stock-integration-schemas.yaml#/components/schemas/FactionEventPayload"
             example:
               event_id: "faction_war_victory_789"
               event_type: "war_victory"
@@ -164,7 +164,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/WorldEventPayload"
+              $ref: "stock-integration-schemas.yaml#/components/schemas/WorldEventPayload"
             example:
               event_id: "energy_crisis_2025"
               event_type: "economic_crisis"
@@ -231,7 +231,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventPreviewResult"
+                $ref: "stock-integration-schemas.yaml#/components/schemas/EventPreviewResult"
               example:
                 affected_stocks:
                   - stock_id: "550e8400-e29b-41d4-a716-446655440000"
@@ -302,7 +302,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/EventMapping"
+                      $ref: "stock-integration-schemas.yaml#/components/schemas/EventMapping"
                   pagination:
                     $ref: "common.yaml#/components/schemas/PaginationResponse"
         "401":
@@ -360,7 +360,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/JournalEntry"
+                      $ref: "stock-integration-schemas.yaml#/components/schemas/JournalEntry"
                   pagination:
                     $ref: "common.yaml#/components/schemas/PaginationResponse"
         "401":
@@ -384,7 +384,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EventMappingUpsert"
+              $ref: "stock-integration-schemas.yaml#/components/schemas/EventMappingUpsert"
       responses:
         "200":
           description: Маппинг обновлен
@@ -444,332 +444,19 @@ components:
 
   schemas:
     QuestEventPayload:
-      type: object
-      description: Событие из quest-service
-      required:
-        - event_id
-        - quest_id
-        - quest_name
-        - player_id
-        - outcome
-        - affected_corporations
-        - timestamp
-      properties:
-        event_id:
-          type: string
-          description: ID события
-        quest_id:
-          type: string
-          description: ID квеста
-        quest_name:
-          type: string
-          description: Название квеста
-        player_id:
-          type: string
-          format: uuid
-          description: ID игрока
-        outcome:
-          type: string
-          enum: [success, failure, partial]
-          description: Результат квеста
-        affected_corporations:
-          type: array
-          description: Затронутые корпорации
-          items:
-            type: object
-            required:
-              - corporation_id
-              - impact_type
-              - severity
-            properties:
-              corporation_id:
-                type: string
-                format: uuid
-              impact_type:
-                type: string
-                enum: [positive, negative, neutral]
-              severity:
-                type: string
-                enum: [low, medium, high, critical]
-        timestamp:
-          type: string
-          format: date-time
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Дополнительная информация
-
+      $ref: "stock-integration-schemas.yaml#/components/schemas/QuestEventPayload"
     FactionEventPayload:
-      type: object
-      description: Событие из faction-service
-      required:
-        - event_id
-        - event_type
-        - timestamp
-      properties:
-        event_id:
-          type: string
-        event_type:
-          type: string
-          enum:
-            - war_started
-            - war_victory
-            - war_defeat
-            - territory_captured
-            - territory_lost
-            - reputation_change
-        winner_faction_id:
-          type: string
-          description: ID победившей фракции
-        loser_faction_id:
-          type: string
-          description: ID проигравшей фракции
-        territory_gained:
-          type: integer
-          description: Количество захваченных территорий
-        territory_lost:
-          type: integer
-          description: Количество потерянных территорий
-        casualty_ratio:
-          type: number
-          format: double
-          description: Соотношение потерь (0-1)
-        timestamp:
-          type: string
-          format: date-time
-
+      $ref: "stock-integration-schemas.yaml#/components/schemas/FactionEventPayload"
     WorldEventPayload:
-      type: object
-      description: Глобальное мировое событие
-      required:
-        - event_id
-        - event_type
-        - event_name
-        - severity
-        - timestamp
-      properties:
-        event_id:
-          type: string
-        event_type:
-          type: string
-          enum:
-            - economic_crisis
-            - tech_breakthrough
-            - energy_crisis
-            - medical_emergency
-            - political_upheaval
-            - natural_disaster
-        event_name:
-          type: string
-        severity:
-          type: string
-          enum: [low, medium, high, critical]
-        affected_sectors:
-          type: array
-          description: Затронутые секторы
-          items:
-            type: object
-            properties:
-              sector:
-                type: string
-              impact_percent:
-                type: number
-                format: double
-        duration_hours:
-          type: integer
-          description: Длительность события в часах
-        timestamp:
-          type: string
-          format: date-time
-
+      $ref: "stock-integration-schemas.yaml#/components/schemas/WorldEventPayload"
     EventPreviewResult:
-      type: object
-      description: Результат предварительного просмотра
-      properties:
-        affected_stocks:
-          type: array
-          items:
-            type: object
-            properties:
-              stock_id:
-                type: string
-                format: uuid
-              stock_symbol:
-                type: string
-              current_price:
-                type: number
-                format: double
-              projected_price:
-                type: number
-                format: double
-              impact_percent:
-                type: number
-                format: double
-              reason:
-                type: string
-        total_market_cap_change:
-          type: number
-          format: double
-          description: Изменение общей капитализации
-        indices_affected:
-          type: array
-          description: Затронутые индексы
-          items:
-            type: object
-            properties:
-              index_code:
-                type: string
-              current_value:
-                type: number
-                format: double
-              projected_value:
-                type: number
-                format: double
-              change_percent:
-                type: number
-                format: double
-
+      $ref: "stock-integration-schemas.yaml#/components/schemas/EventPreviewResult"
     EventMapping:
-      type: object
-      description: Правило маппинга события на акцию
-      required:
-        - id
-        - event_type
-        - condition
-        - impact_formula
-        - status
-      properties:
-        id:
-          type: string
-          format: uuid
-        event_type:
-          type: string
-          enum:
-            - quest_completed
-            - faction_war
-            - world_event
-            - tech_breakthrough
-            - corporate_scandal
-        condition:
-          type: object
-          description: Условия срабатывания маппинга
-          properties:
-            quest_id_pattern:
-              type: string
-              description: Regex паттерн для quest_id
-            outcome:
-              type: string
-              enum: [success, failure, partial, any]
-            corporation_id:
-              type: string
-              format: uuid
-            faction_id:
-              type: string
-            severity:
-              type: string
-              enum: [low, medium, high, critical]
-        impact_formula:
-          type: object
-          description: Формула расчета влияния
-          properties:
-            base_impact_percent:
-              type: number
-              format: double
-            modifiers:
-              type: array
-              items:
-                type: object
-                properties:
-                  type:
-                    type: string
-                  multiplier:
-                    type: number
-                    format: double
-        status:
-          type: string
-          enum: [active, inactive, deprecated]
-        priority:
-          type: integer
-          description: Приоритет (для конфликтов)
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
+      $ref: "stock-integration-schemas.yaml#/components/schemas/EventMapping"
     EventMappingUpsert:
-      type: object
-      description: Создание/обновление маппинга
-      required:
-        - event_type
-        - condition
-        - impact_formula
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: ID для обновления (опционально)
-        event_type:
-          type: string
-          enum:
-            - quest_completed
-            - faction_war
-            - world_event
-            - tech_breakthrough
-            - corporate_scandal
-        condition:
-          type: object
-        impact_formula:
-          type: object
-        status:
-          type: string
-          enum: [active, inactive]
-          default: active
-        priority:
-          type: integer
-          default: 100
-
+      $ref: "stock-integration-schemas.yaml#/components/schemas/EventMappingUpsert"
     JournalEntry:
-      type: object
-      description: Запись журнала интеграций
-      properties:
-        id:
-          type: string
-          format: uuid
-        source:
-          type: string
-          enum: [quest_service, faction_service, economy_events, manual]
-        event_id:
-          type: string
-        event_type:
-          type: string
-        payload:
-          type: object
-          description: Оригинальный payload события
-        status:
-          type: string
-          enum: [pending, processing, completed, failed]
-        processing_started_at:
-          type: string
-          format: date-time
-        processing_completed_at:
-          type: string
-          format: date-time
-          nullable: true
-        processing_duration_ms:
-          type: integer
-          description: Длительность обработки в миллисекундах
-        affected_stocks_count:
-          type: integer
-          description: Количество затронутых акций
-        error_message:
-          type: string
-          nullable: true
-          description: Сообщение об ошибке (если failed)
-        created_at:
-          type: string
-          format: date-time
+      $ref: "stock-integration-schemas.yaml#/components/schemas/JournalEntry"
 
 
 
