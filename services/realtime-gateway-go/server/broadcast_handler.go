@@ -111,11 +111,15 @@ func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
 				ci.clientConn.mu.Lock()
 				ci.conn.SetWriteDeadline(deadline)
 				if err := ci.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
-					logger.WithError(err).Debug("Failed to broadcast delta to client")
-				} else {
-					atomic.AddInt64(&successCount, 1)
-					deltaState.SetLastState(CopyGameStateData(newState))
+					logger.WithError(err).Warn("Failed to broadcast delta to client, removing connection")
+					ci.clientConn.mu.Unlock()
+					h.RemoveClientConnection(ci.conn)
+					ci.conn.Close()
+					RecordError("broadcast_delta_failed")
+					continue
 				}
+				atomic.AddInt64(&successCount, 1)
+				deltaState.SetLastState(CopyGameStateData(newState))
 				ci.clientConn.mu.Unlock()
 			}
 		}()
@@ -174,15 +178,19 @@ func (h *GatewayHandler) BroadcastToClientsParallel(data []byte) {
 		go func(cc *ClientConnection) {
 			defer wg.Done()
 			cc.mu.Lock()
-			defer cc.mu.Unlock()
 			cc.conn.SetWriteDeadline(deadline)
 			if err := cc.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
-				logger.WithError(err).Debug("Failed to broadcast to client")
-			} else {
-				mu.Lock()
-				successCount++
-				mu.Unlock()
+				logger.WithError(err).Warn("Failed to broadcast to client, removing connection")
+				cc.mu.Unlock()
+				h.RemoveClientConnection(cc.conn)
+				cc.conn.Close()
+				RecordError("broadcast_failed")
+				return
 			}
+			cc.mu.Unlock()
+			mu.Lock()
+			successCount++
+			mu.Unlock()
 		}(clientConn)
 	}
 	
