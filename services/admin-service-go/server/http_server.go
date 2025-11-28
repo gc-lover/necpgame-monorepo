@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -151,11 +152,19 @@ func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(data); err != nil {
+		s.logger.WithError(err).Error("Failed to encode response")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errorResponse := map[string]string{"error": "Internal server error"}
+		json.NewEncoder(w).Encode(errorResponse)
+		return
+	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		s.logger.WithError(err).Error("Failed to encode JSON response")
-	}
+	w.Write(buf.Bytes())
 }
 
 func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {
