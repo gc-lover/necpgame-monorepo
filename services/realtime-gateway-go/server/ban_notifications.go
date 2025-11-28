@@ -145,7 +145,11 @@ func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotifi
 		}
 
 		if match {
-			notificationMessage := bns.buildNotificationMessage(notification)
+			notificationMessage, err := bns.buildNotificationMessage(notification)
+			if err != nil {
+				bns.logger.WithError(err).WithField("character_id", notification.CharacterID).Error("Failed to build ban notification message, skipping send")
+				continue
+			}
 			
 			clientConn.mu.Lock()
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
@@ -168,7 +172,7 @@ func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotifi
 	}
 }
 
-func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanNotification) []byte {
+func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanNotification) ([]byte, error) {
 	response := map[string]interface{}{
 		"type":        "ban_notification",
 		"ban_id":      notification.BanID,
@@ -188,7 +192,11 @@ func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanN
 		response["ban_type"] = *notification.Type
 	}
 
-	message, _ := json.Marshal(response)
-	return message
+	message, err := json.Marshal(response)
+	if err != nil {
+		bns.logger.WithError(err).WithField("ban_id", notification.BanID).Error("Failed to marshal ban notification message")
+		return nil, err
+	}
+	return message, nil
 }
 

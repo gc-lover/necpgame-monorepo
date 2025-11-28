@@ -144,7 +144,11 @@ func (ns *NotificationSubscriber) sendNotification(notification NotificationEven
 		}
 
 		if match {
-			notificationMessage := ns.buildNotificationMessage(notification)
+			notificationMessage, err := ns.buildNotificationMessage(notification)
+			if err != nil {
+				ns.logger.WithError(err).WithField("account_id", notification.AccountID).Error("Failed to build notification message, skipping send")
+				continue
+			}
 			
 			clientConn.mu.Lock()
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
@@ -167,7 +171,7 @@ func (ns *NotificationSubscriber) sendNotification(notification NotificationEven
 	}
 }
 
-func (ns *NotificationSubscriber) buildNotificationMessage(notification NotificationEvent) []byte {
+func (ns *NotificationSubscriber) buildNotificationMessage(notification NotificationEvent) ([]byte, error) {
 	response := map[string]interface{}{
 		"type":            "notification",
 		"notification_id": notification.NotificationID,
@@ -183,7 +187,11 @@ func (ns *NotificationSubscriber) buildNotificationMessage(notification Notifica
 		response["data"] = notification.Data
 	}
 
-	message, _ := json.Marshal(response)
-	return message
+	message, err := json.Marshal(response)
+	if err != nil {
+		ns.logger.WithError(err).WithField("notification_id", notification.NotificationID).Error("Failed to marshal notification message")
+		return nil, err
+	}
+	return message, nil
 }
 
