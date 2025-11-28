@@ -18,7 +18,7 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:8084")
 	metricsAddr := getEnv("METRICS_ADDR", ":9094")
-
+	
 	friendsService := &server.MockFriendsService{}
 	guildsService := &server.MockGuildsService{}
 	chatService := &server.MockChatService{}

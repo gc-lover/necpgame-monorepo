@@ -1,0 +1,452 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Catalog Service API
+  description: |
+    API для каталога и лоадаутов боевых способностей в NECPGAME.
+    
+    **Основные возможности:**
+    - Каталог способностей с различными источниками
+    - Управление лоадаутами (Q/E/R слоты, пассивы, хакерские)
+    
+    **Слоты способностей:**
+    - Q/E/R - активные тактические способности
+    - Passive - пассивные способности
+    - Hacking - хакерские способности (для кибердеков)
+    
+    **Источники способностей:**
+    - Equipment - из экипировки
+    - Implant - из имплантов
+    - Progression - из прокачки
+    - Cyberdeck - из кибердеки
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Catalog
+    description: Каталог способностей
+  - name: Loadouts
+    description: Лоадауты способностей
+
+paths:
+  /api/v1/gameplay/combat/abilities/catalog:
+    get:
+      tags:
+        - Catalog
+      summary: Каталог способностей
+      description: |
+        Возвращает каталог доступных способностей.
+        
+        **Фильтры:**
+        - По типу (tactical, signature, ultimate, passive, hacking)
+        - По источнику (equipment, implant, progression, cyberdeck)
+        - По слоту (Q, E, R, passive, hacking)
+        
+        **Типы способностей:**
+        - `tactical` - тактические (базовые боевые)
+        - `signature` - сигнатурные (уникальные для класса)
+        - `ultimate` - ультимативные (мощные с долгим кулдауном)
+        - `passive` - пассивные (постоянный эффект)
+        - `hacking` - хакерские (кибердека)
+      operationId: getAbilitiesCatalog
+      parameters:
+        - name: ability_type
+          in: query
+          description: Фильтр по типу способности
+          schema:
+            type: string
+            enum: [tactical, signature, ultimate, passive, hacking]
+        - name: source
+          in: query
+          description: Фильтр по источнику
+          schema:
+            type: string
+            enum: [equipment, implant, progression, cyberdeck]
+        - name: slot
+          in: query
+          description: Фильтр по слоту
+          schema:
+            type: string
+            enum: [Q, E, R, passive, hacking]
+      responses:
+        "200":
+          description: Каталог способностей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  abilities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Ability"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/abilities/{ability_id}:
+    get:
+      tags:
+        - Catalog
+      summary: Информация о способности
+      description: |
+        Возвращает детальную информацию о способности.
+        
+        **Включает:**
+        - Основные характеристики
+        - Требования для использования
+        - Эффекты и модификаторы
+        - Возможные синергии
+      operationId: getAbility
+      parameters:
+        - $ref: "#/components/parameters/AbilityId"
+      responses:
+        "200":
+          description: Информация о способности
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbilityDetailed"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/abilities/loadouts:
+    get:
+      tags:
+        - Loadouts
+      summary: Получение лоадаутов
+      description: |
+        Возвращает сохранённые лоадауты способностей персонажа.
+        
+        **Лоадаут включает:**
+        - Q/E/R слоты (активные способности)
+        - Passive abilities (пассивные способности)
+        - Hacking abilities (хакерские способности)
+        - Auto-cast настройки
+      operationId: getLoadouts
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список лоадаутов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loadouts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AbilityLoadout"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - Loadouts
+      summary: Сохранение лоадаута
+      description: |
+        Сохраняет новый лоадаут способностей или обновляет существующий.
+        
+        **Валидация:**
+        - Проверка доступности способностей
+        - Проверка требований способностей
+        - Проверка конфликтов между способностями
+        - Проверка синергий
+        
+        **Ограничения:**
+        - Максимум 10 лоадаутов на персонажа
+        - Название лоадаута уникально
+      operationId: saveLoadout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveLoadoutRequest"
+            examples:
+              assault:
+                summary: Assault лоадаут
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440001"
+                  name: "Assault Build"
+                  slot_q: "650e8400-e29b-41d4-a716-446655440001"
+                  slot_e: "650e8400-e29b-41d4-a716-446655440002"
+                  slot_r: "650e8400-e29b-41d4-a716-446655440003"
+                  passive_abilities:
+                    - "750e8400-e29b-41d4-a716-446655440001"
+                    - "750e8400-e29b-41d4-a716-446655440002"
+      responses:
+        "201":
+          description: Лоадаут сохранён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbilityLoadout"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/abilities/loadouts/{loadout_id}:
+    delete:
+      tags:
+        - Loadouts
+      summary: Удаление лоадаута
+      description: Удаляет сохранённый лоадаут
+      operationId: deleteLoadout
+      parameters:
+        - name: loadout_id
+          in: path
+          required: true
+          description: ID лоадаута для удаления
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Лоадаут удалён
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  parameters:
+    AbilityId:
+      name: ability_id
+      in: path
+      required: true
+      description: Уникальный идентификатор способности
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Ability:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID способности
+        name:
+          type: string
+          description: Название способности
+        description:
+          type: string
+          description: Описание способности
+        ability_type:
+          type: string
+          enum: [tactical, signature, ultimate, passive, hacking]
+          description: Тип способности
+        slot:
+          type: string
+          enum: [Q, E, R, passive, hacking]
+          description: Слот для способности
+        source:
+          type: string
+          enum: [equipment, implant, progression, cyberdeck]
+          description: Источник способности
+        rank:
+          type: integer
+          description: Ранг способности (1-5)
+          minimum: 1
+          maximum: 5
+        energy_cost:
+          type: integer
+          description: Стоимость энергии
+          minimum: 0
+        health_cost:
+          type: integer
+          description: Стоимость здоровья
+          minimum: 0
+        cooldown_base:
+          type: integer
+          description: Базовый кулдаун (секунды)
+          minimum: 0
+        cyberpsychosis_impact:
+          type: number
+          format: float
+          description: Влияние на киберпсихоз (0.0-1.0)
+
+    AbilityDetailed:
+      allOf:
+        - $ref: "#/components/schemas/Ability"
+        - type: object
+          properties:
+            requirements:
+              type: object
+              description: Требования для использования
+              properties:
+                min_level:
+                  type: integer
+                  description: Минимальный уровень персонажа
+                attributes:
+                  type: object
+                  description: Требуемые атрибуты
+                  properties:
+                    strength:
+                      type: integer
+                    agility:
+                      type: integer
+                    intelligence:
+                      type: integer
+                items_required:
+                  type: array
+                  description: Требуемые предметы/импланты
+                  items:
+                    type: string
+            modifiers:
+              type: object
+              description: Модификаторы способности
+              properties:
+                damage_multiplier:
+                  type: number
+                range_multiplier:
+                  type: number
+                duration_multiplier:
+                  type: number
+            effects:
+              type: array
+              description: Эффекты способности
+              items:
+                type: object
+                properties:
+                  effect_type:
+                    type: string
+                  value:
+                    type: number
+                  duration:
+                    type: integer
+            synergies:
+              type: array
+              description: Возможные синергии
+              items:
+                type: string
+                format: uuid
+                description: ID синергий
+
+    AbilityLoadout:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID лоадаута
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        name:
+          type: string
+          description: Название лоадаута
+        slot_q:
+          type: string
+          format: uuid
+          description: Способность в слоте Q
+        slot_e:
+          type: string
+          format: uuid
+          description: Способность в слоте E
+        slot_r:
+          type: string
+          format: uuid
+          description: Способность в слоте R
+        passive_abilities:
+          type: array
+          description: Пассивные способности
+          items:
+            type: string
+            format: uuid
+        hacking_abilities:
+          type: array
+          description: Хакерские способности (для кибердеки)
+          items:
+            type: string
+            format: uuid
+        auto_cast_enabled:
+          type: boolean
+          description: Автоматическое использование способностей
+        is_active:
+          type: boolean
+          description: Активен ли лоадаут
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SaveLoadoutRequest:
+      type: object
+      required:
+        - character_id
+        - name
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Название лоадаута
+          minLength: 3
+          maxLength: 50
+        slot_q:
+          type: string
+          format: uuid
+          description: Способность для слота Q
+        slot_e:
+          type: string
+          format: uuid
+          description: Способность для слота E
+        slot_r:
+          type: string
+          format: uuid
+          description: Способность для слота R
+        passive_abilities:
+          type: array
+          description: Пассивные способности
+          items:
+            type: string
+            format: uuid
+        hacking_abilities:
+          type: array
+          description: Хакерские способности
+          items:
+            type: string
+            format: uuid
+        auto_cast_enabled:
+          type: boolean
+          description: Автоматическое использование
+          default: false
+

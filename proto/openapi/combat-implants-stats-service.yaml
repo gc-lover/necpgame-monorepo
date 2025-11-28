@@ -1,0 +1,275 @@
+openapi: 3.0.3
+info:
+  title: Combat Implants Stats Service API
+  description: |
+    API для статов и ограничений имплантов в NECPGAME.
+    
+    **Основные возможности:**
+    - Энергетический пул и перегрев
+    - Человечность и киберпсихоз
+    - Совместимость имплантов
+    - Сет-бонусы брендов
+    
+    **Ограничения:**
+    - Слоты (боевые, тактические, защитные, двигательные, OS)
+    - Энергопотребление
+    - Человечность
+    - Совместимость
+    
+    **Бренды и сет-бонусы:**
+    - Arasaka - тактические преимущества
+    - Militech - боевые усиления
+    - Kang Tao - точность и крит
+    - Zetatech - энергоэффективность
+    - Biotechnica - регенерация
+    
+    **Киберпсихоз:**
+    - Риск растёт с установкой имплантов
+    - Несовместимые импланты повышают риск
+    - Временное превышение лимитов опасно
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Energy
+    description: Энергия
+  - name: Humanity
+    description: Человечность
+  - name: Compatibility
+    description: Совместимость
+  - name: Set Bonuses
+    description: Сет-бонусы
+
+paths:
+  /api/v1/combat/implants/energy:
+    get:
+      tags:
+        - Energy
+      summary: Энергетический статус
+      description: |
+        Возвращает текущий энергетический статус.
+        
+        **Параметры:**
+        - Current - текущая энергия
+        - Max - максимальная энергия
+        - Consumption - потребление
+        - Overheated - флаг перегрева
+      operationId: getEnergyStatus
+      responses:
+        "200":
+          description: Энергия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnergyStatus"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/humanity:
+    get:
+      tags:
+        - Humanity
+      summary: Человечность
+      description: |
+        Возвращает текущий уровень человечности.
+        
+        **Параметры:**
+        - Current - текущая человечность
+        - Max - максимальная человечность
+        - Cyberpsychosis Risk - риск киберпсихоза (0-100%)
+      operationId: getHumanityStatus
+      responses:
+        "200":
+          description: Человечность
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumanityStatus"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/compatibility:
+    get:
+      tags:
+        - Compatibility
+      summary: Проверка совместимости
+      description: |
+        Проверяет совместимость имплантов.
+        
+        **Проверки:**
+        - Конфликты с установленными имплантами
+        - Энергетический лимит
+        - Человечность
+        - Слоты
+      operationId: checkCompatibility
+      parameters:
+        - name: implant_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompatibilityResult"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/set-bonuses:
+    get:
+      tags:
+        - Set Bonuses
+      summary: Сет-бонусы
+      description: |
+        Возвращает активные сет-бонусы брендов.
+        
+        **Бонусы:**
+        - 2 items - малый бонус
+        - 3 items - средний бонус
+        - 4+ items - полный сет-бонус
+      operationId: getSetBonuses
+      responses:
+        "200":
+          description: Сет-бонусы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetBonuses"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    EnergyStatus:
+      type: object
+      properties:
+        current:
+          type: number
+          description: Текущая энергия
+        max:
+          type: number
+          description: Максимальная энергия
+        consumption:
+          type: number
+          description: Потребление
+        overheated:
+          type: boolean
+          description: Флаг перегрева
+        cooling_rate:
+          type: number
+          description: Скорость охлаждения
+
+    HumanityStatus:
+      type: object
+      properties:
+        current:
+          type: number
+          description: Текущая человечность
+        max:
+          type: number
+          description: Максимальная человечность
+        cyberpsychosis_risk:
+          type: number
+          description: Риск киберпсихоза (0-100%)
+        implant_count:
+          type: integer
+          description: Количество имплантов
+
+    CompatibilityResult:
+      type: object
+      properties:
+        compatible:
+          type: boolean
+          description: Совместим ли
+        conflicts:
+          type: array
+          description: Конфликты
+          items:
+            type: object
+            properties:
+              implant_id:
+                type: string
+                format: uuid
+              reason:
+                type: string
+        warnings:
+          type: array
+          description: Предупреждения
+          items:
+            type: string
+        energy_check:
+          type: object
+          description: Проверка энергии
+          properties:
+            available:
+              type: number
+            required:
+              type: number
+            sufficient:
+              type: boolean
+        humanity_check:
+          type: object
+          description: Проверка человечности
+          properties:
+            available:
+              type: number
+            required:
+              type: number
+            sufficient:
+              type: boolean
+
+    SetBonuses:
+      type: object
+      properties:
+        active_sets:
+          type: array
+          description: Активные сеты
+          items:
+            type: object
+            properties:
+              brand:
+                type: string
+                description: Бренд
+              implants_count:
+                type: integer
+                description: Количество имплантов
+              bonuses:
+                type: array
+                description: Бонусы
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    value:
+                      type: number
+
+
+

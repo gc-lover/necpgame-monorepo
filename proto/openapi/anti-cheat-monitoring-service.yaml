@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Monitoring Service API
+  description: API для мониторинга нарушений античита
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Monitoring
+    description: Мониторинг нарушений
+
+paths:
+  /anti-cheat/monitoring/stats:
+    get:
+      tags:
+        - Monitoring
+      summary: Получить статистику нарушений
+      description: Получить статистику нарушений за указанный период времени
+      operationId: getViolationStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - 1h
+              - 24h
+              - 7d
+              - 30d
+            default: 24h
+          description: Временной диапазон для статистики
+      responses:
+        '200':
+          description: Статистика нарушений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationStatsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/monitoring/alerts:
+    get:
+      tags:
+        - Monitoring
+      summary: Получить активные алерты
+      description: Получить список активных алертов о нарушениях с фильтрацией по серьёзности
+      operationId: getActiveAlerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+          description: Фильтр по серьёзности
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Активные алерты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveAlertsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ViolationStatsResponse:
+      type: object
+      properties:
+        time_range:
+          type: string
+          description: Временной диапазон
+        total_violations:
+          type: integer
+          description: Общее количество нарушений
+        violations_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Нарушения по типам
+        violations_by_severity:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Нарушения по серьёзности
+        top_offenders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerViolationStats'
+          description: Топ нарушителей
+        trends:
+          type: object
+          description: Тренды нарушений
+          additionalProperties: true
+
+    PlayerViolationStats:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        total_violations:
+          type: integer
+          description: Общее количество нарушений
+        violations_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Нарушения по типам
+        last_violation_at:
+          type: string
+          format: date-time
+          description: Время последнего нарушения
+
+    ActiveAlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+          description: Список алертов
+        total:
+          type: integer
+          description: Общее количество алертов
+        limit:
+          type: integer
+          description: Лимит на страницу
+        offset:
+          type: integer
+          description: Смещение
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID алерта
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        alert_type:
+          type: string
+          description: Тип алерта
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьёзность алерта
+        message:
+          type: string
+          description: Сообщение алерта
+        violation_count:
+          type: integer
+          description: Количество нарушений
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+
+security:
+  - BearerAuth: []
+

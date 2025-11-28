@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: Cosmetic Equipment Service API
+  description: API для экипировки косметики
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Equipment
+    description: Экипировка косметики
+
+paths:
+  /monetization/cosmetic/{cosmetic_id}/equip:
+    post:
+      tags:
+        - Equipment
+      summary: Экипировать косметический предмет
+      description: Экипировать косметический предмет на персонажа
+      operationId: equipCosmetic
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cosmetic_id
+          in: path
+          required: true
+          description: ID косметического предмета
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Данные для экипировки
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipCosmeticRequest'
+            examples:
+              example1:
+                value:
+                  player_id: "550e8400-e29b-41d4-a716-446655440001"
+                  slot: "CHARACTER_SKIN"
+      responses:
+        '200':
+          description: Предмет экипирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquippedCosmetics'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/{cosmetic_id}/unequip:
+    post:
+      tags:
+        - Equipment
+      summary: Снять косметический предмет
+      description: Снять экипированный косметический предмет
+      operationId: unequipCosmetic
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cosmetic_id
+          in: path
+          required: true
+          description: ID косметического предмета
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Данные для снятия
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnequipCosmeticRequest'
+            examples:
+              example1:
+                value:
+                  player_id: "550e8400-e29b-41d4-a716-446655440001"
+                  slot: "CHARACTER_SKIN"
+      responses:
+        '200':
+          description: Предмет снят
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: unequipped
+              examples:
+                example1:
+                  value:
+                    status: "unequipped"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/equipped/{player_id}:
+    get:
+      tags:
+        - Equipment
+      summary: Получить экипированную косметику игрока
+      description: Получить список экипированной косметики для указанного игрока
+      operationId: getEquippedCosmetics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Экипированная косметика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquippedCosmetics'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    EquipCosmeticRequest:
+      type: object
+      required:
+        - player_id
+        - slot
+      description: Запрос на экипировку косметики
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        slot:
+          type: string
+          enum:
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - TITLE
+            - NAME_PLATE
+            - EMOTE_1
+            - EMOTE_2
+            - EMOTE_3
+            - EMOTE_4
+          description: Слот для экипировки
+
+    UnequipCosmeticRequest:
+      type: object
+      required:
+        - player_id
+        - slot
+      description: Запрос на снятие косметики
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        slot:
+          type: string
+          enum:
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - TITLE
+            - NAME_PLATE
+            - EMOTE_1
+            - EMOTE_2
+            - EMOTE_3
+            - EMOTE_4
+          description: Слот для снятия
+
+    EquippedCosmetics:
+      type: object
+      description: Экипированная косметика
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        character_skin_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID скина персонажа
+        character_skin:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+          description: Скин персонажа
+        weapon_skin_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID скина оружия
+        weapon_skin:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+          description: Скин оружия
+        title_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID титула
+        title:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+          description: Титул
+        name_plate_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID таблички имени
+        name_plate:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+          description: Табличка имени
+        emote_1_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID эмоции 1
+        emote_1:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+          description: Эмоция 1
+        emote_2_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID эмоции 2
+        emote_2:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+          description: Эмоция 2
+        emote_3_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID эмоции 3
+        emote_3:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+          description: Эмоция 3
+        emote_4_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID эмоции 4
+        emote_4:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+          description: Эмоция 4
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+
+    CosmeticItem:
+      type: object
+      description: Косметический предмет
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор
+        code:
+          type: string
+          maxLength: 50
+          description: Код предмета
+        name:
+          type: string
+          maxLength: 255
+          description: Название предмета
+        category:
+          type: string
+          enum:
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - EMOTE
+            - TITLE
+            - NAME_PLATE
+          description: Категория косметики
+        cosmetic_type:
+          type: string
+          enum:
+            - SKIN
+            - EMOTE
+            - TITLE
+            - NAME_PLATE
+          description: Тип косметики
+        rarity:
+          type: string
+          enum:
+            - COMMON
+            - UNCOMMON
+            - RARE
+            - EPIC
+            - LEGENDARY
+            - EXOTIC
+          description: Редкость косметики
+        description:
+          type: string
+          description: Описание предмета
+        cost:
+          type: integer
+          format: int64
+          description: Стоимость предмета
+        currency_type:
+          type: string
+          description: Тип валюты
+        is_exclusive:
+          type: boolean
+          default: false
+          description: Является ли предмет эксклюзивным
+        source:
+          type: string
+          maxLength: 100
+          description: Источник получения
+        visual_effects:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Визуальные эффекты
+        assets:
+          type: object
+          additionalProperties: true
+          description: Ресурсы предмета
+        is_active:
+          type: boolean
+          default: true
+          description: Активен ли предмет
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+

@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: Announcement Events Service API
+  description: API для получения событий объявлений
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Announcement Events
+    description: События объявлений
+
+paths:
+  /liveops/announcements/events/{announcement_id}:
+    get:
+      tags:
+        - Announcement Events
+      summary: Получить события объявления
+      description: Получить список событий для объявления (требуются права администратора)
+      operationId: getAnnouncementEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementEventsResponse'
+              examples:
+                example1:
+                  value:
+                    events:
+                      - id: "550e8400-e29b-41d4-a716-446655440002"
+                        announcement_id: "550e8400-e29b-41d4-a716-446655440000"
+                        event_type: "announcement:published"
+                        event_data:
+                          published_by: "admin"
+                        created_at: "2025-11-27T10:00:00Z"
+                    total: 1
+                    limit: 20
+                    offset: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    AnnouncementEvent:
+      type: object
+      description: Событие объявления
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор события
+        announcement_id:
+          type: string
+          format: uuid
+          description: ID объявления
+        event_type:
+          type: string
+          enum:
+            - announcement:created
+            - announcement:published
+            - announcement:delivered
+            - announcement:read
+            - announcement:clicked
+          description: Тип события
+        event_data:
+          type: object
+          additionalProperties: true
+          description: Данные события
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания события
+
+    AnnouncementEventsResponse:
+      type: object
+      description: Ответ со списком событий
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnouncementEvent'
+          description: Список событий
+        total:
+          type: integer
+          description: Общее количество событий
+        limit:
+          type: integer
+          description: Лимит записей
+        offset:
+          type: integer
+          description: Смещение записей
+

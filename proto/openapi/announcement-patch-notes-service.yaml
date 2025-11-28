@@ -1,0 +1,238 @@
+openapi: 3.0.3
+info:
+  title: Announcement Patch Notes Service API
+  description: API для управления патчноутами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Patch Notes
+    description: Патчноуты
+
+paths:
+  /announcements/patch-notes:
+    get:
+      tags:
+        - Patch Notes
+      summary: Получить патчноуты
+      description: Получить список патчноутов с фильтрацией по версии
+      operationId: getPatchNotes
+      parameters:
+        - name: version
+          in: query
+          description: Версия патчноута
+          schema:
+            type: string
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список патчноутов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patch_notes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PatchNote'
+                  total:
+                    type: integer
+                    description: Общее количество патчноутов
+              examples:
+                example1:
+                  value:
+                    patch_notes:
+                      - id: "550e8400-e29b-41d4-a716-446655440000"
+                        version: "1.0.0"
+                        title: "Патчноут 1.0.0"
+                        published_at: "2025-11-27T10:00:00Z"
+                    total: 1
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /announcements/patch-notes/{version}:
+    get:
+      tags:
+        - Patch Notes
+      summary: Получить патчноут по версии
+      description: Получить патчноут по номеру версии
+      operationId: getPatchNoteByVersion
+      parameters:
+        - name: version
+          in: path
+          required: true
+          description: Версия патчноута
+          schema:
+            type: string
+            maxLength: 50
+      responses:
+        '200':
+          description: Патчноут
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchNote'
+              examples:
+                example1:
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    version: "1.0.0"
+                    title: "Патчноут 1.0.0"
+                    improvements:
+                      - "Улучшена производительность"
+                    bug_fixes:
+                      - "Исправлена ошибка входа"
+                    published_at: "2025-11-27T10:00:00Z"
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /liveops/patch-notes:
+    post:
+      tags:
+        - Patch Notes
+      summary: Создать патчноут (admin)
+      description: Создать новый патчноут (требуются права администратора)
+      operationId: createPatchNote
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        description: Данные для создания патчноута
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatchNoteRequest'
+            examples:
+              example1:
+                value:
+                  version: "1.0.0"
+                  title: "Патчноут 1.0.0"
+                  content: "Описание обновления"
+                  improvements:
+                    - "Улучшена производительность"
+                    - "Добавлены новые функции"
+                  known_issues:
+                    - "Известная проблема 1"
+      responses:
+        '201':
+          description: Патчноут создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchNote'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    PatchNote:
+      type: object
+      description: Патчноут
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор патчноута
+        version:
+          type: string
+          description: Версия патчноута
+          maxLength: 50
+        title:
+          type: string
+          description: Заголовок патчноута
+          maxLength: 255
+        improvements:
+          type: array
+          items:
+            type: string
+          description: Список улучшений
+        bug_fixes:
+          type: array
+          items:
+            type: string
+          description: Список исправлений багов
+        known_issues:
+          type: array
+          items:
+            type: string
+          description: Список известных проблем
+        attachments:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          nullable: true
+          description: Вложения
+        published_at:
+          type: string
+          format: date-time
+          description: Время публикации
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+
+    CreatePatchNoteRequest:
+      type: object
+      required:
+        - version
+        - title
+        - content
+      description: Запрос на создание патчноута
+      properties:
+        version:
+          type: string
+          maxLength: 50
+          description: Версия патчноута
+        title:
+          type: string
+          maxLength: 255
+          description: Заголовок патчноута
+        content:
+          type: string
+          description: Содержание патчноута
+        improvements:
+          type: array
+          items:
+            type: string
+          description: Список улучшений
+        known_issues:
+          type: array
+          items:
+            type: string
+          description: Список известных проблем
+        attachments:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          nullable: true
+          description: Вложения
+        announcement_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID связанного объявления
+

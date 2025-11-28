@@ -24,8 +24,16 @@ func NewQuestRepository(db *pgxpool.Pool) *QuestRepository {
 }
 
 func (r *QuestRepository) CreateQuestInstance(ctx context.Context, instance *models.QuestInstance) error {
-	dialogueStateJSON, _ := json.Marshal(instance.DialogueState)
-	objectivesJSON, _ := json.Marshal(instance.Objectives)
+	dialogueStateJSON, err := json.Marshal(instance.DialogueState)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal dialogue state JSON")
+		return err
+	}
+	objectivesJSON, err := json.Marshal(instance.Objectives)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal objectives JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO gameplay.quest_instances (
@@ -35,7 +43,7 @@ func (r *QuestRepository) CreateQuestInstance(ctx context.Context, instance *mod
 			gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW(), $7, NOW()
 		) RETURNING id, started_at, updated_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		instance.CharacterID, instance.QuestID, instance.Status, instance.CurrentNode,
 		dialogueStateJSON, objectivesJSON, instance.CompletedAt,
 	).Scan(&instance.ID, &instance.StartedAt, &instance.UpdatedAt)
@@ -67,13 +75,19 @@ func (r *QuestRepository) GetQuestInstance(ctx context.Context, instanceID uuid.
 	}
 
 	if len(dialogueStateJSON) > 0 {
-		json.Unmarshal(dialogueStateJSON, &instance.DialogueState)
+		if err := json.Unmarshal(dialogueStateJSON, &instance.DialogueState); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal dialogue state JSON")
+			instance.DialogueState = make(map[string]interface{})
+		}
 	} else {
 		instance.DialogueState = make(map[string]interface{})
 	}
 
 	if len(objectivesJSON) > 0 {
-		json.Unmarshal(objectivesJSON, &instance.Objectives)
+		if err := json.Unmarshal(objectivesJSON, &instance.Objectives); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal objectives JSON")
+			instance.Objectives = make(map[string]interface{})
+		}
 	} else {
 		instance.Objectives = make(map[string]interface{})
 	}
@@ -105,13 +119,19 @@ func (r *QuestRepository) GetQuestInstanceByCharacterAndQuest(ctx context.Contex
 	}
 
 	if len(dialogueStateJSON) > 0 {
-		json.Unmarshal(dialogueStateJSON, &instance.DialogueState)
+		if err := json.Unmarshal(dialogueStateJSON, &instance.DialogueState); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal dialogue state JSON")
+			instance.DialogueState = make(map[string]interface{})
+		}
 	} else {
 		instance.DialogueState = make(map[string]interface{})
 	}
 
 	if len(objectivesJSON) > 0 {
-		json.Unmarshal(objectivesJSON, &instance.Objectives)
+		if err := json.Unmarshal(objectivesJSON, &instance.Objectives); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal objectives JSON")
+			instance.Objectives = make(map[string]interface{})
+		}
 	} else {
 		instance.Objectives = make(map[string]interface{})
 	}
@@ -120,8 +140,16 @@ func (r *QuestRepository) GetQuestInstanceByCharacterAndQuest(ctx context.Contex
 }
 
 func (r *QuestRepository) UpdateQuestInstance(ctx context.Context, instance *models.QuestInstance) error {
-	dialogueStateJSON, _ := json.Marshal(instance.DialogueState)
-	objectivesJSON, _ := json.Marshal(instance.Objectives)
+	dialogueStateJSON, err := json.Marshal(instance.DialogueState)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal dialogue state JSON")
+		return err
+	}
+	objectivesJSON, err := json.Marshal(instance.Objectives)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal objectives JSON")
+		return err
+	}
 
 	query := `
 		UPDATE gameplay.quest_instances
@@ -129,7 +157,7 @@ func (r *QuestRepository) UpdateQuestInstance(ctx context.Context, instance *mod
 		    objectives = $4, completed_at = $5, updated_at = NOW()
 		WHERE id = $6`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		instance.Status, instance.CurrentNode, dialogueStateJSON,
 		objectivesJSON, instance.CompletedAt, instance.ID,
 	)
@@ -182,13 +210,19 @@ func (r *QuestRepository) ListQuestInstances(ctx context.Context, characterID uu
 		}
 
 		if len(dialogueStateJSON) > 0 {
-			json.Unmarshal(dialogueStateJSON, &instance.DialogueState)
+			if err := json.Unmarshal(dialogueStateJSON, &instance.DialogueState); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal dialogue state JSON")
+				instance.DialogueState = make(map[string]interface{})
+			}
 		} else {
 			instance.DialogueState = make(map[string]interface{})
 		}
 
 		if len(objectivesJSON) > 0 {
-			json.Unmarshal(objectivesJSON, &instance.Objectives)
+			if err := json.Unmarshal(objectivesJSON, &instance.Objectives); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal objectives JSON")
+				instance.Objectives = make(map[string]interface{})
+			}
 		} else {
 			instance.Objectives = make(map[string]interface{})
 		}
@@ -217,8 +251,16 @@ func (r *QuestRepository) CountQuestInstances(ctx context.Context, characterID u
 }
 
 func (r *QuestRepository) CreateDialogueState(ctx context.Context, dialogueState *models.DialogueState) error {
-	visitedNodesJSON, _ := json.Marshal(dialogueState.VisitedNodes)
-	choicesJSON, _ := json.Marshal(dialogueState.Choices)
+	visitedNodesJSON, err := json.Marshal(dialogueState.VisitedNodes)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal visited nodes JSON")
+		return err
+	}
+	choicesJSON, err := json.Marshal(dialogueState.Choices)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal choices JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO gameplay.dialogue_state (
@@ -228,7 +270,7 @@ func (r *QuestRepository) CreateDialogueState(ctx context.Context, dialogueState
 			gen_random_uuid(), $1, $2, $3, $4, $5, NOW()
 		) RETURNING id, updated_at`
 
-	err := r.db.QueryRow(ctx, query,
+	err = r.db.QueryRow(ctx, query,
 		dialogueState.QuestInstanceID, dialogueState.CharacterID, dialogueState.CurrentNode,
 		visitedNodesJSON, choicesJSON,
 	).Scan(&dialogueState.ID, &dialogueState.UpdatedAt)
@@ -237,15 +279,23 @@ func (r *QuestRepository) CreateDialogueState(ctx context.Context, dialogueState
 }
 
 func (r *QuestRepository) UpdateDialogueState(ctx context.Context, dialogueState *models.DialogueState) error {
-	visitedNodesJSON, _ := json.Marshal(dialogueState.VisitedNodes)
-	choicesJSON, _ := json.Marshal(dialogueState.Choices)
+	visitedNodesJSON, err := json.Marshal(dialogueState.VisitedNodes)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal visited nodes JSON")
+		return err
+	}
+	choicesJSON, err := json.Marshal(dialogueState.Choices)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal choices JSON")
+		return err
+	}
 
 	query := `
 		UPDATE gameplay.dialogue_state
 		SET current_node = $1, visited_nodes = $2, choices = $3, updated_at = NOW()
 		WHERE quest_instance_id = $4`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		dialogueState.CurrentNode, visitedNodesJSON, choicesJSON,
 		dialogueState.QuestInstanceID,
 	)
@@ -276,13 +326,19 @@ func (r *QuestRepository) GetDialogueState(ctx context.Context, questInstanceID 
 	}
 
 	if len(visitedNodesJSON) > 0 {
-		json.Unmarshal(visitedNodesJSON, &dialogueState.VisitedNodes)
+		if err := json.Unmarshal(visitedNodesJSON, &dialogueState.VisitedNodes); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal visited nodes JSON")
+			dialogueState.VisitedNodes = []string{}
+		}
 	} else {
 		dialogueState.VisitedNodes = []string{}
 	}
 
 	if len(choicesJSON) > 0 {
-		json.Unmarshal(choicesJSON, &dialogueState.Choices)
+		if err := json.Unmarshal(choicesJSON, &dialogueState.Choices); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal choices JSON")
+			dialogueState.Choices = make(map[string]interface{})
+		}
 	} else {
 		dialogueState.Choices = make(map[string]interface{})
 	}

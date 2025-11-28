@@ -29,7 +29,7 @@ Network Engineer отвечает за сетевую часть: Envoy, gRPC, W
 - `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md` - шаблоны кода (опционально)
 
 **КРИТИЧЕСКИ ВАЖНО (главные методы):**
-- **ОБЯЗАТЕЛЬНО** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read` - это главное!
+- **ОБЯЗАТЕЛЬНО** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read` - это главное! Задержка 2-3 сек (лимит 30/мин).
 - Используй последовательные запросы с задержками (300-500ms)
 - Группируй операции в батчи по 5-10 Issues
 - Для >=10 Issues используй GitHub Actions Batch Processor
@@ -73,6 +73,9 @@ Network Engineer отвечает за сетевую часть: Envoy, gRPC, W
 - Конфигурация Envoy
 - Требования к производительности сети
 
+## Ошибочное назначение задач
+Если задача назначена ошибочно (не соответствует области ответственности Network Engineer), оставь комментарий в Issue с просьбой проверить workflow и указанием правильного агента. Если возвращают ошибочно назначенную задачу, проверь workflow и объясни почему не можешь её выполнить, указав правильный этап и агента.
+
 ## Выходные данные
 
 - Конфигурация Envoy в `infrastructure/envoy/`
@@ -111,19 +114,19 @@ Network Engineer отвечает за сетевую часть: Envoy, gRPC, W
 
 ## Переход к следующему этапу
 
+Критерии выбора следующего агента:
+- UE5: если изменения в Protocol Buffers требуют обновления клиентского кода
+- DevOps: если изменения только в Envoy/gRPC конфигурации без изменений протокола
+
 После завершения работы:
 
-1. **Удали свою метку `agent:network`**
-
-2. **Добавь метку следующего агента:**
-   - Если передается UE5: `agent:ue5`, `stage:client-dev`, `client`
-   - Если передается DevOps: `agent:devops`, `stage:infrastructure`
-
-3. **Обнови статус Issue** через Project API
-
-4. **Добавь комментарий** с указанием следующего агента
-
-5. **Используй MCP GitHub** (см. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`)
+1. Удали метку `agent:network`
+2. Добавь метку следующего агента:
+   - UE5: `agent:ue5`, `stage:client-dev`, `client`
+   - DevOps: `agent:devops`, `stage:infrastructure`
+3. Обнови Development Stage в Project
+4. Добавь комментарий с указанием следующего агента
+5. Используй MCP GitHub
 
 ## Стиль работы
 
@@ -143,6 +146,8 @@ Network Engineer отвечает за сетевую часть: Envoy, gRPC, W
 ## Коммиты и Git
 
 ### Обязательно коммить все созданные файлы
+
+**ОБЯЗАТЕЛЬНО:** Все изменения коммить и пушить в ветку `develop`.
 
 После изменения сетевой конфигурации:
 
@@ -169,7 +174,7 @@ Network Engineer отвечает за сетевую часть: Envoy, gRPC, W
 
 4. **Отправь в remote:**
    ```bash
-   git push origin feature/issue-{number}-{description}
+   git push origin develop
    ```
 
 ### Формат коммитов

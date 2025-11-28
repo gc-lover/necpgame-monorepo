@@ -1,0 +1,210 @@
+openapi: 3.0.3
+info:
+  title: Stock Indices Core Service API
+  description: API для основных операций с фондовыми индексами
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: indices
+    description: Операции с фондовыми индексами
+
+paths:
+  /stocks/indices:
+    get:
+      tags:
+        - indices
+      summary: Получить список всех индексов
+      description: |
+        Возвращает все фондовые индексы с текущими значениями.
+        Включает глобальные, региональные и секторные индексы.
+      operationId: getAllIndices
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Фильтр по типу индекса
+          schema:
+            type: string
+            enum: [global, regional, sector]
+      responses:
+        "200":
+          description: Список индексов успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StockIndex"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/indices/{code}:
+    get:
+      tags:
+        - indices
+      summary: Получить данные индекса
+      description: |
+        Возвращает детальную информацию об индексе по коду.
+        Включает историю изменений, метод расчета, метрики.
+      operationId: getIndexByCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса
+          schema:
+            type: string
+            pattern: "^[A-Z0-9]+$"
+      responses:
+        "200":
+          description: Данные индекса успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockIndexDetailed"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    StockIndex:
+      type: object
+      description: Фондовый индекс (краткая информация)
+      required:
+        - code
+        - name
+        - type
+        - current_value
+        - change_24h
+        - change_24h_percent
+        - constituents_count
+        - updated_at
+      properties:
+        code:
+          type: string
+          description: Код индекса (CORP100, NC50, TECH, etc.)
+          pattern: "^[A-Z0-9]+$"
+        name:
+          type: string
+          description: Название индекса
+        type:
+          type: string
+          enum: [global, regional, sector]
+          description: |
+            Тип индекса:
+            - global: Глобальный (CORP100)
+            - regional: Региональный (NC50, ASIA25, EURO30)
+            - sector: Секторный (TECH, DEFENSE, ENERGY, MEDICAL, CYBER)
+        description:
+          type: string
+          description: Описание индекса
+        current_value:
+          type: number
+          format: double
+          description: Текущее значение индекса
+        change_24h:
+          type: number
+          format: double
+          description: Изменение за 24 часа (абсолютное)
+        change_24h_percent:
+          type: number
+          format: double
+          description: Изменение за 24 часа (%)
+        constituents_count:
+          type: integer
+          description: Количество акций в индексе
+        market_cap_total:
+          type: number
+          format: double
+          description: Общая капитализация акций в индексе
+        last_rebalance:
+          type: string
+          format: date-time
+          description: Дата последнего ребаланса
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+
+    StockIndexDetailed:
+      allOf:
+        - $ref: "#/components/schemas/StockIndex"
+        - type: object
+          required:
+            - calculation_method
+            - base_value
+            - base_date
+            - rebalance_frequency
+          properties:
+            calculation_method:
+              type: string
+              enum: [market_cap_weighted, price_weighted, equal_weighted]
+              description: |
+                Метод расчета:
+                - market_cap_weighted: По капитализации
+                - price_weighted: По цене (deprecated)
+                - equal_weighted: Равновзвешенный
+            base_value:
+              type: number
+              format: double
+              description: Базовое значение индекса
+            base_date:
+              type: string
+              format: date-time
+              description: Базовая дата индекса
+            change_7d_percent:
+              type: number
+              format: double
+              description: Изменение за 7 дней (%)
+            change_30d_percent:
+              type: number
+              format: double
+              description: Изменение за 30 дней (%)
+            all_time_high:
+              type: number
+              format: double
+              description: Максимальное значение за все время
+            all_time_low:
+              type: number
+              format: double
+              description: Минимальное значение за все время
+            next_rebalance:
+              type: string
+              format: date-time
+              description: Дата следующего ребаланса
+            rebalance_frequency:
+              type: string
+              enum: [monthly, quarterly, semi_annual, annual, event_based]
+              description: Частота ребаланса
+            created_at:
+              type: string
+              format: date-time
+

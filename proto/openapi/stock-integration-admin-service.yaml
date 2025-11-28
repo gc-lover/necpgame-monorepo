@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: Stock Integration Admin Service API
+  description: API для административного управления маппингом событий на акции
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: admin
+    description: Административные операции
+
+paths:
+  /admin/stocks/integration/mapping:
+    post:
+      tags:
+        - admin
+      summary: Создать или обновить маппинг
+      description: |
+        Админ endpoint для управления правилами маппинга.
+        Требуется роль admin.
+      operationId: upsertEventMapping
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventMappingUpsert"
+      responses:
+        "200":
+          description: Маппинг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMapping"
+        "201":
+          description: Маппинг создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMapping"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/integration/mapping/{mapping_id}:
+    delete:
+      tags:
+        - admin
+      summary: Удалить маппинг
+      description: |
+        Админ endpoint для удаления правила маппинга.
+        Требуется роль admin.
+      operationId: deleteEventMapping
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mapping_id
+          in: path
+          required: true
+          description: ID маппинга
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Маппинг успешно удален
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    EventMapping:
+      type: object
+      description: Правило маппинга события на акцию
+      required:
+        - id
+        - event_type
+        - condition
+        - impact_formula
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - quest_completed
+            - faction_war
+            - world_event
+            - tech_breakthrough
+            - corporate_scandal
+        condition:
+          type: object
+          description: Условия срабатывания маппинга
+          properties:
+            quest_id_pattern:
+              type: string
+              description: Regex паттерн для quest_id
+            outcome:
+              type: string
+              enum: [success, failure, partial, any]
+            corporation_id:
+              type: string
+              format: uuid
+            faction_id:
+              type: string
+            severity:
+              type: string
+              enum: [low, medium, high, critical]
+        impact_formula:
+          type: object
+          description: Формула расчета влияния
+          properties:
+            base_impact_percent:
+              type: number
+              format: double
+            modifiers:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  multiplier:
+                    type: number
+                    format: double
+        status:
+          type: string
+          enum: [active, inactive, deprecated]
+        priority:
+          type: integer
+          description: Приоритет (для конфликтов)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EventMappingUpsert:
+      type: object
+      description: Создание/обновление маппинга
+      required:
+        - event_type
+        - condition
+        - impact_formula
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID для обновления (опционально)
+        event_type:
+          type: string
+          enum:
+            - quest_completed
+            - faction_war
+            - world_event
+            - tech_breakthrough
+            - corporate_scandal
+        condition:
+          type: object
+        impact_formula:
+          type: object
+        status:
+          type: string
+          enum: [active, inactive]
+          default: active
+        priority:
+          type: integer
+          default: 100
+

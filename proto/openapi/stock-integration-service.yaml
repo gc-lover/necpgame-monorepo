@@ -1,0 +1,775 @@
+openapi: 3.0.3
+info:
+  title: Stock Exchange Integration Service API
+  description: |
+    API для интеграции фондовой биржи с игровыми системами.
+ 
+    Функционал:
+    - Webhooks от quest-service, faction-service
+    - Event bus для мировых событий
+    - Маппинг событий на влияние акций
+    - Preview симуляция влияния событий
+    - Журнал интеграционных событий
+    - Admin управление маппингом
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: webhooks
+    description: Webhooks для внешних систем
+  - name: events
+    description: Обработка игровых событий
+  - name: mapping
+    description: Маппинг событий на акции
+  - name: journal
+    description: Журнал интеграций
+  - name: admin
+    description: Административные операции
+
+paths:
+  /stocks/integration/webhooks/quest:
+    post:
+      tags:
+        - webhooks
+      summary: Webhook для событий из quest-service
+      description: |
+        Принимает события о завершении квестов и применяет влияние на акции.
+        Вызывается quest-service при завершении корпоративных квестов.
+      operationId: handleQuestWebhook
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestEventPayload"
+            example:
+              event_id: "quest_completed_12345"
+              quest_id: "corp_espionage_001"
+              quest_name: "Corporate Espionage - Arasaka Tower"
+              player_id: "123e4567-e89b-12d3-a456-426614174000"
+              outcome: "success"
+              affected_corporations:
+                - corporation_id: "550e8400-e29b-41d4-a716-446655440000"
+                  impact_type: "negative"
+                  severity: "high"
+                - corporation_id: "660e8400-e29b-41d4-a716-446655440001"
+                  impact_type: "positive"
+                  severity: "medium"
+              timestamp: "2025-11-26T20:00:00Z"
+              metadata:
+                player_count: 1250
+                quest_difficulty: "hard"
+      responses:
+        "202":
+          description: Webhook принят, событие будет обработано асинхронно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  event_id:
+                    type: string
+                  processing_id:
+                    type: string
+                    format: uuid
+                  estimated_processing_time:
+                    type: integer
+                    description: Время обработки в секундах
+                example:
+                  message: "Quest event accepted for processing"
+                  event_id: "quest_completed_12345"
+                  processing_id: "p1234567-89ab-cdef-0123-456789abcdef"
+                  estimated_processing_time: 5
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/integration/webhooks/faction:
+    post:
+      tags:
+        - webhooks
+      summary: Webhook для фракционных событий
+      description: |
+        Принимает события о фракционных войнах и репутации.
+        Вызывается faction-service при изменении статуса войны.
+      operationId: handleFactionWebhook
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FactionEventPayload"
+            example:
+              event_id: "faction_war_victory_789"
+              event_type: "war_victory"
+              winner_faction_id: "arasaka"
+              loser_faction_id: "militech"
+              territory_gained: 3
+              casualty_ratio: 0.65
+              timestamp: "2025-11-26T20:00:00Z"
+      responses:
+        "202":
+          description: Webhook принят
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  event_id:
+                    type: string
+                  processing_id:
+                    type: string
+                    format: uuid
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/integration/events/world:
+    post:
+      tags:
+        - events
+      summary: Обработать мировое событие
+      description: |
+        Принимает глобальные игровые события (кризисы, прорывы).
+        Вызывается economy-events или вручную админами.
+      operationId: handleWorldEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorldEventPayload"
+            example:
+              event_id: "energy_crisis_2025"
+              event_type: "economic_crisis"
+              event_name: "Global Energy Crisis"
+              severity: "high"
+              affected_sectors:
+                - sector: "energy"
+                  impact_percent: -25.0
+                - sector: "tech"
+                  impact_percent: -10.0
+              duration_hours: 336
+              timestamp: "2025-11-26T20:00:00Z"
+      responses:
+        "202":
+          description: Событие принято
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  event_id:
+                    type: string
+                  affected_stocks_count:
+                    type: integer
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/integration/events/preview:
+    post:
+      tags:
+        - events
+      summary: Предварительный просмотр влияния события
+      description: |
+        Симулирует влияние события на акции без применения изменений.
+        Полезно для тестирования и балансировки.
+      operationId: previewEventImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/QuestEventPayload"
+                - $ref: "#/components/schemas/FactionEventPayload"
+                - $ref: "#/components/schemas/WorldEventPayload"
+            example:
+              event_type: "quest_completed"
+              outcome: "success"
+              affected_corporations:
+                - corporation_id: "550e8400-e29b-41d4-a716-446655440000"
+                  impact_type: "negative"
+                  severity: "high"
+      responses:
+        "200":
+          description: Предварительный просмотр готов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventPreviewResult"
+              example:
+                affected_stocks:
+                  - stock_id: "550e8400-e29b-41d4-a716-446655440000"
+                    stock_symbol: "ARASAKA"
+                    current_price: 1250.50
+                    projected_price: 975.39
+                    impact_percent: -22.0
+                    reason: "Corporate espionage quest completed"
+                  - stock_id: "660e8400-e29b-41d4-a716-446655440001"
+                    stock_symbol: "MILITECH"
+                    current_price: 890.75
+                    projected_price: 935.29
+                    impact_percent: 5.0
+                    reason: "Competitor weakened"
+                total_market_cap_change: -2500000000.00
+                indices_affected:
+                  - index_code: "CORP100"
+                    current_value: 15234.56
+                    projected_value: 14987.23
+                    change_percent: -1.62
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/integration/mapping:
+    get:
+      tags:
+        - mapping
+      summary: Получить маппинги событий на акции
+      description: |
+        Возвращает правила маппинга событий на влияние акций.
+      operationId: getEventMappings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_type
+          in: query
+          required: false
+          description: Фильтр по типу события
+          schema:
+            type: string
+            enum:
+              - quest_completed
+              - faction_war
+              - world_event
+              - tech_breakthrough
+              - corporate_scandal
+        - name: corporation_id
+          in: query
+          required: false
+          description: Фильтр по ID корпорации
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Маппинги успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EventMapping"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/integration/journal:
+    get:
+      tags:
+        - journal
+      summary: Получить журнал интеграционных событий
+      description: |
+        Возвращает историю обработанных событий от внешних систем.
+      operationId: getIntegrationJournal
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: source
+          in: query
+          required: false
+          description: Источник события
+          schema:
+            type: string
+            enum: [quest_service, faction_service, economy_events, manual]
+        - name: status
+          in: query
+          required: false
+          description: Статус обработки
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+        - name: from_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Журнал успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/JournalEntry"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/integration/mapping:
+    post:
+      tags:
+        - admin
+      summary: Создать или обновить маппинг
+      description: |
+        Админ endpoint для управления правилами маппинга.
+        Требуется роль admin.
+      operationId: upsertEventMapping
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventMappingUpsert"
+      responses:
+        "200":
+          description: Маппинг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMapping"
+        "201":
+          description: Маппинг создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventMapping"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/integration/mapping/{mapping_id}:
+    delete:
+      tags:
+        - admin
+      summary: Удалить маппинг
+      description: |
+        Админ endpoint для удаления правила маппинга.
+        Требуется роль admin.
+      operationId: deleteEventMapping
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mapping_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Маппинг успешно удален
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    QuestEventPayload:
+      type: object
+      description: Событие из quest-service
+      required:
+        - event_id
+        - quest_id
+        - quest_name
+        - player_id
+        - outcome
+        - affected_corporations
+        - timestamp
+      properties:
+        event_id:
+          type: string
+          description: ID события
+        quest_id:
+          type: string
+          description: ID квеста
+        quest_name:
+          type: string
+          description: Название квеста
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        outcome:
+          type: string
+          enum: [success, failure, partial]
+          description: Результат квеста
+        affected_corporations:
+          type: array
+          description: Затронутые корпорации
+          items:
+            type: object
+            required:
+              - corporation_id
+              - impact_type
+              - severity
+            properties:
+              corporation_id:
+                type: string
+                format: uuid
+              impact_type:
+                type: string
+                enum: [positive, negative, neutral]
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Дополнительная информация
+
+    FactionEventPayload:
+      type: object
+      description: Событие из faction-service
+      required:
+        - event_id
+        - event_type
+        - timestamp
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+          enum:
+            - war_started
+            - war_victory
+            - war_defeat
+            - territory_captured
+            - territory_lost
+            - reputation_change
+        winner_faction_id:
+          type: string
+          description: ID победившей фракции
+        loser_faction_id:
+          type: string
+          description: ID проигравшей фракции
+        territory_gained:
+          type: integer
+          description: Количество захваченных территорий
+        territory_lost:
+          type: integer
+          description: Количество потерянных территорий
+        casualty_ratio:
+          type: number
+          format: double
+          description: Соотношение потерь (0-1)
+        timestamp:
+          type: string
+          format: date-time
+
+    WorldEventPayload:
+      type: object
+      description: Глобальное мировое событие
+      required:
+        - event_id
+        - event_type
+        - event_name
+        - severity
+        - timestamp
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+          enum:
+            - economic_crisis
+            - tech_breakthrough
+            - energy_crisis
+            - medical_emergency
+            - political_upheaval
+            - natural_disaster
+        event_name:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        affected_sectors:
+          type: array
+          description: Затронутые секторы
+          items:
+            type: object
+            properties:
+              sector:
+                type: string
+              impact_percent:
+                type: number
+                format: double
+        duration_hours:
+          type: integer
+          description: Длительность события в часах
+        timestamp:
+          type: string
+          format: date-time
+
+    EventPreviewResult:
+      type: object
+      description: Результат предварительного просмотра
+      properties:
+        affected_stocks:
+          type: array
+          items:
+            type: object
+            properties:
+              stock_id:
+                type: string
+                format: uuid
+              stock_symbol:
+                type: string
+              current_price:
+                type: number
+                format: double
+              projected_price:
+                type: number
+                format: double
+              impact_percent:
+                type: number
+                format: double
+              reason:
+                type: string
+        total_market_cap_change:
+          type: number
+          format: double
+          description: Изменение общей капитализации
+        indices_affected:
+          type: array
+          description: Затронутые индексы
+          items:
+            type: object
+            properties:
+              index_code:
+                type: string
+              current_value:
+                type: number
+                format: double
+              projected_value:
+                type: number
+                format: double
+              change_percent:
+                type: number
+                format: double
+
+    EventMapping:
+      type: object
+      description: Правило маппинга события на акцию
+      required:
+        - id
+        - event_type
+        - condition
+        - impact_formula
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - quest_completed
+            - faction_war
+            - world_event
+            - tech_breakthrough
+            - corporate_scandal
+        condition:
+          type: object
+          description: Условия срабатывания маппинга
+          properties:
+            quest_id_pattern:
+              type: string
+              description: Regex паттерн для quest_id
+            outcome:
+              type: string
+              enum: [success, failure, partial, any]
+            corporation_id:
+              type: string
+              format: uuid
+            faction_id:
+              type: string
+            severity:
+              type: string
+              enum: [low, medium, high, critical]
+        impact_formula:
+          type: object
+          description: Формула расчета влияния
+          properties:
+            base_impact_percent:
+              type: number
+              format: double
+            modifiers:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  multiplier:
+                    type: number
+                    format: double
+        status:
+          type: string
+          enum: [active, inactive, deprecated]
+        priority:
+          type: integer
+          description: Приоритет (для конфликтов)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EventMappingUpsert:
+      type: object
+      description: Создание/обновление маппинга
+      required:
+        - event_type
+        - condition
+        - impact_formula
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID для обновления (опционально)
+        event_type:
+          type: string
+          enum:
+            - quest_completed
+            - faction_war
+            - world_event
+            - tech_breakthrough
+            - corporate_scandal
+        condition:
+          type: object
+        impact_formula:
+          type: object
+        status:
+          type: string
+          enum: [active, inactive]
+          default: active
+        priority:
+          type: integer
+          default: 100
+
+    JournalEntry:
+      type: object
+      description: Запись журнала интеграций
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [quest_service, faction_service, economy_events, manual]
+        event_id:
+          type: string
+        event_type:
+          type: string
+        payload:
+          type: object
+          description: Оригинальный payload события
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        processing_started_at:
+          type: string
+          format: date-time
+        processing_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        processing_duration_ms:
+          type: integer
+          description: Длительность обработки в миллисекундах
+        affected_stocks_count:
+          type: integer
+          description: Количество затронутых акций
+        error_message:
+          type: string
+          nullable: true
+          description: Сообщение об ошибке (если failed)
+        created_at:
+          type: string
+          format: date-time
+
+
+

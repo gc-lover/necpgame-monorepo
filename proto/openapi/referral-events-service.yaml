@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: Referral Events Service API
+  description: API для событий реферальной системы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Events
+    description: События реферальной системы
+
+paths:
+  /growth/referral/events/{player_id}:
+    get:
+      tags:
+        - Referral Events
+      summary: Получить события реферальной системы
+      operationId: getReferralEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - referral:code-generated
+              - referral:registered
+              - referral:level-10-reached
+              - referral:milestone-achieved
+              - referral:reward-distributed
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        '200':
+          description: События реферальной системы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralEventsResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ReferralEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - referral:code-generated
+            - referral:registered
+            - referral:level-10-reached
+            - referral:milestone-achieved
+            - referral:reward-distributed
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ReferralEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: Stock Integration Events Service API
+  description: API для обработки мировых событий и preview симуляции влияния
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: events
+    description: Обработка игровых событий
+
+paths:
+  /stocks/integration/events/world:
+    post:
+      tags:
+        - events
+      summary: Обработать мировое событие
+      description: |
+        Принимает глобальное мировое событие и применяет влияние на акции.
+        Вызывается из event bus или вручную.
+      operationId: handleWorldEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorldEventPayload"
+      responses:
+        "202":
+          description: Событие принято, будет обработано асинхронно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  event_id:
+                    type: string
+                  processing_id:
+                    type: string
+                    format: uuid
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/integration/events/preview:
+    post:
+      tags:
+        - events
+      summary: Предварительный просмотр влияния события
+      description: |
+        Симулирует влияние события на акции без применения изменений.
+        Полезно для тестирования и балансировки.
+      operationId: previewEventImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/QuestEventPayload"
+                - $ref: "#/components/schemas/FactionEventPayload"
+                - $ref: "#/components/schemas/WorldEventPayload"
+      responses:
+        "200":
+          description: Предварительный просмотр готов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventPreviewResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    QuestEventPayload:
+      type: object
+      description: Событие из quest-service
+      required:
+        - event_id
+        - quest_id
+        - quest_name
+        - player_id
+        - outcome
+        - affected_corporations
+        - timestamp
+      properties:
+        event_id:
+          type: string
+          description: ID события
+        quest_id:
+          type: string
+          description: ID квеста
+        quest_name:
+          type: string
+          description: Название квеста
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        outcome:
+          type: string
+          enum: [success, failure, partial]
+          description: Результат квеста
+        affected_corporations:
+          type: array
+          description: Затронутые корпорации
+          items:
+            type: object
+            required:
+              - corporation_id
+              - impact_type
+              - severity
+            properties:
+              corporation_id:
+                type: string
+                format: uuid
+              impact_type:
+                type: string
+                enum: [positive, negative, neutral]
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Дополнительная информация
+
+    FactionEventPayload:
+      type: object
+      description: Событие из faction-service
+      required:
+        - event_id
+        - event_type
+        - timestamp
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+          enum:
+            - war_started
+            - war_victory
+            - war_defeat
+            - territory_captured
+            - territory_lost
+            - reputation_change
+        winner_faction_id:
+          type: string
+          description: ID победившей фракции
+        loser_faction_id:
+          type: string
+          description: ID проигравшей фракции
+        territory_gained:
+          type: integer
+          description: Количество захваченных территорий
+        territory_lost:
+          type: integer
+          description: Количество потерянных территорий
+        casualty_ratio:
+          type: number
+          format: double
+          description: Соотношение потерь (0-1)
+        timestamp:
+          type: string
+          format: date-time
+
+    WorldEventPayload:
+      type: object
+      description: Глобальное мировое событие
+      required:
+        - event_id
+        - event_type
+        - event_name
+        - severity
+        - timestamp
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+          enum:
+            - economic_crisis
+            - tech_breakthrough
+            - energy_crisis
+            - medical_emergency
+            - political_upheaval
+            - natural_disaster
+        event_name:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        affected_sectors:
+          type: array
+          description: Затронутые секторы
+          items:
+            type: object
+            properties:
+              sector:
+                type: string
+              impact_percent:
+                type: number
+                format: double
+        duration_hours:
+          type: integer
+          description: Длительность события в часах
+        timestamp:
+          type: string
+          format: date-time
+
+    EventPreviewResult:
+      type: object
+      description: Результат предварительного просмотра
+      properties:
+        affected_stocks:
+          type: array
+          items:
+            type: object
+            properties:
+              stock_id:
+                type: string
+                format: uuid
+              stock_symbol:
+                type: string
+              current_price:
+                type: number
+                format: double
+              projected_price:
+                type: number
+                format: double
+              impact_percent:
+                type: number
+                format: double
+              reason:
+                type: string
+        total_market_cap_change:
+          type: number
+          format: double
+          description: Изменение общей капитализации
+        indices_affected:
+          type: array
+          description: Затронутые индексы
+          items:
+            type: object
+            properties:
+              index_code:
+                type: string
+              current_value:
+                type: number
+                format: double
+              projected_value:
+                type: number
+                format: double
+              change_percent:
+                type: number
+                format: double
+

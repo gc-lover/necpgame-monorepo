@@ -4,7 +4,7 @@ metadata:
   document_type: canon
   category: timeline-author
   status: draft
-  version: '0.1.0'
+  version: '1.1.0'
   last_updated: 2025-11-12T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
@@ -104,6 +104,74 @@ content:
         уличной еды.
       mechanics_links: []
       assets: []
+quest_definition:
+  quest_type: side
+  level_min: 1
+  level_max: 12
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements: []
+  objectives:
+    - id: obj-001
+      text: "Прибыть на перекрёсток 9th Street и Passyunk Avenue"
+      type: move
+      target: cheesesteak_corner
+      optional: false
+    - id: obj-002
+      text: "Изучить историю Pat's и Geno's и правила заказа"
+      type: learn
+      target: cheesesteak_lore
+      optional: false
+    - id: obj-003
+      text: "Выбрать сторону: Pat's или Geno's"
+      type: choice
+      target: restaurant_choice
+      optional: false
+    - id: obj-004
+      text: "Правильно заказать чизстейк с использованием местного сленга"
+      type: skill_check
+      target: order_cheesesteak
+      skill: charisma
+      difficulty: medium
+      optional: false
+    - id: obj-005
+      text: "Попробовать чизстейк и поделиться отзывом"
+      type: interact
+      target: cheesesteak_tasting
+      optional: false
+  rewards:
+    experience: 800
+    currency: -12
+    reputation:
+      philadelphia: 15
+    unlocks:
+      - type: achievement
+        id: cheesesteak_master
+      - type: buff
+        id: health
+        value: 25
+        duration: 28800
+  branches:
+    - id: choose_pats
+      condition: restaurant == "pats"
+      consequences:
+        pats_loyalty: increased
+        genos_loyalty: decreased
+      rewards:
+        reputation:
+          pats_king_of_steaks: 20
+    - id: choose_genos
+      condition: restaurant == "genos"
+      consequences:
+        genos_loyalty: increased
+        pats_loyalty: decreased
+      rewards:
+        reputation:
+          genos_steaks: 20
+
 appendix:
   glossary: []
   references: []
@@ -118,6 +186,10 @@ history:
     date: 2025-11-12
     author: concept_team
     changes: 'Конвертация квеста «Филадельфийский чизстейк» в формат знаний.'
+  - version: '1.1.0'
+    date: 2025-11-23
+    author: content_writer
+    changes: Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
   checksum: ''
   schema_version: '1.0'

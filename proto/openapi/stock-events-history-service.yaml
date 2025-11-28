@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: Stock Events History Service API
+  description: API для получения истории воздействий событий на акции
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: history
+    description: История событий акций
+
+paths:
+  /stocks/{stock_id}/events/history:
+    get:
+      tags:
+        - history
+      summary: Получить историю событий акции
+      description: |
+        Возвращает историю всех событий, влиявших на акцию.
+        Включает завершенные, истекшие и откаченные воздействия.
+      operationId: getStockEventHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          description: ID акции
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          required: false
+          description: Фильтр по типу события
+          schema:
+            type: string
+            enum:
+              - quest_completed
+              - faction_war
+              - territory_control
+              - corporate_scandal
+              - tech_breakthrough
+              - economic_event
+        - name: status
+          in: query
+          required: false
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum: [active, expired, reversed]
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История событий успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StockEventHistoryEntry"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    StockEventHistoryEntry:
+      type: object
+      description: Запись в истории событий акции
+      required:
+        - id
+        - stock_id
+        - stock_symbol
+        - event_type
+        - event_id
+        - event_name
+        - total_impact_percent
+        - price_before
+        - price_after
+        - price_change_percent
+        - applied_at
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        stock_id:
+          type: string
+          format: uuid
+        stock_symbol:
+          type: string
+        event_type:
+          $ref: "#/components/schemas/EventType"
+        event_id:
+          type: string
+        event_name:
+          type: string
+        total_impact_percent:
+          type: number
+          format: double
+        price_before:
+          type: number
+          format: double
+          description: Цена до события
+        price_after:
+          type: number
+          format: double
+          description: Цена после события
+        price_change_percent:
+          type: number
+          format: double
+          description: Фактическое изменение цены (%)
+        applied_at:
+          type: string
+          format: date-time
+        expired_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [active, expired, reversed]
+
+    EventType:
+      type: string
+      enum:
+        - quest_completed
+        - faction_war
+        - territory_control
+        - corporate_scandal
+        - tech_breakthrough
+        - economic_event
+      description: |
+        Типы событий:
+        - quest_completed: Завершение квеста
+        - faction_war: Фракционная война
+        - territory_control: Смена контроля территории
+        - corporate_scandal: Корпоративный скандал
+        - tech_breakthrough: Технологический прорыв
+        - economic_event: Экономическое событие (кризис, подъем)
+

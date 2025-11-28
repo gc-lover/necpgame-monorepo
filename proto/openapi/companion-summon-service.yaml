@@ -1,0 +1,184 @@
+openapi: 3.0.3
+info:
+  title: Companion Summon Service API
+  description: API для призыва и отзыва компаньонов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companion Summon
+    description: Призыв и отзыв компаньонов
+
+paths:
+  /gameplay/companions/{companion_id}/summon:
+    post:
+      tags:
+        - Companion Summon
+      summary: Призвать компаньона
+      operationId: summonCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SummonCompanionRequest'
+      responses:
+        '200':
+          description: Компаньон призван
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/dismiss:
+    post:
+      tags:
+        - Companion Summon
+      summary: Отозвать компаньона
+      operationId: dismissCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DismissCompanionRequest'
+      responses:
+        '200':
+          description: Компаньон отозван
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/active/{player_id}:
+    get:
+      tags:
+        - Companion Summon
+      summary: Получить активного компаньона игрока
+      operationId: getActiveCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+      responses:
+        '200':
+          description: Активный компаньон
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+          nullable: true
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    PlayerCompanion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        level:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 1
+        experience:
+          type: integer
+          minimum: 0
+          default: 0
+        is_summoned:
+          type: boolean
+          default: false
+        summoned_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SummonCompanionRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    DismissCompanionRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,104 @@
+openapi: 3.0.3
+info:
+  title: Global State Projections API
+  description: |
+    API для работы с проекциями глобального состояния.
+    Проекции формируют read-модели из событий.
+  version: 1.0.0
+  contact:
+    name: World Service Team
+    email: world@necp.game
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8086/v1
+    description: Local world-service
+tags:
+  - name: projections
+    description: Проекции и read-модели
+paths:
+  /world/projections/{projection_name}:
+    get:
+      tags: [projections]
+      summary: Получить данные проекции
+      operationId: getProjection
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projection_name
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [player_profile, faction_stats, territory_control, economy_summary]
+        - name: entity_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Проекция получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Projection'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /world/projections/{projection_name}/rebuild:
+    post:
+      tags: [projections]
+      summary: Перестроить проекцию
+      operationId: rebuildProjection
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projection_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Перестроение запущено
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  schemas:
+    Projection:
+      type: object
+      required: [projection_name, last_updated, data]
+      properties:
+        projection_name:
+          type: string
+        last_updated:
+          type: string
+          format: date-time
+        last_event_version:
+          type: integer
+          format: int64
+        data:
+          type: object
+          additionalProperties: true
+
+
+

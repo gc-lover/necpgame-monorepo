@@ -1,13 +1,13 @@
 metadata:
   id: quest-la-2029-freeway-chase
-  title: 'Лос-Анджелес 2020-2029 — Погоня по фривею'
+  title: "Лос-Анджелес 2020-2029 — Погоня по фривею"
   document_type: canon
   category: timeline-quest
-  status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T03:05:00Z
+  status: approved
+  version: "1.1.0"
+  last_updated: 2025-11-23T19:00:00Z
   concept_approved: false
-  concept_reviewed_at: ''
+  concept_reviewed_at: ""
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -37,8 +37,8 @@ metadata:
 review:
   chain:
     - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
+      reviewer: ""
+      reviewed_at: ""
       status: pending
   next_actions: []
 summary:
@@ -49,6 +49,75 @@ summary:
     - Фривеи ЛА славятся шириной в 6–8 полос и вечными пробками.
     - Погони часто транслируются в прямом эфире, полиция подключает вертолёты.
     - Квест повышает репутацию в автомобильной культуре и даёт крупный лут, но рискован.
+quest_definition:
+  quest_type: side
+  level_min: 10
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: steal_corp_cargo
+      text: "Захватить корп-груз и вывести его на I-405"
+      type: interact
+      target: corp_warehouse
+      optional: false
+    - id: evade_pursuers
+      text: "Уйти от корпов и LAPD, лавируя между машинами в заторах"
+      type: skill_check
+      target: freeway_traffic
+      skill: driving
+      difficulty: hard
+      optional: false
+    - id: change_freeways
+      text: "Сменить трассу (405 → 10 → 101), избегая блокпостов и вертолётов"
+      type: move
+      target: freeway_network
+      optional: false
+    - id: use_stunt_tricks
+      text: "Использовать трюки с рампами, разделителями и сервисными съездами"
+      type: skill_check
+      target: freeway_stunts
+      skill: driving
+      difficulty: medium
+      optional: false
+    - id: deliver_to_downtown
+      text: "Добраться до Downtown LA и передать груз союзникам"
+      type: interact
+      target: downtown_dropoff
+      optional: false
+  rewards:
+    experience: 3000
+    currency: 20000
+    reputation:
+      los_angeles: -10
+      criminal_factions: 20
+    unlocks:
+      - type: achievement
+        id: freeway_king
+    risks:
+      - type: arrest
+        probability: 30
+      - type: vehicle_damage
+        probability: 50
+  branches:
+    - id: perfect_escape
+      condition: no_damage == true && no_arrest == true
+      consequences:
+        currency_bonus: 10000
+        reputation:
+          criminal_factions: 15
+    - id: damaged_escape
+      condition: vehicle_damage == true
+      consequences:
+        currency: -5000
+        debuffs:
+          - type: wanted_level
+            id: lapd_wanted
+            value: 25
+            duration: 43200
 content:
   sections:
     - id: overview
@@ -106,11 +175,14 @@ implementation:
   queue_reference: []
   blockers: []
 history:
-  - version: '1.0.0'
+  - version: "1.0.0"
     date: 2025-11-12
     author: concept_team
     changes: Конвертирован квест «Погоня по фривею» в формат знаний.
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
 validation:
-  checksum: ''
-  schema_version: '1.0'
-
+  checksum: ""
+  schema_version: "1.0"

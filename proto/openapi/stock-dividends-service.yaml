@@ -1,0 +1,697 @@
+openapi: 3.0.3
+info:
+  title: Stock Dividends Service API
+  description: |
+    API для управления дивидендами фондовой биржи.
+    
+    Функционал:
+    - Расписание выплат дивидендов (квартальные, годовые)
+    - История выплат игрокам
+    - DRIP (Dividend Reinvestment Plan) - реинвестирование
+    - Налоговые удержания и отчётность
+    - Админ операции для обработки выплат
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: dividends
+    description: Операции с дивидендами
+  - name: drip
+    description: Управление DRIP (реинвестирование)
+  - name: admin
+    description: Административные операции
+
+paths:
+  /stocks/{stock_id}/dividends/schedule:
+    get:
+      tags:
+        - dividends
+      summary: Получить расписание дивидендов акции
+      description: |
+        Возвращает график выплат дивидендов для указанной акции.
+        Включает ключевые даты: declaration, ex-dividend, record, payment.
+      operationId: getDividendSchedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          description: ID акции
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Расписание дивидендов успешно получено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DividendSchedule'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+              example:
+                data:
+                  - id: "d1234567-89ab-cdef-0123-456789abcdef"
+                    stock_id: "550e8400-e29b-41d4-a716-446655440000"
+                    stock_symbol: "ARASAKA"
+                    frequency: "quarterly"
+                    amount_per_share: 2.50
+                    declaration_date: "2025-11-01T00:00:00Z"
+                    ex_dividend_date: "2025-11-15T00:00:00Z"
+                    record_date: "2025-11-17T00:00:00Z"
+                    payment_date: "2025-12-01T00:00:00Z"
+                    status: "scheduled"
+                    created_at: "2025-10-25T10:00:00Z"
+                    updated_at: "2025-10-25T10:00:00Z"
+                pagination:
+                  total: 4
+                  limit: 10
+                  offset: 0
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /players/{player_id}/dividends/payments:
+    get:
+      tags:
+        - dividends
+      summary: Получить историю выплат дивидендов игрока
+      description: |
+        Возвращает все дивидендные выплаты игрока с детализацией:
+        акции, суммы, налоги, DRIP, статусы.
+      operationId: getPlayerDividendPayments
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: stock_id
+          in: query
+          required: false
+          description: Фильтр по ID акции
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          description: Фильтр по статусу выплаты
+          schema:
+            type: string
+            enum: [pending, processed, failed]
+        - name: from_date
+          in: query
+          required: false
+          description: Начало периода (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          description: Конец периода (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История выплат успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DividendPayment'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+                  summary:
+                    $ref: '#/components/schemas/PaymentSummary'
+              example:
+                data:
+                  - id: "p1234567-89ab-cdef-0123-456789abcdef"
+                    player_id: "123e4567-e89b-12d3-a456-426614174000"
+                    schedule_id: "d1234567-89ab-cdef-0123-456789abcdef"
+                    stock_id: "550e8400-e29b-41d4-a716-446655440000"
+                    stock_symbol: "ARASAKA"
+                    shares_owned: 100
+                    amount_per_share: 2.50
+                    gross_amount: 250.00
+                    tax_amount: 37.50
+                    net_amount: 212.50
+                    drip_enabled: true
+                    drip_amount: 212.50
+                    drip_shares: 8.5
+                    status: "processed"
+                    payment_date: "2025-12-01T12:00:00Z"
+                    processed_at: "2025-12-01T12:05:00Z"
+                    created_at: "2025-11-17T10:00:00Z"
+                    updated_at: "2025-12-01T12:05:00Z"
+                pagination:
+                  total: 12
+                  limit: 10
+                  offset: 0
+                summary:
+                  total_gross: 3000.00
+                  total_tax: 450.00
+                  total_net: 2550.00
+                  total_drip_shares: 102.0
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /players/{player_id}/dividends/drip:
+    get:
+      tags:
+        - drip
+      summary: Получить настройки DRIP игрока
+      description: |
+        Возвращает конфигурацию DRIP (Dividend Reinvestment Plan) игрока.
+        DRIP автоматически реинвестирует дивиденды в покупку новых акций.
+      operationId: getPlayerDRIPSettings
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Настройки DRIP успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DRIPSettings'
+              example:
+                player_id: "123e4567-e89b-12d3-a456-426614174000"
+                global_enabled: true
+                stocks:
+                  - stock_id: "550e8400-e29b-41d4-a716-446655440000"
+                    stock_symbol: "ARASAKA"
+                    enabled: true
+                    threshold: 50.00
+                  - stock_id: "660e8400-e29b-41d4-a716-446655440001"
+                    stock_symbol: "MILITECH"
+                    enabled: false
+                    threshold: 0
+                created_at: "2025-10-01T10:00:00Z"
+                updated_at: "2025-11-15T14:30:00Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - drip
+      summary: Обновить настройки DRIP игрока
+      description: |
+        Обновляет конфигурацию DRIP для игрока.
+        Можно включить/выключить глобально или для конкретных акций.
+      operationId: updatePlayerDRIPSettings
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DRIPSettingsUpdate'
+            example:
+              global_enabled: true
+              stocks:
+                - stock_id: "550e8400-e29b-41d4-a716-446655440000"
+                  enabled: true
+                  threshold: 100.00
+                - stock_id: "660e8400-e29b-41d4-a716-446655440001"
+                  enabled: false
+                  threshold: 0
+      responses:
+        '200':
+          description: Настройки DRIP успешно обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DRIPSettings'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /admin/dividends/schedules:
+    post:
+      tags:
+        - admin
+      summary: Создать расписание дивидендов
+      description: |
+        Админ endpoint для создания нового расписания выплаты дивидендов.
+        Требуется роль admin.
+      operationId: createDividendSchedule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DividendScheduleCreate'
+            example:
+              stock_id: "550e8400-e29b-41d4-a716-446655440000"
+              frequency: "quarterly"
+              amount_per_share: 3.00
+              declaration_date: "2025-12-01T00:00:00Z"
+              ex_dividend_date: "2025-12-15T00:00:00Z"
+              record_date: "2025-12-17T00:00:00Z"
+              payment_date: "2026-01-01T00:00:00Z"
+      responses:
+        '201':
+          description: Расписание успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DividendSchedule'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /admin/dividends/process:
+    post:
+      tags:
+        - admin
+      summary: Обработать выплату дивидендов
+      description: |
+        Админ endpoint для обработки выплаты дивидендов по расписанию.
+        Вызывается cron'ом или вручную.
+        Требуется роль admin.
+      operationId: processDividendPayment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - schedule_id
+              properties:
+                schedule_id:
+                  type: string
+                  format: uuid
+                  description: ID расписания для обработки
+              example:
+                schedule_id: "d1234567-89ab-cdef-0123-456789abcdef"
+      responses:
+        '200':
+          description: Выплата успешно обработана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  schedule_id:
+                    type: string
+                    format: uuid
+                  total_players:
+                    type: integer
+                    description: Количество игроков получивших выплату
+                  total_paid:
+                    type: number
+                    format: double
+                    description: Общая сумма выплат
+                  total_drip_shares:
+                    type: number
+                    format: double
+                    description: Всего акций приобретено через DRIP
+                example:
+                  message: "Dividend payment processed successfully"
+                  schedule_id: "d1234567-89ab-cdef-0123-456789abcdef"
+                  total_players: 1523
+                  total_paid: 381250.00
+                  total_drip_shares: 15250.5
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    DividendSchedule:
+      type: object
+      description: Расписание выплаты дивидендов
+      required:
+        - id
+        - stock_id
+        - stock_symbol
+        - frequency
+        - amount_per_share
+        - declaration_date
+        - ex_dividend_date
+        - record_date
+        - payment_date
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID расписания
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+          minLength: 1
+          maxLength: 10
+        frequency:
+          type: string
+          enum: [quarterly, annual, special]
+          description: |
+            Частота выплаты:
+            - quarterly: квартальная
+            - annual: годовая
+            - special: специальная (разовая)
+        amount_per_share:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Сумма дивидендов на одну акцию
+        declaration_date:
+          type: string
+          format: date-time
+          description: Дата объявления дивидендов
+        ex_dividend_date:
+          type: string
+          format: date-time
+          description: |
+            Ex-dividend дата. Акции купленные после этой даты 
+            не имеют права на дивиденды
+        record_date:
+          type: string
+          format: date-time
+          description: Дата фиксации акционеров
+        payment_date:
+          type: string
+          format: date-time
+          description: Дата выплаты дивидендов
+        status:
+          type: string
+          enum: [scheduled, processing, processed, cancelled]
+          description: Статус выплаты
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DividendScheduleCreate:
+      type: object
+      description: Данные для создания расписания дивидендов
+      required:
+        - stock_id
+        - frequency
+        - amount_per_share
+        - declaration_date
+        - ex_dividend_date
+        - record_date
+        - payment_date
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        frequency:
+          type: string
+          enum: [quarterly, annual, special]
+        amount_per_share:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        declaration_date:
+          type: string
+          format: date-time
+        ex_dividend_date:
+          type: string
+          format: date-time
+        record_date:
+          type: string
+          format: date-time
+        payment_date:
+          type: string
+          format: date-time
+
+    DividendPayment:
+      type: object
+      description: Выплата дивидендов игроку
+      required:
+        - id
+        - player_id
+        - schedule_id
+        - stock_id
+        - stock_symbol
+        - shares_owned
+        - amount_per_share
+        - gross_amount
+        - tax_amount
+        - net_amount
+        - drip_enabled
+        - status
+        - payment_date
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID выплаты
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        schedule_id:
+          type: string
+          format: uuid
+          description: ID расписания
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+        shares_owned:
+          type: integer
+          minimum: 0
+          description: Количество акций у игрока на record_date
+        amount_per_share:
+          type: number
+          format: double
+          description: Дивиденды на акцию
+        gross_amount:
+          type: number
+          format: double
+          description: Сумма до налогов
+        tax_amount:
+          type: number
+          format: double
+          description: Сумма налога (15%)
+        net_amount:
+          type: number
+          format: double
+          description: Сумма после налогов
+        drip_enabled:
+          type: boolean
+          description: DRIP активирован для этой выплаты
+        drip_amount:
+          type: number
+          format: double
+          nullable: true
+          description: Сумма реинвестированная через DRIP
+        drip_shares:
+          type: number
+          format: double
+          nullable: true
+          description: Количество акций приобретенных через DRIP
+        status:
+          type: string
+          enum: [pending, processed, failed]
+          description: Статус выплаты
+        payment_date:
+          type: string
+          format: date-time
+          description: Дата выплаты (из расписания)
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Фактическое время обработки
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PaymentSummary:
+      type: object
+      description: Сводная статистика по выплатам
+      properties:
+        total_gross:
+          type: number
+          format: double
+          description: Всего до налогов
+        total_tax:
+          type: number
+          format: double
+          description: Всего налогов
+        total_net:
+          type: number
+          format: double
+          description: Всего после налогов
+        total_drip_shares:
+          type: number
+          format: double
+          description: Всего акций через DRIP
+
+    DRIPSettings:
+      type: object
+      description: Настройки DRIP (Dividend Reinvestment Plan) игрока
+      required:
+        - player_id
+        - global_enabled
+        - stocks
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        global_enabled:
+          type: boolean
+          description: |
+            Глобальное включение DRIP.
+            Если false, DRIP отключен для всех акций.
+        stocks:
+          type: array
+          description: Настройки DRIP для конкретных акций
+          items:
+            $ref: '#/components/schemas/DRIPStockSettings'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DRIPStockSettings:
+      type: object
+      description: Настройки DRIP для конкретной акции
+      required:
+        - stock_id
+        - stock_symbol
+        - enabled
+        - threshold
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+        enabled:
+          type: boolean
+          description: DRIP включен для этой акции
+        threshold:
+          type: number
+          format: double
+          minimum: 0
+          description: |
+            Минимальная сумма дивидендов для DRIP.
+            Если выплата меньше, идёт на кошелёк вместо реинвестирования.
+
+    DRIPSettingsUpdate:
+      type: object
+      description: Обновление настроек DRIP
+      required:
+        - global_enabled
+        - stocks
+      properties:
+        global_enabled:
+          type: boolean
+        stocks:
+          type: array
+          items:
+            type: object
+            required:
+              - stock_id
+              - enabled
+              - threshold
+            properties:
+              stock_id:
+                type: string
+                format: uuid
+              enabled:
+                type: boolean
+              threshold:
+                type: number
+                format: double
+                minimum: 0
+
+
+

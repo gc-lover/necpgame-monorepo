@@ -25,7 +25,7 @@ Database Engineer проектирует схемы БД, создает Liquiba
 - `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md` - шаблоны кода (опционально)
 
 **КРИТИЧЕСКИ ВАЖНО (главные методы):**
-- **ОБЯЗАТЕЛЬНО** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read` - это главное!
+- **ОБЯЗАТЕЛЬНО** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read` - это главное! Задержка 2-3 сек (лимит 30/мин).
 - Используй последовательные запросы с задержками (300-500ms)
 - Группируй операции в батчи по 5-10 Issues
 - Для >=10 Issues используй GitHub Actions Batch Processor
@@ -93,6 +93,9 @@ Database Engineer проектирует схемы БД, создает Liquiba
 - OpenAPI спецификация от API Designer (определяет поля API)
 - Требования к производительности
 - Существующие схемы БД
+
+## Ошибочное назначение задач
+Если задача назначена ошибочно (не соответствует области ответственности Database Engineer), оставь комментарий в Issue с просьбой проверить workflow и указанием правильного агента. Если возвращают ошибочно назначенную задачу, проверь workflow и объясни почему не можешь её выполнить, указав правильный этап и агента.
 
 ## ⚠️ ВАЖНО: Возврат задач при проблемах с OpenAPI
 
@@ -190,19 +193,19 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 ## Переход к следующему этапу
 
+Критерии выбора следующего агента:
+- API Designer: если схема БД требует изменений в OpenAPI спецификации
+- Backend: если OpenAPI спецификация готова и не требует изменений
+
 После завершения работы:
 
-1. **Удали свою метку `agent:database`**
-
-2. **Добавь метку следующего агента:**
-   - Если передается API Designer: `agent:api-designer`, `stage:api-design`
-   - Если передается Backend: `agent:backend`, `stage:backend-dev`
-
-3. **Обнови статус Issue** через Project API
-
-4. **Добавь комментарий** с указанием следующего агента и готовности схемы БД
-
-5. **Используй MCP GitHub** (см. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`)
+1. Удали метку `agent:database`
+2. Добавь метку следующего агента:
+   - API Designer: `agent:api-designer`, `stage:api-design`
+   - Backend: `agent:backend`, `stage:backend-dev`
+3. Обнови Development Stage в Project
+4. Добавь комментарий с указанием следующего агента
+5. Используй MCP GitHub
 
 ## Стиль работы
 
@@ -223,6 +226,8 @@ Database Engineer проектирует схемы БД, создает Liquiba
 ## Коммиты и Git
 
 ### Обязательно коммить все созданные файлы
+
+**ОБЯЗАТЕЛЬНО:** Все изменения коммить и пушить в ветку `develop`.
 
 После создания схемы БД и миграций:
 
@@ -250,7 +255,7 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 4. **Отправь в remote:**
    ```bash
-   git push origin feature/issue-{number}-{description}
+   git push origin develop
    ```
 
 ### Формат коммитов

@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: Companion Combat Service API
+  description: API для боевых действий компаньонов (атака, защита)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companion Combat
+    description: Боевые действия компаньонов
+
+paths:
+  /gameplay/companions/{companion_id}/combat/attack:
+    post:
+      tags:
+        - Companion Combat
+      summary: Команда атаки компаньона
+      operationId: companionAttack
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanionAttackRequest'
+      responses:
+        '200':
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanionAttackResponse'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/combat/defend:
+    post:
+      tags:
+        - Companion Combat
+      summary: Команда защиты компаньона
+      operationId: companionDefend
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanionDefendRequest'
+      responses:
+        '200':
+          description: Защита активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanionDefendResponse'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CompanionAttackRequest:
+      type: object
+      required:
+        - player_id
+        - target_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+
+    CompanionDefendRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    CompanionAttackResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        damage_dealt:
+          type: integer
+        target_id:
+          type: string
+          format: uuid
+
+    CompanionDefendResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        defense_active:
+          type: boolean
+        defense_duration_seconds:
+          type: integer
+
+security:
+  - BearerAuth: []
+

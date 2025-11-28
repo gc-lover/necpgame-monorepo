@@ -7,7 +7,7 @@ metadata:
   category: side_quest
   quest_type: side
   status: active
-  version: "1.0.0"
+  version: "1.1.0"
   timeline: 2020-2029
   year: 2024
   season: autumn
@@ -73,6 +73,81 @@ requirements:
     - skill: social
       min_value: 0.4
       description: Navigate political landscape
+
+quest_definition:
+  quest_type: side
+  level_min: 14
+  level_max: 28
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements:
+      - skill: investigation
+        min_value: 0.5
+      - skill: social
+        min_value: 0.4
+  objectives:
+    - id: obj-001
+      text: "Встретиться с Amélie и понять ситуацию"
+      type: dialogue
+      target: amelie_meeting
+      optional: false
+    - id: obj-002
+      text: "Исследовать Metroland Development Corp"
+      type: investigate
+      target: metroland_research
+      optional: false
+    - id: obj-003
+      text: "Найти доказательства коррупции"
+      type: investigate
+      target: corruption_evidence
+      optional: false
+    - id: obj-004
+      text: "Остановить Royal Heights Project"
+      type: choice
+      target: project_stop
+      optional: false
+  rewards:
+    experience: 8000
+    currency: 5000
+    reputation:
+      montreal: 30
+      environmentalists: 50
+    unlocks:
+      - type: achievement
+        id: mont_royal_protector
+  branches:
+    - id: expose_corruption
+      condition: corruption_exposed == true
+      consequences:
+        project_stopped: true
+        metroland_investigated: true
+      rewards:
+        experience: 12000
+        reputation:
+          environmentalists: 100
+          journalists: 50
+    - id: political_pressure
+      condition: political_pressure_applied == true
+      consequences:
+        vote_delayed: true
+        public_awareness: increased
+      rewards:
+        experience: 10000
+        reputation:
+          montreal: 50
+    - id: sabotage
+      condition: sabotage_successful == true
+      consequences:
+        project_delayed: true
+        investigation_triggered: true
+      rewards:
+        experience: 15000
+        reputation:
+          criminals: 20
+          environmentalists: 30
 
 story:
   background: |
@@ -401,3 +476,13 @@ notes:
     development threat plausible. Multiple victory paths - legal, leak, deal,
     direct action. All save mountain, different costs. No combat, pure investigation
     и social gameplay. Environmental theme relevant globally.
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-26
+    author: content_writer
+    changes: "Создан квест «Вершина Роял» о защите Mont Royal от корпоративной застройки."
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."

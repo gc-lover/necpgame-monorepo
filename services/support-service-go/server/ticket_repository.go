@@ -248,7 +248,11 @@ func (r *TicketRepository) CountByStatus(ctx context.Context, status models.Tick
 }
 
 func (r *TicketRepository) CreateResponse(ctx context.Context, response *models.TicketResponse) error {
-	attachmentsJSON, _ := json.Marshal(response.Attachments)
+	attachmentsJSON, err := json.Marshal(response.Attachments)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal attachments JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO support.ticket_responses (
@@ -258,7 +262,7 @@ func (r *TicketRepository) CreateResponse(ctx context.Context, response *models.
 			$1, $2, $3, $4, $5, $6, $7, $8
 		)`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		response.ID, response.TicketID, response.AuthorID, response.IsAgent,
 		response.Message, attachmentsJSON, response.Visibility, response.CreatedAt,
 	)
@@ -294,7 +298,9 @@ func (r *TicketRepository) GetResponsesByTicketID(ctx context.Context, ticketID 
 		}
 
 		if len(attachmentsJSON) > 0 {
-			json.Unmarshal(attachmentsJSON, &response.Attachments)
+			if err := json.Unmarshal(attachmentsJSON, &response.Attachments); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal attachments JSON")
+	}
 		}
 
 		responses = append(responses, response)

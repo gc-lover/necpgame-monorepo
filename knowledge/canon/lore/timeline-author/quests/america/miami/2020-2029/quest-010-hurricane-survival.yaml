@@ -7,7 +7,7 @@ metadata:
   category: side_quest
   quest_type: side
   status: active
-  version: "1.0.0"
+  version: "1.1.0"
   timeline: 2020-2029
   year: 2029
   season: fall
@@ -77,6 +77,89 @@ requirements:
     - skill: leadership
       min_value: 0.6
       description: Coordinate shelter, make crisis decisions
+
+quest_definition:
+  quest_type: side
+  level_min: 15
+  level_max: 30
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements:
+      - skill: survival
+        min_value: 0.7
+      - skill: leadership
+        min_value: 0.6
+  objectives:
+    - id: obj-001
+      text: "Reach community center shelter"
+      type: move
+      target: liberty_city_shelter
+      optional: false
+    - id: obj-002
+      text: "Help organize shelter resources"
+      type: interact
+      target: shelter_organization
+      optional: false
+    - id: obj-003
+      text: "Survive hurricane landfall"
+      type: survival
+      target: hurricane_maria_ii
+      optional: false
+    - id: obj-004
+      text: "Rescue trapped survivors"
+      type: skill_check
+      target: rescue_operations
+      skill: survival
+      difficulty: hard
+      optional: false
+    - id: obj-005
+      text: "Face aftermath and consequences"
+      type: dialogue
+      target: post_hurricane
+      optional: false
+  rewards:
+    experience: 10000
+    currency: 2000
+    reputation:
+      miami: 50
+    unlocks:
+      - type: achievement
+        id: hurricane_survivor
+  branches:
+    - id: maximum_survival
+      condition: survivors_saved >= 180
+      consequences:
+        community_saved: maximum
+        leadership_recognized: true
+      rewards:
+        experience: 15000
+        reputation:
+          community: 5000
+          authorities: 3000
+        unlocks:
+          - type: achievement
+            id: hero_of_liberty_city
+    - id: partial_survival
+      condition: survivors_saved >= 100 && survivors_saved < 180
+      consequences:
+        community_partially_saved: true
+        losses_acceptable: true
+      rewards:
+        experience: 10000
+        reputation:
+          community: 3000
+    - id: minimal_survival
+      condition: survivors_saved < 100
+      consequences:
+        heavy_losses: true
+        trauma: severe
+      rewards:
+        experience: 5000
+        reputation:
+          community: 1000
 
 story:
   background: |
@@ -415,6 +498,16 @@ notes:
     future - present reality killing people now, disproportionately poor/Black/Latino.
     Impossible choices reflect real disaster scenarios: Limited resources, triage decisions,
     structural collapses, medical emergencies no solutions. Sam's sacrifice path explores
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-26
+    author: content_writer
+    changes: "Создан квест «Стена воды» о выживании во время урагана и климатическом неравенстве."
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
     martyrdom ethics - heroic or enabling self-destruction? PTSD portrayed respectfully.
     Collective survival path shows shared burden dignity. Faith path respects religious
     communities' coping mechanisms without endorsing/dismissing. Evacuation chaos

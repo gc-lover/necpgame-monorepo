@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Violations Service API
+  description: API для управления нарушениями античита
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Violations
+    description: Управление нарушениями
+
+paths:
+  /anti-cheat/violations/log:
+    post:
+      tags:
+        - Violations
+      summary: Логирование нарушения
+      description: Записать нарушение античита в систему
+      operationId: logViolation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogViolationRequest'
+      responses:
+        '201':
+          description: Нарушение залогировано
+          content:
+            application/json:
+              schema:
+                $ref: 'anti-cheat-common.yaml#/components/schemas/Violation'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/violations/{player_id}:
+    get:
+      tags:
+        - Violations
+      summary: Получить историю нарушений игрока
+      description: Получить историю нарушений для указанного игрока с фильтрацией по типу и пагинацией
+      operationId: getPlayerViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: violation_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - SPEED_HACK
+              - POSITION_HACK
+              - ACTION_RATE_HACK
+              - RECONCILIATION_FAILURE
+          description: Фильтр по типу нарушения
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История нарушений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerViolationsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    LogViolationRequest:
+      type: object
+      required:
+        - player_id
+        - violation_type
+        - violation_data
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+            - POSITION_HACK
+            - ACTION_RATE_HACK
+            - RECONCILIATION_FAILURE
+          description: Тип нарушения
+        violation_data:
+          type: object
+          description: Данные нарушения
+          additionalProperties: true
+        server_state:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/GameState'
+          nullable: true
+          description: Состояние сервера
+        client_state:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/GameState'
+          nullable: true
+          description: Состояние клиента
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          default: MEDIUM
+          description: Серьёзность нарушения
+
+    PlayerViolationsResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: 'anti-cheat-common.yaml#/components/schemas/Violation'
+          description: Список нарушений
+        total:
+          type: integer
+          description: Общее количество нарушений
+        limit:
+          type: integer
+          description: Лимит на страницу
+        offset:
+          type: integer
+          description: Смещение
+
+security:
+  - BearerAuth: []
+

@@ -21,11 +21,12 @@ Development Stage: `backend-dev`
 ## Оптимизация GitHub API
 
 См. `.cursor/rules/GITHUB_API_OPTIMIZATION.md`
-Главное: `mcp_github_search_issues` вместо множественных `issue_read`
+Главное: `mcp_github_search_issues` вместо множественных `issue_read`. Задержка 2-3 сек для поиска (лимит 30/мин).
 
 ## Контентные квесты
 
-Если метки `canon`, `lore`, `quest` - передай Content Writer.
+Если метки `canon`, `lore`, `quest` И задача на импорт YAML квестов в БД - обработай импорт.
+Если задача на создание контента - передай Content Writer.
 
 ## Поиск задач
 
@@ -37,18 +38,40 @@ Development Stage: `backend-dev`
 
 - OpenAPI спецификация от API Designer (proto/openapi/)
 - oapi-codegen установлен
+- YAML файлы квестов от Content Writer (для импорта в БД)
 
 ## Возврат задач
 
 Если нет OpenAPI или проблемы - верни API Designer.
+Если YAML квеста не соответствует требованиям - верни Content Writer.
 См. `.cursor/rules/AGENT_TASK_RETURN.md`
 
-Шаблон комментария:
+Шаблон комментария для возврата API Designer:
 ```
 Отсутствует OpenAPI спецификация
 Задача возвращена @agent:api-designer
 Метки: удалено agent:backend, добавлено returned, agent:api-designer
 ```
+
+Шаблон комментария для возврата Content Writer:
+```
+YAML квест не соответствует требованиям для импорта в БД
+
+Задача возвращена @agent:content-writer
+
+Обнаружены критические ошибки:
+- [Описание ошибки 1]
+- [Описание ошибки 2]
+
+См. шаблон валидации: .cursor/rules/QUEST_YAML_VALIDATION.md
+
+Метки обновлены:
+- Удалено: agent:backend, stage:backend-dev
+- Добавлено: returned, agent:content-writer, stage:content
+```
+
+## Ошибочное назначение задач
+Если задача назначена ошибочно (не соответствует области ответственности Backend), оставь комментарий в Issue с просьбой проверить workflow и указанием правильного агента. Если возвращают ошибочно назначенную задачу, проверь workflow и объясни почему не можешь её выполнить, указав правильный этап и агента.
 
 ## Генерация кода из OpenAPI
 
@@ -137,6 +160,7 @@ docker build -t {service-name}:test .
 - Handlers (реализация ServerInterface)
 - Тесты
 - Конфигурация oapi-codegen
+- API endpoint для импорта квестов из YAML в БД (если задача от Content Writer)
 
 ## Критерии готовности
 
@@ -154,11 +178,28 @@ docker build -t {service-name}:test .
 
 ## Переход к следующему этапу
 
+**Для обычных задач (API endpoints):**
 1. Удали `agent:backend`
 2. Добавь `agent:ue5`, `stage:client-dev`, `client`
 3. Обнови Development Stage = `ue5-dev`
 4. Создай PR: `[backend] feat: реализация для Issue #15`
 5. Добавь комментарий: "Бекенд готов к интеграции с клиентом"
+
+**Для задач импорта квестов (от Content Writer):**
+1. Удали `agent:backend`
+2. Добавь `agent:qa`, `stage:testing`
+3. Обнови Development Stage = `testing`
+4. Добавь комментарий:
+```
+Квест импортирован в БД
+
+- API endpoint создан: POST /api/v1/gameplay/quests/content/import
+- YAML файл валидирован
+- Квест загружен в таблицу quest_definitions
+- ID квеста в БД: {uuid}
+
+Задача передана @agent:qa для тестирования импорта и функциональности квеста.
+```
 
 ## Стиль работы
 
@@ -170,6 +211,40 @@ docker build -t {service-name}:test .
 - Файлы 300-400 строк максимум
 - НЕ создавай файлы >500 строк
 - НЕ редактируй сгенерированный код
+
+## Импорт контентных квестов
+
+Если задача от Content Writer на импорт YAML квеста в БД:
+
+1. **Валидация YAML:**
+   - Проверь структуру согласно `.cursor/rules/QUEST_YAML_VALIDATION.md`
+   - Проверь все обязательные поля
+   - Проверь типы данных
+   - При критических ошибках - верни задачу Content Writer
+
+2. **Создание API endpoint:**
+   - Создай endpoint `POST /api/v1/gameplay/quests/content/import`
+   - Endpoint принимает путь к YAML файлу или YAML контент
+   - Валидирует YAML перед импортом
+   - Импортирует в таблицу `gameplay.quest_definitions`
+   - Возвращает UUID созданного квеста
+
+3. **Маппинг YAML → БД:**
+   - `metadata.id` → используется для генерации UUID или как идентификатор
+   - `metadata.title` → `title` (VARCHAR(255))
+   - `quest_definition.quest_type` → `quest_type` (ENUM)
+   - `quest_definition.level_min` → `level_min` (INTEGER)
+   - `quest_definition.level_max` → `level_max` (INTEGER или NULL)
+   - `quest_definition.requirements` → `requirements` (JSONB)
+   - `quest_definition.objectives` → `objectives` (JSONB)
+   - `quest_definition.rewards` → `rewards` (JSONB)
+   - `quest_definition.branches` → `branches` (JSONB)
+   - `metadata.version` → `version` (INTEGER, парсится из строки)
+
+4. **Обработка ошибок:**
+   - Критические ошибки валидации → возврат Content Writer
+   - Ошибки БД → логирование и возврат ошибки в API
+   - Дубликаты → проверка по `metadata.id` или `title`
 
 ### Dockerfile с генерацией
 
@@ -216,20 +291,24 @@ ENTRYPOINT ["/app/{service-name}"]
 
 ## Коммиты
 
+**ОБЯЗАТЕЛЬНО:** Все изменения коммить и пушить в ветку `develop`.
+
 Формат: `[backend] type: описание`
 Типы: feat, fix, test
 Issue: указывай номер
 
 Примеры:
-```
-[backend] feat: реализовать API для уведомлений
+```bash
+git add services/{service}-go/
+git commit -m "[backend] feat: реализовать API для уведомлений
 
 - Endpoint POST /api/v1/notifications
 - Бизнес-логика
 - Тесты
 - Документация
 
-Связанные Issue: #9
+Связанные Issue: #9"
+git push origin develop
 ```
 
 Когда коммитить:

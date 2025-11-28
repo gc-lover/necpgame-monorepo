@@ -94,8 +94,10 @@ func (s *ProgressionService) GetProgression(ctx context.Context, characterID uui
 	cached, err := s.cache.Get(ctx, cacheKey).Result()
 	if err == nil {
 		var progression models.CharacterProgression
-		if json.Unmarshal([]byte(cached), &progression) == nil {
+		if err := json.Unmarshal([]byte(cached), &progression); err == nil {
 			return &progression, nil
+		} else {
+			s.logger.WithError(err).Error("Failed to unmarshal cached progression JSON")
 		}
 	}
 
@@ -121,7 +123,11 @@ func (s *ProgressionService) GetProgression(ctx context.Context, characterID uui
 		}
 	}
 
-	data, _ := json.Marshal(progression)
+	data, err := json.Marshal(progression)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to marshal progression JSON")
+		return progression, nil
+	}
 	s.cache.Set(ctx, cacheKey, data, 5*time.Minute)
 
 	return progression, nil

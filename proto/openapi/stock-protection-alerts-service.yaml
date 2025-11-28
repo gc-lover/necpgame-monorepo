@@ -1,0 +1,294 @@
+openapi: 3.0.3
+info:
+  title: Stock Protection Alerts Service API
+  description: API для surveillance alerts (алерты о подозрительной активности)
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: alerts
+    description: Алерты о подозрительной активности
+
+paths:
+  /stocks/protection/alerts:
+    get:
+      tags:
+        - alerts
+      summary: Получить список surveillance alerts
+      description: |
+        Возвращает алерты о подозрительной активности на бирже.
+      operationId: getSurveillanceAlerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alert_type
+          in: query
+          required: false
+          description: Тип алерта
+          schema:
+            type: string
+            enum:
+              - insider_trading
+              - spoofing
+              - wash_trading
+              - pump_and_dump
+              - price_manipulation
+              - collusion
+        - name: severity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [new, under_review, confirmed, dismissed, escalated]
+        - name: stock_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: player_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Алерты успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SurveillanceAlert"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/protection/alerts/{alert_id}:
+    get:
+      tags:
+        - alerts
+      summary: Получить детали алерта
+      description: |
+        Возвращает детальную информацию об алерте.
+      operationId: getAlertDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали алерта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveillanceAlertDetailed"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+    put:
+      tags:
+        - alerts
+      summary: Обновить статус алерта
+      description: |
+        Обновляет статус алерта (требуется роль admin/moderator).
+      operationId: updateAlertStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [under_review, confirmed, dismissed, escalated]
+                notes:
+                  type: string
+                  description: Комментарий модератора
+      responses:
+        "200":
+          description: Статус обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveillanceAlert"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    SurveillanceAlert:
+      type: object
+      description: Алерт о подозрительной активности
+      required:
+        - id
+        - alert_type
+        - severity
+        - status
+        - triggered_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        alert_type:
+          type: string
+          enum:
+            - insider_trading
+            - spoofing
+            - wash_trading
+            - pump_and_dump
+            - price_manipulation
+            - collusion
+          description: |
+            Типы алертов:
+            - insider_trading: Инсайдерская торговля
+            - spoofing: Ложные заявки
+            - wash_trading: Фиктивные сделки
+            - pump_and_dump: Искусственное раздувание цены
+            - price_manipulation: Манипулирование ценой
+            - collusion: Сговор
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [new, under_review, confirmed, dismissed, escalated]
+        stock_id:
+          type: string
+          format: uuid
+          nullable: true
+        stock_symbol:
+          type: string
+          nullable: true
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+        triggered_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        reviewed_by:
+          type: string
+          nullable: true
+          description: ID модератора/админа
+        notes:
+          type: string
+          nullable: true
+          description: Комментарии расследования
+
+    SurveillanceAlertDetailed:
+      allOf:
+        - $ref: "#/components/schemas/SurveillanceAlert"
+        - type: object
+          properties:
+            trigger_details:
+              type: object
+              description: Детали триггера
+              properties:
+                pattern_detected:
+                  type: string
+                confidence_score:
+                  type: number
+                  format: double
+                  minimum: 0
+                  maximum: 1
+                related_accounts:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                suspicious_transactions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      transaction_id:
+                        type: string
+                        format: uuid
+                      timestamp:
+                        type: string
+                        format: date-time
+                      amount:
+                        type: number
+                        format: double
+            enforcement_actions:
+              type: array
+              description: Применённые санкции
+              items:
+                type: object
+                properties:
+                  action_id:
+                    type: string
+                    format: uuid
+                  action_type:
+                    type: string
+                  applied_at:
+                    type: string
+                    format: date-time
+

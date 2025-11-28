@@ -115,9 +115,13 @@ func (r *NotificationPreferencesRepository) createDefaultPreferences(ctx context
 		UpdatedAt:          time.Now(),
 	}
 
-	channelsJSON, _ := json.Marshal([]string{string(models.DeliveryChannelInGame), string(models.DeliveryChannelWebSocket)})
+	channelsJSON, err := json.Marshal([]string{string(models.DeliveryChannelInGame), string(models.DeliveryChannelWebSocket)})
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal channels JSON")
+		return prefs, err
+	}
 
-	_, err := r.db.Exec(ctx,
+	_, err = r.db.Exec(ctx,
 		`INSERT INTO social.notification_preferences 
 		 (account_id, quest_enabled, message_enabled, achievement_enabled, 
 		  system_enabled, friend_enabled, guild_enabled, trade_enabled, combat_enabled,
@@ -137,10 +141,14 @@ func (r *NotificationPreferencesRepository) createDefaultPreferences(ctx context
 }
 
 func (r *NotificationPreferencesRepository) Update(ctx context.Context, prefs *models.NotificationPreferences) error {
-	channelsJSON, _ := json.Marshal(prefs.PreferredChannels)
+	channelsJSON, err := json.Marshal(prefs.PreferredChannels)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal preferred channels JSON")
+		return err
+	}
 	prefs.UpdatedAt = time.Now()
 
-	_, err := r.db.Exec(ctx,
+	_, err = r.db.Exec(ctx,
 		`UPDATE social.notification_preferences
 		 SET quest_enabled = $1, message_enabled = $2, achievement_enabled = $3,
 		     system_enabled = $4, friend_enabled = $5, guild_enabled = $6,

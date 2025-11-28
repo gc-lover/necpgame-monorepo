@@ -1,0 +1,481 @@
+openapi: 3.0.3
+info:
+  title: League Service API
+  description: |
+    API для управления сезонной системой лиг и мета-прогрессом.
+    Функционал: информация о лигах, мета-прогресс, регистрация на финальный эвент.
+  version: 1.0.0
+  contact:
+    name: Progression Team
+    email: progression@necp.game
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+tags:
+  - name: leagues
+    description: Операции с лигами
+  - name: legacy
+    description: Мета-прогресс игрока
+paths:
+  /leagues/current:
+    get:
+      tags: [leagues]
+      summary: Получить текущую лигу
+      operationId: getCurrentLeague
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/League'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /leagues/{league_id}:
+    get:
+      tags: [leagues]
+      summary: Получить лигу по ID
+      operationId: getLeagueById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: league_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/League'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /leagues/history:
+    get:
+      tags: [leagues]
+      summary: История лиг
+      operationId: getLeagueHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [upcoming, active, ended]
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeagueSummary'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /leagues/{league_id}/statistics:
+    get:
+      tags: [leagues]
+      summary: Статистика лиги
+      operationId: getLeagueStatistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: league_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueStatistics'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /leagues/countdown:
+    get:
+      tags: [leagues]
+      summary: Таймер до конца лиги
+      operationId: getLeagueCountdown
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueCountdown'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /leagues/end-event/register:
+    post:
+      tags: [leagues]
+      summary: Регистрация на финальный эвент
+      operationId: registerForEndEvent
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /players/me/legacy:
+    get:
+      tags: [legacy]
+      summary: Мета-прогресс игрока
+      operationId: getPlayerLegacy
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerLegacy'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /players/me/achievements:
+    get:
+      tags: [legacy]
+      summary: Достижения игрока
+      operationId: getPlayerAchievements
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [story, economy, pvp, pve, social, exploration]
+        - name: unlocked
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Achievement'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /players/me/titles:
+    get:
+      tags: [legacy]
+      summary: Титулы игрока
+      operationId: getPlayerTitles
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  titles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Title'
+                  active_title:
+                    $ref: '#/components/schemas/Title'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /players/me/titles/active:
+    put:
+      tags: [legacy]
+      summary: Установить активный титул
+      operationId: setActiveTitle
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title_id]
+              properties:
+                title_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  schemas:
+    League:
+      type: object
+      required: [id, name, start_date, end_date, phase, status, seed]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        phase:
+          type: string
+          enum: [start, rise, crisis, endgame, finale]
+        status:
+          type: string
+          enum: [upcoming, active, ended]
+        seed:
+          type: string
+        game_start_date:
+          type: string
+          format: date-time
+        game_end_date:
+          type: string
+          format: date-time
+        time_acceleration:
+          type: number
+          format: float
+        total_players:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    LeagueSummary:
+      type: object
+      required: [id, name, start_date, end_date, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [upcoming, active, ended]
+        total_players:
+          type: integer
+    LeagueStatistics:
+      type: object
+      required: [league_id, total_players, completion_rate]
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        total_players:
+          type: integer
+        active_players:
+          type: integer
+        completion_rate:
+          type: number
+          format: float
+        faction_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+        economy_metrics:
+          type: object
+          properties:
+            total_transactions:
+              type: integer
+            total_currency:
+              type: number
+              format: double
+            avg_wealth_per_player:
+              type: number
+              format: double
+        pvp_metrics:
+          type: object
+          properties:
+            total_matches:
+              type: integer
+            avg_match_duration:
+              type: integer
+    LeagueCountdown:
+      type: object
+      required: [league_id, end_date, remaining_seconds]
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        end_date:
+          type: string
+          format: date-time
+        remaining_seconds:
+          type: integer
+          format: int64
+        phase:
+          type: string
+          enum: [start, rise, crisis, endgame, finale]
+    PlayerLegacy:
+      type: object
+      required: [player_id, legacy_points, global_rating]
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        legacy_points:
+          type: integer
+        global_rating:
+          type: number
+          format: float
+        active_title:
+          $ref: '#/components/schemas/Title'
+        achievements_unlocked:
+          type: integer
+        total_achievements:
+          type: integer
+    Achievement:
+      type: object
+      required: [id, title, category, rarity, unlocked]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [story, economy, pvp, pve, social, exploration]
+        rarity:
+          type: string
+          enum: [common, rare, epic, legendary]
+        unlocked:
+          type: boolean
+        unlocked_at:
+          type: string
+          format: date-time
+        rewards:
+          type: object
+          properties:
+            legacy_points:
+              type: integer
+            cosmetic_id:
+              type: string
+              format: uuid
+    Title:
+      type: object
+      required: [id, name, rarity]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        rarity:
+          type: string
+          enum: [common, rare, epic, legendary]
+        league_id:
+          type: string
+          format: uuid
+        visual_effects:
+          type: array
+          items:
+            type: string

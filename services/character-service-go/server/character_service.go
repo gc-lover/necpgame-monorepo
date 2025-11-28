@@ -60,6 +60,8 @@ func (s *CharacterService) GetAccount(ctx context.Context, accountID uuid.UUID) 
 		var account models.PlayerAccount
 		if err := json.Unmarshal([]byte(cached), &account); err == nil {
 			return &account, nil
+		} else {
+			s.logger.WithError(err).Error("Failed to unmarshal cached account JSON")
 		}
 	}
 
@@ -69,8 +71,12 @@ func (s *CharacterService) GetAccount(ctx context.Context, accountID uuid.UUID) 
 	}
 
 	if account != nil {
-		accountJSON, _ := json.Marshal(account)
-		s.cache.Set(ctx, cacheKey, accountJSON, 5*time.Minute)
+		accountJSON, err := json.Marshal(account)
+		if err != nil {
+			s.logger.WithError(err).Error("Failed to marshal account JSON")
+		} else {
+			s.cache.Set(ctx, cacheKey, accountJSON, 5*time.Minute)
+		}
 	}
 
 	return account, nil
@@ -83,8 +89,12 @@ func (s *CharacterService) CreateAccount(ctx context.Context, req *models.Create
 	}
 
 	cacheKey := "account:" + account.ID.String()
-	accountJSON, _ := json.Marshal(account)
-	s.cache.Set(ctx, cacheKey, accountJSON, 5*time.Minute)
+	accountJSON, err := json.Marshal(account)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to marshal account JSON")
+	} else {
+		s.cache.Set(ctx, cacheKey, accountJSON, 5*time.Minute)
+	}
 
 	return account, nil
 }
@@ -97,6 +107,8 @@ func (s *CharacterService) GetCharactersByAccountID(ctx context.Context, account
 		var characters []models.Character
 		if err := json.Unmarshal([]byte(cached), &characters); err == nil {
 			return characters, nil
+		} else {
+			s.logger.WithError(err).Error("Failed to unmarshal cached characters JSON")
 		}
 	}
 
@@ -105,8 +117,12 @@ func (s *CharacterService) GetCharactersByAccountID(ctx context.Context, account
 		return nil, err
 	}
 
-	charactersJSON, _ := json.Marshal(characters)
-	s.cache.Set(ctx, cacheKey, charactersJSON, 5*time.Minute)
+	charactersJSON, err := json.Marshal(characters)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to marshal characters JSON")
+	} else {
+		s.cache.Set(ctx, cacheKey, charactersJSON, 5*time.Minute)
+	}
 
 	SetCharactersCount(accountID.String(), float64(len(characters)))
 
@@ -121,6 +137,8 @@ func (s *CharacterService) GetCharacter(ctx context.Context, characterID uuid.UU
 		var char models.Character
 		if err := json.Unmarshal([]byte(cached), &char); err == nil {
 			return &char, nil
+		} else {
+			s.logger.WithError(err).Error("Failed to unmarshal cached character JSON")
 		}
 	}
 
@@ -130,8 +148,12 @@ func (s *CharacterService) GetCharacter(ctx context.Context, characterID uuid.UU
 	}
 
 	if char != nil {
-		charJSON, _ := json.Marshal(char)
-		s.cache.Set(ctx, cacheKey, charJSON, 5*time.Minute)
+		charJSON, err := json.Marshal(char)
+		if err != nil {
+			s.logger.WithError(err).Error("Failed to marshal character JSON")
+		} else {
+			s.cache.Set(ctx, cacheKey, charJSON, 5*time.Minute)
+		}
 	}
 
 	return char, nil

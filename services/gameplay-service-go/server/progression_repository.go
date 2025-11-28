@@ -47,7 +47,10 @@ func (r *ProgressionRepository) GetProgression(ctx context.Context, characterID 
 	}
 
 	if len(attributesJSON) > 0 {
-		json.Unmarshal(attributesJSON, &progression.Attributes)
+		if err := json.Unmarshal(attributesJSON, &progression.Attributes); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal attributes JSON")
+			progression.Attributes = make(map[string]int)
+		}
 	} else {
 		progression.Attributes = make(map[string]int)
 	}
@@ -56,7 +59,11 @@ func (r *ProgressionRepository) GetProgression(ctx context.Context, characterID 
 }
 
 func (r *ProgressionRepository) CreateProgression(ctx context.Context, progression *models.CharacterProgression) error {
-	attributesJSON, _ := json.Marshal(progression.Attributes)
+	attributesJSON, err := json.Marshal(progression.Attributes)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal attributes JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO progression.character_progression (
@@ -66,7 +73,7 @@ func (r *ProgressionRepository) CreateProgression(ctx context.Context, progressi
 			$1, $2, $3, $4, $5, $6, $7, NOW()
 		)`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		progression.CharacterID, progression.Level, progression.Experience,
 		progression.ExperienceToNext, progression.AttributePoints,
 		progression.SkillPoints, attributesJSON,
@@ -76,7 +83,11 @@ func (r *ProgressionRepository) CreateProgression(ctx context.Context, progressi
 }
 
 func (r *ProgressionRepository) UpdateProgression(ctx context.Context, progression *models.CharacterProgression) error {
-	attributesJSON, _ := json.Marshal(progression.Attributes)
+	attributesJSON, err := json.Marshal(progression.Attributes)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal attributes JSON")
+		return err
+	}
 
 	query := `
 		UPDATE progression.character_progression
@@ -84,7 +95,7 @@ func (r *ProgressionRepository) UpdateProgression(ctx context.Context, progressi
 		    attribute_points = $4, skill_points = $5, attributes = $6, updated_at = NOW()
 		WHERE character_id = $7`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		progression.Level, progression.Experience, progression.ExperienceToNext,
 		progression.AttributePoints, progression.SkillPoints, attributesJSON,
 		progression.CharacterID,

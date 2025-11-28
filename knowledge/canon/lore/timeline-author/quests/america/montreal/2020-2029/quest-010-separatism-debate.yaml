@@ -7,7 +7,7 @@ metadata:
   category: side_quest
   quest_type: side
   status: active
-  version: "1.0.0"
+  version: "1.1.0"
   timeline: 2020-2029
   year: 2027
   season: fall
@@ -69,6 +69,75 @@ requirements:
     - skill: cultural_awareness
       min_value: 0.5
       description: Understand Quebec identity
+
+quest_definition:
+  quest_type: side
+  level_min: 18
+  level_max: 35
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements:
+      - skill: diplomacy
+        min_value: 0.6
+      - skill: cultural_awareness
+        min_value: 0.5
+  objectives:
+    - id: obj-001
+      text: "Встретиться с Sophie и понять задачу"
+      type: dialogue
+      target: sophie_meeting
+      optional: false
+    - id: obj-002
+      text: "Провести интервью с федералистами"
+      type: dialogue
+      target: federalist_interviews
+      optional: false
+    - id: obj-003
+      text: "Провести интервью с сепаратистами"
+      type: dialogue
+      target: sovereigntist_interviews
+      optional: false
+    - id: obj-004
+      text: "Провести интервью с иммигрантами"
+      type: dialogue
+      target: immigrant_interviews
+      optional: false
+    - id: obj-005
+      text: "Задокументировать все перспективы"
+      type: interact
+      target: documentation_complete
+      optional: false
+  rewards:
+    experience: 10000
+    currency: 5000
+    reputation:
+      montreal: 50
+    unlocks:
+      - type: achievement
+        id: political_observer
+  branches:
+    - id: balanced_documentary
+      condition: all_perspectives_documented == true
+      consequences:
+        documentary_balanced: true
+        truth_preserved: true
+      rewards:
+        experience: 15000
+        reputation:
+          montreal: 80
+          journalists: 50
+    - id: referendum_witnessed
+      condition: referendum_observed == true
+      consequences:
+        history_witnessed: true
+        democratic_process: respected
+      rewards:
+        experience: 12000
+        reputation:
+          montreal: 60
 
 story:
   background: |
@@ -386,6 +455,16 @@ notes:
   design_notes: |
     Heavy political quest. Requires respectful treatment all perspectives. No
     "correct" answer - both sovereignty и federation legitimate positions. Indigenous
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-26
+    author: content_writer
+    changes: "Создан квест «Разделённые голоса» о третьем референдуме о независимости Квебека."
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
     perspective critical inclusion - often forgotten в referendum debates. Player
     can lean any direction або abstain judgment. Educational about Quebec history,
     politics. Dialogue-heavy, no combat ever. Referendum result deliberately ambiguous -

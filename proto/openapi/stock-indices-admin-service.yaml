@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: Stock Indices Admin Service API
+  description: API для административного управления индексами (ребаланс)
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: admin
+    description: Административные операции
+
+paths:
+  /admin/indices/{code}/rebalance:
+    post:
+      tags:
+        - admin
+      summary: Выполнить ребаланс индекса
+      description: |
+        Админ endpoint для ребаланса индекса.
+        Пересчитывает состав и веса на основе текущей капитализации.
+        Требуется роль admin.
+      operationId: rebalanceIndex
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса для ребаланса
+          schema:
+            type: string
+            pattern: "^[A-Z0-9]+$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                effective_date:
+                  type: string
+                  format: date-time
+                  description: Дата вступления в силу (опционально, default = now)
+                max_weight:
+                  type: number
+                  format: double
+                  description: Максимальный вес акции (%)
+                  minimum: 0
+                  maximum: 100
+                  default: 15.0
+                reason:
+                  type: string
+                  description: Причина ребаланса
+      responses:
+        "200":
+          description: Ребаланс выполнен успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RebalanceResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    RebalanceResult:
+      type: object
+      description: Результат ребаланса индекса
+      properties:
+        index_code:
+          type: string
+          description: Код индекса
+        effective_date:
+          type: string
+          format: date-time
+          description: Дата вступления в силу
+        previous_value:
+          type: number
+          format: double
+          description: Значение до ребаланса
+        new_value:
+          type: number
+          format: double
+          description: Значение после ребаланса
+        divisor_adjustment:
+          type: number
+          format: double
+          description: Корректировка divisor для непрерывности
+        added_stocks:
+          type: array
+          description: Добавленные акции
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              weight:
+                type: number
+                format: double
+        removed_stocks:
+          type: array
+          description: Удаленные акции
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              weight:
+                type: number
+                format: double
+        weight_changes:
+          type: array
+          description: Изменения весов существующих акций
+          items:
+            type: object
+            properties:
+              stock_symbol:
+                type: string
+              old_weight:
+                type: number
+                format: double
+              new_weight:
+                type: number
+                format: double
+              change:
+                type: number
+                format: double
+        total_changes:
+          type: integer
+          description: Общее количество изменений
+        executed_at:
+          type: string
+          format: date-time
+          description: Время выполнения
+

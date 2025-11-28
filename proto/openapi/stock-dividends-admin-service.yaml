@@ -1,0 +1,87 @@
+openapi: 3.0.3
+info:
+  title: Stock Dividends Admin Service API
+  description: API для административной обработки выплат дивидендов
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: admin
+    description: Административные операции
+
+paths:
+  /admin/dividends/process:
+    post:
+      tags:
+        - admin
+      summary: Обработать выплату дивидендов
+      description: |
+        Админ endpoint для обработки выплаты дивидендов по расписанию.
+        Вызывается cron'ом или вручную.
+        Требуется роль admin.
+      operationId: processDividendPayment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - schedule_id
+              properties:
+                schedule_id:
+                  type: string
+                  format: uuid
+                  description: ID расписания для обработки
+      responses:
+        '200':
+          description: Выплата успешно обработана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  schedule_id:
+                    type: string
+                    format: uuid
+                  total_players:
+                    type: integer
+                    description: Количество игроков получивших выплату
+                  total_paid:
+                    type: number
+                    format: double
+                    description: Общая сумма выплат
+                  total_drip_shares:
+                    type: number
+                    format: double
+                    description: Всего акций приобретено через DRIP
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+

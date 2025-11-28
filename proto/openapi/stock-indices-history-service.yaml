@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Stock Indices History Service API
+  description: API для истории значений фондовых индексов
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: indices
+    description: Операции с фондовыми индексами
+
+paths:
+  /stocks/indices/{code}/history:
+    get:
+      tags:
+        - indices
+      summary: Получить историю значений индекса
+      description: |
+        Возвращает историю значений индекса за указанный период.
+        Поддерживает различные интервалы: hourly, daily, weekly, monthly.
+      operationId: getIndexHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса
+          schema:
+            type: string
+            pattern: "^[A-Z0-9]+$"
+        - name: interval
+          in: query
+          required: false
+          description: Интервал данных
+          schema:
+            type: string
+            enum: [hourly, daily, weekly, monthly]
+            default: daily
+        - name: from_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: История успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/IndexHistoryEntry"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    IndexHistoryEntry:
+      type: object
+      description: Запись истории индекса
+      required:
+        - timestamp
+        - value
+        - change
+        - change_percent
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Время записи
+        value:
+          type: number
+          format: double
+          description: Значение индекса
+        change:
+          type: number
+          format: double
+          description: Изменение с предыдущего периода (абсолютное)
+        change_percent:
+          type: number
+          format: double
+          description: Изменение с предыдущего периода (%)
+        volume:
+          type: number
+          format: double
+          description: Объем торгов акций в индексе
+

@@ -109,6 +109,8 @@ func (s *TicketService) GetTicketsByPlayerID(ctx context.Context, playerID uuid.
 		var response models.TicketListResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else {
+			s.logger.WithError(err).Error("Failed to unmarshal cached tickets JSON")
 		}
 	}
 
@@ -127,8 +129,12 @@ func (s *TicketService) GetTicketsByPlayerID(ctx context.Context, playerID uuid.
 		Total:   total,
 	}
 
-	responseJSON, _ := json.Marshal(response)
-	s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to marshal response JSON")
+	} else {
+		s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	}
 
 	return response, nil
 }

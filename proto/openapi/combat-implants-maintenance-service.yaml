@@ -1,0 +1,345 @@
+openapi: 3.0.3
+info:
+  title: Combat Implants Maintenance Service API
+  description: |
+    API для обслуживания и кастомизации имплантов в NECPGAME.
+    
+    **Основные возможности:**
+    - Ремонт повреждённых имплантов
+    - Улучшение (апгрейды)
+    - Модификации
+    - Визуальная кастомизация
+    
+    **Долговечность:**
+    - Износ со временем
+    - Повреждения от EMP и критического урона
+    - Временные отключения при низкой прочности
+    - Деградация усиливает риск киберпсихоза
+    
+    **Способы ремонта:**
+    - NPC Ripperdoc
+    - Crafting
+    - Emergency Kit
+    
+    **Улучшения:**
+    - Повышение характеристик до потолка
+    - Требуют компоненты и навыки
+    
+    **Модификации:**
+    - Аффиксы и перераспределение статов
+    - Усиление синергий с экипировкой
+    
+    **Визуализация:**
+    - Режимы видимости (full, partial, hidden)
+    - Кастомизация цветов и эффектов
+    - Брендовые стили
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Repair
+    description: Ремонт
+  - name: Upgrades
+    description: Улучшения
+  - name: Modifications
+    description: Модификации
+  - name: Visuals
+    description: Визуализация
+
+paths:
+  /api/v1/combat/implants/repair:
+    post:
+      tags:
+        - Repair
+      summary: Ремонт импланта
+      description: |
+        Ремонтирует повреждённый имплант.
+        
+        **Способы:**
+        - NPC Ripperdoc - полный ремонт, требует посещения
+        - Crafting - частичный ремонт, требует компоненты
+        - Emergency Kit - быстрый ремонт, ограниченная эффективность
+      operationId: repairImplant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepairRequest"
+      responses:
+        "200":
+          description: Ремонт выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepairResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/upgrade:
+    post:
+      tags:
+        - Upgrades
+      summary: Улучшить имплант
+      description: |
+        Улучшает характеристики импланта.
+        
+        **Улучшения:**
+        - Повышение базовых характеристик
+        - Увеличение потолка статов
+        - Требуют компоненты и навыки
+        - Ограничены редкостью импланта
+      operationId: upgradeImplant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpgradeRequest"
+      responses:
+        "200":
+          description: Улучшение выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpgradeResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/modify:
+    post:
+      tags:
+        - Modifications
+      summary: Модифицировать имплант
+      description: |
+        Добавляет модификации к импланту.
+        
+        **Модификации:**
+        - Аффиксы (бонусы к статам)
+        - Перераспределение характеристик
+        - Синергии с экипировкой
+        - Усиление сет-бонусов
+      operationId: modifyImplant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModifyRequest"
+      responses:
+        "200":
+          description: Модификация выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModifyResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/visuals:
+    get:
+      tags:
+        - Visuals
+      summary: Визуальные настройки
+      description: |
+        Возвращает визуальные настройки имплантов.
+        
+        **Настройки:**
+        - Режим видимости
+        - Цветовая схема
+        - Эффекты
+      operationId: getVisuals
+      responses:
+        "200":
+          description: Визуальные настройки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisualsSettings"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/visuals/customize:
+    post:
+      tags:
+        - Visuals
+      summary: Кастомизировать визуал
+      description: |
+        Изменяет визуальные настройки импланта.
+        
+        **Режимы видимости:**
+        - Full - полная видимость
+        - Partial - частичная маскировка
+        - Hidden - скрытие (для внутренних имплантов)
+      operationId: customizeVisuals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomizeVisualsRequest"
+      responses:
+        "200":
+          description: Визуал изменён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomizeVisualsResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    RepairRequest:
+      type: object
+      required:
+        - implant_id
+        - repair_type
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+          description: ID импланта
+        repair_type:
+          type: string
+          enum: [npc, crafting, kit]
+          description: Способ ремонта
+
+    RepairResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        durability:
+          type: number
+          description: Новая прочность (0-100%)
+        cost:
+          type: object
+          description: Стоимость ремонта
+
+    UpgradeRequest:
+      type: object
+      required:
+        - implant_id
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+          description: ID импланта
+        components:
+          type: array
+          description: Компоненты для апгрейда
+          items:
+            type: object
+
+    UpgradeResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        new_level:
+          type: integer
+          description: Новый уровень
+        new_stats:
+          type: object
+          description: Новые характеристики
+
+    ModifyRequest:
+      type: object
+      required:
+        - implant_id
+        - modification_id
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+          description: ID импланта
+        modification_id:
+          type: string
+          format: uuid
+          description: ID модификации
+
+    ModifyResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        applied_modifications:
+          type: array
+          description: Применённые модификации
+          items:
+            type: object
+
+    VisualsSettings:
+      type: object
+      properties:
+        visibility_mode:
+          type: string
+          enum: [full, partial, hidden]
+          description: Режим видимости
+        color_scheme:
+          type: string
+          description: Цветовая схема
+        effects_enabled:
+          type: boolean
+          description: Включены ли эффекты
+        brand_style:
+          type: string
+          description: Стиль бренда
+
+    CustomizeVisualsRequest:
+      type: object
+      required:
+        - implant_id
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+          description: ID импланта
+        visibility_mode:
+          type: string
+          enum: [full, partial, hidden]
+          description: Режим видимости
+        color_scheme:
+          type: string
+          description: Цветовая схема
+
+    CustomizeVisualsResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+
+
+

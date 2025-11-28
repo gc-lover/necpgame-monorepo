@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: Stock Futures Service API
+  description: |
+    API для фьючерсов фондовой биржи NECPGAME.
+    
+    **Основные возможности:**
+    - Фьючерсные контракты
+    - Расчёты (cash settlement)
+    - Mark-to-market
+    - Управление позициями
+    
+    **Параметры:**
+    - Базовые активы: CORP100 index, ключевые товары
+    - Номинал: 10,000 кредитов
+    - Margin: 10% от номинала
+    - Расчёт: наличными (средневзвешенная цена в день истечения)
+    
+    **Требования:**
+    - Уровень 50+
+    - Margin 10%
+    
+    **Интеграция:**
+    - notification-service для истечений
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8080
+    description: Futures Service (локальная разработка)
+  - url: https://trading.necpgame.com
+    description: Futures Service (продакшн)
+
+tags:
+  - name: Contracts
+    description: Фьючерсные контракты
+  - name: Positions
+    description: Позиции
+
+paths:
+  /api/v1/futures/contracts:
+    get:
+      tags:
+        - Contracts
+      summary: Список фьючерсных контрактов
+      description: |
+        Возвращает доступные фьючерсные контракты.
+        
+        **Базовые активы:**
+        - CORP100 index
+        - Ключевые товары
+        
+        **Параметры:**
+        - Номинал: 10,000 кредитов
+        - Margin: 10% от номинала
+        - Расчёт: наличными
+      operationId: listFuturesContracts
+      parameters:
+        - name: underlying
+          in: query
+          schema:
+            type: string
+        - name: expiration_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: expiration_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список контрактов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contracts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FuturesContract"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/futures/open:
+    post:
+      tags:
+        - Positions
+      summary: Открыть фьючерсную позицию
+      description: |
+        Открывает фьючерсную позицию.
+        
+        **Требования:**
+        - Уровень 50+
+        - Margin 10% от номинала
+      operationId: openFuturesPosition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenFuturesRequest"
+      responses:
+        "201":
+          description: Позиция открыта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuturesPosition"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/futures/positions:
+    get:
+      tags:
+        - Positions
+      summary: Список фьючерсных позиций
+      description: |
+        Возвращает фьючерсные позиции игрока.
+        
+        **Данные:**
+        - Entry price
+        - Current price
+        - Unrealized PnL
+        - Margin held
+        - Days to settlement
+      operationId: listFuturesPositions
+      parameters:
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список позиций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  positions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FuturesPosition"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/futures/{position_id}/close:
+    post:
+      tags:
+        - Positions
+      summary: Закрыть фьючерсную позицию
+      description: |
+        Закрывает фьючерсную позицию до истечения.
+        
+        **Процесс:**
+        - Закрытие по текущей цене
+        - Расчёт realized PnL
+        - Освобождение margin
+      operationId: closeFuturesPosition
+      parameters:
+        - name: position_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Позиция закрыта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClosePositionResponse"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    FuturesContract:
+      type: object
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        underlying:
+          type: string
+        expiration_date:
+          type: string
+          format: date
+        settlement_price:
+          type: number
+        nominal_value:
+          type: number
+          default: 10000
+        margin_requirement:
+          type: number
+
+    OpenFuturesRequest:
+      type: object
+      required:
+        - contract_id
+        - quantity
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+
+    FuturesPosition:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        entry_price:
+          type: number
+        current_price:
+          type: number
+        pnl:
+          type: number
+        margin_held:
+          type: number
+        days_to_settlement:
+          type: integer
+        opened_at:
+          type: string
+          format: date-time
+
+    ClosePositionResponse:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        realized_pnl:
+          type: number
+        closed_at:
+          type: string
+          format: date-time
+

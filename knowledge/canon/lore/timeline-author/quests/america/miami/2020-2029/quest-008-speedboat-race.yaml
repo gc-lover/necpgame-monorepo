@@ -7,7 +7,7 @@ metadata:
   category: side_quest
   quest_type: side
   status: active
-  version: "1.0.0"
+  version: "1.1.0"
   timeline: 2020-2029
   year: 2027
   season: spring
@@ -89,6 +89,88 @@ requirements:
     - skill: empathy
       min_value: 0.5
       description: Connect with Vic's trauma, guide choices
+
+quest_definition:
+  quest_type: side
+  level_min: 10
+  level_max: 25
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements:
+      - skill: piloting
+        min_value: 0.6
+      - skill: empathy
+        min_value: 0.5
+  objectives:
+    - id: obj-001
+      text: "Meet Vic and understand situation"
+      type: dialogue
+      target: vic_santos
+      optional: false
+    - id: obj-002
+      text: "Choose approach to help"
+      type: choice
+      target: help_strategy
+      optional: false
+    - id: obj-003
+      text: "Prepare for race"
+      type: interact
+      target: race_preparation
+      optional: false
+    - id: obj-004
+      text: "Survive race and consequences"
+      type: skill_check
+      target: speedboat_race
+      skill: piloting
+      difficulty: hard
+      optional: false
+  rewards:
+    experience: 5000
+    currency: 10000
+    reputation:
+      miami: 20
+    unlocks:
+      - type: achievement
+        id: speedboat_champion
+  branches:
+    - id: race_clean
+      condition: strategy == "clean"
+      consequences:
+        redemption: achieved
+        integrity: preserved
+      rewards:
+        experience: 8000
+        currency: 50000
+        reputation:
+          racing_community: 3000
+    - id: race_dirty
+      condition: strategy == "dirty"
+      consequences:
+        survival: achieved
+        corruption: accepted
+      rewards:
+        experience: 6000
+        currency: 50000
+        reputation:
+          criminals: 2000
+          racing_community: -1000
+    - id: expose_operation
+      condition: strategy == "expose"
+      consequences:
+        operation_busted: true
+        vic_safe: possible
+      rewards:
+        experience: 10000
+        currency: 20000
+        reputation:
+          authorities: 4000
+          criminals: -3000
+        unlocks:
+          - type: achievement
+            id: whistleblower
 
 story:
   background: |
@@ -491,6 +573,16 @@ notes:
     survivor guilt driving force, healthy grieving honors deceased living well not
     dying guilt. Player co-pilot literally/figuratively - your choices influence Vic's
     path significantly. Sometimes best help holding space grief not solving problems.
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-26
+    author: content_writer
+    changes: "Создан квест «Синий гром» о редемпшене через гонки на скоростных катерах."
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
     One year later endings show realistic outcomes - clean redemption slow rebuilding,
     dirty survival hollow trap, whistleblower purposeful quiet, emotional healing
     deepest peace. Quest respects that healing non-linear, redemption complex, second

@@ -1,0 +1,283 @@
+name: Validate Agent Labels
+
+on:
+  issues:
+    types: [opened, edited, labeled, unlabeled]
+
+jobs:
+  validate-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Agent Labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Получаем Issue - для событий labeled/unlabeled payload содержит issue
+            let issue;
+            let issueNumber;
+            
+            // Для всех событий issues (opened, edited, labeled, unlabeled) payload содержит issue
+            if (context.payload.issue) {
+              issue = context.payload.issue;
+              issueNumber = issue.number;
+            } else {
+              console.log('Could not find issue in payload');
+              console.log('Event name:', context.eventName);
+              console.log('Payload keys:', Object.keys(context.payload || {}));
+              return;
+            }
+            
+            if (!issue || !issueNumber) {
+              console.log('Issue not found or invalid');
+              return;
+            }
+            
+            console.log(`Validating labels for issue #${issueNumber}`);
+            const labels = issue.labels.map(l => l.name);
+            console.log(`Current labels: ${labels.join(', ')}`);
+            
+            // Пропускаем валидацию, если есть метка skip-validation
+            if (labels.includes('skip-validation')) {
+              console.log(`Skipping validation for issue #${issueNumber} (skip-validation label)`);
+              return;
+            }
+            
+            // Правила валидации
+            const agentLabels = labels.filter(l => l.startsWith('agent:'));
+            const stageLabels = labels.filter(l => l.startsWith('stage:'));
+            
+            const agentStageMapping = {
+              'agent:idea-writer': 'stage:idea',
+              'agent:content-writer': 'stage:content',
+              'agent:architect': 'stage:design',
+              'agent:database': 'stage:database',
+              'agent:api-designer': 'stage:api-design',
+              'agent:backend': 'stage:backend-dev',
+              'agent:network': 'stage:network',
+              'agent:security': 'stage:security',
+              'agent:devops': 'stage:infrastructure',
+              'agent:performance': 'stage:performance',
+              'agent:ue5': 'stage:client-dev',
+              'agent:qa': 'stage:testing',
+              'agent:game-balance': 'stage:balance',
+              'agent:release': 'stage:release'
+            };
+            
+            const errors = [];
+            const warnings = [];
+            
+            // Правило 1: Только одна метка agent:* одновременно
+            if (agentLabels.length > 1) {
+              errors.push(`Нарушение workflow: обнаружено ${agentLabels.length} меток агентов одновременно (${agentLabels.join(', ')}). Должна быть только одна метка agent:*`);
+            }
+            
+            // Правило 2: Если есть agent:*, должна быть соответствующая stage:*
+            if (agentLabels.length === 1) {
+              const agentLabel = agentLabels[0];
+              const expectedStage = agentStageMapping[agentLabel];
+              
+              if (expectedStage && !stageLabels.includes(expectedStage)) {
+                errors.push(`Нарушение workflow: метка ${agentLabel} требует метку ${expectedStage}, но она отсутствует`);
+              }
+              
+              // Проверка на несовместимые stage метки
+              const incompatibleStages = stageLabels.filter(s => s !== expectedStage && s.startsWith('stage:'));
+              if (incompatibleStages.length > 0) {
+                errors.push(`Нарушение workflow: метка ${agentLabel} несовместима с метками ${incompatibleStages.join(', ')}`);
+              }
+            }
+            
+            // Правило 3: Контентные квесты (canon, lore, quest) должны иметь правильный workflow
+            const hasContentLabels = labels.some(l => ['canon', 'lore', 'quest'].includes(l));
+            if (hasContentLabels) {
+              const hasContentWriter = labels.includes('agent:content-writer');
+              const hasBackend = labels.includes('agent:backend');
+              const hasArchitect = labels.includes('agent:architect');
+              const hasQA = labels.includes('agent:qa');
+              
+              // Контентные квесты НЕ должны идти через Architect
+              if (hasArchitect && hasContentLabels) {
+                errors.push(`Нарушение workflow: контентные квесты (canon, lore, quest) НЕ проходят через Architect. Правильный workflow: Idea Writer → Content Writer → Backend → QA`);
+              }
+              
+              // Если есть Content Writer, следующий должен быть Backend (не QA напрямую)
+              if (hasContentWriter && !hasBackend && hasQA) {
+                errors.push(`Нарушение workflow: контентные квесты после Content Writer должны идти через Backend Developer для импорта в БД (POST /api/v1/gameplay/quests/content/import), затем QA. Правильный workflow: Content Writer → Backend → QA`);
+              }
+            }
+            
+            // Правило 4: Проверка правильной последовательности для системных задач
+            const systemAgents = ['agent:architect', 'agent:api-designer', 'agent:backend'];
+            const hasSystemAgent = systemAgents.some(a => labels.includes(a));
+            if (hasSystemAgent && hasContentLabels && !labels.includes('agent:backend')) {
+              // Это может быть нормально, если Backend обрабатывает импорт квестов
+              // Но проверим, что нет конфликта
+            }
+            
+            // Правило 5: Если есть returned, должна быть метка правильного агента
+            if (labels.includes('returned')) {
+              const hasAnyAgent = agentLabels.length > 0;
+              if (!hasAnyAgent) {
+                warnings.push(`Метка 'returned' присутствует, но нет метки агента для возврата задачи`);
+              }
+            }
+            
+            // Если есть ошибки - создаем комментарий и удаляем несовместимые метки
+            if (errors.length > 0) {
+              const errorMessage = `## ⚠️ Нарушение правил workflow\n\n` +
+                `Обнаружены следующие нарушения:\n\n` +
+                errors.map(e => `- ❌ ${e}`).join('\n') +
+                (warnings.length > 0 ? `\n\n**Предупреждения:**\n` + warnings.map(w => `- ⚠️ ${w}`).join('\n') : '') +
+                `\n\n**Правила workflow:**\n` +
+                `- Должна быть только одна метка \`agent:*\` одновременно\n` +
+                `- Метка \`agent:*\` должна соответствовать метке \`stage:*\`\n` +
+                `- Контентные квесты (canon, lore, quest): Idea Writer → Content Writer → Backend → QA\n` +
+                `- Системные задачи: Idea Writer → Architect → API Designer → Backend → ...\n\n` +
+                `**См. документацию:**\n` +
+                `- \`.cursor/rules/AGENT_LABEL_MANAGEMENT.md\`\n` +
+                `- \`.github/AGENT_WORKFLOW.md\`\n\n` +
+                `Пожалуйста, исправьте метки согласно правилам workflow.`;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: errorMessage
+              });
+              
+              // Удаляем несовместимые метки
+              if (agentLabels.length > 1) {
+                // Оставляем только первую метку агента, остальные удаляем
+                const labelsToRemove = agentLabels.slice(1);
+                console.log(`Removing duplicate agent labels: ${labelsToRemove.join(', ')}`);
+                for (const label of labelsToRemove) {
+                  try {
+                    await github.rest.issues.removeLabel({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      name: label
+                    });
+                    console.log(`Removed label: ${label}`);
+                  } catch (error) {
+                    console.log(`Could not remove label ${label}: ${error.message}`);
+                  }
+                }
+              }
+              
+              // Удаляем несовместимые stage метки и добавляем правильные
+              // Получаем актуальные метки после удаления дубликатов агентов
+              const { data: updatedIssue } = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber
+              });
+              const updatedLabels = updatedIssue.labels.map(l => l.name);
+              const updatedAgentLabels = updatedLabels.filter(l => l.startsWith('agent:'));
+              const updatedStageLabels = updatedLabels.filter(l => l.startsWith('stage:'));
+              
+              if (updatedAgentLabels.length === 1) {
+                const agentLabel = updatedAgentLabels[0];
+                const expectedStage = agentStageMapping[agentLabel];
+                if (expectedStage) {
+                  const incompatibleStages = updatedStageLabels.filter(s => s !== expectedStage);
+                  for (const stage of incompatibleStages) {
+                    try {
+                      await github.rest.issues.removeLabel({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issueNumber,
+                        name: stage
+                      });
+                      console.log(`Removed incompatible stage label: ${stage}`);
+                    } catch (error) {
+                      console.log(`Could not remove label ${stage}: ${error.message}`);
+                    }
+                  }
+                  
+                  // Добавляем правильную stage метку, если её нет
+                  if (!updatedStageLabels.includes(expectedStage)) {
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      labels: [expectedStage]
+                    });
+                    console.log(`Added correct stage label: ${expectedStage}`);
+                  }
+                }
+              }
+              
+              // Удаляем agent:architect для контентных квестов
+              // Используем обновленные метки после предыдущих удалений
+              const { data: finalIssue } = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber
+              });
+              const finalLabels = finalIssue.labels.map(l => l.name);
+              const finalHasContentLabels = finalLabels.some(l => ['canon', 'lore', 'quest'].includes(l));
+              
+              if (finalHasContentLabels && finalLabels.includes('agent:architect')) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: 'agent:architect'
+                  });
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: 'stage:design'
+                  });
+                } catch (error) {
+                  console.log(`Could not remove architect labels: ${error.message}`);
+                }
+              }
+              
+              // Удаляем agent:qa для контентных квестов, если нет agent:backend
+              if (finalHasContentLabels && finalLabels.includes('agent:content-writer') && finalLabels.includes('agent:qa') && !finalLabels.includes('agent:backend')) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: 'agent:qa'
+                  });
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: 'stage:testing'
+                  });
+                } catch (error) {
+                  console.log(`Could not remove qa labels: ${error.message}`);
+                }
+              }
+              
+              console.log(`Validation failed for issue #${issueNumber}: ${errors.join('; ')}`);
+            } else if (warnings.length > 0) {
+              // Только предупреждения - создаем комментарий, но не удаляем метки
+              const warningMessage = `## ⚠️ Предупреждения workflow\n\n` +
+                `Обнаружены следующие предупреждения:\n\n` +
+                warnings.map(w => `- ⚠️ ${w}`).join('\n') +
+                `\n\nПожалуйста, проверьте правильность меток согласно правилам workflow.`;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: warningMessage
+              });
+            } else {
+              console.log(`Validation passed for issue #${issueNumber}`);
+            }
+

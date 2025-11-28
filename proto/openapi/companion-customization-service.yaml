@@ -1,0 +1,205 @@
+openapi: 3.0.3
+info:
+  title: Companion Customization Service API
+  description: API для кастомизации компаньонов (переименование, экипировка, внешний вид)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companion Customization
+    description: Кастомизация компаньонов
+
+paths:
+  /gameplay/companions/{companion_id}/rename:
+    post:
+      tags:
+        - Companion Customization
+      summary: Переименовать компаньона
+      operationId: renameCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameCompanionRequest'
+      responses:
+        '200':
+          description: Компаньон переименован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/equip:
+    post:
+      tags:
+        - Companion Customization
+      summary: Экипировать предмет компаньону
+      operationId: equipCompanionItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipCompanionItemRequest'
+      responses:
+        '200':
+          description: Предмет экипирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}/customize:
+    post:
+      tags:
+        - Companion Customization
+      summary: Кастомизировать компаньона
+      operationId: customizeCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomizeCompanionRequest'
+      responses:
+        '200':
+          description: Компаньон кастомизирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    PlayerCompanion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        equipment:
+          type: object
+          additionalProperties: true
+          nullable: true
+        customization:
+          type: object
+          additionalProperties: true
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+
+    RenameCompanionRequest:
+      type: object
+      required:
+        - player_id
+        - name
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+
+    EquipCompanionItemRequest:
+      type: object
+      required:
+        - player_id
+        - item_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+
+    CustomizeCompanionRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        customization:
+          type: object
+          additionalProperties: true
+
+security:
+  - BearerAuth: []
+

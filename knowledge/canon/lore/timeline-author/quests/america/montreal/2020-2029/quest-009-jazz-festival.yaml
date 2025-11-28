@@ -7,7 +7,7 @@ metadata:
   category: side_quest
   quest_type: side
   status: active
-  version: "1.0.0"
+  version: "1.1.0"
   timeline: 2020-2029
   year: 2025
   season: summer
@@ -72,6 +72,80 @@ requirements:
     - skill: improvisation
       min_value: 0.4
       description: Adapt to chaos
+
+quest_definition:
+  quest_type: side
+  level_min: 15
+  level_max: 30
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements:
+      - skill: stealth
+        min_value: 0.5
+      - skill: improvisation
+        min_value: 0.4
+  objectives:
+    - id: obj-001
+      text: "Встретиться с Marcus и выслушать план"
+      type: dialogue
+      target: marcus_meeting
+      optional: false
+    - id: obj-002
+      text: "Выбрать: помочь или остановить кражу"
+      type: choice
+      target: heist_decision
+      optional: false
+    - id: obj-003
+      text: "Выполнить выбранный путь"
+      type: skill_check
+      target: heist_execution
+      skill: stealth
+      difficulty: hard
+      optional: false
+    - id: obj-004
+      text: "Обеспечить безопасное возвращение трубы"
+      type: interact
+      target: trumpet_return
+      optional: false
+  rewards:
+    experience: 8000
+    currency: 5000
+    reputation:
+      montreal: 30
+    unlocks:
+      - type: achievement
+        id: jazz_festival_legend
+  branches:
+    - id: help_heist
+      condition: decision == "help"
+      consequences:
+        trumpet_stolen: true
+        marcus_satisfied: true
+      rewards:
+        experience: 10000
+        currency: 10000
+        reputation:
+          criminals: 20
+          jazz_community: 40
+        unlocks:
+          - type: achievement
+            id: romantic_thief
+    - id: stop_heist
+      condition: decision == "stop"
+      consequences:
+        trumpet_protected: true
+        marcus_arrested: possible
+      rewards:
+        experience: 8000
+        reputation:
+          police: 30
+          museum: 40
+        unlocks:
+          - type: achievement
+            id: artifact_protector
 
 story:
   background: |
@@ -331,6 +405,16 @@ notes:
   design_notes: |
     Light heist quest. Marcus charming rogue - neither hero nor villain. Moral
     ambiguity intentional. Heist path more rewarding (XP, story), но stop path
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-26
+    author: content_writer
+    changes: "Создан квест «Ночь импровизации» о краже трубы Dizzy Gillespie."
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
     valid choice. Improvisation theme matches jazz spirit. Sunrise scene beautiful
     payoff. Victimless crime - player decides ethics. Montreal Jazz Fest real,
     atmosphere captured. No combat ever - pure stealth, charm, cleverness.

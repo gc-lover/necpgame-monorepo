@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Action Rate Validation Service API
+  description: API для валидации частоты действий игроков
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Action Rate Validation
+    description: Валидация частоты действий
+
+paths:
+  /anti-cheat/action-rate/validate:
+    post:
+      tags:
+        - Action Rate Validation
+      summary: Валидация частоты действий
+      description: Проверка частоты действий игрока на обнаружение макросов и автоматических действий
+      operationId: validateActionRate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionRateValidationRequest'
+      responses:
+        '200':
+          description: Результат валидации частоты действий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionRateValidationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/action-rate/violations/{player_id}:
+    get:
+      tags:
+        - Action Rate Validation
+      summary: Получить нарушения частоты действий для игрока
+      description: Получить список нарушений частоты действий для указанного игрока с пагинацией
+      operationId: getActionRateViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список нарушений частоты действий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionRateViolationsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ActionRateValidationRequest:
+      type: object
+      required:
+        - player_id
+        - action_type
+        - action_timestamp
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        action_type:
+          type: string
+          enum:
+            - ATTACK
+            - SKILL
+            - INTERACTION
+            - MOVEMENT
+          description: Тип действия
+        action_timestamp:
+          type: string
+          format: date-time
+          description: Временная метка действия
+        action_data:
+          type: object
+          description: Дополнительные данные действия
+          additionalProperties: true
+
+    ActionRateValidationResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+          description: Результат валидации
+        actions_per_second:
+          type: number
+          format: float
+          description: Количество действий в секунду
+        max_actions_per_second:
+          type: integer
+          description: Максимально допустимое количество действий в секунду
+        pattern_detected:
+          type: string
+          enum:
+            - HUMAN
+            - MACRO
+            - UNKNOWN
+          description: Обнаруженный паттерн
+        violation:
+          $ref: '#/components/schemas/ActionRateViolation'
+          nullable: true
+          description: Информация о нарушении (если обнаружено)
+
+    ActionRateViolation:
+      type: object
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - ACTION_RATE_HACK
+          description: Тип нарушения
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьёзность нарушения
+        actions_exceeded_by:
+          type: integer
+          description: На сколько превышено количество действий
+        threshold:
+          type: integer
+          description: Пороговое значение действий
+        pattern_periodicity:
+          type: number
+          format: float
+          description: Процент идеальной периодичности (индикатор макроса)
+          minimum: 0
+          maximum: 100
+
+    ActionRateViolationsResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: 'anti-cheat-common.yaml#/components/schemas/Violation'
+          description: Список нарушений
+        total:
+          type: integer
+          description: Общее количество нарушений
+        limit:
+          type: integer
+          description: Лимит на страницу
+        offset:
+          type: integer
+          description: Смещение
+
+security:
+  - BearerAuth: []
+

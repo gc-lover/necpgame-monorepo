@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: Referral Core Service API
+  description: API для основных операций реферальной системы (коды, регистрация, статус)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Code Manager
+    description: Управление реферальными кодами
+  - name: Referral Registration
+    description: Регистрация по реферальному коду
+
+paths:
+  /growth/referral/code:
+    get:
+      tags:
+        - Referral Code Manager
+      summary: Получить реферальный код игрока
+      operationId: getReferralCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+      responses:
+        '200':
+          description: Реферальный код
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralCode'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/code/generate:
+    post:
+      tags:
+        - Referral Code Manager
+      summary: Сгенерировать новый реферальный код
+      operationId: generateReferralCode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReferralCodeRequest'
+      responses:
+        '201':
+          description: Реферальный код создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralCode'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/code/{code}/validate:
+    get:
+      tags:
+        - Referral Code Manager
+      summary: Валидировать реферальный код
+      operationId: validateReferralCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 12
+      responses:
+        '200':
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralCodeValidationResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/register:
+    post:
+      tags:
+        - Referral Registration
+      summary: Зарегистрироваться по реферальному коду
+      operationId: registerWithReferralCode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterWithCodeRequest'
+      responses:
+        '200':
+          description: Регистрация завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Referral'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/status/{player_id}:
+    get:
+      tags:
+        - Referral Registration
+      summary: Получить статус рефералов игрока
+      operationId: getReferralStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        '200':
+          description: Статус рефералов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralStatusResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ReferralCode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 12
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+
+    GenerateReferralCodeRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    ReferralCodeValidationResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        is_valid:
+          type: boolean
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+        message:
+          type: string
+          nullable: true
+
+    RegisterWithCodeRequest:
+      type: object
+      required:
+        - player_id
+        - referral_code
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        referral_code:
+          type: string
+          maxLength: 12
+
+    Referral:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        referrer_id:
+          type: string
+          format: uuid
+        referee_id:
+          type: string
+          format: uuid
+        referral_code_id:
+          type: string
+          format: uuid
+        registered_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - PENDING
+            - ACTIVE
+            - COMPLETED
+            - INACTIVE
+        level_10_reached:
+          type: boolean
+          default: false
+        level_10_reached_at:
+          type: string
+          format: date-time
+          nullable: true
+        welcome_bonus_given:
+          type: boolean
+          default: false
+        referrer_bonus_given:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ReferralStatusResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        referrals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Referral'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+security:
+  - BearerAuth: []
+

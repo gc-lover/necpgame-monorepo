@@ -1,0 +1,430 @@
+openapi: 3.0.3
+info:
+  title: Combat Stealth Network Service API
+  description: |
+    API для маскировки и взлома сети в системе стелса NECPGAME.
+    
+    **Основные возможности:**
+    - Маскировка под NPC
+    - Взлом сетевых узлов
+    - Контроль систем безопасности
+    
+    **Типы маскировки:**
+    - NPC Disguise - маскировка под обычного NPC
+    - Faction Uniform - форма фракции (требует репутацию)
+    - Crowd Blend - слияние с толпой
+    
+    **Типы сетевых узлов:**
+    - Camera - камеры (отключение, зацикливание)
+    - Door - двери (открытие, блокировка)
+    - Alarm - сигнализация (отключение)
+    - Turret - турели (отключение, перепрограммирование)
+    - Security System - система безопасности (полный контроль)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Disguise
+    description: Маскировка
+  - name: Network Hacking
+    description: Взлом сети
+
+paths:
+  /api/v1/gameplay/combat/stealth/disguise:
+    post:
+      tags:
+        - Disguise
+      summary: Активация маскировки
+      description: |
+        Активирует маскировку под NPC.
+        
+        **Типы маскировки:**
+        - `npc_disguise` - маскировка под обычного NPC
+        - `faction_uniform` - форма фракции (требует репутацию)
+        - `crowd_blend` - слияние с толпой
+        
+        **Требования:**
+        - Предмет маскировки в инвентаре
+        - Репутация фракции (для faction_uniform)
+        - Не в состоянии боя
+        - Не обнаружен (не fully_detected)
+        
+        **Эффекты:**
+        - Значительное снижение обнаружения
+        - Доступ к ограниченным зонам
+        - Ограничения на действия (нельзя бегать, стрелять)
+      operationId: activateDisguise
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateDisguiseRequest"
+            examples:
+              npc:
+                summary: Маскировка под NPC
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440001"
+                  disguise_item_id: "950e8400-e29b-41d4-a716-446655440001"
+                  disguise_type: npc_disguise
+              faction:
+                summary: Форма фракции
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440002"
+                  disguise_item_id: "950e8400-e29b-41d4-a716-446655440002"
+                  disguise_type: faction_uniform
+      responses:
+        "200":
+          description: Маскировка активирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Disguise"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/stealth/disguise/{disguise_id}:
+    get:
+      tags:
+        - Disguise
+      summary: Информация о маскировке
+      description: Возвращает детальную информацию о маскировке
+      operationId: getDisguise
+      parameters:
+        - name: disguise_id
+          in: path
+          required: true
+          description: ID маскировки
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о маскировке
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Disguise"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    delete:
+      tags:
+        - Disguise
+      summary: Деактивация маскировки
+      description: |
+        Деактивирует текущую маскировку.
+        
+        **Автоматическая деактивация:**
+        - Выполнение запрещённого действия (бег, стрельба)
+        - Вход в запрещённую зону
+        - Полное обнаружение
+      operationId: deactivateDisguise
+      parameters:
+        - name: disguise_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Маскировка деактивирована
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/stealth/network/nodes:
+    get:
+      tags:
+        - Network Hacking
+      summary: Сетевые узлы
+      description: |
+        Возвращает доступные сетевые узлы для взлома в области.
+        
+        **Типы узлов:**
+        - `camera` - камеры наблюдения
+        - `door` - электронные двери
+        - `alarm` - системы сигнализации
+        - `turret` - автоматические турели
+        - `security_system` - центральная система безопасности
+        
+        **Фильтрация:**
+        - По типу узла
+        - По уровню безопасности
+        - По статусу взлома
+      operationId: getNetworkNodes
+      parameters:
+        - name: area_id
+          in: query
+          required: true
+          description: ID области для поиска узлов
+          schema:
+            type: string
+        - name: node_type
+          in: query
+          description: Фильтр по типу узла
+          schema:
+            type: string
+            enum: [camera, door, alarm, turret, security_system]
+      responses:
+        "200":
+          description: Список сетевых узлов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nodes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NetworkNode"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/stealth/network/hack:
+    post:
+      tags:
+        - Network Hacking
+      summary: Взлом сетевого узла
+      description: |
+        Взламывает сетевой узел для отключения или контроля.
+        
+        **Типы взлома:**
+        - `disable` - отключение устройства
+        - `loop` - зацикливание (для камер)
+        - `control` - получение контроля
+        - `override` - перезапись системы
+        
+        **Результаты по типам узлов:**
+        - **Camera**: отключение, зацикливание записи
+        - **Door**: открытие, блокировка, контроль доступа
+        - **Alarm**: отключение, задержка срабатывания
+        - **Turret**: отключение, перепрограммирование на союзников
+        - **Security System**: полный контроль над зоной
+        
+        **Риски:**
+        - Провал взлома повышает обнаружение
+        - Высокий уровень безопасности = выше риск
+        - Сетевое обнаружение при взломе
+      operationId: hackNetworkNode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HackNodeRequest"
+      responses:
+        "200":
+          description: Узел взломан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackNodeResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ActivateDisguiseRequest:
+      type: object
+      required:
+        - character_id
+        - disguise_item_id
+        - disguise_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        disguise_item_id:
+          type: string
+          format: uuid
+          description: ID предмета маскировки в инвентаре
+        disguise_type:
+          type: string
+          enum: [npc_disguise, faction_uniform, crowd_blend]
+          description: Тип маскировки
+
+    Disguise:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID маскировки
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        disguise_type:
+          type: string
+          enum: [npc_disguise, faction_uniform, crowd_blend]
+          description: Тип маскировки
+        disguise_item_id:
+          type: string
+          format: uuid
+          description: ID используемого предмета
+        detection_reduction:
+          type: number
+          format: float
+          description: Снижение обнаружения (%)
+        restrictions:
+          type: array
+          description: Ограничения при использовании маскировки
+          items:
+            type: string
+            enum: [no_running, no_combat, no_restricted_zones, no_suspicious_actions]
+        allowed_zones:
+          type: array
+          description: Разрешённые зоны доступа
+          items:
+            type: string
+        active:
+          type: boolean
+          description: Активна ли маскировка
+        activated_at:
+          type: string
+          format: date-time
+          description: Время активации
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения (если ограничено)
+
+    NetworkNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID сетевого узла
+        node_type:
+          type: string
+          enum: [camera, door, alarm, turret, security_system]
+          description: Тип узла
+        name:
+          type: string
+          description: Название узла
+        position:
+          type: object
+          description: Позиция узла
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        security_level:
+          type: integer
+          description: Уровень безопасности (1-5)
+          minimum: 1
+          maximum: 5
+        is_hacked:
+          type: boolean
+          description: Взломан ли узел
+        hack_duration:
+          type: integer
+          description: Оставшееся время контроля (секунды, если взломан)
+        coverage_area:
+          type: object
+          description: Зона покрытия (для камер, турелей)
+          properties:
+            radius:
+              type: number
+            angle:
+              type: number
+
+    HackNodeRequest:
+      type: object
+      required:
+        - character_id
+        - node_id
+        - hack_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        node_id:
+          type: string
+          format: uuid
+          description: ID узла для взлома
+        hack_type:
+          type: string
+          enum: [disable, loop, control, override]
+          description: |
+            Тип взлома:
+            - `disable` - отключение
+            - `loop` - зацикливание (камеры)
+            - `control` - контроль
+            - `override` - перезапись
+
+    HackNodeResult:
+      type: object
+      properties:
+        node_id:
+          type: string
+          format: uuid
+          description: ID взломанного узла
+        node_type:
+          type: string
+          description: Тип узла
+        success:
+          type: boolean
+          description: Успешность взлома
+        hack_type:
+          type: string
+          description: Примененный тип взлома
+        duration:
+          type: integer
+          description: Длительность контроля (секунды)
+        detection_risk:
+          type: number
+          format: float
+          description: Риск обнаружения (0.0-1.0)
+        effects:
+          type: array
+          description: Эффекты взлома
+          items:
+            type: string
+        hacked_at:
+          type: string
+          format: date-time
+          description: Время взлома
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения контроля
+

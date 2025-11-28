@@ -11,6 +11,7 @@ import (
 	"github.com/necpgame/social-service-go/pkg/api/guilds"
 	"github.com/necpgame/social-service-go/pkg/api/mail"
 	"github.com/necpgame/social-service-go/pkg/api/notifications"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,7 +61,8 @@ func NewHTTPServer(config *ServerConfig) *HTTPServer {
 	notifications.HandlerFromMux(NewNotificationsHandlers(config.NotificationsService), r)
 	
 	r.HandleFunc("/health", s.healthCheck).Methods("GET")
-	
+	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
+
 	s.server = &http.Server{
 		Addr:         s.addr,
 		Handler:      r,
@@ -68,7 +70,7 @@ func NewHTTPServer(config *ServerConfig) *HTTPServer {
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
-	
+
 	return s
 }
 
@@ -79,7 +81,7 @@ func (s *HTTPServer) Start() error {
 
 func (s *HTTPServer) Stop(ctx context.Context) error {
 	s.logger.Info("Stopping HTTP server")
-	return s.server.Shutdown(ctx)
+		return s.server.Shutdown(ctx)
 }
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {

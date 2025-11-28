@@ -25,3 +25,7 @@ func HandlerFromMux(si api.ServerInterface, r *mux.Router) {
 	r.HandleFunc("/growth/referral/stats/{player_id}", wrapper.GetReferralStats).Methods("GET")
 	r.HandleFunc("/growth/referral/status/{player_id}", wrapper.GetReferralStatus).Methods("GET")
 }
+
+
+
+

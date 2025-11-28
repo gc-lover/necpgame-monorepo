@@ -1,0 +1,392 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Synergies Service API
+  description: |
+    API для синергий и киберпсихоза боевых способностей в NECPGAME.
+    
+    **Основные возможности:**
+    - Система синергий между способностями/имплантами
+    - Отслеживание и управление киберпсихозом
+    
+    **Типы синергий:**
+    - Ability Synergy (между способностями)
+    - Team Synergy (с союзниками)
+    - Equipment Synergy (с экипировкой)
+    - Implant Synergy (с имплантами)
+    - Timing Synergy (по времени активации)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Synergies
+    description: Синергии способностей
+  - name: Cyberpsychosis
+    description: Киберпсихоз
+
+paths:
+  /api/v1/gameplay/combat/abilities/synergies:
+    get:
+      tags:
+        - Synergies
+      summary: Доступные синергии
+      description: |
+        Возвращает доступные синергии для текущего лоадаута.
+        
+        **Типы синергий:**
+        - **Ability Synergy** - синергия между способностями (например, огонь + взрыв)
+        - **Team Synergy** - синергия с союзниками (например, щит + лечение)
+        - **Equipment Synergy** - синергия с экипировкой (например, меч + dash)
+        - **Implant Synergy** - синергия с имплантами (например, кибер-руки + силовая атака)
+        - **Timing Synergy** - синергия по времени активации (например, 2 способности за 1 секунду)
+        
+        **Бонусы синергий:**
+        - Увеличение урона
+        - Сокращение кулдауна
+        - Дополнительные эффекты
+        - Уникальные комбо
+      operationId: getAvailableSynergies
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Доступные синергии
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  synergies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Synergy"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - Synergies
+      summary: Применение синергии
+      description: |
+        Применяет синергию между способностями/имплантами/экипировкой.
+        
+        **Процесс:**
+        1. Проверка условий синергии
+        2. Проверка наличия требуемых элементов
+        3. Расчёт бонусов
+        4. Применение эффектов
+        5. Публикация события `combat.ability.synergy-triggered`
+      operationId: applySynergy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplySynergyRequest"
+      responses:
+        "200":
+          description: Синергия применена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SynergyResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/abilities/cyberpsychosis:
+    get:
+      tags:
+        - Cyberpsychosis
+      summary: Уровень киберпсихоза
+      description: |
+        Возвращает текущий уровень киберпсихоза персонажа.
+        
+        **Влияющие факторы:**
+        - Количество активных имплантов
+        - Частота использования способностей
+        - Длительность использования
+        - Модификаторы от перков/предметов
+        
+        **Пороговые значения:**
+        - 0.0-0.3: Норма (нет штрафов)
+        - 0.3-0.6: Легкий киберпсихоз (небольшие штрафы)
+        - 0.6-0.8: Средний киберпсихоз (значительные штрафы)
+        - 0.8-1.0: Тяжелый киберпсихоз (критические штрафы)
+      operationId: getCyberpsychosis
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Уровень киберпсихоза
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cyberpsychosis"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - Cyberpsychosis
+      summary: Обновление киберпсихоза
+      description: |
+        Обновляет уровень киберпсихоза после активации способности.
+        
+        **Автоматически вызывается:**
+        - При активации способности через `/activate`
+        - При установке/удалении импланта
+        - Периодически для естественного снижения (decay)
+        
+        **Влияние на игру:**
+        - Штрафы к характеристикам
+        - Визуальные эффекты
+        - Ограничение на использование способностей
+      operationId: updateCyberpsychosis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCyberpsychosisRequest"
+      responses:
+        "200":
+          description: Киберпсихоз обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cyberpsychosis"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    Synergy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID синергии
+        name:
+          type: string
+          description: Название синергии
+        description:
+          type: string
+          description: Описание синергии
+        synergy_type:
+          type: string
+          enum: [ability, team, equipment, implant, timing]
+          description: Тип синергии
+        required_abilities:
+          type: array
+          description: Требуемые способности
+          items:
+            type: string
+            format: uuid
+        required_items:
+          type: array
+          description: Требуемые предметы/импланты
+          items:
+            type: string
+        timing_window:
+          type: integer
+          description: Временное окно для активации (секунды)
+        bonus_effects:
+          type: object
+          description: Бонусные эффекты синергии
+          properties:
+            damage_multiplier:
+              type: number
+              format: float
+              description: Множитель урона
+            cooldown_reduction:
+              type: number
+              format: float
+              description: Сокращение кулдауна (%)
+            additional_effects:
+              type: array
+              description: Дополнительные эффекты
+              items:
+                type: string
+        is_available:
+          type: boolean
+          description: Доступна ли синергия
+
+    ApplySynergyRequest:
+      type: object
+      required:
+        - character_id
+        - synergy_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        synergy_id:
+          type: string
+          format: uuid
+          description: ID синергии
+        abilities_used:
+          type: array
+          description: ID использованных способностей
+          items:
+            type: string
+            format: uuid
+
+    SynergyResult:
+      type: object
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+          description: ID синергии
+        synergy_name:
+          type: string
+          description: Название синергии
+        applied_at:
+          type: string
+          format: date-time
+          description: Время применения
+        bonus_effects:
+          type: object
+          description: Примененные бонусные эффекты
+          properties:
+            damage_bonus:
+              type: number
+            cooldown_reduction:
+              type: number
+            additional_effects:
+              type: array
+              items:
+                type: string
+        duration:
+          type: integer
+          description: Длительность эффекта (секунды)
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения эффекта
+
+    Cyberpsychosis:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        current_level:
+          type: number
+          format: float
+          description: Текущий уровень киберпсихоза (0.0-1.0)
+        threshold:
+          type: number
+          format: float
+          description: Пороговое значение для текущего состояния
+        severity:
+          type: string
+          enum: [normal, mild, moderate, severe]
+          description: |
+            Тяжесть киберпсихоза:
+            - `normal` (0.0-0.3) - норма
+            - `mild` (0.3-0.6) - легкий
+            - `moderate` (0.6-0.8) - средний
+            - `severe` (0.8-1.0) - тяжелый
+        active_implants_count:
+          type: integer
+          description: Количество активных имплантов
+        modifiers:
+          type: array
+          description: Модификаторы от перков/предметов
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+                description: Источник модификатора
+              reduction_percent:
+                type: number
+                format: float
+                description: Процент снижения влияния
+        penalties:
+          type: object
+          description: Текущие штрафы (если превышен порог)
+          properties:
+            attribute_penalty:
+              type: integer
+              description: Штраф к атрибутам (%)
+            ability_cost_increase:
+              type: integer
+              description: Увеличение стоимости способностей (%)
+            cooldown_increase:
+              type: integer
+              description: Увеличение кулдауна (%)
+        last_updated:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+        decay_rate:
+          type: number
+          format: float
+          description: Скорость естественного снижения (в час)
+
+    UpdateCyberpsychosisRequest:
+      type: object
+      required:
+        - character_id
+        - change_amount
+        - reason
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        change_amount:
+          type: number
+          format: float
+          description: Изменение уровня (может быть отрицательным для снижения)
+        reason:
+          type: string
+          enum: [ability_used, implant_installed, implant_removed, natural_decay]
+          description: |
+            Причина изменения:
+            - `ability_used` - использована способность
+            - `implant_installed` - установлен имплант
+            - `implant_removed` - удалён имплант
+            - `natural_decay` - естественное снижение
+

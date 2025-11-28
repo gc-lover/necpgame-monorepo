@@ -54,10 +54,18 @@ func (a *StringArray) Scan(value interface{}) error {
 }
 
 func (r *NotificationRepository) Create(ctx context.Context, notification *models.Notification) (*models.Notification, error) {
-	channelsJSON, _ := json.Marshal(notification.Channels)
-	dataJSON, _ := json.Marshal(notification.Data)
+	channelsJSON, err := json.Marshal(notification.Channels)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal notification channels JSON")
+		return nil, err
+	}
+	dataJSON, err := json.Marshal(notification.Data)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal notification data JSON")
+		return nil, err
+	}
 
-	err := r.db.QueryRow(ctx,
+	err = r.db.QueryRow(ctx,
 		`INSERT INTO social.notifications 
 		 (id, account_id, type, priority, title, content, data, status, channels, created_at, expires_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -101,8 +109,12 @@ func (r *NotificationRepository) GetByID(ctx context.Context, id uuid.UUID) (*mo
 		return nil, err
 	}
 
-	json.Unmarshal(channelsJSON, &notification.Channels)
-	json.Unmarshal(dataJSON, &notification.Data)
+	if err := json.Unmarshal(channelsJSON, &notification.Channels); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal notification channels JSON")
+	}
+	if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal notification data JSON")
+	}
 
 	return &notification, nil
 }
@@ -137,8 +149,12 @@ func (r *NotificationRepository) GetByAccountID(ctx context.Context, accountID u
 			continue
 		}
 
-		json.Unmarshal(channelsJSON, &notification.Channels)
-		json.Unmarshal(dataJSON, &notification.Data)
+		if err := json.Unmarshal(channelsJSON, &notification.Channels); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal notification channels JSON")
+		}
+		if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal notification data JSON")
+		}
 
 		notifications = append(notifications, notification)
 	}
@@ -206,8 +222,12 @@ func (r *NotificationRepository) UpdateStatus(ctx context.Context, id uuid.UUID,
 		return nil, err
 	}
 
-	json.Unmarshal(channelsJSON, &notification.Channels)
-	json.Unmarshal(dataJSON, &notification.Data)
+	if err := json.Unmarshal(channelsJSON, &notification.Channels); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal notification channels JSON")
+	}
+	if err := json.Unmarshal(dataJSON, &notification.Data); err != nil {
+		r.logger.WithError(err).Error("Failed to unmarshal notification data JSON")
+	}
 
 	return &notification, nil
 }

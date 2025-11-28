@@ -1,0 +1,310 @@
+openapi: 3.0.3
+info:
+  title: Combat Implants Core Service API
+  description: |
+    API для управления имплантами в NECPGAME.
+    
+    **Основные возможности:**
+    - Каталог имплантов (боевые, тактические, защитные, двигательные, OS)
+    - Установка и удаление имплантов
+    - Управление слотами
+    - Информация об установленных имплантах
+    
+    **Типы имплантов:**
+    - Combat (боевые) - урон, точность, крит
+    - Tactical (тактические) - хакерство, сканирование
+    - Defensive (защитные) - броня, реген
+    - Movement (двигательные) - скорость, паркур
+    - OS (операционные системы) - Сандевистан, Берсерк, Кибердека
+    
+    **Бренды:**
+    - Arasaka, Militech, Kang Tao, Zetatech, Biotechnica
+    
+    **Редкость:**
+    - Common, Uncommon, Rare, Epic, Legendary, Artifact
+    - Специальные: Iconic, Prototype, Custom
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Catalog
+    description: Каталог имплантов
+  - name: Implants
+    description: Управление имплантами
+  - name: Slots
+    description: Слоты
+
+paths:
+  /api/v1/combat/implants/catalog:
+    get:
+      tags:
+        - Catalog
+      summary: Каталог имплантов
+      description: |
+        Возвращает каталог доступных имплантов.
+        
+        **Фильтры:**
+        - Тип (combat, tactical, defensive, movement, os)
+        - Бренд (Arasaka, Militech, и т.д.)
+        - Редкость (common, rare, epic, etc.)
+      operationId: getImplantsCatalog
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [combat, tactical, defensive, movement, os]
+        - name: brand
+          in: query
+          schema:
+            type: string
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum: [common, uncommon, rare, epic, legendary, artifact]
+      responses:
+        "200":
+          description: Каталог имплантов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  implants:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ImplantCatalogItem"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/installed:
+    get:
+      tags:
+        - Implants
+      summary: Установленные импланты
+      description: Возвращает список установленных имплантов
+      operationId: getInstalledImplants
+      responses:
+        "200":
+          description: Установленные импланты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  implants:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InstalledImplant"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/install:
+    post:
+      tags:
+        - Implants
+      summary: Установить имплант
+      description: |
+        Устанавливает имплант в слот.
+        
+        **Проверки:**
+        - Доступность слота
+        - Совместимость с другими имплантами
+        - Энергетический лимит
+        - Человечность
+      operationId: installImplant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstallImplantRequest"
+      responses:
+        "200":
+          description: Имплант установлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstallResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/uninstall:
+    post:
+      tags:
+        - Implants
+      summary: Удалить имплант
+      description: Удаляет имплант из слота
+      operationId: uninstallImplant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UninstallImplantRequest"
+      responses:
+        "200":
+          description: Имплант удалён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UninstallResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/implants/slots:
+    get:
+      tags:
+        - Slots
+      summary: Информация о слотах
+      description: Возвращает информацию о слотах имплантов
+      operationId: getSlots
+      responses:
+        "200":
+          description: Слоты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlotsInfo"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ImplantCatalogItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [combat, tactical, defensive, movement, os]
+        brand:
+          type: string
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, artifact]
+        description:
+          type: string
+        stats:
+          type: object
+          description: Характеристики импланта
+        energy_cost:
+          type: number
+          description: Энергопотребление
+        humanity_cost:
+          type: number
+          description: Стоимость человечности
+
+    InstalledImplant:
+      allOf:
+        - $ref: "#/components/schemas/ImplantCatalogItem"
+        - type: object
+          properties:
+            slot:
+              type: string
+              description: Слот установки
+            durability:
+              type: number
+              description: Прочность (0-100%)
+            upgrade_level:
+              type: integer
+              description: Уровень улучшения
+            modifications:
+              type: array
+              description: Модификации
+              items:
+                type: object
+
+    InstallImplantRequest:
+      type: object
+      required:
+        - implant_id
+        - slot
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+          description: ID импланта
+        slot:
+          type: string
+          description: Слот для установки
+
+    InstallResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        installed_implant:
+          $ref: "#/components/schemas/InstalledImplant"
+        energy_remaining:
+          type: number
+          description: Оставшаяся энергия
+        humanity_remaining:
+          type: number
+          description: Оставшаяся человечность
+
+    UninstallImplantRequest:
+      type: object
+      required:
+        - implant_id
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+
+    UninstallResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+
+    SlotsInfo:
+      type: object
+      properties:
+        total_slots:
+          type: integer
+          description: Всего слотов
+        used_slots:
+          type: integer
+          description: Использовано слотов
+        available_slots:
+          type: integer
+          description: Свободных слотов
+        slot_types:
+          type: object
+          description: Типы слотов
+
+
+

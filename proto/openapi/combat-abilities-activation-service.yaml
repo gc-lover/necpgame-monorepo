@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Activation Service API
+  description: |
+    API для активации способностей и управления кулдаунами в NECPGAME.
+    
+    **Основные возможности:**
+    - Активация боевых способностей
+    - Управление кулдаунами
+    - Проверка готовности способностей
+    
+    **Проверки при активации:**
+    - Доступность способности
+    - Состояние кулдауна
+    - Ресурсы (энергия, здоровье)
+    - Киберпсихоз (пороговые значения)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Activation
+    description: Активация способностей
+  - name: Cooldowns
+    description: Управление кулдаунами
+
+paths:
+  /api/v1/gameplay/combat/abilities/activate:
+    post:
+      tags:
+        - Activation
+      summary: Активация способности
+      description: |
+        Активирует боевую способность.
+        
+        **Процесс активации:**
+        1. Проверка доступности способности
+        2. Проверка кулдауна (готова ли)
+        3. Проверка ресурсов (энергия, здоровье)
+        4. Проверка киберпсихоза (пороговые значения)
+        5. Активация способности
+        6. Запуск кулдауна
+        7. Проверка синергий
+        8. Обновление киберпсихоза
+        
+        **Автоматически:**
+        - Запуск кулдауна
+        - Проверка синергий
+        - Обновление киберпсихоза
+        - Публикация события `combat.ability.activated`
+        - Синхронизация через Realtime Gateway
+      operationId: activateAbility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateAbilityRequest"
+            examples:
+              dash:
+                summary: Dash способность
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440001"
+                  ability_id: "650e8400-e29b-41d4-a716-446655440001"
+                  position:
+                    x: 100
+                    y: 0
+                    z: 50
+              targeted:
+                summary: Целевая способность
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440002"
+                  ability_id: "650e8400-e29b-41d4-a716-446655440002"
+                  target_id: "850e8400-e29b-41d4-a716-446655440001"
+      responses:
+        "200":
+          description: Способность активирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbilityActivationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/abilities/cooldowns:
+    get:
+      tags:
+        - Cooldowns
+      summary: Проверка кулдаунов
+      description: |
+        Возвращает состояние кулдаунов всех способностей персонажа.
+        
+        **Включает:**
+        - Активные кулдауны
+        - Оставшееся время до готовности
+        - Модификаторы кулдауна (от имплантов/навыков)
+        
+        **Модификаторы:**
+        - Импланты (сокращение кулдауна)
+        - Навыки (ускорение восстановления)
+        - Баффы (временное сокращение)
+      operationId: getCooldowns
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние кулдаунов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cooldowns:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AbilityCooldown"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ActivateAbilityRequest:
+      type: object
+      required:
+        - character_id
+        - ability_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        ability_id:
+          type: string
+          format: uuid
+          description: ID способности
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели (если способность требует цель)
+        position:
+          type: object
+          description: Позиция активации (для AoE или dash)
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+
+    AbilityActivationResult:
+      type: object
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: ID активированной способности
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        activation_time:
+          type: string
+          format: date-time
+          description: Время активации
+        cooldown_started:
+          type: boolean
+          description: Запущен ли кулдаун
+        cooldown_duration:
+          type: integer
+          description: Длительность кулдауна (секунды)
+        cooldown_expires_at:
+          type: string
+          format: date-time
+          description: Время окончания кулдауна
+        energy_consumed:
+          type: integer
+          description: Потрачено энергии
+        health_consumed:
+          type: integer
+          description: Потрачено здоровья
+        cyberpsychosis_change:
+          type: number
+          format: float
+          description: Изменение киберпсихоза
+        synergies_triggered:
+          type: array
+          description: Сработавшие синергии
+          items:
+            type: string
+            format: uuid
+        effects_applied:
+          type: array
+          description: Применённые эффекты
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              value:
+                type: number
+              duration:
+                type: integer
+
+    AbilityCooldown:
+      type: object
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: ID способности
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала кулдауна
+        expires_at:
+          type: string
+          format: date-time
+          description: Время окончания кулдауна
+        remaining_seconds:
+          type: integer
+          description: Оставшееся время (секунды)
+        base_cooldown:
+          type: integer
+          description: Базовый кулдаун (секунды)
+        modified_cooldown:
+          type: integer
+          description: Кулдаун с учётом модификаторов (секунды)
+        modifiers:
+          type: array
+          description: Активные модификаторы кулдауна
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+                enum: [implant, skill, buff, synergy]
+                description: Источник модификатора
+              reduction_percent:
+                type: number
+                format: float
+                description: Процент сокращения кулдауна
+        is_active:
+          type: boolean
+          description: Активен ли кулдаун
+        is_ready:
+          type: boolean
+          description: Готова ли способность
+

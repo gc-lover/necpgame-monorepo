@@ -1,0 +1,339 @@
+openapi: 3.0.3
+info:
+  title: Companion Core Service API
+  description: API для основных операций с компаньонами (каталог, покупка, владение)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8091/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Companion Manager
+    description: Управление компаньонами
+
+paths:
+  /gameplay/companions/available:
+    get:
+      tags:
+        - Companion Manager
+      summary: Получить доступные компаньоны
+      operationId: getAvailableCompanions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - COMBAT_DRONE
+              - UTILITY
+              - SOCIAL_PET
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        '200':
+          description: Список доступных компаньонов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableCompanionsResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/purchase:
+    post:
+      tags:
+        - Companion Manager
+      summary: Купить компаньона
+      operationId: purchaseCompanion
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseCompanionRequest'
+      responses:
+        '200':
+          description: Компаньон куплен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/owned/{player_id}:
+    get:
+      tags:
+        - Companion Manager
+      summary: Получить компаньонов игрока
+      operationId: getOwnedCompanions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - COMBAT_DRONE
+              - UTILITY
+              - SOCIAL_PET
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        '200':
+          description: Компаньоны игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnedCompanionsResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /gameplay/companions/{companion_id}:
+    get:
+      tags:
+        - Companion Manager
+      summary: Получить информацию о компаньоне
+      operationId: getCompanion
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: companion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о компаньоне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCompanion'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CompanionType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 255
+        category:
+          type: string
+          enum:
+            - COMBAT_DRONE
+            - UTILITY
+            - SOCIAL_PET
+        subcategory:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        base_health:
+          type: integer
+        base_damage:
+          type: integer
+        base_xp:
+          type: integer
+        max_level:
+          type: integer
+          default: 50
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanionAbility'
+        stats:
+          type: object
+          additionalProperties: true
+        cost:
+          type: integer
+          format: int64
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CompanionAbility:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+          format: uuid
+        ability_type:
+          type: string
+          enum:
+            - ACTIVE
+            - PASSIVE
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        cooldown_seconds:
+          type: integer
+          nullable: true
+        effects:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+          default: true
+
+    PlayerCompanion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+          format: uuid
+        companion_type:
+          $ref: '#/components/schemas/CompanionType'
+        name:
+          type: string
+          maxLength: 255
+        level:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 1
+        experience:
+          type: integer
+          minimum: 0
+          default: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        health:
+          type: integer
+        damage:
+          type: integer
+        is_summoned:
+          type: boolean
+          default: false
+        summoned_at:
+          type: string
+          format: date-time
+          nullable: true
+        equipment:
+          type: object
+          additionalProperties: true
+          nullable: true
+        customization:
+          type: object
+          additionalProperties: true
+          nullable: true
+        purchased_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PurchaseCompanionRequest:
+      type: object
+      required:
+        - player_id
+        - companion_type_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        companion_type_id:
+          type: string
+          format: uuid
+
+    AvailableCompanionsResponse:
+      type: object
+      properties:
+        companions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanionType'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    OwnedCompanionsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        companions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerCompanion'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+security:
+  - BearerAuth: []
+

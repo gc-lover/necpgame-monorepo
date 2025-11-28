@@ -1,0 +1,310 @@
+openapi: 3.0.3
+info:
+  title: Announcement Targeting Service API
+  description: API для таргетинга объявлений на аудиторию
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Announcement Targeting
+    description: Таргетинг объявлений
+
+paths:
+  /liveops/announcements/{announcement_id}/target:
+    post:
+      tags:
+        - Announcement Targeting
+      summary: Настроить таргетинг объявления
+      description: Настроить критерии таргетинга для объявления (требуются права администратора)
+      operationId: setAnnouncementTargeting
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Критерии таргетинга
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTargetingRequest'
+            examples:
+              example1:
+                value:
+                  targeting:
+                    region:
+                      - "EU"
+                      - "NA"
+                    min_level: 10
+                    max_level: 50
+                    min_activity_days: 7
+                    has_purchases: true
+                    languages:
+                      - "ru"
+                      - "en"
+                    platforms:
+                      - "PC"
+      responses:
+        '200':
+          description: Таргетинг настроен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/audience:
+    get:
+      tags:
+        - Announcement Targeting
+      summary: Получить аудиторию объявления
+      description: Получить оценку размера аудитории на основе критериев таргетинга (требуются права администратора)
+      operationId: getAnnouncementAudience
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Аудитория объявления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudienceResponse'
+              examples:
+                example1:
+                  value:
+                    announcement_id: "550e8400-e29b-41d4-a716-446655440000"
+                    estimated_audience_size: 1500
+                    targeting_criteria:
+                      region: ["EU", "NA"]
+                      min_level: 10
+                      max_level: 50
+                    audience_breakdown:
+                      by_region:
+                        EU: 800
+                        NA: 700
+                      by_level:
+                        "10-20": 300
+                        "21-30": 500
+                        "31-50": 700
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Announcement:
+      type: object
+      description: Объявление
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор объявления
+        announcement_type:
+          type: string
+          enum:
+            - GAME_NEWS
+            - PATCH_NOTES
+            - MAINTENANCE
+            - EVENT
+            - PROMOTION
+            - COMMUNITY
+            - EMERGENCY
+          description: Тип объявления
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+          description: Приоритет объявления
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+          description: Стиль отображения
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - SCHEDULED
+            - PUBLISHED
+            - ARCHIVED
+          description: Статус объявления
+        title:
+          type: string
+          description: Заголовок объявления
+          maxLength: 255
+        content:
+          type: string
+          description: Содержание объявления
+        scheduled_publish_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Запланированное время публикации
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время публикации
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время архивирования
+        targeting:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Критерии таргетинга
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+          description: Каналы доставки
+        media:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Медиа файлы
+        created_by:
+          type: string
+          format: uuid
+          description: ID создателя
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+
+    SetTargetingRequest:
+      type: object
+      description: Запрос на настройку таргетинга
+      properties:
+        targeting:
+          type: object
+          properties:
+            region:
+              type: array
+              items:
+                type: string
+              description: Регионы для таргетинга
+            min_level:
+              type: integer
+              minimum: 1
+              description: Минимальный уровень персонажа
+            max_level:
+              type: integer
+              minimum: 1
+              description: Максимальный уровень персонажа
+            min_activity_days:
+              type: integer
+              minimum: 0
+              description: Минимальное количество дней активности
+            has_purchases:
+              type: boolean
+              description: Требование наличия покупок
+            languages:
+              type: array
+              items:
+                type: string
+              description: Языки для таргетинга
+            platforms:
+              type: array
+              items:
+                type: string
+                enum:
+                  - PC
+                  - CONSOLE
+                  - MOBILE
+              description: Платформы для таргетинга
+          additionalProperties: true
+          description: Критерии таргетинга
+
+    AudienceResponse:
+      type: object
+      description: Ответ с информацией об аудитории
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+          description: ID объявления
+        estimated_audience_size:
+          type: integer
+          description: Оценочный размер аудитории
+        targeting_criteria:
+          type: object
+          additionalProperties: true
+          description: Критерии таргетинга
+        audience_breakdown:
+          type: object
+          properties:
+            by_region:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Разбивка по регионам
+            by_level:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Разбивка по уровням
+            by_platform:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Разбивка по платформам
+          description: Детальная разбивка аудитории
+

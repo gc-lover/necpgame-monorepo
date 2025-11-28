@@ -2,9 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -111,19 +108,17 @@ type OrderRepositoryInterface interface {
 }
 
 type SocialService struct {
-	notificationRepo         NotificationRepositoryInterface
-	notificationPrefsRepo    NotificationPreferencesRepositoryInterface
-	friendRepo               FriendRepositoryInterface
-	chatRepo                 ChatRepositoryInterface
-	mailRepo                 MailRepositoryInterface
-	guildRepo              GuildRepositoryInterface
-	orderRepo                OrderRepositoryInterface
-	moderationRepo              ModerationRepositoryInterface
+	notificationService    *NotificationService
+	chatService            *ChatService
+	mailService            *MailService
+	friendService          *FriendService
+	orderService           *OrderService
 	moderationService      ModerationServiceInterface
+	notificationSubscriber *NotificationSubscriber
+	guildRepo              GuildRepositoryInterface
+	eventBus               EventBus
 	cache                  *redis.Client
 	logger                 *logrus.Logger
-	notificationSubscriber *NotificationSubscriber
-	eventBus               EventBus
 }
 
 func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
@@ -152,20 +147,26 @@ func NewSocialService(dbURL, redisURL string) (*SocialService, error) {
 	notificationSubscriber.SetPreferencesRepository(notificationPrefsRepo)
 	eventBus := NewRedisEventBus(redisClient)
 
+	logger := GetLogger()
+
+	notificationService := NewNotificationService(notificationRepo, notificationPrefsRepo, redisClient, logger)
+	chatService := NewChatService(chatRepo, moderationService, redisClient, logger)
+	mailService := NewMailService(mailRepo, redisClient, logger, eventBus)
+	friendService := NewFriendService(friendRepo, notificationRepo, eventBus)
+	orderService := NewOrderService(orderRepo)
+
 	service := &SocialService{
-		notificationRepo:      notificationRepo,
-		notificationPrefsRepo: notificationPrefsRepo,
-		friendRepo:            friendRepo,
-		chatRepo:              chatRepo,
-		mailRepo:              mailRepo,
-		guildRepo:             guildRepo,
-		orderRepo:             orderRepo,
-		moderationRepo:        moderationRepo,
-		moderationService:     moderationService,
-		cache:                 redisClient,
-		logger:                GetLogger(),
+		notificationService:    notificationService,
+		chatService:            chatService,
+		mailService:            mailService,
+		friendService:          friendService,
+		orderService:           orderService,
+		moderationService:      moderationService,
 		notificationSubscriber: notificationSubscriber,
-		eventBus:              eventBus,
+		guildRepo:              guildRepo,
+		eventBus:               eventBus,
+		cache:                  redisClient,
+		logger:                 logger,
 	}
 
 	mailRewardSubscriber := NewMailRewardSubscriber(mailRepo, notificationRepo, redisClient)
@@ -190,623 +191,99 @@ func (s *SocialService) GetNotificationSubscriber() *NotificationSubscriber {
 }
 
 func (s *SocialService) CreateNotification(ctx context.Context, req *models.CreateNotificationRequest) (*models.Notification, error) {
-	notification := &models.Notification{
-		ID:        uuid.New(),
-		AccountID: req.AccountID,
-		Type:      req.Type,
-		Priority:  req.Priority,
-		Title:     req.Title,
-		Content:   req.Content,
-		Data:      req.Data,
-		Status:    models.NotificationStatusUnread,
-		Channels:  req.Channels,
-		CreatedAt: time.Now(),
-		ExpiresAt: req.ExpiresAt,
-	}
-
-	if len(notification.Channels) == 0 {
-		notification.Channels = []models.DeliveryChannel{models.DeliveryChannelInGame}
-	}
-
-	notification, err := s.notificationRepo.Create(ctx, notification)
-	if err != nil {
-		return nil, err
-	}
-
-	cacheKey := "notifications:account:" + req.AccountID.String()
-	s.cache.Del(ctx, cacheKey)
-
-	return notification, nil
+	return s.notificationService.CreateNotification(ctx, req)
 }
 
 func (s *SocialService) GetNotifications(ctx context.Context, accountID uuid.UUID, limit, offset int) (*models.NotificationListResponse, error) {
-	cacheKey := "notifications:account:" + accountID.String() + ":limit:" + strconv.Itoa(limit) + ":offset:" + strconv.Itoa(offset)
-	
-	cached, err := s.cache.Get(ctx, cacheKey).Result()
-	if err == nil && cached != "" {
-		var response models.NotificationListResponse
-		if err := json.Unmarshal([]byte(cached), &response); err == nil {
-			return &response, nil
-		}
-	}
-
-	notifications, err := s.notificationRepo.GetByAccountID(ctx, accountID, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	total, err := s.notificationRepo.CountByAccountID(ctx, accountID)
-	if err != nil {
-		return nil, err
-	}
-
-	unread, err := s.notificationRepo.CountUnreadByAccountID(ctx, accountID)
-	if err != nil {
-		return nil, err
-	}
-
-	response := &models.NotificationListResponse{
-		Notifications: notifications,
-		Total:         total,
-		Unread:        unread,
-	}
-
-	responseJSON, _ := json.Marshal(response)
-	s.cache.Set(ctx, cacheKey, responseJSON, 1*time.Minute)
-
-	return response, nil
+	return s.notificationService.GetNotifications(ctx, accountID, limit, offset)
 }
 
 func (s *SocialService) GetNotification(ctx context.Context, notificationID uuid.UUID) (*models.Notification, error) {
-	return s.notificationRepo.GetByID(ctx, notificationID)
+	return s.notificationService.GetNotification(ctx, notificationID)
 }
 
 func (s *SocialService) UpdateNotificationStatus(ctx context.Context, notificationID uuid.UUID, status models.NotificationStatus) (*models.Notification, error) {
-	notification, err := s.notificationRepo.UpdateStatus(ctx, notificationID, status)
-	if err != nil {
-		return nil, err
-	}
+	return s.notificationService.UpdateNotificationStatus(ctx, notificationID, status)
+}
 
-	if notification != nil {
-		cacheKey := "notifications:account:" + notification.AccountID.String()
-		s.cache.Del(ctx, cacheKey)
-	}
+func (s *SocialService) GetNotificationPreferences(ctx context.Context, accountID uuid.UUID) (*models.NotificationPreferences, error) {
+	return s.notificationService.GetNotificationPreferences(ctx, accountID)
+}
 
-	return notification, nil
+func (s *SocialService) UpdateNotificationPreferences(ctx context.Context, prefs *models.NotificationPreferences) error {
+	return s.notificationService.UpdateNotificationPreferences(ctx, prefs)
 }
 
 func (s *SocialService) CreateMessage(ctx context.Context, message *models.ChatMessage) (*models.ChatMessage, error) {
-	ban, err := s.moderationService.CheckBan(ctx, message.SenderID, &message.ChannelID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to check ban")
-		return nil, err
-	}
-	if ban != nil {
-		return nil, errors.New("user is banned from this channel")
-	}
-
-	isSpam, err := s.moderationService.DetectSpam(ctx, message.SenderID, message.Content)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to detect spam")
-		return nil, err
-	}
-	if isSpam {
-		autoBan, err := s.moderationService.AutoBanIfSpam(ctx, message.SenderID, &message.ChannelID)
-		if err != nil {
-			s.logger.WithError(err).Error("Failed to create auto-ban for spam")
-		} else if autoBan != nil {
-			s.logger.WithField("character_id", message.SenderID).Warn("Auto-ban created for spam")
-		}
-		return nil, errors.New("message detected as spam")
-	}
-
-	filtered, hasViolation, err := s.moderationService.FilterMessage(ctx, message.Content)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to filter message")
-		return nil, err
-	}
-	message.Content = filtered
-
-	if hasViolation {
-		s.logger.WithField("sender_id", message.SenderID).Warn("Message filtered for violations")
-		
-		violationKey := "violations:character:" + message.SenderID.String()
-		violationCount, err := s.cache.Incr(ctx, violationKey).Result()
-		if err == nil {
-			if violationCount == 1 {
-				s.cache.Expire(ctx, violationKey, 1*time.Hour)
-			}
-			
-			if violationCount >= 3 {
-				autoBan, err := s.moderationService.AutoBanIfSevereViolation(ctx, message.SenderID, &message.ChannelID, int(violationCount))
-				if err != nil {
-					s.logger.WithError(err).Error("Failed to create auto-ban for severe violations")
-				} else if autoBan != nil {
-					s.logger.WithField("character_id", message.SenderID).Warn("Auto-ban created for severe violations")
-					s.cache.Del(ctx, violationKey)
-				}
-			}
-		}
-	}
-
-	return s.chatRepo.CreateMessage(ctx, message)
+	return s.chatService.CreateMessage(ctx, message)
 }
 
 func (s *SocialService) GetMessages(ctx context.Context, channelID uuid.UUID, limit, offset int) ([]models.ChatMessage, int, error) {
-	messages, err := s.chatRepo.GetMessagesByChannel(ctx, channelID, limit, offset)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	total, err := s.chatRepo.CountMessagesByChannel(ctx, channelID)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return messages, total, nil
+	return s.chatService.GetMessages(ctx, channelID, limit, offset)
 }
 
 func (s *SocialService) GetChannels(ctx context.Context, channelType *models.ChannelType) ([]models.ChatChannel, error) {
-	return s.chatRepo.GetChannels(ctx, channelType)
+	return s.chatService.GetChannels(ctx, channelType)
 }
 
 func (s *SocialService) GetChannel(ctx context.Context, channelID uuid.UUID) (*models.ChatChannel, error) {
-	return s.chatRepo.GetChannelByID(ctx, channelID)
+	return s.chatService.GetChannel(ctx, channelID)
 }
 
 func (s *SocialService) SendMail(ctx context.Context, req *models.CreateMailRequest, senderID *uuid.UUID, senderName string) (*models.MailMessage, error) {
-	now := time.Now()
-	expiresAt := (*time.Time)(nil)
-	if req.ExpiresIn != nil && *req.ExpiresIn > 0 {
-		exp := now.Add(time.Duration(*req.ExpiresIn) * 24 * time.Hour)
-		expiresAt = &exp
-	}
-
-	mail := &models.MailMessage{
-		ID:          uuid.New(),
-		SenderID:    senderID,
-		SenderName:  senderName,
-		RecipientID: req.RecipientID,
-		Type:        models.MailTypePlayer,
-		Subject:     req.Subject,
-		Content:     req.Content,
-		Attachments: req.Attachments,
-		CODAmount:   req.CODAmount,
-		Status:      models.MailStatusUnread,
-		IsRead:      false,
-		IsClaimed:    false,
-		SentAt:      now,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-		ExpiresAt:   expiresAt,
-	}
-
-	if senderID == nil {
-		mail.Type = models.MailTypeSystem
-	}
-
-	err := s.mailRepo.Create(ctx, mail)
-	if err != nil {
-		return nil, err
-	}
-
-	s.invalidateMailCache(ctx, req.RecipientID)
-
-	if s.eventBus != nil {
-		payload := map[string]interface{}{
-			"mail_id":     mail.ID.String(),
-			"sender_id":   nil,
-			"recipient_id": mail.RecipientID.String(),
-			"type":        string(mail.Type),
-			"subject":     mail.Subject,
-			"has_attachments": mail.Attachments != nil && len(mail.Attachments) > 0,
-			"timestamp":   mail.SentAt.Format(time.RFC3339),
-		}
-		if mail.SenderID != nil {
-			payload["sender_id"] = mail.SenderID.String()
-		}
-		s.eventBus.PublishEvent(ctx, "mail:sent", payload)
-
-		payload["status"] = string(mail.Status)
-		s.eventBus.PublishEvent(ctx, "mail:received", payload)
-	}
-
-	return mail, nil
+	return s.mailService.SendMail(ctx, req, senderID, senderName)
 }
 
 func (s *SocialService) GetMails(ctx context.Context, recipientID uuid.UUID, limit, offset int) (*models.MailListResponse, error) {
-	cacheKey := "mails:recipient:" + recipientID.String() + ":limit:" + strconv.Itoa(limit) + ":offset:" + strconv.Itoa(offset)
-
-	cached, err := s.cache.Get(ctx, cacheKey).Result()
-	if err == nil && cached != "" {
-		var response models.MailListResponse
-		if err := json.Unmarshal([]byte(cached), &response); err == nil {
-			return &response, nil
-		}
-	}
-
-	messages, err := s.mailRepo.GetByRecipientID(ctx, recipientID, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	total, err := s.mailRepo.CountByRecipientID(ctx, recipientID)
-	if err != nil {
-		return nil, err
-	}
-
-	unread, err := s.mailRepo.CountUnreadByRecipientID(ctx, recipientID)
-	if err != nil {
-		return nil, err
-	}
-
-	response := &models.MailListResponse{
-		Messages: messages,
-		Total:    total,
-		Unread:   unread,
-	}
-
-	responseJSON, _ := json.Marshal(response)
-	s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
-
-	return response, nil
+	return s.mailService.GetMails(ctx, recipientID, limit, offset)
 }
 
 func (s *SocialService) MarkMailAsRead(ctx context.Context, mailID uuid.UUID) error {
-	mail, err := s.mailRepo.GetByID(ctx, mailID)
-	if err != nil {
-		return err
-	}
-	if mail == nil {
-		return nil
-	}
-
-	now := time.Now()
-	err = s.mailRepo.UpdateStatus(ctx, mailID, models.MailStatusRead, &now)
-	if err != nil {
-		return err
-	}
-
-	s.invalidateMailCache(ctx, mail.RecipientID)
-	return nil
+	return s.mailService.MarkMailAsRead(ctx, mailID)
 }
 
 func (s *SocialService) ClaimAttachment(ctx context.Context, mailID uuid.UUID) (*models.ClaimAttachmentResponse, error) {
-	mail, err := s.mailRepo.GetByID(ctx, mailID)
-	if err != nil {
-		return nil, err
-	}
-	if mail == nil {
-		return &models.ClaimAttachmentResponse{Success: false}, nil
-	}
-
-	if mail.IsClaimed {
-		return &models.ClaimAttachmentResponse{Success: false}, nil
-	}
-
-	if mail.Attachments == nil || len(mail.Attachments) == 0 {
-		return &models.ClaimAttachmentResponse{Success: false}, nil
-	}
-
-	err = s.mailRepo.MarkAsClaimed(ctx, mailID)
-	if err != nil {
-		return nil, err
-	}
-
-	s.invalidateMailCache(ctx, mail.RecipientID)
-
-	if s.eventBus != nil {
-		payload := map[string]interface{}{
-			"mail_id":     mail.ID.String(),
-			"recipient_id": mail.RecipientID.String(),
-			"attachments": mail.Attachments,
-			"timestamp":   time.Now().Format(time.RFC3339),
-		}
-		s.eventBus.PublishEvent(ctx, "mail:attachment-claimed", payload)
-	}
-
-	items := make(map[string]interface{})
-	currency := make(map[string]int)
-
-	if attachments, ok := mail.Attachments["items"].([]interface{}); ok {
-		items["items"] = attachments
-	}
-	if attachments, ok := mail.Attachments["currency"].(map[string]interface{}); ok {
-		for k, v := range attachments {
-			if val, ok := v.(float64); ok {
-				currency[k] = int(val)
-			}
-		}
-	}
-
-	return &models.ClaimAttachmentResponse{
-		Success:  true,
-		Items:    items,
-		Currency: currency,
-	}, nil
+	return s.mailService.ClaimAttachment(ctx, mailID)
 }
 
 func (s *SocialService) DeleteMail(ctx context.Context, mailID uuid.UUID) error {
-	mail, err := s.mailRepo.GetByID(ctx, mailID)
-	if err != nil {
-		return err
-	}
-	if mail == nil {
-		return nil
-	}
-
-	err = s.mailRepo.Delete(ctx, mailID)
-	if err != nil {
-		return err
-	}
-
-	s.invalidateMailCache(ctx, mail.RecipientID)
-	return nil
+	return s.mailService.DeleteMail(ctx, mailID)
 }
 
 func (s *SocialService) GetMail(ctx context.Context, mailID uuid.UUID) (*models.MailMessage, error) {
-	return s.mailRepo.GetByID(ctx, mailID)
+	return s.mailService.GetMail(ctx, mailID)
 }
 
 func (s *SocialService) GetUnreadMailCount(ctx context.Context, recipientID uuid.UUID) (*models.UnreadMailCountResponse, error) {
-	unread, err := s.mailRepo.CountUnreadByRecipientID(ctx, recipientID)
-	if err != nil {
-		return nil, err
-	}
-	total, err := s.mailRepo.CountByRecipientID(ctx, recipientID)
-	if err != nil {
-		return nil, err
-	}
-	return &models.UnreadMailCountResponse{
-		UnreadCount: unread,
-		TotalCount:  total,
-	}, nil
+	return s.mailService.GetUnreadMailCount(ctx, recipientID)
 }
 
 func (s *SocialService) GetMailAttachments(ctx context.Context, mailID uuid.UUID) (*models.MailAttachmentsResponse, error) {
-	mail, err := s.mailRepo.GetByID(ctx, mailID)
-	if err != nil {
-		return nil, err
-	}
-	if mail == nil {
-		return nil, nil
-	}
-
-	attachments := []models.MailAttachment{}
-	if mail.Attachments != nil {
-		if items, ok := mail.Attachments["items"].([]interface{}); ok {
-			for _, item := range items {
-				if itemMap, ok := item.(map[string]interface{}); ok {
-					att := models.MailAttachment{
-						Type: "item",
-						Data: itemMap,
-					}
-					if itemID, ok := itemMap["item_id"].(string); ok {
-						att.ItemID = &itemID
-					}
-					if qty, ok := itemMap["quantity"].(float64); ok {
-						qtyInt := int(qty)
-						att.Quantity = &qtyInt
-					}
-					attachments = append(attachments, att)
-				}
-			}
-		}
-		if currency, ok := mail.Attachments["currency"].(map[string]interface{}); ok {
-			currencyMap := make(map[string]int)
-			for k, v := range currency {
-				if val, ok := v.(float64); ok {
-					currencyMap[k] = int(val)
-				}
-			}
-			if len(currencyMap) > 0 {
-				attachments = append(attachments, models.MailAttachment{
-					Type:     "currency",
-					Currency: currencyMap,
-				})
-			}
-		}
-	}
-
-	return &models.MailAttachmentsResponse{
-		MailID:      mailID,
-		Attachments: attachments,
-		HasCOD:      mail.CODAmount != nil && *mail.CODAmount > 0,
-		CODAmount:   mail.CODAmount,
-	}, nil
+	return s.mailService.GetMailAttachments(ctx, mailID)
 }
 
 func (s *SocialService) PayMailCOD(ctx context.Context, mailID uuid.UUID) (*models.ClaimAttachmentResponse, error) {
-	mail, err := s.mailRepo.GetByID(ctx, mailID)
-	if err != nil {
-		return nil, err
-	}
-	if mail == nil {
-		return &models.ClaimAttachmentResponse{Success: false}, nil
-	}
-
-	if mail.CODAmount == nil || *mail.CODAmount <= 0 {
-		return &models.ClaimAttachmentResponse{Success: false}, nil
-	}
-
-	if mail.IsClaimed {
-		return &models.ClaimAttachmentResponse{Success: false}, nil
-	}
-
-	err = s.mailRepo.MarkAsClaimed(ctx, mailID)
-	if err != nil {
-		return nil, err
-	}
-
-	s.invalidateMailCache(ctx, mail.RecipientID)
-
-	items := make(map[string]interface{})
-	currency := make(map[string]int)
-
-	if mail.Attachments != nil {
-		if attachments, ok := mail.Attachments["items"].([]interface{}); ok {
-			items["items"] = attachments
-		}
-		if attachments, ok := mail.Attachments["currency"].(map[string]interface{}); ok {
-			for k, v := range attachments {
-				if val, ok := v.(float64); ok {
-					currency[k] = int(val)
-				}
-			}
-		}
-	}
-
-	return &models.ClaimAttachmentResponse{
-		Success:  true,
-		Items:    items,
-		Currency: currency,
-	}, nil
+	return s.mailService.PayMailCOD(ctx, mailID)
 }
 
 func (s *SocialService) DeclineMailCOD(ctx context.Context, mailID uuid.UUID) error {
-	mail, err := s.mailRepo.GetByID(ctx, mailID)
-	if err != nil {
-		return err
-	}
-	if mail == nil {
-		return nil
-	}
-
-	if mail.CODAmount == nil || *mail.CODAmount <= 0 {
-		return nil
-	}
-
-	s.invalidateMailCache(ctx, mail.RecipientID)
-	return nil
+	return s.mailService.DeclineMailCOD(ctx, mailID)
 }
 
 func (s *SocialService) GetExpiringMails(ctx context.Context, recipientID uuid.UUID, days int, limit, offset int) (*models.MailListResponse, error) {
-	messages, err := s.mailRepo.GetExpiringMailsByDays(ctx, recipientID, days, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	total, err := s.mailRepo.CountByRecipientID(ctx, recipientID)
-	if err != nil {
-		return nil, err
-	}
-
-	unread, err := s.mailRepo.CountUnreadByRecipientID(ctx, recipientID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.MailListResponse{
-		Messages: messages,
-		Total:    total,
-		Unread:   unread,
-	}, nil
+	return s.mailService.GetExpiringMails(ctx, recipientID, days, limit, offset)
 }
 
 func (s *SocialService) ExtendMailExpiration(ctx context.Context, mailID uuid.UUID, days int) (*models.MailMessage, error) {
-	err := s.mailRepo.ExtendExpiration(ctx, mailID, days)
-	if err != nil {
-		return nil, err
-	}
-
-	mail, err := s.mailRepo.GetByID(ctx, mailID)
-	if err != nil {
-		return nil, err
-	}
-
-	if mail != nil {
-		s.invalidateMailCache(ctx, mail.RecipientID)
-	}
-
-	return mail, nil
+	return s.mailService.ExtendMailExpiration(ctx, mailID, days)
 }
 
 func (s *SocialService) SendSystemMail(ctx context.Context, req *models.SendSystemMailRequest) (*models.MailMessage, error) {
-	now := time.Now()
-	expiresAt := (*time.Time)(nil)
-	if req.ExpiresIn != nil && *req.ExpiresIn > 0 {
-		exp := now.Add(time.Duration(*req.ExpiresIn) * 24 * time.Hour)
-		expiresAt = &exp
-	}
-
-	mail := &models.MailMessage{
-		ID:          uuid.New(),
-		SenderID:    nil,
-		SenderName:  "System",
-		RecipientID: req.RecipientID,
-		Type:        req.Type,
-		Subject:     req.Title,
-		Content:     req.Content,
-		Attachments: req.Attachments,
-		Status:      models.MailStatusUnread,
-		IsRead:      false,
-		IsClaimed:    false,
-		SentAt:      now,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-		ExpiresAt:   expiresAt,
-	}
-
-	err := s.mailRepo.Create(ctx, mail)
-	if err != nil {
-		return nil, err
-	}
-
-	s.invalidateMailCache(ctx, req.RecipientID)
-
-	if s.eventBus != nil {
-		payload := map[string]interface{}{
-			"mail_id":      mail.ID.String(),
-			"recipient_id": mail.RecipientID.String(),
-			"type":         string(mail.Type),
-			"subject":      mail.Subject,
-			"timestamp":    mail.SentAt.Format(time.RFC3339),
-		}
-		s.eventBus.PublishEvent(ctx, "mail:system-sent", payload)
-	}
-
-	return mail, nil
+	return s.mailService.SendSystemMail(ctx, req)
 }
 
 func (s *SocialService) BroadcastSystemMail(ctx context.Context, req *models.BroadcastSystemMailRequest) (*models.BroadcastResult, error) {
-	result := &models.BroadcastResult{
-		TotalSent:       0,
-		TotalFailed:     0,
-		FailedRecipients: []string{},
-	}
-
-	if len(req.RecipientIDs) == 0 {
-		return result, nil
-	}
-
-	for _, recipientID := range req.RecipientIDs {
-		systemReq := &models.SendSystemMailRequest{
-			RecipientID: recipientID,
-			Type:        req.Type,
-			Title:       req.Title,
-			Content:     req.Content,
-			Attachments: req.Attachments,
-			ExpiresIn:   req.ExpiresIn,
-		}
-
-		_, err := s.SendSystemMail(ctx, systemReq)
-		if err != nil {
-			result.TotalFailed++
-			result.FailedRecipients = append(result.FailedRecipients, recipientID.String())
-		} else {
-			result.TotalSent++
-		}
-	}
-
-	return result, nil
-}
-
-func (s *SocialService) invalidateMailCache(ctx context.Context, recipientID uuid.UUID) {
-	pattern := "mails:recipient:" + recipientID.String() + ":*"
-	keys, _ := s.cache.Keys(ctx, pattern).Result()
-	if len(keys) > 0 {
-		s.cache.Del(ctx, keys...)
-	}
+	return s.mailService.BroadcastSystemMail(ctx, req)
 }
 
 func (s *SocialService) CreateBan(ctx context.Context, adminID uuid.UUID, req *models.CreateBanRequest) (*models.ChatBan, error) {
@@ -833,302 +310,62 @@ func (s *SocialService) ResolveReport(ctx context.Context, reportID uuid.UUID, a
 	return s.moderationService.ResolveReport(ctx, reportID, adminID, status)
 }
 
-func (s *SocialService) GetNotificationPreferences(ctx context.Context, accountID uuid.UUID) (*models.NotificationPreferences, error) {
-	return s.notificationPrefsRepo.GetByAccountID(ctx, accountID)
-}
-
-func (s *SocialService) UpdateNotificationPreferences(ctx context.Context, prefs *models.NotificationPreferences) error {
-	return s.notificationPrefsRepo.Update(ctx, prefs)
-}
-
 func (s *SocialService) SendFriendRequest(ctx context.Context, fromCharacterID uuid.UUID, req *models.SendFriendRequestRequest) (*models.Friendship, error) {
-	if fromCharacterID == req.ToCharacterID {
-		return nil, errors.New("cannot send friend request to yourself")
-	}
-
-	existing, err := s.friendRepo.GetFriendship(ctx, fromCharacterID, req.ToCharacterID)
-	if err != nil {
-		return nil, err
-	}
-	if existing != nil {
-		if existing.Status == models.FriendshipStatusAccepted {
-			return nil, errors.New("already friends")
-		}
-		if existing.Status == models.FriendshipStatusPending {
-			return nil, errors.New("friend request already pending")
-		}
-		if existing.Status == models.FriendshipStatusBlocked {
-			return nil, errors.New("cannot send friend request to blocked user")
-		}
-	}
-
-	friendship, err := s.friendRepo.CreateRequest(ctx, fromCharacterID, req.ToCharacterID)
-	if err != nil {
-		return nil, err
-	}
-
-	if s.eventBus != nil {
-		payload := map[string]interface{}{
-			"friendship_id":   friendship.ID.String(),
-			"from_character_id": fromCharacterID.String(),
-			"to_character_id":   req.ToCharacterID.String(),
-			"status":          string(friendship.Status),
-			"timestamp":       time.Now().Format(time.RFC3339),
-		}
-		s.eventBus.PublishEvent(ctx, "friend:request-sent", payload)
-	}
-
-	if s.notificationRepo != nil {
-		notificationReq := &models.CreateNotificationRequest{
-			AccountID: req.ToCharacterID,
-			Type:      models.NotificationTypeFriend,
-			Priority:  models.NotificationPriorityMedium,
-			Title:     "New Friend Request",
-			Content:   "You have received a friend request",
-			Data: map[string]interface{}{
-				"friendship_id":    friendship.ID.String(),
-				"from_character_id": fromCharacterID.String(),
-			},
-			Channels: []models.DeliveryChannel{models.DeliveryChannelInGame, models.DeliveryChannelWebSocket},
-		}
-		s.notificationRepo.Create(ctx, &models.Notification{
-			ID:        uuid.New(),
-			AccountID: notificationReq.AccountID,
-			Type:      notificationReq.Type,
-			Priority:  notificationReq.Priority,
-			Title:     notificationReq.Title,
-			Content:   notificationReq.Content,
-			Data:      notificationReq.Data,
-			Status:    models.NotificationStatusUnread,
-			Channels:  notificationReq.Channels,
-			CreatedAt: time.Now(),
-		})
-	}
-
-	return friendship, nil
+	return s.friendService.SendFriendRequest(ctx, fromCharacterID, req)
 }
 
 func (s *SocialService) AcceptFriendRequest(ctx context.Context, characterID uuid.UUID, requestID uuid.UUID) (*models.Friendship, error) {
-	friendship, err := s.friendRepo.GetByID(ctx, requestID)
-	if err != nil {
-		return nil, err
-	}
-	if friendship == nil {
-		return nil, errors.New("friend request not found")
-	}
-
-	if friendship.CharacterAID != characterID && friendship.CharacterBID != characterID {
-		return nil, errors.New("not authorized to accept this request")
-	}
-
-	if friendship.Status != models.FriendshipStatusPending {
-		return nil, errors.New("friend request is not pending")
-	}
-
-	accepted, err := s.friendRepo.AcceptRequest(ctx, requestID)
-	if err != nil {
-		return nil, err
-	}
-	if accepted == nil {
-		return nil, errors.New("failed to accept friend request")
-	}
-
-	if s.eventBus != nil {
-		payload := map[string]interface{}{
-			"friendship_id":   accepted.ID.String(),
-			"character_a_id":  accepted.CharacterAID.String(),
-			"character_b_id":  accepted.CharacterBID.String(),
-			"initiator_id":    accepted.InitiatorID.String(),
-			"status":          string(accepted.Status),
-			"timestamp":       time.Now().Format(time.RFC3339),
-		}
-		s.eventBus.PublishEvent(ctx, "friend:request-accepted", payload)
-	}
-
-	return accepted, nil
+	return s.friendService.AcceptFriendRequest(ctx, characterID, requestID)
 }
 
 func (s *SocialService) RejectFriendRequest(ctx context.Context, characterID uuid.UUID, requestID uuid.UUID) error {
-	friendship, err := s.friendRepo.GetByID(ctx, requestID)
-	if err != nil {
-		return err
-	}
-	if friendship == nil {
-		return errors.New("friend request not found")
-	}
-
-	if friendship.CharacterAID != characterID && friendship.CharacterBID != characterID {
-		return errors.New("not authorized to reject this request")
-	}
-
-	return s.friendRepo.Delete(ctx, requestID)
+	return s.friendService.RejectFriendRequest(ctx, characterID, requestID)
 }
 
 func (s *SocialService) RemoveFriend(ctx context.Context, characterID uuid.UUID, friendID uuid.UUID) error {
-	friendship, err := s.friendRepo.GetFriendship(ctx, characterID, friendID)
-	if err != nil {
-		return err
-	}
-	if friendship == nil {
-		return errors.New("friendship not found")
-	}
-
-	if friendship.Status != models.FriendshipStatusAccepted {
-		return errors.New("not friends")
-	}
-
-	return s.friendRepo.Delete(ctx, friendship.ID)
+	return s.friendService.RemoveFriend(ctx, characterID, friendID)
 }
 
 func (s *SocialService) BlockFriend(ctx context.Context, characterID uuid.UUID, targetID uuid.UUID) (*models.Friendship, error) {
-	if characterID == targetID {
-		return nil, errors.New("cannot block yourself")
-	}
-
-	friendship, err := s.friendRepo.GetFriendship(ctx, characterID, targetID)
-	if err != nil {
-		return nil, err
-	}
-
-	if friendship == nil {
-		friendship, err = s.friendRepo.CreateRequest(ctx, characterID, targetID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	blocked, err := s.friendRepo.Block(ctx, friendship.ID)
-	if err != nil {
-		return nil, err
-	}
-	if blocked == nil {
-		return nil, errors.New("failed to block friend")
-	}
-
-	return blocked, nil
+	return s.friendService.BlockFriend(ctx, characterID, targetID)
 }
 
 func (s *SocialService) GetFriends(ctx context.Context, characterID uuid.UUID) (*models.FriendListResponse, error) {
-	friendships, err := s.friendRepo.GetByCharacterID(ctx, characterID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.FriendListResponse{
-		Friends: friendships,
-		Total:   len(friendships),
-	}, nil
+	return s.friendService.GetFriends(ctx, characterID)
 }
 
 func (s *SocialService) GetFriendRequests(ctx context.Context, characterID uuid.UUID) ([]models.Friendship, error) {
-	return s.friendRepo.GetPendingRequests(ctx, characterID)
+	return s.friendService.GetFriendRequests(ctx, characterID)
 }
 
 func (s *SocialService) CreatePlayerOrder(ctx context.Context, customerID uuid.UUID, req *models.CreatePlayerOrderRequest) (*models.PlayerOrder, error) {
-	order := &models.PlayerOrder{
-		ID:          uuid.New(),
-		CustomerID:  customerID,
-		OrderType:   req.OrderType,
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      models.OrderStatusOpen,
-		Reward:      req.Reward,
-		Requirements: req.Requirements,
-		Deadline:    req.Deadline,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-
-	if err := s.orderRepo.Create(ctx, order); err != nil {
-		return nil, err
-	}
-
-	return s.orderRepo.GetByID(ctx, order.ID)
+	return s.orderService.CreatePlayerOrder(ctx, customerID, req)
 }
 
 func (s *SocialService) GetPlayerOrders(ctx context.Context, orderType *models.OrderType, status *models.OrderStatus, limit, offset int) (*models.PlayerOrdersResponse, error) {
-	orders, err := s.orderRepo.List(ctx, orderType, status, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	total, err := s.orderRepo.Count(ctx, orderType, status)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.PlayerOrdersResponse{
-		Orders: orders,
-		Total:  total,
-	}, nil
+	return s.orderService.GetPlayerOrders(ctx, orderType, status, limit, offset)
 }
 
 func (s *SocialService) GetPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error) {
-	return s.orderRepo.GetByID(ctx, orderID)
+	return s.orderService.GetPlayerOrder(ctx, orderID)
 }
 
 func (s *SocialService) AcceptPlayerOrder(ctx context.Context, orderID, executorID uuid.UUID) (*models.PlayerOrder, error) {
-	if err := s.orderRepo.AcceptOrder(ctx, orderID, executorID); err != nil {
-		return nil, err
-	}
-
-	return s.orderRepo.GetByID(ctx, orderID)
+	return s.orderService.AcceptPlayerOrder(ctx, orderID, executorID)
 }
 
 func (s *SocialService) StartPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error) {
-	if err := s.orderRepo.StartOrder(ctx, orderID); err != nil {
-		return nil, err
-	}
-
-	return s.orderRepo.GetByID(ctx, orderID)
+	return s.orderService.StartPlayerOrder(ctx, orderID)
 }
 
 func (s *SocialService) CompletePlayerOrder(ctx context.Context, orderID uuid.UUID, req *models.CompletePlayerOrderRequest) (*models.PlayerOrder, error) {
-	if !req.Success {
-		return nil, errors.New("order completion requires success=true")
-	}
-
-	if err := s.orderRepo.CompleteOrder(ctx, orderID); err != nil {
-		return nil, err
-	}
-
-	return s.orderRepo.GetByID(ctx, orderID)
+	return s.orderService.CompletePlayerOrder(ctx, orderID, req)
 }
 
 func (s *SocialService) CancelPlayerOrder(ctx context.Context, orderID uuid.UUID) (*models.PlayerOrder, error) {
-	if err := s.orderRepo.CancelOrder(ctx, orderID); err != nil {
-		return nil, err
-	}
-
-	return s.orderRepo.GetByID(ctx, orderID)
+	return s.orderService.CancelPlayerOrder(ctx, orderID)
 }
 
 func (s *SocialService) ReviewPlayerOrder(ctx context.Context, orderID, reviewerID uuid.UUID, req *models.ReviewPlayerOrderRequest) (*models.PlayerOrderReview, error) {
-	order, err := s.orderRepo.GetByID(ctx, orderID)
-	if err != nil {
-		return nil, err
-	}
-	if order == nil {
-		return nil, errors.New("order not found")
-	}
-
-	if order.Status != models.OrderStatusCompleted {
-		return nil, errors.New("can only review completed orders")
-	}
-
-	review := &models.PlayerOrderReview{
-		ID:         uuid.New(),
-		OrderID:    orderID,
-		ReviewerID: reviewerID,
-		ExecutorID: req.ExecutorID,
-		Rating:     req.Rating,
-		Comment:    req.Comment,
-		CreatedAt:  time.Now(),
-	}
-
-	if err := s.orderRepo.CreateReview(ctx, review); err != nil {
-		return nil, err
-	}
-
-	return review, nil
+	return s.orderService.ReviewPlayerOrder(ctx, orderID, reviewerID, req)
 }

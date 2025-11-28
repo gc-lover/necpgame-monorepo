@@ -74,7 +74,9 @@ func (r *MailRepository) GetByID(ctx context.Context, mailID uuid.UUID) (*models
 
 	mail.SenderID = senderID
 	if len(attachmentsJSON) > 0 {
-		json.Unmarshal(attachmentsJSON, &mail.Attachments)
+		if err := json.Unmarshal(attachmentsJSON, &mail.Attachments); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal attachments JSON")
+		}
 	}
 
 	return &mail, nil
@@ -114,7 +116,9 @@ func (r *MailRepository) GetByRecipientID(ctx context.Context, recipientID uuid.
 
 		mail.SenderID = senderID
 		if len(attachmentsJSON) > 0 {
-			json.Unmarshal(attachmentsJSON, &mail.Attachments)
+			if err := json.Unmarshal(attachmentsJSON, &mail.Attachments); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal attachments JSON")
+			}
 		}
 
 		messages = append(messages, mail)
@@ -209,7 +213,9 @@ func (r *MailRepository) GetExpiredMails(ctx context.Context, before time.Time) 
 
 		mail.SenderID = senderID
 		if len(attachmentsJSON) > 0 {
-			json.Unmarshal(attachmentsJSON, &mail.Attachments)
+			if err := json.Unmarshal(attachmentsJSON, &mail.Attachments); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal attachments JSON")
+			}
 		}
 
 		messages = append(messages, mail)

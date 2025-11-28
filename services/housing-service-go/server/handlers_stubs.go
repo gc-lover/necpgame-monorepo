@@ -79,3 +79,7 @@ func (h *HousingHandlers) PurchaseFurnitureFromShop(w http.ResponseWriter, r *ht
 	h.respondError(w, http.StatusNotImplemented, "PurchaseFurnitureFromShop not implemented")
 }
 
+
+
+
+

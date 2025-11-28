@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+  title: Announcement News Feed Service API
+  description: API для новостной ленты объявлений
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: News Feed
+    description: Новостная лента
+
+paths:
+  /announcements/news-feed:
+    get:
+      tags:
+        - News Feed
+      summary: Получить новостную ленту
+      description: Получить новостную ленту объявлений для персонажа
+      operationId: getNewsFeed
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Новостная лента
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feed:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NewsFeedItem'
+                  total:
+                    type: integer
+                    description: Общее количество элементов в ленте
+              examples:
+                example1:
+                  value:
+                    feed:
+                      - announcement_id: "550e8400-e29b-41d4-a716-446655440000"
+                        type: "GAME_NEWS"
+                        title: "Новое обновление"
+                        preview: "Описание обновления..."
+                        is_read: false
+                        published_at: "2025-11-27T10:00:00Z"
+                    total: 1
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    NewsFeedItem:
+      type: object
+      description: Элемент новостной ленты
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+          description: ID объявления
+        type:
+          type: string
+          enum:
+            - GAME_NEWS
+            - PATCH_NOTES
+            - MAINTENANCE
+            - EVENT
+            - PROMOTION
+            - COMMUNITY
+            - EMERGENCY
+          description: Тип объявления
+        title:
+          type: string
+          description: Заголовок объявления
+        preview:
+          type: string
+          description: Превью содержания
+        media_url:
+          type: string
+          nullable: true
+          description: URL медиа файла
+        is_read:
+          type: boolean
+          description: Прочитано ли объявление
+        published_at:
+          type: string
+          format: date-time
+          description: Время публикации
+

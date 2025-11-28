@@ -7,7 +7,7 @@ metadata:
   category: side_quest
   quest_type: side
   status: active
-  version: "1.0.0"
+  version: "1.1.0"
   timeline: 2020-2029
   year: 2023
   season: spring
@@ -80,6 +80,77 @@ requirements:
     - skill: negotiation
       min_value: 0.5
       description: Deal with bookmakers, mediators
+
+quest_definition:
+  quest_type: side
+  level_min: 12
+  level_max: 28
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements:
+      - skill: empathy
+        min_value: 0.6
+      - skill: negotiation
+        min_value: 0.5
+  objectives:
+    - id: obj-001
+      text: "Understand Marcus's situation"
+      type: dialogue
+      target: marcus_johnson
+      optional: false
+    - id: obj-002
+      text: "Choose approach to help"
+      type: choice
+      target: help_strategy
+      optional: false
+    - id: obj-003
+      text: "Execute chosen plan"
+      type: interact
+      target: game_night
+      optional: false
+    - id: obj-004
+      text: "Face consequences"
+      type: dialogue
+      target: resolution
+      optional: false
+  rewards:
+    experience: 4000
+    currency: 5000
+    reputation:
+      miami: 20
+    unlocks:
+      - type: achievement
+        id: family_protector
+  branches:
+    - id: attend_game
+      condition: strategy == "attend"
+      consequences:
+        father_son_bond: preserved
+        debt_remains: true
+      rewards:
+        experience: 6000
+        reputation:
+          family: 3000
+    - id: sell_tickets
+      condition: strategy == "sell"
+      consequences:
+        debt_partial: paid
+        bond_damaged: true
+      rewards:
+        experience: 4000
+        currency: 20000
+    - id: bet_tickets
+      condition: strategy == "bet"
+      consequences:
+        debt_cleared: possible
+        bond_destroyed: possible
+      rewards:
+        experience: 8000
+        currency: 85000
+        risk: high
 
 story:
   background: |
@@ -491,6 +562,16 @@ notes:
     possible (death, estrangement, bankruptcy). Player can't fix addiction directly -
     only help navigate crisis. Realistic portrayal: Addiction progressive disease,
     shame powerful barrier, family impact devastating, recovery requires honesty/help.
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-26
+    author: content_writer
+    changes: "Создан квест «Последний бросок» о зависимости от азартных игр и семейных связях."
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов. Примечание: файл превышает 500 строк, рекомендуется оптимизация."
     Tommy's innocence contrasts Marcus's guilt poignantly. Basketball bond beautiful
     despite addiction taint. No perfect solutions - least destructive path varies
     player values. Attend game emotionally satisfying але dangerous. Sell tickets

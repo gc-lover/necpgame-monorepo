@@ -311,10 +311,12 @@
 
 ### Контентные задачи (НЕ требуют архитектуры):
 ```
-[Idea Writer] → [Content Writer] → [QA] → [Release]
-     ↓                ↓              ↓         ↓
-   idea-writer   content-writer   testing  release
+[Idea Writer] → [Content Writer] → [Backend Developer] → [QA] → [Release]
+     ↓                ↓                    ↓                ↓         ↓
+   idea-writer   content-writer        backend-dev       testing  release
 ```
+
+**Важно:** Content Writer создает YAML файл квеста, затем Backend Developer импортирует его в БД через API endpoint `POST /api/v1/gameplay/quests/content/import`, затем QA тестирует.
 
 ### Дополнительные агенты
 

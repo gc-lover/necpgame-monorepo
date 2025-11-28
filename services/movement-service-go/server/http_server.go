@@ -6,28 +6,20 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/necpgame/movement-service-go/models"
 	"github.com/necpgame/movement-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
-type MovementServiceInterface interface {
-	GetPosition(ctx context.Context, characterID uuid.UUID) (*models.CharacterPosition, error)
-	SavePosition(ctx context.Context, characterID uuid.UUID, req *models.SavePositionRequest) (*models.CharacterPosition, error)
-	GetPositionHistory(ctx context.Context, characterID uuid.UUID, limit int) ([]models.PositionHistory, error)
-}
-
 type HTTPServer struct {
 	addr            string
 	router          *mux.Router
-	movementService MovementServiceInterface
+	movementService *MovementService
 	logger          *logrus.Logger
 	server          *http.Server
 }
 
-func NewHTTPServer(addr string, movementService MovementServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, movementService *MovementService) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:            addr,
@@ -42,8 +34,14 @@ func NewHTTPServer(addr string, movementService MovementServiceInterface) *HTTPS
 
 	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 
-	handlers := NewMovementHandlers(movementService)
-	HandlerFromMux(handlers, apiRouter)
+	handlers := NewHandlers(movementService)
+	api.HandlerWithOptions(handlers, api.GorillaServerOptions{
+		BaseRouter: apiRouter.PathPrefix("/movement").Subrouter(),
+		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		},
+	})
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -98,7 +96,9 @@ func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		s.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {

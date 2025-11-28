@@ -60,6 +60,8 @@ func (s *InventoryService) GetInventory(ctx context.Context, characterID uuid.UU
 		var response models.InventoryResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
+		} else {
+			s.logger.WithError(err).Error("Failed to unmarshal cached inventory JSON")
 		}
 	}
 
@@ -87,8 +89,12 @@ func (s *InventoryService) GetInventory(ctx context.Context, characterID uuid.UU
 		Items:     items,
 	}
 
-	responseJSON, _ := json.Marshal(response)
-	s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to marshal inventory response JSON")
+	} else {
+		s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	}
 
 	return response, nil
 }

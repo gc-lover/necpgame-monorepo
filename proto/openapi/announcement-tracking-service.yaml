@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: Announcement Tracking Service API
+  description: API для отслеживания прочтений, кликов и статистики объявлений
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Announcement Tracking
+    description: Учёт прочтений и статистика
+
+paths:
+  /announcements/{announcementId}/read:
+    post:
+      tags:
+        - Announcement Tracking
+      summary: Отметить объявление как прочитанное
+      description: Отметить объявление как прочитанное игроком
+      operationId: markAnnouncementAsRead
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Данные для отметки прочтения
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkReadRequest'
+            examples:
+              example1:
+                value:
+                  player_id: "550e8400-e29b-41d4-a716-446655440001"
+                  delivery_channel: "NEWS_FEED"
+      responses:
+        '200':
+          description: Объявление отмечено как прочитанное
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: read
+              examples:
+                example1:
+                  value:
+                    status: "read"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/click:
+    post:
+      tags:
+        - Announcement Tracking
+      summary: Отследить клик по объявлению
+      description: Зафиксировать клик игрока по объявлению (требуются права администратора для просмотра)
+      operationId: trackAnnouncementClick
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Данные для отслеживания клика
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackClickRequest'
+            examples:
+              example1:
+                value:
+                  player_id: "550e8400-e29b-41d4-a716-446655440001"
+                  delivery_channel: "NEWS_FEED"
+      responses:
+        '200':
+          description: Клик зафиксирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: tracked
+              examples:
+                example1:
+                  value:
+                    status: "tracked"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/stats:
+    get:
+      tags:
+        - Announcement Tracking
+      summary: Получить статистику объявления
+      description: Получить статистику просмотров, прочтений и кликов по объявлению (требуются права администратора)
+      operationId: getAnnouncementStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика объявления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementStats'
+              examples:
+                example1:
+                  value:
+                    announcement_id: "550e8400-e29b-41d4-a716-446655440000"
+                    total_views: 2000
+                    total_reads: 1500
+                    total_clicks: 300
+                    total_hides: 50
+                    read_rate: 75.0
+                    click_rate: 20.0
+                    stats_by_channel:
+                      NEWS_FEED:
+                        views: 2000
+                        reads: 1500
+                        clicks: 300
+                        hides: 50
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    MarkReadRequest:
+      type: object
+      required:
+        - player_id
+      description: Запрос на отметку прочтения
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        delivery_channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+          description: Канал доставки, через который было прочитано объявление
+
+    TrackClickRequest:
+      type: object
+      required:
+        - player_id
+      description: Запрос на отслеживание клика
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        delivery_channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+          description: Канал доставки, через который был совершен клик
+
+    AnnouncementStats:
+      type: object
+      description: Статистика объявления
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+          description: ID объявления
+        total_views:
+          type: integer
+          description: Общее количество просмотров
+        total_reads:
+          type: integer
+          description: Общее количество прочтений
+        total_clicks:
+          type: integer
+          description: Общее количество кликов
+        total_hides:
+          type: integer
+          description: Общее количество скрытий
+        read_rate:
+          type: number
+          format: float
+          description: Процент прочтений от просмотров
+        click_rate:
+          type: number
+          format: float
+          description: Процент кликов от прочтений
+        stats_by_channel:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChannelStats'
+          description: Статистика по каналам доставки
+
+    ChannelStats:
+      type: object
+      description: Статистика по каналу
+      properties:
+        views:
+          type: integer
+          description: Количество просмотров
+        reads:
+          type: integer
+          description: Количество прочтений
+        clicks:
+          type: integer
+          description: Количество кликов
+        hides:
+          type: integer
+          description: Количество скрытий
+

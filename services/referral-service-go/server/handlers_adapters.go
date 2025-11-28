@@ -100,7 +100,7 @@ func toAPIReferralStats(stats *models.ReferralStats) api.ReferralStats {
 	}
 
 	apiPlayerID := openapi_types.UUID(stats.PlayerID)
-	
+
 	var apiCurrentMilestone *api.ReferralStatsCurrentMilestone
 	if stats.CurrentMilestone != nil {
 		ms := api.ReferralStatsCurrentMilestone(string(*stats.CurrentMilestone))
@@ -124,7 +124,7 @@ func toAPILeaderboardEntry(entry *models.ReferralLeaderboardEntry) api.ReferralL
 	}
 
 	apiPlayerID := openapi_types.UUID(entry.PlayerID)
-	
+
 	var apiCurrentMilestone *api.ReferralLeaderboardEntryCurrentMilestone
 	if entry.CurrentMilestone != nil {
 		ms := api.ReferralLeaderboardEntryCurrentMilestone(string(*entry.CurrentMilestone))

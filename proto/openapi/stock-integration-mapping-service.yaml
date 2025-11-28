@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: Stock Integration Mapping Service API
+  description: API для маппинга событий на акции и журнала интеграций
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: mapping
+    description: Маппинг событий на акции
+  - name: journal
+    description: Журнал интеграций
+
+paths:
+  /stocks/integration/mapping:
+    get:
+      tags:
+        - mapping
+      summary: Получить маппинги событий на акции
+      description: |
+        Возвращает правила маппинга событий на влияние акций.
+      operationId: getEventMappings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_type
+          in: query
+          required: false
+          description: Фильтр по типу события
+          schema:
+            type: string
+            enum:
+              - quest_completed
+              - faction_war
+              - world_event
+              - tech_breakthrough
+              - corporate_scandal
+        - name: corporation_id
+          in: query
+          required: false
+          description: Фильтр по ID корпорации
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Маппинги успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EventMapping"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /stocks/integration/journal:
+    get:
+      tags:
+        - journal
+      summary: Получить журнал интеграционных событий
+      description: |
+        Возвращает историю обработанных событий от внешних систем.
+      operationId: getIntegrationJournal
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: source
+          in: query
+          required: false
+          description: Источник события
+          schema:
+            type: string
+            enum: [quest_service, faction_service, economy_events, manual]
+        - name: status
+          in: query
+          required: false
+          description: Статус обработки
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+        - name: from_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Журнал успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/JournalEntry"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    EventMapping:
+      type: object
+      description: Правило маппинга события на акцию
+      required:
+        - id
+        - event_type
+        - condition
+        - impact_formula
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - quest_completed
+            - faction_war
+            - world_event
+            - tech_breakthrough
+            - corporate_scandal
+        condition:
+          type: object
+          description: Условия срабатывания маппинга
+          properties:
+            quest_id_pattern:
+              type: string
+              description: Regex паттерн для quest_id
+            outcome:
+              type: string
+              enum: [success, failure, partial, any]
+            corporation_id:
+              type: string
+              format: uuid
+            faction_id:
+              type: string
+            severity:
+              type: string
+              enum: [low, medium, high, critical]
+        impact_formula:
+          type: object
+          description: Формула расчета влияния
+          properties:
+            base_impact_percent:
+              type: number
+              format: double
+            modifiers:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  multiplier:
+                    type: number
+                    format: double
+        status:
+          type: string
+          enum: [active, inactive, deprecated]
+        priority:
+          type: integer
+          description: Приоритет (для конфликтов)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    JournalEntry:
+      type: object
+      description: Запись журнала интеграций
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [quest_service, faction_service, economy_events, manual]
+        event_id:
+          type: string
+        event_type:
+          type: string
+        payload:
+          type: object
+          description: Оригинальный payload события
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        processing_started_at:
+          type: string
+          format: date-time
+        processing_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        processing_duration_ms:
+          type: integer
+          description: Длительность обработки в миллисекундах
+        affected_stocks_count:
+          type: integer
+          description: Количество затронутых акций
+        error_message:
+          type: string
+          nullable: true
+          description: Сообщение об ошибке (если failed)
+        created_at:
+          type: string
+          format: date-time
+

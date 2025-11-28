@@ -1,13 +1,13 @@
 metadata:
   id: quest-vegas-2029-casino-gambling
-  title: 'Лас-Вегас 2020-2029 — Казино и азарт'
+  title: "Лас-Вегас 2020-2029 — Казино и азарт"
   document_type: canon
   category: timeline-quest
-  status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-12T00:00:00Z
+  status: approved
+  version: "1.1.0"
+  last_updated: 2025-11-23T19:00:00Z
   concept_approved: false
-  concept_reviewed_at: ''
+  concept_reviewed_at: ""
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -37,8 +37,8 @@ metadata:
 review:
   chain:
     - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
+      reviewer: ""
+      reviewed_at: ""
       status: pending
   next_actions: []
 summary:
@@ -49,6 +49,65 @@ summary:
     - Казино Вегаса создают специально сконструированную среду: отсутствие часов, бесплатные напитки.
     - «House always wins» задаёт риск-профиль и вероятность проигрыша.
     - Квест даёт переменный финансовый результат и влияет на зависимость персонажа.
+quest_definition:
+  quest_type: side
+  level_min: 3
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: enter_casino
+      text: "Войти в одно из казино (Bellagio, Caesars Palace) и получить стартовые фишки"
+      type: interact
+      target: casino_entrance
+      optional: false
+    - id: choose_games
+      text: "Определить лимиты и выбрать последовательность игр (слоты, блэкджек, рулетка, покер)"
+      type: dialogue
+      target: casino_dealer
+      optional: false
+    - id: experience_casino_environment
+      text: "Испытать влияние бесплатных напитков и отсутствие часов"
+      type: interact
+      target: casino_bar
+      optional: false
+    - id: make_gambling_choice
+      text: "Сделать выбор: остановиться в плюсе или продолжить до проигрыша"
+      type: choice
+      target: gambling_table
+      optional: false
+    - id: report_results
+      text: "Отчитаться перед фракцией о результатах и уроках риск-менеджмента"
+      type: dialogue
+      target: faction_contact
+      optional: false
+  rewards:
+    experience: 2000
+    currency:
+      min: -500
+      max: 5000
+      random: true
+    reputation:
+      las_vegas: 15
+    unlocks:
+      - type: achievement
+        id: vegas_gambler
+  branches:
+    - id: stop_winning
+      condition: choice_made == "stop_winning"
+      consequences:
+        reputation:
+          las_vegas: 5
+        currency_bonus: 500
+    - id: continue_losing
+      condition: choice_made == "continue_losing"
+      consequences:
+        reputation:
+          las_vegas: -5
+        addiction_risk: 10
 content:
   sections:
     - id: overview
@@ -105,11 +164,14 @@ implementation:
   queue_reference: []
   blockers: []
 history:
-  - version: '1.0.0'
+  - version: "1.0.0"
     date: 2025-11-12
     author: concept_team
     changes: Конвертирован квест «Казино и азарт» в формат знаний.
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
 validation:
-  checksum: ''
-  schema_version: '1.0'
-
+  checksum: ""
+  schema_version: "1.0"

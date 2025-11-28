@@ -1,0 +1,599 @@
+openapi: 3.0.3
+info:
+  title: Combat Combos Catalog & Activation Service API
+  description: API для каталога и активации комбо с синергиями
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083
+    description: Локальный сервер разработки
+  - url: https://api.necp.game
+    description: Продакшен сервер
+
+tags:
+  - name: Combo Catalog
+    description: Каталог комбо
+  - name: Combo Activation
+    description: Активация комбо и синергий
+
+paths:
+  /api/v1/gameplay/combat/combos/catalog:
+    get:
+      tags:
+        - Combo Catalog
+      summary: Получить каталог комбо
+      description: Возвращает список всех доступных комбо с фильтрацией
+      operationId: getComboCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: combo_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - solo
+              - team
+              - legendary
+          description: Фильтр по типу комбо
+        - name: complexity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - Bronze
+              - Silver
+              - Gold
+              - Platinum
+              - Legendary
+          description: Фильтр по сложности
+        - name: character_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа для проверки доступности
+      responses:
+        "200":
+          description: Каталог комбо
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboCatalogResponse"
+              examples:
+                catalog:
+                  summary: Пример каталога
+                  value:
+                    combos:
+                      - combo_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                        name: "Aerial Devastation"
+                        description: "Devastating aerial attack combo"
+                        combo_type: "solo"
+                        complexity: "Gold"
+                        requirements:
+                          min_level: 15
+                          required_abilities: ["ability-dash", "ability-slam"]
+                        cooldown: 30
+                        chain_compatible: true
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/combos/{comboId}:
+    get:
+      tags:
+        - Combo Catalog
+      summary: Получить информацию о комбо
+      description: Возвращает детальную информацию о конкретном комбо
+      operationId: getComboById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: comboId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID комбо
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      responses:
+        "200":
+          description: Информация о комбо
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboDetail"
+              examples:
+                combo_detail:
+                  summary: Детали комбо
+                  value:
+                    combo_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                    name: "Aerial Devastation"
+                    description: "Devastating aerial attack combo"
+                    combo_type: "solo"
+                    complexity: "Gold"
+                    requirements:
+                      min_level: 15
+                      required_abilities:
+                        - "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                    sequence:
+                      - action_type: "ability"
+                        action_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                        timing_window: 2000
+                      - action_type: "ability"
+                        action_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                        timing_window: 1500
+                    bonuses:
+                      damage_multiplier: 2.5
+                      cooldown_reduction: 10
+                    cooldown: 30
+                    chain_compatible: true
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/combos/activate:
+    post:
+      tags:
+        - Combo Activation
+      summary: Активировать комбо
+      description: Активирует комбо на основе выполненной последовательности действий
+      operationId: activateCombo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComboActivationRequest"
+            examples:
+              solo_combo:
+                summary: Соло комбо
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  combo_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  action_sequence:
+                    - action_type: "ability"
+                      action_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+                      timestamp: "2025-11-26T15:30:00Z"
+                    - action_type: "ability"
+                      action_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+                      timestamp: "2025-11-26T15:30:01.5Z"
+              team_combo:
+                summary: Командное комбо
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  combo_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+                  action_sequence:
+                    - action_type: "ability"
+                      action_id: "a7b8c9d0-e1f2-3456-7890-123456a01235"
+                      timestamp: "2025-11-26T15:30:00Z"
+                  participants:
+                    - "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                    - "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+      responses:
+        "200":
+          description: Комбо активировано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComboActivationResponse"
+              examples:
+                success:
+                  summary: Успешная активация
+                  value:
+                    success: true
+                    activation_id: "b8c9d0e1-f2a3-4567-8901-234567b01236"
+                    bonuses_applied:
+                      damage_multiplier: 2.5
+                      cooldown_reduction: 10
+                    synergies_triggered: 2
+                    chain_possible: true
+                    message: "Combo activated successfully"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Комбо недоступно или требования не выполнены
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/combos/synergy:
+    post:
+      tags:
+        - Combo Activation
+      summary: Применить синергию
+      description: Применяет синергию между комбо, способностями, имплантами или экипировкой
+      operationId: applyCombinationSynergy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SynergyApplicationRequest"
+            examples:
+              ability_synergy:
+                summary: Синергия способностей
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  synergy_type: "ability"
+                  combo_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  ability_ids:
+                    - "d4e5f6a7-b8c9-0123-4567-890123def012"
+                    - "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+              equipment_synergy:
+                summary: Синергия экипировки
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  synergy_type: "equipment"
+                  combo_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+                  equipment_ids:
+                    - "a7b8c9d0-e1f2-3456-7890-123456a01235"
+      responses:
+        "200":
+          description: Синергия применена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SynergyApplicationResponse"
+              examples:
+                success:
+                  summary: Успешное применение
+                  value:
+                    success: true
+                    synergy_id: "b8c9d0e1-f2a3-4567-8901-234567b01236"
+                    bonuses_applied:
+                      damage_boost: 30
+                      cooldown_reduction: 15
+                    message: "Synergy applied successfully"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          description: Синергия не найдена или несовместима
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ComboCatalogResponse:
+      type: object
+      required:
+        - combos
+      properties:
+        combos:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComboSummary"
+          description: Список комбо
+
+    ComboSummary:
+      type: object
+      required:
+        - combo_id
+        - name
+        - combo_type
+        - complexity
+        - cooldown
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+          description: ID комбо
+        name:
+          type: string
+          description: Название комбо
+        description:
+          type: string
+          description: Описание комбо
+        combo_type:
+          type: string
+          enum:
+            - solo
+            - team
+            - legendary
+          description: Тип комбо
+        complexity:
+          type: string
+          enum:
+            - Bronze
+            - Silver
+            - Gold
+            - Platinum
+            - Legendary
+          description: Сложность комбо
+        requirements:
+          type: object
+          description: Требования для активации
+          additionalProperties: true
+        cooldown:
+          type: integer
+          minimum: 0
+          description: Кулдаун комбо (секунды)
+        chain_compatible:
+          type: boolean
+          default: false
+          description: Совместимость с chain-комбо
+
+    ComboDetail:
+      type: object
+      required:
+        - combo_id
+        - name
+        - combo_type
+        - complexity
+        - sequence
+        - cooldown
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+          description: ID комбо
+        name:
+          type: string
+          description: Название комбо
+        description:
+          type: string
+          description: Описание комбо
+        combo_type:
+          type: string
+          enum:
+            - solo
+            - team
+            - legendary
+          description: Тип комбо
+        complexity:
+          type: string
+          enum:
+            - Bronze
+            - Silver
+            - Gold
+            - Platinum
+            - Legendary
+          description: Сложность
+        requirements:
+          type: object
+          description: Требования для активации
+          additionalProperties: true
+        sequence:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComboAction"
+          description: Последовательность действий
+        bonuses:
+          type: object
+          description: Бонусы от комбо
+          additionalProperties:
+            type: number
+        cooldown:
+          type: integer
+          minimum: 0
+          description: Кулдаун (секунды)
+        chain_compatible:
+          type: boolean
+          default: false
+          description: Совместимость с chain-комбо
+
+    ComboAction:
+      type: object
+      required:
+        - action_type
+        - action_id
+      properties:
+        action_type:
+          type: string
+          enum:
+            - ability
+            - attack
+            - movement
+            - stealth
+          description: Тип действия
+        action_id:
+          type: string
+          format: uuid
+          description: ID действия
+        timing_window:
+          type: integer
+          minimum: 0
+          description: Временное окно для выполнения (миллисекунды)
+
+    ComboActivationRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - combo_id
+        - action_sequence
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        combo_id:
+          type: string
+          format: uuid
+          description: ID активируемого комбо
+        action_sequence:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExecutedAction"
+          minItems: 1
+          description: Выполненная последовательность действий
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID участников (для командных комбо)
+
+    ExecutedAction:
+      type: object
+      required:
+        - action_type
+        - action_id
+        - timestamp
+      properties:
+        action_type:
+          type: string
+          enum:
+            - ability
+            - attack
+            - movement
+            - stealth
+          description: Тип действия
+        action_id:
+          type: string
+          format: uuid
+          description: ID действия
+        timestamp:
+          type: string
+          format: date-time
+          description: Время выполнения действия
+
+    ComboActivationResponse:
+      type: object
+      required:
+        - success
+        - activation_id
+      properties:
+        success:
+          type: boolean
+          description: Успешность активации
+        activation_id:
+          type: string
+          format: uuid
+          description: ID активации
+        bonuses_applied:
+          type: object
+          description: Примененные бонусы
+          additionalProperties:
+            type: number
+        synergies_triggered:
+          type: integer
+          minimum: 0
+          description: Количество активированных синергий
+        chain_possible:
+          type: boolean
+          default: false
+          description: Возможность chain-комбо
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    SynergyApplicationRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - synergy_type
+        - combo_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        synergy_type:
+          type: string
+          enum:
+            - ability
+            - team
+            - equipment
+            - implant
+            - timing
+          description: Тип синергии
+        combo_id:
+          type: string
+          format: uuid
+          description: ID комбо для синергии
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID способностей (если synergy_type = ability)
+        equipment_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID экипировки (если synergy_type = equipment)
+        implant_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID имплантов (если synergy_type = implant)
+        team_members:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: ID членов команды (если synergy_type = team)
+
+    SynergyApplicationResponse:
+      type: object
+      required:
+        - success
+        - synergy_id
+      properties:
+        success:
+          type: boolean
+          description: Успешность применения
+        synergy_id:
+          type: string
+          format: uuid
+          description: ID примененной синергии
+        bonuses_applied:
+          type: object
+          description: Примененные бонусы
+          additionalProperties:
+            type: number
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+security:
+  - BearerAuth: []
+
+
+

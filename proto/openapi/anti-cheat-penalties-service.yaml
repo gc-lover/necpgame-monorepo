@@ -1,0 +1,228 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Penalties Service API
+  description: API для управления наказаниями за нарушения античита
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Penalties
+    description: Управление наказаниями
+
+paths:
+  /anti-cheat/penalties/apply:
+    post:
+      tags:
+        - Penalties
+      summary: Применить наказание
+      description: Применить наказание к игроку за нарушения античита
+      operationId: applyPenalty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyPenaltyRequest'
+      responses:
+        '201':
+          description: Наказание применено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Penalty'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/penalties/{player_id}:
+    get:
+      tags:
+        - Penalties
+      summary: Получить наказания игрока
+      description: Получить список наказаний для указанного игрока с фильтрацией по активности
+      operationId: getPlayerPenalties
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по активности наказания
+      responses:
+        '200':
+          description: Наказания игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerPenaltiesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/penalties/revoke:
+    post:
+      tags:
+        - Penalties
+      summary: Отменить наказание
+      description: Отменить активное наказание для игрока
+      operationId: revokePenalty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokePenaltyRequest'
+      responses:
+        '200':
+          description: Наказание отменено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: revoked
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ApplyPenaltyRequest:
+      type: object
+      required:
+        - player_id
+        - penalty_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        penalty_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
+          description: Тип наказания
+        reason:
+          type: string
+          description: Причина наказания
+        duration_seconds:
+          type: integer
+          description: Длительность для TEMPORARY_BAN в секундах
+          minimum: 0
+        violation_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Связанные нарушения
+
+    Penalty:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID наказания
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        penalty_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
+          description: Тип наказания
+        reason:
+          type: string
+          description: Причина наказания
+        duration_seconds:
+          type: integer
+          nullable: true
+          description: Длительность наказания в секундах
+        applied_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID администратора, применившего наказание
+        is_active:
+          type: boolean
+          description: Наказание активно
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время истечения наказания
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания наказания
+
+    PlayerPenaltiesResponse:
+      type: object
+      properties:
+        penalties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Penalty'
+          description: Список наказаний
+        total:
+          type: integer
+          description: Общее количество наказаний
+
+    RevokePenaltyRequest:
+      type: object
+      required:
+        - penalty_id
+      properties:
+        penalty_id:
+          type: string
+          format: uuid
+          description: ID наказания для отмены
+        reason:
+          type: string
+          description: Причина отмены наказания
+
+security:
+  - BearerAuth: []
+

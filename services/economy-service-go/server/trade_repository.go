@@ -25,8 +25,16 @@ func NewTradeRepository(db *pgxpool.Pool) *TradeRepository {
 }
 
 func (r *TradeRepository) Create(ctx context.Context, session *models.TradeSession) error {
-	initiatorOfferJSON, _ := json.Marshal(session.InitiatorOffer)
-	recipientOfferJSON, _ := json.Marshal(session.RecipientOffer)
+	initiatorOfferJSON, err := json.Marshal(session.InitiatorOffer)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal initiator offer JSON")
+		return err
+	}
+	recipientOfferJSON, err := json.Marshal(session.RecipientOffer)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal recipient offer JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO economy.trade_sessions (
@@ -37,7 +45,7 @@ func (r *TradeRepository) Create(ctx context.Context, session *models.TradeSessi
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		session.ID, session.InitiatorID, session.RecipientID,
 		initiatorOfferJSON, recipientOfferJSON,
 		session.InitiatorConfirmed, session.RecipientConfirmed,
@@ -79,10 +87,14 @@ func (r *TradeRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Tr
 
 	session.ZoneID = zoneID
 	if len(initiatorOfferJSON) > 0 {
-		json.Unmarshal(initiatorOfferJSON, &session.InitiatorOffer)
+		if err := json.Unmarshal(initiatorOfferJSON, &session.InitiatorOffer); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal initiator offer JSON")
+		}
 	}
 	if len(recipientOfferJSON) > 0 {
-		json.Unmarshal(recipientOfferJSON, &session.RecipientOffer)
+		if err := json.Unmarshal(recipientOfferJSON, &session.RecipientOffer); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal recipient offer JSON")
+		}
 	}
 
 	return &session, nil
@@ -126,10 +138,14 @@ func (r *TradeRepository) GetActiveByCharacter(ctx context.Context, characterID 
 
 		session.ZoneID = zoneID
 		if len(initiatorOfferJSON) > 0 {
-			json.Unmarshal(initiatorOfferJSON, &session.InitiatorOffer)
+			if err := json.Unmarshal(initiatorOfferJSON, &session.InitiatorOffer); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal initiator offer JSON")
+			}
 		}
 		if len(recipientOfferJSON) > 0 {
-			json.Unmarshal(recipientOfferJSON, &session.RecipientOffer)
+			if err := json.Unmarshal(recipientOfferJSON, &session.RecipientOffer); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal recipient offer JSON")
+			}
 		}
 
 		sessions = append(sessions, session)
@@ -139,8 +155,16 @@ func (r *TradeRepository) GetActiveByCharacter(ctx context.Context, characterID 
 }
 
 func (r *TradeRepository) Update(ctx context.Context, session *models.TradeSession) error {
-	initiatorOfferJSON, _ := json.Marshal(session.InitiatorOffer)
-	recipientOfferJSON, _ := json.Marshal(session.RecipientOffer)
+	initiatorOfferJSON, err := json.Marshal(session.InitiatorOffer)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal initiator offer JSON")
+		return err
+	}
+	recipientOfferJSON, err := json.Marshal(session.RecipientOffer)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal recipient offer JSON")
+		return err
+	}
 
 	query := `
 		UPDATE economy.trade_sessions
@@ -149,7 +173,7 @@ func (r *TradeRepository) Update(ctx context.Context, session *models.TradeSessi
 			status = $5, updated_at = $6, completed_at = $7
 		WHERE id = $8`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		initiatorOfferJSON, recipientOfferJSON,
 		session.InitiatorConfirmed, session.RecipientConfirmed,
 		session.Status, session.UpdatedAt, session.CompletedAt,
@@ -170,8 +194,16 @@ func (r *TradeRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status
 }
 
 func (r *TradeRepository) CreateHistory(ctx context.Context, history *models.TradeHistory) error {
-	initiatorOfferJSON, _ := json.Marshal(history.InitiatorOffer)
-	recipientOfferJSON, _ := json.Marshal(history.RecipientOffer)
+	initiatorOfferJSON, err := json.Marshal(history.InitiatorOffer)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal initiator offer JSON")
+		return err
+	}
+	recipientOfferJSON, err := json.Marshal(history.RecipientOffer)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal recipient offer JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO economy.trade_history (
@@ -182,7 +214,7 @@ func (r *TradeRepository) CreateHistory(ctx context.Context, history *models.Tra
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 		)`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		history.ID, history.TradeSessionID, history.InitiatorID, history.RecipientID,
 		initiatorOfferJSON, recipientOfferJSON,
 		history.Status, history.ZoneID,
@@ -227,10 +259,14 @@ func (r *TradeRepository) GetHistoryByCharacter(ctx context.Context, characterID
 
 		h.ZoneID = zoneID
 		if len(initiatorOfferJSON) > 0 {
-			json.Unmarshal(initiatorOfferJSON, &h.InitiatorOffer)
+			if err := json.Unmarshal(initiatorOfferJSON, &h.InitiatorOffer); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal initiator offer JSON")
+			}
 		}
 		if len(recipientOfferJSON) > 0 {
-			json.Unmarshal(recipientOfferJSON, &h.RecipientOffer)
+			if err := json.Unmarshal(recipientOfferJSON, &h.RecipientOffer); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal recipient offer JSON")
+			}
 		}
 
 		history = append(history, h)

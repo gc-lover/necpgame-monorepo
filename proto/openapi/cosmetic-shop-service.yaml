@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: Cosmetic Shop Service API
+  description: API для магазина косметики и ротации товаров
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Shop
+    description: Магазин косметики
+
+paths:
+  /monetization/cosmetic/shop/daily:
+    get:
+      tags:
+        - Shop
+      summary: Получить ежедневный магазин
+      description: Получить текущую ротацию ежедневного магазина косметики
+      operationId: getDailyShop
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ежедневный магазин
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyShopResponse'
+              examples:
+                example1:
+                  value:
+                    rotation_id: "550e8400-e29b-41d4-a716-446655440000"
+                    rotation_date: "2025-11-27"
+                    items:
+                      - id: "550e8400-e29b-41d4-a716-446655440001"
+                        name: "Скин дня"
+                        rarity: "EPIC"
+                    next_rotation_at: "2025-11-28T00:00:00Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /monetization/cosmetic/shop/history:
+    get:
+      tags:
+        - Shop
+      summary: Получить историю ротаций магазина
+      description: Получить историю ротаций ежедневного магазина
+      operationId: getShopHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История ротаций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopHistoryResponse'
+              examples:
+                example1:
+                  value:
+                    rotations:
+                      - id: "550e8400-e29b-41d4-a716-446655440000"
+                        rotation_date: "2025-11-26"
+                        items: []
+                        created_at: "2025-11-26T00:00:00Z"
+                    total: 1
+                    limit: 20
+                    offset: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    CosmeticItem:
+      type: object
+      description: Косметический предмет
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор
+        code:
+          type: string
+          maxLength: 50
+          description: Код предмета
+        name:
+          type: string
+          maxLength: 255
+          description: Название предмета
+        category:
+          type: string
+          enum:
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - EMOTE
+            - TITLE
+            - NAME_PLATE
+          description: Категория косметики
+        cosmetic_type:
+          type: string
+          enum:
+            - SKIN
+            - EMOTE
+            - TITLE
+            - NAME_PLATE
+          description: Тип косметики
+        rarity:
+          type: string
+          enum:
+            - COMMON
+            - UNCOMMON
+            - RARE
+            - EPIC
+            - LEGENDARY
+            - EXOTIC
+          description: Редкость косметики
+        description:
+          type: string
+          description: Описание предмета
+        cost:
+          type: integer
+          format: int64
+          description: Стоимость предмета
+        currency_type:
+          type: string
+          description: Тип валюты
+        is_exclusive:
+          type: boolean
+          default: false
+          description: Является ли предмет эксклюзивным
+        source:
+          type: string
+          maxLength: 100
+          description: Источник получения
+        visual_effects:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Визуальные эффекты
+        assets:
+          type: object
+          additionalProperties: true
+          description: Ресурсы предмета
+        is_active:
+          type: boolean
+          default: true
+          description: Активен ли предмет
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+
+    DailyShopResponse:
+      type: object
+      description: Ответ с ежедневным магазином
+      properties:
+        rotation_id:
+          type: string
+          format: uuid
+          description: ID ротации
+        rotation_date:
+          type: string
+          format: date
+          description: Дата ротации
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CosmeticItem'
+          description: Предметы в магазине
+        next_rotation_at:
+          type: string
+          format: date-time
+          description: Время следующей ротации
+
+    ShopHistoryResponse:
+      type: object
+      description: Ответ с историей ротаций
+      properties:
+        rotations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: ID ротации
+              rotation_date:
+                type: string
+                format: date
+                description: Дата ротации
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CosmeticItem'
+                description: Предметы в ротации
+              created_at:
+                type: string
+                format: date-time
+                description: Время создания ротации
+          description: Список ротаций
+        total:
+          type: integer
+          description: Общее количество ротаций
+        limit:
+          type: integer
+          description: Лимит записей
+        offset:
+          type: integer
+          description: Смещение записей
+

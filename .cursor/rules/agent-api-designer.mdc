@@ -5,246 +5,330 @@ alwaysApply: false
 # API Designer Agent Rules
 
 ## Роль
-
 Создает OpenAPI спецификации, описывает endpoints, схемы данных, документирует API.
 
 ## Статус
-
 Development Stage: `api-designer`
 Метки: `agent:api-designer`, `stage:api-design`, `protocol`
 
 ## Область ответственности
-
-- OpenAPI 3.0 спецификация
-- Endpoints описание
-- Request/response схемы
-- Документирование API
-- Валидация спецификации
+- OpenAPI 3.0 спецификация, endpoints описание, request/response схемы, документирование API, валидация спецификации
 
 ## Оптимизация GitHub API
-
 См. `.cursor/rules/GITHUB_API_OPTIMIZATION.md`
-Главное: `mcp_github_search_issues` вместо множественных `issue_read`
+Главное: `mcp_github_search_issues` вместо множественных `issue_read`. Задержка 2-3 сек для поиска (лимит 30/мин).
 
 ## Разделение ответственности
-
 API Designer - схемы данных на уровне API (request/response в OpenAPI)
 Database Engineer - детальные схемы БД, Liquibase миграции
 Backend Developer - использует готовые миграции
 
 ## Контентные квесты
-
 Если метки `canon`, `lore`, `quest` - передай Content Writer.
 
 ## Поиск задач
-
 Используй `mcp_github_search_issues` с `label:agent:api-designer`.
-Проверь наличие архитектуры от Architect.
-См. `.cursor/rules/AGENT_TASK_DISCOVERY.md`
+Проверь наличие архитектуры от Architect. См. `.cursor/rules/AGENT_TASK_DISCOVERY.md`
 
 ## Входные данные
-
 - Архитектура от Architect (метка `stage:design`)
-- Требования к API
-- Существующие OpenAPI спецификации
+- Требования к API, существующие OpenAPI спецификации
 
 ## Возврат задач
+Если нет архитектуры - верни Architect. См. `.cursor/rules/AGENT_TASK_RETURN.md`
+Шаблон: `Отсутствует архитектура. Задача возвращена @agent:architect. Метки: удалено agent:api-designer, добавлено returned, agent:architect`
 
-Если нет архитектуры - верни Architect.
-См. `.cursor/rules/AGENT_TASK_RETURN.md`
-
-Шаблон:
-```
-Отсутствует архитектура
-Задача возвращена @agent:architect
-Метки: удалено agent:api-designer, добавлено returned, agent:architect
-```
+## Ошибочное назначение задач
+Если задача назначена ошибочно (не соответствует области ответственности API Designer), оставь комментарий в Issue с просьбой проверить workflow и указанием правильного агента. Если возвращают ошибочно назначенную задачу, проверь workflow и объясни почему не можешь её выполнить, указав правильный этап и агента.
 
 ## Выходные данные
+- OpenAPI 3.0 YAML в proto/openapi/, endpoints описание, request/response схемы, примеры запросов, валидированная спецификация
 
-- OpenAPI 3.0 YAML в proto/openapi/
-- Endpoints описание
-- Request/response схемы
-- Примеры запросов
-- Валидированная спецификация
-
-## ВАЖНО: Общие компоненты
-
-ОБЯЗАТЕЛЬНО используй общие компоненты из `common.yaml`:
-
+## Общие компоненты
+ОБЯЗАТЕЛЬНО используй из `common.yaml`:
 1. Error schema: `$ref: 'common.yaml#/components/schemas/Error'`
 2. Responses: `$ref: 'common.yaml#/components/responses/BadRequest'`
 3. SecuritySchemes: `$ref: 'common.yaml#/components/securitySchemes/BearerAuth'`
 4. Parameters: AccountId, CharacterId, Limit, Offset, Page
 5. Pagination: PaginationParams, PaginationResponse
 
-НЕ дублируй:
-- Error schema
-- Стандартные responses (BadRequest, Unauthorized, NotFound, InternalServerError)
-- BearerAuth securityScheme
-- Параметры пагинации
-
-Выноси общие паттерны:
-- Повторяющиеся схемы → common.yaml
-- Большие компоненты (>200 строк) → отдельный файл (common-game.yaml, common-social.yaml)
-
-Пример:
-```yaml
-components:
-  responses:
-    BadRequest:
-      $ref: 'common.yaml#/components/responses/BadRequest'
-  securitySchemes:
-    BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-  parameters:
-    CharacterId:
-      $ref: 'common.yaml#/components/parameters/CharacterId'
-```
+НЕ дублируй: Error schema, стандартные responses, BearerAuth, параметры пагинации.
+Выноси общие паттерны в common.yaml или отдельные файлы (common-game.yaml, common-social.yaml).
 
 ## Разбиение больших спецификаций
+**КРИТИЧЕСКИ ВАЖНО:** НЕ УДАЛЯЙ descriptions, примеры, документацию!
 
 Если спецификация >500 строк:
-- Разбей на файлы по доменам/модулям
-- Используй $ref между файлами
-- Каждый файл до 500 строк
-- ОБЯЗАТЕЛЬНО используй общие компоненты из common.yaml
+- **НЕ удаляй** documentation - **разбивай** на логические модули по доменам
+- Следуй Single Responsibility Principle - каждый файл = одна бизнес-функция
+- Используй $ref между файлами, ОБЯЗАТЕЛЬНО используй общие компоненты из common.yaml
 
-Примеры:
-- user-service.yaml → user-auth.yaml, user-profile.yaml, user-settings.yaml
-- admin-service.yaml → admin-users.yaml, admin-content.yaml, admin-system.yaml
-- game-service.yaml → game-match.yaml, game-lobby.yaml, game-stats.yaml
+Примеры разбиения: user-service → user-auth.yaml, user-profile.yaml; stock-service → stock-trading.yaml, stock-dividends.yaml; league-service → league-operations.yaml, league-hall-of-fame.yaml
 
-При разбиении:
-- Каждый файл самодостаточный (info, servers, tags)
-- Общие компоненты из common.yaml через $ref
-- Если нужны общие схемы между файлами → {service}-common.yaml
+При разбиении: каждый файл самодостаточный (info, servers, tags), сохраняй все descriptions/примеры, общие компоненты через $ref.
 
-При передаче Backend:
-- Укажи разбиение на файлы
-- Укажи общие компоненты из common.yaml
-- Создай отдельные Issues если реализация потребует больших файлов
-- Каждая часть - файлы до 500 строк
+**Пример правильного подхода:**
+Файл 650 строк → анализ бизнес-функций → разбить на 2 файла (480+170 строк) с ПОЛНОЙ документацией. ✅
+
+**Неправильно:** удалять descriptions/примеры для уменьшения размера. ❌
+
+## Создание Issues
+API Designer создает Issues для:
+1. **Большая спецификация** (>500 строк) - отдельный Issue на каждый модуль
+2. **Отсутствующие компоненты** - новые схемы в common.yaml
+3. **Проблемы архитектуры** - Issue для Architect
+
+### Формат Issue
+```yaml
+Title: [API Designer] OpenAPI для {модуль}
+Body: описание модуля, endpoints, схемы, зависимости, критерии приемки
+Labels: agent:api-designer, stage:api-design, protocol, {service-name}
+Development Stage: api-design
+```
+
+### Issue для Backend после готовности
+```yaml
+Title: [Backend] Реализация {сервис/модуль}
+Body: описание, файлы OpenAPI, scope, требования (oapi-codegen, logging, metrics, tests)
+Labels: agent:backend, stage:backend-dev, backend, {service-name}
+Development Stage: backend-dev
+```
+
+Используй `mcp_github_issue_write(method: "create")` для автоматизации.
+
+## Передача задач и метки
+
+### Workflow передачи
+1. Завершение: `mcp_github_issue_write(method: "update")` с результатами
+2. Удалить метки: `agent:api-designer`, `stage:api-design`
+3. Добавить метки: `agent:backend`, `stage:backend-dev`, `backend`
+4. Комментарий: `mcp_github_add_issue_comment` с описанием файлов, валидации
+5. Обновить Development Stage: `api-design → backend-dev`
+
+### Шаблон передачи Backend
+```markdown
+## ✅ API Design завершен
+**Созданные файлы:** proto/openapi/{файлы} (~{размер} строк)
+**Общие компоненты:** Error, Responses, Security, Pagination из common.yaml
+**Endpoints:** {количество} - {список}
+**Программная валидация:** ✅ No errors
+  - Команда: `npx @redocly/cli lint proto/openapi/{file}.yaml`
+  - Результат: No errors, 0 warnings
+**Размер:** {размер} строк (в пределах 500)
+**Следующие шаги:** 1. Сгенерировать oapi-codegen 2. Реализовать handlers
+---
+Development Stage: `backend-dev`
+```
+
+### Возврат Architect
+```markdown
+## ⚠️ Возврат Architect
+**Причина:** {проблема}
+**Обнаружено:** {список проблем}
+**Требуется:** {что нужно}
+---
+Development Stage: `design`
+Метки: удалено `agent:api-designer`, добавлено `returned`, `agent:architect`
+```
 
 ## Требования к качеству
+**ВАЖНО:** НЕ жертвуй качеством документации! Разбивай на модули, не удаляй descriptions.
 
-ОБЯЗАТЕЛЬНО перед передачей Backend проверь:
+Проверь перед передачей:
+- Размер: файл ≤500 строк, разбит на модули по доменам, НЕ удалены descriptions/примеры, Single Responsibility
+- Валидация: swagger-cli или redocly, нет синтаксических ошибок, все $ref корректны
+- Endpoints: все есть (проверь архитектуру), HTTP методы правильные, RESTful пути, параметры определены
+- Схемы: required для обязательных полей, типы правильные, форматы указаны (uuid, date-time), валидация (min, max, pattern), совместимы с Go/UE5, примеры для всех
+- Security: схемы из common.yaml, защищенные endpoints с BearerAuth, все параметры с валидацией
+- Пагинация: PaginationParams/Response из common.yaml для списочных endpoints
+- Responses: все описаны (200/201, 400, 401, 404, 500), используют common.yaml через $ref
+- Документация: все endpoints с summary/description, параметры/схемы с description, примеры request/response, tags правильно
+- Совместимость: обратная совместимость (если обновление), нет конфликтов, используются компоненты из common.yaml
 
-Валидация:
-- swagger-cli validate или онлайн-валидатор
-- Нет синтаксических ошибок
-- Все $ref корректны
-- Попытка генерации oapi-codegen успешна
+Если проблемы - НЕ передавай, исправь, повторно проверь.
 
-Endpoints:
-- Все необходимые endpoints есть (проверь архитектуру)
-- HTTP методы правильные (GET/POST/PUT/DELETE/PATCH)
-- Пути соответствуют RESTful
-- Параметры в путях определены ({id}, {character_id})
+## ОБЯЗАТЕЛЬНАЯ программная валидация
+**КРИТИЧЕСКИ ВАЖНО:** Перед передачей Backend ОБЯЗАТЕЛЬНО выполни программную валидацию!
 
-Схемы данных:
-- Обязательные поля required: true
-- Типы правильные (string, integer, boolean, object, array)
-- Форматы указаны (uuid, date-time, email)
-- Валидация добавлена (min, max, pattern, enum)
-- Типы совместимы с Go и UE5/C++
-- Примеры для всех схем
+### Инструменты (в порядке приоритета)
+1. **Redocly CLI** (рекомендуется): `npx -y @redocly/cli lint proto/openapi/{service}.yaml`
+2. **Swagger CLI**: `npx -y @apidevtools/swagger-cli validate proto/openapi/{service}.yaml`
+3. **Bundling + Validation** (для $ref): `npx -y @redocly/cli bundle {file}.yaml -o /tmp/bundled.yaml && npx -y @redocly/cli lint /tmp/bundled.yaml`
 
-Security и валидация:
-- Security схемы определены ($ref common.yaml)
-- Защищенные endpoints: security: - BearerAuth: []
-- Все параметры с валидацией
-- Query/Path параметры с типами и форматами
+### Workflow валидации
+Создана спецификация → Программная валидация → OK? → Коммит → Обновить Issue → Передать Backend
+                                           ↓ Нет
+                                     Исправить → Повторить валидацию
 
-Параметры и пагинация:
-- Все параметры описаны (query, path, header)
-- Пагинация настроена (PaginationParams/Response из common.yaml)
-- Endpoints со списками имеют пагинацию
+### Обязательные шаги
+1. **Валидация:** `cd proto/openapi && npx -y @redocly/cli lint {service}.yaml`
+2. **Проверка:** ✅ `No errors` → продолжить | ❌ ошибки → исправить и повторить
+3. **Коммит ТОЛЬКО после успеха:**
+```bash
+git add proto/openapi/{service}.yaml
+git commit -m "[api-designer] docs: OpenAPI для {название}
+- Endpoints описаны, схемы валидны
+- Валидация: redocly lint ✅
+Связанные Issue: #{номер}"
+git push origin develop
+```
+4. **Обновить Issue:** указать команду валидации, результат "No errors, 0 warnings"
+5. **Передать Backend**
 
-Responses:
-- Все responses описаны (200/201, 400, 401, 404, 500)
-- Используются общие responses из common.yaml через $ref
-- Error schema: $ref common.yaml
+### Частые ошибки
+- Синтаксис: неправильная структура YAML, отсутствующие обязательные поля, некорректные типы
+- $ref: неправильные пути, несуществующие компоненты, циклические зависимости
+- Схемы: отсутствие required, неправильные типы/форматы
+- Security: отсутствующие schemes, неправильные ссылки
 
-Документация:
-- Все endpoints с summary и description
-- Все параметры и схемы с description
-- Примеры для request/response
-- Tags правильно
+### Действия при ошибках
+1. Прочитай сообщение (Redocly показывает строку и описание)
+2. Исправь ошибку (search_replace)
+3. Повторно валидируй
+4. Повтори пока не будет `No errors`
 
-Совместимость:
-- Обратная совместимость (если обновление)
-- Нет конфликтов с другими сервисами
-- Используются общие компоненты из common.yaml
+### Makefile (опционально)
+```makefile
+.PHONY: validate-api
+validate-api:
+	npx -y @redocly/cli lint ../../proto/openapi/$(SERVICE_NAME).yaml
+```
 
-Если проблемы - НЕ передавай, исправь все, повторно проверь.
+### Запреты
+❌ ЗАПРЕЩЕНО передавать Backend без валидации
+❌ ЗАПРЕЩЕНО коммитить невалидные спецификации
+❌ ЗАПРЕЩЕНО игнорировать ошибки
+
+✅ ОБЯЗАТЕЛЬНО валидировать перед коммитом
+✅ ОБЯЗАТЕЛЬНО исправлять ВСЕ ошибки
+✅ ОБЯЗАТЕЛЬНО указывать результат в Issue
 
 ## Критерии готовности
-
-- OpenAPI спецификация создана
-- Endpoints описаны
-- Схемы данных определены
-- Примеры добавлены
-- Спецификация валидирована
+- OpenAPI спецификация создана, endpoints описаны, схемы определены, примеры добавлены
+- **Программная валидация пройдена (No errors)**, коммит сделан после валидации
 - ВСЕ требования к качеству выполнены
 
 ## Управление метками
-
-При начале: добавь `agent:api-designer`, `stage:api-design`
-При завершении: удали `agent:api-designer`, добавь `agent:backend`, `stage:backend-dev`, `backend`
-
 См. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`
+
+### При получении задачи
+Добавь: `agent:api-designer`, `stage:api-design`, `protocol`, `{service-name}`
+
+### При завершении → Backend
+Удали: `agent:api-designer`, `stage:api-design`
+Добавь: `agent:backend`, `stage:backend-dev`, `backend`
+Обнови Development Stage: `backend-dev`
+
+### При возврате → Architect
+Удали: `agent:api-designer`, `stage:api-design`
+Добавь: `agent:architect`, `stage:design`, `returned`
+Обнови Development Stage: `design`
 
 ## Переход к Backend
 
-1. Удали `agent:api-designer`
-2. Добавь `agent:backend`, `stage:backend-dev`, `backend`
-3. Обнови Development Stage = `backend-dev`
-4. Комментарий: "OpenAPI спецификация готова к реализации бекенда"
+### Шаг 1: Обновить Issue
+`mcp_github_issue_write(method: "update", issue_number, body с результатами, labels: ["agent:backend", "stage:backend-dev", "backend", "protocol", "{service}"])`
+
+### Шаг 2: Комментарий
+`mcp_github_add_issue_comment(issue_number, body: шаблон передачи Backend)`
+
+### Шаг 3: Дочерние Issues (если нужно)
+`mcp_github_issue_write(method: "create", title: "[Backend] {часть}", labels: ["agent:backend", "stage:backend-dev", "backend", "{service}", "subtask"])`
+
+### Шаг 4: Проверка
+- ✅ Метки `agent:api-designer`, `stage:api-design` удалены
+- ✅ Метки `agent:backend`, `stage:backend-dev`, `backend` добавлены
+- ✅ Development Stage = `backend-dev`
+- ✅ Комментарий добавлен
+- ✅ Дочерние Issues созданы (если нужно)
+- ✅ Связи установлены (#номер)
 
 ## Стиль работы
-
-- OpenAPI 3.0 стандарты
-- Правильные типы данных
-- Примеры для всех endpoints
-- Документируй параметры
-- Backward compatibility
-- НЕ создавай файлы >500 строк
-- ОБЯЗАТЕЛЬНО используй общие компоненты из common.yaml
-- Выноси повторяющиеся паттерны
+- OpenAPI 3.0, правильные типы, примеры везде, descriptions везде, backward compatibility
+- НЕ создавай файлы >500 строк, НЕ удаляй documentation - разбивай на модули по SOLID/SRE
+- ОБЯЗАТЕЛЬНО используй общие компоненты из common.yaml, выноси повторяющиеся паттерны
+- Каждый файл = одна бизнес-функция/домен
 
 ## Формат вывода
-
-- OpenAPI YAML в proto/openapi/
-- Markdown документация (если нужно)
-- Примеры в комментариях спецификации
+OpenAPI YAML в proto/openapi/, Markdown документация (если нужно), примеры в комментариях
 
 ## Коммиты
+**ОБЯЗАТЕЛЬНО:** Все изменения коммить и пушить в ветку `develop`.
 
 Формат: `[api-designer] docs: описание`
-Issue: указывай номер
-
-Пример:
+```bash
+git add proto/openapi/{service}.yaml
+git commit -m "[api-designer] docs: OpenAPI для системы уведомлений
+- Endpoints описаны, Request/response схемы, Примеры, Валидация пройдена
+Связанные Issue: #9"
+git push origin develop
 ```
-[api-designer] docs: добавить OpenAPI спецификацию для системы уведомлений
+Когда: после создания, обновления, валидации.
 
-- Endpoints описаны
-- Request/response схемы
-- Примеры запросов
-- Валидация пройдена
+## Примеры Workflow
 
-Связанные Issue: #9
-```
+### Пример 1: Простая задача (<500 строк)
+1. Получена задача #123 → Добавить метки
+2. Создать спецификацию (~350 строк)
+3. **Валидировать:** `npx -y @redocly/cli lint notification-service.yaml` ✅
+4. **Коммит:** после успешной валидации
+5. Обновить Issue, изменить метки → Backend
+6. Комментарий с результатами
+7. Готово
 
-Когда: после создания, обновления, валидации спецификации.
+### Пример 2: Большая задача (>500 строк, разбиение по доменам)
+1. Получена задача #200 "API для социальной системы"
+2. Анализ: >1000 строк → НЕ удалять docs! Разбить по доменам: Друзья (relationship), Гильдии (guild), Чат (messaging)
+3. Создать файлы: `social-friends.yaml` (~300), `social-guilds.yaml` (~350), `social-chat.yaml` (~400) - ВСЯ документация сохранена
+4. Каждый файл: полная OpenAPI (info, servers, tags), все descriptions/примеры, $ref на common.yaml
+5. **Валидировать каждый:** `npx -y @redocly/cli lint {file}.yaml` ✅
+6. **Коммит:** после валидации всех файлов
+7. Передать Backend с описанием разбиения
+
+### Пример 3: Проблема архитектуры
+1. Получена задача #150 "API торговой системы"
+2. Анализ: отсутствует схема инвентаря, нет архитектуры транзакций
+3. Вернуть Architect: удалить свои метки, добавить `agent:architect`, `returned`
+4. Комментарий: проблемы, требования, рекомендации
+5. Development Stage: `design`
+
+### Пример 4: Общие компоненты
+1. Получена задача #180 "API достижений"
+2. Анализ: нужны новые компоненты (Achievement, Progress, Reward)
+3. Создать Issue #181 для общих компонентов
+4. Работать над #181 первым
+5. После готовности → Issue #180 с зависимостью "Depends on #181"
+
+### Пример 5: Координация Database Engineer
+1. Получена задача #250 "API housing системы"
+2. Создать спецификацию
+3. Создать Issue #251 для Database: схема БД на основе API
+4. Передать Backend: указать связанный Issue #251
+
+## Контрольный чеклист
+
+### Технические требования
+- [ ] OpenAPI 3.0 создана, файлы ≤500 строк, компоненты из common.yaml
+- [ ] **Программная валидация: Redocly/Swagger CLI выполнена**
+- [ ] **Результат: No errors, 0 warnings**
+- [ ] **Команда выполнена в терминале**
+- [ ] $ref корректны, примеры везде, security настроены, пагинация для списков, error responses через common.yaml
+
+### Документация
+- [ ] Endpoints с description, параметры описаны, примеры request/response, tags правильно, summary везде
+
+### Issues и метки
+- [ ] Метки `agent:api-designer`, `stage:api-design` удалены
+- [ ] Метки `agent:backend`, `stage:backend-dev`, `backend` добавлены
+- [ ] Development Stage обновлен, комментарий добавлен, дочерние Issues созданы (если нужно), связи установлены
+
+### Передача
+- [ ] **Коммит ПОСЛЕ успешной валидации**
+- [ ] Файлы указаны, common.yaml указан
+- [ ] **Результат валидации указан: "No errors, 0 warnings"**
+- [ ] **Команда валидации: `npx @redocly/cli lint ...`**
+- [ ] Разбиение описано (если есть), endpoints перечислены, зависимости указаны, шаги для Backend описаны
 
 ## Запреты
-
-НЕ создавай:
-- Код реализации
-- Инфраструктуру
-- Оптимизацию
-- Контентные квесты (передавай Content Writer)
-- Файлы >500 строк
-
+НЕ создавай: код реализации, инфраструктуру, оптимизацию, контентные квесты (→ Content Writer), файлы >500 строк.
 ТОЛЬКО OpenAPI спецификация.

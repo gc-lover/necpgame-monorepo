@@ -7,8 +7,15 @@ import (
 )
 
 func TestHealthCheck(t *testing.T) {
-	friendsService := NewMockFriendsService()
-	server := NewHTTPServer(":8084", friendsService)
+	config := &ServerConfig{
+		Addr:           ":8084",
+		FriendsService: NewMockFriendsService(),
+		GuildsService:  &MockGuildsService{},
+		ChatService:    &MockChatService{},
+		MailService:    &MockMailService{},
+		NotificationsService: &MockNotificationsService{},
+	}
+	server := NewHTTPServer(config)
 	
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()
@@ -26,8 +33,15 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestMetricsEndpoint(t *testing.T) {
-	friendsService := NewMockFriendsService()
-	server := NewHTTPServer(":8084", friendsService)
+	config := &ServerConfig{
+		Addr:           ":8084",
+		FriendsService: NewMockFriendsService(),
+		GuildsService:  &MockGuildsService{},
+		ChatService:    &MockChatService{},
+		MailService:    &MockMailService{},
+		NotificationsService: &MockNotificationsService{},
+	}
+	server := NewHTTPServer(config)
 	
 	req := httptest.NewRequest("GET", "/metrics", nil)
 	w := httptest.NewRecorder()
@@ -40,8 +54,15 @@ func TestMetricsEndpoint(t *testing.T) {
 }
 
 func TestCORSHeaders(t *testing.T) {
-	friendsService := NewMockFriendsService()
-	server := NewHTTPServer(":8084", friendsService)
+	config := &ServerConfig{
+		Addr:           ":8084",
+		FriendsService: NewMockFriendsService(),
+		GuildsService:  &MockGuildsService{},
+		ChatService:    &MockChatService{},
+		MailService:    &MockMailService{},
+		NotificationsService: &MockNotificationsService{},
+	}
+	server := NewHTTPServer(config)
 	
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()

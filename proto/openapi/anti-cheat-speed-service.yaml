@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Speed Validation Service API
+  description: API для валидации скорости движения игроков
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Speed Validation
+    description: Валидация скорости движения
+
+paths:
+  /anti-cheat/speed/validate:
+    post:
+      tags:
+        - Speed Validation
+      summary: Валидация скорости движения
+      description: Проверка скорости движения игрока на соответствие максимально допустимой скорости с учётом класса, навыков и баффов
+      operationId: validateSpeed
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeedValidationRequest'
+            examples:
+              basic:
+                summary: Базовая проверка скорости
+                value:
+                  player_id: "550e8400-e29b-41d4-a716-446655440000"
+                  current_position:
+                    x: 100.5
+                    y: 200.3
+                    z: 50.0
+                    map_id: "map-001"
+                  previous_position:
+                    x: 90.0
+                    y: 190.0
+                    z: 50.0
+                    map_id: "map-001"
+                  time_delta: 0.5
+      responses:
+        '200':
+          description: Результат валидации скорости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeedValidationResponse'
+              examples:
+                valid:
+                  summary: Валидная скорость
+                  value:
+                    is_valid: true
+                    calculated_speed: 20.5
+                    max_speed: 25.0
+                    speed_percentage: 82.0
+                    violation: null
+                violation:
+                  summary: Обнаружено нарушение
+                  value:
+                    is_valid: false
+                    calculated_speed: 35.0
+                    max_speed: 25.0
+                    speed_percentage: 140.0
+                    violation:
+                      violation_type: "SPEED_HACK"
+                      severity: "HIGH"
+                      speed_exceeded_by: 10.0
+                      threshold: 25.0
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/speed/violations/{player_id}:
+    get:
+      tags:
+        - Speed Validation
+      summary: Получить нарушения скорости для игрока
+      description: Получить список нарушений скорости для указанного игрока с пагинацией
+      operationId: getSpeedViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список нарушений скорости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeedViolationsResponse'
+              examples:
+                violations:
+                  summary: Список нарушений
+                  value:
+                    violations:
+                      - id: "550e8400-e29b-41d4-a716-446655440001"
+                        player_id: "550e8400-e29b-41d4-a716-446655440000"
+                        violation_type: "SPEED_HACK"
+                        severity: "HIGH"
+                        created_at: "2025-11-27T10:00:00Z"
+                    total: 1
+                    limit: 20
+                    offset: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    SpeedValidationRequest:
+      type: object
+      required:
+        - player_id
+        - current_position
+        - previous_position
+        - time_delta
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        current_position:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/Position'
+          description: Текущая позиция игрока
+        previous_position:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/Position'
+          description: Предыдущая позиция игрока
+        time_delta:
+          type: number
+          format: float
+          description: Время в секундах между позициями
+          minimum: 0
+        character_class:
+          type: string
+          description: Класс персонажа
+        skills:
+          type: array
+          items:
+            type: string
+          description: Активные навыки, влияющие на скорость
+        buffs:
+          type: array
+          items:
+            type: string
+          description: Активные баффы, влияющие на скорость
+
+    SpeedValidationResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+          description: Результат валидации
+        calculated_speed:
+          type: number
+          format: float
+          description: Рассчитанная скорость (единиц/сек)
+        max_speed:
+          type: number
+          format: float
+          description: Максимально допустимая скорость
+        speed_percentage:
+          type: number
+          format: float
+          description: Процент от максимальной скорости
+          minimum: 0
+          maximum: 1000
+        violation:
+          $ref: '#/components/schemas/SpeedViolation'
+          nullable: true
+          description: Информация о нарушении (если обнаружено)
+
+    SpeedViolation:
+      type: object
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+          description: Тип нарушения
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьёзность нарушения
+        speed_exceeded_by:
+          type: number
+          format: float
+          description: На сколько превышена скорость
+        threshold:
+          type: number
+          format: float
+          description: Пороговое значение скорости
+
+    SpeedViolationsResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: 'anti-cheat-common.yaml#/components/schemas/Violation'
+          description: Список нарушений
+        total:
+          type: integer
+          description: Общее количество нарушений
+        limit:
+          type: integer
+          description: Лимит на страницу
+        offset:
+          type: integer
+          description: Смещение
+
+security:
+  - BearerAuth: []
+

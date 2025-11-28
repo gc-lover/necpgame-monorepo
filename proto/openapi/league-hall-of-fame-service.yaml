@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: League Hall of Fame API
+  description: |
+    API для Hall of Fame - рейтинга лучших игроков лиг.
+    
+    Функционал:
+    - Просмотр топ игроков по категориям
+    - Фильтрация по достижениям
+    - 3D-модели персонажей победителей
+  version: 1.0.0
+  contact:
+    name: Progression Team
+    email: progression@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: hall-of-fame
+    description: Hall of Fame операции
+
+paths:
+  /leagues/{league_id}/hall-of-fame:
+    get:
+      tags:
+        - hall-of-fame
+      summary: Получить Hall of Fame лиги
+      description: |
+        Возвращает топ игроков лиги по категориям.
+        Доступны фильтры по категориям достижений.
+      operationId: getHallOfFame
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: league_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category
+          in: query
+          description: Фильтр по категории
+          schema:
+            type: string
+            enum: [overall, story, economy, pvp, pve, alternative]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Hall of Fame успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HallOfFameEntry'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    HallOfFameEntry:
+      type: object
+      required:
+        - player_id
+        - player_name
+        - rank
+        - category
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        rank:
+          type: integer
+          description: Место (1-100)
+        category:
+          type: string
+          enum: [overall, story, economy, pvp, pve, alternative]
+        score:
+          type: number
+          format: float
+          description: Итоговый счет
+        rewards:
+          type: array
+          items:
+            type: string
+          description: Список наград
+        character_model_url:
+          type: string
+          description: URL 3D-модели (только 1 место)
+
+
+

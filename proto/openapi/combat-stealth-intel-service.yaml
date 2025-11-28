@@ -1,0 +1,417 @@
+openapi: 3.0.3
+info:
+  title: Combat Stealth Intel Service API
+  description: |
+    API для карты угроз, достижений и репутации в системе стелса NECPGAME.
+    
+    **Основные возможности:**
+    - Карта угроз (позиции охранников, камер, патрулей)
+    - Достижения стелса
+    - Репутационные последствия
+    
+    **Типы достижений:**
+    - Ghost - прохождение без обнаружения
+    - Silent Assassin - бесшумные убийства
+    - Hacker - взлом всех систем
+    - Phantom - полное прохождение в стелсе
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Threat Map
+    description: Карта угроз
+  - name: Achievements
+    description: Достижения стелса
+  - name: Reputation
+    description: Репутационные последствия
+
+paths:
+  /api/v1/gameplay/combat/stealth/threat-map:
+    get:
+      tags:
+        - Threat Map
+      summary: Карта угроз
+      description: |
+        Возвращает карту угроз в области.
+        
+        **Включает:**
+        - Позиции охранников и их состояние
+        - Зоны видимости камер
+        - Позиции сенсоров и детекторов
+        - Патрульные маршруты
+        - Зоны повышенной опасности
+        
+        **Зависит от:**
+        - Навыков разведки персонажа
+        - Взломанных камер (расширяет обзор)
+        - Имплантов сканирования
+        - Предметов разведки
+      operationId: getThreatMap
+      parameters:
+        - name: area_id
+          in: query
+          required: true
+          description: ID области для карты угроз
+          schema:
+            type: string
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Карта угроз
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreatMap"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/stealth/achievements:
+    get:
+      tags:
+        - Achievements
+      summary: Достижения стелса
+      description: |
+        Возвращает достижения стелса персонажа.
+        
+        **Типы достижений:**
+        - `ghost` - Ghost (прохождение без обнаружения)
+        - `silent_assassin` - Silent Assassin (бесшумные убийства)
+        - `hacker` - Hacker (взлом всех систем)
+        - `phantom` - Phantom (полное прохождение в стелсе)
+        - `shadow_master` - Shadow Master (мастер теней)
+        - `infiltrator` - Infiltrator (проникновение в запретные зоны)
+        
+        **Прогресс:**
+        - Количество выполненных миссий в стелсе
+        - Процент успешности
+        - Специальные условия
+      operationId: getStealthAchievements
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Достижения стелса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StealthAchievement"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/stealth/reputation/calculate:
+    post:
+      tags:
+        - Reputation
+      summary: Расчёт репутационных последствий
+      description: |
+        Рассчитывает влияние действий стелса на репутацию.
+        
+        **Факторы влияния:**
+        - **Обнаружение** - был ли обнаружен (-5 до -20)
+        - **Убийства** - количество убийств (-10 за каждое)
+        - **Свидетели** - количество свидетелей (-5 за каждого)
+        - **Тревоги** - сработавшие тревоги (-15 за каждую)
+        - **Чистота** - миссия без следов (+20)
+        
+        **Влияние на фракции:**
+        - Враждебные фракции: позитивное влияние
+        - Дружественные фракции: негативное влияние
+        - Нейтральные фракции: зависит от действий
+      operationId: calculateReputationImpact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReputationImpactRequest"
+      responses:
+        "200":
+          description: Репутационные последствия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReputationImpact"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ThreatMap:
+      type: object
+      properties:
+        area_id:
+          type: string
+          description: ID области
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа (для учёта навыков)
+        guards:
+          type: array
+          description: Охранники в области
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              position:
+                type: object
+                properties:
+                  x:
+                    type: number
+                  y:
+                    type: number
+                  z:
+                    type: number
+              state:
+                type: string
+                enum: [idle, patrol, investigate, alert, combat]
+              awareness_level:
+                type: number
+                format: float
+                description: Уровень настороженности (0.0-1.0)
+              vision_cone:
+                type: object
+                description: Конус зрения
+                properties:
+                  angle:
+                    type: number
+                  range:
+                    type: number
+        cameras:
+          type: array
+          description: Камеры в области
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              position:
+                type: object
+              coverage_area:
+                type: object
+              is_hacked:
+                type: boolean
+              is_disabled:
+                type: boolean
+        sensors:
+          type: array
+          description: Сенсоры и детекторы
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              sensor_type:
+                type: string
+                enum: [motion, thermal, emf, sound]
+              position:
+                type: object
+              detection_radius:
+                type: number
+        patrol_routes:
+          type: array
+          description: Патрульные маршруты
+          items:
+            type: object
+            properties:
+              guard_id:
+                type: string
+              waypoints:
+                type: array
+                items:
+                  type: object
+              patrol_interval:
+                type: integer
+                description: Интервал патруля (секунды)
+        danger_zones:
+          type: array
+          description: Зоны повышенной опасности
+          items:
+            type: object
+            properties:
+              zone_id:
+                type: string
+              zone_type:
+                type: string
+                enum: [restricted, high_security, no_go]
+              polygon:
+                type: array
+                description: Полигон зоны
+                items:
+                  type: object
+        last_updated:
+          type: string
+          format: date-time
+
+    StealthAchievement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID достижения
+        name:
+          type: string
+          description: Название достижения
+        description:
+          type: string
+          description: Описание достижения
+        achievement_type:
+          type: string
+          enum: [ghost, silent_assassin, hacker, phantom, shadow_master, infiltrator]
+          description: Тип достижения
+        unlocked:
+          type: boolean
+          description: Разблокировано ли достижение
+        progress:
+          type: number
+          format: float
+          description: Прогресс выполнения (0.0-1.0)
+        requirements:
+          type: object
+          description: Требования для разблокировки
+          properties:
+            missions_count:
+              type: integer
+              description: Количество миссий
+            no_detection:
+              type: boolean
+              description: Без обнаружения
+            no_kills:
+              type: boolean
+              description: Без убийств
+            all_systems_hacked:
+              type: boolean
+              description: Все системы взломаны
+        rewards:
+          type: array
+          description: Награды за достижение
+          items:
+            type: object
+        unlocked_at:
+          type: string
+          format: date-time
+          description: Время разблокировки
+
+    ReputationImpactRequest:
+      type: object
+      required:
+        - character_id
+        - faction_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        faction_id:
+          type: string
+          description: ID фракции
+        mission_id:
+          type: string
+          description: ID миссии (опционально)
+        was_detected:
+          type: boolean
+          description: Был ли обнаружен
+          default: false
+        detection_level:
+          type: string
+          enum: [none, suspicious, partial, full]
+          description: Уровень обнаружения
+        kills_count:
+          type: integer
+          description: Количество убийств
+          minimum: 0
+          default: 0
+        witnesses_count:
+          type: integer
+          description: Количество свидетелей
+          minimum: 0
+          default: 0
+        alarms_triggered:
+          type: integer
+          description: Сработавшие тревоги
+          minimum: 0
+          default: 0
+        clean_mission:
+          type: boolean
+          description: Миссия без следов
+          default: false
+
+    ReputationImpact:
+      type: object
+      properties:
+        faction_id:
+          type: string
+          description: ID фракции
+        faction_name:
+          type: string
+          description: Название фракции
+        reputation_change:
+          type: integer
+          description: Изменение репутации
+        new_reputation:
+          type: integer
+          description: Новая репутация
+        breakdown:
+          type: object
+          description: Разбивка изменений
+          properties:
+            detection_penalty:
+              type: integer
+            kills_penalty:
+              type: integer
+            witnesses_penalty:
+              type: integer
+            alarms_penalty:
+              type: integer
+            clean_bonus:
+              type: integer
+        consequences:
+          type: array
+          description: Последствия изменения репутации
+          items:
+            type: string
+        new_faction_status:
+          type: string
+          enum: [hostile, unfriendly, neutral, friendly, allied]
+          description: Новый статус с фракцией
+

@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: Stock Indices Constituents Service API
+  description: API для получения состава фондовых индексов
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: constituents
+    description: Состав индексов
+
+paths:
+  /stocks/indices/{code}/constituents:
+    get:
+      tags:
+        - constituents
+      summary: Получить состав индекса
+      description: |
+        Возвращает список акций в составе индекса с их весами.
+        Показывает текущую капитализацию и изменение цен.
+      operationId: getIndexConstituents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Код индекса
+          schema:
+            type: string
+            pattern: "^[A-Z0-9]+$"
+        - name: sort
+          in: query
+          required: false
+          description: Сортировка
+          schema:
+            type: string
+            enum: [weight_desc, weight_asc, market_cap_desc, market_cap_asc, symbol_asc]
+            default: weight_desc
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Состав индекса успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/IndexConstituent"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/PaginationResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    IndexConstituent:
+      type: object
+      description: Акция в составе индекса
+      required:
+        - stock_id
+        - stock_symbol
+        - stock_name
+        - weight
+        - market_cap
+        - price
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+        stock_name:
+          type: string
+          description: Название корпорации
+        weight:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Вес в индексе (%)
+        market_cap:
+          type: number
+          format: double
+          description: Рыночная капитализация
+        price:
+          type: number
+          format: double
+          description: Текущая цена акции
+        price_change_24h:
+          type: number
+          format: double
+          description: Изменение цены за 24ч (абсолютное)
+        price_change_24h_percent:
+          type: number
+          format: double
+          description: Изменение цены за 24ч (%)
+        shares_in_index:
+          type: integer
+          description: Количество акций в индексе
+

@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Position Validation Service API
+  description: API для валидации позиции игроков
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Position Validation
+    description: Валидация позиции игрока
+
+paths:
+  /anti-cheat/position/validate:
+    post:
+      tags:
+        - Position Validation
+      summary: Валидация позиции игрока
+      description: Проверка позиции игрока на телепортацию, прохождение через стены и коллизии
+      operationId: validatePosition
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionValidationRequest'
+            examples:
+              basic:
+                summary: Базовая проверка позиции
+                value:
+                  player_id: "550e8400-e29b-41d4-a716-446655440000"
+                  current_position:
+                    x: 100.5
+                    y: 200.3
+                    z: 50.0
+                    map_id: "map-001"
+                  previous_position:
+                    x: 90.0
+                    y: 190.0
+                    z: 50.0
+                    map_id: "map-001"
+                  time_delta: 0.5
+                  max_speed: 25.0
+      responses:
+        '200':
+          description: Результат валидации позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionValidationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/position/violations/{player_id}:
+    get:
+      tags:
+        - Position Validation
+      summary: Получить нарушения позиции для игрока
+      description: Получить список нарушений позиции для указанного игрока с пагинацией
+      operationId: getPositionViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список нарушений позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionViolationsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PositionValidationRequest:
+      type: object
+      required:
+        - player_id
+        - current_position
+        - previous_position
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        current_position:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/Position'
+          description: Текущая позиция игрока
+        previous_position:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/Position'
+          description: Предыдущая позиция игрока
+        time_delta:
+          type: number
+          format: float
+          description: Время в секундах между позициями
+          minimum: 0
+        max_speed:
+          type: number
+          format: float
+          description: Максимальная скорость игрока
+
+    PositionValidationResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+          description: Результат валидации
+        distance:
+          type: number
+          format: float
+          description: Расстояние между позициями
+        max_allowed_distance:
+          type: number
+          format: float
+          description: Максимально допустимое расстояние
+        collision_detected:
+          type: boolean
+          description: Обнаружена коллизия
+        violation:
+          $ref: '#/components/schemas/PositionViolation'
+          nullable: true
+          description: Информация о нарушении (если обнаружено)
+
+    PositionViolation:
+      type: object
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - POSITION_HACK
+          description: Тип нарушения
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьёзность нарушения
+        distance_exceeded:
+          type: number
+          format: float
+          description: На сколько превышено расстояние
+        teleportation_detected:
+          type: boolean
+          description: Обнаружена телепортация
+        wall_collision:
+          type: boolean
+          description: Обнаружено прохождение через стену
+
+    PositionViolationsResponse:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: 'anti-cheat-common.yaml#/components/schemas/Violation'
+          description: Список нарушений
+        total:
+          type: integer
+          description: Общее количество нарушений
+        limit:
+          type: integer
+          description: Лимит на страницу
+        offset:
+          type: integer
+          description: Смещение
+
+security:
+  - BearerAuth: []
+

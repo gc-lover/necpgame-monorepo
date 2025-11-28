@@ -1,0 +1,501 @@
+openapi: 3.0.3
+info:
+  title: Global State Service API
+  description: |
+    API для управления глобальным состоянием мира с Event Sourcing.
+    
+    Функционал:
+    - Запросы состояния (point, range, aggregate, time travel)
+    - Event sourcing операции
+    - Проекции и read-модели
+    - Синхронизация через Event Bus
+    - Мониторинг и health checks
+  version: 1.0.0
+  contact:
+    name: World Service Team
+    email: world@necp.game
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8086/v1
+    description: Local world-service
+tags:
+  - name: state
+    description: Операции с глобальным состоянием
+  - name: events
+    description: Event sourcing операции
+  - name: health
+    description: Мониторинг и health checks
+paths:
+  /world/state/current:
+    get:
+      tags: [state]
+      summary: Получить текущее состояние мира
+      operationId: getCurrentWorldState
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Текущее состояние успешно получено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldState'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /world/state/{entity_type}/{entity_id}:
+    get:
+      tags: [state]
+      summary: Получить состояние конкретной сущности
+      operationId: getEntityState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: entity_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [territory, faction, resource, economy]
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Состояние сущности получено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityState'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /world/state/query/range:
+    post:
+      tags: [state]
+      summary: Range query для получения состояния за период
+      operationId: queryStateRange
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entity_type, from_timestamp, to_timestamp]
+              properties:
+                entity_type:
+                  type: string
+                  enum: [territory, faction, resource, economy]
+                entity_id:
+                  type: string
+                  format: uuid
+                from_timestamp:
+                  type: string
+                  format: date-time
+                to_timestamp:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Range query выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StateSnapshot'
+                  count:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /world/state/query/aggregate:
+    post:
+      tags: [state]
+      summary: Aggregate query для агрегации данных
+      operationId: queryStateAggregate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aggregation_type, entity_type]
+              properties:
+                aggregation_type:
+                  type: string
+                  enum: [sum, avg, count, min, max]
+                entity_type:
+                  type: string
+                  enum: [territory, faction, resource, economy]
+                field:
+                  type: string
+                filters:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Aggregation выполнена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: number
+                    format: double
+                  count:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /world/state/query/time-travel:
+    post:
+      tags: [state]
+      summary: Time travel query для получения состояния на момент времени
+      operationId: queryStateTimeTravel
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [timestamp]
+              properties:
+                timestamp:
+                  type: string
+                  format: date-time
+                entity_type:
+                  type: string
+                  enum: [territory, faction, resource, economy]
+                entity_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Историческое состояние получено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateSnapshot'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /world/events:
+    get:
+      tags: [events]
+      summary: Получить список событий
+      operationId: getWorldEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [territory_captured, faction_war, quest_completed, economy_crash]
+        - name: from_timestamp
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: События успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldEvent'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+    post:
+      tags: [events]
+      summary: Создать новое событие
+      operationId: createWorldEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorldEventCreate'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /world/events/{event_id}:
+    get:
+      tags: [events]
+      summary: Получить событие по ID
+      operationId: getWorldEventById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Событие получено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldEvent'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /health:
+    get:
+      tags: [health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Сервис здоров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: Сервис недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  schemas:
+    WorldState:
+      type: object
+      required: [version, timestamp, territories, factions]
+      properties:
+        version:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+        territories:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TerritoryState'
+        factions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FactionState'
+        economy:
+          $ref: '#/components/schemas/EconomyState'
+    EntityState:
+      type: object
+      required: [entity_id, entity_type, version, timestamp, data]
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          enum: [territory, faction, resource, economy]
+        version:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object
+          additionalProperties: true
+    StateSnapshot:
+      type: object
+      required: [timestamp, version, state]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+        state:
+          type: object
+          additionalProperties: true
+    TerritoryState:
+      type: object
+      required: [territory_id, owner_faction_id, control_level]
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+        owner_faction_id:
+          type: string
+          format: uuid
+        control_level:
+          type: number
+          format: float
+        contested:
+          type: boolean
+        resources:
+          type: array
+          items:
+            type: string
+    FactionState:
+      type: object
+      required: [faction_id, power_level, territories_count]
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        power_level:
+          type: number
+          format: float
+        territories_count:
+          type: integer
+        at_war_with:
+          type: array
+          items:
+            type: string
+            format: uuid
+    EconomyState:
+      type: object
+      required: [total_currency, inflation_rate]
+      properties:
+        total_currency:
+          type: number
+          format: double
+        inflation_rate:
+          type: number
+          format: float
+        crash_risk:
+          type: number
+          format: float
+    WorldEvent:
+      type: object
+      required: [event_id, event_type, timestamp, version]
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [territory_captured, faction_war, quest_completed, economy_crash]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+        data:
+          type: object
+          additionalProperties: true
+        metadata:
+          type: object
+          properties:
+            source_service:
+              type: string
+            correlation_id:
+              type: string
+              format: uuid
+    WorldEventCreate:
+      type: object
+      required: [event_type, data]
+      properties:
+        event_type:
+          type: string
+          enum: [territory_captured, faction_war, quest_completed, economy_crash]
+        data:
+          type: object
+          additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+    HealthStatus:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        components:
+          type: object
+          properties:
+            postgres:
+              type: string
+              enum: [up, down]
+            redis:
+              type: string
+              enum: [up, down]
+            event_bus:
+              type: string
+              enum: [up, down]
+        metrics:
+          type: object
+          properties:
+            event_store_lag:
+              type: integer
+            sync_delay_ms:
+              type: integer
+

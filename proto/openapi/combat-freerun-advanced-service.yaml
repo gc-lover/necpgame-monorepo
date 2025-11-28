@@ -1,0 +1,658 @@
+openapi: 3.0.3
+info:
+  title: Combat Freerun Advanced Service API
+  description: API для комбо, мобильных способностей, маршрутов и телеметрии паркура
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083
+    description: Локальный сервер разработки
+  - url: https://api.necp.game
+    description: Продакшен сервер
+
+tags:
+  - name: Freerun Combos
+    description: Комбо паркура
+  - name: Freerun Mobile Abilities
+    description: Мобильные способности
+  - name: Freerun Routes
+    description: Пользовательские маршруты
+  - name: Freerun Telemetry
+    description: Телеметрия паркура
+
+paths:
+  /api/v1/gameplay/combat/freerun/combo:
+    post:
+      tags:
+        - Freerun Combos
+      summary: Выполнить комбо паркура
+      description: Выполняет последовательность действий паркура как комбо с бонусами
+      operationId: performFreerunCombo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FreerunComboRequest"
+            examples:
+              basic_combo:
+                summary: Базовое комбо
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  action_sequence:
+                    - "roof_jump"
+                    - "wall_climb"
+                    - "wire_slide"
+                  combat_integration: true
+      responses:
+        "200":
+          description: Комбо выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunComboResponse"
+              examples:
+                success:
+                  summary: Успешное выполнение
+                  value:
+                    success: true
+                    combo_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                    bonuses_applied:
+                      speed_bonus: 20
+                      stamina_efficiency: 15
+                    combat_integrated: true
+                    message: "Combo executed successfully"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/freerun/mobile-ability:
+    post:
+      tags:
+        - Freerun Mobile Abilities
+      summary: Активировать мобильную способность
+      description: Активирует способность во время паркура с корректировкой затрат
+      operationId: activateMobileFreerunAbility
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobileAbilityRequest"
+            examples:
+              dash_ability:
+                summary: Способность рывка
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  ability_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+                  current_action: "wall_climb"
+      responses:
+        "200":
+          description: Способность активирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileAbilityResponse"
+              examples:
+                success:
+                  summary: Успешная активация
+                  value:
+                    success: true
+                    activation_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+                    mobile_version_used: true
+                    cost_adjusted: 30
+                    original_cost: 50
+                    message: "Mobile ability activated"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Способность несовместима с текущим действием паркура
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/freerun/route:
+    post:
+      tags:
+        - Freerun Routes
+      summary: Создать пользовательский маршрут
+      description: Создает новый маршрут паркура, созданный игроком
+      operationId: createFreerunRoute
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRouteRequest"
+            examples:
+              rooftop_route:
+                summary: Маршрут по крышам
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  name: "Night City Rooftops Sprint"
+                  route_points:
+                    - position:
+                        x: 100.0
+                        y: 200.0
+                        z: 50.0
+                      action_type: "roof_jump"
+                    - position:
+                        x: 120.0
+                        y: 220.0
+                        z: 55.0
+                      action_type: "wall_climb"
+                  difficulty: "medium"
+                  is_public: true
+      responses:
+        "201":
+          description: Маршрут создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateRouteResponse"
+              examples:
+                success:
+                  summary: Успешное создание
+                  value:
+                    success: true
+                    route_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+                    validation_passed: true
+                    estimated_time: 45
+                    message: "Route created successfully"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/freerun/route/{routeId}:
+    get:
+      tags:
+        - Freerun Routes
+      summary: Получить маршрут
+      description: Возвращает данные конкретного маршрута паркура
+      operationId: getFreerunRoute
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID маршрута
+          example: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+      responses:
+        "200":
+          description: Данные маршрута
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunRoute"
+              examples:
+                route:
+                  summary: Пример маршрута
+                  value:
+                    route_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+                    character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                    name: "Night City Rooftops Sprint"
+                    route_points:
+                      - position:
+                          x: 100.0
+                          y: 200.0
+                          z: 50.0
+                        action_type: "roof_jump"
+                      - position:
+                          x: 120.0
+                          y: 220.0
+                          z: 55.0
+                        action_type: "wall_climb"
+                    difficulty: "medium"
+                    is_public: true
+                    completion_count: 42
+                    created_at: "2025-11-25T10:00:00Z"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/freerun/telemetry:
+    get:
+      tags:
+        - Freerun Telemetry
+      summary: Получить телеметрию паркура
+      description: Возвращает телеметрические данные о действиях паркура персонажа
+      operationId: getFreerunTelemetry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        - name: from_time
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода (ISO 8601)
+          example: "2025-11-26T00:00:00Z"
+        - name: to_time
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода (ISO 8601)
+          example: "2025-11-26T23:59:59Z"
+        - $ref: "common.yaml#/components/parameters/Page"
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Количество записей на странице
+      responses:
+        "200":
+          description: Телеметрические данные
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunTelemetryResponse"
+              examples:
+                telemetry:
+                  summary: Пример телеметрии
+                  value:
+                    character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                    telemetry_records:
+                      - action_type: "roof_jump"
+                        duration: 2500
+                        distance: 15.5
+                        stamina_used: 20
+                        combo_triggered: false
+                        timestamp: "2025-11-26T15:30:00Z"
+                      - action_type: "wall_climb"
+                        duration: 4000
+                        distance: 10.0
+                        stamina_used: 15
+                        combo_triggered: true
+                        timestamp: "2025-11-26T15:30:05Z"
+                    pagination:
+                      page: 1
+                      page_size: 50
+                      total_records: 142
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    FreerunComboRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - action_sequence
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        action_sequence:
+          type: array
+          items:
+            type: string
+            enum:
+              - roof_jump
+              - wall_climb
+              - wire_slide
+              - rock_climb
+              - hook_grab
+              - gravibot
+              - leg_implant
+          minItems: 2
+          description: Последовательность действий комбо
+        combat_integration:
+          type: boolean
+          default: false
+          description: Интегрировать с боевыми комбо
+
+    FreerunComboResponse:
+      type: object
+      required:
+        - success
+        - combo_id
+      properties:
+        success:
+          type: boolean
+          description: Успешность выполнения комбо
+        combo_id:
+          type: string
+          format: uuid
+          description: ID выполненного комбо
+        bonuses_applied:
+          type: object
+          description: Примененные бонусы
+          additionalProperties:
+            type: number
+        combat_integrated:
+          type: boolean
+          description: Было ли интегрировано с боевой системой
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    MobileAbilityRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - ability_id
+        - current_action
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        ability_id:
+          type: string
+          format: uuid
+          description: ID активируемой способности
+        current_action:
+          type: string
+          enum:
+            - roof_jump
+            - wall_climb
+            - wire_slide
+            - rock_climb
+            - hook_grab
+            - gravibot
+            - leg_implant
+          description: Текущее действие паркура
+
+    MobileAbilityResponse:
+      type: object
+      required:
+        - success
+        - activation_id
+        - mobile_version_used
+      properties:
+        success:
+          type: boolean
+          description: Успешность активации
+        activation_id:
+          type: string
+          format: uuid
+          description: ID активации способности
+        mobile_version_used:
+          type: boolean
+          description: Использована ли мобильная версия способности
+        cost_adjusted:
+          type: integer
+          minimum: 0
+          description: Скорректированная стоимость способности
+        original_cost:
+          type: integer
+          minimum: 0
+          description: Оригинальная стоимость способности
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    CreateRouteRequest:
+      type: object
+      required:
+        - character_id
+        - name
+        - route_points
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа-создателя
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Название маршрута
+        route_points:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutePoint"
+          minItems: 2
+          description: Точки маршрута
+        difficulty:
+          type: string
+          enum:
+            - easy
+            - medium
+            - hard
+            - expert
+          default: medium
+          description: Сложность маршрута
+        is_public:
+          type: boolean
+          default: false
+          description: Публичный ли маршрут
+
+    CreateRouteResponse:
+      type: object
+      required:
+        - success
+        - route_id
+        - validation_passed
+      properties:
+        success:
+          type: boolean
+          description: Успешность создания
+        route_id:
+          type: string
+          format: uuid
+          description: ID созданного маршрута
+        validation_passed:
+          type: boolean
+          description: Прошла ли валидация маршрута
+        estimated_time:
+          type: integer
+          minimum: 0
+          description: Предполагаемое время прохождения (секунды)
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    FreerunRoute:
+      type: object
+      required:
+        - route_id
+        - character_id
+        - name
+        - route_points
+        - difficulty
+        - is_public
+        - created_at
+      properties:
+        route_id:
+          type: string
+          format: uuid
+          description: ID маршрута
+        character_id:
+          type: string
+          format: uuid
+          description: ID создателя
+        name:
+          type: string
+          description: Название маршрута
+        route_points:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutePoint"
+          description: Точки маршрута
+        difficulty:
+          type: string
+          enum:
+            - easy
+            - medium
+            - hard
+            - expert
+          description: Сложность
+        is_public:
+          type: boolean
+          description: Публичный ли маршрут
+        completion_count:
+          type: integer
+          minimum: 0
+          description: Количество прохождений
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+
+    RoutePoint:
+      type: object
+      required:
+        - position
+        - action_type
+      properties:
+        position:
+          $ref: "#/components/schemas/Position3D"
+        action_type:
+          type: string
+          enum:
+            - roof_jump
+            - wall_climb
+            - wire_slide
+            - rock_climb
+            - hook_grab
+            - gravibot
+            - leg_implant
+          description: Тип действия в этой точке
+
+    Position3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: double
+          description: Координата X
+        y:
+          type: number
+          format: double
+          description: Координата Y
+        z:
+          type: number
+          format: double
+          description: Координата Z
+
+    FreerunTelemetryResponse:
+      type: object
+      required:
+        - character_id
+        - telemetry_records
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        telemetry_records:
+          type: array
+          items:
+            $ref: "#/components/schemas/TelemetryRecord"
+          description: Записи телеметрии
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            page_size:
+              type: integer
+              minimum: 1
+            total_records:
+              type: integer
+              minimum: 0
+
+    TelemetryRecord:
+      type: object
+      required:
+        - action_type
+        - duration
+        - distance
+        - stamina_used
+        - timestamp
+      properties:
+        action_type:
+          type: string
+          description: Тип действия паркура
+        duration:
+          type: integer
+          minimum: 0
+          description: Длительность действия (миллисекунды)
+        distance:
+          type: number
+          format: double
+          minimum: 0
+          description: Пройденная дистанция (метры)
+        stamina_used:
+          type: integer
+          minimum: 0
+          description: Потрачена выносливость
+        combo_triggered:
+          type: boolean
+          description: Было ли активировано комбо
+        timestamp:
+          type: string
+          format: date-time
+          description: Время выполнения действия
+
+security:
+  - BearerAuth: []

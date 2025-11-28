@@ -1,0 +1,359 @@
+openapi: 3.0.3
+info:
+  title: Combat Shooting Profiles Service API
+  description: |
+    API для управления профилями стрельбы, отдачей и TTK в NECPGAME.
+    
+    **Основные возможности:**
+    - Профили стрельбы для разных режимов (PvE/PvP/Arena)
+    - Управление паттернами отдачи оружия
+    - Расчёт TTK (Time To Kill)
+    
+    **TTK Profiles:**
+    - Open World PvE: 5-10+ попаданий (высокий TTK)
+    - Tactical PvP: 1-3 попадания (низкий TTK)
+    - Arena Ranked: 1-3 попадания (низкий TTK)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Shooting Profiles
+    description: Профили стрельбы
+  - name: Recoil
+    description: Отдача оружия
+  - name: TTK
+    description: Time To Kill
+
+paths:
+  /api/v1/gameplay/combat/shooting/profiles:
+    get:
+      tags:
+        - Shooting Profiles
+      summary: Получение профилей стрельбы
+      description: |
+        Возвращает доступные профили стрельбы для разных режимов игры.
+        
+        **Профили:**
+        - `open_world_pve` - Открытый мир и PvE (TTK: 5-10+)
+        - `tactical_pvp` - Тактические PvP-зоны (TTK: 1-3)
+        - `arena_ranked` - Арены и рейтинговые матчи (TTK: 1-3)
+      operationId: getShootingProfiles
+      responses:
+        "200":
+          description: Список профилей стрельбы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ShootingProfile"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/shooting/weapons/{weapon_id}/recoil:
+    get:
+      tags:
+        - Recoil
+      summary: Получение паттерна отдачи
+      description: |
+        Возвращает паттерн отдачи для указанного оружия.
+        
+        **Включает:**
+        - Базовый паттерн отдачи (вертикальная/горизонтальная)
+        - Модификаторы от имплантов/навыков
+        - Влияние модов оружия
+        - Тип отдачи (предсказуемая/реалистичная)
+        
+        **Модификаторы отдачи:**
+        - Импланты (кибер-руки, стабилизаторы)
+        - Навыки (контроль оружия)
+        - Моды оружия (компенсаторы, рукоятки)
+        - Баффы (временные усиления)
+      operationId: getWeaponRecoil
+      parameters:
+        - $ref: "#/components/parameters/WeaponId"
+      responses:
+        "200":
+          description: Паттерн отдачи
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoilPattern"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/shooting/ttk/calculate:
+    post:
+      tags:
+        - TTK
+      summary: Расчёт TTK
+      description: |
+        Рассчитывает Time To Kill для указанного оружия и цели.
+        
+        **Учитывает:**
+        - Профиль игры (PvE/PvP/Arena)
+        - Базовый урон оружия
+        - Броню и сопротивления цели
+        - Части тела и их множители
+        - Кибер-части (другие множители)
+        - Rate of Fire оружия
+        
+        **Множители частей тела:**
+        - Голова (органическая): x2.0
+        - Торс (органический): x1.0
+        - Конечности (органические): x0.7
+        - Кибер-голова: x1.5
+        - Кибер-торс: x0.8
+        - Кибер-конечности: x0.5
+      operationId: calculateTTK
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TTKCalculationRequest"
+            examples:
+              pve:
+                summary: PvE расчёт
+                value:
+                  weapon_id: "weapon-rifle-ak47"
+                  target_armor: 50
+                  target_body_parts:
+                    - part: torso
+                      is_cyber: false
+                  game_mode: open_world_pve
+              pvp_headshot:
+                summary: PvP хедшот
+                value:
+                  weapon_id: "weapon-sniper-barrett"
+                  target_armor: 80
+                  target_body_parts:
+                    - part: head
+                      is_cyber: false
+                  game_mode: tactical_pvp
+      responses:
+        "200":
+          description: Результат расчёта TTK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TTKResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  parameters:
+    WeaponId:
+      name: weapon_id
+      in: path
+      required: true
+      description: Уникальный идентификатор оружия
+      schema:
+        type: string
+
+  schemas:
+    ShootingProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID профиля
+        name:
+          type: string
+          description: Название профиля
+        description:
+          type: string
+          description: Описание профиля
+        ttk_range:
+          type: string
+          description: Диапазон TTK (например "5-10+ попаданий")
+        game_mode:
+          type: string
+          enum: [open_world_pve, tactical_pvp, arena_ranked]
+          description: Режим игры
+        characteristics:
+          type: object
+          description: Характеристики профиля
+          properties:
+            base_damage_multiplier:
+              type: number
+              format: float
+              description: Базовый множитель урона
+            accuracy_requirement:
+              type: string
+              description: Требования к точности
+            positioning_importance:
+              type: string
+              description: Важность позиционирования
+
+    RecoilPattern:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          description: ID оружия
+        pattern_type:
+          type: string
+          enum: [predictable, realistic]
+          description: |
+            Тип паттерна отдачи:
+            - `predictable` - предсказуемая (для аркадного стиля)
+            - `realistic` - реалистичная (для дальнобойного боя)
+        base_recoil:
+          type: object
+          description: Базовая отдача без модификаторов
+          properties:
+            vertical:
+              type: number
+              format: float
+              description: Вертикальная отдача (degrees)
+            horizontal:
+              type: number
+              format: float
+              description: Горизонтальная отдача (degrees)
+        pattern_points:
+          type: array
+          description: Точки паттерна отдачи (для визуализации)
+          items:
+            type: object
+            properties:
+              shot_number:
+                type: integer
+                description: Номер выстрела
+              x:
+                type: number
+                description: Горизонтальное смещение
+              y:
+                type: number
+                description: Вертикальное смещение
+        modifiers:
+          type: array
+          description: Активные модификаторы отдачи
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+                enum: [implant, skill, weapon_mod, buff]
+                description: Источник модификатора
+              reduction_percent:
+                type: number
+                format: float
+                description: Процент снижения отдачи
+        final_recoil:
+          type: object
+          description: Финальная отдача с учётом модификаторов
+          properties:
+            vertical:
+              type: number
+              format: float
+            horizontal:
+              type: number
+              format: float
+
+    TTKCalculationRequest:
+      type: object
+      required:
+        - weapon_id
+        - target_armor
+        - game_mode
+      properties:
+        weapon_id:
+          type: string
+          description: ID оружия
+        target_armor:
+          type: integer
+          description: Броня цели
+          minimum: 0
+        target_body_parts:
+          type: array
+          description: Части тела для расчёта попаданий
+          items:
+            type: object
+            required:
+              - part
+              - is_cyber
+            properties:
+              part:
+                type: string
+                enum: [head, torso, arms, legs, cyber_head, cyber_torso, cyber_limbs]
+                description: Часть тела
+              is_cyber:
+                type: boolean
+                description: Является ли кибер-частью
+        game_mode:
+          type: string
+          enum: [open_world_pve, tactical_pvp, arena_ranked]
+          description: Режим игры (влияет на TTK профиль)
+
+    TTKResult:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          description: ID оружия
+        ttk_seconds:
+          type: number
+          format: float
+          description: TTK в секундах
+        shots_to_kill:
+          type: integer
+          description: Количество выстрелов для убийства
+        game_mode:
+          type: string
+          description: Режим игры
+        breakdown:
+          type: object
+          description: Детальная разбивка расчёта
+          properties:
+            base_damage:
+              type: integer
+              description: Базовый урон оружия
+            armor_reduction:
+              type: integer
+              description: Снижение урона от брони
+            body_part_multipliers:
+              type: array
+              description: Множители частей тела
+              items:
+                type: object
+                properties:
+                  part:
+                    type: string
+                  multiplier:
+                    type: number
+                  damage_dealt:
+                    type: integer
+            fire_rate:
+              type: number
+              format: float
+              description: Скорострельность (выстрелов в секунду)
+
+
+

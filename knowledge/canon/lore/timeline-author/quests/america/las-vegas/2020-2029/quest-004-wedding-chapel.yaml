@@ -1,13 +1,13 @@
 metadata:
   id: quest-vegas-2029-wedding-chapel
-  title: 'Лас-Вегас 2020-2029 — Свадебная часовня'
+  title: "Лас-Вегас 2020-2029 — Свадебная часовня"
   document_type: canon
   category: timeline-quest
-  status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-12T00:00:00Z
+  status: approved
+  version: "1.1.0"
+  last_updated: 2025-11-23T19:00:00Z
   concept_approved: false
-  concept_reviewed_at: ''
+  concept_reviewed_at: ""
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -37,8 +37,8 @@ metadata:
 review:
   chain:
     - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
+      reviewer: ""
+      reviewed_at: ""
       status: pending
   next_actions: []
 summary:
@@ -49,6 +49,71 @@ summary:
     - Ежегодно в Вегасе проводится более 100 000 свадеб.
     - Часовни работают 24/7, церемонии занимают до 15 минут.
     - Стоимость пакетов варьируется от $50 до $500, лицензия оформляется за $77.
+quest_definition:
+  quest_type: side
+  level_min: 1
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: choose_chapel
+      text: "Выбрать часовню из десятков доступных вариантов, ориентируясь на стиль и стоимость"
+      type: dialogue
+      target: wedding_chapel_coordinator
+      optional: false
+    - id: get_marriage_license
+      text: "Оформить брачную лицензию в Marriage License Bureau ($77)"
+      type: interact
+      target: marriage_license_bureau
+      optional: false
+    - id: choose_ceremony_format
+      text: "Определить формат: классический, с Elvis-священником или drive-thru"
+      type: choice
+      target: wedding_chapel
+      optional: false
+    - id: conduct_ceremony
+      text: "Провести церемонию длительностью 15 минут и получить свидетельство"
+      type: interact
+      target: wedding_ceremony
+      optional: false
+    - id: decide_relationship_future
+      text: "Принять решение о дальнейшем развитии отношений или аннулировании брака"
+      type: choice
+      target: post_ceremony
+      optional: false
+  rewards:
+    experience: 1500
+    currency: -200
+    reputation:
+      las_vegas: 10
+    unlocks:
+      - type: status
+        id: married
+      - type: achievement
+        id: vegas_newlywed
+  branches:
+    - id: classic_ceremony
+      condition: ceremony_format == "classic"
+      consequences:
+        reputation:
+          las_vegas: 5
+    - id: elvis_ceremony
+      condition: ceremony_format == "elvis"
+      consequences:
+        reputation:
+          las_vegas: 10
+        unlocks:
+          - type: achievement
+            id: elvis_wedding
+    - id: drive_thru_ceremony
+      condition: ceremony_format == "drive_thru"
+      consequences:
+        currency: -50
+        reputation:
+          las_vegas: 3
 content:
   sections:
     - id: overview
@@ -106,11 +171,14 @@ implementation:
   queue_reference: []
   blockers: []
 history:
-  - version: '1.0.0'
+  - version: "1.0.0"
     date: 2025-11-12
     author: concept_team
     changes: Конвертирован квест «Свадебная часовня» в формат знаний.
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
 validation:
-  checksum: ''
-  schema_version: '1.0'
-
+  checksum: ""
+  schema_version: "1.0"

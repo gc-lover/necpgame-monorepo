@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: Combat Freerun Actions Service API
+  description: API для управления действиями паркура
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083
+    description: Локальный сервер разработки
+  - url: https://api.necp.game
+    description: Продакшен сервер
+
+tags:
+  - name: Freerun Actions
+    description: Управление действиями паркура
+
+paths:
+  /api/v1/gameplay/combat/freerun/actions:
+    post:
+      tags:
+        - Freerun Actions
+      summary: Выполнить действие паркура
+      description: Выполняет конкретное действие паркура с валидацией и расходом выносливости
+      operationId: performFreerunAction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FreerunActionRequest"
+            examples:
+              roof_jump:
+                summary: Прыжок между крышами
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  action_type: "roof_jump"
+                  position_before:
+                    x: 125.5
+                    y: 340.2
+                    z: 85.0
+                  position_after:
+                    x: 130.0
+                    y: 345.0
+                    z: 87.5
+                  automation_level: "auto"
+              wall_climb:
+                summary: Лазание по стене
+                value:
+                  character_id: "c3d4e5f6-a7b8-9012-3456-789012cdef01"
+                  session_id: "d4e5f6a7-b8c9-0123-4567-890123def012"
+                  action_type: "wall_climb"
+                  position_before:
+                    x: 50.0
+                    y: 100.0
+                    z: 20.0
+                  position_after:
+                    x: 50.0
+                    y: 100.0
+                    z: 35.0
+                  automation_level: "manual"
+      responses:
+        "200":
+          description: Действие успешно выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreerunActionResponse"
+              examples:
+                success:
+                  summary: Успешное выполнение
+                  value:
+                    success: true
+                    action_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+                    stamina_used: 20
+                    combo_triggered: false
+                    validation_passed: true
+                    message: "Action executed successfully"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Недостаточно выносливости или действие недоступно
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/freerun/actions/available:
+    get:
+      tags:
+        - Freerun Actions
+      summary: Получить доступные действия паркура
+      description: Возвращает список действий паркура, доступных персонажу в текущем контексте
+      operationId: getAvailableFreerunActions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        - name: session_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID боевой сессии (опционально)
+          example: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+      responses:
+        "200":
+          description: Список доступных действий
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailableFreerunActionsResponse"
+              examples:
+                full_stamina:
+                  summary: Все действия доступны
+                  value:
+                    character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                    available_actions:
+                      - action_type: "roof_jump"
+                        stamina_cost: 20
+                        available: true
+                        automation_available: true
+                      - action_type: "wall_climb"
+                        stamina_cost: 15
+                        available: true
+                        automation_available: true
+                      - action_type: "wire_slide"
+                        stamina_cost: 10
+                        available: true
+                        automation_available: true
+                    current_stamina: 100
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    FreerunActionRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - action_type
+        - position_before
+        - position_after
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        action_type:
+          type: string
+          enum:
+            - roof_jump
+            - wall_climb
+            - wire_slide
+            - rock_climb
+            - hook_grab
+            - gravibot
+            - leg_implant
+          description: Тип действия паркура
+        position_before:
+          $ref: "#/components/schemas/Position3D"
+        position_after:
+          $ref: "#/components/schemas/Position3D"
+        automation_level:
+          type: string
+          enum:
+            - auto
+            - manual
+          default: auto
+          description: Уровень автоматизации действия
+
+    FreerunActionResponse:
+      type: object
+      required:
+        - success
+        - action_id
+        - stamina_used
+        - validation_passed
+      properties:
+        success:
+          type: boolean
+          description: Успешность выполнения действия
+        action_id:
+          type: string
+          format: uuid
+          description: ID выполненного действия
+        stamina_used:
+          type: integer
+          minimum: 0
+          description: Количество израсходованной выносливости
+        combo_triggered:
+          type: boolean
+          default: false
+          description: Было ли активировано комбо
+        validation_passed:
+          type: boolean
+          description: Прошло ли действие валидацию античита
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    AvailableFreerunActionsResponse:
+      type: object
+      required:
+        - character_id
+        - available_actions
+        - current_stamina
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        available_actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailableAction"
+          description: Список доступных действий
+        current_stamina:
+          type: integer
+          minimum: 0
+          description: Текущая выносливость
+
+    AvailableAction:
+      type: object
+      required:
+        - action_type
+        - stamina_cost
+        - available
+      properties:
+        action_type:
+          type: string
+          enum:
+            - roof_jump
+            - wall_climb
+            - wire_slide
+            - rock_climb
+            - hook_grab
+            - gravibot
+            - leg_implant
+          description: Тип действия
+        stamina_cost:
+          type: integer
+          minimum: 0
+          description: Стоимость в выносливости
+        available:
+          type: boolean
+          description: Доступно ли действие
+        automation_available:
+          type: boolean
+          default: true
+          description: Доступна ли автоматизация для этого действия
+        reason_unavailable:
+          type: string
+          description: Причина недоступности (если available = false)
+
+    Position3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: double
+          description: Координата X
+        y:
+          type: number
+          format: double
+          description: Координата Y
+        z:
+          type: number
+          format: double
+          description: Координата Z
+
+security:
+  - BearerAuth: []

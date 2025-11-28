@@ -1,0 +1,217 @@
+openapi: 3.0.3
+info:
+  title: Stock Protection Circuit Breaker Service API
+  description: API для circuit breakers (автоостановка торгов при волатильности)
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: circuit-breakers
+    description: Автоостановка торгов
+  - name: admin
+    description: Административные операции
+
+paths:
+  /stocks/{stock_id}/circuit-breaker:
+    get:
+      tags:
+        - circuit-breakers
+      summary: Получить статус circuit breaker
+      description: |
+        Возвращает текущий статус circuit breaker для акции.
+        Показывает активны ли торги или приостановлены.
+      operationId: getCircuitBreakerStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          description: ID акции
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статус успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CircuitBreakerStatus"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/protection/circuit-breaker/trigger:
+    post:
+      tags:
+        - admin
+      summary: Вручную активировать circuit breaker
+      description: |
+        Админ endpoint для ручной активации circuit breaker.
+        Требуется роль admin.
+      operationId: triggerCircuitBreaker
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - stock_id
+                - reason
+                - duration_minutes
+              properties:
+                stock_id:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+                  description: Причина остановки
+                duration_minutes:
+                  type: integer
+                  minimum: 1
+                  maximum: 1440
+                  description: Длительность остановки (до 24 часов)
+      responses:
+        "200":
+          description: Circuit breaker активирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CircuitBreakerStatus"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/protection/circuit-breaker/resume:
+    post:
+      tags:
+        - admin
+      summary: Возобновить торги досрочно
+      description: |
+        Админ endpoint для досрочного возобновления торгов.
+        Требуется роль admin.
+      operationId: resumeTrading
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - stock_id
+              properties:
+                stock_id:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+                  description: Причина досрочного возобновления
+      responses:
+        "200":
+          description: Торги возобновлены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  stock_id:
+                    type: string
+                    format: uuid
+                  resumed_at:
+                    type: string
+                    format: date-time
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CircuitBreakerStatus:
+      type: object
+      description: Статус circuit breaker
+      required:
+        - stock_id
+        - stock_symbol
+        - status
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        stock_symbol:
+          type: string
+        status:
+          type: string
+          enum: [active, halted]
+          description: |
+            Статус торгов:
+            - active: Торги активны
+            - halted: Торги приостановлены
+        reason:
+          type: string
+          nullable: true
+          enum: [price_volatility, daily_limit, manual, investigation]
+          description: Причина остановки
+        triggered_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время остановки
+        estimated_resume_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Ожидаемое время возобновления
+        price_change_percent:
+          type: number
+          format: double
+          nullable: true
+          description: Изменение цены которое вызвало остановку
+        threshold_breached:
+          type: number
+          format: double
+          nullable: true
+          description: Порог который был превышен
+        halt_duration_minutes:
+          type: integer
+          nullable: true
+          description: Длительность остановки
+

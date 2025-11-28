@@ -1,0 +1,430 @@
+openapi: 3.0.3
+info:
+  title: Stock Events Admin Service API
+  description: API для административных операций с событиями акций (симуляция, применение, откат)
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: admin
+    description: Административные операции
+
+paths:
+  /admin/stocks/events/simulate:
+    post:
+      tags:
+        - admin
+      summary: Симулировать влияние события
+      description: |
+        Админ endpoint для симуляции влияния события на акцию.
+        Не применяет изменения, только рассчитывает эффект.
+        Требуется роль admin.
+      operationId: simulateEventImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventSimulationRequest"
+      responses:
+        "200":
+          description: Симуляция выполнена успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventSimulationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/events/apply:
+    post:
+      tags:
+        - admin
+      summary: Применить событие вручную
+      description: |
+        Админ endpoint для ручного применения события к акции.
+        Обновляет цену и создает impact запись.
+        Требуется роль admin.
+      operationId: applyEventImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventApplicationRequest"
+      responses:
+        "201":
+          description: Событие успешно применено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventImpact"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /admin/stocks/events/{impact_id}/reverse:
+    post:
+      tags:
+        - admin
+      summary: Откатить воздействие события
+      description: |
+        Админ endpoint для отмены воздействия события.
+        Восстанавливает цену и помечает impact как reversed.
+        Требуется роль admin.
+      operationId: reverseEventImpact
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: impact_id
+          in: path
+          required: true
+          description: ID воздействия для отката
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  description: Причина отката
+                  minLength: 10
+      responses:
+        "200":
+          description: Воздействие успешно откачено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  impact_id:
+                    type: string
+                    format: uuid
+                  stock_id:
+                    type: string
+                    format: uuid
+                  price_restored:
+                    type: number
+                    format: double
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "common.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    EventImpact:
+      type: object
+      description: Воздействие события на акцию
+      required:
+        - id
+        - stock_id
+        - stock_symbol
+        - event_type
+        - event_id
+        - event_name
+        - base_impact_percent
+        - total_impact_percent
+        - duration_type
+        - duration_hours
+        - decay_curve
+        - applied_at
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID воздействия
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+        event_type:
+          $ref: "#/components/schemas/EventType"
+        event_id:
+          type: string
+          description: ID источника события (quest_id, war_id, etc.)
+        event_name:
+          type: string
+          description: Название события
+        base_impact_percent:
+          type: number
+          format: double
+          description: Базовое влияние на цену (%)
+        modifiers:
+          type: array
+          description: Модификаторы воздействия
+          items:
+            $ref: "#/components/schemas/EventModifier"
+        total_impact_percent:
+          type: number
+          format: double
+          description: Итоговое влияние с модификаторами (%)
+        duration_type:
+          $ref: "#/components/schemas/DurationType"
+        duration_hours:
+          type: integer
+          minimum: 0
+          description: Длительность в часах
+        decay_curve:
+          $ref: "#/components/schemas/DecayCurve"
+        applied_at:
+          type: string
+          format: date-time
+          description: Время применения
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время истечения
+        current_effect_percent:
+          type: number
+          format: double
+          description: Текущий эффект с учетом decay
+        status:
+          type: string
+          enum: [active, expired, reversed]
+          description: Статус воздействия
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EventType:
+      type: string
+      enum:
+        - quest_completed
+        - faction_war
+        - territory_control
+        - corporate_scandal
+        - tech_breakthrough
+        - economic_event
+      description: |
+        Типы событий:
+        - quest_completed: Завершение квеста
+        - faction_war: Фракционная война
+        - territory_control: Смена контроля территории
+        - corporate_scandal: Корпоративный скандал
+        - tech_breakthrough: Технологический прорыв
+        - economic_event: Экономическое событие (кризис, подъем)
+
+    DurationType:
+      type: string
+      enum: [instant, short_term, long_term, permanent]
+      description: |
+        Длительность воздействия:
+        - instant: Мгновенное (с частичным откатом)
+        - short_term: Краткосрочное (~1 неделя)
+        - long_term: Долгосрочное (несколько недель)
+        - permanent: Перманентное (банкротство, делистинг)
+
+    DecayCurve:
+      type: string
+      enum: [none, linear, exponential]
+      description: |
+        Кривая затухания эффекта:
+        - none: Без затухания (permanent)
+        - linear: Линейное затухание
+        - exponential: Экспоненциальное затухание
+
+    EventModifier:
+      type: object
+      description: Модификатор воздействия события
+      required:
+        - type
+        - value
+        - effect_percent
+      properties:
+        type:
+          type: string
+          enum:
+            - player_participation
+            - sector_synergy
+            - company_size
+            - media_coverage
+            - market_volatility
+          description: |
+            Тип модификатора:
+            - player_participation: Количество участников
+            - sector_synergy: Синергия с сектором
+            - company_size: Размер компании
+            - media_coverage: Медиа освещенность
+            - market_volatility: Волатильность рынка
+        value:
+          oneOf:
+            - type: string
+            - type: number
+          description: Значение модификатора (число или enum)
+        effect_percent:
+          type: number
+          format: double
+          description: Эффект модификатора (%)
+
+    EventSimulationRequest:
+      type: object
+      description: Запрос симуляции события
+      required:
+        - stock_id
+        - event_type
+        - base_impact_percent
+        - duration_type
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        event_type:
+          $ref: "#/components/schemas/EventType"
+        base_impact_percent:
+          type: number
+          format: double
+        modifiers:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - value
+            properties:
+              type:
+                type: string
+              value:
+                oneOf:
+                  - type: string
+                  - type: number
+        duration_type:
+          $ref: "#/components/schemas/DurationType"
+
+    EventSimulationResult:
+      type: object
+      description: Результат симуляции события
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        stock_symbol:
+          type: string
+        current_price:
+          type: number
+          format: double
+        base_impact_percent:
+          type: number
+          format: double
+        calculated_modifiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventModifier"
+        total_impact_percent:
+          type: number
+          format: double
+        projected_price:
+          type: number
+          format: double
+        price_change:
+          type: number
+          format: double
+        duration_hours:
+          type: integer
+        decay_curve:
+          $ref: "#/components/schemas/DecayCurve"
+
+    EventApplicationRequest:
+      type: object
+      description: Запрос применения события
+      required:
+        - stock_id
+        - event_type
+        - event_id
+        - event_name
+        - base_impact_percent
+        - duration_type
+        - decay_curve
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        event_type:
+          $ref: "#/components/schemas/EventType"
+        event_id:
+          type: string
+          description: ID источника события
+        event_name:
+          type: string
+          description: Название события
+        base_impact_percent:
+          type: number
+          format: double
+        modifiers:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - value
+            properties:
+              type:
+                type: string
+              value:
+                oneOf:
+                  - type: string
+                  - type: number
+        duration_type:
+          $ref: "#/components/schemas/DurationType"
+        decay_curve:
+          $ref: "#/components/schemas/DecayCurve"
+        reason:
+          type: string
+          description: Причина ручного применения
+

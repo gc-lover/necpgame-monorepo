@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: Referral Milestones Service API
+  description: API для milestone реферальной системы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Milestone
+    description: Отслеживание milestone
+
+paths:
+  /growth/referral/milestones/{player_id}:
+    get:
+      tags:
+        - Referral Milestone
+      summary: Получить milestone игрока
+      operationId: getReferralMilestones
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+      responses:
+        '200':
+          description: Milestone игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralMilestonesResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/milestones/{milestone_id}/claim:
+    post:
+      tags:
+        - Referral Milestone
+      summary: Получить награду за milestone
+      operationId: claimMilestoneReward
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: milestone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimMilestoneRewardRequest'
+      responses:
+        '200':
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneRewardResponse'
+        '400':
+          $ref: "common.yaml#/components/responses/BadRequest"
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ReferralMilestone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        milestone_type:
+          type: string
+          enum:
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+        milestone_value:
+          type: integer
+        achieved_at:
+          type: string
+          format: date-time
+        reward_claimed:
+          type: boolean
+          default: false
+        reward_claimed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ReferralMilestonesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralMilestone'
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+
+    ClaimMilestoneRewardRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+
+    MilestoneRewardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        milestone_id:
+          type: string
+          format: uuid
+        reward_amount:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+
+security:
+  - BearerAuth: []
+

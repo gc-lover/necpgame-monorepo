@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: Referral Statistics Service API
+  description: API для статистики реферальной системы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Statistics
+    description: Статистика рефералов
+
+paths:
+  /growth/referral/stats/{player_id}:
+    get:
+      tags:
+        - Referral Statistics
+      summary: Получить статистику рефералов игрока
+      operationId: getReferralStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+      responses:
+        '200':
+          description: Статистика рефералов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralStats'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/stats/public/{code}:
+    get:
+      tags:
+        - Referral Statistics
+      summary: Получить публичную статистику по реферальному коду
+      operationId: getPublicReferralStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 12
+      responses:
+        '200':
+          description: Публичная статистика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicReferralStatsResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ReferralStats:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+        total_rewards:
+          type: integer
+          format: int64
+        last_updated:
+          type: string
+          format: date-time
+
+    PublicReferralStatsResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+
+security:
+  - BearerAuth: []
+

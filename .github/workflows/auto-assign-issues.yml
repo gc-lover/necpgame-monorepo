@@ -1,0 +1,94 @@
+name: Auto Assign Issues to Agents
+
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  auto-assign:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Auto-assign based on title and labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title;
+            const body = issue.body || '';
+            let labels = issue.labels.map(l => l.name);
+
+            const labelsToAdd = [];
+            const labelsToRemove = [];
+
+            // Если уже есть agent метка, не переназначаем
+            const hasAgentLabel = labels.some(l => l.startsWith('agent:'));
+            if (hasAgentLabel && context.payload.action === 'labeled') {
+              console.log('Issue already has agent label, skipping auto-assignment');
+              return;
+            }
+
+            // Определение агента по title
+            if (title.startsWith('[Idea]') || title.includes('[Idea Writer]')) {
+              labelsToAdd.push('agent:idea-writer', 'stage:idea');
+            } else if (title.startsWith('[Analysis]') || title.includes('[Analyst]')) {
+              labelsToAdd.push('agent:analyst', 'stage:analysis');
+            } else if (title.startsWith('[Architect]')) {
+              labelsToAdd.push('agent:architect', 'stage:design');
+            } else if (title.startsWith('[API Designer]') || title.includes('OpenAPI')) {
+              labelsToAdd.push('agent:api-designer', 'stage:api-design', 'protocol');
+            } else if (title.startsWith('[Backend]')) {
+              labelsToAdd.push('agent:backend', 'stage:backend-dev', 'backend');
+            } else if (title.startsWith('[Database]')) {
+              labelsToAdd.push('agent:database-engineer', 'stage:database-design', 'database');
+            } else if (title.startsWith('[Frontend]') || title.startsWith('[Client]')) {
+              labelsToAdd.push('agent:frontend', 'stage:frontend-dev', 'frontend');
+            } else if (title.startsWith('[QA]') || title.startsWith('[Testing]')) {
+              labelsToAdd.push('agent:qa', 'stage:testing');
+            } else if (title.startsWith('[DevOps]') || title.startsWith('[Infrastructure]')) {
+              labelsToAdd.push('agent:devops', 'stage:deployment', 'infrastructure');
+            } else if (title.startsWith('[Canon/Lore]') || labels.includes('canon') || labels.includes('lore') || labels.includes('quest')) {
+              labelsToAdd.push('agent:content-writer', 'stage:concept');
+            } else if (title.startsWith('[Mechanics]')) {
+              // Mechanics требует сначала Idea Writer для концепции, затем Architect для архитектуры
+              const status = body.match(/status:\s*(\w+)/i);
+              if (status && status[1].toLowerCase() === 'approved') {
+                labelsToAdd.push('agent:architect', 'stage:design');
+              } else {
+                labelsToAdd.push('agent:idea-writer', 'stage:idea', 'mechanics');
+              }
+            } else if (title.startsWith('[Implementation]')) {
+              // Implementation обычно требует архитектуры
+              labelsToAdd.push('agent:architect', 'stage:design');
+            }
+
+            // Применяем метки только если что-то нужно добавить
+            if (labelsToAdd.length > 0) {
+              const currentLabels = issue.labels.map(l => l.name);
+              const finalLabels = [...new Set([...currentLabels, ...labelsToAdd])];
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: finalLabels
+              });
+              
+              console.log(`Added labels: ${labelsToAdd.join(', ')}`);
+              
+              // Добавляем комментарий о автоназначении
+              const agentLabel = labelsToAdd.find(l => l.startsWith('agent:'));
+              if (agentLabel) {
+                const agentName = agentLabel.replace('agent:', '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `🤖 **Автоматическое назначение**\n\nЗадача автоматически назначена агенту: **${agentName}**\n\nЕсли это неверно, измените метки вручную.`
+                });
+              }
+            }
+
+

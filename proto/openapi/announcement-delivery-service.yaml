@@ -1,0 +1,213 @@
+openapi: 3.0.3
+info:
+  title: Announcement Delivery Service API
+  description: API для доставки объявлений через различные каналы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Announcement Delivery
+    description: Доставка объявлений
+
+paths:
+  /liveops/announcements/{announcement_id}/deliver:
+    post:
+      tags:
+        - Announcement Delivery
+      summary: Доставить объявление
+      description: Доставить объявление через указанные каналы (требуются права администратора)
+      operationId: deliverAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Данные для доставки объявления
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliverAnnouncementRequest'
+            examples:
+              example1:
+                value:
+                  delivery_channels:
+                    - "IN_GAME_POPUP"
+                    - "PUSH_NOTIFICATION"
+                  force: false
+      responses:
+        '200':
+          description: Объявление доставлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: delivered
+                  recipients_count:
+                    type: integer
+                    description: Количество получателей
+              examples:
+                example1:
+                  value:
+                    status: "delivered"
+                    recipients_count: 1500
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/delivery-status:
+    get:
+      tags:
+        - Announcement Delivery
+      summary: Получить статус доставки объявления
+      description: Получить статус доставки объявления по каналам (требуются права администратора)
+      operationId: getDeliveryStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус доставки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryStatusResponse'
+              examples:
+                example1:
+                  value:
+                    announcement_id: "550e8400-e29b-41d4-a716-446655440000"
+                    delivery_status: "COMPLETED"
+                    channels:
+                      - channel: "IN_GAME_POPUP"
+                        status: "COMPLETED"
+                        recipients_count: 1500
+                        delivered_count: 1500
+                        failed_count: 0
+                    total_recipients: 1500
+                    delivered_count: 1500
+                    failed_count: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    DeliverAnnouncementRequest:
+      type: object
+      description: Запрос на доставку объявления
+      properties:
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+          description: Каналы доставки
+          minItems: 1
+        force:
+          type: boolean
+          default: false
+          description: Принудительная доставка даже если объявление не опубликовано
+
+    DeliveryStatusResponse:
+      type: object
+      description: Статус доставки объявления
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+          description: ID объявления
+        delivery_status:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+          description: Общий статус доставки
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelDeliveryStatus'
+          description: Статус доставки по каналам
+        total_recipients:
+          type: integer
+          description: Общее количество получателей
+        delivered_count:
+          type: integer
+          description: Количество успешно доставленных
+        failed_count:
+          type: integer
+          description: Количество неудачных доставок
+
+    ChannelDeliveryStatus:
+      type: object
+      description: Статус доставки по каналу
+      properties:
+        channel:
+          type: string
+          enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+          description: Канал доставки
+        status:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+          description: Статус доставки по каналу
+        recipients_count:
+          type: integer
+          description: Количество получателей по каналу
+        delivered_count:
+          type: integer
+          description: Количество успешно доставленных по каналу
+        failed_count:
+          type: integer
+          description: Количество неудачных доставок по каналу
+

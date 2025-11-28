@@ -1,13 +1,13 @@
 metadata:
   id: quest-la-2029-beverly-hills-heist
-  title: 'Лос-Анджелес 2020-2029 — Ограбление Беверли-Хиллз'
+  title: "Лос-Анджелес 2020-2029 — Ограбление Беверли-Хиллз"
   document_type: canon
   category: timeline-quest
-  status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-12T00:00:00Z
+  status: approved
+  version: "1.1.0"
+  last_updated: 2025-11-23T19:00:00Z
   concept_approved: false
-  concept_reviewed_at: ''
+  concept_reviewed_at: ""
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -36,8 +36,8 @@ metadata:
 review:
   chain:
     - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
+      reviewer: ""
+      reviewed_at: ""
       status: pending
   next_actions: []
 summary:
@@ -48,6 +48,82 @@ summary:
     - Beverly Hills и Rodeo Drive символизируют богатство и роскошь.
     - Особняки охраняют частные службы и системы кибербезопасности.
     - Квест даёт крупный лут и репутацию в криминальных кругах.
+quest_definition:
+  quest_type: side
+  level_min: 15
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: gather_intel
+      text: "Собрать информацию о цели: расписание знаменитости, охрана, смарт-дом"
+      type: dialogue
+      target: informants
+      optional: false
+    - id: hack_security
+      text: "Взломать системы безопасности и проникнуть в особняк под покровом ночи"
+      type: skill_check
+      target: mansion_security
+      skill: hacking
+      difficulty: hard
+      optional: false
+    - id: neutralize_guards
+      text: "Обезвредить охрану, отключить сигнализацию, найти сейфы с ценностями"
+      type: combat
+      target: mansion_guards
+      optional: false
+    - id: collect_loot
+      text: "Забрать драгоценности, произведения искусства, импланты и цифровые носители"
+      type: collect
+      target: mansion_vault
+      optional: false
+    - id: escape_before_police
+      text: "Эвакуироваться до прибытия LAPD и частных сил, используя подготовленные маршруты"
+      type: move
+      target: escape_route
+      optional: false
+  rewards:
+    experience: 8000
+    currency:
+      min: 100000
+      max: 500000
+      random: true
+    reputation:
+      los_angeles: -20
+      criminal_factions: 30
+    items:
+      - type: luxury_items
+        quantity: random
+      - type: cyberware
+        quantity: random
+      - type: digital_secrets
+        quantity: random
+    debuffs:
+      - type: wanted_level
+        id: lapd_attention
+        value: 50
+        duration: 86400
+    unlocks:
+      - type: achievement
+        id: beverly_hills_heist_master
+  branches:
+    - id: perfect_heist
+      condition: no_alarms_triggered == true
+      consequences:
+        currency_bonus: 100000
+        reputation:
+          criminal_factions: 20
+    - id: detected_heist
+      condition: alarms_triggered == true
+      consequences:
+        debuffs:
+          - type: wanted_level
+            id: lapd_attention
+            value: 100
+            duration: 172800
 content:
   sections:
     - id: overview
@@ -105,11 +181,14 @@ implementation:
   queue_reference: []
   blockers: []
 history:
-  - version: '1.0.0'
+  - version: "1.0.0"
     date: 2025-11-12
     author: concept_team
     changes: Конвертирован квест «Ограбление Беверли-Хиллз» в формат знаний.
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
 validation:
-  checksum: ''
-  schema_version: '1.0'
-
+  checksum: ""
+  schema_version: "1.0"

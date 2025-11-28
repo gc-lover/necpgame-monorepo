@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: Cosmetic Events Service API
+  description: API для получения событий косметики
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Events
+    description: События косметики
+
+paths:
+  /monetization/cosmetic/events/{player_id}:
+    get:
+      tags:
+        - Events
+      summary: Получить события косметики игрока
+      description: Получить список событий косметики для указанного игрока с фильтрацией по типу события
+      operationId: getCosmeticEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          description: Тип события
+          schema:
+            type: string
+            enum:
+              - cosmetic:purchased
+              - cosmetic:equipped
+              - cosmetic:unequipped
+              - cosmetic:shop-rotated
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: События косметики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CosmeticEventsResponse'
+              examples:
+                example1:
+                  value:
+                    events:
+                      - id: "550e8400-e29b-41d4-a716-446655440002"
+                        player_id: "550e8400-e29b-41d4-a716-446655440001"
+                        event_type: "cosmetic:purchased"
+                        cosmetic_id: "550e8400-e29b-41d4-a716-446655440000"
+                        created_at: "2025-11-27T10:00:00Z"
+                    total: 1
+                    limit: 20
+                    offset: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    CosmeticEvent:
+      type: object
+      description: Событие косметики
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор события
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        event_type:
+          type: string
+          enum:
+            - cosmetic:purchased
+            - cosmetic:equipped
+            - cosmetic:unequipped
+            - cosmetic:shop-rotated
+          description: Тип события
+        cosmetic_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID косметического предмета
+        event_data:
+          type: object
+          additionalProperties: true
+          description: Дополнительные данные события
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания события
+
+    CosmeticEventsResponse:
+      type: object
+      description: Ответ со списком событий
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CosmeticEvent'
+          description: Список событий
+        total:
+          type: integer
+          description: Общее количество событий
+        limit:
+          type: integer
+          description: Лимит записей
+        offset:
+          type: integer
+          description: Смещение записей
+

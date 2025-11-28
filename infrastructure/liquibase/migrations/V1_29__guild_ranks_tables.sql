@@ -19,3 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_guild_ranks_order ON social.guild_ranks(guild_id,
 
 
 
+
+
+
+

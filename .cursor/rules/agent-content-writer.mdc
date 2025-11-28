@@ -25,7 +25,7 @@ Development Stage: `content-writer`
 ## Оптимизация GitHub API
 
 См. `.cursor/rules/GITHUB_API_OPTIMIZATION.md`
-Главное: `mcp_github_search_issues` вместо множественных `issue_read`
+Главное: `mcp_github_search_issues` вместо множественных `issue_read`. Задержка 2-3 сек для поиска (лимит 30/мин).
 
 ## Поиск задач
 
@@ -37,9 +37,13 @@ Development Stage: `content-writer`
 
 - Концепция квеста от Idea Writer (метка `stage:idea`)
 - Архитектура системы квестов (`knowledge/implementation/architecture/quest-system-architecture.yaml`)
+- Шаблон валидации YAML квестов (`.cursor/rules/QUEST_YAML_VALIDATION.md`) - ОБЯЗАТЕЛЬНО для соответствия требованиям БД
 - Требования к контенту из Issue
 - Лор игры
 - NPC профили (если нужно)
+
+## Ошибочное назначение задач
+Если задача назначена ошибочно (не соответствует области ответственности Content Writer), оставь комментарий в Issue с просьбой проверить workflow и указанием правильного агента. Если возвращают ошибочно назначенную задачу, проверь workflow и объясни почему не можешь её выполнить, указав правильный этап и агента.
 
 ## КРИТИЧНО: Проверка перед обработкой
 
@@ -83,31 +87,52 @@ Development Stage: `content-writer`
 - Интеграция с NPC (если нужно)
 - Награды и проверки определены
 - Структура соответствует архитектуре
+- **Все обязательные поля заполнены согласно шаблону валидации** (см. `.cursor/rules/QUEST_YAML_VALIDATION.md`)
 - Файл закоммичен
+
+## Валидация структуры YAML
+
+Перед передачей Backend Developer ОБЯЗАТЕЛЬНО проверь:
+- `metadata.id` присутствует и уникален
+- `metadata.title` присутствует и не длиннее 255 символов
+- `quest_definition.quest_type` присутствует и из допустимых значений
+- `quest_definition.level_min` присутствует и >= 1
+- `quest_definition.objectives` присутствует и содержит минимум 1 цель
+- Каждая objective содержит: `id`, `text`, `type`, `target`, `optional`
+- `quest_definition.requirements` присутствует (может быть пустым объектом)
+- `quest_definition.rewards` присутствует (может быть пустым объектом)
+- `quest_definition.branches` присутствует (может быть пустым массивом)
+
+Если есть критические ошибки - исправь перед передачей Backend Developer.
 
 ## Управление метками
 
 При начале: добавь `agent:content-writer`, `stage:content`
-При завершении: удали `agent:content-writer`, добавь `agent:qa`, `stage:testing`
+При завершении: удали `agent:content-writer`, добавь `agent:backend`, `stage:backend-dev`
 
 См. `.cursor/rules/AGENT_LABEL_MANAGEMENT.md`
 
-## Переход к QA
+## Переход к Backend Developer
+
+**ОБЯЗАТЕЛЬНО:** После создания YAML файла квеста передай задачу Backend Developer для импорта в БД.
 
 1. Удали `agent:content-writer`
-2. Добавь `agent:qa`, `stage:testing`
-3. Обнови Development Stage = `testing`
+2. Добавь `agent:backend`, `stage:backend-dev`, `backend`
+3. Обнови Development Stage = `backend-dev`
 4. Комментарий:
 ```
-Контентный квест готов к тестированию
+Контентный квест готов к импорту в БД
 
-Задача передана @agent:qa
+Задача передана @agent:backend
 
 Детали:
 - YAML файл: {путь}
 - Лор проработан
 - Диалоги созданы (если есть)
 - Интеграция с NPC (если есть)
+- Структура соответствует шаблону валидации (см. .cursor/rules/QUEST_YAML_VALIDATION.md)
+
+Следующий шаг: Backend Developer должен создать API endpoint для импорта квеста в таблицу quest_definitions.
 ```
 
 ## Стиль работы
@@ -133,22 +158,28 @@ YAML с:
 
 НЕ создавай архитектуру. Используй готовую из `knowledge/implementation/architecture/quest-system-architecture.yaml`.
 
+**ОБЯЗАТЕЛЬНО:** Следуй шаблону валидации `.cursor/rules/QUEST_YAML_VALIDATION.md` для соответствия требованиям БД.
+
 Структура квеста:
 - Метаданные (id, title, status, version)
 - Описание (summary, goal, essence)
+- Quest Definition (quest_type, level_min, level_max, requirements, objectives, rewards, branches) - ОБЯЗАТЕЛЬНО для импорта в БД
 - Контент (sections, dialogues, branches)
 - Награды (rewards, skill checks)
 - Интеграции (NPC, locations, factions)
 
 ## Коммиты
 
+**ОБЯЗАТЕЛЬНО:** Все изменения коммить и пушить в ветку `develop`.
+
 Формат: `[content-writer] type: описание`
 Типы: feat, fix, docs
 Issue: указывай номер
 
 Примеры:
-```
-[content-writer] feat: добавить квест Знак Голливуда
+```bash
+git add knowledge/canon/lore/timeline-author/quests/
+git commit -m "[content-writer] feat: добавить квест Знак Голливуда
 
 - YAML файл
 - Лор
@@ -156,7 +187,8 @@ Issue: указывай номер
 - Интеграция с NPC
 - Награды и проверки
 
-Связанные Issue: #1123
+Связанные Issue: #1123"
+git push origin develop
 ```
 
 Когда коммитить:

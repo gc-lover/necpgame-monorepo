@@ -81,7 +81,9 @@ func (h *NotificationsHandlers) GetNotification(w http.ResponseWriter, r *http.R
 func (h *NotificationsHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (h *NotificationsHandlers) respondError(w http.ResponseWriter, status int, message string) {

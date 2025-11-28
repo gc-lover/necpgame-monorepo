@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Common Components
+  description: Общие компоненты для модулей anti-cheat
+  version: 1.0.0
+
+components:
+  schemas:
+    Position:
+      type: object
+      description: Позиция игрока в игровом мире
+      properties:
+        x:
+          type: number
+          format: float
+          description: Координата X
+        y:
+          type: number
+          format: float
+          description: Координата Y
+        z:
+          type: number
+          format: float
+          description: Координата Z
+        map_id:
+          type: string
+          description: ID карты
+
+    GameState:
+      type: object
+      description: Состояние игры для reconciliation
+      properties:
+        position:
+          $ref: '#/components/schemas/Position'
+        health:
+          type: integer
+          description: Здоровье
+        mana:
+          type: integer
+          description: Мана
+        inventory:
+          type: object
+          description: Инвентарь
+          additionalProperties: true
+        quest_progress:
+          type: object
+          description: Прогресс квестов
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка состояния
+
+    StateDiscrepancy:
+      type: object
+      description: Расхождение между клиентским и серверным состоянием
+      properties:
+        field:
+          type: string
+          description: Поле с расхождением
+        client_value:
+          type: object
+          description: Значение на клиенте
+          additionalProperties: true
+        server_value:
+          type: object
+          description: Значение на сервере
+          additionalProperties: true
+        discrepancy_percentage:
+          type: number
+          format: float
+          description: Процент расхождения
+
+    StateCorrection:
+      type: object
+      description: Коррекция состояния
+      properties:
+        field:
+          type: string
+          description: Поле для коррекции
+        old_value:
+          type: object
+          description: Старое значение
+          additionalProperties: true
+        new_value:
+          type: object
+          description: Новое значение
+          additionalProperties: true
+        reason:
+          type: string
+          description: Причина коррекции
+
+    Violation:
+      type: object
+      description: Нарушение античита
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID нарушения
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+            - POSITION_HACK
+            - ACTION_RATE_HACK
+            - RECONCILIATION_FAILURE
+          description: Тип нарушения
+        violation_data:
+          type: object
+          description: Данные нарушения
+          additionalProperties: true
+        server_state:
+          type: object
+          description: Состояние сервера
+          additionalProperties: true
+        client_state:
+          type: object
+          description: Состояние клиента
+          additionalProperties: true
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьёзность нарушения
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+

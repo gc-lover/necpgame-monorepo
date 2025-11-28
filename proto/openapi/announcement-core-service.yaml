@@ -1,0 +1,477 @@
+openapi: 3.0.3
+info:
+  title: Announcement Core Service API
+  description: API для основных операций с объявлениями (CRUD)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Announcements
+    description: Управление объявлениями
+
+paths:
+  /announcements:
+    get:
+      tags:
+        - Announcements
+      summary: Получить список объявлений
+      description: Получить список объявлений с фильтрацией по типу и приоритету
+      operationId: getAnnouncements
+      parameters:
+        - name: type
+          in: query
+          description: Тип объявления
+          schema:
+            type: string
+            enum:
+              - GAME_NEWS
+              - PATCH_NOTES
+              - MAINTENANCE
+              - EVENT
+              - PROMOTION
+              - COMMUNITY
+              - EMERGENCY
+        - name: priority
+          in: query
+          description: Приоритет объявления
+          schema:
+            type: string
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список объявлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcement'
+                  total:
+                    type: integer
+                    description: Общее количество объявлений
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+              examples:
+                example1:
+                  value:
+                    announcements:
+                      - id: "550e8400-e29b-41d4-a716-446655440000"
+                        announcement_type: "GAME_NEWS"
+                        priority: "MEDIUM"
+                        title: "Новое обновление"
+                        status: "PUBLISHED"
+                    total: 1
+                    limit: 50
+                    offset: 0
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /announcements/{announcementId}:
+    get:
+      tags:
+        - Announcements
+      summary: Получить объявление
+      description: Получить информацию об объявлении по ID
+      operationId: getAnnouncement
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+              examples:
+                example1:
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    announcement_type: "GAME_NEWS"
+                    priority: "MEDIUM"
+                    display_style: "NEWS_FEED"
+                    status: "PUBLISHED"
+                    title: "Новое обновление"
+                    content: "Описание обновления"
+                    published_at: "2025-11-27T10:00:00Z"
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements:
+    post:
+      tags:
+        - Announcements
+      summary: Создать объявление (admin)
+      description: Создать новое объявление (требуются права администратора)
+      operationId: createAnnouncement
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        description: Данные для создания объявления
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnnouncementRequest'
+            examples:
+              example1:
+                value:
+                  announcement_type: "GAME_NEWS"
+                  priority: "MEDIUM"
+                  display_style: "NEWS_FEED"
+                  title: "Новое обновление"
+                  content: "Описание обновления"
+                  delivery_channels:
+                    - "NEWS_FEED"
+      responses:
+        '201':
+          description: Объявление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}:
+    put:
+      tags:
+        - Announcements
+      summary: Обновить объявление (admin)
+      description: Обновить существующее объявление (требуются права администратора)
+      operationId: updateAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Данные для обновления объявления
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAnnouncementRequest'
+            examples:
+              example1:
+                value:
+                  title: "Обновленное название"
+                  content: "Обновленное содержание"
+                  priority: "HIGH"
+      responses:
+        '200':
+          description: Объявление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Announcements
+      summary: Удалить объявление (admin)
+      description: Удалить объявление (требуются права администратора)
+      operationId: deleteAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          description: ID объявления
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Announcement:
+      type: object
+      description: Объявление
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор объявления
+        announcement_type:
+          type: string
+          enum:
+            - GAME_NEWS
+            - PATCH_NOTES
+            - MAINTENANCE
+            - EVENT
+            - PROMOTION
+            - COMMUNITY
+            - EMERGENCY
+          description: Тип объявления
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+          description: Приоритет объявления
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+          description: Стиль отображения
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - SCHEDULED
+            - PUBLISHED
+            - ARCHIVED
+          description: Статус объявления
+        title:
+          type: string
+          description: Заголовок объявления
+          maxLength: 255
+        content:
+          type: string
+          description: Содержание объявления
+        scheduled_publish_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Запланированное время публикации
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время публикации
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время архивирования
+        targeting:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Критерии таргетинга
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+          description: Каналы доставки
+        media:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Медиа файлы
+        created_by:
+          type: string
+          format: uuid
+          description: ID создателя
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+
+    CreateAnnouncementRequest:
+      type: object
+      required:
+        - announcement_type
+        - title
+        - content
+      description: Запрос на создание объявления
+      properties:
+        announcement_type:
+          type: string
+          enum:
+            - GAME_NEWS
+            - PATCH_NOTES
+            - MAINTENANCE
+            - EVENT
+            - PROMOTION
+            - COMMUNITY
+            - EMERGENCY
+          description: Тип объявления
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+          default: NORMAL
+          description: Приоритет объявления
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+          default: NEWS_FEED
+          description: Стиль отображения
+        title:
+          type: string
+          maxLength: 255
+          description: Заголовок объявления
+        content:
+          type: string
+          description: Содержание объявления
+        targeting:
+          type: object
+          additionalProperties: true
+          description: Критерии таргетинга
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+          default:
+            - NEWS_FEED
+          description: Каналы доставки
+        media:
+          type: object
+          additionalProperties: true
+          description: Медиа файлы
+
+    UpdateAnnouncementRequest:
+      type: object
+      description: Запрос на обновление объявления
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Заголовок объявления
+        content:
+          type: string
+          description: Содержание объявления
+        priority:
+          type: string
+          enum:
+            - LOW
+            - NORMAL
+            - HIGH
+            - CRITICAL
+          description: Приоритет объявления
+        display_style:
+          type: string
+          enum:
+            - NEWS_FEED
+            - POPUP
+            - MODAL
+            - BANNER
+            - TOAST
+          description: Стиль отображения
+        targeting:
+          type: object
+          additionalProperties: true
+          description: Критерии таргетинга
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+              - IN_GAME_POPUP
+              - PUSH_NOTIFICATION
+              - EMAIL
+              - NEWS_FEED
+          description: Каналы доставки
+        media:
+          type: object
+          additionalProperties: true
+          description: Медиа файлы
+

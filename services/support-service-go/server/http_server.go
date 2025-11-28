@@ -156,8 +156,12 @@ func (s *HTTPServer) getTickets(w http.ResponseWriter, r *http.Request) {
 	limit := 50
 	offset := 0
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			if l > 100 {
+				limit = 100
+			} else {
+				limit = l
+			}
 		}
 	}
 	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
@@ -410,7 +414,9 @@ func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		s.logger.WithError(err).Error("Failed to encode JSON response")
+	}
 }
 
 func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {

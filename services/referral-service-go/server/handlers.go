@@ -159,7 +159,7 @@ func (h *ReferralHandlers) GetReferralMilestones(w http.ResponseWriter, r *http.
 	response := api.ReferralMilestonesResponse{
 		Milestones: &apiMilestones,
 	}
-	
+
 	if currentType != nil {
 		mt := api.ReferralMilestonesResponseCurrentMilestone(string(*currentType))
 		response.CurrentMilestone = &mt

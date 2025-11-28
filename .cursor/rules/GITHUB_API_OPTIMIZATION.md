@@ -1,5 +1,9 @@
 # Оптимизация запросов к GitHub API
 
+## ⚠️ КРИТИЧНО: Secondary Rate Limit
+
+**Search API лимит: 30 запросов/минуту.** При превышении GitHub блокирует ВСЕ типы запросов (REST, GraphQL, Search) на 1 час. Используй задержки 2-3 секунды для `search_issues` и кэширование результатов.
+
 ## Система очередей
 
 Для массовых операций используй GitHub Actions Batch Processor:
@@ -94,7 +98,7 @@ for (const num of [1, 2, 3]) {
 Задержки:
 - Одиночные: 200-300ms
 - Массовые: 300-500ms
-- Поиск: 500-1000ms
+- Поиск: 2000-3000ms (КРИТИЧНО: Search API лимит 30/мин, secondary rate limit блокирует ВСЕ запросы)
 
 ### 2. Группирование (батчинг)
 
@@ -166,7 +170,7 @@ async function searchIssuesCached(query) {
   searchResult.items.forEach(issue => {
     issueCache.set(issue.number, { data: issue, timestamp: Date.now() });
   });
-  await delay(500);
+  await delay(2000);
   return searchResult;
 }
 
@@ -251,7 +255,7 @@ async function safeApiCall(apiFunction, retries = 3) {
 |----------|----------|--------------|
 | Чтение Issue | 200-300ms | - |
 | Обновление Issue | 300-500ms | 5-10 |
-| Поиск Issues | 500-1000ms | - |
+| Поиск Issues | 2000-3000ms | - |
 | Комментарии | 300-500ms | 5-10 |
 | Метки | 300-500ms | 5-10 |
 | Массовые | 500-1000ms | 5 |
@@ -279,10 +283,11 @@ async function safeApiCall(apiFunction, retries = 3) {
   - >=10 Issues: GitHub Actions
 - Группируй в батчи по 5-10
 - Задержки между запросами (300-500ms)
+- Задержки для Search API (2000-3000ms) - КРИТИЧНО
 - Задержки между батчами (1000ms)
 - Последовательно, не параллельно
 - Обрабатывай rate limit с повторами
-- Кэширование в памяти (опционально)
+- Кэширование результатов поиска (TTL: 1-2 мин) - ОБЯЗАТЕЛЬНО
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

@@ -1,0 +1,462 @@
+openapi: 3.0.3
+info:
+  title: Combat Hacking Service API
+  description: |
+    API для системы боевого хакерства в NECPGAME.
+    
+    **Основные возможности:**
+    - Взлом вражеских имплантов и устройств
+    - Сетевой доступ (простые, сложные, изолированные сети)
+    - ICE защита и уровни сложности
+    - PvP взлом с учётом защиты
+    - Обнаружение и ответные меры
+    - Система перегрева
+    - Демоны и кибердеки
+    
+    **Категории хакерства:**
+    - Враги (отключение имплантов, контроль устройств)
+    - Устройства (взлом турелей, камер, дронов)
+    - Инфраструктура (доступ к базам данных, отключение систем)
+    - Боевой сценарий (поддержка тактических действий)
+    
+    **Классы:**
+    - Netrunner - полный доступ ко всем хакам и продвинутым кибердекам
+    - Другие классы - ограниченный доступ к базовым хакам
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Hacking
+    description: Взлом целей
+  - name: Networks
+    description: Сетевой доступ
+  - name: ICE
+    description: Защита и ICE
+  - name: Demons
+    description: Демоны взлома
+  - name: Overheat
+    description: Перегрев
+
+paths:
+  /api/v1/combat/hacking/attack:
+    post:
+      tags:
+        - Hacking
+      summary: Взлом цели
+      description: |
+        Начинает взлом вражеского импланта или устройства.
+        
+        **Типы целей:**
+        - Enemy (вражеский игрок/NPC)
+        - Device (турель, камера, дрон)
+        - Infrastructure (система, база данных)
+        
+        **Результат:**
+        - Success - взлом успешен
+        - Failed - взлом провален
+        - Detected - взлом обнаружен, триггер ответных мер
+      operationId: hackTarget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HackTargetRequest"
+      responses:
+        "200":
+          description: Результат взлома
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/hacking/networks/{network_id}:
+    get:
+      tags:
+        - Networks
+      summary: Информация о сети
+      description: Возвращает информацию о сети и её топологии
+      operationId: getNetworkInfo
+      parameters:
+        - name: network_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Информация о сети
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkInfo"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/hacking/networks/{network_id}/access:
+    post:
+      tags:
+        - Networks
+      summary: Получить доступ к сети
+      description: |
+        Пытается получить доступ к сети.
+        
+        **Методы доступа:**
+        - Remote - удалённый доступ (для простых сетей)
+        - Physical - физическое подключение (для изолированных сетей)
+        - Node - взлом ключевого узла (для сложных сетей)
+      operationId: accessNetwork
+      parameters:
+        - name: network_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NetworkAccessRequest"
+      responses:
+        "200":
+          description: Доступ получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkAccessResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/hacking/ice/{target_id}:
+    get:
+      tags:
+        - ICE
+      summary: Уровень ICE защиты
+      description: Возвращает уровень ICE защиты цели
+      operationId: getICELevel
+      parameters:
+        - name: target_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Уровень ICE
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ICEInfo"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/hacking/countermeasures:
+    post:
+      tags:
+        - ICE
+      summary: Активировать контрмеры
+      description: Активирует ответные меры при обнаружении взлома
+      operationId: activateCountermeasures
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CountermeasureRequest"
+      responses:
+        "200":
+          description: Контрмеры активированы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountermeasureResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/hacking/overheat:
+    get:
+      tags:
+        - Overheat
+      summary: Состояние перегрева
+      description: Возвращает текущий уровень перегрева кибердеки
+      operationId: getOverheatStatus
+      responses:
+        "200":
+          description: Состояние перегрева
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OverheatStatus"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/hacking/demons:
+    get:
+      tags:
+        - Demons
+      summary: Список доступных демонов
+      description: Возвращает список демонов, доступных для игрока
+      operationId: getDemons
+      responses:
+        "200":
+          description: Список демонов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  demons:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Demon"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/combat/hacking/demons/{demon_id}/activate:
+    post:
+      tags:
+        - Demons
+      summary: Активировать демона
+      description: |
+        Активирует демона для взлома.
+        
+        **Типы демонов:**
+        - Control (контроль устройств)
+        - Disable (отключение имплантов)
+        - Stealth (скрытный взлом)
+        - Offensive (атакующий взлом)
+      operationId: activateDemon
+      parameters:
+        - name: demon_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateDemonRequest"
+      responses:
+        "200":
+          description: Демон активирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemonActivationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    HackTargetRequest:
+      type: object
+      required:
+        - target_id
+        - hack_type
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        hack_type:
+          type: string
+          enum: [control, disable, scan, extract]
+        demon_id:
+          type: string
+          format: uuid
+
+    HackResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        detected:
+          type: boolean
+        effects:
+          type: array
+          items:
+            type: object
+        overheat_increase:
+          type: number
+
+    NetworkInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [simple, complex, isolated, hybrid]
+        security_level:
+          type: string
+          enum: [low, medium, high, corporate, government]
+        nodes:
+          type: array
+          items:
+            type: object
+
+    NetworkAccessRequest:
+      type: object
+      required:
+        - method
+      properties:
+        method:
+          type: string
+          enum: [remote, physical, node]
+        node_id:
+          type: string
+          format: uuid
+
+    NetworkAccessResult:
+      type: object
+      properties:
+        access_granted:
+          type: boolean
+        access_level:
+          type: string
+        available_targets:
+          type: array
+          items:
+            type: string
+
+    ICEInfo:
+      type: object
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        ice_level:
+          type: integer
+        ice_type:
+          type: string
+          enum: [basic, advanced, military, corporate, blackwall]
+        active_countermeasures:
+          type: array
+          items:
+            type: string
+
+    CountermeasureRequest:
+      type: object
+      required:
+        - attacker_id
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        countermeasure_type:
+          type: string
+          enum: [counterattack, reinforce, trace]
+
+    CountermeasureResult:
+      type: object
+      properties:
+        activated:
+          type: boolean
+        effects:
+          type: array
+          items:
+            type: object
+
+    OverheatStatus:
+      type: object
+      properties:
+        current_heat:
+          type: number
+        max_heat:
+          type: number
+        cooling_rate:
+          type: number
+        overheated:
+          type: boolean
+
+    Demon:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [control, disable, stealth, offensive]
+        heat_cost:
+          type: number
+        skill_requirement:
+          type: integer
+        class_restricted:
+          type: boolean
+
+    ActivateDemonRequest:
+      type: object
+      required:
+        - target_id
+      properties:
+        target_id:
+          type: string
+          format: uuid
+
+    DemonActivationResult:
+      type: object
+      properties:
+        activated:
+          type: boolean
+        effects:
+          type: array
+          items:
+            type: object
+        overheat_increase:
+          type: number
+
+
+

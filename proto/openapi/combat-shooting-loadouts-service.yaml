@@ -1,0 +1,406 @@
+openapi: 3.0.3
+info:
+  title: Combat Shooting Loadouts Service API
+  description: |
+    API для управления лоадаутами и кастомизацией оружия в NECPGAME.
+    
+    **Основные возможности:**
+    - Сохранение и управление лоадаутами оружия
+    - Кастомизация оружия (моды, насадки)
+    - Скины и камуфляж
+    
+    **Лоадаут включает:**
+    - Primary weapon (основное оружие)
+    - Secondary weapon (дополнительное оружие)
+    - Melee weapon (холодное оружие)
+    - Grenades/расходники
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Loadouts
+    description: Лоадауты оружия
+  - name: Customization
+    description: Кастомизация оружия
+
+paths:
+  /api/v1/gameplay/combat/shooting/loadouts:
+    get:
+      tags:
+        - Loadouts
+      summary: Получение лоадаутов
+      description: |
+        Возвращает сохранённые лоадауты оружия персонажа.
+        
+        **Лоадаут включает:**
+        - Основное оружие (Primary)
+        - Дополнительное оружие (Secondary)
+        - Холодное оружие (Melee)
+        - Гранаты/расходники
+        - Настройки стрельбы
+      operationId: getLoadouts
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список лоадаутов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loadouts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WeaponLoadout"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - Loadouts
+      summary: Сохранение лоадаута
+      description: |
+        Сохраняет новый лоадаут оружия или обновляет существующий.
+        
+        **Ограничения:**
+        - Максимум 10 лоадаутов на персонажа
+        - Название лоадаута уникально
+      operationId: saveLoadout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveLoadoutRequest"
+            examples:
+              assault:
+                summary: Assault лоадаут
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440001"
+                  name: "Assault Loadout"
+                  primary_weapon: "weapon-rifle-ak47"
+                  secondary_weapon: "weapon-pistol-glock"
+                  melee_weapon: "weapon-melee-katana"
+                  grenades:
+                    - item_id: "grenade-frag"
+                      quantity: 2
+              sniper:
+                summary: Sniper лоадаут
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440002"
+                  name: "Sniper Loadout"
+                  primary_weapon: "weapon-sniper-barrett"
+                  secondary_weapon: "weapon-smg-mp5"
+                  melee_weapon: "weapon-melee-knife"
+      responses:
+        "201":
+          description: Лоадаут сохранён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponLoadout"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/shooting/loadouts/{loadout_id}:
+    delete:
+      tags:
+        - Loadouts
+      summary: Удаление лоадаута
+      description: Удаляет сохранённый лоадаут
+      operationId: deleteLoadout
+      parameters:
+        - name: loadout_id
+          in: path
+          required: true
+          description: ID лоадаута для удаления
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Лоадаут удалён
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/shooting/weapons/{weapon_id}/customization:
+    get:
+      tags:
+        - Customization
+      summary: Получение кастомизации
+      description: |
+        Возвращает текущую кастомизацию оружия.
+        
+        **Включает:**
+        - Установленные моды (прицелы, глушители, компенсаторы, магазины, рукоятки)
+        - Камуфляж и скины
+        - Настройки стрельбы
+        - Статистические изменения от модов
+      operationId: getWeaponCustomization
+      parameters:
+        - $ref: "#/components/parameters/WeaponId"
+      responses:
+        "200":
+          description: Кастомизация оружия
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponCustomization"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - Customization
+      summary: Обновление кастомизации
+      description: |
+        Обновляет кастомизацию оружия (установка/снятие модов).
+        
+        **Типы модов:**
+        - **Прицелы** - увеличение точности, зум
+        - **Глушители** - снижение шума, небольшое снижение урона
+        - **Компенсаторы** - снижение отдачи
+        - **Магазины** - увеличение ёмкости
+        - **Рукоятки** - улучшение контроля
+        
+        **Ограничения:**
+        - Мод должен быть в инвентаре
+        - Мод должен подходить к типу оружия
+        - Максимум 1 мод на слот
+      operationId: updateWeaponCustomization
+      parameters:
+        - $ref: "#/components/parameters/WeaponId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomizationRequest"
+      responses:
+        "200":
+          description: Кастомизация обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeaponCustomization"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  parameters:
+    WeaponId:
+      name: weapon_id
+      in: path
+      required: true
+      description: Уникальный идентификатор оружия
+      schema:
+        type: string
+
+  schemas:
+    WeaponLoadout:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID лоадаута
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        name:
+          type: string
+          description: Название лоадаута
+        primary_weapon:
+          type: string
+          description: ID основного оружия
+        secondary_weapon:
+          type: string
+          description: ID дополнительного оружия
+        melee_weapon:
+          type: string
+          description: ID холодного оружия
+        grenades:
+          type: array
+          description: Гранаты и расходники
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                description: ID предмета
+              quantity:
+                type: integer
+                description: Количество
+                minimum: 0
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+
+    SaveLoadoutRequest:
+      type: object
+      required:
+        - character_id
+        - name
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        name:
+          type: string
+          description: Название лоадаута
+          minLength: 3
+          maxLength: 50
+        primary_weapon:
+          type: string
+          description: ID основного оружия
+        secondary_weapon:
+          type: string
+          description: ID дополнительного оружия
+        melee_weapon:
+          type: string
+          description: ID холодного оружия
+        grenades:
+          type: array
+          description: Гранаты и расходники
+          items:
+            type: object
+            required:
+              - item_id
+              - quantity
+            properties:
+              item_id:
+                type: string
+              quantity:
+                type: integer
+                minimum: 0
+
+    WeaponCustomization:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          description: ID оружия
+        mods:
+          type: object
+          description: Установленные моды
+          properties:
+            sight:
+              type: string
+              description: ID прицела (опционально)
+            muzzle:
+              type: string
+              description: ID насадки на дуло (опционально)
+            magazine:
+              type: string
+              description: ID магазина (опционально)
+            grip:
+              type: string
+              description: ID рукоятки (опционально)
+        skin:
+          type: string
+          description: ID скина/камуфляжа (опционально)
+        stats_changes:
+          type: object
+          description: Изменения характеристик от модов
+          properties:
+            accuracy:
+              type: number
+              format: float
+              description: Изменение точности (%)
+            recoil:
+              type: number
+              format: float
+              description: Изменение отдачи (%)
+            damage:
+              type: number
+              format: float
+              description: Изменение урона (%)
+            fire_rate:
+              type: number
+              format: float
+              description: Изменение скорострельности (%)
+            magazine_size:
+              type: integer
+              description: Изменение размера магазина
+
+    UpdateCustomizationRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа владельца оружия
+        mods:
+          type: object
+          description: Моды для установки (null для снятия)
+          properties:
+            sight:
+              type: string
+              nullable: true
+              description: ID прицела или null для снятия
+            muzzle:
+              type: string
+              nullable: true
+              description: ID насадки или null для снятия
+            magazine:
+              type: string
+              nullable: true
+              description: ID магазина или null для снятия
+            grip:
+              type: string
+              nullable: true
+              description: ID рукоятки или null для снятия
+        skin:
+          type: string
+          nullable: true
+          description: ID скина или null для снятия
+

@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Stock Dividends Payments Service API
+  description: API для истории выплат дивидендов игрокам
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: dividends
+    description: Операции с дивидендами
+
+paths:
+  /players/{player_id}/dividends/payments:
+    get:
+      tags:
+        - dividends
+      summary: Получить историю выплат дивидендов игрока
+      description: |
+        Возвращает историю всех выплат дивидендов для указанного игрока.
+        Включает информацию о налогах, DRIP и статусе выплат.
+      operationId: getPlayerDividendPayments
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: stock_id
+          in: query
+          required: false
+          description: Фильтр по ID акции
+          schema:
+            type: string
+            format: uuid
+        - name: from_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: История выплат успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DividendPayment'
+                  summary:
+                    $ref: '#/components/schemas/PaymentSummary'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    DividendPayment:
+      type: object
+      description: Выплата дивидендов игроку
+      required:
+        - id
+        - player_id
+        - schedule_id
+        - stock_id
+        - stock_symbol
+        - shares_owned
+        - amount_per_share
+        - gross_amount
+        - tax_amount
+        - net_amount
+        - drip_enabled
+        - status
+        - payment_date
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID выплаты
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        schedule_id:
+          type: string
+          format: uuid
+          description: ID расписания
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+        shares_owned:
+          type: integer
+          minimum: 0
+          description: Количество акций у игрока на record_date
+        amount_per_share:
+          type: number
+          format: double
+          description: Дивиденды на акцию
+        gross_amount:
+          type: number
+          format: double
+          description: Сумма до налогов
+        tax_amount:
+          type: number
+          format: double
+          description: Сумма налога (15%)
+        net_amount:
+          type: number
+          format: double
+          description: Сумма после налогов
+        drip_enabled:
+          type: boolean
+          description: DRIP активирован для этой выплаты
+        drip_amount:
+          type: number
+          format: double
+          nullable: true
+          description: Сумма реинвестированная через DRIP
+        drip_shares:
+          type: number
+          format: double
+          nullable: true
+          description: Количество акций приобретенных через DRIP
+        status:
+          type: string
+          enum: [pending, processed, failed]
+          description: Статус выплаты
+        payment_date:
+          type: string
+          format: date-time
+          description: Дата выплаты (из расписания)
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Фактическое время обработки
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PaymentSummary:
+      type: object
+      description: Сводная статистика по выплатам
+      properties:
+        total_gross:
+          type: number
+          format: double
+          description: Всего до налогов
+        total_tax:
+          type: number
+          format: double
+          description: Всего налогов
+        total_net:
+          type: number
+          format: double
+          description: Всего после налогов
+        total_drip_shares:
+          type: number
+          format: double
+          description: Всего акций через DRIP
+

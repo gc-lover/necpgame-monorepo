@@ -1,0 +1,360 @@
+openapi: 3.0.3
+info:
+  title: Economy Player Market Social Service API
+  description: |
+    API для социальных функций P2P торговой площадки NECPGAME.
+    
+    **Основные возможности:**
+    - Система отзывов о продавцах
+    - Рейтинги и репутация
+    - Профили продавцов
+    - История сделок
+    - Статистика торговли
+    
+    **Социальные элементы:**
+    - Отзывы после сделок
+    - Рейтинг продавцов
+    - Профили с историей
+    - Система доверия
+    
+    **Антифрод:**
+    - Уникальность отзывов (один на сделку)
+    - Антискам логика
+    - Модерация
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8084
+    description: Economy Service (локальная разработка)
+  - url: https://economy.necpgame.com
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Reviews
+    description: Отзывы
+  - name: Sellers
+    description: Продавцы
+  - name: History
+    description: История
+
+paths:
+  /api/v1/market/reviews:
+    post:
+      tags:
+        - Reviews
+      summary: Оставить отзыв
+      description: |
+        Оставляет отзыв о продавце после сделки.
+        
+        **Проверки:**
+        - Наличие завершённой сделки
+        - Уникальность отзыва (один на сделку)
+        - Рейтинг: 1-5 звёзд
+      operationId: createReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewRequest"
+      responses:
+        "201":
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/market/sellers/{seller_id}:
+    get:
+      tags:
+        - Sellers
+      summary: Профиль продавца
+      description: |
+        Возвращает профиль и статистику продавца.
+        
+        **Данные:**
+        - Имя, рейтинг, количество сделок
+        - Активные объявления
+        - Дата регистрации
+      operationId: getSellerProfile
+      parameters:
+        - name: seller_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Профиль продавца
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SellerProfile"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/market/sellers/{seller_id}/reviews:
+    get:
+      tags:
+        - Reviews
+      summary: Отзывы о продавце
+      description: |
+        Возвращает список отзывов о продавце.
+        
+        **Сортировка:**
+        - По дате (новые первые)
+        - По рейтингу
+      operationId: getSellerReviews
+      parameters:
+        - name: seller_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "common.yaml#/components/parameters/Page"
+        - $ref: "common.yaml#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Отзывы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Review"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/Pagination"
+                  average_rating:
+                    type: number
+                    description: Средний рейтинг
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/market/history:
+    get:
+      tags:
+        - History
+      summary: История сделок
+      description: |
+        Возвращает историю покупок и продаж игрока.
+        
+        **Типы:**
+        - Purchases - покупки
+        - Sales - продажи
+        - All - все сделки
+      operationId: getTradeHistory
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [purchases, sales, all]
+        - $ref: "common.yaml#/components/parameters/Page"
+        - $ref: "common.yaml#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: История сделок
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trades:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Trade"
+                  pagination:
+                    $ref: "common.yaml#/components/schemas/Pagination"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/market/sellers/{seller_id}/stats:
+    get:
+      tags:
+        - Sellers
+      summary: Статистика продавца
+      description: |
+        Возвращает детальную статистику продавца.
+        
+        **Метрики:**
+        - Общее количество сделок
+        - Общая сумма продаж
+        - Средний чек
+        - Распределение по рейтингам
+        - Топ проданных товаров
+      operationId: getSellerStats
+      parameters:
+        - name: seller_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Статистика
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SellerStats"
+        "404":
+          $ref: "common.yaml#/components/responses/NotFound"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CreateReviewRequest:
+      type: object
+      required:
+        - trade_id
+        - rating
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+          description: ID завершённой сделки
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Рейтинг (1-5 звёзд)
+        comment:
+          type: string
+          description: Комментарий
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        trade_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        buyer_name:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    SellerProfile:
+      type: object
+      properties:
+        seller_id:
+          type: string
+          format: uuid
+        seller_name:
+          type: string
+        rating:
+          type: number
+          description: Средний рейтинг
+        total_trades:
+          type: integer
+          description: Общее количество сделок
+        active_listings:
+          type: integer
+          description: Активные объявления
+        member_since:
+          type: string
+          format: date-time
+          description: Дата регистрации
+
+    Trade:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [purchase, sale]
+        item_name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        total_price:
+          type: number
+        other_party:
+          type: string
+          description: Имя покупателя/продавца
+        completed_at:
+          type: string
+          format: date-time
+
+    SellerStats:
+      type: object
+      properties:
+        total_trades:
+          type: integer
+          description: Всего сделок
+        total_sales_amount:
+          type: number
+          description: Общая сумма продаж
+        average_transaction:
+          type: number
+          description: Средний чек
+        rating_distribution:
+          type: object
+          description: Распределение рейтингов
+          properties:
+            five_stars:
+              type: integer
+            four_stars:
+              type: integer
+            three_stars:
+              type: integer
+            two_stars:
+              type: integer
+            one_star:
+              type: integer
+        top_items:
+          type: array
+          description: Топ проданных товаров
+          items:
+            type: object
+
+
+

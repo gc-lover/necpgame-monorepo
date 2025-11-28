@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Referral Leaderboard Service API
+  description: API для лидерборда реферальной системы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Referral Leaderboard
+    description: Лидерборд рефералов
+
+paths:
+  /growth/referral/leaderboard:
+    get:
+      tags:
+        - Referral Leaderboard
+      summary: Получить лидерборд рефералов
+      operationId: getReferralLeaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leaderboard_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - TOP_REFERRERS
+              - TOP_MILESTONE
+              - TOP_REWARDS
+        - $ref: "common.yaml#/components/parameters/Limit"
+        - $ref: "common.yaml#/components/parameters/Offset"
+      responses:
+        '200':
+          description: Лидерборд рефералов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralLeaderboardResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /growth/referral/leaderboard/{player_id}/position:
+    get:
+      tags:
+        - Referral Leaderboard
+      summary: Получить позицию игрока в лидерборде
+      operationId: getLeaderboardPosition
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "common.yaml#/components/parameters/PlayerId"
+        - name: leaderboard_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - TOP_REFERRERS
+              - TOP_MILESTONE
+              - TOP_REWARDS
+      responses:
+        '200':
+          description: Позиция в лидерборде
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardPositionResponse'
+        '401':
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        '404':
+          $ref: "common.yaml#/components/responses/NotFound"
+        '500':
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ReferralLeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+        total_rewards:
+          type: integer
+          format: int64
+
+    ReferralLeaderboardResponse:
+      type: object
+      properties:
+        leaderboard_type:
+          type: string
+          enum:
+            - TOP_REFERRERS
+            - TOP_MILESTONE
+            - TOP_REWARDS
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralLeaderboardEntry'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    LeaderboardPositionResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        leaderboard_type:
+          type: string
+          enum:
+            - TOP_REFERRERS
+            - TOP_MILESTONE
+            - TOP_REWARDS
+        position:
+          type: integer
+          nullable: true
+        entry:
+          $ref: '#/components/schemas/ReferralLeaderboardEntry'
+          nullable: true
+
+security:
+  - BearerAuth: []
+

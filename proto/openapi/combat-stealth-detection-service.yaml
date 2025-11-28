@@ -1,0 +1,420 @@
+openapi: 3.0.3
+info:
+  title: Combat Stealth Detection Service API
+  description: |
+    API для системы обнаружения и действий стелса в NECPGAME.
+    
+    **Основные возможности:**
+    - Система обнаружения (4 канала)
+    - Действия стелса
+    - Профиль стелса персонажа
+    
+    **Каналы обнаружения:**
+    - Visual - визуальное (камеры, охранники, дроны)
+    - Audio - аудиальное (микрофоны, звуковые детекторы)
+    - Technological - технологическое (термальные, EMF, датчики движения)
+    - Network - сетевое (сетевой мониторинг)
+    
+    **Стадии обнаружения:**
+    - Undetected - не обнаружен (норма)
+    - Suspicious - подозрение (расследование, эскалация через 30s)
+    - Partially Detected - частичное обнаружение (тревога, эскалация через 15s)
+    - Fully Detected - полное обнаружение (бой, немедленно)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Stealth Actions
+    description: Действия стелса
+  - name: Detection
+    description: Система обнаружения
+
+paths:
+  /api/v1/gameplay/combat/stealth/actions:
+    post:
+      tags:
+        - Stealth Actions
+      summary: Выполнение действия стелса
+      description: |
+        Выполняет действие в режиме стелса.
+        
+        **Типы действий:**
+        - `move_stealth` - скрытное перемещение
+        - `takedown` - бесшумное убийство
+        - `distract` - отвлечение (бросок предмета, взлом устройства)
+        - `hide_body` - сокрытие тела
+        - `use_cover` - использование укрытия
+        - `blend_crowd` - слияние с толпой
+        
+        **Проверки при выполнении:**
+        - Текущий уровень обнаружения
+        - Позиция игрока (в укрытии, в тени, на виду)
+        - Доступность действия (близость цели, наличие предметов)
+        - Навыки стелса персонажа
+        
+        **Влияние на обнаружение:**
+        - Успешное действие может снизить обнаружение
+        - Провал повышает обнаружение
+        - Некоторые действия рискованные
+      operationId: performStealthAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StealthActionRequest"
+            examples:
+              takedown:
+                summary: Бесшумное убийство
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440001"
+                  action_type: takedown
+                  target_id: "850e8400-e29b-41d4-a716-446655440001"
+              distract:
+                summary: Отвлечение
+                value:
+                  character_id: "550e8400-e29b-41d4-a716-446655440002"
+                  action_type: distract
+                  position:
+                    x: 100
+                    y: 0
+                    z: 50
+      responses:
+        "200":
+          description: Действие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthActionResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/stealth/detection:
+    get:
+      tags:
+        - Detection
+      summary: Состояние обнаружения
+      description: |
+        Возвращает текущее состояние обнаружения персонажа.
+        
+        **Включает:**
+        - Текущую стадию обнаружения
+        - Общий уровень обнаружения (0.0-1.0)
+        - Уровни по каналам обнаружения
+        - Активные сенсоры (что обнаруживает игрока)
+        - Модификаторы обнаружения (укрытие, маскировка, тени)
+        - Время до эскалации (если в подозрении/частичном)
+        
+        **Модификаторы снижения обнаружения:**
+        - Укрытие (cover) - high
+        - Тени (shadows) - medium
+        - Маскировка (disguise) - very high
+        - Толпа (crowd) - high
+        - Взлом камер - very high
+      operationId: getDetectionState
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние обнаружения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetectionState"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - Detection
+      summary: Пересчёт обнаружения
+      description: |
+        Пересчитывает уровень обнаружения с учётом новых факторов.
+        
+        **Триггеры пересчёта:**
+        - `movement` - перемещение персонажа (изменение позиции)
+        - `lighting_change` - изменение освещения (вход в тень/свет)
+        - `disguise_toggle` - активация/деактивация маскировки
+        - `sensor_hack` - взлом камер/сенсоров
+        - `distraction` - отвлечение охранников
+        
+        **Процесс пересчёта:**
+        1. Оценка текущей позиции
+        2. Проверка видимости для сенсоров
+        3. Применение модификаторов
+        4. Обновление стадии обнаружения
+        5. Публикация события `combat.stealth.detection`
+      operationId: recalculateDetection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecalculateDetectionRequest"
+      responses:
+        "200":
+          description: Обнаружение пересчитано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetectionState"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/stealth/profile:
+    get:
+      tags:
+        - Stealth Actions
+      summary: Профиль стелса
+      description: |
+        Возвращает профиль стелса персонажа.
+        
+        **Включает:**
+        - Навык стелса (уровень)
+        - Модификаторы от имплантов
+        - Модификаторы от перков
+        - Модификаторы от экипировки
+      operationId: getStealthProfile
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Профиль стелса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StealthProfile"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    StealthActionRequest:
+      type: object
+      required:
+        - character_id
+        - action_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        action_type:
+          type: string
+          enum: [move_stealth, takedown, distract, hide_body, use_cover, blend_crowd]
+          description: Тип действия стелса
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели (для takedown, hide_body)
+        position:
+          type: object
+          description: Позиция (для distract, move_stealth)
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+
+    StealthActionResult:
+      type: object
+      properties:
+        action_type:
+          type: string
+          description: Выполненное действие
+        success:
+          type: boolean
+          description: Успешность выполнения
+        detection_change:
+          type: number
+          format: float
+          description: Изменение обнаружения
+        new_detection_stage:
+          type: string
+          enum: [undetected, suspicious, partially_detected, fully_detected]
+          description: Новая стадия обнаружения
+        consequences:
+          type: array
+          description: Последствия действия
+          items:
+            type: string
+
+    DetectionState:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        detection_stage:
+          type: string
+          enum: [undetected, suspicious, partially_detected, fully_detected]
+          description: Текущая стадия обнаружения
+        detection_level:
+          type: number
+          format: float
+          description: Общий уровень обнаружения (0.0-1.0)
+        channels:
+          type: object
+          description: Уровни обнаружения по каналам
+          properties:
+            visual:
+              type: number
+              format: float
+              description: Визуальное обнаружение (0.0-1.0)
+            audio:
+              type: number
+              format: float
+              description: Аудиальное обнаружение (0.0-1.0)
+            technological:
+              type: number
+              format: float
+              description: Технологическое обнаружение (0.0-1.0)
+            network:
+              type: number
+              format: float
+              description: Сетевое обнаружение (0.0-1.0)
+        active_sensors:
+          type: array
+          description: Активные сенсоры
+          items:
+            type: object
+            properties:
+              sensor_id:
+                type: string
+              sensor_type:
+                type: string
+                enum: [camera, guard, drone, microphone, thermal, emf, motion_detector]
+              detection_contribution:
+                type: number
+                format: float
+        modifiers:
+          type: array
+          description: Модификаторы обнаружения
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+                enum: [cover, shadows, disguise, crowd, camera_hack, implant]
+              reduction_amount:
+                type: number
+                format: float
+        escalation_time:
+          type: integer
+          description: Время до эскалации (секунды, null если undetected или fully_detected)
+        last_updated:
+          type: string
+          format: date-time
+
+    RecalculateDetectionRequest:
+      type: object
+      required:
+        - character_id
+        - trigger
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        trigger:
+          type: string
+          enum: [movement, lighting_change, disguise_toggle, sensor_hack, distraction]
+          description: Причина пересчёта
+        position:
+          type: object
+          description: Новая позиция (для movement)
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        affected_sensors:
+          type: array
+          description: Затронутые сенсоры (для sensor_hack, distraction)
+          items:
+            type: string
+
+    StealthProfile:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        stealth_skill:
+          type: integer
+          description: Уровень навыка стелса
+        modifiers:
+          type: object
+          description: Модификаторы стелса
+          properties:
+            movement_noise:
+              type: number
+              format: float
+              description: Снижение шума при движении (%)
+            visibility_reduction:
+              type: number
+              format: float
+              description: Снижение видимости (%)
+            hacking_bonus:
+              type: number
+              format: float
+              description: Бонус к взлому (%)
+            takedown_damage:
+              type: number
+              format: float
+              description: Бонус к урону takedown (%)
+        equipment_bonuses:
+          type: array
+          description: Бонусы от экипировки
+          items:
+            type: object
+        implant_bonuses:
+          type: array
+          description: Бонусы от имплантов
+          items:
+            type: object
+

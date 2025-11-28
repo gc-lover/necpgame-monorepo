@@ -1,0 +1,214 @@
+openapi: 3.0.3
+info:
+  title: Stock Dividends Schedule Service API
+  description: API для расписания выплат дивидендов
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: dividends
+    description: Операции с дивидендами
+  - name: admin
+    description: Административные операции
+
+paths:
+  /stocks/{stock_id}/dividends/schedule:
+    get:
+      tags:
+        - dividends
+      summary: Получить расписание дивидендов акции
+      description: |
+        Возвращает график выплат дивидендов для указанной акции.
+        Включает ключевые даты: declaration, ex-dividend, record, payment.
+      operationId: getDividendSchedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          description: ID акции
+          schema:
+            type: string
+            format: uuid
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Расписание дивидендов успешно получено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DividendSchedule'
+                  pagination:
+                    $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /admin/dividends/schedules:
+    post:
+      tags:
+        - admin
+      summary: Создать расписание дивидендов
+      description: |
+        Админ endpoint для создания нового расписания выплаты дивидендов.
+        Требуется роль admin.
+      operationId: createDividendSchedule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DividendScheduleCreate'
+      responses:
+        '201':
+          description: Расписание успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DividendSchedule'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    DividendSchedule:
+      type: object
+      description: Расписание выплаты дивидендов
+      required:
+        - id
+        - stock_id
+        - stock_symbol
+        - frequency
+        - amount_per_share
+        - declaration_date
+        - ex_dividend_date
+        - record_date
+        - payment_date
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID расписания
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+          minLength: 1
+          maxLength: 10
+        frequency:
+          type: string
+          enum: [quarterly, annual, special]
+          description: |
+            Частота выплаты:
+            - quarterly: квартальная
+            - annual: годовая
+            - special: специальная (разовая)
+        amount_per_share:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Сумма дивидендов на одну акцию
+        declaration_date:
+          type: string
+          format: date-time
+          description: Дата объявления дивидендов
+        ex_dividend_date:
+          type: string
+          format: date-time
+          description: |
+            Ex-dividend дата. Акции купленные после этой даты 
+            не имеют права на дивиденды
+        record_date:
+          type: string
+          format: date-time
+          description: Дата фиксации акционеров
+        payment_date:
+          type: string
+          format: date-time
+          description: Дата выплаты дивидендов
+        status:
+          type: string
+          enum: [scheduled, processing, processed, cancelled]
+          description: Статус выплаты
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DividendScheduleCreate:
+      type: object
+      description: Данные для создания расписания дивидендов
+      required:
+        - stock_id
+        - frequency
+        - amount_per_share
+        - declaration_date
+        - ex_dividend_date
+        - record_date
+        - payment_date
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+        frequency:
+          type: string
+          enum: [quarterly, annual, special]
+        amount_per_share:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        declaration_date:
+          type: string
+          format: date-time
+        ex_dividend_date:
+          type: string
+          format: date-time
+        record_date:
+          type: string
+          format: date-time
+        payment_date:
+          type: string
+          format: date-time
+

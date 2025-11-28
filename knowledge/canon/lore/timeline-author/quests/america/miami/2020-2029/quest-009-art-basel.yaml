@@ -7,7 +7,7 @@ metadata:
   category: side_quest
   quest_type: side
   status: active
-  version: "1.0.0"
+  version: "1.1.0"
   timeline: 2020-2029
   year: 2028
   season: winter
@@ -91,6 +91,88 @@ requirements:
     - skill: charisma
       min_value: 0.5
       description: Navigate art world elites, charm information
+
+quest_definition:
+  quest_type: side
+  level_min: 12
+  level_max: 28
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+    skill_requirements:
+      - skill: investigation
+        min_value: 0.6
+      - skill: charisma
+        min_value: 0.5
+  objectives:
+    - id: obj-001
+      text: "Investigate Volkov mystery"
+      type: explore
+      target: volkov_research
+      optional: false
+    - id: obj-002
+      text: "Navigate Art Basel events"
+      type: interact
+      target: art_basel_events
+      optional: false
+    - id: obj-003
+      text: "Choose investigation path"
+      type: choice
+      target: investigation_approach
+      optional: false
+    - id: obj-004
+      text: "Face consequences of choice"
+      type: dialogue
+      target: resolution
+      optional: false
+  rewards:
+    experience: 6000
+    currency: 5000
+    reputation:
+      miami: 25
+    unlocks:
+      - type: achievement
+        id: art_world_navigator
+  branches:
+    - id: expose_fraud
+      condition: approach == "expose"
+      consequences:
+        fraud_revealed: true
+        art_world_shaken: true
+      rewards:
+        experience: 10000
+        currency: 10000
+        reputation:
+          journalists: 4000
+          art_world: -2000
+        unlocks:
+          - type: achievement
+            id: truth_seeker
+    - id: appreciate_art
+      condition: approach == "appreciate"
+      consequences:
+        art_understood: true
+        legitimacy_recognized: true
+      rewards:
+        experience: 8000
+        reputation:
+          art_world: 3000
+    - id: steal_invisible
+      condition: approach == "heist"
+      consequences:
+        heist_successful: possible
+        absurdity_highlighted: true
+      rewards:
+        experience: 12000
+        currency: 0
+        reputation:
+          criminals: 2000
+          art_world: -3000
+        unlocks:
+          - type: achievement
+            id: invisible_thief
 
 story:
   background: |
@@ -440,6 +522,16 @@ notes:
     distance. No "correct" path - perspectives differ. Cyberpunk capitalism meets
     conceptual art tradition (Duchamp, Klein, Manzoni precedent real). Volkov character
     ambiguous intentionally - dead? Alive? Fictional? Doesn't matter ultimately -
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-26
+    author: content_writer
+    changes: "Создан квест «Невидимая картина» - сатирический квест о мире искусства и капитализме."
+  - version: "1.1.0"
+    date: 2025-11-23
+    author: content_writer
+    changes: "Добавлена структура quest_definition с objectives, rewards и branches согласно архитектуре системы квестов."
     concept survives creator. Svetlana complex villain - fraud artist or legitimate
     executor vision? Both possibly. Chen sympathetic mark - insecurity drives bad
     decisions, wealth enables delusion. Heist path hilariously absurd - stealing nothing

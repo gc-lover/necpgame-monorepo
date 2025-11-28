@@ -26,8 +26,16 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 }
 
 func (r *OrderRepository) Create(ctx context.Context, order *models.PlayerOrder) error {
-	rewardJSON, _ := json.Marshal(order.Reward)
-	requirementsJSON, _ := json.Marshal(order.Requirements)
+	rewardJSON, err := json.Marshal(order.Reward)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal reward JSON")
+		return err
+	}
+	requirementsJSON, err := json.Marshal(order.Requirements)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal requirements JSON")
+		return err
+	}
 
 	query := `
 		INSERT INTO social.player_orders (
@@ -37,7 +45,7 @@ func (r *OrderRepository) Create(ctx context.Context, order *models.PlayerOrder)
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)`
 
-	_, err := r.db.Exec(ctx, query,
+	_, err = r.db.Exec(ctx, query,
 		order.ID, order.CustomerID, order.ExecutorID, order.OrderType,
 		order.Title, order.Description, order.Status,
 		rewardJSON, requirementsJSON, order.Deadline,
@@ -75,10 +83,14 @@ func (r *OrderRepository) GetByID(ctx context.Context, orderID uuid.UUID) (*mode
 
 	order.ExecutorID = executorID
 	if len(rewardJSON) > 0 {
-		json.Unmarshal(rewardJSON, &order.Reward)
+		if err := json.Unmarshal(rewardJSON, &order.Reward); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal reward JSON")
+		}
 	}
 	if len(requirementsJSON) > 0 {
-		json.Unmarshal(requirementsJSON, &order.Requirements)
+		if err := json.Unmarshal(requirementsJSON, &order.Requirements); err != nil {
+			r.logger.WithError(err).Error("Failed to unmarshal requirements JSON")
+		}
 	}
 
 	return &order, nil
@@ -133,10 +145,14 @@ func (r *OrderRepository) List(ctx context.Context, orderType *models.OrderType,
 
 		order.ExecutorID = executorID
 		if len(rewardJSON) > 0 {
-			json.Unmarshal(rewardJSON, &order.Reward)
+			if err := json.Unmarshal(rewardJSON, &order.Reward); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal reward JSON")
+			}
 		}
 		if len(requirementsJSON) > 0 {
-			json.Unmarshal(requirementsJSON, &order.Requirements)
+			if err := json.Unmarshal(requirementsJSON, &order.Requirements); err != nil {
+				r.logger.WithError(err).Error("Failed to unmarshal requirements JSON")
+			}
 		}
 
 		orders = append(orders, order)

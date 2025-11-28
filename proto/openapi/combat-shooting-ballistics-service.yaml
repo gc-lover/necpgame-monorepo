@@ -1,0 +1,453 @@
+openapi: 3.0.3
+info:
+  title: Combat Shooting Ballistics Service API
+  description: |
+    API для баллистики, модификаторов и телеметрии стрельбы в NECPGAME.
+    
+    **Основные возможности:**
+    - Симуляция баллистики выстрелов
+    - Управление модификаторами стрельбы
+    - Телеметрия и статистика стрельбы
+    
+    **Модификаторы от:**
+    - Имплантов (кибер-руки, стабилизаторы)
+    - Навыков (контроль оружия, меткость)
+    - Модов оружия (компенсаторы, прицелы)
+    - Баффов (временные усиления)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Ballistics
+    description: Баллистика
+  - name: Modifiers
+    description: Модификаторы стрельбы
+  - name: Telemetry
+    description: Телеметрия стрельбы
+
+paths:
+  /api/v1/gameplay/combat/shooting/ballistics/simulate:
+    post:
+      tags:
+        - Ballistics
+      summary: Симуляция баллистики
+      description: |
+        Симулирует траекторию выстрела с учётом баллистики.
+        
+        **Учитывает:**
+        - Начальную скорость пули
+        - Гравитацию
+        - Сопротивление воздуха
+        - Ветер (если применимо)
+        - Дистанцию до цели
+        - Траекторию пули
+        
+        **Используется для:**
+        - Дальнобойных выстрелов
+        - Расчёта упреждения
+        - Тренировки игроков
+        - Снайперских систем
+      operationId: simulateBallistics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BallisticsSimulationRequest"
+            examples:
+              long_range:
+                summary: Дальний выстрел
+                value:
+                  weapon_id: "weapon-sniper-barrett"
+                  start_position:
+                    x: 0
+                    y: 100
+                    z: 0
+                  target_position:
+                    x: 500
+                    y: 100
+                    z: 0
+                  wind:
+                    speed: 5
+                    direction: 90
+      responses:
+        "200":
+          description: Результат симуляции
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BallisticsSimulationResult"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/shooting/modifiers:
+    get:
+      tags:
+        - Modifiers
+      summary: Получение модификаторов
+      description: |
+        Возвращает активные модификаторы стрельбы для персонажа.
+        
+        **Источники модификаторов:**
+        - **Импланты** - кибер-руки, стабилизаторы, нейроинтерфейсы
+        - **Навыки** - контроль оружия, меткость, быстрая перезарядка
+        - **Моды оружия** - компенсаторы, прицелы, рукоятки
+        - **Баффы** - временные усиления от предметов/способностей
+      operationId: getShootingModifiers
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список активных модификаторов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  modifiers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ShootingModifier"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - Modifiers
+      summary: Применение модификатора
+      description: |
+        Применяет модификатор к стрельбе (через имплант, навык или бафф).
+        
+        **Типы модификаторов:**
+        - `recoil_reduction` - снижение отдачи
+        - `accuracy_increase` - увеличение точности
+        - `damage_increase` - увеличение урона
+        - `fire_rate_increase` - увеличение скорострельности
+      operationId: applyShootingModifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplyModifierRequest"
+      responses:
+        "200":
+          description: Модификатор применён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShootingModifier"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+  /api/v1/gameplay/combat/shooting/telemetry:
+    get:
+      tags:
+        - Telemetry
+      summary: Получение телеметрии
+      description: |
+        Возвращает статистику стрельбы персонажа.
+        
+        **Метрики:**
+        - Точность стрельбы (%)
+        - Количество выстрелов/попаданий
+        - Среднее расстояние попаданий
+        - Любимое оружие
+        - Попадания по частям тела
+        - TTK статистика
+        - Headshot процент
+      operationId: getShootingTelemetry
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          description: ID персонажа
+          schema:
+            type: string
+            format: uuid
+        - name: time_range
+          in: query
+          description: Временной диапазон статистики
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, all]
+            default: 7d
+      responses:
+        "200":
+          description: Телеметрия стрельбы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShootingTelemetry"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    BallisticsSimulationRequest:
+      type: object
+      required:
+        - weapon_id
+        - start_position
+        - target_position
+      properties:
+        weapon_id:
+          type: string
+          description: ID оружия для симуляции
+        start_position:
+          type: object
+          description: Начальная позиция выстрела
+          required:
+            - x
+            - y
+            - z
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+        target_position:
+          type: object
+          description: Позиция цели
+          required:
+            - x
+            - y
+            - z
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+        wind:
+          type: object
+          description: Параметры ветра (опционально)
+          properties:
+            speed:
+              type: number
+              format: float
+              description: Скорость ветра (m/s)
+            direction:
+              type: number
+              format: float
+              description: Направление ветра (градусы, 0-360)
+
+    BallisticsSimulationResult:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          description: ID оружия
+        trajectory:
+          type: array
+          description: Траектория пули (точки по времени)
+          items:
+            type: object
+            properties:
+              time:
+                type: number
+                format: float
+                description: Время от выстрела (секунды)
+              position:
+                type: object
+                description: Позиция пули
+                properties:
+                  x:
+                    type: number
+                    format: float
+                  y:
+                    type: number
+                    format: float
+                  z:
+                    type: number
+                    format: float
+              velocity:
+                type: number
+                format: float
+                description: Скорость пули (m/s)
+        hit_probability:
+          type: number
+          format: float
+          description: Вероятность попадания (0-1)
+        flight_time:
+          type: number
+          format: float
+          description: Время полёта пули до цели (секунды)
+        impact_velocity:
+          type: number
+          format: float
+          description: Скорость пули при попадании (m/s)
+        bullet_drop:
+          type: number
+          format: float
+          description: Падение пули (метры)
+
+    ShootingModifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID модификатора
+        source:
+          type: string
+          enum: [implant, skill, weapon_mod, buff]
+          description: Источник модификатора
+        modifier_type:
+          type: string
+          enum: [recoil_reduction, accuracy_increase, damage_increase, fire_rate_increase]
+          description: Тип модификатора
+        value:
+          type: number
+          format: float
+          description: Значение модификатора (%)
+        duration:
+          type: integer
+          description: Длительность в секундах (для баффов, null для постоянных)
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения (для баффов)
+        applied_at:
+          type: string
+          format: date-time
+          description: Время применения
+
+    ApplyModifierRequest:
+      type: object
+      required:
+        - character_id
+        - source
+        - modifier_type
+        - value
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        source:
+          type: string
+          enum: [implant, skill, weapon_mod, buff]
+          description: Источник модификатора
+        modifier_type:
+          type: string
+          enum: [recoil_reduction, accuracy_increase, damage_increase, fire_rate_increase]
+          description: Тип модификатора
+        value:
+          type: number
+          format: float
+          description: Значение модификатора (%)
+          minimum: 0
+          maximum: 100
+        duration:
+          type: integer
+          description: Длительность в секундах (только для баффов)
+          minimum: 1
+
+    ShootingTelemetry:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        time_range:
+          type: string
+          description: Временной диапазон статистики
+        accuracy:
+          type: number
+          format: float
+          description: Точность стрельбы (%)
+        total_shots:
+          type: integer
+          description: Всего выстрелов
+        total_hits:
+          type: integer
+          description: Всего попаданий
+        headshots:
+          type: integer
+          description: Попаданий в голову
+        headshot_percent:
+          type: number
+          format: float
+          description: Процент хедшотов
+        average_distance:
+          type: number
+          format: float
+          description: Среднее расстояние попаданий (метры)
+        favorite_weapon:
+          type: object
+          description: Любимое оружие
+          properties:
+            weapon_id:
+              type: string
+            weapon_name:
+              type: string
+            usage_percent:
+              type: number
+              format: float
+        body_part_hits:
+          type: object
+          description: Попадания по частям тела
+          properties:
+            head:
+              type: integer
+            torso:
+              type: integer
+            limbs:
+              type: integer
+        average_ttk:
+          type: number
+          format: float
+          description: Средний TTK (секунды)
+        kills:
+          type: integer
+          description: Всего убийств
+        deaths:
+          type: integer
+          description: Всего смертей
+        kd_ratio:
+          type: number
+          format: float
+          description: K/D соотношение
+

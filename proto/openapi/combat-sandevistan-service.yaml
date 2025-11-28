@@ -1,0 +1,477 @@
+openapi: 3.0.3
+info:
+  title: Combat Sandevistan API
+  description: |
+    API для управления имплантом Sandevistan - временной овердрайв системы.
+    
+    Функционал:
+    - Активация и деактивация Sandevistan
+    - Управление фазами (подготовка, активная, рекуперация)
+    - Action Priority Budget
+    - Перегрев и охлаждение
+    - Temporal Marks (пометка целей)
+    - Контрплей механики
+  version: 1.0.0
+  contact:
+    name: Combat Team
+    email: combat@necp.game
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+tags:
+  - name: sandevistan
+    description: Операции с Sandevistan имплантом
+  - name: cooling
+    description: Управление охлаждением
+paths:
+  /combat/players/{player_id}/sandevistan/activate:
+    post:
+      tags: [sandevistan]
+      summary: Активировать Sandevistan
+      operationId: activateSandevistan
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Sandevistan активирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandevistanActivation'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          description: Невозможно активировать (перегрев или кулдаун)
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/deactivate:
+    post:
+      tags: [sandevistan]
+      summary: Досрочно деактивировать Sandevistan
+      operationId: deactivateSandevistan
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Sandevistan деактивирован
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/status:
+    get:
+      tags: [sandevistan]
+      summary: Получить статус Sandevistan
+      operationId: getSandevistanStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Статус успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandevistanStatus'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/action-budget:
+    post:
+      tags: [sandevistan]
+      summary: Использовать Action Budget
+      operationId: useActionBudget
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actions]
+              properties:
+                actions:
+                  type: array
+                  maxItems: 3
+                  items:
+                    $ref: '#/components/schemas/Action'
+      responses:
+        '200':
+          description: Действия выполнены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionBudgetResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          description: Action Budget исчерпан
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/temporal-marks:
+    post:
+      tags: [sandevistan]
+      summary: Установить Temporal Marks на цели
+      operationId: setTemporalMarks
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_ids]
+              properties:
+                target_ids:
+                  type: array
+                  maxItems: 3
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '201':
+          description: Temporal Marks установлены
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/StatusResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+    get:
+      tags: [sandevistan]
+      summary: Получить активные Temporal Marks
+      operationId: getTemporalMarks
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Список Temporal Marks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  marks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TemporalMark'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/cooling:
+    post:
+      tags: [cooling]
+      summary: Использовать охлаждающий картридж
+      operationId: applyCoolingCartridge
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cartridge_id]
+              properties:
+                cartridge_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Охлаждение применено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoolingResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/heat:
+    get:
+      tags: [cooling]
+      summary: Получить статус перегрева
+      operationId: getHeatStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Статус перегрева
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatStatus'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/counterplay:
+    post:
+      tags: [sandevistan]
+      summary: Применить контрплей эффект
+      description: Chrono-Jammer, EMP или dilation_break
+      operationId: applyCounterplay
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [effect_type, source_player_id]
+              properties:
+                effect_type:
+                  type: string
+                  enum: [chrono_jammer, emp, dilation_break]
+                source_player_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Контрплей применен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CounterplayResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  schemas:
+    SandevistanActivation:
+      type: object
+      required: [activation_id, phase, started_at, expires_at]
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+        phase:
+          type: string
+          enum: [preparation, active, recuperation]
+        started_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        action_budget_remaining:
+          type: integer
+          minimum: 0
+          maximum: 3
+        bonuses:
+          type: object
+          properties:
+            movement_boost:
+              type: number
+              format: float
+            fire_rate_boost:
+              type: number
+              format: float
+            dash_distance:
+              type: number
+              format: float
+    SandevistanStatus:
+      type: object
+      required: [is_active, phase, cooldown_remaining]
+      properties:
+        is_active:
+          type: boolean
+        phase:
+          type: string
+          enum: [inactive, preparation, active, recuperation]
+        activation_id:
+          type: string
+          format: uuid
+        cooldown_remaining:
+          type: integer
+          description: Секунды до следующей активации
+        heat_stacks:
+          type: integer
+          minimum: 0
+          maximum: 4
+        action_budget_remaining:
+          type: integer
+        temporal_marks_count:
+          type: integer
+          maximum: 3
+    Action:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [dash, shoot, melee, reload]
+        target_id:
+          type: string
+          format: uuid
+        target_position:
+          type: object
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+    ActionBudgetResult:
+      type: object
+      required: [executed_actions, budget_remaining]
+      properties:
+        executed_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action_type:
+                type: string
+              success:
+                type: boolean
+              timestamp:
+                type: string
+                format: date-time
+        budget_remaining:
+          type: integer
+    TemporalMark:
+      type: object
+      required: [mark_id, target_id, marked_at, expires_at]
+      properties:
+        mark_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        marked_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        delayed_burst_damage:
+          type: number
+          format: float
+    CoolingResult:
+      type: object
+      required: [heat_stacks_removed, new_heat_level]
+      properties:
+        heat_stacks_removed:
+          type: integer
+        new_heat_level:
+          type: integer
+        cooldown_reduced:
+          type: integer
+          description: Секунды снятия с кулдауна
+        cyberpsychosis_risk:
+          type: number
+          format: float
+    HeatStatus:
+      type: object
+      required: [current_stacks, max_stacks, is_overstress]
+      properties:
+        current_stacks:
+          type: integer
+          minimum: 0
+          maximum: 4
+        max_stacks:
+          type: integer
+        is_overstress:
+          type: boolean
+        overstress_penalty:
+          type: object
+          properties:
+            hp_loss_percent:
+              type: number
+              format: float
+            cooldown_multiplier:
+              type: number
+              format: float
+        cyberpsychosis_risk:
+          type: number
+          format: float
+    CounterplayResult:
+      type: object
+      required: [effect_applied, sandevistan_interrupted]
+      properties:
+        effect_applied:
+          type: string
+          enum: [chrono_jammer, emp, dilation_break]
+        sandevistan_interrupted:
+          type: boolean
+        action_budget_reduced:
+          type: integer
+        phase_ended:
+          type: boolean
+
+
+

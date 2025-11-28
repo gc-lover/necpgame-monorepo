@@ -1,0 +1,173 @@
+openapi: 3.0.3
+info:
+  title: Stock Dividends DRIP Service API
+  description: API для управления DRIP (Dividend Reinvestment Plan) - реинвестирование дивидендов
+  version: 1.0.0
+  contact:
+    name: Economy Team
+    email: economy@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production
+  - url: https://api-stage.necp.game/v1
+    description: Staging
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: drip
+    description: Управление DRIP (реинвестирование)
+
+paths:
+  /players/{player_id}/dividends/drip:
+    get:
+      tags:
+        - drip
+      summary: Получить настройки DRIP игрока
+      description: |
+        Возвращает конфигурацию DRIP (Dividend Reinvestment Plan) игрока.
+        DRIP автоматически реинвестирует дивиденды в покупку новых акций.
+      operationId: getPlayerDRIPSettings
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Настройки DRIP успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DRIPSettings'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - drip
+      summary: Обновить настройки DRIP игрока
+      description: |
+        Обновляет конфигурацию DRIP для игрока.
+        Можно включить/выключить глобально или для конкретных акций.
+      operationId: updatePlayerDRIPSettings
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DRIPSettingsUpdate'
+      responses:
+        '200':
+          description: Настройки DRIP успешно обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DRIPSettings'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    DRIPSettings:
+      type: object
+      description: Настройки DRIP (Dividend Reinvestment Plan) игрока
+      required:
+        - player_id
+        - global_enabled
+        - stocks
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        global_enabled:
+          type: boolean
+          description: |
+            Глобальное включение DRIP.
+            Если false, DRIP отключен для всех акций.
+        stocks:
+          type: array
+          description: Настройки DRIP для конкретных акций
+          items:
+            $ref: '#/components/schemas/DRIPStockSettings'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DRIPStockSettings:
+      type: object
+      description: Настройки DRIP для конкретной акции
+      required:
+        - stock_id
+        - stock_symbol
+        - enabled
+        - threshold
+      properties:
+        stock_id:
+          type: string
+          format: uuid
+          description: ID акции
+        stock_symbol:
+          type: string
+          description: Тикер акции
+        enabled:
+          type: boolean
+          description: DRIP включен для этой акции
+        threshold:
+          type: number
+          format: double
+          minimum: 0
+          description: |
+            Минимальная сумма дивидендов для DRIP.
+            Если выплата меньше, идёт на кошелёк вместо реинвестирования.
+
+    DRIPSettingsUpdate:
+      type: object
+      description: Обновление настроек DRIP
+      required:
+        - global_enabled
+        - stocks
+      properties:
+        global_enabled:
+          type: boolean
+        stocks:
+          type: array
+          items:
+            type: object
+            required:
+              - stock_id
+              - enabled
+              - threshold
+            properties:
+              stock_id:
+                type: string
+                format: uuid
+              enabled:
+                type: boolean
+              threshold:
+                type: number
+                format: double
+                minimum: 0
+
