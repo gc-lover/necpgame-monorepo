@@ -15,16 +15,24 @@ type HTTPServer struct {
 	addr             string
 	router           *mux.Router
 	inventoryService InventoryServiceInterface
+	engramChipsService EngramChipsServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
 func NewHTTPServer(addr string, inventoryService InventoryServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
+	
+	var engramChipsService EngramChipsServiceInterface
+	if is, ok := inventoryService.(*InventoryService); ok {
+		engramChipsService = is.GetEngramChipsService()
+	}
+	
 	server := &HTTPServer{
 		addr:             addr,
 		router:           router,
 		inventoryService: inventoryService,
+		engramChipsService: engramChipsService,
 		logger:           GetLogger(),
 	}
 
@@ -38,6 +46,12 @@ func NewHTTPServer(addr string, inventoryService InventoryServiceInterface) *HTT
 	api.HandlerWithOptions(handlers, api.GorillaServerOptions{
 		BaseRouter: apiRouter,
 	})
+
+	if engramChipsService != nil {
+		apiRouter.HandleFunc("/inventory/engrams/chips/tiers", server.getEngramChipTiers).Methods("GET")
+		apiRouter.HandleFunc("/inventory/engrams/chips/{chip_id}/tier", server.getEngramChipTier).Methods("GET")
+		apiRouter.HandleFunc("/inventory/engrams/chips/{chip_id}/decay", server.getEngramChipDecay).Methods("GET")
+	}
 	
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
