@@ -1,0 +1,394 @@
+metadata:
+  id: blackwall-risk-mortality-architecture
+  title: Архитектура системы рисков и смертности Blackwall
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - blackwall
+    - risk
+    - mortality
+    - high-risk
+  related_documents:
+    - id: blackwall-systems-architecture
+      relation: extends
+  github_issues:
+    - 1474
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+
+summary:
+  problem: |
+    Лор указывает на ~70% смертность netrunner при попытке проникновения за Blackwall, но игровая
+    механика рисков и последствий не детализирована. Требуется система, которая создаёт реальное
+    ощущение опасности без полного пермадеата, балансируя между напряжением и справедливостью.
+  goal: |
+    Спроектировать систему рисков и смертности:
+    - Уровни риска с соответствующими последствиями
+    - Типы последствий (от лёгких до летальных)
+    - Система цифрового призрака (альтернатива смерти)
+    - Балансировка рисков через подготовку
+    - Интеграция с медицинской системой
+  essence: |
+    Система генерирует различные типы угроз и последствий, от временных повреждений до критических
+    состояний и смерти. Каждое действие за барьером — балансирование на грани.
+
+architecture:
+  components:
+    - name: risk-calculator
+      location: blackwall-service (blackwall-risk-calculator)
+      responsibility: |
+        Расчёт рисков на основе действий:
+        - Оценка уровня риска операции
+        - Расчёт вероятности последствий
+        - Учёт подготовки и навыков
+        - Балансировка рисков
+      estimated_lines: 350
+      dependencies:
+        - character-service
+        - inventory-service
+
+    - name: consequence-engine
+      location: blackwall-service (blackwall-risk-calculator)
+      responsibility: |
+        Генерация и применение последствий:
+        - Определение типа последствий
+        - Расчёт тяжести
+        - Применение эффектов к персонажу
+        - Интеграция с медицинской системой
+      estimated_lines: 400
+      dependencies:
+        - character-service
+        - medical-service
+
+    - name: stress-tracker
+      location: blackwall-service (blackwall-risk-calculator)
+      responsibility: |
+        Отслеживание накопленного стресса:
+        - Накопление стресса от взаимодействий
+        - Влияние на эффективность
+        - Генерация эффектов при критическом стрессе
+        - Восстановление стресса
+      estimated_lines: 250
+      dependencies:
+        - character-service
+
+    - name: digital-ghost-system
+      location: blackwall-service (blackwall-risk-calculator)
+      responsibility: |
+        Система цифрового призрака:
+        - Превращение в цифрового призрака
+        - Новый игровой режим
+        - Путь восстановления
+        - Уникальные способности
+      estimated_lines: 300
+      dependencies:
+        - character-service
+        - world-service
+
+  risk_levels:
+    low:
+      operations: [surface_mapping, basic_scanning]
+      mortality_rate: "2-5%"
+      consequences:
+        - digital_infection: "30-50%"
+        - stress: "10-20%"
+      severity: light
+
+    medium:
+      operations: [barrier_interaction, corridor_creation]
+      mortality_rate: "10-25%"
+      consequences:
+        - digital_infection: "40-60%"
+        - cyberpsychosis: "20-40%"
+        - neural_damage: "15-30%"
+      severity: moderate
+
+    high:
+      operations: [full_penetration, corridor_passage]
+      mortality_rate: "40-60%"
+      consequences:
+        - critical_damage: "25-45%"
+        - neural_damage: "30-50%"
+        - cyberpsychosis: "40-70%"
+        - deck_damage: "25-40%"
+        - possible_death: "20-40%"
+      severity: severe
+
+    extreme:
+      operations: [deep_expedition, ai_contact]
+      mortality_rate: "70-90%"
+      consequences:
+        - permadeath: "10-30%"
+        - digital_ghost: "20-40%"
+        - critical_damage: "50-80%"
+        - neural_damage: "60-90%"
+        - cyberpsychosis: "70-100%"
+      severity: critical
+
+  consequence_types:
+    digital_infection:
+      probability: "30-50%"
+      effects:
+        - interface_glitches: true
+        - false_warnings: true
+        - skill_debuff: "10-20%"
+      duration: "1-7 days"
+      treatment:
+        - special_procedures: true
+        - cleanup_implants: true
+        - cost: "10000-50000 еддис"
+      visual: periodic_distortions
+
+    cyberpsychosis:
+      probability: "20-40%"
+      effects:
+        - all_stats_debuff: "5-15%"
+        - hallucinations: true
+        - random_actions: true
+      duration: "3-14 days or permanent"
+      treatment:
+        - expensive_therapy: true
+        - special_implants: true
+        - cost: "50000-200000 еддис"
+      visual: reality_distortions
+
+    neural_damage:
+      probability: "15-30%"
+      effects:
+        - skill_loss: "5-15%"
+        - max_stats_reduction: "2-5 points"
+      duration: "temporary or permanent"
+      treatment:
+        - neuroreconstruction: true
+        - compensation_implants: true
+        - cost: "100000-500000 еддис"
+      visual: interface_instability
+
+    deck_damage:
+      probability: "25-45%"
+      effects:
+        - hacking_effectiveness: "-20-40%"
+        - feature_loss: true
+      duration: "until repair"
+      treatment:
+        - repair: true
+        - replacement: true
+        - cost: "50000-300000 еддис"
+      visual: system_warnings
+
+    critical_condition:
+      probability: "5-15%"
+      effects:
+        - multiple_severe_consequences: true
+        - unplayable_state: true
+      duration: "requires_immediate_treatment"
+      treatment:
+        - comprehensive_therapy: true
+        - possible_character_loss: true
+      visual: constant_distortions
+
+    permadeath:
+      probability: "2-10%"
+      effects:
+        - character_loss: true
+        - experience_retention: "30-50%"
+        - unique_items_recoverable: true
+        - alternative_digital_ghost: true
+      visual: digital_disintegration
+
+  digital_ghost_system:
+    transformation:
+      trigger: "Critical AI contact with high mortality risk"
+      process: "Character 'dies' but consciousness partially preserved"
+      result: "Digital ghost in cyberspace"
+    
+    gameplay_mode:
+      physical_world_interaction: limited
+      cyberspace_abilities: unique
+      embodiment_devices: special_equipment
+      feeling: alienation_and_inhumanity
+    
+    restoration_path:
+      quests: "Body restoration quests"
+      procedures: "Very expensive procedures"
+      partial_return: "Partial return to normal gameplay"
+      permanent_reminders: true
+
+  risk_balancing:
+    preparation_reductions:
+      equipment: "-10-20% mortality"
+      skills: "-15-25% mortality"
+      team_support: "-20-30% mortality"
+      maps: "-10-15% mortality"
+    
+    class_modifiers:
+      netrunner: "-15% base risk"
+      techie: "+5% base risk"
+      other_classes: "+20% base risk"
+    
+    escalation:
+      first_attempt: "Reduced risks (learning)"
+      repeated_attempts: "Stress accumulation, increased risks"
+      long_expeditions: "Exponential risk growth"
+
+  api_endpoints:
+    - path: POST /api/v1/blackwall/risk/calculate
+      description: Расчёт рисков для действия
+      request:
+        character_id: UUID
+        action_type: enum
+        preparation_level: object
+        equipment_ids: [UUID]
+        map_id: UUID (optional)
+      response:
+        risk_level: enum
+        mortality_rate: percentage
+        consequence_probabilities: object
+        recommendations: [string]
+        warnings: [string]
+
+    - path: POST /api/v1/blackwall/risk/consequence/apply
+      description: Применение последствий
+      request:
+        character_id: UUID
+        consequence_type: enum
+        severity: integer
+        source: string
+      response:
+        consequence_id: UUID
+        effects_applied: object
+        treatment_available: boolean
+        treatment_cost: integer
+
+    - path: GET /api/v1/blackwall/risk/{characterId}/stress
+      description: Получение уровня стресса персонажа
+      response:
+        current_stress: 0-100
+        effects_active: [object]
+        recovery_rate: integer
+        next_recovery: timestamp
+
+    - path: POST /api/v1/blackwall/risk/{characterId}/stress/add
+      description: Увеличение стресса
+      request:
+        amount: integer
+        source: string
+      response:
+        new_stress: 0-100
+        effects_triggered: [object]
+
+    - path: POST /api/v1/blackwall/risk/digital-ghost/transform
+      description: Превращение в цифрового призрака
+      request:
+        character_id: UUID
+        trigger_event: string
+      response:
+        ghost_id: UUID
+        new_abilities: object
+        restoration_options: object
+
+  database_schema:
+    tables:
+      - name: blackwall_risk_assessments
+        columns:
+          - name: id
+            type: UUID
+            primary_key: true
+          - name: character_id
+            type: UUID
+            foreign_key: characters.id
+          - name: action_type
+            type: VARCHAR(50)
+          - name: risk_level
+            type: VARCHAR(20)
+          - name: mortality_rate
+            type: INTEGER
+          - name: calculated_at
+            type: TIMESTAMP
+
+      - name: blackwall_consequences
+        columns:
+          - name: id
+            type: UUID
+            primary_key: true
+          - name: character_id
+            type: UUID
+            foreign_key: characters.id
+          - name: consequence_type
+            type: VARCHAR(50)
+          - name: severity
+            type: INTEGER
+            range: 0-100
+          - name: effects
+            type: JSONB
+          - name: duration
+            type: INTEGER
+            nullable: true
+          - name: applied_at
+            type: TIMESTAMP
+          - name: expires_at
+            type: TIMESTAMP
+            nullable: true
+          - name: treated
+            type: BOOLEAN
+          - name: treated_at
+            type: TIMESTAMP
+            nullable: true
+
+      - name: blackwall_player_stress
+        columns:
+          - name: character_id
+            type: UUID
+            primary_key: true
+            foreign_key: characters.id
+          - name: current_stress
+            type: INTEGER
+            range: 0-100
+          - name: accumulated_stress
+            type: INTEGER
+          - name: last_interaction
+            type: TIMESTAMP
+          - name: recovery_rate
+            type: INTEGER
+
+      - name: digital_ghosts
+        columns:
+          - name: id
+            type: UUID
+            primary_key: true
+          - name: character_id
+            type: UUID
+            foreign_key: characters.id
+          - name: transformed_at
+            type: TIMESTAMP
+          - name: restoration_progress
+            type: INTEGER
+            range: 0-100
+          - name: abilities_unlocked
+            type: JSONB
+
+  integration_points:
+    character_service:
+      - POST /api/v1/characters/{id}/consequences/apply
+      - GET /api/v1/characters/{id}/stress
+      - POST /api/v1/characters/{id}/stats/modify
+
+    medical_service:
+      - POST /api/v1/medical/digital-infection/treat
+      - POST /api/v1/medical/cyberpsychosis/treat
+      - POST /api/v1/medical/neural-damage/treat
+
+    inventory_service:
+      - GET /api/v1/inventory/{id}/equipment/protection
+      - POST /api/v1/inventory/{id}/items/cleanup-implants
+

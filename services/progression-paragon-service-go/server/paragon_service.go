@@ -98,6 +98,10 @@ func (s *ParagonService) GetParagonStats(ctx context.Context, characterID uuid.U
 	return s.repo.GetParagonStats(ctx, characterID)
 }
 
+func (s *ParagonService) GetDBPool() *pgxpool.Pool {
+	return s.db
+}
+
 func (s *ParagonService) AddParagonExperience(ctx context.Context, characterID uuid.UUID, amount int64) error {
 	levels, err := s.GetParagonLevels(ctx, characterID)
 	if err != nil {

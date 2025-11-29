@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Difficulty Modes Service API
+  description: |
+    API для системы мастер-режимов и Challenge modes: управление режимами сложности, применение модификаторов, отслеживание ограничений.
+    
+    Система добавляет три уровня сложности (Master, Grandmaster, Legendary) с фиксированными усилениями врагов,
+    ограничениями по времени, респавну и чекпоинтам, а также уникальными наградами.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1/gameplay
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay
+    description: Продакшен сервер
+
+tags:
+  - name: Difficulty Modes
+    description: Управление режимами сложности
+  - name: Instance Difficulty
+    description: Режимы сложности инстансов
+  - name: Difficulty Stats
+    description: Статистика режимов
+
+paths:
+  /instances/{instance_id}/difficulty:
+    post:
+      tags:
+        - Instance Difficulty
+      summary: Выбрать режим сложности для инстанса
+      description: |
+        Выбирает режим сложности для инстанса рейда, подземелья или мирового босса.
+        Режим применяется при входе в контент и влияет на HP, урон врагов и ограничения.
+      operationId: selectDifficultyMode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID инстанса
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectDifficultyModeRequest'
+            example:
+              difficulty_mode_id: '880e8400-e29b-41d4-a716-446655440000'
+      responses:
+        '200':
+          description: Режим сложности успешно применен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyModeSession'
+              example:
+                id: '990e8400-e29b-41d4-a716-446655440000'
+                instance_id: '660e8400-e29b-41d4-a716-446655440000'
+                difficulty_mode:
+                  id: '880e8400-e29b-41d4-a716-446655440000'
+                  name: Master
+                  level: master
+                  hp_modifier: 2.0
+                  damage_modifier: 1.5
+                  time_limit_multiplier: 0.8
+                  respawn_limit: 3
+                  checkpoint_limit: 2
+                  reward_modifier: 1.5
+                time_remaining: 3600
+                respawns_remaining: 3
+                checkpoints_used: 0
+                started_at: '2025-12-01T10:00:00Z'
+                status: in_progress
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Instance Difficulty
+      summary: Получить режим сложности инстанса
+      description: |
+        Возвращает информацию о режиме сложности, примененном к инстансу,
+        включая текущие ограничения (время, респавны, чекпоинты).
+      operationId: getInstanceDifficultyMode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID инстанса
+      responses:
+        '200':
+          description: Режим сложности инстанса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyModeSession'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /content/{content_id}/difficulty-modes:
+    get:
+      tags:
+        - Difficulty Modes
+      summary: Получить доступные режимы сложности для контента
+      description: |
+        Возвращает список режимов сложности, доступных для конкретного контента
+        (рейда, подземелья или мирового босса), включая требования для каждого режима.
+      operationId: getContentDifficultyModes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: content_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID контента (рейда, подземелья или мирового босса)
+      responses:
+        '200':
+          description: Доступные режимы сложности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentDifficultyModesResponse'
+              example:
+                content_id: '770e8400-e29b-41d4-a716-446655440000'
+                available_modes:
+                  - id: '880e8400-e29b-41d4-a716-446655440000'
+                    name: Master
+                    level: master
+                    hp_modifier: 2.0
+                    damage_modifier: 1.5
+                    time_limit_multiplier: 0.8
+                    respawn_limit: 3
+                    checkpoint_limit: 2
+                    reward_modifier: 1.5
+                    requirements:
+                      min_level: 40
+                      completed_normal: true
+                  - id: '880e8400-e29b-41d4-a716-446655440001'
+                    name: Grandmaster
+                    level: grandmaster
+                    hp_modifier: 3.0
+                    damage_modifier: 2.0
+                    time_limit_multiplier: 0.6
+                    respawn_limit: 1
+                    checkpoint_limit: 1
+                    reward_modifier: 2.0
+                    requirements:
+                      min_level: 45
+                      completed_master: true
+                  - id: '880e8400-e29b-41d4-a716-446655440002'
+                    name: Legendary
+                    level: legendary
+                    hp_modifier: 4.0
+                    damage_modifier: 2.5
+                    time_limit_multiplier: 0.5
+                    respawn_limit: 0
+                    checkpoint_limit: 0
+                    reward_modifier: 3.0
+                    requirements:
+                      min_level: 50
+                      completed_grandmaster: true
+                      permadeath: true
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /difficulty-modes/stats:
+    get:
+      tags:
+        - Difficulty Stats
+      summary: Получить статистику режимов сложности
+      description: |
+        Возвращает статистику прохождения контента по режимам сложности:
+        количество попыток, успешных прохождений, среднее время, смертность.
+      operationId: getDifficultyModesStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: difficulty_mode_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по режиму сложности (опционально)
+        - name: content_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по контенту (опционально)
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Статистика режимов сложности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyModesStatsResponse'
+              example:
+                items:
+                  - difficulty_mode:
+                      id: '880e8400-e29b-41d4-a716-446655440000'
+                      name: Master
+                      level: master
+                    attempts: 1250
+                    completions: 342
+                    completion_rate: 0.27
+                    avg_completion_time: 2850
+                    avg_deaths: 8.5
+                    unique_players: 156
+                total: 1
+                limit: 20
+                offset: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /difficulty-modes/{mode}/requirements:
+    get:
+      tags:
+        - Difficulty Modes
+      summary: Получить требования для режима сложности
+      description: |
+        Возвращает детальные требования для доступа к режиму сложности,
+        включая минимальный уровень, завершенные контенты и другие условия.
+      operationId: getDifficultyModeRequirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mode
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [master, grandmaster, legendary]
+          description: Уровень режима сложности
+      responses:
+        '200':
+          description: Требования для режима
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyModeRequirements'
+              example:
+                mode: master
+                requirements:
+                  min_level: 40
+                  completed_normal: true
+                  description: |
+                    Требуется уровень 40+ и завершение контента на нормальной сложности.
+                    Режим Master увеличивает HP врагов на 100% и урон на 50%.
+                    Ограничения: время ×0.8, максимум 3 респавна, 2 чекпоинта.
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    DifficultyMode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор режима
+        name:
+          type: string
+          description: Название режима
+          example: Master
+        level:
+          type: string
+          enum: [master, grandmaster, legendary]
+          description: Уровень режима сложности
+        hp_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+          description: Модификатор HP врагов (2.0 = +100% HP)
+          example: 2.0
+        damage_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+          description: Модификатор урона врагов (1.5 = +50% урон)
+          example: 1.5
+        time_limit_multiplier:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Множитель лимита времени (0.8 = 80% от базового времени)
+          example: 0.8
+        respawn_limit:
+          type: integer
+          minimum: 0
+          description: Максимальное количество респавнов (0 = без респавнов)
+          example: 3
+        checkpoint_limit:
+          type: integer
+          minimum: 0
+          description: Максимальное количество чекпоинтов (0 = без чекпоинтов)
+          example: 2
+        reward_modifier:
+          type: number
+          format: float
+          minimum: 1.0
+          description: Модификатор наград (1.5 = +50% награды)
+          example: 1.5
+
+    DifficultyModeRequirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Минимальный уровень персонажа
+        completed_normal:
+          type: boolean
+          description: Требуется завершение на нормальной сложности
+        completed_master:
+          type: boolean
+          description: Требуется завершение на Master
+        completed_grandmaster:
+          type: boolean
+          description: Требуется завершение на Grandmaster
+        permadeath:
+          type: boolean
+          description: Режим перманентной смерти (только для Legendary)
+        description:
+          type: string
+          description: Текстовое описание требований
+
+    SelectDifficultyModeRequest:
+      type: object
+      required:
+        - difficulty_mode_id
+      properties:
+        difficulty_mode_id:
+          type: string
+          format: uuid
+          description: ID режима сложности
+
+    DifficultyModeSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID сессии режима
+        instance_id:
+          type: string
+          format: uuid
+          description: ID инстанса
+        difficulty_mode:
+          $ref: '#/components/schemas/DifficultyMode'
+        time_remaining:
+          type: integer
+          minimum: 0
+          description: Оставшееся время в секундах
+        respawns_remaining:
+          type: integer
+          minimum: 0
+          description: Оставшиеся респавны
+        checkpoints_used:
+          type: integer
+          minimum: 0
+          description: Использованные чекпоинты
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала сессии
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения сессии
+        status:
+          type: string
+          enum: [in_progress, completed, failed]
+          description: Статус сессии
+
+    ContentDifficultyMode:
+      allOf:
+        - $ref: '#/components/schemas/DifficultyMode'
+        - type: object
+          properties:
+            requirements:
+              $ref: '#/components/schemas/DifficultyModeRequirements'
+
+    ContentDifficultyModesResponse:
+      type: object
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          description: ID контента
+        available_modes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentDifficultyMode'
+          description: Доступные режимы сложности
+
+    DifficultyModeStats:
+      type: object
+      properties:
+        difficulty_mode:
+          $ref: '#/components/schemas/DifficultyMode'
+        attempts:
+          type: integer
+          minimum: 0
+          description: Количество попыток
+        completions:
+          type: integer
+          minimum: 0
+          description: Количество успешных прохождений
+        completion_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Процент успешных прохождений
+        avg_completion_time:
+          type: integer
+          minimum: 0
+          description: Среднее время прохождения в секундах
+        avg_deaths:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Среднее количество смертей
+        unique_players:
+          type: integer
+          minimum: 0
+          description: Количество уникальных игроков
+
+    DifficultyModesStatsResponse:
+      allOf:
+        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
+        - type: object
+          properties:
+            stats:
+              type: array
+              items:
+                $ref: '#/components/schemas/DifficultyModeStats'
+              description: Статистика режимов
+

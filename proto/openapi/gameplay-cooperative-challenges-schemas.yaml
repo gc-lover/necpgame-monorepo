@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Cooperative Challenges Schemas
+  description: Общие схемы данных для системы кооперативных испытаний
+  version: 1.0.0
+
+components:
+  schemas:
+    ChallengeType:
+      type: string
+      enum: [synchronized_actions, role_specific, team_coordination]
+      description: Тип кооперативного испытания
+      example: "synchronized_actions"
+
+    ChallengeConfig:
+      type: object
+      properties:
+        synchronization_window:
+          type: number
+          format: float
+          description: Окно синхронизации в секундах
+          default: 0.5
+          example: 0.5
+        required_players:
+          type: integer
+          description: Требуемое количество игроков
+          minimum: 2
+          maximum: 8
+          example: 4
+        action_sequence:
+          type: array
+          description: Последовательность действий для синхронизации
+          items:
+            type: string
+          example: ["action1", "action2", "action3"]
+        role_requirements:
+          type: object
+          description: Требования к ролям (для role_specific)
+          additionalProperties:
+            type: integer
+          example:
+            tank: 1
+            dps: 2
+            support: 1
+
+    ChallengeSession:
+      type: object
+      required:
+        - session_id
+        - challenge_type
+        - team_id
+        - status
+        - synchronization_score
+        - coordination_score
+        - started_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: UUID сессии испытания
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        challenge_type:
+          $ref: '#/components/schemas/ChallengeType'
+        team_id:
+          type: string
+          format: uuid
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [active, completed, failed]
+          description: Статус сессии
+          example: "active"
+        synchronization_score:
+          type: number
+          format: float
+          description: Оценка синхронизации (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.0
+        coordination_score:
+          type: number
+          format: float
+          description: Оценка координации (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.0
+        started_at:
+          type: string
+          format: date-time
+          example: "2025-12-01T10:00:00Z"
+
+    ChallengeProgress:
+      type: object
+      properties:
+        completed_actions:
+          type: integer
+          description: Количество завершенных действий
+          minimum: 0
+          example: 2
+        total_actions:
+          type: integer
+          description: Общее количество действий
+          minimum: 1
+          example: 3
+        perfect_synchronizations:
+          type: integer
+          description: Количество идеальных синхронизаций
+          minimum: 0
+          example: 2
+
+    ChallengeRewards:
+      type: object
+      required:
+        - base_rewards
+        - coordination_bonus_rewards
+        - total_rewards
+      properties:
+        base_rewards:
+          type: object
+          description: Базовые награды
+          properties:
+            experience:
+              type: integer
+              minimum: 0
+              example: 10000
+            currency:
+              type: integer
+              minimum: 0
+              example: 5000
+        coordination_bonus_rewards:
+          type: object
+          description: Бонусные награды за координацию
+          properties:
+            experience:
+              type: integer
+              minimum: 0
+              example: 9000
+            currency:
+              type: integer
+              minimum: 0
+              example: 4500
+        total_rewards:
+          type: object
+          description: Итоговые награды
+          properties:
+            experience:
+              type: integer
+              minimum: 0
+              example: 19000
+            currency:
+              type: integer
+              minimum: 0
+              example: 9500
+

@@ -1,0 +1,413 @@
+openapi: 3.0.3
+info:
+  title: Combat Freerun Acrobatics Base Service API
+  description: API для базовых элементов акробатики (Wall Run, Double Jump, Slide)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083
+    description: Локальный сервер разработки
+  - url: https://api.necp.game
+    description: Продакшен сервер
+
+tags:
+  - name: Acrobatics Base Actions
+    description: Базовые элементы акробатики
+
+paths:
+  /api/v1/gameplay/combat/freerun/actions/wall-run:
+    post:
+      tags:
+        - Acrobatics Base Actions
+      summary: Активировать Wall Run
+      description: Активирует бег по вертикальной поверхности для быстрого вертикального перемещения
+      operationId: activateWallRun
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WallRunRequest"
+            examples:
+              basic:
+                summary: Базовый Wall Run
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  wall_position:
+                    x: 100.0
+                    y: 200.0
+                    z: 50.0
+                  wall_normal:
+                    x: 1.0
+                    y: 0.0
+                    z: 0.0
+                  direction: "up"
+                  automation_level: "auto"
+      responses:
+        "200":
+          description: Wall Run активирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WallRunResponse"
+              examples:
+                success:
+                  summary: Успешная активация
+                  value:
+                    success: true
+                    action_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+                    stamina_cost_per_second: 15
+                    max_duration: 5
+                    validation_passed: true
+                    message: "Wall Run activated"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Недостаточно выносливости или стена недоступна
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/freerun/actions/double-jump:
+    post:
+      tags:
+        - Acrobatics Base Actions
+      summary: Выполнить Double Jump
+      description: Выполняет второй прыжок в воздухе для увеличения высоты
+      operationId: performDoubleJump
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DoubleJumpRequest"
+            examples:
+              basic:
+                summary: Базовый Double Jump
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  position:
+                    x: 100.0
+                    y: 200.0
+                    z: 50.0
+                  direction:
+                    x: 0.0
+                    y: 0.0
+                    z: 1.0
+      responses:
+        "200":
+          description: Double Jump выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DoubleJumpResponse"
+              examples:
+                success:
+                  summary: Успешное выполнение
+                  value:
+                    success: true
+                    action_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+                    stamina_used: 12
+                    validation_passed: true
+                    message: "Double Jump performed"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Double Jump уже использован или недостаточно выносливости
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /api/v1/gameplay/combat/freerun/actions/slide:
+    post:
+      tags:
+        - Acrobatics Base Actions
+      summary: Активировать Slide
+      description: Активирует скольжение по горизонтальной поверхности для быстрого перемещения и уклонения
+      operationId: activateSlide
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SlideRequest"
+            examples:
+              basic:
+                summary: Базовый Slide
+                value:
+                  character_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  session_id: "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+                  position:
+                    x: 100.0
+                    y: 200.0
+                    z: 20.0
+                  direction:
+                    x: 1.0
+                    y: 0.0
+                    z: 0.0
+                  velocity: 8.5
+                  automation_level: "auto"
+      responses:
+        "200":
+          description: Slide активирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlideResponse"
+              examples:
+                success:
+                  summary: Успешная активация
+                  value:
+                    success: true
+                    action_id: "a7b8c9d0-e1f2-3456-7890-123456789012"
+                    stamina_used: 6
+                    max_duration: 2
+                    validation_passed: true
+                    message: "Slide activated"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "403":
+          description: Недостаточно выносливости или условия не выполнены
+          content:
+            application/json:
+              schema:
+                $ref: "common.yaml#/components/schemas/Error"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    WallRunRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - wall_position
+        - wall_normal
+        - direction
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        wall_position:
+          $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D"
+        wall_normal:
+          $ref: "#/components/schemas/Vector3D"
+          description: Нормаль стены (направление от стены)
+        direction:
+          type: string
+          enum:
+            - up
+            - down
+            - left
+            - right
+          description: Направление движения по стене
+        automation_level:
+          type: string
+          enum:
+            - auto
+            - manual
+          default: auto
+          description: Уровень автоматизации
+
+    WallRunResponse:
+      type: object
+      required:
+        - success
+        - action_id
+        - stamina_cost_per_second
+        - validation_passed
+      properties:
+        success:
+          type: boolean
+          description: Успешность активации
+        action_id:
+          type: string
+          format: uuid
+          description: ID действия
+        stamina_cost_per_second:
+          type: integer
+          minimum: 0
+          description: Стоимость выносливости в секунду
+        max_duration:
+          type: number
+          format: double
+          minimum: 0
+          description: Максимальная длительность (секунды)
+        validation_passed:
+          type: boolean
+          description: Прошло ли валидацию античита
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    DoubleJumpRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - position
+        - direction
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        position:
+          $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D"
+        direction:
+          $ref: "#/components/schemas/Vector3D"
+          description: Направление прыжка
+
+    DoubleJumpResponse:
+      type: object
+      required:
+        - success
+        - action_id
+        - stamina_used
+        - validation_passed
+      properties:
+        success:
+          type: boolean
+          description: Успешность выполнения
+        action_id:
+          type: string
+          format: uuid
+          description: ID действия
+        stamina_used:
+          type: integer
+          minimum: 0
+          description: Потрачена выносливость
+        validation_passed:
+          type: boolean
+          description: Прошло ли валидацию античита
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    SlideRequest:
+      type: object
+      required:
+        - character_id
+        - session_id
+        - position
+        - direction
+        - velocity
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        position:
+          $ref: "combat-freerun-advanced-schemas.yaml#/components/schemas/Position3D"
+        direction:
+          $ref: "#/components/schemas/Vector3D"
+          description: Направление скольжения
+        velocity:
+          type: number
+          format: double
+          minimum: 0
+          description: Скорость скольжения (м/с)
+        automation_level:
+          type: string
+          enum:
+            - auto
+            - manual
+          default: auto
+          description: Уровень автоматизации
+
+    SlideResponse:
+      type: object
+      required:
+        - success
+        - action_id
+        - stamina_used
+        - max_duration
+        - validation_passed
+      properties:
+        success:
+          type: boolean
+          description: Успешность активации
+        action_id:
+          type: string
+          format: uuid
+          description: ID действия
+        stamina_used:
+          type: integer
+          minimum: 0
+          description: Потрачена выносливость
+        max_duration:
+          type: number
+          format: double
+          minimum: 0
+          description: Максимальная длительность (секунды)
+        validation_passed:
+          type: boolean
+          description: Прошло ли валидацию античита
+        message:
+          type: string
+          description: Дополнительное сообщение
+
+    Vector3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: double
+          description: Компонента X
+        y:
+          type: number
+          format: double
+          description: Компонента Y
+        z:
+          type: number
+          format: double
+          description: Компонента Z
+
+security:
+  - BearerAuth: []
+

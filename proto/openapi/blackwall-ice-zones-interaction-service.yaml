@@ -1,0 +1,277 @@
+openapi: 3.0.3
+info:
+  title: Blackwall ICE Zones & Interaction Service API
+  description: |
+    API для управления Blackwall ICE в зонах и взаимодействия с ICE.
+    
+    **Основные возможности:**
+    - Получение информации о Blackwall ICE в зонах барьера
+    - Взаимодействие с адаптивным ICE (обнаружение, анализ, обход, атака)
+    
+    **Типы Blackwall ICE:**
+    - Guardian - базовая защита периметра
+    - Hunter - активный поиск взломщиков
+    - Deception - создание ложных сигналов
+    - Corruption - медленное заражение системы
+    - Collective - роевая система координации
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8092/api/v1/blackwall
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/blackwall
+    description: Продакшен сервер
+
+tags:
+  - name: ICE Zones
+    description: Управление Blackwall ICE в зонах
+  - name: ICE Interaction
+    description: Взаимодействие с Blackwall ICE
+
+paths:
+  /ice/zones/{zoneId}:
+    get:
+      tags:
+        - ICE Zones
+      summary: Получить информацию о Blackwall ICE в зоне
+      description: |
+        Возвращает список активных Blackwall ICE в указанной зоне барьера,
+        включая их типы, уровни адаптации и оценку угрозы.
+      operationId: getZoneICE
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          description: UUID зоны барьера
+          schema:
+            type: string
+            format: uuid
+            example: "aa0e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Информация о Blackwall ICE в зоне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneICEResponse'
+              example:
+                zone_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                ice_instances:
+                  - ice_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                    ice_type: "guardian"
+                    level: "alpha"
+                    adaptation_level: 2
+                    defense_multiplier: 1.15
+                    position:
+                      x: 100.5
+                      y: 200.3
+                      z: 50.0
+                    status: "active"
+                adaptation_levels:
+                  guardian: 2
+                  hunter: 5
+                threat_assessment:
+                  overall_threat: "high"
+                  active_threats: 2
+                  recommended_caution: true
+                warnings:
+                  - "Hunter ICE активно ищет взломщиков"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /ice/{iceId}/interact:
+    post:
+      tags:
+        - ICE Interaction
+      summary: Взаимодействие с Blackwall ICE
+      description: |
+        Выполняет взаимодействие с Blackwall ICE: обнаружение, анализ, обход или атаку.
+        ICE может адаптироваться к действиям взломщика в реальном времени.
+      operationId: interactWithICE
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: iceId
+          in: path
+          required: true
+          description: UUID Blackwall ICE
+          schema:
+            type: string
+            format: uuid
+            example: "bb0e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICEInteractionRequest'
+            example:
+              action: "analyze"
+              character_id: "cc0e8400-e29b-41d4-a716-446655440000"
+              skill_check:
+                skill_type: "hacking"
+                skill_level: 45
+                modifiers:
+                  - type: "netrunner_bonus"
+                    value: 0.2
+      responses:
+        '200':
+          description: Результат взаимодействия с ICE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEInteractionResponse'
+              example:
+                interaction_id: "dd0e8400-e29b-41d4-a716-446655440000"
+                ice_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                action: "analyze"
+                success: true
+                interaction_result:
+                  ice_type: "guardian"
+                  level: "alpha"
+                  stats:
+                    attack_speed: "slow"
+                    defense: "high"
+                    adaptation_rate: "medium"
+                    aggression: "low"
+                  current_adaptation_level: 2
+                  defense_multiplier: 1.15
+                ice_response:
+                  response_type: "defensive"
+                  message: "Защита активирована. Обнаружена попытка анализа."
+                  psychological_effect: "low"
+                adaptation_triggered: false
+                consequences:
+                  stress_increase: 5
+                  detection_risk: 10
+                  data_leak: false
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ZoneICEResponse:
+      type: object
+      required:
+        - zone_id
+        - ice_instances
+        - adaptation_levels
+        - threat_assessment
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: UUID зоны барьера
+          example: "aa0e8400-e29b-41d4-a716-446655440000"
+        ice_instances:
+          type: array
+          description: Список активных Blackwall ICE в зоне
+          items:
+            $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICEInstance'
+        adaptation_levels:
+          type: object
+          description: Уровни адаптации по типам ICE
+          additionalProperties:
+            type: integer
+            minimum: 0
+            maximum: 10
+          example:
+            guardian: 2
+            hunter: 5
+        threat_assessment:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ThreatAssessment'
+        warnings:
+          type: array
+          description: Предупреждения о текущем состоянии ICE
+          items:
+            type: string
+          example:
+            - "Hunter ICE активно ищет взломщиков"
+
+    ICEInteractionRequest:
+      type: object
+      required:
+        - action
+        - character_id
+        - skill_check
+      properties:
+        action:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICEInteractionAction'
+        character_id:
+          type: string
+          format: uuid
+          description: UUID персонажа, выполняющего взаимодействие
+          example: "cc0e8400-e29b-41d4-a716-446655440000"
+        skill_check:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/SkillCheck'
+
+    ICEInteractionResponse:
+      type: object
+      required:
+        - interaction_id
+        - ice_id
+        - action
+        - success
+        - interaction_result
+        - ice_response
+        - adaptation_triggered
+        - consequences
+      properties:
+        interaction_id:
+          type: string
+          format: uuid
+          description: UUID взаимодействия
+          example: "dd0e8400-e29b-41d4-a716-446655440000"
+        ice_id:
+          type: string
+          format: uuid
+          description: UUID Blackwall ICE
+          example: "bb0e8400-e29b-41d4-a716-446655440000"
+        action:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICEInteractionAction'
+        success:
+          type: boolean
+          description: Успешность взаимодействия
+          example: true
+        interaction_result:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICEInteractionResult'
+        ice_response:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICEResponse'
+        adaptation_triggered:
+          type: boolean
+          description: Была ли вызвана адаптация ICE
+          example: false
+        consequences:
+          $ref: 'blackwall-ice-schemas.yaml#/components/schemas/ICEConsequences'
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

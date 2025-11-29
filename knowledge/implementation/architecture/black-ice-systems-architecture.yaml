@@ -1,0 +1,283 @@
+metadata:
+  id: black-ice-systems-architecture
+  title: Архитектура систем Black ICE
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - black-ice
+    - hacking
+    - lethal
+    - high-risk
+  related_documents:
+    - id: cyber-network-systems-architecture
+      relation: extends
+    - id: black-ice-core-architecture
+      relation: references
+    - id: black-ice-types-defense-architecture
+      relation: references
+  github_issues:
+    - 1475
+    - 1476
+    - 1477
+    - 1482
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+
+summary:
+  problem: |
+    Black ICE упоминается в лоре как летальная ICE-программа, но детализированная игровая механика
+    отсутствует. Требуется система, которая реализует Black ICE как уникальную угрозу с
+    перегрузкой нейроимплантов и психологическим воздействием.
+  goal: |
+    Спроектировать архитектуру систем Black ICE:
+    - Основная механика перегрузки нейроимплантов
+    - Типы Black ICE программ с уникальным поведением
+    - Система защиты и контрмер
+    - Интеграция с перегревом и последствиями
+    - Психологическое воздействие через эффект зловещей долины
+  essence: |
+    Black ICE — активный хищник в цифровом пространстве, использующий перегрузку нейроимплантов
+    для убийства netrunner. Создаёт ощущение борьбы за выживание с разумным, но нечеловеческим
+    противником.
+
+architecture:
+  overview: |
+    Системы Black ICE состоят из следующих компонентов:
+    1. Black ICE Engine - основной движок Black ICE
+    2. Overload System - система перегрузки нейроимплантов
+    3. Black ICE Types Registry - типы и варианты программ
+    4. Defense System - демоны и импланты защиты
+    5. Psychological Engine - психологическое воздействие
+    6. Integration Layer - интеграция с существующей системой ICE
+
+  design_principles:
+    - name: Lethality
+      description: Black ICE нацелена на убийство, не просто блокировку
+    - name: Active Hunting
+      description: Black ICE активно охотится, а не пассивно защищает
+    - name: Intelligence Simulation
+      description: Демонстрирует признаки разума, но нечеловеческую логику
+    - name: Psychological Horror
+      description: Эффект зловещей долины для создания атмосферы ужаса
+    - name: Preparation Critical
+      description: Без защиты встреча почти всегда смертельна
+
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> HackingService[Hacking Service]
+        
+        HackingService --> BlackICEModule[Black ICE Module]
+        
+        BlackICEModule --> ICEEngine[Black ICE Engine]
+        BlackICEModule --> OverloadSys[Overload System]
+        BlackICEModule --> TypesRegistry[Types Registry]
+        BlackICEModule --> DefenseSys[Defense System]
+        BlackICEModule --> PsychEngine[Psychological Engine]
+        
+        ICEEngine --> CharacterService[Character Service]
+        OverloadSys --> CharacterService
+        DefenseSys --> InventoryService[Inventory Service]
+        
+        BlackICEModule --> EventBus[Event Bus]
+        BlackICEModule --> DB[(Black ICE DB)]
+    ```
+
+  microservices:
+    - name: hacking-service
+      location: gameplay-service (модуль hacking, подмодуль black-ice)
+      responsibility: |
+        Интеграция Black ICE в систему взлома:
+        - Обработка встреч с Black ICE
+        - Перегрузка нейроимплантов
+        - Защита и контрмеры
+        - Типы и варианты Black ICE
+      endpoints:
+        - POST /api/v1/hacking/blackice/encounter - встреча с Black ICE
+        - POST /api/v1/hacking/blackice/{iceId}/interact - взаимодействие
+        - GET /api/v1/hacking/blackice/{iceId}/analysis - анализ типа
+        - POST /api/v1/hacking/blackice/{iceId}/defend - активация защиты
+        - POST /api/v1/hacking/blackice/{iceId}/overload - обработка перегрузки
+        - POST /api/v1/hacking/blackice/{iceId}/escape - экстренное отключение
+
+  components:
+    - name: black-ice-engine
+      location: hacking-service (black-ice-module)
+      responsibility: |
+        Основной движок Black ICE:
+        - Управление экземплярами Black ICE
+        - Обработка охоты и преследования
+        - Координация с типами ICE
+        - Интеграция с системой ICE
+      estimated_lines: 450
+      dependencies:
+        - hacking-service (ICE система)
+        - character-service
+
+    - name: overload-system
+      location: hacking-service (black-ice-module)
+      responsibility: |
+        Система перегрузки нейроимплантов:
+        - Процесс перегрузки
+        - Индикация опасности
+        - Критические точки
+        - Система сопротивления
+      estimated_lines: 400
+      dependencies:
+        - character-service
+        - medical-service
+
+    - name: black-ice-types-registry
+      location: hacking-service (black-ice-module)
+      responsibility: |
+        Реестр типов и вариантов Black ICE:
+        - Killer, Hunter, Deception, Corruption, Collective
+        - Уровни Alpha, Beta, Gamma
+        - Уникальные способности
+        - Визуальные представления
+      estimated_lines: 450
+      dependencies:
+        - black-ice-engine
+
+    - name: defense-system
+      location: hacking-service (black-ice-module)
+      responsibility: |
+        Система защиты от Black ICE:
+        - Демоны защиты
+        - Импланты защиты
+        - Оборудование
+        - Тактические приёмы
+      estimated_lines: 400
+      dependencies:
+        - inventory-service
+        - character-service
+
+    - name: psychological-engine
+      location: hacking-service (black-ice-module)
+      responsibility: |
+        Психологическое воздействие:
+        - Визуальные эффекты (зловещая долина)
+        - Звуковые эффекты
+        - Поведенческие паттерны
+        - Неопределённость
+      estimated_lines: 300
+      dependencies:
+        - atmosphere-system
+        - character-service
+
+  integrations:
+    - name: hacking-service
+      purpose: Интеграция с существующей системой ICE и взлома
+      endpoints:
+        - GET /api/v1/hacking/ice/types - типы ICE (включая blackwall)
+        - POST /api/v1/hacking/ice/{iceId}/analyze - анализ ICE
+
+    - name: character-service
+      purpose: Применение последствий перегрузки, проверка навыков
+      endpoints:
+        - POST /api/v1/characters/{id}/overload/apply
+        - GET /api/v1/characters/{id}/skills/blackice-defense
+
+    - name: inventory-service
+      purpose: Проверка защиты, выдача демонов
+      endpoints:
+        - GET /api/v1/inventory/{id}/equipment/blackice-protection
+        - GET /api/v1/inventory/{id}/demons/defense
+
+    - name: medical-service
+      purpose: Лечение последствий встречи
+      endpoints:
+        - POST /api/v1/medical/overload-damage/treat
+        - POST /api/v1/medical/neural-damage/treat
+
+    - name: event-bus
+      purpose: Публикация событий встреч с Black ICE
+      events:
+        - blackice.encountered
+        - blackice.overload.started
+        - blackice.overload.critical
+        - blackice.defended
+        - blackice.escaped
+        - blackice.fatal
+
+  risk_reward_balance:
+    encounter_rates:
+      basic_zones: "5-10%"
+      corporate_zones: "15-25%"
+      blackwall_proximity: "30-50%"
+      deep_cyberspace: "40-60%"
+    
+    mortality_rates:
+      unprepared: "80-95%"
+      basic_defense: "40-60%"
+      good_defense: "10-25%"
+      excellent_defense: "2-5%"
+    
+    rewards:
+      successful_defense:
+        experience: "1000-5000 XP"
+        skills: "Black ICE Defense +1-3"
+        reputation: "+10-30 to hacker factions"
+      
+      analysis_complete:
+        data: "ICE behavior logs (sellable)"
+        knowledge: "Type-specific tactics"
+        experience: "500-2000 XP"
+
+  class_interaction:
+    netrunner:
+      defense_effectiveness: high
+      special_demons: true
+      understanding: "Better understanding of behavior"
+      risk_modifier: -20%
+    
+    techie:
+      defense_effectiveness: medium
+      technical_solutions: true
+      risk_modifier: +10%
+    
+    other_classes:
+      defense_effectiveness: low
+      risk_modifier: +40%
+      recommendation: "Avoid encounters or team up"
+
+implementation_notes:
+  lethality_design: |
+    Black ICE спроектирована как смертельная угроза:
+    - Перегрузка нейроимплантов → реальный физический вред
+    - Без защиты встреча почти всегда смертельна
+    - Подготовка критически важна
+    - Ошибки фатальны
+
+  psychological_design: |
+    Психологическое воздействие:
+    - Эффект зловещей долины через визуальные эффекты
+    - Почти человеческое поведение, но неправильное
+    - Ощущение разумного противника
+    - Постоянное беспокойство и страх
+
+  defense_importance: |
+    Защита критически важна:
+    - Без защиты: 80-95% смертность
+    - С базовой защитой: 40-60%
+    - С хорошей защитой: 10-25%
+    - С отличной защитой: 2-5%
+
+next_steps:
+  - Создать детальную архитектуру компонентов (отдельные файлы)
+  - Определить структуру БД для Black ICE
+  - Спроектировать API endpoints детально
+  - Разбить на технические задачи
+

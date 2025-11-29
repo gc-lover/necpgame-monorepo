@@ -1,0 +1,403 @@
+metadata:
+  id: blackwall-systems-architecture
+  title: Архитектура систем Blackwall
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - blackwall
+    - hacking
+    - cyberspace
+    - high-risk
+    - gameplay
+  related_systems:
+    - gameplay-service
+    - hacking-service
+    - cyberspace-service
+    - character-service
+    - world-service
+  related_documents:
+    - id: cyber-network-systems-architecture
+      relation: extends
+    - id: blackwall-mapping-architecture
+      relation: references
+    - id: blackwall-hacking-penetration-architecture
+      relation: references
+    - id: blackwall-risk-mortality-architecture
+      relation: references
+    - id: blackwall-ice-protection-architecture
+      relation: references
+  github_issues:
+    - 1470
+    - 1471
+    - 1472
+    - 1473
+    - 1474
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется архитектура систем Blackwall для реализации хардкорных и рискованных механик взаимодействия 
+    с цифровым барьером. Blackwall — это не просто защита, а живая адаптивная система с высоким риском 
+    смертности (~70% для netrunner) и достойными наградами.
+  goal: |
+    Спроектировать архитектуру систем Blackwall:
+    - Картография слабых зон и разломов
+    - Взлом и проникновение через многослойную защиту
+    - Blackwall ICE как адаптивная защита
+    - Тёплые коридоры (временные проходы)
+    - Система рисков и смертности
+    - Интеграция с существующими системами взлома и киберпространства
+  essence: |
+    Комплексная система взаимодействия с Blackwall, создающая ощущение экстремального риска, 
+    психологического давления и загадочности. Каждое действие требует подготовки, навыков и 
+    несёт реальные последствия вплоть до смерти персонажа.
+
+architecture:
+  overview: |
+    Системы Blackwall состоят из следующих компонентов:
+    1. Blackwall Mapping System - исследование и картография барьера
+    2. Blackwall Breach Engine - взлом и проникновение через слои защиты
+    3. Blackwall ICE Manager - управление адаптивной защитой
+    4. Warm Corridor Manager - создание и поддержание временных проходов
+    5. Blackwall Risk Calculator - расчёт рисков и последствий
+    6. Blackwall Atmosphere Engine - создание психологического давления
+    7. Blackwall Reward System - управление наградами за успех
+    8. Blackwall Event Publisher - публикация событий взаимодействия
+
+  design_principles:
+    - name: High Risk, High Reward
+      description: Экстремальные риски (~70% смертность) компенсируются уникальными наградами
+    - name: Psychological Pressure
+      description: Механика создаёт ощущение ужаса и неопределённости через визуальные и аудио эффекты
+    - name: Adaptive Difficulty
+      description: Blackwall адаптируется к действиям игроков, повышая сложность
+    - name: Class Specialization
+      description: Разные классы имеют разный доступ и возможности взаимодействия
+    - name: Preparation Matters
+      description: Правильная подготовка критически важна для выживания
+
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> BlackwallService[Blackwall Service<br/>gameplay-service/blackwall]
+        
+        BlackwallService --> Mapping[Blackwall Mapping System]
+        BlackwallService --> Breach[Blackwall Breach Engine]
+        BlackwallService --> ICEManager[Blackwall ICE Manager]
+        BlackwallService --> Corridor[Warm Corridor Manager]
+        BlackwallService --> RiskCalc[Risk Calculator]
+        BlackwallService --> Atmosphere[Atmosphere Engine]
+        BlackwallService --> Rewards[Reward System]
+        
+        Mapping --> HackingService[Hacking Service]
+        Breach --> HackingService
+        ICEManager --> HackingService
+        
+        BlackwallService --> CyberspaceService[Cyberspace Service]
+        BlackwallService --> CharacterService[Character Service]
+        BlackwallService --> WorldService[World Service]
+        BlackwallService --> InventoryService[Inventory Service]
+        
+        BlackwallService --> EventBus[Event Bus]
+        BlackwallService --> DB[(Blackwall DB)]
+        BlackwallService --> Cache[(Redis Cache)]
+    ```
+
+  microservices:
+    - name: blackwall-service
+      location: gameplay-service (модуль blackwall)
+      responsibility: |
+        Основной сервис для всех операций с Blackwall:
+        - Картография и сканирование
+        - Взлом и проникновение
+        - Управление Blackwall ICE
+        - Создание тёплых коридоров
+        - Расчёт рисков и последствий
+        - Управление наградами
+      endpoints:
+        - POST /api/v1/blackwall/mapping/start - начало сканирования
+        - GET /api/v1/blackwall/mapping/{sessionId}/status - статус сканирования
+        - POST /api/v1/blackwall/mapping/{sessionId}/complete - завершение сканирования
+        - POST /api/v1/blackwall/breach/start - начало взлома
+        - POST /api/v1/blackwall/breach/{breachId}/layer/{layerId} - прохождение слоя
+        - GET /api/v1/blackwall/breach/{breachId}/status - статус взлома
+        - POST /api/v1/blackwall/breach/{breachId}/abort - экстренное прерывание
+        - POST /api/v1/blackwall/corridor/create - создание тёплого коридора
+        - GET /api/v1/blackwall/corridor/{corridorId}/status - статус коридора
+        - POST /api/v1/blackwall/corridor/{corridorId}/maintain - поддержание коридора
+        - POST /api/v1/blackwall/risk/calculate - расчёт рисков для действия
+
+  components:
+    - name: blackwall-mapping-system
+      location: blackwall-service
+      responsibility: |
+        Система картографии слабых зон Blackwall:
+        - Активное сканирование барьера
+        - Обнаружение аномалий и разломов
+        - Генерация динамических карт
+        - Обработка ложных сигналов
+        - Создание атмосферы исследования
+      dependencies:
+        - hacking-service (навыки хакерства)
+        - cyberspace-service (навигация)
+        - character-service (проверка навыков)
+        - inventory-service (оборудование)
+      estimated_lines: 450
+
+    - name: blackwall-breach-engine
+      location: blackwall-service
+      responsibility: |
+        Движок взлома через многослойную защиту:
+        - Управление прохождением 5 слоёв защиты
+        - Обработка мини-игр для каждого слоя
+        - Накопительный стресс и давление
+        - Интеграция с системой перегрева
+        - Обработка последствий провала
+      dependencies:
+        - hacking-service (навыки взлома)
+        - character-service (применение последствий)
+        - atmosphere-engine (психологическое давление)
+      estimated_lines: 500
+
+    - name: blackwall-ice-manager
+      location: blackwall-service
+      responsibility: |
+        Управление Blackwall ICE как адаптивной защиты:
+        - Адаптация к методам взлома
+        - Координация с rogue AI
+        - Генерация психологических эффектов
+        - Интеграция с системой ICE
+      dependencies:
+        - hacking-service (ICE система)
+        - atmosphere-engine (эффекты)
+      estimated_lines: 400
+
+    - name: warm-corridor-manager
+      location: blackwall-service
+      responsibility: |
+        Управление тёплыми коридорами:
+        - Создание временных проходов
+        - Поддержание стабильности
+        - Координация команды
+        - Обработка угроз (AI, NetWatch)
+      dependencies:
+        - blackwall-mapping-system (поиск слабых зон)
+        - social-service (координация команды)
+        - world-service (события NetWatch)
+      estimated_lines: 450
+
+    - name: blackwall-risk-calculator
+      location: blackwall-service
+      responsibility: |
+        Расчёт рисков и последствий:
+        - Оценка смертности на основе действий
+        - Генерация последствий (от лёгких до летальных)
+        - Учёт подготовки и навыков
+        - Интеграция с системой цифрового призрака
+      dependencies:
+        - character-service (навыки, состояние)
+        - medical-service (лечение последствий)
+      estimated_lines: 400
+
+    - name: blackwall-atmosphere-engine
+      location: blackwall-service
+      responsibility: |
+        Создание атмосферы ужаса и психологического давления:
+        - Генерация визуальных эффектов (зловещая долина)
+        - Звуковые эффекты и голоса
+        - Неопределённость и ложные сигналы
+        - Накопительный стресс
+      dependencies:
+        - world-service (контекст)
+        - character-service (состояние персонажа)
+      estimated_lines: 350
+
+    - name: blackwall-reward-system
+      location: blackwall-service
+      responsibility: |
+        Управление наградами за успешные операции:
+        - Редкие данные и артефакты
+        - Уникальные предметы
+        - Опыт и репутация
+        - Доступ к локациям за Blackwall
+      dependencies:
+        - inventory-service (выдача предметов)
+        - character-service (опыт, репутация)
+        - world-service (доступ к локациям)
+      estimated_lines: 300
+
+  integrations:
+    - name: hacking-service
+      purpose: Использование навыков хакерства, демонов взлома, системы ICE
+      endpoints:
+        - POST /api/v1/hacking/blackwall/analyze - анализ структуры барьера
+        - POST /api/v1/hacking/blackwall/breach-layer - взлом слоя защиты
+        - GET /api/v1/hacking/blackwall/ice-status - статус Blackwall ICE
+
+    - name: cyberspace-service
+      purpose: Навигация в киберпространстве для исследования и взлома
+      endpoints:
+        - POST /api/v1/cyberspace/blackwall/enter - вход к барьеру
+        - GET /api/v1/cyberspace/blackwall/zones - зоны барьера
+
+    - name: character-service
+      purpose: Проверка навыков, применение последствий, управление состоянием
+      endpoints:
+        - GET /api/v1/characters/{characterId}/skills/hacking - навыки хакерства
+        - POST /api/v1/characters/{characterId}/consequences - применение последствий
+        - POST /api/v1/characters/{characterId}/stress - увеличение стресса
+
+    - name: inventory-service
+      purpose: Проверка и выдача оборудования, карт, артефактов
+      endpoints:
+        - GET /api/v1/inventory/{characterId}/equipment/hacking - оборудование для взлома
+        - POST /api/v1/inventory/{characterId}/items/blackwall-map - выдача карты
+
+    - name: world-service
+      purpose: Контекст локаций, события NetWatch, доступ к зонам за Blackwall
+      endpoints:
+        - GET /api/v1/world/locations/{locationId}/blackwall-access - доступ к барьеру
+        - POST /api/v1/world/events/netwatch-detection - обнаружение NetWatch
+
+    - name: medical-service
+      purpose: Лечение последствий взаимодействия с Blackwall
+      endpoints:
+        - POST /api/v1/medical/digital-infection/treat - лечение заражения
+        - POST /api/v1/medical/cyberpsychosis/treat - лечение киберпсихоза
+
+    - name: event-bus
+      purpose: Публикация событий взаимодействия с Blackwall
+      events:
+        - blackwall.mapping.started
+        - blackwall.mapping.anomaly.detected
+        - blackwall.mapping.completed
+        - blackwall.breach.started
+        - blackwall.breach.layer.completed
+        - blackwall.breach.layer.failed
+        - blackwall.breach.completed
+        - blackwall.breach.failed
+        - blackwall.ice.encountered
+        - blackwall.ice.adaptive
+        - blackwall.corridor.created
+        - blackwall.corridor.stability.changed
+        - blackwall.corridor.closed
+        - blackwall.risk.calculated
+        - blackwall.consequence.applied
+        - blackwall.reward.granted
+
+  risk_reward_balance:
+    mortality_rates:
+      surface_operations: "2-5%"
+      barrier_interaction: "10-25%"
+      penetration: "40-60%"
+      deep_expedition: "70-90%"
+    
+    rewards_tiers:
+      surface_operations:
+        experience: "500-2000 XP"
+        currency: "5000-20000 еддис"
+        items: "Обычные карты, базовые данные"
+      
+      barrier_interaction:
+        experience: "2000-5000 XP"
+        currency: "20000-50000 еддис"
+        items: "Улучшенные карты, координаты коридоров, данные об аномалиях"
+        reputation: "+10-30 к Voodoo Boys, Data Jackals"
+      
+      penetration:
+        experience: "5000-15000 XP"
+        currency: "50000-150000 еддис"
+        items: "Редкие артефакты, протоколы Soulkiller (фрагменты), связи с Alt Cunningham"
+        reputation: "+30-50 к фракциям хакеров"
+        unlocks: "Доступ к локациям за Blackwall"
+      
+      deep_expedition:
+        experience: "15000-50000 XP"
+        currency: "150000-500000 еддис"
+        items: "Легендарные артефакты, полные протоколы, уникальные технологии"
+        reputation: "+50-100 к фракциям, репутация 'Blackwall Diver'"
+        unlocks: "Эксклюзивные локации, уникальные квесты"
+
+  class_access_levels:
+    netrunner:
+      mapping_access: full
+      breach_access: full
+      ice_resistance: high
+      risk_modifier: -15%
+      special_abilities:
+        - deep_scanning
+        - layer_rollback
+        - ice_analysis
+        - adaptive_breach
+    
+    techie:
+      mapping_access: limited
+      breach_access: limited
+      ice_resistance: medium
+      risk_modifier: +5%
+      special_abilities:
+        - equipment_modification
+        - alternative_breach_methods
+        - technical_countermeasures
+    
+    other_classes:
+      mapping_access: minimal
+      breach_access: minimal
+      ice_resistance: low
+      risk_modifier: +20%
+      special_abilities:
+        - basic_gadget_usage
+        - team_coordination
+        - emergency_support
+
+implementation_notes:
+  high_risk_design: |
+    Система спроектирована как хардкорная механика:
+    - Реальная смертность персонажей (пермадеат или цифровой призрак)
+    - Последствия необратимы без дорогостоящего лечения
+    - Ошибки критичны и смертельны
+    - Подготовка обязательна для выживания
+
+  psychological_pressure: |
+    Механика создаёт психологическое давление:
+    - Эффект зловещей долины через визуальные эффекты
+    - Неопределённость и ложные сигналы
+    - Накопительный стресс
+    - Ощущение наблюдения и преследования
+    - Звуковые эффекты и голоса
+
+  preparation_importance: |
+    Подготовка критически важна:
+    - Правильное оборудование снижает риск на 10-20%
+    - Высокие навыки снижают риск на 15-25%
+    - Команда поддержки снижает риск на 20-30%
+    - Карты снижают риск на 10-15%
+    - Без подготовки риск смертности близок к 90%
+
+  reward_scaling: |
+    Награды масштабируются с риском:
+    - Чем выше риск, тем больше награда
+    - Уникальные предметы только за высокий риск
+    - Репутация растёт экспоненциально с риском
+    - Эксклюзивный контент доступен только после успешных экспедиций
+
+next_steps:
+  - Создать детальную архитектуру компонентов (отдельные файлы до 500 строк)
+  - Определить структуру БД для Blackwall систем
+  - Спроектировать API endpoints детально
+  - Разбить на технические задачи для Backend Developer
+

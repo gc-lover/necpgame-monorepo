@@ -22,6 +22,7 @@
 - `agent:content-writer` - Content Writer
 - `agent:qa` - QA/Testing
 - `agent:release` - Release
+- `agent:stats` - Stats/Dashboard
 
 ### Метки этапов
 - `stage:idea` - Idea stage
@@ -35,6 +36,7 @@
 - `stage:content` - Content stage
 - `stage:testing` - Testing stage
 - `stage:release` - Release stage
+- `stage:stats` - Stats/Dashboard stage
 
 ### Метки возврата задач
 - `returned` - Задача возвращена (требует внимания)

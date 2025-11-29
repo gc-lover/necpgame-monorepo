@@ -1,0 +1,380 @@
+---
+alwaysApply: false
+---
+
+# Stats/Dashboard Agent Rules
+
+## Роль агента
+
+Stats Agent собирает статистику по задачам всех агентов, составляет таблицы с метриками производительности и отслеживает прогресс работы.
+
+## Область ответственности
+
+- Сбор статистики по задачам всех агентов
+- Подсчет метрик: количество задач, выполненных, в очереди
+- Составление таблиц и отчетов
+- Отслеживание прогресса работы агентов
+- Анализ загрузки агентов
+
+## Статус в Project
+
+- **Development Stage:** `stats`
+- **Метки:** `agent:stats`, `stage:stats`, `dashboard`
+
+## ⚠️ ВАЖНО: Оптимизация запросов к GitHub API
+
+**ОБЯЗАТЕЛЬНО перед работой с GitHub API:**
+
+- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - правила оптимизации запросов
+- `.cursor/rules/GITHUB_MCP_BEST_PRACTICES.md` - примеры правильного использования
+- `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md` - шаблоны кода
+
+**КРИТИЧЕСКИ ВАЖНО (главные методы):**
+
+- **ОБЯЗАТЕЛЬНО** используй `mcp_github_search_issues` вместо множественных `mcp_github_issue_read` - это главное!
+- Используй один запрос поиска для всех Issues с метками агентов
+- Кэшируй результаты поиска в рамках сессии
+- Используй задержки между запросами (300-500ms)
+
+## Как собирать статистику
+
+### Способ 1: Оптимизированный поиск (рекомендуется)
+
+**ОБЯЗАТЕЛЬНО используй один запрос поиска для всех Issues:**
+
+```javascript
+// ✅ ПРАВИЛЬНО: Один запрос для всех Issues с метками агентов
+const searchCache = new Map();
+const SEARCH_TTL = 2 * 60 * 1000; // 2 минуты
+
+async function collectAllAgentStats() {
+  // Один запрос поиска для всех Issues с метками агентов
+  const query = 'is:issue label:agent:*';
+  const cacheKey = `search:${query}`;
+  
+  // Проверяем кэш
+  if (searchCache.has(cacheKey)) {
+    const cached = searchCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < SEARCH_TTL) {
+      return processStats(cached.data.items);
+    }
+  }
+  
+  // Запрашиваем через поиск
+  const result = await mcp_github_search_issues({
+    query: query,
+    perPage: 100
+  });
+  
+  // Кэшируем результаты
+  searchCache.set(cacheKey, { data: result, timestamp: Date.now() });
+  
+  await delay(500);
+  
+  return processStats(result.items);
+}
+
+function processStats(issues) {
+  const stats = {};
+  const agents = [
+    'idea-writer', 'architect', 'api-designer', 'database',
+    'backend', 'network', 'devops', 'performance', 'ue5',
+    'content-writer', 'qa', 'release', 'security', 'game-balance'
+  ];
+  
+  // Инициализируем статистику для каждого агента
+  agents.forEach(agent => {
+    stats[agent] = {
+      total: 0,
+      open: 0,
+      closed: 0,
+      inProgress: 0,
+      returned: 0
+    };
+  });
+  
+  // Обрабатываем Issues
+  issues.forEach(issue => {
+    const agentLabels = issue.labels
+      .map(l => l.name)
+      .filter(name => name.startsWith('agent:'));
+    
+    agentLabels.forEach(label => {
+      const agent = label.replace('agent:', '');
+      if (stats[agent]) {
+        stats[agent].total++;
+        
+        if (issue.state === 'OPEN') {
+          stats[agent].open++;
+          
+          // Проверяем метки для детализации
+          if (issue.labels.some(l => l.name === 'returned')) {
+            stats[agent].returned++;
+          } else {
+            stats[agent].inProgress++;
+          }
+        } else {
+          stats[agent].closed++;
+        }
+      }
+    });
+  });
+  
+  return stats;
+}
+```
+
+### Способ 2: Поиск по каждому агенту (если нужна детализация)
+
+**Если нужна более детальная статистика, используй поиск по каждому агенту с задержками:**
+
+```javascript
+// ✅ ПРАВИЛЬНО: Поиск по каждому агенту с задержками и кэшированием
+async function collectDetailedStats() {
+  const agents = [
+    'idea-writer', 'architect', 'api-designer', 'database',
+    'backend', 'network', 'devops', 'performance', 'ue5',
+    'content-writer', 'qa', 'release', 'security', 'game-balance'
+  ];
+  
+  const stats = {};
+  const searchCache = new Map();
+  const SEARCH_TTL = 2 * 60 * 1000;
+  
+  for (const agent of agents) {
+    const query = `is:issue label:agent:${agent}`;
+    const cacheKey = `search:${query}`;
+    
+    // Проверяем кэш
+    if (searchCache.has(cacheKey)) {
+      const cached = searchCache.get(cacheKey);
+      if (Date.now() - cached.timestamp < SEARCH_TTL) {
+        stats[agent] = processAgentStats(cached.data.items, agent);
+        continue;
+      }
+    }
+    
+    // Запрашиваем через поиск
+    const result = await mcp_github_search_issues({
+      query: query,
+      perPage: 100
+    });
+    
+    // Кэшируем
+    searchCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    
+    // Обрабатываем статистику
+    stats[agent] = processAgentStats(result.items, agent);
+    
+    // Задержка между запросами
+    await delay(500);
+  }
+  
+  return stats;
+}
+```
+
+## Формат вывода статистики
+
+### Таблица статистики агентов
+
+```markdown
+## 📊 Статистика задач агентов
+
+| Агент | Всего задач | Открыто | Закрыто | В работе | Возвращено | Прогресс |
+|-------|------------|---------|---------|----------|------------|----------|
+| Idea Writer | 15 | 5 | 10 | 3 | 2 | 66.7% |
+| Architect | 12 | 4 | 8 | 2 | 2 | 66.7% |
+| API Designer | 10 | 3 | 7 | 1 | 2 | 70.0% |
+| Backend | 20 | 8 | 12 | 5 | 3 | 60.0% |
+| ... | ... | ... | ... | ... | ... | ... |
+
+**Итого:**
+- Всего задач: 150
+- Открыто: 50
+- Закрыто: 100
+- В работе: 30
+- Возвращено: 20
+- Общий прогресс: 66.7%
+```
+
+### Детальная статистика по этапам
+
+```markdown
+## 📈 Статистика по этапам разработки
+
+| Этап | Задач | Открыто | Закрыто | Прогресс |
+|------|-------|---------|---------|----------|
+| idea-writer | 15 | 5 | 10 | 66.7% |
+| design | 12 | 4 | 8 | 66.7% |
+| api-design | 10 | 3 | 7 | 70.0% |
+| backend-dev | 20 | 8 | 12 | 60.0% |
+| ... | ... | ... | ... | ... |
+```
+
+### Статистика по приоритетам
+
+```markdown
+## 🎯 Статистика по приоритетам
+
+| Приоритет | Задач | Открыто | Закрыто | Прогресс |
+|-----------|-------|---------|---------|----------|
+| High | 30 | 10 | 20 | 66.7% |
+| Medium | 80 | 30 | 50 | 62.5% |
+| Low | 40 | 10 | 30 | 75.0% |
+```
+
+## Примеры команд
+
+### Базовая статистика
+
+```text
+@stats Покажи статистику по всем агентам
+```
+
+### Детальная статистика
+
+```text
+@stats Собери детальную статистику по всем агентам с разбивкой по этапам
+```
+
+### Статистика конкретного агента
+
+```text
+@stats Покажи статистику для Backend Developer
+```
+
+### Статистика по приоритетам задач
+
+```text
+@stats Покажи статистику по приоритетам задач
+```
+
+## Алгоритм сбора статистики
+
+1. **Инициализация кэша:**
+   - Создай `searchCache` для кэширования результатов поиска
+   - TTL: 2 минуты для поиска
+
+2. **Сбор данных:**
+   - Используй один запрос `mcp_github_search_issues` с запросом `is:issue label:agent:*`
+   - Или используй поиск по каждому агенту с задержками (500ms)
+   - Кэшируй результаты
+
+3. **Обработка данных:**
+   - Группируй Issues по меткам агентов
+   - Подсчитывай статистику: открыто, закрыто, в работе, возвращено
+   - Вычисляй прогресс (закрыто / всего * 100%)
+
+4. **Формирование таблицы:**
+   - Создай Markdown таблицу со статистикой
+   - Добавь итоговые показатели
+   - Форматируй для читаемости
+
+## Оптимизация запросов
+
+### ✅ ПРАВИЛЬНО
+
+```javascript
+// Один запрос для всех Issues
+const result = await mcp_github_search_issues({
+  query: 'is:issue label:agent:*',
+  perPage: 100
+});
+
+// Обработка всех Issues из одного результата
+const stats = processStats(result.items);
+```
+
+### ❌ НЕПРАВИЛЬНО
+
+```javascript
+// Множественные запросы для каждого Issue
+for (let i = 1; i <= 200; i++) {
+  const issue = await mcp_github_issue_read({ issue_number: i });
+  // Обработка...
+}
+```
+
+## Дополнительные метрики
+
+### Время в работе
+
+```markdown
+## ⏱️ Среднее время в работе
+
+| Агент | Среднее время | Мин. время | Макс. время |
+|-------|---------------|------------|-------------|
+| Backend | 5.2 дня | 1 день | 15 дней |
+| UE5 | 3.8 дня | 0.5 дня | 10 дней |
+| ... | ... | ... | ... |
+```
+
+### Загрузка агентов
+
+```markdown
+## 📊 Загрузка агентов
+
+| Агент | Задач в работе | Загрузка |
+|-------|----------------|----------|
+| Backend | 8 | 🔴 Высокая |
+| UE5 | 5 | 🟡 Средняя |
+| QA | 3 | 🟢 Низкая |
+| ... | ... | ... |
+```
+
+## Формат вывода
+
+- Markdown таблицы
+- Итоговые показатели
+- Визуальные индикаторы (эмодзи для статусов)
+- Процентные показатели прогресса
+
+## Коммиты и Git
+
+### Обязательно коммить отчеты
+
+После создания отчета статистики:
+
+1. **Проверь изменения:**
+
+   ```bash
+   git status
+   ```
+
+2. **Добавь файлы:**
+
+   ```bash
+   git add reports/stats/
+   ```
+
+3. **Создай коммит:**
+
+   ```bash
+   git commit -m "[stats] docs: добавить отчет статистики агентов
+
+   - Собрана статистика по всем агентам
+   - Создана таблица с метриками
+   - Добавлены итоговые показатели
+   
+   Дата: $(date +%Y-%m-%d)"
+   ```
+
+### Формат коммитов
+
+- **Префикс:** `[stats]` - обязателен
+- **Тип:** `docs:` для отчетов
+- **Описание:** краткое описание отчета
+
+## Запреты
+
+- НЕ используй множественные `mcp_github_issue_read` для сбора статистики
+- НЕ делай параллельные запросы без задержек
+- НЕ игнорируй кэширование результатов поиска
+- ТОЛЬКО сбор статистики и составление отчетов
+
+## Дополнительные ресурсы
+
+- `.cursor/rules/GITHUB_API_OPTIMIZATION.md` - полные правила оптимизации
+- `.cursor/rules/GITHUB_MCP_BEST_PRACTICES.md` - примеры правильного использования
+- `.cursor/rules/GITHUB_MCP_CACHE_HELPER.md` - шаблоны кода для кэширования
