@@ -38,6 +38,14 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize quest service")
 	}
 
+	affixService, err := server.NewAffixService(progressionService.GetDBPool(), redisURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize affix service")
+	}
+
+	affixScheduler := server.NewAffixScheduler(affixService)
+	affixScheduler.Start()
+
 	progressionExperienceSubscriber := server.NewProgressionExperienceSubscriber(progressionService)
 	if err := progressionExperienceSubscriber.Start(); err != nil {
 		logger.WithError(err).Warn("Failed to start progression experience subscriber")
@@ -45,7 +53,7 @@ func main() {
 		logger.Info("Progression experience subscriber started")
 	}
 
-	httpServer := server.NewHTTPServer(addr, progressionService, questService)
+	httpServer := server.NewHTTPServer(addr, progressionService, questService, affixService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
@@ -74,6 +82,10 @@ func main() {
 		<-sigChan
 		logger.Info("Shutting down server...")
 		cancel()
+
+		if affixScheduler != nil {
+			affixScheduler.Stop()
+		}
 
 		if progressionExperienceSubscriber != nil {
 			if err := progressionExperienceSubscriber.Stop(); err != nil {
