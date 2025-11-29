@@ -1,0 +1,429 @@
+openapi: 3.0.3
+info:
+  title: Social Romance Service Schemas
+  description: Схемы данных для Social Romance Service API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+
+paths: {}
+
+components:
+  schemas:
+    RomanceType:
+      type: string
+      enum:
+        - player_player
+        - player_npc
+        - player_digital_avatar
+      description: |
+        Тип романтических отношений:
+        - `player_player` - романтика между игроками
+        - `player_npc` - романтика между игроком и NPC
+        - `player_digital_avatar` - романтика между игроком и цифровым аватаром
+
+    RelationshipStage:
+      type: string
+      enum:
+        - stranger
+        - acquaintance
+        - friend
+        - close_friend
+        - romantic_interest
+        - dating
+        - in_relationship
+        - engaged
+        - married
+      description: Стадия романтических отношений
+
+    ConsentStatus:
+      type: string
+      enum:
+        - pending
+        - accepted
+        - rejected
+        - revoked
+      description: Статус согласия на романтику
+
+    RelationshipStatus:
+      type: string
+      enum:
+        - single
+        - dating
+        - in_relationship
+        - engaged
+        - married
+      description: Статус отношений для player-player романтики
+
+    RomanceRelationship:
+      type: object
+      properties:
+        relationship_id:
+          type: string
+          format: uuid
+          description: Уникальный ID отношения
+        romance_type:
+          $ref: '#/components/schemas/RomanceType'
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели (игрок, NPC или цифровой аватар)
+        relationship_score:
+          type: integer
+          description: Оценка отношений (-100 до 100)
+          minimum: -100
+          maximum: 100
+        chemistry_score:
+          type: integer
+          description: Оценка химии (0 до 100)
+          minimum: 0
+          maximum: 100
+        trust_score:
+          type: integer
+          description: Оценка доверия (0 до 100)
+          minimum: 0
+          maximum: 100
+        physical_intimacy:
+          type: integer
+          description: Физическая близость (0 до 100)
+          minimum: 0
+          maximum: 100
+        emotional_intimacy:
+          type: integer
+          description: Эмоциональная близость (0 до 100)
+          minimum: 0
+          maximum: 100
+        relationship_stage:
+          $ref: '#/components/schemas/RelationshipStage'
+        is_active:
+          type: boolean
+          description: Активно ли отношение
+        is_romantic:
+          type: boolean
+          description: Является ли романтическим
+        is_public:
+          type: boolean
+          description: Публично ли отношение
+        consent_status:
+          $ref: '#/components/schemas/ConsentStatus'
+        relationship_health:
+          type: integer
+          description: Здоровье отношений (0 до 100)
+          minimum: 0
+          maximum: 100
+        flags:
+          type: array
+          items:
+            type: string
+          description: Флаги отношения
+        metadata:
+          type: object
+          description: Дополнительные метаданные
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    InitiatePlayerPlayerRomanceRequest:
+      type: object
+      required:
+        - target_player_id
+      properties:
+        target_player_id:
+          type: string
+          format: uuid
+          description: ID целевого игрока
+        message:
+          type: string
+          description: Сообщение с предложением
+          maxLength: 500
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettings'
+          description: Настройки приватности
+
+    AcceptRomanceRequest:
+      type: object
+      required:
+        - relationship_id
+      properties:
+        relationship_id:
+          type: string
+          format: uuid
+          description: ID отношения
+        message:
+          type: string
+          description: Сообщение при принятии
+          maxLength: 500
+
+    RejectRomanceRequest:
+      type: object
+      required:
+        - relationship_id
+      properties:
+        relationship_id:
+          type: string
+          format: uuid
+          description: ID отношения
+        reason:
+          type: string
+          description: Причина отклонения
+          maxLength: 500
+
+    BreakupRomanceRequest:
+      type: object
+      required:
+        - relationship_id
+      properties:
+        relationship_id:
+          type: string
+          format: uuid
+          description: ID отношения
+        reason:
+          type: string
+          description: Причина разрыва
+          maxLength: 500
+
+    InitiatePlayerNPCRomanceRequest:
+      type: object
+      required:
+        - npc_id
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+          description: ID NPC
+        initial_interaction:
+          type: string
+          description: Начальное взаимодействие
+          maxLength: 500
+
+    TriggerRomanceEventRequest:
+      type: object
+      required:
+        - event_id
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: ID романтического события
+        location:
+          type: string
+          description: Локация события
+        choices:
+          type: object
+          description: Выборы игрока в событии
+
+    RomanceEventResult:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+          description: Результат события
+        relationship_changes:
+          type: object
+          description: Изменения в отношениях
+          properties:
+            relationship_score_delta:
+              type: integer
+            chemistry_score_delta:
+              type: integer
+            trust_score_delta:
+              type: integer
+            stage_changed:
+              type: boolean
+            new_stage:
+              $ref: '#/components/schemas/RelationshipStage'
+        metadata:
+          type: object
+        completed_at:
+          type: string
+          format: date-time
+
+    InitiatePlayerDigitalAvatarRomanceRequest:
+      type: object
+      required:
+        - avatar_id
+      properties:
+        avatar_id:
+          type: string
+          format: uuid
+          description: ID цифрового аватара
+        net_connection_id:
+          type: string
+          format: uuid
+          description: ID соединения с NET
+
+    DigitalAvatarInteractionRequest:
+      type: object
+      required:
+        - interaction_type
+      properties:
+        interaction_type:
+          type: string
+          enum:
+            - conversation
+            - gift
+            - virtual_date
+            - consciousness_exploration
+          description: Тип взаимодействия
+        interaction_data:
+          type: object
+          description: Данные взаимодействия
+
+    DigitalAvatarInteractionResult:
+      type: object
+      properties:
+        interaction_id:
+          type: string
+          format: uuid
+        avatar_response:
+          type: object
+          description: Ответ цифрового аватара
+        relationship_changes:
+          type: object
+          description: Изменения в отношениях
+        consciousness_evolution:
+          type: boolean
+          description: Произошла ли эволюция сознания
+        metadata:
+          type: object
+
+    CompatibilityResult:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        overall_compatibility:
+          type: integer
+          description: Общая совместимость (0 до 100)
+          minimum: 0
+          maximum: 100
+        chemistry_score:
+          type: integer
+          description: Оценка химии (0 до 100)
+          minimum: 0
+          maximum: 100
+        personality_match:
+          type: integer
+          description: Совпадение личностей (0 до 100)
+          minimum: 0
+          maximum: 100
+        interests_match:
+          type: integer
+          description: Совпадение интересов (0 до 100)
+          minimum: 0
+          maximum: 100
+        cultural_compatibility:
+          type: integer
+          description: Культурная совместимость (0 до 100)
+          minimum: 0
+          maximum: 100
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              factor_name:
+                type: string
+              factor_score:
+                type: integer
+              factor_weight:
+                type: number
+                format: float
+          description: Факторы совместимости
+        calculated_at:
+          type: string
+          format: date-time
+
+    UpdatePrivacyRequest:
+      type: object
+      required:
+        - relationship_id
+        - privacy_settings
+      properties:
+        relationship_id:
+          type: string
+          format: uuid
+          description: ID отношения
+        privacy_settings:
+          $ref: '#/components/schemas/PrivacySettings'
+
+    PrivacySettings:
+      type: object
+      properties:
+        is_public:
+          type: boolean
+          description: Публично ли отношение
+        show_in_profile:
+          type: boolean
+          description: Показывать ли в профиле
+        allow_gifts:
+          type: boolean
+          description: Разрешить подарки
+        allow_notifications:
+          type: boolean
+          description: Разрешить уведомления
+        share_location:
+          type: boolean
+          description: Делиться ли локацией
+        custom_settings:
+          type: object
+          description: Пользовательские настройки
+
+    RomanceNotification:
+      type: object
+      properties:
+        notification_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        notification_type:
+          type: string
+          enum:
+            - romance_initiated
+            - romance_accepted
+            - romance_rejected
+            - romance_stage_changed
+            - romance_event_available
+            - romance_milestone_reached
+            - romance_breakup
+            - compatibility_calculated
+          description: Тип уведомления
+        relationship_id:
+          type: string
+          format: uuid
+          nullable: true
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+        message:
+          type: string
+          description: Текст уведомления
+        data:
+          type: object
+          description: Дополнительные данные
+        is_read:
+          type: boolean
+          description: Прочитано ли уведомление
+        created_at:
+          type: string
+          format: date-time
+
