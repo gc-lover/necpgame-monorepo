@@ -18,6 +18,30 @@ tags:
     description: Управление сессиями торговли
 
 paths:
+  /economy/trade:
+    get:
+      tags:
+        - Trade Sessions
+      summary: Получить список активных торговых сессий
+      description: |
+        Возвращает список всех активных торговых сессий для текущего пользователя.
+        Включает сессии, где пользователь является инициатором или получателем.
+        Возвращаются только сессии со статусом `pending`, `active` или `confirmed`.
+      operationId: getActiveTrades
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список активных торговых сессий
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveTradesResponse"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
   /economy/trade/sessions:
     post:
       tags:
@@ -284,6 +308,22 @@ components:
           type: string
           format: date-time
           nullable: true
+
+    ActiveTradesResponse:
+      type: object
+      required:
+        - trades
+        - total
+      properties:
+        trades:
+          type: array
+          description: Список активных торговых сессий
+          items:
+            $ref: "#/components/schemas/TradeSession"
+        total:
+          type: integer
+          description: Общее количество активных торговых сессий
+          minimum: 0
 
 security:
   - BearerAuth: []
