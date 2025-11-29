@@ -62,12 +62,6 @@ func NewHTTPServer(addr string, ticketService TicketServiceInterface, jwtValidat
 	support := api.PathPrefix("/support").Subrouter()
 	supportapi.HandlerFromMux(supportHandlers, support)
 
-	support.HandleFunc("/tickets/number/{number}", server.getTicketByNumber).Methods("GET")
-	support.HandleFunc("/tickets/{id}/assign", server.assignTicket).Methods("POST")
-	support.HandleFunc("/tickets/{id}/responses", server.addResponse).Methods("POST")
-	support.HandleFunc("/tickets/{id}/rate", server.rateTicket).Methods("POST")
-	support.HandleFunc("/tickets/{id}/detail", server.getTicketDetail).Methods("GET")
-
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
 	return server
@@ -104,164 +98,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) getTicketByNumber(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	number := vars["number"]
-
-	ticket, err := s.ticketService.GetTicketByNumber(r.Context(), number)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get ticket by number")
-		s.respondError(w, http.StatusInternalServerError, "failed to get ticket")
-		return
-	}
-
-	if ticket == nil {
-		s.respondError(w, http.StatusNotFound, "ticket not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, ticket)
-}
-
-func (s *HTTPServer) assignTicket(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid ticket id")
-		return
-	}
-
-	var req models.AssignTicketRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	ticket, err := s.ticketService.AssignTicket(r.Context(), id, req.AgentID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to assign ticket")
-		s.respondError(w, http.StatusInternalServerError, "failed to assign ticket")
-		return
-	}
-
-	if ticket == nil {
-		s.respondError(w, http.StatusNotFound, "ticket not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, ticket)
-}
-
-func (s *HTTPServer) addResponse(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	ticketID, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid ticket id")
-		return
-	}
-
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	authorID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	claims := r.Context().Value("claims").(*Claims)
-	isAgent := false
-	for _, role := range claims.RealmAccess.Roles {
-		if role == "support_agent" || role == "admin" {
-			isAgent = true
-			break
-		}
-	}
-
-	var req models.AddResponseRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.Message == "" {
-		s.respondError(w, http.StatusBadRequest, "message is required")
-		return
-	}
-
-	response, err := s.ticketService.AddResponse(r.Context(), ticketID, authorID, isAgent, &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to add response")
-		s.respondError(w, http.StatusInternalServerError, "failed to add response")
-		return
-	}
-
-	if response == nil {
-		s.respondError(w, http.StatusNotFound, "ticket not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusCreated, response)
-}
-
-func (s *HTTPServer) getTicketDetail(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid ticket id")
-		return
-	}
-
-	response, err := s.ticketService.GetTicketDetail(r.Context(), id)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get ticket detail")
-		s.respondError(w, http.StatusInternalServerError, "failed to get ticket detail")
-		return
-	}
-
-	if response == nil {
-		s.respondError(w, http.StatusNotFound, "ticket not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
-}
-
-func (s *HTTPServer) rateTicket(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid ticket id")
-		return
-	}
-
-	var req models.RateTicketRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	err = s.ticketService.RateTicket(r.Context(), id, req.Rating)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to rate ticket")
-		s.respondError(w, http.StatusInternalServerError, "failed to rate ticket")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
@@ -270,10 +106,6 @@ func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interfa
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
-}
-
-func (s *HTTPServer) respondError(w http.ResponseWriter, status int, message string) {
-	s.respondJSON(w, status, map[string]string{"error": message})
 }
 
 func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
