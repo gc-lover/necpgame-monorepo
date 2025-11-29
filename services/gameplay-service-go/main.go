@@ -43,6 +43,11 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize affix service")
 	}
 
+	timeTrialService, err := server.NewTimeTrialService(progressionService.GetDBPool(), redisURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize time trial service")
+	}
+
 	affixScheduler := server.NewAffixScheduler(affixService)
 	affixScheduler.Start()
 
@@ -53,7 +58,7 @@ func main() {
 		logger.Info("Progression experience subscriber started")
 	}
 
-	httpServer := server.NewHTTPServer(addr, progressionService, questService, affixService)
+	httpServer := server.NewHTTPServer(addr, progressionService, questService, affixService, timeTrialService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
