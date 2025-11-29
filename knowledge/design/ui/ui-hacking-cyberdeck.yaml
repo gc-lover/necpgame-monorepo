@@ -1,0 +1,343 @@
+metadata:
+  id: ui-hacking-cyberdeck
+  title: Hacking System - Cyberdeck Interface UI/UX Design
+  document_type: design
+  category: ui
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-29T16:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-29T16:00:00Z
+  owners:
+    - role: ui_ux_designer
+      contact: ui-ux@necp.game
+  tags:
+    - ui
+    - ux
+    - design
+    - hacking
+    - cyberdeck
+  topics:
+    - ui-design
+    - user-experience
+    - cyberpunk-aesthetic
+  related_systems:
+    - combat-service
+    - gameplay-service
+  related_documents:
+    - id: combat-hacking
+      relation: based_on
+      path: knowledge/mechanics/combat/combat-hacking.yaml
+    - id: ui-hacking-networks
+      relation: complements
+      path: knowledge/design/ui/ui-hacking-networks.yaml
+    - id: ui-hacking-cyberspace
+      relation: complements
+      path: knowledge/design/ui/ui-hacking-cyberspace.yaml
+    - id: ui-hacking-combat
+      relation: complements
+      path: knowledge/design/ui/ui-hacking-combat.yaml
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - frontend
+    - ue5
+  risk_level: medium
+review:
+  chain:
+    - role: ui_ux_designer
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходим детальный UI/UX дизайн для интерфейса кибердека, управления взломами и мониторинга состояния.
+  goal: Создать интуитивный интерфейс кибердека в стиле Cyberpunk 2077 для выбора взломов, управления энергией и быстрого доступа.
+  essence: Дизайн-документ описывает структуру интерфейса кибердека, визуальный стиль, UX механики для управления взломами.
+  key_points:
+    - Список доступных взломов с категориями и фильтрами
+    - Управление энергопотреблением и кулдаунами
+    - Быстрый доступ к часто используемым взломам
+    - Мониторинг перегрева и состояния кибердека
+content:
+  visual_design:
+    style: cyberpunk-2077
+    color_scheme:
+      background:
+        primary: '#0A0A0F'
+        secondary: '#151520'
+        accent: '#1A1A2E'
+      text:
+        primary: '#E0E0E0'
+        secondary: '#B0B0B0'
+        accent: '#00FF88'
+        warning: '#FFAA00'
+        danger: '#FF4444'
+      hacking_categories:
+        quick_hack: '#00FF88'
+        combat_hack: '#FF4444'
+        utility_hack: '#00AAFF'
+        infrastructure: '#AA00FF'
+      energy:
+        full: '#00FF88'
+        medium: '#FFAA00'
+        low: '#FF4444'
+        critical: '#FF0000'
+      cooldown:
+        ready: '#00FF88'
+        active: '#FFAA00'
+        cooling: '#666666'
+    typography:
+      font_family:
+        primary: 'Cyberpunk-Regular'
+        secondary: 'Roboto-Mono'
+        display: 'Cyberpunk-Bold'
+      sizes:
+        heading_large: 28px
+        heading_medium: 20px
+        heading_small: 16px
+        body_large: 14px
+        body_medium: 12px
+        body_small: 10px
+    effects:
+      neon_glow:
+        color: '#00FF88'
+        intensity: medium
+        animation: pulse
+      data_stream:
+        opacity: 0.6
+        speed: medium
+        direction: vertical
+      energy_pulse:
+        trigger: energy_low
+        frequency: high
+        color: '#FF4444'
+  interface_structure:
+    cyberdeck_main:
+      title: Cyberdeck
+      layout: overlay_panel
+      position: center_screen
+      size: 80% width, 70% height
+      sections:
+        - id: quick_access_bar
+          title: Quick Access
+          position: top
+          height: 80px
+          components:
+            - type: quick_hack_slots
+              count: 4
+              layout: horizontal
+              drag_drop: true
+              visual: hack_icons
+        - id: hack_catalog
+          title: Available Hacks
+          position: center_left
+          width: 50%
+          height: 500px
+          components:
+            - type: category_tabs
+              categories:
+                - quick_hack
+                - combat_hack
+                - utility_hack
+                - infrastructure
+            - type: hack_list
+              layout: grid
+              items_per_row: 2
+              item_template: hack_card
+              filters:
+                - category
+                - energy_cost
+                - cooldown
+                - availability
+              sort_options:
+                - name
+                - energy_cost
+                - cooldown
+                - usage_frequency
+            - type: search_bar
+              placeholder: 'Search hacks...'
+        - id: hack_details
+          title: Hack Details
+          position: center_right
+          width: 50%
+          height: 500px
+          components:
+            - type: hack_info_panel
+              sections:
+                - name
+                - description
+                - category
+                - energy_cost
+                - cooldown
+                - duration
+                - effects
+                - requirements
+            - type: preview_animation
+              trigger: hover
+            - type: action_buttons
+              buttons:
+                - add_to_quick_access
+                - test_hack
+                - view_requirements
+        - id: cyberdeck_status
+          title: Cyberdeck Status
+          position: bottom
+          height: 120px
+          components:
+            - type: energy_meter
+              display: circular_progress
+              color: dynamic_by_level
+              label: Energy
+            - type: overheat_meter
+              display: linear_progress
+              color: dynamic_by_level
+              label: Overheat
+              warning_threshold: 70%
+            - type: active_hacks_list
+              display: icon_list
+              max_visible: 5
+            - type: cooldown_timers
+              display: countdown_badges
+      navigation:
+        tabs:
+          - id: hacks
+            label: Hacks
+            icon: hack
+          - id: quick_access
+            label: Quick Access
+            icon: star
+          - id: cyberdeck_upgrade
+            label: Upgrade
+            icon: upgrade
+  ux_mechanics:
+    navigation:
+      primary_method: mouse_keyboard
+      secondary_method: controller
+      shortcuts:
+        open_cyberdeck: 'H'
+        quick_hack_1: '1'
+        quick_hack_2: '2'
+        quick_hack_3: '3'
+        quick_hack_4: '4'
+        cycle_category: 'Tab'
+    interactions:
+      select_hack:
+        flow:
+          1. browse_catalog
+          2. hover_for_preview
+          3. click_for_details
+          4. add_to_quick_access
+        feedback:
+          - highlight_animation
+          - preview_tooltip
+          - energy_cost_preview
+      use_quick_hack:
+        flow:
+          1. press_hotkey
+          2. select_target
+          3. execute_hack
+          4. show_feedback
+        validation:
+          - energy_check
+          - cooldown_check
+          - target_validity
+        feedback:
+          - success_animation
+          - energy_consumption
+          - cooldown_start
+    feedback_systems:
+      notifications:
+        types:
+          - hack_executed
+          - energy_low
+          - overheat_warning
+          - cooldown_ready
+          - hack_failed
+        display: toast_notifications
+        position: top_right
+        duration: 2-4_seconds
+      tooltips:
+        trigger: hover
+        content:
+          - hack_info
+          - energy_cost
+          - cooldown_time
+          - requirements
+          - effects
+    accessibility:
+      color_blind_support: true
+      text_scaling: true
+      high_contrast_mode: true
+      screen_reader_support: true
+  animations:
+    transitions:
+      menu_open:
+        duration: 250ms
+        easing: ease_out_cubic
+        effect: slide_from_bottom
+      menu_close:
+        duration: 200ms
+        easing: ease_in_cubic
+        effect: slide_to_bottom
+      hack_select:
+        duration: 150ms
+        easing: ease_out
+        effect: scale_highlight
+      hack_execute:
+        duration: 300ms
+        easing: ease_in_out
+        effect: energy_drain_animation
+    state_changes:
+      energy_consumption:
+        duration: 500ms
+        effect: pulse_decrease
+      overheat_increase:
+        duration: 400ms
+        effect: heat_wave
+      cooldown_tick:
+        duration: 1000ms
+        effect: progress_fill
+  responsive_design:
+    breakpoints:
+      mobile: 480px
+      tablet: 768px
+      desktop: 1920px
+      ultrawide: 2560px
+    adaptations:
+      mobile:
+        menu_layout: fullscreen
+        quick_access: bottom_bar
+        grid_columns: 1
+      tablet:
+        menu_layout: overlay
+        quick_access: side_bar
+        grid_columns: 2
+      desktop:
+        menu_layout: overlay
+        quick_access: top_bar
+        grid_columns: 2
+implementation:
+  needs_task: true
+  github_issue: 1487
+  queue_reference: []
+  blockers: []
+  technical_requirements:
+    - real_time_energy_tracking
+    - cooldown_management
+    - quick_access_system
+    - hack_catalog_api
+  performance_targets:
+    menu_open_time: '< 100ms'
+    hack_execution_time: '< 50ms'
+    animation_fps: '>= 60fps'
+history:
+  - version: '1.0.0'
+    date: 2025-11-29
+    author: UI/UX Designer
+    changes: Initial UI/UX design document for cyberdeck interface created
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

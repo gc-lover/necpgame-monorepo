@@ -1,0 +1,297 @@
+metadata:
+  id: ui-hacking-combat
+  title: Hacking System - Combat Integration UI/UX Design
+  document_type: design
+  category: ui
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-11-29T16:15:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-11-29T16:15:00Z
+  owners:
+    - role: ui_ux_designer
+      contact: ui-ux@necp.game
+  tags:
+    - ui
+    - ux
+    - design
+    - hacking
+    - combat
+  topics:
+    - ui-design
+    - user-experience
+    - cyberpunk-aesthetic
+  related_systems:
+    - combat-service
+    - gameplay-service
+  related_documents:
+    - id: combat-hacking
+      relation: based_on
+      path: knowledge/mechanics/combat/combat-hacking.yaml
+    - id: ui-hacking-cyberdeck
+      relation: complements
+      path: knowledge/design/ui/ui-hacking-cyberdeck.yaml
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - frontend
+    - ue5
+  risk_level: high
+review:
+  chain:
+    - role: ui_ux_designer
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Необходим детальный UI/UX дизайн для боевой интеграции взлома: быстрый взлом в бою, цели, эффекты и защита.
+  goal: Создать быстрый и интуитивный интерфейс для взлома в боевых ситуациях с минимальным прерыванием геймплея.
+  essence: Дизайн-документ описывает боевую интеграцию взлома, быстрый доступ, визуализацию целей и эффектов.
+  key_points:
+    - Быстрый взлом в бою через радиальное меню
+    - Визуализация целей для взлома
+    - Эффекты взлома на врагов
+    - Защита от взлома и индикаторы
+content:
+  visual_design:
+    style: cyberpunk-2077
+    color_scheme:
+      background:
+        overlay: '#00000080'
+        radial_menu: '#0A0A0F'
+      target_indicators:
+        hackable: '#00FF88'
+        hacking: '#FFAA00'
+        hacked: '#AA00FF'
+        protected: '#FF4444'
+        immune: '#666666'
+      hack_effects:
+        active: '#00FF88'
+        duration: '#FFAA00'
+        expired: '#666666'
+      protection:
+        active: '#00AAFF'
+        warning: '#FFAA00'
+        critical: '#FF4444'
+    typography:
+      font_family:
+        primary: 'Cyberpunk-Regular'
+        secondary: 'Roboto-Mono'
+        display: 'Cyberpunk-Bold'
+    effects:
+      target_highlight:
+        color: '#00FF88'
+        intensity: high
+        animation: pulse
+      hack_execution:
+        duration: 500ms
+        effect: digital_pulse
+      effect_indicator:
+        duration: 2000ms
+        effect: fade_out
+  interface_structure:
+    combat_hacking:
+      title: Combat Hacking
+      layout: overlay_hud
+      position: center_screen
+      trigger: keybind_or_aim
+      sections:
+        - id: radial_hack_menu
+          title: Quick Hack Menu
+          position: center_screen
+          size: 300x300px
+          components:
+            - type: radial_menu
+              layout: circular
+              sectors: 4
+              items:
+                - quick_hack_1
+                - quick_hack_2
+                - quick_hack_3
+                - quick_hack_4
+            - type: hack_preview
+              position: center
+              display: icon_name
+            - type: energy_cost
+              position: bottom
+              display: cost_badge
+        - id: target_indicators
+          title: Hack Targets
+          position: world_space
+          components:
+            - type: target_highlight
+              display: outline_glow
+              color: dynamic_by_status
+              condition: enemy_hackable
+            - type: hack_progress
+              display: circular_progress
+              position: above_target
+              condition: hacking_in_progress
+            - type: hack_status
+              display: icon_badge
+              position: above_target
+              condition: hack_active
+        - id: active_hack_effects
+          title: Active Hacks
+          position: top_right
+          width: 250px
+          height: auto
+          components:
+            - type: effect_list
+              layout: vertical
+              item_template: effect_card
+              max_visible: 5
+              items:
+                - hack_name
+                - target_name
+                - duration_timer
+                - effect_icon
+        - id: protection_status
+          title: Protection Status
+          position: bottom_right
+          width: 200px
+          height: 100px
+          components:
+            - type: protection_meter
+              display: circular_progress
+              color: dynamic_by_level
+              label: Protection
+            - type: hack_warning
+              display: alert_badge
+              condition: hack_detected
+  ux_mechanics:
+    navigation:
+      primary_method: mouse_keyboard
+      secondary_method: controller
+      shortcuts:
+        open_radial_menu: 'Q'
+        quick_hack_1: '1'
+        quick_hack_2: '2'
+        quick_hack_3: '3'
+        quick_hack_4: '4'
+        cancel_hack: 'Esc'
+    interactions:
+      quick_hack_combat:
+        flow:
+          1. aim_at_target
+          2. press_hotkey_or_open_menu
+          3. select_hack
+          4. execute_instantly
+          5. show_feedback
+        validation:
+          - target_hackable
+          - energy_available
+          - cooldown_ready
+          - range_check
+        feedback:
+          - hack_animation
+          - target_effect
+          - energy_consumption
+          - cooldown_start
+      target_selection:
+        flow:
+          1. aim_at_enemy
+          2. show_hackable_indicator
+          3. display_available_hacks
+          4. select_hack
+          5. execute
+        feedback:
+          - target_highlight
+          - hack_preview
+          - energy_cost_display
+    feedback_systems:
+      notifications:
+        types:
+          - hack_executed
+          - hack_failed
+          - target_protected
+          - energy_low
+          - hack_detected
+        display: combat_notifications
+        position: center_screen
+        duration: 1-2_seconds
+      visual_feedback:
+        target_highlight:
+          trigger: aim_at_hackable
+          effect: outline_glow
+        hack_execution:
+          trigger: hack_executed
+          effect: digital_pulse
+        effect_active:
+          trigger: hack_active
+          effect: status_indicator
+    accessibility:
+      color_blind_support: true
+      text_scaling: true
+      high_contrast_mode: true
+      screen_reader_support: true
+  animations:
+    transitions:
+      radial_menu_open:
+        duration: 150ms
+        easing: ease_out_cubic
+        effect: scale_fade_in
+      radial_menu_close:
+        duration: 100ms
+        easing: ease_in_cubic
+        effect: scale_fade_out
+      hack_execute:
+        duration: 300ms
+        easing: ease_in_out
+        effect: digital_pulse
+    state_changes:
+      target_highlight:
+        duration: 200ms
+        effect: glow_pulse
+      hack_progress:
+        duration: variable
+        effect: circular_fill
+      effect_active:
+        duration: 500ms
+        effect: fade_in
+  responsive_design:
+    breakpoints:
+      mobile: 480px
+      tablet: 768px
+      desktop: 1920px
+      ultrawide: 2560px
+    adaptations:
+      mobile:
+        radial_menu: simplified
+        target_indicators: minimal
+        effects_list: compact
+      tablet:
+        radial_menu: standard
+        target_indicators: standard
+        effects_list: standard
+      desktop:
+        radial_menu: full
+        target_indicators: full
+        effects_list: full
+implementation:
+  needs_task: true
+  github_issue: 1487
+  queue_reference: []
+  blockers: []
+  technical_requirements:
+    - radial_menu_system
+    - target_detection_system
+    - hack_execution_api
+    - effect_tracking_system
+    - protection_system
+  performance_targets:
+    radial_menu_open_time: '< 50ms'
+    hack_execution_time: '< 100ms'
+    target_detection_fps: '>= 60fps'
+    effect_update_rate: '30hz'
+history:
+  - version: '1.0.0'
+    date: 2025-11-29
+    author: UI/UX Designer
+    changes: Initial UI/UX design document for combat hacking integration created
+validation:
+  checksum: ''
+  schema_version: '1.0'
+
