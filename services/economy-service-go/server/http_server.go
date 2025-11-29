@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/necpgame/economy-service-go/models"
+	tradeapi "github.com/necpgame/economy-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,6 +28,7 @@ type HTTPServer struct {
 	addr          string
 	router        *mux.Router
 	tradeService  TradeServiceInterface
+	tradeHandlers *TradeHandlers
 	logger        *logrus.Logger
 	server        *http.Server
 	jwtValidator  *JwtValidator
@@ -36,35 +37,30 @@ type HTTPServer struct {
 
 func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
+	tradeHandlers := NewTradeHandlers(tradeService)
 	server := &HTTPServer{
-		addr:         addr,
-		router:       router,
-		tradeService: tradeService,
-		logger:       GetLogger(),
-		jwtValidator: jwtValidator,
-		authEnabled:  authEnabled,
+		addr:          addr,
+		router:        router,
+		tradeService:  tradeService,
+		tradeHandlers: tradeHandlers,
+		logger:        GetLogger(),
+		jwtValidator:  jwtValidator,
+		authEnabled:   authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	api := router.PathPrefix("/api/v1").Subrouter()
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 
 	if authEnabled {
-		api.Use(server.authMiddleware)
+		apiRouter.Use(server.authMiddleware)
 	}
 
-	economy := api.PathPrefix("/economy").Subrouter()
+	economy := apiRouter.PathPrefix("/economy").Subrouter()
 
-	economy.HandleFunc("/trade", server.createTrade).Methods("POST")
-	economy.HandleFunc("/trade", server.getActiveTrades).Methods("GET")
-	economy.HandleFunc("/trade/history", server.getTradeHistory).Methods("GET")
-	economy.HandleFunc("/trade/{id}", server.getTrade).Methods("GET")
-	economy.HandleFunc("/trade/{id}/offer", server.updateOffer).Methods("PUT")
-	economy.HandleFunc("/trade/{id}/confirm", server.confirmTrade).Methods("POST")
-	economy.HandleFunc("/trade/{id}/complete", server.completeTrade).Methods("POST")
-	economy.HandleFunc("/trade/{id}/cancel", server.cancelTrade).Methods("POST")
+	tradeapi.HandlerFromMux(tradeHandlers, economy)
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
@@ -100,266 +96,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 		return s.server.Shutdown(ctx)
 	}
 	return nil
-}
-
-func (s *HTTPServer) createTrade(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	initiatorID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	var req models.CreateTradeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.RecipientID == uuid.Nil {
-		s.respondError(w, http.StatusBadRequest, "recipient_id is required")
-		return
-	}
-
-	session, err := s.tradeService.CreateTrade(r.Context(), initiatorID, &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to create trade")
-		s.respondError(w, http.StatusInternalServerError, "failed to create trade")
-		return
-	}
-
-	if session == nil {
-		s.respondError(w, http.StatusConflict, "active trade already exists")
-		return
-	}
-
-	s.respondJSON(w, http.StatusCreated, session)
-}
-
-func (s *HTTPServer) getActiveTrades(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	characterID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	sessions, err := s.tradeService.GetActiveTrades(r.Context(), characterID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get active trades")
-		s.respondError(w, http.StatusInternalServerError, "failed to get active trades")
-		return
-	}
-
-	response := models.TradeListResponse{
-		Trades: sessions,
-		Total:  len(sessions),
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
-}
-
-func (s *HTTPServer) getTrade(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid trade id")
-		return
-	}
-
-	session, err := s.tradeService.GetTrade(r.Context(), id)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get trade")
-		s.respondError(w, http.StatusInternalServerError, "failed to get trade")
-		return
-	}
-
-	if session == nil {
-		s.respondError(w, http.StatusNotFound, "trade not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, session)
-}
-
-func (s *HTTPServer) updateOffer(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	sessionID, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid trade id")
-		return
-	}
-
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	characterID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	var req models.UpdateTradeOfferRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	session, err := s.tradeService.UpdateOffer(r.Context(), sessionID, characterID, &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to update offer")
-		s.respondError(w, http.StatusInternalServerError, "failed to update offer")
-		return
-	}
-
-	if session == nil {
-		s.respondError(w, http.StatusForbidden, "cannot update offer")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, session)
-}
-
-func (s *HTTPServer) confirmTrade(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	sessionID, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid trade id")
-		return
-	}
-
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	characterID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	session, err := s.tradeService.ConfirmTrade(r.Context(), sessionID, characterID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to confirm trade")
-		s.respondError(w, http.StatusInternalServerError, "failed to confirm trade")
-		return
-	}
-
-	if session == nil {
-		s.respondError(w, http.StatusForbidden, "cannot confirm trade")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, session)
-}
-
-func (s *HTTPServer) completeTrade(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	sessionID, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid trade id")
-		return
-	}
-
-	err = s.tradeService.CompleteTrade(r.Context(), sessionID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to complete trade")
-		s.respondError(w, http.StatusInternalServerError, "failed to complete trade")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) cancelTrade(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	sessionID, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid trade id")
-		return
-	}
-
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	characterID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	err = s.tradeService.CancelTrade(r.Context(), sessionID, characterID)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to cancel trade")
-		s.respondError(w, http.StatusInternalServerError, "failed to cancel trade")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, map[string]string{"status": "success"})
-}
-
-func (s *HTTPServer) getTradeHistory(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	characterID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	limit := 50
-	offset := 0
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
-		}
-	}
-	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-			offset = o
-		}
-	}
-
-	response, err := s.tradeService.GetTradeHistory(r.Context(), characterID, limit, offset)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get trade history")
-		s.respondError(w, http.StatusInternalServerError, "failed to get trade history")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
 }
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
