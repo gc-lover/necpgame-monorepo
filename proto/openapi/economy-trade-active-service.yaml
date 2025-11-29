@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Economy Trade Active Service API
+  description: |
+    API для получения списка активных торговых сессий для текущего пользователя.
+    Используется для отображения всех активных торговых операций персонажа.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necpgame.com/api/v1
+    description: Economy Service (продакшн)
+
+tags:
+  - name: Active Trades
+    description: Управление активными торговыми сессиями
+
+paths:
+  /economy/trade:
+    get:
+      tags:
+        - Active Trades
+      summary: Получить список активных торговых сессий
+      description: |
+        Возвращает список всех активных торговых сессий для текущего пользователя.
+        Включает сессии, где пользователь является инициатором или получателем.
+        Возвращаются только сессии со статусом `pending`, `active` или `confirmed`.
+      operationId: getActiveTrades
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список активных торговых сессий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveTradesResponse'
+              example:
+                trades:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    initiator_id: "550e8400-e29b-41d4-a716-446655440001"
+                    target_id: "550e8400-e29b-41d4-a716-446655440002"
+                    status: "active"
+                    initiator_offer:
+                      items:
+                        - item_id: "550e8400-e29b-41d4-a716-446655440003"
+                          quantity: 1
+                      currency: 1000
+                    target_offer:
+                      items:
+                        - item_id: "550e8400-e29b-41d4-a716-446655440004"
+                          quantity: 2
+                      currency: 500
+                    initiator_confirmed: false
+                    target_confirmed: false
+                    expires_at: "2025-12-01T12:00:00Z"
+                    created_at: "2025-11-29T10:00:00Z"
+                    updated_at: "2025-11-29T10:05:00Z"
+                total: 1
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    ActiveTradesResponse:
+      type: object
+      required:
+        - trades
+        - total
+      properties:
+        trades:
+          type: array
+          description: Список активных торговых сессий
+          items:
+            $ref: '#/components/schemas/TradeSession'
+        total:
+          type: integer
+          description: Общее количество активных торговых сессий
+          minimum: 0
+
+    TradeSession:
+      type: object
+      description: |
+        Информация о торговой сессии.
+        Используется схема из economy-trade-sessions-service.yaml для консистентности.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор торговой сессии
+        initiator_id:
+          type: string
+          format: uuid
+          description: ID персонажа-инициатора торговли
+        target_id:
+          type: string
+          format: uuid
+          description: ID персонажа-получателя торговли
+        status:
+          type: string
+          enum: [pending, active, confirmed, completed, cancelled, expired]
+          description: |
+            Статус торговой сессии:
+            - `pending` - ожидает подтверждения
+            - `active` - активна, ожидает изменений предложений
+            - `confirmed` - оба участника подтвердили сделку
+            - `completed` - сделка завершена
+            - `cancelled` - сделка отменена
+            - `expired` - сделка истекла
+        initiator_offer:
+          $ref: '#/components/schemas/TradeOffer'
+          description: Предложение инициатора
+        target_offer:
+          $ref: '#/components/schemas/TradeOffer'
+          description: Предложение получателя
+        initiator_confirmed:
+          type: boolean
+          description: Подтвердил ли инициатор сделку
+          default: false
+        target_confirmed:
+          type: boolean
+          description: Подтвердил ли получатель сделку
+          default: false
+        expires_at:
+          type: string
+          format: date-time
+          description: Время истечения торговой сессии
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания торговой сессии
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления торговой сессии
+
+    TradeOffer:
+      type: object
+      description: Предложение в торговой сессии
+      properties:
+        items:
+          type: array
+          description: Список предметов в предложении
+          items:
+            $ref: '#/components/schemas/TradeItem'
+        currency:
+          type: integer
+          description: Количество валюты в предложении
+          minimum: 0
+          default: 0
+
+    TradeItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      description: Предмет в торговом предложении
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор предмета
+        quantity:
+          type: integer
+          description: Количество предметов
+          minimum: 1
+
+  responses:
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+security:
+  - BearerAuth: []
+
