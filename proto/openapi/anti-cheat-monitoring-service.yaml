@@ -1,0 +1,244 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Monitoring Service API
+  description: API для мониторинга нарушений античита
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Monitoring
+    description: Мониторинг нарушений
+
+paths:
+  /anti-cheat/monitoring/stats:
+    get:
+      tags:
+        - Monitoring
+      summary: Получить статистику нарушений
+      description: Возвращает статистику нарушений за указанный период времени.
+      operationId: getViolationStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - 1h
+              - 24h
+              - 7d
+              - 30d
+            default: 24h
+          description: Временной диапазон
+          example: "24h"
+      responses:
+        '200':
+          description: Статистика нарушений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationStatsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/monitoring/alerts:
+    get:
+      tags:
+        - Monitoring
+      summary: Получить активные алерты
+      description: Возвращает список активных алертов о нарушениях с фильтрацией и пагинацией.
+      operationId: getActiveAlerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+          description: Фильтр по серьезности
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Активные алерты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveAlertsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ViolationStatsResponse:
+      type: object
+      required:
+        - time_range
+        - total_violations
+      properties:
+        time_range:
+          type: string
+          description: Временной диапазон
+          example: "24h"
+        total_violations:
+          type: integer
+          minimum: 0
+          description: Общее количество нарушений
+          example: 150
+        violations_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Нарушения по типам
+          example:
+            SPEED_HACK: 50
+            POSITION_HACK: 30
+            ACTION_RATE_HACK: 40
+            RECONCILIATION_FAILURE: 30
+        violations_by_severity:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Нарушения по серьезности
+          example:
+            LOW: 50
+            MEDIUM: 60
+            HIGH: 30
+            CRITICAL: 10
+        top_offenders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerViolationStats'
+          description: Топ нарушителей
+        trends:
+          type: object
+          description: Тренды нарушений
+          additionalProperties: true
+
+    PlayerViolationStats:
+      type: object
+      required:
+        - player_id
+        - total_violations
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        total_violations:
+          type: integer
+          minimum: 0
+          description: Общее количество нарушений
+          example: 10
+        violations_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Нарушения по типам
+        last_violation_at:
+          type: string
+          format: date-time
+          description: Время последнего нарушения
+          example: "2025-11-29T10:00:00Z"
+
+    ActiveAlertsResponse:
+      type: object
+      required:
+        - alerts
+        - total
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+          description: Список алертов
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество алертов
+          example: 5
+        limit:
+          type: integer
+          minimum: 1
+          description: Лимит на страницу
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение
+          example: 0
+
+    Alert:
+      type: object
+      required:
+        - id
+        - player_id
+        - alert_type
+        - severity
+        - message
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор алерта
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        alert_type:
+          type: string
+          description: Тип алерта
+          example: "multiple_violations"
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьезность алерта
+          example: "HIGH"
+        message:
+          type: string
+          description: Сообщение алерта
+          example: "Player has multiple violations in short time"
+        violation_count:
+          type: integer
+          minimum: 0
+          description: Количество нарушений
+          example: 5
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания алерта
+          example: "2025-11-29T10:00:00Z"
+
+security:
+  - BearerAuth: []
+

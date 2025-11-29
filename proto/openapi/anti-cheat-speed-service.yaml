@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Speed Validation Service API
+  description: API для валидации скорости движения и обнаружения speed hack
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Speed Validation
+    description: Валидация скорости движения
+
+paths:
+  /anti-cheat/speed/validate:
+    post:
+      tags:
+        - Speed Validation
+      summary: Валидация скорости движения
+      description: |
+        Проверяет скорость движения игрока и обнаруживает возможные speed hack.
+        Учитывает класс персонажа, навыки и баффы.
+      operationId: validateSpeed
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeedValidationRequest'
+      responses:
+        '200':
+          description: Результат валидации скорости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeedValidationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/speed/violations/{player_id}:
+    get:
+      tags:
+        - Speed Validation
+      summary: Получить нарушения скорости для игрока
+      description: Возвращает список нарушений скорости для указанного игрока с пагинацией.
+      operationId: getSpeedViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список нарушений скорости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeedViolationsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    SpeedValidationRequest:
+      type: object
+      required:
+        - player_id
+        - current_position
+        - previous_position
+        - time_delta
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        current_position:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/Position'
+        previous_position:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/Position'
+        time_delta:
+          type: number
+          format: float
+          minimum: 0
+          description: Время в секундах между позициями
+          example: 0.1
+        character_class:
+          type: string
+          description: Класс персонажа
+          example: "Assassin"
+        skills:
+          type: array
+          items:
+            type: string
+          description: Активные навыки
+          example: ["speed_boost", "dash"]
+        buffs:
+          type: array
+          items:
+            type: string
+          description: Активные баффы
+          example: ["haste"]
+
+    SpeedValidationResponse:
+      type: object
+      required:
+        - is_valid
+      properties:
+        is_valid:
+          type: boolean
+          description: Валидна ли скорость
+          example: true
+        calculated_speed:
+          type: number
+          format: float
+          minimum: 0
+          description: Рассчитанная скорость
+          example: 5.5
+        max_speed:
+          type: number
+          format: float
+          minimum: 0
+          description: Максимальная допустимая скорость
+          example: 6.0
+        speed_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Процент от максимальной скорости
+          example: 91.67
+        violation:
+          $ref: '#/components/schemas/SpeedViolation'
+          nullable: true
+          description: Нарушение, если обнаружено
+
+    SpeedViolation:
+      type: object
+      required:
+        - violation_type
+        - severity
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+          description: Тип нарушения
+          example: "SPEED_HACK"
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьезность нарушения
+          example: "MEDIUM"
+        speed_exceeded_by:
+          type: number
+          format: float
+          minimum: 0
+          description: Превышение скорости
+          example: 1.5
+        threshold:
+          type: number
+          format: float
+          minimum: 0
+          description: Порог скорости
+          example: 6.0
+
+    SpeedViolationsResponse:
+      type: object
+      required:
+        - violations
+        - total
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: 'anti-cheat-common.yaml#/components/schemas/Violation'
+          description: Список нарушений
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество нарушений
+          example: 10
+        limit:
+          type: integer
+          minimum: 1
+          description: Лимит на страницу
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение
+          example: 0
+
+security:
+  - BearerAuth: []
+
+
+

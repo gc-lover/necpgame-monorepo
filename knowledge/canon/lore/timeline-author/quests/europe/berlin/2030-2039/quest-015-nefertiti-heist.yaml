@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +45,91 @@ summary:
     - Три стадии подготовки: разведка, план эвакуации, подмена экспоната.
     - Линейка выборов влияет на дипломатические отношения и экономику.
     - Финал открывает международные события по реституции артефактов.
+quest_definition:
+  quest_type: main
+  level_min: 10
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: receive_egyptian_contract
+      text: "Получить зашифрованное сообщение от египетского министерства культуры и собрать команду"
+      type: interact
+      target: egyptian_culture_ministry
+      count: 1
+      optional: false
+    - id: plan_heist
+      text: "Спланировать ограбление: анализ охраны, лазерных сеток и расписания смен"
+      type: plan
+      target: neues_museum_security_analysis
+      count: 1
+      optional: false
+    - id: create_3d_schemes
+      text: "Создать 3D-схемы зала бюста и подготовить фальшивые пропуска"
+      type: craft
+      target: museum_3d_schemes
+      count: 1
+      optional: false
+    - id: infiltrate_museum
+      text: "Проникнуть в Neues Museum через вентиляцию и сервисные коридоры"
+      type: infiltrate
+      target: neues_museum_infiltration
+      count: 1
+      optional: false
+    - id: swap_bust
+      text: "Установить 3D-печатную копию бюста, избегая сенсоров веса и температуры"
+      type: interact
+      target: nefertiti_bust_swap
+      count: 1
+      optional: false
+    - id: decide_fate
+      text: "Принять решение о судьбе реликвии: доставить Египту, продать на чёрном рынке или вернуть Германии"
+      type: interact
+      target: nefertiti_fate_decision
+      count: 1
+      optional: false
+  rewards:
+    experience: 10000
+    currency: 500000000
+    items:
+      - id: cultural_repatriation_contract
+        name: "Контракт на репатриацию культуры"
+        quantity: 1
+    reputation:
+      egypt_culture_ministry: 50
+    flags:
+      - nefertiti_heist_completed
+  branches:
+    - id: deliver_to_egypt
+      condition: "player_morality_score >= 5"
+      objectives:
+        - id: transport_to_egypt
+          text: "Доставить бюст Нефертити в Египет"
+          type: deliver
+          target: egypt_museum
+          count: 1
+          optional: false
+    - id: sell_black_market
+      condition: "player_currency < 1000000"
+      objectives:
+        - id: find_buyer
+          text: "Найти покупателя на чёрном рынке"
+          type: interact
+          target: black_market_dealer
+          count: 1
+          optional: false
+    - id: return_to_germany
+      condition: "player_reputation_germany >= 20"
+      objectives:
+        - id: return_bust
+          text: "Вернуть бюст в Neues Museum"
+          type: deliver
+          target: neues_museum_return
+          count: 1
+          optional: false
 content:
   sections:
     - id: contract
@@ -100,6 +185,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики планирования ограбления и морального выбора.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

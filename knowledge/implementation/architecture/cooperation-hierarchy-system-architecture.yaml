@@ -1,0 +1,237 @@
+metadata:
+  id: cooperation-hierarchy-system-architecture
+  title: Архитектура иерархии коопераций игроков
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - cooperation
+    - social
+    - hierarchy
+  related_systems:
+    - social-service-go
+    - gameplay-service-go
+  related_documents:
+    - id: guild-system-architecture
+      relation: extends
+    - id: corporation-system-architecture
+      relation: extends
+    - id: politics-system-architecture
+      relation: extends
+  github_issue: 1433
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру иерархии коопераций игроков с поддержкой
+    7 уровней: Игрок, Группа игроков, Клан, Корпорация, Политика, Континенты, Планеты.
+  goal: |
+    Создать архитектурную схему иерархии коопераций с определением:
+    - Микросервисов для каждого уровня иерархии
+    - Компонентов для управления связями между уровнями
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Многоуровневая иерархия коопераций игроков с поддержкой 7 уровней организации
+    и связей между уровнями.
+
+architecture:
+  overview: |
+    Иерархия коопераций состоит из следующих уровней:
+    1. Игрок - базовый уровень
+    2. Группа игроков - для заданий/заказов (макс. 8)
+    3. Клан - постоянная группа с рангами (макс. 50)
+    4. Корпорация - официально зарегистрированный клан (макс. 200)
+    5. Политика - следующий уровень организации
+    6. Континенты - региональный уровень
+    7. Планеты - глобальный уровень
+
+  microservices:
+    - name: group-service
+      location: social-service-go (модуль group)
+      port: 8084
+      responsibility: |
+        Управление группами игроков:
+        - Создание группы
+        - Управление участниками группы
+        - Управление заданиями группы
+        - Распад группы
+      endpoints:
+        - POST /api/v1/social/groups - создание группы
+        - GET /api/v1/social/groups/{groupId} - информация о группе
+        - POST /api/v1/social/groups/{groupId}/members - добавление участника
+        - DELETE /api/v1/social/groups/{groupId}/members/{memberId} - удаление участника
+        - POST /api/v1/social/groups/{groupId}/disband - роспуск группы
+
+    - name: clan-service
+      location: social-service-go (модуль clan)
+      port: 8084
+      responsibility: |
+        Управление кланами:
+        - Создание клана
+        - Управление участниками клана
+        - Управление рангами
+        - Управление структурой клана
+      endpoints:
+        - POST /api/v1/social/clans - создание клана
+        - GET /api/v1/social/clans/{clanId} - информация о клане
+        - POST /api/v1/social/clans/{clanId}/members - добавление участника
+        - DELETE /api/v1/social/clans/{clanId}/members/{memberId} - удаление участника
+        - POST /api/v1/social/clans/{clanId}/ranks - управление рангами
+
+    - name: corporation-service
+      location: social-service-go (модуль corporation)
+      port: 8084
+      responsibility: |
+        Управление корпорациями:
+        - Регистрация корпорации
+        - Управление структурой корпорации
+        - Управление официальной деятельностью
+        - Управление иерархией должностей
+      endpoints:
+        - POST /api/v1/social/corporations - регистрация корпорации
+        - GET /api/v1/social/corporations/{corporationId} - информация о корпорации
+        - POST /api/v1/social/corporations/{corporationId}/structure - управление структурой
+        - POST /api/v1/social/corporations/{corporationId}/activities - управление деятельностью
+
+    - name: politics-service
+      location: social-service-go (модуль politics)
+      port: 8084
+      responsibility: |
+        Управление политикой:
+        - Создание политических структур
+        - Управление политическими силами
+        - Взаимодействие между политическими силами
+        - Влияние на континенты и планеты
+      endpoints:
+        - POST /api/v1/social/politics - создание политической структуры
+        - GET /api/v1/social/politics/{politicsId} - информация о политике
+        - POST /api/v1/social/politics/{politicsId}/forces - управление силами
+        - POST /api/v1/social/politics/{politicsId}/influence - влияние на мир
+
+    - name: continent-service
+      location: world-service-go (модуль continent)
+      port: 8088
+      responsibility: |
+        Управление континентами:
+        - Управление континентами
+        - Взаимодействие между континентами
+        - Региональные события
+      endpoints:
+        - GET /api/v1/world/continents - список континентов
+        - GET /api/v1/world/continents/{continentId} - информация о континенте
+        - POST /api/v1/world/continents/{continentId}/events - региональные события
+
+    - name: planet-service
+      location: world-service-go (модуль planet)
+      port: 8088
+      responsibility: |
+        Управление планетами:
+        - Управление планетами
+        - Взаимодействие между планетами
+        - Глобальные события
+      endpoints:
+        - GET /api/v1/world/planets - список планет
+        - GET /api/v1/world/planets/{planetId} - информация о планете
+        - POST /api/v1/world/planets/{planetId}/events - глобальные события
+
+    - name: hierarchy-relationship-service
+      location: social-service-go (модуль hierarchy)
+      port: 8084
+      responsibility: |
+        Управление связями между уровнями:
+        - Управление связями между уровнями
+        - Валидация связей
+        - Управление переходами между уровнями
+      endpoints:
+        - POST /api/v1/social/hierarchy/relationships - создание связи
+        - GET /api/v1/social/hierarchy/relationships/{relationshipId} - информация о связи
+        - DELETE /api/v1/social/hierarchy/relationships/{relationshipId} - удаление связи
+        - POST /api/v1/social/hierarchy/relationships/{relationshipId}/promote - повышение уровня
+
+  integrations:
+    guild_service: |
+      - Использование системы кланов
+      - Интеграция с гильдиями
+
+    economy_service: |
+      - Экономические транзакции
+      - Управление ресурсами
+
+    world_service: |
+      - Интеграция с миром игры
+      - Управление территориями
+
+  technical_tasks:
+    phase_1:
+      name: Group Service
+      tasks:
+        - Реализация Group Service
+        - Управление группами
+      estimated_effort: 3 days
+
+    phase_2:
+      name: Clan Service
+      tasks:
+        - Реализация Clan Service
+        - Управление кланами
+      estimated_effort: 4 days
+
+    phase_3:
+      name: Corporation Service
+      tasks:
+        - Реализация Corporation Service
+        - Управление корпорациями
+      estimated_effort: 5 days
+
+    phase_4:
+      name: Politics Service
+      tasks:
+        - Реализация Politics Service
+        - Управление политикой
+      estimated_effort: 5 days
+
+    phase_5:
+      name: Continent Service
+      tasks:
+        - Реализация Continent Service
+        - Управление континентами
+      estimated_effort: 4 days
+
+    phase_6:
+      name: Planet Service
+      tasks:
+        - Реализация Planet Service
+        - Управление планетами
+      estimated_effort: 4 days
+
+    phase_7:
+      name: Hierarchy Relationship Service
+      tasks:
+        - Реализация Hierarchy Relationship Service
+        - Управление связями
+      estimated_effort: 4 days
+
+    phase_8:
+      name: Интеграции
+      tasks:
+        - Интеграция с Guild Service
+        - Интеграция с Economy Service
+        - Интеграция с World Service
+        - WebSocket каналы
+      estimated_effort: 3 days
+
+    total_estimated_effort: 32 days
+

@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+  title: Combat AI Enemies Common Schemas
+  description: Общие схемы для системы боевого AI врагов
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+paths: {}
+
+components:
+  schemas:
+    AIProfile:
+      type: object
+      required:
+        - id
+        - name
+        - difficulty_layer
+        - skill_level_min
+        - skill_level_max
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор профиля
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Название профиля AI
+          example: "Street Thug"
+        difficulty_layer:
+          type: string
+          enum:
+            - street
+            - tactical
+            - mythic
+            - raid
+          description: Слой сложности
+          example: "street"
+        skill_level_min:
+          type: integer
+          minimum: 1
+          description: Минимальный уровень навыков
+          example: 1
+        skill_level_max:
+          type: integer
+          minimum: 1
+          description: Максимальный уровень навыков
+          example: 10
+        behavior_tree:
+          type: object
+          description: Дерево поведения AI
+          additionalProperties: true
+        utility_weights:
+          type: object
+          description: Веса утилит для Utility AI
+          additionalProperties: true
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/AIAbility'
+          description: Список способностей AI
+        loot_table_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор таблицы лута
+        faction_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор фракции
+        world_influence:
+          type: object
+          description: Влияние на мир
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+          example: "2025-11-29T10:00:00Z"
+
+    AIAbility:
+      type: object
+      required:
+        - id
+        - name
+        - ability_type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор способности
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        name:
+          type: string
+          description: Название способности
+          example: "Urban Sweep"
+        ability_type:
+          type: string
+          description: Тип способности
+          example: "area_attack"
+        cooldown:
+          type: integer
+          minimum: 0
+          description: Время перезарядки в секундах
+          example: 30
+        damage:
+          type: integer
+          minimum: 0
+          description: Урон способности
+          example: 100
+        effects:
+          type: object
+          description: Эффекты способности
+          additionalProperties: true
+        requirements:
+          type: object
+          description: Требования для использования
+          additionalProperties: true
+
+    AITelemetry:
+      type: object
+      required:
+        - id
+        - profile_id
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор записи телеметрии
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        profile_id:
+          type: string
+          format: uuid
+          description: Идентификатор профиля AI
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        encounter_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор встречи
+        raid_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор рейда
+        damage_dealt:
+          type: integer
+          minimum: 0
+          description: Нанесенный урон
+          example: 5000
+        damage_taken:
+          type: integer
+          minimum: 0
+          description: Полученный урон
+          example: 3000
+        time_to_defeat:
+          type: integer
+          minimum: 0
+          description: Время до поражения в секундах
+          example: 120
+        skill_tests_passed:
+          type: integer
+          minimum: 0
+          description: Количество пройденных проверок навыков
+          example: 5
+        skill_tests_failed:
+          type: integer
+          minimum: 0
+          description: Количество проваленных проверок навыков
+          example: 2
+        abilities_used:
+          type: object
+          description: Использованные способности
+          additionalProperties:
+            type: integer
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка
+          example: "2025-11-29T10:00:00Z"
+
+    RaidSession:
+      type: object
+      required:
+        - id
+        - raid_id
+        - current_phase
+        - status
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор сессии
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        raid_id:
+          type: string
+          format: uuid
+          description: Идентификатор рейда
+          example: "550e8400-e29b-41d4-a716-446655440005"
+        current_phase:
+          type: integer
+          minimum: 1
+          description: Текущая фаза рейда
+          example: 2
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала рейда
+          example: "2025-11-29T10:00:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения рейда
+        status:
+          type: string
+          enum:
+            - in_progress
+            - completed
+            - failed
+          description: Статус рейда
+          example: "in_progress"
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Идентификаторы участников рейда
+
+    RaidPhaseTransitionRequest:
+      type: object
+      required:
+        - phase_number
+      properties:
+        phase_number:
+          type: integer
+          minimum: 1
+          description: Номер фазы для перехода
+          example: 2
+        reason:
+          type: string
+          description: Причина перехода фазы
+          example: "Boss health threshold reached"
+
+    CreateEncounterRequest:
+      type: object
+      required:
+        - encounter_type
+        - profile_ids
+        - zone_id
+      properties:
+        encounter_type:
+          type: string
+          description: Тип встречи
+          example: "street"
+        profile_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Идентификаторы профилей AI для встречи
+          example: ["550e8400-e29b-41d4-a716-446655440000"]
+        zone_id:
+          type: string
+          format: uuid
+          description: Идентификатор зоны
+          example: "550e8400-e29b-41d4-a716-446655440006"
+
+    AIEncounter:
+      type: object
+      required:
+        - id
+        - encounter_type
+        - profile_ids
+        - zone_id
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор встречи
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        encounter_type:
+          type: string
+          description: Тип встречи
+          example: "street"
+        profile_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Идентификаторы профилей AI
+        zone_id:
+          type: string
+          format: uuid
+          description: Идентификатор зоны
+          example: "550e8400-e29b-41d4-a716-446655440006"
+        started_at:
+          type: string
+          format: date-time
+          description: Время начала встречи
+          example: "2025-11-29T10:00:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения встречи
+        result:
+          type: string
+          enum:
+            - victory
+            - defeat
+            - abandoned
+          nullable: true
+          description: Результат встречи
+
+    EndEncounterRequest:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: string
+          enum:
+            - victory
+            - defeat
+            - abandoned
+          description: Результат встречи
+          example: "victory"
+        completion_data:
+          type: object
+          description: Дополнительные данные о завершении
+          additionalProperties: true
+
+
+

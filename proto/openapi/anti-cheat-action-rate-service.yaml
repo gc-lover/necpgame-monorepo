@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Action Rate Validation Service API
+  description: API для валидации частоты действий и обнаружения макросов
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Action Rate Validation
+    description: Валидация частоты действий
+
+paths:
+  /anti-cheat/action-rate/validate:
+    post:
+      tags:
+        - Action Rate Validation
+      summary: Валидация частоты действий
+      description: |
+        Проверяет частоту действий игрока и обнаруживает возможные макросы
+        и автоматизацию действий.
+      operationId: validateActionRate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionRateValidationRequest'
+      responses:
+        '200':
+          description: Результат валидации частоты действий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionRateValidationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/action-rate/violations/{player_id}:
+    get:
+      tags:
+        - Action Rate Validation
+      summary: Получить нарушения частоты действий для игрока
+      description: Возвращает список нарушений частоты действий для указанного игрока с пагинацией.
+      operationId: getActionRateViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список нарушений частоты действий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionRateViolationsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ActionRateValidationRequest:
+      type: object
+      required:
+        - player_id
+        - action_type
+        - action_timestamp
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        action_type:
+          type: string
+          enum:
+            - ATTACK
+            - SKILL
+            - INTERACTION
+            - MOVEMENT
+          description: Тип действия
+          example: "ATTACK"
+        action_timestamp:
+          type: string
+          format: date-time
+          description: Временная метка действия
+          example: "2025-11-29T10:00:00Z"
+        action_data:
+          type: object
+          description: Данные действия
+          additionalProperties: true
+
+    ActionRateValidationResponse:
+      type: object
+      required:
+        - is_valid
+      properties:
+        is_valid:
+          type: boolean
+          description: Валидна ли частота действий
+          example: true
+        actions_per_second:
+          type: number
+          format: float
+          minimum: 0
+          description: Количество действий в секунду
+          example: 2.5
+        max_actions_per_second:
+          type: integer
+          minimum: 0
+          description: Максимально допустимое количество действий в секунду
+          example: 3
+        pattern_detected:
+          type: string
+          enum:
+            - HUMAN
+            - MACRO
+            - UNKNOWN
+          description: Обнаруженный паттерн
+          example: "HUMAN"
+        violation:
+          $ref: '#/components/schemas/ActionRateViolation'
+          nullable: true
+          description: Нарушение, если обнаружено
+
+    ActionRateViolation:
+      type: object
+      required:
+        - violation_type
+        - severity
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - ACTION_RATE_HACK
+          description: Тип нарушения
+          example: "ACTION_RATE_HACK"
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьезность нарушения
+          example: "HIGH"
+        actions_exceeded_by:
+          type: integer
+          minimum: 0
+          description: Превышение количества действий
+          example: 5
+        threshold:
+          type: integer
+          minimum: 0
+          description: Порог количества действий
+          example: 3
+        pattern_periodicity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Процент идеальной периодичности
+          example: 95.5
+
+    ActionRateViolationsResponse:
+      type: object
+      required:
+        - violations
+        - total
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: 'anti-cheat-common.yaml#/components/schemas/Violation'
+          description: Список нарушений
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество нарушений
+          example: 8
+        limit:
+          type: integer
+          minimum: 1
+          description: Лимит на страницу
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение
+          example: 0
+
+security:
+  - BearerAuth: []
+
+
+

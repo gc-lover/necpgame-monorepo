@@ -1,0 +1,181 @@
+metadata:
+  id: network-system-architecture
+  title: Архитектура системы сети (интернет)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - network
+    - internet
+    - gameplay
+  related_systems:
+    - gameplay-service-go
+    - world-service-go
+  related_documents:
+    - id: device-system-architecture
+      relation: extends
+    - id: cyberspace-system-architecture
+      relation: extends
+    - id: hacking-system-architecture
+      relation: extends
+  github_issue: 1448
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы сети (интернет) для обеспечения
+    всех не физических взаимодействий персонажей через устройства, подключенные к сети.
+  goal: |
+    Создать архитектурную схему системы сети с определением:
+    - Микросервисов для управления сетью
+    - Компонентов для сетевой коммуникации
+    - Интеграции с системой устройств
+    - Интеграции с киберпространством
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Базовая система сети для обеспечения всех не физических взаимодействий
+    через устройства, подключенные к сети.
+
+architecture:
+  overview: |
+    Система сети состоит из следующих компонентов:
+    1. Network Service - управление сетью и подключениями
+    2. Network Communication Service - сетевая коммуникация
+    3. Network Device Manager - управление устройствами в сети
+    4. Network Security Service - безопасность сети
+
+  microservices:
+    - name: network-service
+      location: gameplay-service-go (модуль network)
+      port: 8083
+      responsibility: |
+        Управление сетью и подключениями:
+        - Управление сетевыми подключениями
+        - Управление сетевыми узлами
+        - Маршрутизация сетевого трафика
+        - Управление сетевыми зонами
+      endpoints:
+        - GET /api/v1/gameplay/network/status - статус сети
+        - GET /api/v1/gameplay/network/nodes - список узлов сети
+        - POST /api/v1/gameplay/network/nodes - создание узла
+        - GET /api/v1/gameplay/network/nodes/{nodeId} - информация об узле
+        - POST /api/v1/gameplay/network/connect - подключение к сети
+        - POST /api/v1/gameplay/network/disconnect - отключение от сети
+
+    - name: network-communication-service
+      location: gameplay-service-go (модуль network-communication)
+      port: 8083
+      responsibility: |
+        Сетевая коммуникация:
+        - Обработка сетевых сообщений
+        - Маршрутизация сообщений между устройствами
+        - Управление сетевыми каналами
+        - Обработка сетевых запросов
+      endpoints:
+        - POST /api/v1/gameplay/network/messages - отправка сообщения
+        - GET /api/v1/gameplay/network/messages/{messageId} - получение сообщения
+        - POST /api/v1/gameplay/network/channels - создание канала
+        - GET /api/v1/gameplay/network/channels/{channelId} - информация о канале
+
+    - name: network-device-manager
+      location: gameplay-service-go (модуль network-device)
+      port: 8083
+      responsibility: |
+        Управление устройствами в сети:
+        - Регистрация устройств в сети
+        - Управление подключениями устройств
+        - Отслеживание состояния устройств
+        - Интеграция с системой устройств
+      endpoints:
+        - POST /api/v1/gameplay/network/devices/{deviceId}/register - регистрация устройства
+        - POST /api/v1/gameplay/network/devices/{deviceId}/connect - подключение устройства
+        - POST /api/v1/gameplay/network/devices/{deviceId}/disconnect - отключение устройства
+        - GET /api/v1/gameplay/network/devices/{deviceId}/status - статус устройства
+
+    - name: network-security-service
+      location: gameplay-service-go (модуль network-security)
+      port: 8083
+      responsibility: |
+        Безопасность сети:
+        - Управление сетевыми правами доступа
+        - Защита от несанкционированного доступа
+        - Управление сетевыми политиками безопасности
+        - Интеграция с системой взлома
+      endpoints:
+        - GET /api/v1/gameplay/network/security/policies - политики безопасности
+        - POST /api/v1/gameplay/network/security/validate - валидация доступа
+        - POST /api/v1/gameplay/network/security/block - блокировка доступа
+
+  integrations:
+    device_service: |
+      - Подключение устройств к сети
+      - Управление устройствами через сеть
+      - Дистанционное взаимодействие с устройствами
+
+    cyberspace_service: |
+      - Доступ к киберпространству через сеть
+      - Навигация в киберпространстве
+      - Взаимодействие с удаленными устройствами
+
+    hacking_service: |
+      - Взлом сетевых узлов
+      - Защита от взлома
+      - Управление сетевыми уязвимостями
+
+  technical_tasks:
+    phase_1:
+      name: Network Service Core
+      tasks:
+        - Реализация Network Service
+        - Управление сетевыми подключениями
+        - Управление сетевыми узлами
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Network Communication Service
+      tasks:
+        - Реализация Network Communication Service
+        - Обработка сетевых сообщений
+        - Маршрутизация сообщений
+      estimated_effort: 4 days
+
+    phase_3:
+      name: Network Device Manager
+      tasks:
+        - Реализация Network Device Manager
+        - Интеграция с системой устройств
+        - Управление подключениями устройств
+      estimated_effort: 3 days
+
+    phase_4:
+      name: Network Security Service
+      tasks:
+        - Реализация Network Security Service
+        - Управление безопасностью
+        - Интеграция с системой взлома
+      estimated_effort: 3 days
+
+    phase_5:
+      name: Интеграции
+      tasks:
+        - Интеграция с Device Service
+        - Интеграция с Cyberspace Service
+        - Интеграция с Hacking Service
+        - WebSocket каналы
+      estimated_effort: 2 days
+
+    total_estimated_effort: 16 days
+

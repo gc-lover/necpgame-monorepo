@@ -159,11 +159,13 @@
 - Нет готового функционала (бекенд или клиент не реализован)
 - Нет OpenAPI спецификации для тестирования API
 - Нет требований для тестирования
+- **Это контентный квест (YAML файл)** - QA не работает с контентными квестами
 
 **Кому возвращать:**
 - Если нет бекенда → `agent:backend`
 - Если нет клиента → `agent:ue5`
 - Если нет спецификации → `agent:api-designer`
+- **Если контентный квест (YAML)** → `agent:content-writer` (Content Writer валидирует YAML самостоятельно)
 
 ### Backend Developer
 
@@ -294,6 +296,7 @@ async function returnTask(issueNumber, reason, correctAgent) {
 - `.cursor/rules/AGENT_LABEL_MANAGEMENT.md` - управление метками
 - `.cursor/rules/AGENT_TASK_DISCOVERY.md` - поиск задач
 - Правила конкретных агентов: `.cursor/rules/agent-*.mdc`
+
 
 
 

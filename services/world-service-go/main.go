@@ -42,6 +42,9 @@ func main() {
 	eventBus := server.NewRedisEventBus(redisClient)
 	worldService := server.NewWorldService(worldRepo, logger, eventBus)
 
+	worldEventsRepo := server.NewWorldEventsRepository(db)
+	worldEventsService := server.NewWorldEventsService(worldEventsRepo)
+
 	jwtIssuer := getEnv("JWT_ISSUER", "")
 	jwksURL := getEnv("JWKS_URL", "")
 	authEnabled := jwtIssuer != "" && jwksURL != ""
@@ -51,7 +54,7 @@ func main() {
 		jwtValidator = server.NewJwtValidator(jwtIssuer, jwksURL, logger)
 	}
 
-	httpServer := server.NewHTTPServer(addr, worldService, jwtValidator, authEnabled)
+	httpServer := server.NewHTTPServer(addr, worldService, worldEventsService, jwtValidator, authEnabled)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

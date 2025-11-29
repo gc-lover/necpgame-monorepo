@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: NPC Training Service API
+  description: |
+    API для обучения у NPC: навыки, тренировки, симуляции.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: NPC Training
+    description: Обучение у NPC
+
+paths:
+  /gameplay/npc/{npc_id}/training:
+    get:
+      tags:
+        - NPC Training
+      summary: Обучение у NPC
+      description: Возвращает информацию об обучении у NPC.
+      operationId: getNPCTraining
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Информация об обучении
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - training_id
+                  - npc_id
+                  - available_skills
+                properties:
+                  training_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор обучения
+                  npc_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор NPC
+                  available_skills:
+                    type: array
+                    items:
+                      type: object
+                      description: Доступные навыки
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/npc/{npc_id}/skills:
+    get:
+      tags:
+        - NPC Training
+      summary: Доступные навыки
+      description: Возвращает список навыков, доступных для обучения у NPC.
+      operationId: getNPCSkills
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Список навыков
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - skills
+                properties:
+                  skills:
+                    type: array
+                    items:
+                      type: object
+                      description: Навык для обучения
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/npc/{npc_id}/skills/{skill_id}/learn:
+    post:
+      tags:
+        - NPC Training
+      summary: Изучить навык
+      description: Изучает новый навык у NPC.
+      operationId: learnSkill
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор навыка
+          example: "550e8400-e29b-41d4-a716-446655440008"
+      responses:
+        '200':
+          description: Навык изучен
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - skill_id
+                  - learned_at
+                properties:
+                  skill_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор навыка
+                  learned_at:
+                    type: string
+                    format: date-time
+                    description: Время изучения
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/npc/{npc_id}/skills/{skill_id}/upgrade:
+    post:
+      tags:
+        - NPC Training
+      summary: Повысить навык
+      description: Повышает уровень существующего навыка у NPC.
+      operationId: upgradeSkill
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор навыка
+          example: "550e8400-e29b-41d4-a716-446655440008"
+      responses:
+        '200':
+          description: Навык повышен
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - skill_id
+                  - new_level
+                  - upgraded_at
+                properties:
+                  skill_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор навыка
+                  new_level:
+                    type: integer
+                    minimum: 1
+                    description: Новый уровень навыка
+                  upgraded_at:
+                    type: string
+                    format: date-time
+                    description: Время повышения
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/npc/{npc_id}/training/simulations:
+    get:
+      tags:
+        - NPC Training
+      summary: Тренировочные режимы
+      description: Возвращает список доступных тренировочных режимов у NPC.
+      operationId: getTrainingSimulations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Список тренировочных режимов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - simulations
+                properties:
+                  simulations:
+                    type: array
+                    items:
+                      type: object
+                      description: Тренировочный режим
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
+
+

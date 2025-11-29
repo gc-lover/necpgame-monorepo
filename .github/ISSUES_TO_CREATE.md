@@ -152,7 +152,29 @@
 
 ---
 
-### 12. [API Designer] Создать OpenAPI спецификации для stock-* сервисов
+### 12. [API Designer] Создать OpenAPI спецификацию для GET /economy/trade (getActiveTrades) в economy-service-go
+
+**Описание:**
+Endpoint `GET /economy/trade` (getActiveTrades) в `economy-service-go` не имеет OpenAPI спецификации. Необходимо создать спецификацию для этого endpoint.
+
+**Детали:**
+- Сервис: `economy-service-go`
+- Endpoint: `GET /api/v1/economy/trade`
+- Функция: `getActiveTrades` в `http_server.go`
+- Возвращает список активных торговых сессий для текущего пользователя
+- Текущее состояние: endpoint реализован, но нет OpenAPI спецификации
+- Рекомендуемое имя файла: `economy-trade-active-service.yaml` или добавить в существующую спецификацию
+
+**Связанные спецификации:**
+- `economy-trade-sessions-service.yaml` - управление сессиями торговли
+- `economy-trade-offers-service.yaml` - управление предложениями
+- `economy-trade-history-service.yaml` - история торговли
+
+**Метки:** `agent:api-designer`, `stage:api-design`, `api-design`, `openapi`, `economy-service-go`
+
+---
+
+### 13. [API Designer] Создать OpenAPI спецификации для stock-* сервисов
 
 **Описание:**
 Все stock-* сервисы не имеют OpenAPI спецификаций. Необходимо создать OpenAPI спецификации для всех stock сервисов.
@@ -185,13 +207,14 @@
 3. economy-service-go
 4. world-service-go
 
-**Создание OpenAPI спецификаций (17 сервисов):**
-1. combat-ai-service-go
-2. combat-damage-service-go
-3. combat-hacking-service-go
-4. combat-implants-core-service-go
-5. combat-implants-maintenance-service-go
-6. combat-implants-stats-service-go
-7. combat-sandevistan-service-go
-8-17. Все stock-* сервисы (10 сервисов)
+**Создание OpenAPI спецификаций (18 сервисов/endpoints):**
+1. economy-service-go: GET /economy/trade (getActiveTrades)
+2. combat-ai-service-go
+3. combat-damage-service-go
+4. combat-hacking-service-go
+5. combat-implants-core-service-go
+6. combat-implants-maintenance-service-go
+7. combat-implants-stats-service-go
+8. combat-sandevistan-service-go
+9-18. Все stock-* сервисы (10 сервисов)
 

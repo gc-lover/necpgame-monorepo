@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Combat AI Enemies Profiles Service API
+  description: |
+    API для управления профилями AI врагов и телеметрией.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: AI Profiles
+    description: Управление профилями AI врагов
+  - name: Telemetry
+    description: Телеметрия AI
+
+paths:
+  /gameplay/combat/ai/profiles:
+    get:
+      tags:
+        - AI Profiles
+      summary: Список профилей AI
+      description: |
+        Возвращает список всех профилей AI врагов с возможностью фильтрации
+        по слою сложности, фракции и уровню навыков.
+      operationId: listAIProfiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: difficulty_layer
+          in: query
+          schema:
+            type: string
+            enum:
+              - street
+              - tactical
+              - mythic
+              - raid
+          description: Фильтр по слою сложности
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по фракции
+        - name: skill_level_min
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Минимальный уровень навыков
+        - name: skill_level_max
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Максимальный уровень навыков
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список профилей AI
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - profiles
+                  - total
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/AIProfile'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 50
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/ai/profiles/{profile_id}:
+    get:
+      tags:
+        - AI Profiles
+      summary: Информация о профиле AI
+      description: Возвращает детальную информацию о конкретном профиле AI врага.
+      operationId: getAIProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор профиля AI
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Информация о профиле AI
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/AIProfile'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/ai/profiles/{profile_id}/telemetry:
+    get:
+      tags:
+        - Telemetry
+      summary: Телеметрия профиля AI
+      description: |
+        Возвращает телеметрию для указанного профиля AI, включая метрики урона,
+        времени до поражения, использования способностей и балансировки.
+      operationId: getAIProfileTelemetry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор профиля AI
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начальная дата для выборки телеметрии
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конечная дата для выборки телеметрии
+        - $ref: 'common.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Телеметрия профиля AI
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - telemetry
+                  - total
+                properties:
+                  telemetry:
+                    type: array
+                    items:
+                      $ref: 'combat-ai-enemies-schemas.yaml#/components/schemas/AITelemetry'
+                  total:
+                    type: integer
+                    minimum: 0
+                    example: 100
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
+
+

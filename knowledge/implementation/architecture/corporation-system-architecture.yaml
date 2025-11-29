@@ -1,0 +1,213 @@
+metadata:
+  id: corporation-system-architecture
+  title: Архитектура системы корпораций
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - corporation
+    - social
+    - economy
+  related_systems:
+    - social-service-go
+    - economy-service-go
+  related_documents:
+    - id: cooperation-hierarchy-system-architecture
+      relation: extends
+    - id: guild-system-architecture
+      relation: extends
+  github_issue: 1435
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы корпораций - официально
+    зарегистрированных кланов с минимум одной официальной деятельностью,
+    иерархией должностей, зарплатами и должностными обязательствами.
+  goal: |
+    Создать архитектурную схему системы корпораций с определением:
+    - Микросервисов для управления корпорациями
+    - Компонентов для иерархии должностей
+    - Системы зарплат
+    - Должностных обязательств
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Система корпораций с поддержкой официальной регистрации, иерархии должностей,
+    зарплат и должностных обязательств.
+
+architecture:
+  overview: |
+    Система корпораций состоит из следующих компонентов:
+    1. Corporation Service - управление корпорациями
+    2. Corporation Registration Service - регистрация корпораций
+    3. Corporation Hierarchy Manager - управление иерархией должностей
+    4. Corporation Salary Manager - управление зарплатами
+    5. Corporation Duty Manager - управление должностными обязательствами
+    6. Corporation Activity Manager - управление официальной деятельностью
+
+  microservices:
+    - name: corporation-service
+      location: social-service-go (модуль corporation)
+      port: 8084
+      responsibility: |
+        Управление корпорациями:
+        - CRUD операции с корпорациями
+        - Управление информацией о корпорации
+        - Управление статусом корпорации
+      endpoints:
+        - POST /api/v1/social/corporations - создание корпорации
+        - GET /api/v1/social/corporations/{corporationId} - информация о корпорации
+        - PUT /api/v1/social/corporations/{corporationId} - обновление корпорации
+        - DELETE /api/v1/social/corporations/{corporationId} - удаление корпорации
+
+    - name: corporation-registration-service
+      location: social-service-go (модуль corporation-registration)
+      port: 8084
+      responsibility: |
+        Регистрация корпораций:
+        - Регистрация корпорации
+        - Валидация требований для регистрации
+        - Управление регистрационными данными
+      endpoints:
+        - POST /api/v1/social/corporations/register - регистрация корпорации
+        - GET /api/v1/social/corporations/{corporationId}/registration - регистрационные данные
+        - POST /api/v1/social/corporations/{corporationId}/registration/update - обновление регистрации
+
+    - name: corporation-hierarchy-manager
+      location: social-service-go (модуль corporation-hierarchy)
+      port: 8084
+      responsibility: |
+        Управление иерархией должностей:
+        - Создание должностей
+        - Управление иерархией должностей
+        - Назначение должностей
+        - Управление правами должностей
+      endpoints:
+        - POST /api/v1/social/corporations/{corporationId}/positions - создание должности
+        - GET /api/v1/social/corporations/{corporationId}/positions - список должностей
+        - POST /api/v1/social/corporations/{corporationId}/positions/{positionId}/assign - назначение должности
+        - DELETE /api/v1/social/corporations/{corporationId}/positions/{positionId} - удаление должности
+
+    - name: corporation-salary-manager
+      location: economy-service-go (модуль corporation-salary)
+      port: 8085
+      responsibility: |
+        Управление зарплатами:
+        - Настройка зарплат для должностей
+        - Выплата зарплат
+        - Управление зарплатным фондом
+        - Интеграция с экономикой
+      endpoints:
+        - POST /api/v1/economy/corporations/{corporationId}/salaries - настройка зарплат
+        - POST /api/v1/economy/corporations/{corporationId}/salaries/pay - выплата зарплат
+        - GET /api/v1/economy/corporations/{corporationId}/salaries/fund - зарплатный фонд
+
+    - name: corporation-duty-manager
+      location: social-service-go (модуль corporation-duty)
+      port: 8084
+      responsibility: |
+        Управление должностными обязательствами:
+        - Определение должностных обязательств
+        - Назначение обязательств
+        - Отслеживание выполнения обязательств
+      endpoints:
+        - POST /api/v1/social/corporations/{corporationId}/duties - создание обязательства
+        - GET /api/v1/social/corporations/{corporationId}/duties - список обязательств
+        - POST /api/v1/social/corporations/{corporationId}/duties/{dutyId}/assign - назначение обязательства
+        - POST /api/v1/social/corporations/{corporationId}/duties/{dutyId}/complete - выполнение обязательства
+
+    - name: corporation-activity-manager
+      location: social-service-go (модуль corporation-activity)
+      port: 8084
+      responsibility: |
+        Управление официальной деятельностью:
+        - Регистрация официальной деятельности
+        - Управление деятельностью
+        - Отчетность по деятельности
+      endpoints:
+        - POST /api/v1/social/corporations/{corporationId}/activities - регистрация деятельности
+        - GET /api/v1/social/corporations/{corporationId}/activities - список деятельности
+        - POST /api/v1/social/corporations/{corporationId}/activities/{activityId}/report - отчет по деятельности
+
+  integrations:
+    economy_service: |
+      - Управление зарплатами
+      - Экономические транзакции
+      - Управление ресурсами
+
+    guild_service: |
+      - Использование системы кланов
+      - Интеграция с гильдиями
+
+    world_service: |
+      - Интеграция с миром игры
+      - Управление территориями
+
+  technical_tasks:
+    phase_1:
+      name: Corporation Service Core
+      tasks:
+        - Реализация Corporation Service
+        - CRUD операции с корпорациями
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Corporation Registration Service
+      tasks:
+        - Реализация Corporation Registration Service
+        - Регистрация корпораций
+      estimated_effort: 3 days
+
+    phase_3:
+      name: Corporation Hierarchy Manager
+      tasks:
+        - Реализация Corporation Hierarchy Manager
+        - Управление иерархией должностей
+      estimated_effort: 4 days
+
+    phase_4:
+      name: Corporation Salary Manager
+      tasks:
+        - Реализация Corporation Salary Manager
+        - Управление зарплатами
+        - Интеграция с экономикой
+      estimated_effort: 4 days
+
+    phase_5:
+      name: Corporation Duty Manager
+      tasks:
+        - Реализация Corporation Duty Manager
+        - Управление должностными обязательствами
+      estimated_effort: 3 days
+
+    phase_6:
+      name: Corporation Activity Manager
+      tasks:
+        - Реализация Corporation Activity Manager
+        - Управление официальной деятельностью
+      estimated_effort: 3 days
+
+    phase_7:
+      name: Интеграции
+      tasks:
+        - Интеграция с Economy Service
+        - Интеграция с Guild Service
+        - Интеграция с World Service
+        - WebSocket каналы
+      estimated_effort: 2 days
+
+    total_estimated_effort: 23 days
+

@@ -1,0 +1,218 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Position Validation Service API
+  description: API для валидации позиции игрока и обнаружения телепортации
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Position Validation
+    description: Валидация позиции игрока
+
+paths:
+  /anti-cheat/position/validate:
+    post:
+      tags:
+        - Position Validation
+      summary: Валидация позиции игрока
+      description: |
+        Проверяет позицию игрока и обнаруживает возможные телепортации,
+        прохождение через стены и другие нарушения позиции.
+      operationId: validatePosition
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionValidationRequest'
+      responses:
+        '200':
+          description: Результат валидации позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionValidationResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/position/violations/{player_id}:
+    get:
+      tags:
+        - Position Validation
+      summary: Получить нарушения позиции для игрока
+      description: Возвращает список нарушений позиции для указанного игрока с пагинацией.
+      operationId: getPositionViolations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список нарушений позиции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionViolationsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    PositionValidationRequest:
+      type: object
+      required:
+        - player_id
+        - current_position
+        - previous_position
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        current_position:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/Position'
+        previous_position:
+          $ref: 'anti-cheat-common.yaml#/components/schemas/Position'
+        time_delta:
+          type: number
+          format: float
+          minimum: 0
+          description: Время в секундах между позициями
+          example: 0.1
+        max_speed:
+          type: number
+          format: float
+          minimum: 0
+          description: Максимальная скорость
+          example: 6.0
+
+    PositionValidationResponse:
+      type: object
+      required:
+        - is_valid
+      properties:
+        is_valid:
+          type: boolean
+          description: Валидна ли позиция
+          example: true
+        distance:
+          type: number
+          format: float
+          minimum: 0
+          description: Расстояние между позициями
+          example: 5.5
+        max_allowed_distance:
+          type: number
+          format: float
+          minimum: 0
+          description: Максимально допустимое расстояние
+          example: 6.0
+        collision_detected:
+          type: boolean
+          description: Обнаружена ли коллизия
+          example: false
+        violation:
+          $ref: '#/components/schemas/PositionViolation'
+          nullable: true
+          description: Нарушение, если обнаружено
+
+    PositionViolation:
+      type: object
+      required:
+        - violation_type
+        - severity
+      properties:
+        violation_type:
+          type: string
+          enum:
+            - POSITION_HACK
+          description: Тип нарушения
+          example: "POSITION_HACK"
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          description: Серьезность нарушения
+          example: "MEDIUM"
+        distance_exceeded:
+          type: number
+          format: float
+          minimum: 0
+          description: Превышение расстояния
+          example: 10.5
+        teleportation_detected:
+          type: boolean
+          description: Обнаружена ли телепортация
+          example: true
+        wall_collision:
+          type: boolean
+          description: Обнаружена ли коллизия со стеной
+          example: false
+
+    PositionViolationsResponse:
+      type: object
+      required:
+        - violations
+        - total
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: 'anti-cheat-common.yaml#/components/schemas/Violation'
+          description: Список нарушений
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество нарушений
+          example: 5
+        limit:
+          type: integer
+          minimum: 1
+          description: Лимит на страницу
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение
+          example: 0
+
+security:
+  - BearerAuth: []
+
+
+

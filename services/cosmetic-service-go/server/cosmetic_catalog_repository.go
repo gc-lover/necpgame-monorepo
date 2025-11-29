@@ -160,7 +160,7 @@ func (r *CosmeticCatalogRepository) GetCosmeticByID(ctx context.Context, cosmeti
 	return &item, nil
 }
 
-func (r *CosmeticCatalogRepository) GetCategories(ctx context.Context) ([]models.CosmeticCategory, error) {
+func (r *CosmeticCatalogRepository) GetCategories(ctx context.Context) ([]models.CosmeticCategoryInfo, error) {
 	query := `
 		SELECT category, COUNT(*) as count
 		FROM monetization.cosmetic_items
@@ -174,9 +174,9 @@ func (r *CosmeticCatalogRepository) GetCategories(ctx context.Context) ([]models
 	}
 	defer rows.Close()
 
-	var categories []models.CosmeticCategory
+	var categories []models.CosmeticCategoryInfo
 	for rows.Next() {
-		var cat models.CosmeticCategory
+		var cat models.CosmeticCategoryInfo
 		err := rows.Scan(&cat.Category, &cat.Count)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan category: %w", err)

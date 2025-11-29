@@ -1,0 +1,183 @@
+metadata:
+  id: politics-system-architecture
+  title: Архитектура системы политики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - politics
+    - social
+    - world
+  related_systems:
+    - social-service-go
+    - world-service-go
+  related_documents:
+    - id: cooperation-hierarchy-system-architecture
+      relation: extends
+  github_issue: 1437
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы политики как следующего уровня
+    организации после корпораций в иерархии коопераций с влиянием на континенты и планеты.
+  goal: |
+    Создать архитектурную схему системы политики с определением:
+    - Микросервисов для управления политикой
+    - Компонентов для политических структур
+    - Взаимодействия между политическими силами
+    - Влияния на континенты и планеты
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Система политики для управления политическими структурами с влиянием на
+    континенты и планеты.
+
+architecture:
+  overview: |
+    Система политики состоит из следующих компонентов:
+    1. Politics Service - управление политикой
+    2. Political Structure Manager - управление политическими структурами
+    3. Political Force Manager - управление политическими силами
+    4. Political Influence Manager - влияние на континенты и планеты
+    5. Political Event Manager - политические события
+
+  microservices:
+    - name: politics-service
+      location: social-service-go (модуль politics)
+      port: 8084
+      responsibility: |
+        Управление политикой:
+        - CRUD операции с политическими структурами
+        - Управление политическими силами
+        - Взаимодействие между политическими силами
+      endpoints:
+        - POST /api/v1/social/politics - создание политической структуры
+        - GET /api/v1/social/politics/{politicsId} - информация о политике
+        - PUT /api/v1/social/politics/{politicsId} - обновление политики
+        - DELETE /api/v1/social/politics/{politicsId} - удаление политики
+
+    - name: political-structure-manager
+      location: social-service-go (модуль politics-structure)
+      port: 8084
+      responsibility: |
+        Управление политическими структурами:
+        - Создание политических структур
+        - Управление структурой
+        - Управление участниками
+      endpoints:
+        - POST /api/v1/social/politics/{politicsId}/structures - создание структуры
+        - GET /api/v1/social/politics/{politicsId}/structures - список структур
+        - PUT /api/v1/social/politics/{politicsId}/structures/{structureId} - обновление структуры
+
+    - name: political-force-manager
+      location: social-service-go (модуль politics-force)
+      port: 8084
+      responsibility: |
+        Управление политическими силами:
+        - Создание политических сил
+        - Взаимодействие между силами
+        - Управление конфликтами
+      endpoints:
+        - POST /api/v1/social/politics/{politicsId}/forces - создание силы
+        - GET /api/v1/social/politics/{politicsId}/forces - список сил
+        - POST /api/v1/social/politics/{politicsId}/forces/{forceId}/interact - взаимодействие
+
+    - name: political-influence-manager
+      location: world-service-go (модуль politics-influence)
+      port: 8088
+      responsibility: |
+        Влияние на континенты и планеты:
+        - Применение влияния на континенты
+        - Применение влияния на планеты
+        - Управление влиянием
+      endpoints:
+        - POST /api/v1/world/politics/{politicsId}/influence/continents - влияние на континенты
+        - POST /api/v1/world/politics/{politicsId}/influence/planets - влияние на планеты
+        - GET /api/v1/world/politics/{politicsId}/influence - текущее влияние
+
+    - name: political-event-manager
+      location: world-service-go (модуль politics-event)
+      port: 8088
+      responsibility: |
+        Политические события:
+        - Создание политических событий
+        - Управление событиями
+        - Обработка последствий событий
+      endpoints:
+        - POST /api/v1/world/politics/{politicsId}/events - создание события
+        - GET /api/v1/world/politics/{politicsId}/events - список событий
+        - POST /api/v1/world/politics/{politicsId}/events/{eventId}/process - обработка события
+
+  integrations:
+    continent_service: |
+      - Влияние на континенты
+      - Управление континентами
+
+    planet_service: |
+      - Влияние на планеты
+      - Управление планетами
+
+    corporation_service: |
+      - Интеграция с корпорациями
+      - Политическое влияние корпораций
+
+  technical_tasks:
+    phase_1:
+      name: Politics Service Core
+      tasks:
+        - Реализация Politics Service
+        - CRUD операции с политикой
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Political Structure Manager
+      tasks:
+        - Реализация Political Structure Manager
+        - Управление структурами
+      estimated_effort: 3 days
+
+    phase_3:
+      name: Political Force Manager
+      tasks:
+        - Реализация Political Force Manager
+        - Управление силами
+      estimated_effort: 3 days
+
+    phase_4:
+      name: Political Influence Manager
+      tasks:
+        - Реализация Political Influence Manager
+        - Влияние на континенты и планеты
+      estimated_effort: 4 days
+
+    phase_5:
+      name: Political Event Manager
+      tasks:
+        - Реализация Political Event Manager
+        - Управление событиями
+      estimated_effort: 3 days
+
+    phase_6:
+      name: Интеграции
+      tasks:
+        - Интеграция с Continent Service
+        - Интеграция с Planet Service
+        - Интеграция с Corporation Service
+        - WebSocket каналы
+      estimated_effort: 2 days
+
+    total_estimated_effort: 19 days
+

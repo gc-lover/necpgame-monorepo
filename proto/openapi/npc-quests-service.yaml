@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: NPC Quests Service API
+  description: |
+    API для квестов от NPC: доступные квесты, принятие, завершение.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: NPC Quests
+    description: Квесты от NPC
+
+paths:
+  /quests/npc/{npc_id}/available:
+    get:
+      tags:
+        - NPC Quests
+      summary: Доступные квесты
+      description: Возвращает список доступных квестов от NPC.
+      operationId: getAvailableNPCQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Список доступных квестов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - quests
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      type: object
+                      description: Доступный квест
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /quests/npc/{npc_id}/active:
+    get:
+      tags:
+        - NPC Quests
+      summary: Активные квесты
+      description: Возвращает список активных квестов от NPC.
+      operationId: getActiveNPCQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Список активных квестов
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - quests
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      type: object
+                      description: Активный квест
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /quests/npc/{npc_id}/quests/{quest_id}/accept:
+    post:
+      tags:
+        - NPC Quests
+      summary: Принять квест
+      description: Принимает квест от NPC.
+      operationId: acceptNPCQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор квеста
+          example: "550e8400-e29b-41d4-a716-446655440009"
+      responses:
+        '200':
+          description: Квест принят
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - quest_id
+                  - accepted_at
+                properties:
+                  quest_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор квеста
+                  accepted_at:
+                    type: string
+                    format: date-time
+                    description: Время принятия
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /quests/npc/{npc_id}/quests/{quest_id}/complete:
+    post:
+      tags:
+        - NPC Quests
+      summary: Завершить квест
+      description: Завершает квест от NPC и получает награды.
+      operationId: completeNPCQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор квеста
+          example: "550e8400-e29b-41d4-a716-446655440009"
+      responses:
+        '200':
+          description: Квест завершен
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - quest_id
+                  - completed_at
+                  - rewards
+                properties:
+                  quest_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор квеста
+                  completed_at:
+                    type: string
+                    format: date-time
+                    description: Время завершения
+                  rewards:
+                    type: object
+                    description: Награды за квест
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
+
+

@@ -207,10 +207,16 @@ agent:idea   agent:arch   agent:api    agent:back  agent:net agent:ue agent:qa a
 
 ### Контентные задачи (НЕ требуют архитектуры):
 ```
-idea-writer → content-writer → qa → release
-     ↓              ↓           ↓       ↓
-agent:idea    agent:content  agent:qa agent:rel
+idea-writer → content-writer → backend → qa → release
+     ↓              ↓              ↓       ↓       ↓
+agent:idea    agent:content   agent:backend agent:qa agent:release
 ```
+
+**Важно:** 
+- Content Writer сам валидирует YAML файлы
+- **ВСЕГДА передает Backend Developer для импорта в БД** - без импорта контент не попадет в игру
+- Backend Developer импортирует контент в БД
+- QA тестирует функционал после импорта в БД
 
 ## Возврат задач
 

@@ -132,13 +132,13 @@ type CosmeticCatalogResponse struct {
 	Offset int            `json:"offset"`
 }
 
-type CosmeticCategory struct {
+type CosmeticCategoryInfo struct {
 	Category CosmeticCategory `json:"category"`
 	Count    int              `json:"count"`
 }
 
 type CosmeticCategoriesResponse struct {
-	Categories []CosmeticCategory `json:"categories"`
+	Categories []CosmeticCategoryInfo `json:"categories"`
 }
 
 type DailyShop struct {

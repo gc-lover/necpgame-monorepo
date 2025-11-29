@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: NPC Trading Service API
+  description: |
+    API для торговли с NPC: магазины, покупка/продажа, ремонт, обмен валют.
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: NPC Trading
+    description: Торговля с NPC
+
+paths:
+  /economy/npc/{npc_id}/shop:
+    get:
+      tags:
+        - NPC Trading
+      summary: Магазин NPC
+      description: Возвращает информацию о магазине NPC.
+      operationId: getNPCShop
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Информация о магазине
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - shop_id
+                  - npc_id
+                  - items
+                properties:
+                  shop_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор магазина
+                  npc_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор NPC
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      description: Товары в магазине
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/npc/{npc_id}/shop/items:
+    get:
+      tags:
+        - NPC Trading
+      summary: Товары в магазине
+      description: Возвращает список товаров, доступных в магазине NPC.
+      operationId: getNPCShopItems
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список товаров
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - total
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      description: Товар в магазине
+                  total:
+                    type: integer
+                    minimum: 0
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/npc/{npc_id}/shop/buy:
+    post:
+      tags:
+        - NPC Trading
+      summary: Покупка предмета
+      description: Покупает предмет у NPC.
+      operationId: buyFromNPC
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - item_id
+                - quantity
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                  description: Идентификатор предмета
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: Количество
+      responses:
+        '200':
+          description: Покупка выполнена
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - transaction_id
+                  - items
+                properties:
+                  transaction_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор транзакции
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      description: Купленные предметы
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/npc/{npc_id}/shop/sell:
+    post:
+      tags:
+        - NPC Trading
+      summary: Продажа предмета
+      description: Продает предмет NPC.
+      operationId: sellToNPC
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - item_id
+                - quantity
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                  description: Идентификатор предмета
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: Количество
+      responses:
+        '200':
+          description: Продажа выполнена
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - transaction_id
+                  - currency_received
+                properties:
+                  transaction_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор транзакции
+                  currency_received:
+                    type: object
+                    description: Полученная валюта
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/npc/{npc_id}/repair:
+    post:
+      tags:
+        - NPC Trading
+      summary: Ремонт оборудования
+      description: Ремонтирует оборудование у NPC.
+      operationId: repairEquipment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - item_id
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                  description: Идентификатор предмета для ремонта
+      responses:
+        '200':
+          description: Ремонт выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - repair_id
+                  - item_id
+                  - cost
+                properties:
+                  repair_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор ремонта
+                  item_id:
+                    type: string
+                    format: uuid
+                    description: Идентификатор предмета
+                  cost:
+                    type: object
+                    description: Стоимость ремонта
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /economy/npc/{npc_id}/currency-exchange:
+    get:
+      tags:
+        - NPC Trading
+      summary: Обмен валют
+      description: Возвращает информацию об обмене валют у NPC.
+      operationId: getCurrencyExchange
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор NPC
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Информация об обмене валют
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - exchange_rates
+                properties:
+                  exchange_rates:
+                    type: object
+                    description: Курсы обмена валют
+                    additionalProperties:
+                      type: number
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+
+
+

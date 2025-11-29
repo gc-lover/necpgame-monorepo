@@ -1,0 +1,210 @@
+metadata:
+  id: hacking-system-architecture
+  title: Архитектура системы взлома
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - hacking
+    - gameplay
+  related_systems:
+    - gameplay-service-go
+  related_documents:
+    - id: device-system-architecture
+      relation: extends
+    - id: cyberspace-system-architecture
+      relation: extends
+  github_issue: 1451
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы взлома с поддержкой атрибута
+    интеллект, специальных имплантов и гаджетов для взлома устройств и сетей.
+  goal: |
+    Создать архитектурную схему системы взлома с определением:
+    - Микросервисов для управления взломом
+    - Компонентов для проверки атрибутов и имплантов
+    - Процесса взлома
+    - Результатов взлома
+    - API endpoints (высокоуровнево)
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Система взлома с поддержкой атрибута интеллект, имплантов и гаджетов
+    для взлома устройств и сетей.
+
+architecture:
+  overview: |
+    Система взлома состоит из следующих компонентов:
+    1. Hacking Service - управление взломом
+    2. Hacking Attribute Checker - проверка атрибута интеллект
+    3. Hacking Implant Manager - управление имплантами для взлома
+    4. Hacking Gadget Manager - управление гаджетами для взлома
+    5. Hacking Process Manager - процесс взлома
+    6. Hacking Result Manager - результаты взлома
+
+  microservices:
+    - name: hacking-service
+      location: gameplay-service-go (модуль hacking)
+      port: 8083
+      responsibility: |
+        Управление взломом:
+        - Инициализация процесса взлома
+        - Управление процессом взлома
+        - Обработка результатов взлома
+        - Интеграция с другими системами
+      endpoints:
+        - POST /api/v1/gameplay/hacking/initiate - инициализация взлома
+        - GET /api/v1/gameplay/hacking/{hackId}/status - статус взлома
+        - POST /api/v1/gameplay/hacking/{hackId}/execute - выполнение взлома
+        - POST /api/v1/gameplay/hacking/{hackId}/cancel - отмена взлома
+
+    - name: hacking-attribute-checker
+      location: gameplay-service-go (модуль hacking-attribute)
+      port: 8083
+      responsibility: |
+        Проверка атрибута интеллект:
+        - Проверка уровня интеллекта
+        - Валидация требований к интеллекту
+        - Применение модификаторов интеллекта
+      endpoints:
+        - POST /api/v1/gameplay/hacking/attribute/check - проверка атрибута
+        - GET /api/v1/gameplay/hacking/attribute/{characterId}/intelligence - уровень интеллекта
+
+    - name: hacking-implant-manager
+      location: gameplay-service-go (модуль hacking-implant)
+      port: 8083
+      responsibility: |
+        Управление имплантами для взлома:
+        - Проверка наличия имплантов
+        - Применение эффектов имплантов
+        - Управление имплантами для взлома
+      endpoints:
+        - GET /api/v1/gameplay/hacking/implants/{characterId} - список имплантов
+        - POST /api/v1/gameplay/hacking/implants/{characterId}/activate - активация импланта
+        - GET /api/v1/gameplay/hacking/implants/{characterId}/effects - эффекты имплантов
+
+    - name: hacking-gadget-manager
+      location: gameplay-service-go (модуль hacking-gadget)
+      port: 8083
+      responsibility: |
+        Управление гаджетами для взлома:
+        - Проверка наличия гаджетов
+        - Применение эффектов гаджетов
+        - Управление гаджетами для взлома
+      endpoints:
+        - GET /api/v1/gameplay/hacking/gadgets/{characterId} - список гаджетов
+        - POST /api/v1/gameplay/hacking/gadgets/{characterId}/use - использование гаджета
+        - GET /api/v1/gameplay/hacking/gadgets/{characterId}/effects - эффекты гаджетов
+
+    - name: hacking-process-manager
+      location: gameplay-service-go (модуль hacking-process)
+      port: 8083
+      responsibility: |
+        Процесс взлома:
+        - Управление процессом взлома
+        - Обработка шагов взлома
+        - Управление сложностью взлома
+        - Обработка ошибок взлома
+      endpoints:
+        - POST /api/v1/gameplay/hacking/{hackId}/process/step - выполнение шага
+        - GET /api/v1/gameplay/hacking/{hackId}/process/status - статус процесса
+        - POST /api/v1/gameplay/hacking/{hackId}/process/retry - повторная попытка
+
+    - name: hacking-result-manager
+      location: gameplay-service-go (модуль hacking-result)
+      port: 8083
+      responsibility: |
+        Результаты взлома:
+        - Обработка результатов взлома
+        - Применение эффектов взлома
+        - Управление последствиями взлома
+      endpoints:
+        - GET /api/v1/gameplay/hacking/{hackId}/result - результат взлома
+        - POST /api/v1/gameplay/hacking/{hackId}/result/apply - применение результата
+
+  integrations:
+    character_service: |
+      - Проверка атрибута интеллект
+      - Применение эффектов взлома
+
+    inventory_service: |
+      - Проверка наличия имплантов и гаджетов
+      - Использование гаджетов
+
+    device_service: |
+      - Взлом устройств
+      - Доступ к устройствам после взлома
+
+    cyberspace_service: |
+      - Взлом через киберпространство
+      - Навигация в киберпространстве
+
+  technical_tasks:
+    phase_1:
+      name: Hacking Service Core
+      tasks:
+        - Реализация Hacking Service
+        - Инициализация процесса взлома
+        - Управление процессом взлома
+      estimated_effort: 4 days
+
+    phase_2:
+      name: Hacking Attribute Checker
+      tasks:
+        - Реализация Hacking Attribute Checker
+        - Проверка атрибута интеллект
+      estimated_effort: 2 days
+
+    phase_3:
+      name: Hacking Implant Manager
+      tasks:
+        - Реализация Hacking Implant Manager
+        - Управление имплантами
+      estimated_effort: 3 days
+
+    phase_4:
+      name: Hacking Gadget Manager
+      tasks:
+        - Реализация Hacking Gadget Manager
+        - Управление гаджетами
+      estimated_effort: 3 days
+
+    phase_5:
+      name: Hacking Process Manager
+      tasks:
+        - Реализация Hacking Process Manager
+        - Процесс взлома
+      estimated_effort: 4 days
+
+    phase_6:
+      name: Hacking Result Manager
+      tasks:
+        - Реализация Hacking Result Manager
+        - Обработка результатов
+      estimated_effort: 3 days
+
+    phase_7:
+      name: Интеграции
+      tasks:
+        - Интеграция с Character Service
+        - Интеграция с Inventory Service
+        - Интеграция с Device Service
+        - Интеграция с Cyberspace Service
+        - WebSocket каналы
+      estimated_effort: 3 days
+
+    total_estimated_effort: 22 days
+

@@ -45,3 +45,5 @@ func (h *CompanionHandlers) GetCompanionProgression(w http.ResponseWriter, r *ht
 
 
 
+
+

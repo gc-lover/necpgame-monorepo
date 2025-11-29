@@ -233,3 +233,8 @@ kubectl get services -n necpgame
 
 Манифесты готовы для использования с ArgoCD (см. `infrastructure/argocd/app-necpgame.yaml`).
 
+## Дополнительная документация
+
+- `DEPLOYMENT.md` - Полное руководство по деплою (включая GitHub Actions и ArgoCD)
+- `SECRETS_SETUP.md` - Настройка секретов
+

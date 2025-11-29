@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Penalties Service API
+  description: API для управления наказаниями за нарушения античита
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Penalties
+    description: Управление наказаниями
+
+paths:
+  /anti-cheat/penalties/apply:
+    post:
+      tags:
+        - Penalties
+      summary: Применить наказание
+      description: |
+        Применяет наказание к игроку за нарушения античита.
+        Поддерживает различные типы наказаний: предупреждение, временный бан, постоянный бан, откат.
+      operationId: applyPenalty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyPenaltyRequest'
+      responses:
+        '201':
+          description: Наказание применено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Penalty'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/penalties/{player_id}:
+    get:
+      tags:
+        - Penalties
+      summary: Получить наказания игрока
+      description: Возвращает список наказаний для указанного игрока с фильтрацией по активности.
+      operationId: getPlayerPenalties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по активности наказания
+          example: true
+      responses:
+        '200':
+          description: Наказания игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerPenaltiesResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /anti-cheat/penalties/revoke:
+    post:
+      tags:
+        - Penalties
+      summary: Отменить наказание
+      description: Отменяет активное наказание для игрока.
+      operationId: revokePenalty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokePenaltyRequest'
+      responses:
+        '200':
+          description: Наказание отменено
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    example: "revoked"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    ApplyPenaltyRequest:
+      type: object
+      required:
+        - player_id
+        - penalty_type
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        penalty_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
+          description: Тип наказания
+          example: "TEMPORARY_BAN"
+        reason:
+          type: string
+          description: Причина наказания
+          example: "Multiple speed hack violations"
+        duration_seconds:
+          type: integer
+          minimum: 1
+          description: Длительность для TEMPORARY_BAN в секундах
+          example: 604800
+        violation_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Связанные нарушения
+          example: ["550e8400-e29b-41d4-a716-446655440001"]
+
+    Penalty:
+      type: object
+      required:
+        - id
+        - player_id
+        - penalty_type
+        - is_active
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор наказания
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        player_id:
+          type: string
+          format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        penalty_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
+          description: Тип наказания
+          example: "TEMPORARY_BAN"
+        reason:
+          type: string
+          description: Причина наказания
+          example: "Multiple speed hack violations"
+        duration_seconds:
+          type: integer
+          nullable: true
+          description: Длительность в секундах (для TEMPORARY_BAN)
+          example: 604800
+        applied_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: Идентификатор администратора, применившего наказание
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        is_active:
+          type: boolean
+          description: Активно ли наказание
+          example: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время истечения наказания
+          example: "2025-12-06T10:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания наказания
+          example: "2025-11-29T10:00:00Z"
+
+    PlayerPenaltiesResponse:
+      type: object
+      required:
+        - penalties
+        - total
+      properties:
+        penalties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Penalty'
+          description: Список наказаний
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество наказаний
+          example: 3
+
+    RevokePenaltyRequest:
+      type: object
+      required:
+        - penalty_id
+      properties:
+        penalty_id:
+          type: string
+          format: uuid
+          description: Идентификатор наказания
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        reason:
+          type: string
+          description: Причина отмены наказания
+          example: "False positive detected"
+
+security:
+  - BearerAuth: []
+
+
+

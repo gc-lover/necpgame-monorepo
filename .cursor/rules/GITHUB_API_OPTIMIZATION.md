@@ -294,10 +294,10 @@ const issues = result.items;
 
 ## Паттерны для агентов
 
-### Content Writer: Массовая передача в QA
+### Content Writer: Завершение работы (контент готов)
 
 ```javascript
-async function transferToQA(issueNumbers) {
+async function completeContentQuest(issueNumbers) {
   const batchSize = 5;
   const delayBetweenRequests = 300; // ms
   const delayBetweenBatches = 1000; // ms
@@ -310,11 +310,11 @@ async function transferToQA(issueNumbers) {
       // Читаем Issue (используем кэш если возможно)
       const issue = await getCachedIssue(issueNum);
       
-      // Обновляем метки
+      // Обновляем метки - передаем в release
       const newLabels = issue.labels
         .map(l => l.name)
-        .filter(l => l !== 'agent:content-writer')
-        .concat(['agent:qa', 'stage:testing']);
+        .filter(l => l !== 'agent:content-writer' && l !== 'stage:content')
+        .concat(['agent:release', 'stage:release']);
       
       await mcp_github_issue_write({
         method: 'update',
