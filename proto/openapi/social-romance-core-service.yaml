@@ -1,0 +1,425 @@
+openapi: 3.0.3
+info:
+  title: Social Romance Core Service API
+  description: |
+    API для управления многотипной романтикой (общие endpoints и player-player романтика).
+    
+    **Основные возможности:**
+    - Управление типами романтики
+    - Управление романтическими отношениями игрока
+    - Романтика между игроками (player-player)
+    - Расчёт совместимости
+    - Управление приватностью
+    - Уведомления о романтике
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necpgame.com/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Romance Types
+    description: Управление типами романтики
+  - name: Player-Player Romance
+    description: Романтика между игроками
+  - name: Compatibility
+    description: Расчёт совместимости
+  - name: Privacy
+    description: Управление приватностью
+  - name: Notifications
+    description: Уведомления о романтике
+
+paths:
+  /social/romance/types:
+    get:
+      tags:
+        - Romance Types
+      summary: Получить список типов романтики
+      description: Возвращает список всех доступных типов романтических отношений.
+      operationId: getRomanceTypes
+      responses:
+        '200':
+          description: Список типов романтики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  types:
+                    type: array
+                    items:
+                      $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceType'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/{player_id}/relationships:
+    get:
+      tags:
+        - Romance Types
+      summary: Получить все романтические отношения игрока
+      description: Возвращает список всех романтических отношений игрока всех типов.
+      operationId: getPlayerRomanceRelationships
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список романтических отношений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  relationships:
+                    type: array
+                    items:
+                      $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/{player_id}/relationships/{type}:
+    get:
+      tags:
+        - Romance Types
+      summary: Получить отношения игрока по типу
+      description: Возвращает список романтических отношений игрока указанного типа.
+      operationId: getPlayerRomanceRelationshipsByType
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - player_player
+              - player_npc
+              - player_digital_avatar
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список отношений по типу
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  relationships:
+                    type: array
+                    items:
+                      $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+                  total:
+                    type: integer
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-player/initiate:
+    post:
+      tags:
+        - Player-Player Romance
+      summary: Инициировать романтику игрок-игрок
+      description: Инициирует романтическое отношение между двумя игроками. Требуется взаимное согласие.
+      operationId: initiatePlayerPlayerRomance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/InitiatePlayerPlayerRomanceRequest'
+      responses:
+        '200':
+          description: Романтика инициирована
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-player/accept:
+    post:
+      tags:
+        - Player-Player Romance
+      summary: Принять предложение романтики
+      description: Принимает предложение романтики от другого игрока.
+      operationId: acceptPlayerPlayerRomance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/AcceptRomanceRequest'
+      responses:
+        '200':
+          description: Предложение принято
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-player/reject:
+    post:
+      tags:
+        - Player-Player Romance
+      summary: Отклонить предложение романтики
+      description: Отклоняет предложение романтики от другого игрока.
+      operationId: rejectPlayerPlayerRomance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/RejectRomanceRequest'
+      responses:
+        '200':
+          description: Предложение отклонено
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-player/breakup:
+    post:
+      tags:
+        - Player-Player Romance
+      summary: Разорвать романтические отношения
+      description: Разрывает романтические отношения между двумя игроками.
+      operationId: breakupPlayerPlayerRomance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/BreakupRomanceRequest'
+      responses:
+        '200':
+          description: Отношения разорваны
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-player/relationship/{player_id1}/{player_id2}:
+    get:
+      tags:
+        - Player-Player Romance
+      summary: Получить отношения между игроками
+      description: Возвращает информацию о романтических отношениях между двумя игроками.
+      operationId: getPlayerPlayerRomance
+      parameters:
+        - name: player_id1
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: player_id2
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Отношения между игроками
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/compatibility/{player_id}/{target_id}:
+    get:
+      tags:
+        - Compatibility
+      summary: Получить совместимость
+      description: Рассчитывает и возвращает совместимость между игроком и целью (игрок, NPC или цифровой аватар).
+      operationId: getRomanceCompatibility
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: target_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Совместимость рассчитана
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/CompatibilityResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/privacy/update:
+    post:
+      tags:
+        - Privacy
+      summary: Обновить настройки приватности
+      description: Обновляет настройки приватности для романтических отношений.
+      operationId: updateRomancePrivacy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/UpdatePrivacyRequest'
+      responses:
+        '200':
+          description: Настройки приватности обновлены
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/PrivacySettings'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/notifications/{player_id}:
+    get:
+      tags:
+        - Notifications
+      summary: Получить уведомления о романтике
+      description: Возвращает список уведомлений о романтике для игрока.
+      operationId: getRomanceNotifications
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceNotification'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: 'common.yaml#/components/responses/Conflict'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+security:
+  - BearerAuth: []
+

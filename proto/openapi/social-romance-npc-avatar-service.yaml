@@ -1,0 +1,250 @@
+openapi: 3.0.3
+info:
+  title: Social Romance NPC & Digital Avatar Service API
+  description: |
+    API для управления романтикой с NPC и цифровыми аватарами.
+    
+    **Основные возможности:**
+    - Романтика между игроком и NPC (player-npc)
+    - Романтика между игроком и цифровыми аватарами (player-digital-avatar)
+    - Управление романтическими событиями с NPC
+    - Взаимодействие с цифровыми аватарами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necpgame.com/api/v1
+    description: Social Service (продакшн)
+
+tags:
+  - name: Player-NPC Romance
+    description: Романтика между игроком и NPC
+  - name: Player-Digital Avatar Romance
+    description: Романтика между игроком и цифровым аватаром
+
+paths:
+  /social/romance/player-npc/initiate:
+    post:
+      tags:
+        - Player-NPC Romance
+      summary: Инициировать романтику с NPC
+      description: Инициирует романтическое отношение между игроком и NPC.
+      operationId: initiatePlayerNPCRomance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/InitiatePlayerNPCRomanceRequest'
+      responses:
+        '200':
+          description: Романтика с NPC инициирована
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-npc/relationship/{player_id}/{npc_id}:
+    get:
+      tags:
+        - Player-NPC Romance
+      summary: Получить отношения с NPC
+      description: Возвращает информацию о романтических отношениях между игроком и NPC.
+      operationId: getPlayerNPCRomance
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Отношения с NPC
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-npc/relationship/{player_id}/{npc_id}/event:
+    post:
+      tags:
+        - Player-NPC Romance
+      summary: Запустить романтическое событие
+      description: Запускает романтическое событие между игроком и NPC.
+      operationId: triggerPlayerNPCRomanceEvent
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/TriggerRomanceEventRequest'
+      responses:
+        '200':
+          description: Событие запущено
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceEventResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-digital-avatar/initiate:
+    post:
+      tags:
+        - Player-Digital Avatar Romance
+      summary: Инициировать романтику с цифровым аватаром
+      description: Инициирует романтическое отношение между игроком и цифровым аватаром. Требуется подключение к NET.
+      operationId: initiatePlayerDigitalAvatarRomance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/InitiatePlayerDigitalAvatarRomanceRequest'
+      responses:
+        '200':
+          description: Романтика с цифровым аватаром инициирована
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-digital-avatar/relationship/{player_id}/{avatar_id}:
+    get:
+      tags:
+        - Player-Digital Avatar Romance
+      summary: Получить отношения с цифровым аватаром
+      description: Возвращает информацию о романтических отношениях между игроком и цифровым аватаром.
+      operationId: getPlayerDigitalAvatarRomance
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: avatar_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Отношения с цифровым аватаром
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/RomanceRelationship'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /social/romance/player-digital-avatar/relationship/{player_id}/{avatar_id}/interact:
+    post:
+      tags:
+        - Player-Digital Avatar Romance
+      summary: Взаимодействовать с цифровым аватаром
+      description: Выполняет взаимодействие с цифровым аватаром для развития отношений.
+      operationId: interactWithDigitalAvatar
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: avatar_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-romance-schemas.yaml#/components/schemas/DigitalAvatarInteractionRequest'
+      responses:
+        '200':
+          description: Взаимодействие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: 'social-romance-schemas.yaml#/components/schemas/DigitalAvatarInteractionResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+security:
+  - BearerAuth: []
+
