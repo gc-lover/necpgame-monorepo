@@ -22,8 +22,17 @@ echo ""
 FAILED_FILES=()
 CHECKED_COUNT=0
 
-while IFS= read -r file; do
-  if [ ! -f "$file" ]; then
+TEMP_FILE=$(mktemp 2>/dev/null || echo "/tmp/git-diff-cached-$$")
+trap "rm -f '$TEMP_FILE'" EXIT INT TERM
+
+if ! git diff --cached --name-only --diff-filter=ACMRT > "$TEMP_FILE" 2>/dev/null; then
+  echo "Warning: Failed to get staged files, skipping pre-commit hook"
+  rm -f "$TEMP_FILE"
+  exit 0
+fi
+
+while IFS= read -r file || [ -n "$file" ]; do
+  if [ -z "$file" ] || [ ! -f "$file" ]; then
     continue
   fi
   
@@ -45,7 +54,9 @@ while IFS= read -r file; do
   else
     echo "OK $file has $LINES lines (OK)"
   fi
-done < <(git diff --cached --name-only --diff-filter=ACMRT)
+done < "$TEMP_FILE"
+
+rm -f "$TEMP_FILE"
 
 echo ""
 echo "Files checked: $CHECKED_COUNT"
