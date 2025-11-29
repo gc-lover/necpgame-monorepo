@@ -1,11 +1,11 @@
 metadata:
   id: canon-quest-sao-paulo-feijoada
-  title: 'Сан-Паулу — Фейжоада'
+  title: 'Сан-Паулу — Рецепт традиций'
   document_type: canon
   category: quest
   status: approved
-  version: '1.1.0'
-  last_updated: 2025-11-11T15:49:30Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: true
   concept_reviewed_at: 2025-11-11T15:49:30Z
   owners:
@@ -20,9 +20,13 @@ metadata:
     - community
     - history
   related_systems:
-    - food-system
-    - mood-system
-    - memory-system
+    - cooking-system
+    - business-management-system
+    - crowdfunding-system
+    - dialogue-system
+    - reputation-system
+    - world-state-system
+    - quest-engine
   related_documents:
     - id: canon-quest-sao-paulo-street-art
       relation: complements
@@ -46,49 +50,135 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: "Кулинарная традиция фейжоады была вне базы знаний и не учитывала системные эффекты еды и памяти."
-  goal: "Описать субботний ритуал фейжоады в YAML, выделив ингредиенты, исторический контекст и игровые эффекты."
-  essence: "Игрок посещает субботний ресторан Сан-Паулу, дегустирует фейжоаду и узнаёт о её корнях в истории рабства."
+  problem: "Квест семейной драмы вокруг ресторана feijoada требует детализации business management mechanics, family drama dialogue trees и crowdfunding system."
+  goal: "Создать полноценный контентный квест с cooking mini-game, моральными выборами о традиции vs модернизации и семейной драмой."
+  essence: "Игрок должен помочь семье Silva решить судьбу легендарного ресторана feijoada: продать рецепт BrasilFood (700K, традиция умирает), модернизировать (crowdfunding, delivery), или открыть рецепт публично (open source legacy)."
   key_points:
-    - Указаны этапы приготовления/дегустации и культурного обмена.
-    - Связи с food-, mood- и memory-system дают баффы и коллекции воспоминаний.
-    - Награды включают титул «Фейжоада Мастер» и уникальный гастрономический буст.
+    - Семейная драма: Дона Мария (72 года) хранит традицию, внук Лукас хочет продать, дочь Карла хочет модернизировать.
+    - Cooking mini-game для оценки качества feijoada.
+    - Три стратегии: качество/скорость/история.
+    - Crowdfunding system для модернизации.
+    - Моральный выбор между деньгами, традицией и инновациями.
+quest_definition:
+  quest_type: side
+  level_min: 10
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: try_both_feijoada
+      text: "Попробовать обе feijoada (Silva vs BrasilFood) и оценить качество"
+      type: interact
+      target: restaurant_silva
+      count: 1
+      optional: false
+    - id: evaluate_strategies
+      text: "Оценить три стратегии: качество/скорость/история"
+      type: choice
+      target: strategy_evaluation
+      count: 1
+      optional: false
+    - id: make_final_decision
+      text: "Выбрать путь: продать рецепт/модернизировать/открыть публично"
+      type: choice
+      target: final_decision
+      count: 1
+      optional: false
+  rewards:
+    experience: 2000
+    money: 0
+    items:
+      - item_id: achievement_legacy_creator
+        quantity: 1
+    reputation: {}
+    unlocks:
+      - culinary_quests
+      - business_management_system
+  branches:
+    - branch_id: sell_recipe
+      description: "Продать рецепт BrasilFood (700K, традиция умирает)"
+      consequences:
+        money: 700000
+        world_state:
+          tradition_lost: true
+          restaurant_closed: true
+        reputation:
+          Corporations: +20
+          Traditionalists: -40
+        experience: 2000
+    - branch_id: modernize_restaurant
+      description: "Модернизировать (crowdfunding, delivery, соцсети)"
+      consequences:
+        money: -50000
+        world_state:
+          restaurant_modernized: true
+          tradition_preserved: true
+        reputation:
+          Entrepreneurs: +30
+          Traditionalists: +10
+        experience: 3000
+        skill_requirement:
+          business: 0.6
+    - branch_id: open_source_recipe
+      description: "Открыть рецепт публично (open source legacy, radical choice)"
+      consequences:
+        world_state:
+          recipe_open_source: true
+          legacy_preserved: true
+          tradition_shared: true
+        reputation:
+          Open_Source_Community: +50
+          Traditionalists: -20
+          Food_Culture: +30
+        experience: 5000
 content:
   sections:
     - id: quest_profile
       title: 'Параметры квеста'
       body: |
-        Тип: culinary. Сложность: easy. Формат: solo. Длительность: 1–2 часа.
-        Награды: 1 000 XP, -25 едди, бафф «Сыт и доволен» +40% HP на 12 часов, титул «Фейжоада Мастер».
+        Тип: side quest (family drama, business management). Сложность: medium. Формат: solo. Длительность: 2-3 часа.
+        Награды: 2 000-5 000 XP (зависит от выбора), ачивка «Создатель наследия» (за open source), репутация с фракциями, разблокировка culinary quests.
       mechanics_links: []
       assets: []
     - id: stages
-      title: 'Этапы'
+      title: 'Этапы квеста'
       body: |
-        1. Забронировать столик на субботу и собрать компанию.
-        2. Изучить ингредиенты: чёрные бобы, свинина, фарофа, рис, апельсины.
-        3. Провести дегустацию, рассказав историю происхождения блюда.
-        4. Завершить вечер caipirinha и обсудить роль фейжоады в культуре.
+        1. Попробовать обе feijoada (Restaurante Silva vs BrasilFood) и оценить качество через cooking mini-game.
+        2. Оценить три стратегии: качество (традиция), скорость (модернизация), история (наследие).
+        3. Встретиться с семьей Silva: Дона Мария (традиция), Лукас (продажа), Карла (модернизация).
+        4. Принять решение: продать рецепт BrasilFood (700K, традиция умирает), модернизировать (crowdfunding, delivery, соцсети), или открыть рецепт публично (open source legacy).
       mechanics_links: []
       assets: []
     - id: systems_hooks
       title: 'Системные крючки'
       body: |
-        food-system рассчитывает гастрономический бафф, mood-system повышает настроение и социальные связи,
-        memory-system сохраняет фото/запись, добавляя фейжоаду в коллекцию «вкусы мегаполисов».
+        cooking-system обрабатывает mini-game для оценки качества feijoada, business-management-system управляет решениями о модернизации, crowdfunding-system обрабатывает сбор средств, dialogue-system управляет семейными диалогами, reputation-system обновляет отношения с Traditionalists/Corporations/Entrepreneurs, world-state-system фиксирует судьбу ресторана и рецепта.
       mechanics_links: []
       assets: []
     - id: regional_details
       title: 'Региональные детали'
       body: |
-        Зафиксированы субботняя традиция, происхождение блюда из остатков мяса, обязательный гарнир (апельсины, рис, фарофа)
-        и культурные ритуалы общения в ресторанах Сан-Паулу.
+        Restaurante Silva работает с 1952 года. Лучшая feijoada в городе. Секретный рецепт трёх поколений. Дона Мария (72 года) хранит традицию. Внук Лукас хочет продать за 500K реалов и заняться стартапами. Дочь Карла хочет модернизировать. Семья разваливается. BrasilFood предлагает 700K за рецепт. Feijoada — национальное блюдо Бразилии с корнями в рабском прошлом.
+      mechanics_links: []
+      assets: []
+    - id: family_drama
+      title: 'Семейная драма'
+      body: |
+        Дона Мария: "Рецепт передавался три поколения. Это наша душа." (традиция превыше всего)
+        Лукас: "500K реалов — это шанс начать новую жизнь. Ресторан умирает." (прагматизм)
+        Карла: "Мы можем модернизировать, сохранив традицию. Delivery, соцсети, crowdfunding." (компромисс)
+        Игрок должен помочь семье найти решение, которое либо сохранит традицию, либо принесет деньги, либо создаст новое наследие.
       mechanics_links: []
       assets: []
     - id: rewards
       title: 'Награды и последствия'
       body: |
-        1 000 XP, -25 едди, бафф «Сыт и доволен» (+40% HP, 12 ч), титул «Фейжоада Мастер», запись в гастрономическом архиве.
+        Продать рецепт: 700K эдди, 2 000 XP, репутация Corporations +20, Traditionalists -40. Традиция умирает, ресторан закрывается.
+        Модернизировать: -50K эдди (инвестиции), 3 000 XP, репутация Entrepreneurs +30, Traditionalists +10. Ресторан модернизируется, традиция сохраняется. Требует business skill 0.6.
+        Open source: 5 000 XP, ачивка «Создатель наследия», репутация Open_Source_Community +50, Food_Culture +30. Рецепт становится публичным достоянием, наследие сохраняется навсегда.
       mechanics_links: []
       assets: []
 appendix:
@@ -100,12 +190,16 @@ appendix:
       link: https://www.estado.com.br
   decisions: []
 implementation:
-  github_issue: 365
+  github_issue: 249
   needs_task: false
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции "Рецепт традиций". Добавлены cooking mini-game, business management mechanics, family drama dialogue trees и crowdfunding system. Интеграция с системами кулинарии, бизнеса и репутации.'
   - version: '1.1.0'
     date: 2025-11-11
     author: narrative_team
