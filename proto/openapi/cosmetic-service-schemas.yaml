@@ -1,0 +1,411 @@
+openapi: 3.0.3
+info:
+  title: Cosmetic Service Schemas
+  description: Схемы данных для Cosmetic Service API
+  version: 1.0.0
+
+components:
+  schemas:
+    CosmeticItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 255
+        category:
+          type: string
+          enum:
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - EMOTE
+            - TITLE
+            - NAME_PLATE
+        cosmetic_type:
+          type: string
+          enum:
+            - SKIN
+            - EMOTE
+            - TITLE
+            - NAME_PLATE
+        rarity:
+          type: string
+          enum:
+            - COMMON
+            - UNCOMMON
+            - RARE
+            - EPIC
+            - LEGENDARY
+            - EXOTIC
+        description:
+          type: string
+        cost:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+        is_exclusive:
+          type: boolean
+          default: false
+        source:
+          type: string
+          maxLength: 100
+        visual_effects:
+          type: object
+          additionalProperties: true
+          nullable: true
+        assets:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PurchaseCosmeticRequest:
+      type: object
+      required:
+        - player_id
+        - cosmetic_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        cosmetic_id:
+          type: string
+          format: uuid
+
+    PlayerCosmetic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        cosmetic_item_id:
+          type: string
+          format: uuid
+        cosmetic_item:
+          $ref: '#/components/schemas/CosmeticItem'
+        source:
+          type: string
+          maxLength: 100
+        obtained_at:
+          type: string
+          format: date-time
+        times_used:
+          type: integer
+          default: 0
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    EquippedCosmetics:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        character_skin_id:
+          type: string
+          format: uuid
+          nullable: true
+        character_skin:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        weapon_skin_id:
+          type: string
+          format: uuid
+          nullable: true
+        weapon_skin:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        title_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        name_plate_id:
+          type: string
+          format: uuid
+          nullable: true
+        name_plate:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        emote_1_id:
+          type: string
+          format: uuid
+          nullable: true
+        emote_1:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        emote_2_id:
+          type: string
+          format: uuid
+          nullable: true
+        emote_2:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        emote_3_id:
+          type: string
+          format: uuid
+          nullable: true
+        emote_3:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        emote_4_id:
+          type: string
+          format: uuid
+          nullable: true
+        emote_4:
+          $ref: '#/components/schemas/CosmeticItem'
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+
+    EquipCosmeticRequest:
+      type: object
+      required:
+        - player_id
+        - slot
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+          enum:
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - TITLE
+            - NAME_PLATE
+            - EMOTE_1
+            - EMOTE_2
+            - EMOTE_3
+            - EMOTE_4
+
+    UnequipCosmeticRequest:
+      type: object
+      required:
+        - player_id
+        - slot
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+          enum:
+            - CHARACTER_SKIN
+            - WEAPON_SKIN
+            - TITLE
+            - NAME_PLATE
+            - EMOTE_1
+            - EMOTE_2
+            - EMOTE_3
+            - EMOTE_4
+
+    CosmeticCatalogResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CosmeticItem'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    CosmeticCategoriesResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+                enum:
+                  - CHARACTER_SKIN
+                  - WEAPON_SKIN
+                  - EMOTE
+                  - TITLE
+                  - NAME_PLATE
+              count:
+                type: integer
+
+    DailyShopResponse:
+      type: object
+      properties:
+        rotation_id:
+          type: string
+          format: uuid
+        rotation_date:
+          type: string
+          format: date
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CosmeticItem'
+        next_rotation_at:
+          type: string
+          format: date-time
+
+    ShopHistoryResponse:
+      type: object
+      properties:
+        rotations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              rotation_date:
+                type: string
+                format: date
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CosmeticItem'
+              created_at:
+                type: string
+                format: date-time
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    PurchaseHistoryResponse:
+      type: object
+      properties:
+        purchases:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              player_id:
+                type: string
+                format: uuid
+              cosmetic_item_id:
+                type: string
+                format: uuid
+              cosmetic_item:
+                $ref: '#/components/schemas/CosmeticItem'
+              cost:
+                type: integer
+                format: int64
+              currency_type:
+                type: string
+              purchased_at:
+                type: string
+                format: date-time
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    CosmeticInventoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        cosmetics:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerCosmetic'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    OwnershipStatusResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        cosmetic_id:
+          type: string
+          format: uuid
+        owned:
+          type: boolean
+        player_cosmetic:
+          $ref: '#/components/schemas/PlayerCosmetic'
+          nullable: true
+
+    CosmeticEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - cosmetic:purchased
+            - cosmetic:equipped
+            - cosmetic:unequipped
+            - cosmetic:shop-rotated
+        cosmetic_id:
+          type: string
+          format: uuid
+          nullable: true
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    CosmeticEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CosmeticEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+

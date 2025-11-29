@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +45,85 @@ summary:
     - Вовлечение королевской семьи повышает ставки.
     - Ветка успеха/частичного успеха/провала с серьёзными последствиями.
     - Событие влияет на геополитику и атмосферу города.
+quest_definition:
+  quest_type: main
+  level_min: 9
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: receive_intel
+      text: "Получить информацию от спецслужб, проанализировать план террористов и подготовить снаряжение"
+      type: interact
+      target: intelligence_briefing_room
+      count: 1
+      optional: false
+    - id: detect_bombs
+      text: "Обнаружить пять взрывных устройств на мосту (DC Восприятие 20), координируя команду"
+      type: investigate
+      target: london_bridge_bombs
+      count: 5
+      optional: false
+    - id: defuse_or_evacuate
+      text: "Обезвредить бомбы или эвакуировать толпу в зависимости от навыков"
+      type: interact
+      target: bomb_disposal_station
+      count: 5
+      optional: false
+    - id: fight_terrorists
+      text: "Сразиться с террористами, защитить королевскую охрану и VIP"
+      type: combat
+      target: terrorist_encounter
+      count: 1
+      optional: false
+    - id: determine_outcome
+      text: "Определить исход операции: успех, частичный успех или провал"
+      type: interact
+      target: operation_debriefing
+      count: 1
+      optional: false
+  rewards:
+    experience: 8000
+    currency: 100000
+    items:
+      - id: knight_of_london_title
+        name: "Титул «Рыцарь Лондона»"
+        quantity: 1
+    reputation:
+      london_monarchists: 15
+    flags:
+      - london_bridge_operation_completed
+  branches:
+    - id: full_success
+      condition: "all_bombs_defused == true AND terrorists_defeated == true"
+      objectives:
+        - id: celebrate_success
+          text: "Отпраздновать полный успех операции"
+          type: interact
+          target: success_celebration
+          count: 1
+          optional: false
+    - id: partial_success
+      condition: "bombs_defused >= 3 AND bridge_damaged == true"
+      objectives:
+        - id: assess_damage
+          text: "Оценить ущерб мосту и организовать восстановление"
+          type: interact
+          target: damage_assessment
+          count: 1
+          optional: false
+    - id: failure
+      condition: "bombs_defused < 3 OR bridge_destroyed == true"
+      objectives:
+        - id: deal_with_consequences
+          text: "Справиться с последствиями провала операции"
+          type: interact
+          target: failure_consequences
+          count: 1
+          optional: false
 content:
   sections:
     - id: intel
@@ -100,6 +179,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики кризисного управления и кооперативной игры.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

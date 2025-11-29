@@ -4,8 +4,8 @@ metadata:
   document_type: canon
   category: timeline-quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-13T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -45,6 +45,83 @@ summary:
     - Напряжение между общественной моралью и личной выгодой.
     - Ветки исходов влияют на монархистов, журналистов и корпорации.
     - Связь с квестом «Королевский ИИ» и политическими сюжетами.
+quest_definition:
+  quest_type: main
+  level_min: 8
+  level_max: null
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation: {}
+    required_items: []
+  objectives:
+    - id: receive_anonymous_tip
+      text: "Получить зашифрованное сообщение, узнать о торге секретами и собрать сведения об участниках"
+      type: interact
+      target: encrypted_message_system
+      count: 1
+      optional: false
+    - id: infiltrate_palace
+      text: "Проникнуть во дворец: социальная инженерия, стелс или под видом сервиса"
+      type: infiltrate
+      target: buckingham_palace
+      count: 1
+      optional: false
+    - id: collect_evidence
+      text: "Собрать доказательства: взлом личных файлов, запись встреч, анализ банковских транзакций"
+      type: investigate
+      target: palace_secret_files
+      count: 5
+      optional: false
+    - id: confront_traitor
+      text: "Выяснить, кто из семьи виновен, и столкнуться с ним в диалоге"
+      type: interact
+      target: traitor_confrontation
+      count: 1
+      optional: false
+    - id: make_final_decision
+      text: "Принять финальное решение: опубликовать, шантажировать или сообщить короне"
+      type: interact
+      target: scandal_resolution
+      count: 1
+      optional: false
+  rewards:
+    experience: 4000
+    currency: 0
+    items: []
+    reputation:
+      london_monarchists: 0
+      london_journalists: 0
+    flags:
+      - buckingham_scandal_completed
+  branches:
+    - id: publish_scandal
+      condition: "player_morality_score >= 5"
+      objectives:
+        - id: expose_to_media
+          text: "Опубликовать скандал в медиа"
+          type: interact
+          target: media_publication
+          count: 1
+          optional: false
+    - id: blackmail_path
+      condition: "player_morality_score < 0"
+      objectives:
+        - id: blackmail_royal_family
+          text: "Шантажировать королевскую семью за 200 000 еддис"
+          type: interact
+          target: blackmail_negotiation
+          count: 1
+          optional: false
+    - id: loyalty_to_crown
+      condition: "player_reputation_london_monarchists >= 10"
+      objectives:
+        - id: report_to_crown
+          text: "Сообщить короне о предателе"
+          type: interact
+          target: crown_report
+          count: 1
+          optional: false
 content:
   sections:
     - id: tip
@@ -100,6 +177,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-11-29
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики шпионажа и политических интриг.'
   - version: '1.0.0'
     date: 2025-11-13
     author: concept_team

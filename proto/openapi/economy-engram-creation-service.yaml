@@ -1,0 +1,288 @@
+openapi: 3.0.3
+info:
+  title: Economy Engram Creation Service API
+  description: API для создания энграмм
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Engram Creation
+    description: Создание энграмм
+
+paths:
+  /economy/engrams/create:
+    post:
+      tags:
+        - Engram Creation
+      summary: Создать энграмму
+      operationId: createEngram
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEngramRequest"
+      responses:
+        "201":
+          description: Энграмма создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateEngramResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/engrams/create/cost:
+    get:
+      tags:
+        - Engram Creation
+      summary: Получить стоимость создания энграммы
+      operationId: getEngramCreationCost
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: chip_tier
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+          description: Тир чипа (1-5)
+        - $ref: "common.yaml#/components/parameters/CharacterId"
+      responses:
+        "200":
+          description: Стоимость создания
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngramCreationCost"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+  /economy/engrams/create/validate:
+    post:
+      tags:
+        - Engram Creation
+      summary: Валидировать условия создания энграммы
+      operationId: validateEngramCreation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateCreationRequest"
+      responses:
+        "200":
+          description: Результат валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateCreationResponse"
+        "400":
+          $ref: "common.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+        "500":
+          $ref: "common.yaml#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  schemas:
+    CreateEngramRequest:
+      type: object
+      required:
+        - character_id
+        - chip_tier
+        - attitude_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа, для которого создаётся энграмма
+        chip_tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир чипа Relic (1-5)
+          example: 3
+        attitude_type:
+          type: string
+          enum: [aggressive, neutral, friendly, subservient, custom]
+          description: Тип отношения энграммы к владельцу
+          example: "neutral"
+        custom_attitude_settings:
+          type: object
+          nullable: true
+          description: Кастомные настройки отношения (если attitude_type = custom)
+          additionalProperties: true
+        target_person_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID персонажа, с которого создаётся энграмма (для NPC)
+
+    CreateEngramResponse:
+      type: object
+      required:
+        - engram_id
+        - creation_id
+        - success
+        - creation_stage
+      properties:
+        engram_id:
+          type: string
+          format: uuid
+          description: ID созданной энграммы
+        creation_id:
+          type: string
+          format: uuid
+          description: ID процесса создания
+        success:
+          type: boolean
+          description: Успешно ли создана энграмма
+        creation_stage:
+          type: string
+          enum: [preparation, scanning, creation, configuration, saving, completed, failed]
+          description: Текущий этап создания
+        data_loss_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Процент потери данных при создании
+        is_complete:
+          type: boolean
+          description: Полная ли энграмма
+        creation_cost:
+          type: number
+          format: float
+          description: Стоимость создания
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+
+    EngramCreationCost:
+      type: object
+      required:
+        - chip_tier
+        - creation_cost_min
+        - creation_cost_max
+        - purchase_cost_multiplier
+      properties:
+        chip_tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир чипа
+        creation_cost_min:
+          type: number
+          format: float
+          description: Минимальная стоимость создания
+          example: 150000.0
+        creation_cost_max:
+          type: number
+          format: float
+          description: Максимальная стоимость создания
+          example: 250000.0
+        purchase_cost_multiplier:
+          type: number
+          format: float
+          description: Множитель для покупки готовой энграммы (×2-3)
+          example: 2.5
+        historical_multiplier:
+          type: number
+          format: float
+          nullable: true
+          description: Дополнительный множитель для исторических энграмм (×3-5)
+          example: 3.5
+        market_fluctuation:
+          type: number
+          format: float
+          description: Рыночные колебания (+20-50%)
+          example: 30.0
+
+    ValidateCreationRequest:
+      type: object
+      required:
+        - character_id
+        - chip_tier
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        chip_tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Тир чипа
+        target_person_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID персонажа для создания энграммы
+
+    ValidateCreationResponse:
+      type: object
+      required:
+        - is_valid
+      properties:
+        is_valid:
+          type: boolean
+          description: Валидны ли условия создания
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: Список ошибок валидации
+        requirements:
+          type: object
+          description: Требования для создания
+          properties:
+            technology_available:
+              type: boolean
+              description: Доступна ли технология (Soulkiller/Relic)
+            equipment_available:
+              type: boolean
+              description: Доступно ли оборудование
+            reputation_met:
+              type: boolean
+              description: Соответствует ли репутация требованиям
+            skills_met:
+              type: boolean
+              description: Соответствуют ли навыки требованиям
+            funds_available:
+              type: boolean
+              description: Достаточно ли средств
+        estimated_cost:
+          type: number
+          format: float
+          nullable: true
+          description: Ориентировочная стоимость
+
