@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Seasonal Challenges Service Schemas
+  description: Схемы данных для Seasonal Challenges Service API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: World Service (локальная разработка)
+
+paths: {}
+
+components:
+  schemas:
+    Season:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID сезона
+        name:
+          type: string
+          description: Название сезона
+        start_date:
+          type: string
+          format: date-time
+          description: Дата начала сезона
+        end_date:
+          type: string
+          format: date-time
+          description: Дата окончания сезона
+        status:
+          type: string
+          enum:
+            - upcoming
+            - active
+            - ended
+          description: Статус сезона
+        seasonal_affix_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID сезонного аффикса
+        theme:
+          type: string
+          description: Тема сезона
+        description:
+          type: string
+          description: Описание сезона
+
+    SeasonalChallenge:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID испытания
+        season_id:
+          type: string
+          format: uuid
+          description: ID сезона
+        challenge_type:
+          type: string
+          enum:
+            - weekly
+            - event
+            - seasonal
+            - raid
+          description: Тип испытания
+        name:
+          type: string
+          description: Название испытания
+        description:
+          type: string
+          description: Описание испытания
+        content_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID контента (рейд, событие и т.д.)
+        conditions:
+          type: object
+          description: Условия выполнения (JSON)
+        rewards:
+          type: object
+          description: Награды (JSON)
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время истечения испытания
+
+    PlayerSeasonalChallenge:
+      type: object
+      properties:
+        challenge:
+          $ref: '#/components/schemas/SeasonalChallenge'
+        progress:
+          type: integer
+          description: Прогресс выполнения (0-100)
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum:
+            - available
+            - in_progress
+            - completed
+            - expired
+          description: Статус испытания для игрока
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения
+
+    SeasonalReward:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID награды
+        season_id:
+          type: string
+          format: uuid
+          description: ID сезона
+        reward_type:
+          type: string
+          enum:
+            - currency
+            - item
+            - cosmetic
+            - title
+            - ability
+          description: Тип награды
+        reward_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID предмета/косметики/титула/способности
+        currency_cost:
+          type: integer
+          description: Стоимость в сезонной валюте
+          minimum: 0
+        name:
+          type: string
+          description: Название награды
+        description:
+          type: string
+          description: Описание награды
+        available:
+          type: boolean
+          description: Доступна ли награда
+        stock:
+          type: integer
+          nullable: true
+          description: Остаток (если ограничено)
+
+    ChallengeCompletionResult:
+      type: object
+      properties:
+        challenge_id:
+          type: string
+          format: uuid
+        completed:
+          type: boolean
+          description: Успешно ли завершено
+        currency_earned:
+          type: integer
+          description: Получено сезонной валюты
+          minimum: 0
+        rewards:
+          type: array
+          description: Полученные награды
+          items:
+            type: object
+            properties:
+              reward_type:
+                type: string
+              reward_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+        completed_at:
+          type: string
+          format: date-time
+
+    SeasonalCurrencyBalance:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        season_id:
+          type: string
+          format: uuid
+        currency_amount:
+          type: integer
+          description: Количество сезонной валюты
+          minimum: 0
+        max_currency:
+          type: integer
+          description: Максимальное количество валюты за сезон
+          minimum: 0
+          default: 10000
+        updated_at:
+          type: string
+          format: date-time
+
+    CurrencyExchangeRequest:
+      type: object
+      required:
+        - reward_id
+        - quantity
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          description: ID награды для обмена
+        quantity:
+          type: integer
+          description: Количество
+          minimum: 1
+          default: 1
+        season_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID сезона (если не указан, используется текущий сезон)
+
+    CurrencyExchangeResult:
+      type: object
+      properties:
+        exchange_id:
+          type: string
+          format: uuid
+        reward_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        currency_spent:
+          type: integer
+          description: Потрачено сезонной валюты
+        remaining_currency:
+          type: integer
+          description: Остаток сезонной валюты
+        reward_received:
+          type: object
+          description: Полученная награда
+          properties:
+            reward_type:
+              type: string
+            reward_id:
+              type: string
+              format: uuid
+            quantity:
+              type: integer
+        exchanged_at:
+          type: string
+          format: date-time
+

@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: Seasonal Challenges Service API
+  description: |
+    API для управления сезонными испытаниями в NECPGAME.
+    
+    **Основные возможности:**
+    - Управление сезонами
+    - Управление сезонными испытаниями
+    - Управление сезонными аффиксами
+    - Управление сезонной валютой
+    - Расчёт сезонных наград
+    
+    **Типы контента:**
+    - Seasonal Raids: уникальные рейды с сезонными боссами
+    - Limited Time Challenges: временные испытания
+    - Seasonal Affixes: уникальные сезонные аффиксы
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necpgame.com/api/v1
+    description: World Service (продакшн)
+
+tags:
+  - name: Seasons
+    description: Управление сезонами
+  - name: Challenges
+    description: Управление сезонными испытаниями
+  - name: Currency
+    description: Управление сезонной валютой
+  - name: Affixes
+    description: Управление сезонными аффиксами
+
+paths:
+  /seasons/current:
+    get:
+      tags:
+        - Seasons
+      summary: Получить текущий сезон
+      description: |
+        Возвращает информацию о текущем активном сезоне.
+      operationId: getCurrentSeason
+      responses:
+        '200':
+          description: Текущий сезон
+          content:
+            application/json:
+              schema:
+                $ref: 'seasonal-challenges-schemas.yaml#/components/schemas/Season'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /seasons/{season_id}/challenges:
+    get:
+      tags:
+        - Challenges
+      summary: Получить испытания сезона
+      description: |
+        Возвращает список всех испытаний для указанного сезона.
+      operationId: getSeasonChallenges
+      parameters:
+        - name: season_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сезона
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список испытаний сезона
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challenges:
+                    type: array
+                    items:
+                      $ref: 'seasonal-challenges-schemas.yaml#/components/schemas/SeasonalChallenge'
+                  total:
+                    type: integer
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /seasons/{season_id}/rewards:
+    get:
+      tags:
+        - Challenges
+      summary: Получить награды сезона
+      description: |
+        Возвращает список всех доступных наград для указанного сезона.
+      operationId: getSeasonRewards
+      parameters:
+        - name: season_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сезона
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список наград сезона
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: 'seasonal-challenges-schemas.yaml#/components/schemas/SeasonalReward'
+                  total:
+                    type: integer
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /gameplay/seasonal/challenges/active:
+    get:
+      tags:
+        - Challenges
+      summary: Получить активные испытания
+      description: |
+        Возвращает список активных сезонных испытаний для текущего игрока.
+      operationId: getActiveChallenges
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список активных испытаний
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challenges:
+                    type: array
+                    items:
+                      $ref: 'seasonal-challenges-schemas.yaml#/components/schemas/PlayerSeasonalChallenge'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /gameplay/seasonal/challenges/{challenge_id}/complete:
+    post:
+      tags:
+        - Challenges
+      summary: Завершить сезонное испытание
+      description: |
+        Завершает сезонное испытание и начисляет награды.
+      operationId: completeSeasonalChallenge
+      parameters:
+        - name: challenge_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID испытания
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                completion_data:
+                  type: object
+                  description: Дополнительные данные о завершении
+      responses:
+        '200':
+          description: Испытание завершено
+          content:
+            application/json:
+              schema:
+                $ref: 'seasonal-challenges-schemas.yaml#/components/schemas/ChallengeCompletionResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /gameplay/seasonal/currency/balance:
+    get:
+      tags:
+        - Currency
+      summary: Получить баланс сезонной валюты
+      description: |
+        Возвращает баланс сезонной валюты для текущего игрока в текущем сезоне.
+      operationId: getSeasonalCurrencyBalance
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/PlayerId'
+        - name: season_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ID сезона (если не указан, используется текущий сезон)
+      responses:
+        '200':
+          description: Баланс сезонной валюты
+          content:
+            application/json:
+              schema:
+                $ref: 'seasonal-challenges-schemas.yaml#/components/schemas/SeasonalCurrencyBalance'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /gameplay/seasonal/currency/exchange:
+    post:
+      tags:
+        - Currency
+      summary: Обменять сезонную валюту
+      description: |
+        Обменивает сезонную валюту на предметы, косметику, титулы или способности.
+      operationId: exchangeSeasonalCurrency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'seasonal-challenges-schemas.yaml#/components/schemas/CurrencyExchangeRequest'
+      responses:
+        '200':
+          description: Валюта обменена
+          content:
+            application/json:
+              schema:
+                $ref: 'seasonal-challenges-schemas.yaml#/components/schemas/CurrencyExchangeResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: 'common.yaml#/components/responses/Conflict'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+security:
+  - BearerAuth: []
+
