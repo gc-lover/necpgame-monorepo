@@ -4,6 +4,44 @@ if ! command -v bash >/dev/null 2>&1; then
   exit 0
 fi
 
+ALLOWED_BRANCH="develop"
+CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+
+if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "$ALLOWED_BRANCH" ]; then
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "[GIT_HOOK_ERROR] COMMIT_BLOCKED"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "ERROR_TYPE: commit_prohibited"
+  echo "CURRENT_BRANCH: $CURRENT_BRANCH"
+  echo "ALLOWED_BRANCH: $ALLOWED_BRANCH"
+  echo "POLICY: Only 'develop' branch is allowed for commits"
+  echo ""
+  echo "RESTRICTIONS:"
+  echo "  - Commits are restricted to: $ALLOWED_BRANCH"
+  echo "  - Current branch '$CURRENT_BRANCH' is not allowed"
+  echo "  - All work must be done in the '$ALLOWED_BRANCH' branch"
+  echo ""
+  echo "REQUIRED_ACTION: Switch to allowed branch before committing"
+  echo "COMMAND: git checkout $ALLOWED_BRANCH"
+  echo ""
+echo "FOR_AI_AGENTS:"
+echo "  WARNING CRITICAL: You MUST NEVER leave the '$ALLOWED_BRANCH' branch!"
+echo "  WARNING FORBIDDEN: Committing in branch '$CURRENT_BRANCH' is PROHIBITED"
+echo "  WARNING FORBIDDEN: You are NOT allowed to switch from '$ALLOWED_BRANCH'"
+echo "  OK REQUIRED: You MUST be in '$ALLOWED_BRANCH' branch to commit"
+echo "  OK REQUIRED: Never run 'git checkout -b' or 'git checkout <other-branch>'"
+echo "  OK REQUIRED: Always work ONLY in '$ALLOWED_BRANCH' branch"
+echo "  This repository enforces a strict policy: ONLY '$ALLOWED_BRANCH' branch is allowed."
+echo "  You are currently on '$CURRENT_BRANCH' which violates this policy."
+echo "  Switch to '$ALLOWED_BRANCH' immediately. Do NOT create or switch to other branches."
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
@@ -80,18 +118,33 @@ echo "Files checked: $CHECKED_COUNT"
 if [ ${#FAILED_FILES[@]} -gt 0 ]; then
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "❌ COMMIT REJECTED: Files exceeding $MAX_LINES lines:"
+  echo "[GIT_HOOK_ERROR] COMMIT_REJECTED_FILE_SIZE"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "ERROR_TYPE: file_size_exceeded"
+  echo "MAX_LINES_ALLOWED: $MAX_LINES"
+  echo "POLICY: Files must not exceed $MAX_LINES lines"
+  echo ""
+  echo "VIOLATING_FILES:"
   for entry in "${FAILED_FILES[@]}"; do
     IFS=':' read -r file lines <<< "$entry"
-    echo "  • $file: $lines lines (exceeds by $((lines - MAX_LINES)) lines)"
+    EXCEED_BY=$((lines - MAX_LINES))
+    echo "  - $file: $lines lines (exceeds by $EXCEED_BY lines)"
   done
   echo ""
-  echo "💡 Please split these files into smaller files (max $MAX_LINES lines)."
-  echo "   Recommended: ~300-400 lines per file for better maintainability."
+  echo "REQUIRED_ACTION: Split files into smaller files"
+  echo "RECOMMENDATION: ~300-400 lines per file for better maintainability"
   echo ""
-  echo "To bypass this check (NOT recommended):"
-  echo "   git commit --no-verify"
+  echo "FOR_AI_AGENTS:"
+  echo "  This repository enforces a file size limit of $MAX_LINES lines per file."
+  echo "  The following files exceed this limit and must be split:"
+  for entry in "${FAILED_FILES[@]}"; do
+    IFS=':' read -r file lines <<< "$entry"
+    echo "    - $file ($lines lines)"
+  done
+  echo "  You must refactor these files into smaller files (max $MAX_LINES lines each)."
+  echo "  Recommended approach: Split large files into multiple smaller files."
+  echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   exit 1
 else
