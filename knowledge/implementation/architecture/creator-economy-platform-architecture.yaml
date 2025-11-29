@@ -1,0 +1,422 @@
+metadata:
+  id: creator-economy-platform-architecture
+  title: Архитектура Creator Economy Platform
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - platform
+    - creator-economy
+    - ugc
+    - player-created-content
+    - monetization
+  related_systems:
+    - ugc-service
+    - quest-service
+    - economy-service
+    - social-service
+    - npc-service
+    - analytics-service
+  related_documents:
+    - id: ugc-service-architecture
+      relation: integrates
+    - id: player-quest-board-architecture
+      relation: integrates
+    - id: media-influencer-npc-system-architecture
+      relation: integrates
+    - id: economy-monetization
+      relation: implements
+  github_issue: 1463
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - platform
+    - api-designer
+
+summary:
+  problem: |
+    Существующие идеи по созданию контента игроками (Player Quest Board, UGC Service,
+    Media Influencer NPC, монетизация) разрабатываются отдельно. Требуется объединить
+    их в единую платформу с единым интерфейсом, монетизацией и аналитикой.
+  goal: |
+    Создать архитектурную схему Creator Economy Platform с определением:
+    - Компонентов для объединения всех инструментов создания контента
+    - Единого интерфейса Creator Hub
+    - Системы монетизации
+    - Централизованной аналитики
+    - Социальных функций
+    - REST, WebSocket и Event Bus контрактов
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Единая платформа, объединяющая все инструменты для создания контента игроками
+    с единым интерфейсом, монетизацией, аналитикой и социальными функциями.
+
+architecture:
+  overview: |
+    Архитектура Creator Economy Platform состоит из следующих компонентов:
+    1. Creator Hub Manager - центральный интерфейс создателя
+    2. Content Creation Tools Integrator - интеграция инструментов создания
+    3. Monetization Engine - единая система монетизации
+    4. Analytics Dashboard Manager - централизованная аналитика
+    5. Community Features Manager - социальные функции
+    6. Education Support Manager - обучение и поддержка
+    7. Platform Integration Manager - интеграция с платформой
+
+  platform_components:
+    - component: creator_hub
+      description: "Центральный интерфейс создателя"
+      features:
+        - unified_dashboard: "единая панель управления"
+        - content_overview: "обзор всего контента"
+        - quick_access: "быстрый доступ к инструментам"
+        - notifications: "уведомления о событиях"
+        - profile_management: "управление профилем создателя"
+
+    - component: content_creation_tools
+      description: "Интеграция всех инструментов создания"
+      integrated_tools:
+        - player_quest_board: "создание квестов"
+        - ugc_service: "загрузка контента (3D модели, текстуры, аудио, видео)"
+        - media_npc_system: "создание медийных NPC"
+        - mod_creation: "создание модов"
+        - skin_creation: "создание скинов"
+
+    - component: monetization_engine
+      description: "Единая система монетизации"
+      features:
+        - revenue_tracking: "отслеживание доходов"
+        - payment_processing: "обработка платежей"
+        - commission_management: "управление комиссиями"
+        - payout_system: "система выплат"
+        - currency_conversion: "конвертация валют"
+
+    - component: analytics_dashboard
+      description: "Централизованная аналитика"
+      features:
+        - content_metrics: "метрики контента"
+        - revenue_analytics: "аналитика доходов"
+        - audience_insights: "инсайты аудитории"
+        - performance_tracking: "отслеживание производительности"
+        - trend_analysis: "анализ трендов"
+
+    - component: community_features
+      description: "Социальные функции"
+      features:
+        - creator_profiles: "профили создателей"
+        - follower_system: "система подписчиков"
+        - content_sharing: "обмен контентом"
+        - collaboration_tools: "инструменты сотрудничества"
+        - rating_system: "система рейтингов"
+
+    - component: education_support
+      description: "Обучение и поддержка"
+      features:
+        - tutorials: "обучающие материалы"
+        - documentation: "документация"
+        - support_tickets: "система поддержки"
+        - best_practices: "лучшие практики"
+        - community_forums: "форумы сообщества"
+
+  integrated_systems:
+    - system: player_quest_board
+      integration: |
+        - Создание квестов через Creator Hub
+        - Публикация на досках фиксеров
+        - Монетизация популярных квестов
+        - Аналитика квестов
+      endpoints:
+        - POST /api/v1/creator/quests/create
+        - GET /api/v1/creator/quests
+        - PUT /api/v1/creator/quests/{id}
+        - GET /api/v1/creator/quests/{id}/analytics
+
+    - system: ugc_service
+      integration: |
+        - Загрузка контента через Creator Hub
+        - Управление версиями
+        - Модерация контента
+        - Распространение через CDN
+      endpoints:
+        - POST /api/v1/creator/content/upload
+        - GET /api/v1/creator/content
+        - PUT /api/v1/creator/content/{id}
+        - GET /api/v1/creator/content/{id}/analytics
+
+    - system: media_npc_system
+      integration: |
+        - Создание медийных NPC через Creator Hub
+        - Управление NPC функциями
+        - Монетизация NPC услуг
+        - Аналитика NPC взаимодействий
+      endpoints:
+        - POST /api/v1/creator/npc/create
+        - GET /api/v1/creator/npc
+        - PUT /api/v1/creator/npc/{id}
+        - GET /api/v1/creator/npc/{id}/analytics
+
+    - system: economy_monetization
+      integration: |
+        - Единая система монетизации
+        - Обработка платежей
+        - Управление комиссиями
+        - Выплаты создателям
+      endpoints:
+        - GET /api/v1/creator/revenue
+        - GET /api/v1/creator/payments
+        - POST /api/v1/creator/payouts/request
+        - GET /api/v1/creator/commissions
+
+  microservices:
+    - name: creator-platform-service
+      port: 8100
+      responsibility: |
+        Основной сервис платформы:
+        - Creator Hub Manager
+        - Content Creation Tools Integrator
+        - Platform Integration Manager
+      components:
+        - creator-hub-manager: управление Creator Hub
+        - content-tools-integrator: интеграция инструментов
+        - platform-integration-manager: интеграция с платформой
+
+    - name: creator-monetization-service
+      port: 8101
+      responsibility: |
+        Система монетизации:
+        - Monetization Engine
+        - Revenue Tracking
+        - Payment Processing
+        - Payout System
+      components:
+        - monetization-engine: движок монетизации
+        - revenue-tracker: отслеживание доходов
+        - payment-processor: обработка платежей
+        - payout-manager: управление выплатами
+
+    - name: creator-analytics-service
+      port: 8102
+      responsibility: |
+        Аналитика платформы:
+        - Analytics Dashboard Manager
+        - Metrics Collection
+        - Report Generation
+      components:
+        - analytics-dashboard-manager: управление аналитикой
+        - metrics-collector: сбор метрик
+        - report-generator: генерация отчетов
+
+    - name: creator-community-service
+      port: 8103
+      responsibility: |
+        Социальные функции:
+        - Community Features Manager
+        - Creator Profiles
+        - Follower System
+      components:
+        - community-features-manager: управление сообществом
+        - creator-profile-manager: управление профилями
+        - follower-system: система подписчиков
+
+  data_models:
+    - name: CreatorProfile
+      fields:
+        - id: UUID
+        - player_id: UUID
+        - creator_name: string
+        - bio: text
+        - avatar_url: string
+        - total_revenue: decimal
+        - total_content_items: int
+        - follower_count: int
+        - rating: float
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: CreatorContent
+      fields:
+        - id: UUID
+        - creator_id: UUID
+        - content_type: enum (quest, ugc, npc, mod, skin)
+        - title: string
+        - description: text
+        - status: enum (draft, published, archived)
+        - revenue: decimal
+        - views: int
+        - downloads: int
+        - rating: float
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: CreatorRevenue
+      fields:
+        - id: UUID
+        - creator_id: UUID
+        - content_id: UUID
+        - revenue_type: enum (sale, commission, subscription)
+        - amount: decimal
+        - currency: enum (eddies, real_money)
+        - commission_rate: float
+        - net_amount: decimal
+        - transaction_date: timestamp
+
+    - name: CreatorAnalytics
+      fields:
+        - id: UUID
+        - creator_id: UUID
+        - content_id: UUID
+        - metric_type: enum (views, downloads, revenue, rating)
+        - metric_value: decimal
+        - period_start: timestamp
+        - period_end: timestamp
+        - created_at: timestamp
+
+  api_endpoints:
+    creator_hub:
+      - GET /api/v1/creator/hub - получение Creator Hub
+      - GET /api/v1/creator/hub/dashboard - панель управления
+      - GET /api/v1/creator/hub/notifications - уведомления
+
+    content_management:
+      - GET /api/v1/creator/content - список контента
+      - POST /api/v1/creator/content - создание контента
+      - GET /api/v1/creator/content/{id} - детали контента
+      - PUT /api/v1/creator/content/{id} - обновление контента
+      - DELETE /api/v1/creator/content/{id} - удаление контента
+
+    monetization:
+      - GET /api/v1/creator/revenue - доходы создателя
+      - GET /api/v1/creator/revenue/{period} - доходы за период
+      - GET /api/v1/creator/payments - история платежей
+      - POST /api/v1/creator/payouts/request - запрос выплаты
+      - GET /api/v1/creator/commissions - комиссии
+
+    analytics:
+      - GET /api/v1/creator/analytics/overview - обзор аналитики
+      - GET /api/v1/creator/analytics/content/{id} - аналитика контента
+      - GET /api/v1/creator/analytics/revenue - аналитика доходов
+      - GET /api/v1/creator/analytics/audience - аналитика аудитории
+
+    community:
+      - GET /api/v1/creator/profile/{id} - профиль создателя
+      - PUT /api/v1/creator/profile - обновление профиля
+      - GET /api/v1/creator/followers - подписчики
+      - GET /api/v1/creator/following - подписки
+      - POST /api/v1/creator/follow/{id} - подписка
+      - DELETE /api/v1/creator/follow/{id} - отписка
+
+  websocket_events:
+    - creator:content-created - создан контент
+    - creator:content-updated - обновлен контент
+    - creator:revenue-updated - обновлены доходы
+    - creator:analytics-updated - обновлена аналитика
+    - creator:notification - новое уведомление
+
+  event_bus_topics:
+    - creator:content-created - создан контент
+    - creator:content-published - опубликован контент
+    - creator:revenue-generated - сгенерирован доход
+    - creator:payout-requested - запрошена выплата
+    - creator:analytics-collected - собрана аналитика
+
+  data_synchronization:
+    tick_rate: |
+      - Обновление аналитики: каждые 5 минут
+      - Синхронизация доходов: при транзакциях (real-time)
+      - Обновление метрик: каждые 1 минуту
+      - Синхронизация профилей: при изменениях
+
+    network_load: |
+      - Creator Hub: средняя нагрузка (периодические обновления)
+      - Монетизация: высокая нагрузка (при транзакциях)
+      - Аналитика: средняя нагрузка (периодическая обработка)
+      - Сообщество: низкая нагрузка (при взаимодействиях)
+
+    caching_strategy: |
+      - Creator Hub данные: кэш на 1 минуту
+      - Профили создателей: кэш на 5 минут
+      - Аналитика: кэш на 5 минут
+      - Доходы: кэш на 1 минуту
+
+  integrations:
+    with_ugc_service: |
+      - Загрузка контента через платформу
+      - Управление версиями
+      - Модерация контента
+      - Распространение через CDN
+
+    with_quest_service: |
+      - Создание квестов через платформу
+      - Публикация на досках фиксеров
+      - Монетизация квестов
+      - Аналитика квестов
+
+    with_media_npc_service: |
+      - Создание медийных NPC через платформу
+      - Управление NPC функциями
+      - Монетизация NPC услуг
+
+    with_economy_service: |
+      - Обработка платежей
+      - Управление комиссиями
+      - Выплаты создателям
+      - Конвертация валют
+
+    with_social_service: |
+      - Профили создателей
+      - Система подписчиков
+      - Социальные функции
+
+    with_analytics_service: |
+      - Сбор метрик
+      - Генерация отчетов
+      - Анализ трендов
+
+  technical_tasks:
+    - task: "Создать creator-platform-service"
+      description: |
+        Основной сервис платформы с Creator Hub Manager, Content Tools Integrator, Platform Integration Manager
+      estimated_lines: 400
+
+    - task: "Создать creator-monetization-service"
+      description: |
+        Сервис монетизации с Monetization Engine, Revenue Tracker, Payment Processor, Payout Manager
+      estimated_lines: 450
+
+    - task: "Создать creator-analytics-service"
+      description: |
+        Сервис аналитики с Analytics Dashboard Manager, Metrics Collector, Report Generator
+      estimated_lines: 350
+
+    - task: "Создать creator-community-service"
+      description: |
+        Сервис сообщества с Community Features Manager, Creator Profile Manager, Follower System
+      estimated_lines: 300
+
+    - task: "Создать структуру БД для платформы"
+      description: |
+        Таблицы: creator_profiles, creator_content, creator_revenue, creator_analytics
+      estimated_lines: 200
+
+    - task: "Интегрировать с существующими системами"
+      description: |
+        Интеграция с UGC Service, Quest Service, Media NPC Service, Economy Service, Social Service
+      estimated_lines: 300
+
+    - task: "Создать API endpoints"
+      description: |
+        REST API для Creator Hub, Content Management, Monetization, Analytics, Community
+      estimated_lines: 400
+
+    - task: "Интегрировать с Event Bus"
+      description: |
+        Подписка и публикация событий creator:* для интеграции с другими системами
+      estimated_lines: 200
+
