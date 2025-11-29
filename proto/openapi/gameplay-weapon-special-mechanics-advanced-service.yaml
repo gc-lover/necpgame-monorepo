@@ -1,0 +1,321 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Weapon Special Mechanics Advanced Service API
+  description: |
+    API для продвинутых специальных механик оружия.
+    
+    **Основные возможности:**
+    - Уникальные формы проджектайлов
+    - Синергии с классами персонажей
+    - Двойное оружие
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Projectile Forms
+    description: Формы проджектайлов
+  - name: Class Synergy
+    description: Синергии с классами
+  - name: Dual Wielding
+    description: Двойное оружие
+
+paths:
+  /gameplay/combat/weapons/projectile-forms/calculate:
+    post:
+      tags:
+        - Projectile Forms
+      summary: Рассчитать форму проджектайла
+      description: Рассчитывает форму проджектайла (точка, линия, веер, спираль, волна, круг, квадрат, цепь)
+      operationId: calculateProjectileForm
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateProjectileFormRequest'
+            example:
+              weapon_id: "550e8400-e29b-41d4-a716-446655440000"
+              form_type: "fan"
+              form_data:
+                direction: "horizontal"
+                spread_angle: 30.0
+                projectile_count: 5
+      responses:
+        '200':
+          description: Результат расчета формы проджектайла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectileFormResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/weapons/class-synergy/calculate:
+    post:
+      tags:
+        - Class Synergy
+      summary: Рассчитать синергию с классом
+      description: Рассчитывает синергию между классом персонажа и типом оружия
+      operationId: calculateClassSynergy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateClassSynergyRequest'
+            example:
+              character_id: "550e8400-e29b-41d4-a716-446655440001"
+              weapon_id: "550e8400-e29b-41d4-a716-446655440000"
+              class_id: "solo"
+      responses:
+        '200':
+          description: Результат расчета синергии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassSynergyResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/weapons/dual-wielding/fire:
+    post:
+      tags:
+        - Dual Wielding
+      summary: Стрелять с двух оружий
+      description: Выполняет стрельбу с двух оружий одновременно (одновременная, поочередная)
+      operationId: fireDualWielding
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DualWieldingFireRequest'
+            example:
+              character_id: "550e8400-e29b-41d4-a716-446655440001"
+              left_weapon_id: "550e8400-e29b-41d4-a716-446655440000"
+              right_weapon_id: "550e8400-e29b-41d4-a716-446655440003"
+              firing_mode: "simultaneous"
+              target_id: "550e8400-e29b-41d4-a716-446655440002"
+      responses:
+        '200':
+          description: Стрельба выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DualWieldingFireResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    CalculateProjectileFormRequest:
+      type: object
+      required:
+        - weapon_id
+        - form_type
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+          description: ID оружия
+        form_type:
+          type: string
+          enum:
+            - point
+            - line
+            - fan
+            - spiral
+            - wave
+            - circle
+            - square
+            - chain
+          description: Тип формы проджектайла
+        form_data:
+          type: object
+          additionalProperties: true
+          description: Данные формы (зависит от типа)
+
+    ProjectileFormResponse:
+      type: object
+      properties:
+        form_type:
+          type: string
+        trajectories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectileTrajectory'
+        projectile_count:
+          type: integer
+          description: Количество проджектайлов
+
+    ProjectileTrajectory:
+      type: object
+      properties:
+        start_position:
+          $ref: '#/components/schemas/Position3D'
+        direction:
+          $ref: '#/components/schemas/Direction3D'
+        speed:
+          type: number
+          format: float
+
+    CalculateClassSynergyRequest:
+      type: object
+      required:
+        - character_id
+        - weapon_id
+        - class_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        weapon_id:
+          type: string
+          format: uuid
+          description: ID оружия
+        class_id:
+          type: string
+          enum:
+            - solo
+            - netrunner
+            - techie
+            - medtech
+            - lawman
+            - corpo
+            - fixer
+            - rockerboy
+            - media
+            - nomad
+          description: ID класса персонажа
+
+    ClassSynergyResponse:
+      type: object
+      properties:
+        class_id:
+          type: string
+        weapon_id:
+          type: string
+          format: uuid
+        synergy_bonuses:
+          type: object
+          additionalProperties: true
+          description: Бонусы синергии
+        exclusive_abilities:
+          type: array
+          items:
+            type: string
+          description: Эксклюзивные способности
+
+    DualWieldingFireRequest:
+      type: object
+      required:
+        - character_id
+        - left_weapon_id
+        - right_weapon_id
+        - firing_mode
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        left_weapon_id:
+          type: string
+          format: uuid
+          description: ID оружия в левой руке
+        right_weapon_id:
+          type: string
+          format: uuid
+          description: ID оружия в правой руке
+        firing_mode:
+          type: string
+          enum:
+            - single
+            - simultaneous
+            - alternating
+          description: Режим стрельбы
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели
+
+    DualWieldingFireResponse:
+      type: object
+      properties:
+        left_weapon_fired:
+          type: boolean
+        right_weapon_fired:
+          type: boolean
+        accuracy_penalty:
+          type: number
+          format: float
+          description: Штраф к точности
+        reload_penalty:
+          type: number
+          format: float
+          description: Штраф к скорости перезарядки
+
+    Position3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+
+    Direction3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+
