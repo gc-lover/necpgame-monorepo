@@ -53,6 +53,7 @@ func NewHTTPServer(addr string, battlePassService BattlePassServiceInterface, jw
 	apiRouter.HandleFunc("/battle-pass/rewards", server.getSeasonRewards).Methods("GET")
 	apiRouter.HandleFunc("/battle-pass/rewards/claim", server.claimReward).Methods("POST")
 	apiRouter.HandleFunc("/battle-pass/challenges/weekly", server.getWeeklyChallenges).Methods("GET")
+	apiRouter.HandleFunc("/battle-pass/challenges/season/{player_id}", server.getSeasonChallenges).Methods("GET")
 	apiRouter.HandleFunc("/battle-pass/challenges/{challengeId}/complete", server.completeChallenge).Methods("POST")
 	apiRouter.HandleFunc("/battle-pass/season/{season_id}", server.getSeasonInfo).Methods("GET")
 	apiRouter.HandleFunc("/battle-pass/season/create", server.createSeason).Methods("POST")
@@ -189,6 +190,48 @@ func (s *HTTPServer) getWeeklyChallenges(w http.ResponseWriter, r *http.Request)
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"challenges": challenges})
 }
 
+func (s *HTTPServer) getSeasonChallenges(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	playerIDStr := vars["player_id"]
+
+	playerID, err := uuid.Parse(playerIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid player_id")
+		return
+	}
+
+	var seasonID *uuid.UUID
+	seasonIDStr := r.URL.Query().Get("season_id")
+	if seasonIDStr != "" {
+		parsedSeasonID, err := uuid.Parse(seasonIDStr)
+		if err != nil {
+			s.respondError(w, http.StatusBadRequest, "invalid season_id")
+			return
+		}
+		seasonID = &parsedSeasonID
+	}
+
+	challenges, actualSeasonID, err := s.battlePassService.GetSeasonChallenges(r.Context(), playerID, seasonID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get season challenges")
+		if err.Error() == "no active season" {
+			s.respondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		s.respondError(w, http.StatusInternalServerError, "failed to get season challenges")
+		return
+	}
+
+	response := map[string]interface{}{
+		"player_id":  playerID.String(),
+		"season_id":  actualSeasonID.String(),
+		"challenges": challenges,
+		"total":      len(challenges),
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
 func (s *HTTPServer) completeChallenge(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	challengeIDStr := vars["challengeId"]
@@ -199,26 +242,48 @@ func (s *HTTPServer) completeChallenge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	characterIDStr := r.URL.Query().Get("character_id")
-	if characterIDStr == "" {
+	var req struct {
+		CharacterID uuid.UUID `json:"character_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.CharacterID == uuid.Nil {
 		s.respondError(w, http.StatusBadRequest, "character_id is required")
 		return
 	}
 
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
-
-	err = s.battlePassService.CompleteChallenge(r.Context(), characterID, challengeID)
+	err = s.battlePassService.CompleteChallenge(r.Context(), req.CharacterID, challengeID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to complete challenge")
 		s.respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	s.respondJSON(w, http.StatusOK, map[string]interface{}{"success": true})
+	challenges, err := s.battlePassService.GetWeeklyChallenges(r.Context(), req.CharacterID)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get updated challenges")
+		s.respondError(w, http.StatusInternalServerError, "failed to get updated challenges")
+		return
+	}
+
+	var completedChallenge *models.WeeklyChallenge
+	for i := range challenges {
+		if challenges[i].ID == challengeID {
+			completedChallenge = &challenges[i]
+			break
+		}
+	}
+
+	if completedChallenge == nil {
+		s.respondError(w, http.StatusNotFound, "challenge not found")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, completedChallenge)
 }
 
 func (s *HTTPServer) getSeasonInfo(w http.ResponseWriter, r *http.Request) {
