@@ -1,0 +1,509 @@
+openapi: 3.0.3
+info:
+  title: Anti-Cheat Service Schemas
+  description: Схемы данных для Anti-Cheat Service API
+  version: 1.0.0
+
+components:
+  schemas:
+    SpeedValidationRequest:
+      type: object
+      required:
+        - player_id
+        - from_position
+        - to_position
+        - time_delta_ms
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: ID игрока
+        from_position:
+          $ref: "#/components/schemas/Position3D"
+        to_position:
+          $ref: "#/components/schemas/Position3D"
+        time_delta_ms:
+          type: integer
+          description: Время перемещения в миллисекундах
+          minimum: 1
+        max_speed:
+          type: number
+          format: float
+          description: Максимальная скорость игрока (с учётом навыков, баффов)
+          minimum: 0
+
+    SpeedValidationResult:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+          description: Валидна ли скорость
+        calculated_speed:
+          type: number
+          format: float
+          description: Рассчитанная скорость
+        max_speed:
+          type: number
+          format: float
+          description: Максимальная скорость
+        deviation_percent:
+          type: number
+          format: float
+          description: Отклонение в процентах
+        is_violation:
+          type: boolean
+          description: Является ли нарушением
+
+    SpeedViolation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        calculated_speed:
+          type: number
+          format: float
+        max_speed:
+          type: number
+          format: float
+        deviation_percent:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+
+    PositionValidationRequest:
+      type: object
+      required:
+        - player_id
+        - previous_position
+        - current_position
+        - time_delta_ms
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        previous_position:
+          $ref: "#/components/schemas/Position3D"
+        current_position:
+          $ref: "#/components/schemas/Position3D"
+        time_delta_ms:
+          type: integer
+          description: Время перемещения в миллисекундах
+          minimum: 1
+        max_distance:
+          type: number
+          format: float
+          description: Максимальное расстояние за время
+
+    PositionValidationResult:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+        distance:
+          type: number
+          format: float
+          description: Расстояние между позициями
+        max_distance:
+          type: number
+          format: float
+        is_teleport:
+          type: boolean
+          description: Является ли телепортацией
+        is_wall_hack:
+          type: boolean
+          description: Прохождение через стены
+        is_violation:
+          type: boolean
+
+    PositionViolation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        violation_type:
+          type: string
+          enum:
+            - TELEPORT
+            - WALL_HACK
+        distance:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+
+    ActionRateValidationRequest:
+      type: object
+      required:
+        - player_id
+        - action_type
+        - action_count
+        - time_window_seconds
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum:
+            - ATTACK
+            - SKILL
+            - INTERACT
+          description: Тип действия
+        action_count:
+          type: integer
+          description: Количество действий за окно
+          minimum: 1
+        time_window_seconds:
+          type: integer
+          description: Временное окно в секундах
+          minimum: 1
+        max_rate:
+          type: integer
+          description: Максимальная частота действий в секунду
+
+    ActionRateValidationResult:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+        actions_per_second:
+          type: number
+          format: float
+        max_rate:
+          type: integer
+        is_macro_pattern:
+          type: boolean
+          description: Обнаружен ли паттерн макроса
+        is_violation:
+          type: boolean
+
+    ActionRateViolation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum:
+            - ATTACK
+            - SKILL
+            - INTERACT
+        actions_per_second:
+          type: number
+          format: float
+        max_rate:
+          type: integer
+        is_macro_pattern:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Position3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+
+    ReconciliationCompareRequest:
+      type: object
+      required:
+        - player_id
+        - client_state
+        - server_state
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        client_state:
+          type: object
+          description: Состояние клиента (JSON)
+        server_state:
+          type: object
+          description: Состояние сервера (JSON)
+
+    ReconciliationCompareResult:
+      type: object
+      properties:
+        has_difference:
+          type: boolean
+        difference_percent:
+          type: number
+          format: float
+        differences:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              client_value:
+                type: object
+              server_value:
+                type: object
+        requires_resolution:
+          type: boolean
+
+    ReconciliationResolveRequest:
+      type: object
+      required:
+        - player_id
+        - resolution_strategy
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        resolution_strategy:
+          type: string
+          enum:
+            - SERVER_WINS
+            - CLIENT_WINS
+            - MERGE
+          description: Стратегия разрешения конфликта
+        differences:
+          type: array
+          items:
+            type: object
+
+    ReconciliationResolveResult:
+      type: object
+      properties:
+        resolved:
+          type: boolean
+        final_state:
+          type: object
+          description: Финальное состояние после разрешения
+        corrections_applied:
+          type: array
+          items:
+            type: object
+
+    ViolationLogRequest:
+      type: object
+      required:
+        - player_id
+        - violation_type
+        - violation_data
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+            - POSITION_HACK
+            - ACTION_RATE_HACK
+            - RECONCILIATION_FAILURE
+        violation_data:
+          type: object
+          description: Данные нарушения (JSON)
+        server_state:
+          type: object
+          description: Состояние сервера (JSON)
+        client_state:
+          type: object
+          description: Состояние клиента (JSON)
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          default: MEDIUM
+
+    ViolationLogResult:
+      type: object
+      properties:
+        violation_id:
+          type: string
+          format: uuid
+        logged_at:
+          type: string
+          format: date-time
+
+    Violation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        violation_type:
+          type: string
+          enum:
+            - SPEED_HACK
+            - POSITION_HACK
+            - ACTION_RATE_HACK
+            - RECONCILIATION_FAILURE
+        violation_data:
+          type: object
+        server_state:
+          type: object
+        client_state:
+          type: object
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+        created_at:
+          type: string
+          format: date-time
+
+    MonitoringStats:
+      type: object
+      properties:
+        time_range:
+          type: string
+        total_violations:
+          type: integer
+        violations_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        top_violators:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              violation_count:
+                type: integer
+        trends:
+          type: object
+          description: Тренды нарушений
+
+    MonitoringAlert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        alert_type:
+          type: string
+          enum:
+            - MULTIPLE_VIOLATIONS
+            - ESCALATION_TRIGGERED
+            - PENALTY_APPLIED
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+        created_at:
+          type: string
+          format: date-time
+
+    ApplyPenaltyRequest:
+      type: object
+      required:
+        - player_id
+        - penalty_type
+        - reason
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        penalty_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
+        reason:
+          type: string
+          description: Причина наказания
+        duration_seconds:
+          type: integer
+          description: Длительность наказания в секундах (для TEMPORARY_BAN)
+          minimum: 1
+
+    Penalty:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        penalty_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
+        reason:
+          type: string
+        duration_seconds:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        applied_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    RevokePenaltyRequest:
+      type: object
+      required:
+        - penalty_id
+        - reason
+      properties:
+        penalty_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          description: Причина отмены наказания
