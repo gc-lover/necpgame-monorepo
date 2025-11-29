@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/support-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -30,6 +31,14 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize ticket service")
 	}
 
+	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize database pool for SLA service")
+	}
+
+	slaRepo := server.NewSLARepository(dbPool)
+	slaService := server.NewSLAService(slaRepo)
+
 	var jwtValidator *server.JwtValidator
 	if authEnabled && keycloakURL != "" {
 		issuer := keycloakURL + "/realms/" + keycloakRealm
@@ -43,7 +52,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, ticketService, jwtValidator, authEnabled)
+	httpServer := server.NewHTTPServer(addr, ticketService, slaService, jwtValidator, authEnabled)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
