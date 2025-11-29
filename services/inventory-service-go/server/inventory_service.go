@@ -26,6 +26,8 @@ type InventoryRepositoryInterface interface {
 
 type InventoryService struct {
 	repo  InventoryRepositoryInterface
+	engramChipsRepo EngramChipsRepositoryInterface
+	engramChipsService EngramChipsServiceInterface
 	cache *redis.Client
 	logger *logrus.Logger
 }
@@ -44,12 +46,20 @@ func NewInventoryService(dbURL, redisURL string) (*InventoryService, error) {
 	redisClient := redis.NewClient(redisOpts)
 
 	repo := NewInventoryRepository(dbPool)
+	engramChipsRepo := NewEngramChipsRepository(dbPool)
+	engramChipsService := NewEngramChipsService(engramChipsRepo, redisClient)
 
 	return &InventoryService{
 		repo:  repo,
+		engramChipsRepo: engramChipsRepo,
+		engramChipsService: engramChipsService,
 		cache: redisClient,
 		logger: GetLogger(),
 	}, nil
+}
+
+func (s *InventoryService) GetEngramChipsService() EngramChipsServiceInterface {
+	return s.engramChipsService
 }
 
 func (s *InventoryService) GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
