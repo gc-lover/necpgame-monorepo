@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Admin Roles Service API
-  description: API для управления ролями и правами доступа администраторов
+  description: API для управления ролями и правами
   version: 2.0.0
   contact:
     name: NECPGAME API Support
@@ -15,7 +15,7 @@ servers:
 
 tags:
   - name: Roles & Permissions
-    description: Управление ролями и правами доступа
+    description: Роли и права
 
 paths:
   /roles:
@@ -24,8 +24,6 @@ paths:
         - Roles & Permissions
       summary: Список ролей
       operationId: listRoles
-      security:
-        - BearerAuth: []
       responses:
         '200':
           description: Список ролей
@@ -33,19 +31,15 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - roles
                 properties:
                   roles:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Role'
+                      $ref: 'admin-roles-schemas.yaml#/components/schemas/Role'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /roles/{role_id}/permissions:
     get:
@@ -53,16 +47,12 @@ paths:
         - Roles & Permissions
       summary: Права роли
       operationId: getRolePermissions
-      security:
-        - BearerAuth: []
       parameters:
         - name: role_id
           in: path
           required: true
           schema:
             type: string
-          description: Идентификатор роли
-          example: "SUPER_ADMIN"
       responses:
         '200':
           description: Права роли
@@ -70,25 +60,15 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - role_id
-                  - permissions
                 properties:
-                  role_id:
-                    type: string
-                    example: "SUPER_ADMIN"
                   permissions:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Permission'
+                      type: string
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /admins:
     get:
@@ -96,11 +76,20 @@ paths:
         - Roles & Permissions
       summary: Список администраторов
       operationId: listAdmins
-      security:
-        - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
           description: Список администраторов
@@ -108,55 +97,42 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - admins
-                  - total
                 properties:
                   admins:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AdminUser'
+                      $ref: 'admin-auth-service.yaml#/components/schemas/AdminUser'
                   total:
                     type: integer
-                    minimum: 0
-                    example: 10
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
     post:
       tags:
         - Roles & Permissions
       summary: Создание администратора
       operationId: createAdmin
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateAdminRequest'
+              $ref: 'admin-roles-schemas.yaml#/components/schemas/CreateAdminRequest'
       responses:
         '201':
           description: Администратор создан
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminUser'
+                $ref: 'admin-auth-service.yaml#/components/schemas/AdminUser'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '409':
-          $ref: 'common.yaml#/components/responses/Conflict'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /admins/{admin_id}:
     put:
@@ -164,8 +140,6 @@ paths:
         - Roles & Permissions
       summary: Обновление администратора
       operationId: updateAdmin
-      security:
-        - BearerAuth: []
       parameters:
         - name: admin_id
           in: path
@@ -173,39 +147,31 @@ paths:
           schema:
             type: string
             format: uuid
-          description: Идентификатор администратора
-          example: "550e8400-e29b-41d4-a716-446655440000"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateAdminRequest'
+              $ref: 'admin-roles-schemas.yaml#/components/schemas/UpdateAdminRequest'
       responses:
         '200':
           description: Администратор обновлен
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminUser'
+                $ref: 'admin-auth-service.yaml#/components/schemas/AdminUser'
         '400':
           $ref: 'common.yaml#/components/responses/BadRequest'
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
     delete:
       tags:
         - Roles & Permissions
       summary: Удаление администратора
       operationId: deleteAdmin
-      security:
-        - BearerAuth: []
       parameters:
         - name: admin_id
           in: path
@@ -213,8 +179,6 @@ paths:
           schema:
             type: string
             format: uuid
-          description: Идентификатор администратора
-          example: "550e8400-e29b-41d4-a716-446655440000"
       responses:
         '200':
           description: Администратор удален
@@ -222,182 +186,19 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - status
                 properties:
                   status:
                     type: string
-                    example: "deleted"
+                    example: deleted
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
     BearerAuth:
       $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
 
-  schemas:
-    Role:
-      type: object
-      required:
-        - id
-        - name
-        - description
-      properties:
-        id:
-          type: string
-          description: Идентификатор роли
-          example: "SUPER_ADMIN"
-        name:
-          type: string
-          enum:
-            - SUPER_ADMIN
-            - ADMIN
-            - MODERATOR
-          description: Название роли
-          example: "SUPER_ADMIN"
-        description:
-          type: string
-          description: Описание роли
-          example: "Полный доступ ко всем операциям"
-
-    Permission:
-      type: object
-      required:
-        - id
-        - name
-        - resource
-        - action
-      properties:
-        id:
-          type: string
-          description: Идентификатор права
-          example: "players.manage"
-        name:
-          type: string
-          description: Название права
-          example: "Manage Players"
-        resource:
-          type: string
-          description: Ресурс
-          example: "players"
-        action:
-          type: string
-          description: Действие
-          example: "manage"
-
-    AdminUser:
-      type: object
-      required:
-        - id
-        - username
-        - email
-        - role
-        - is_active
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Уникальный идентификатор администратора
-          example: "550e8400-e29b-41d4-a716-446655440000"
-        username:
-          type: string
-          description: Имя пользователя
-          example: "admin"
-        email:
-          type: string
-          format: email
-          description: Email адрес
-          example: "admin@necp.game"
-        role:
-          type: string
-          enum:
-            - SUPER_ADMIN
-            - ADMIN
-            - MODERATOR
-          description: Роль администратора
-          example: "ADMIN"
-        is_active:
-          type: boolean
-          description: Активен ли администратор
-          example: true
-        last_login_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: Время последнего входа
-          example: "2025-11-29T10:00:00Z"
-        created_at:
-          type: string
-          format: date-time
-          description: Время создания
-          example: "2025-11-29T09:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          description: Время обновления
-          example: "2025-11-29T10:00:00Z"
-
-    CreateAdminRequest:
-      type: object
-      required:
-        - username
-        - email
-        - password
-        - role
-      properties:
-        username:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Имя пользователя
-          example: "admin"
-        email:
-          type: string
-          format: email
-          description: Email адрес
-          example: "admin@necp.game"
-        password:
-          type: string
-          minLength: 8
-          format: password
-          description: Пароль
-        role:
-          type: string
-          enum:
-            - SUPER_ADMIN
-            - ADMIN
-            - MODERATOR
-          description: Роль администратора
-          example: "ADMIN"
-
-    UpdateAdminRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-          description: Email адрес
-          example: "admin@necp.game"
-        role:
-          type: string
-          enum:
-            - SUPER_ADMIN
-            - ADMIN
-            - MODERATOR
-          description: Роль администратора
-          example: "ADMIN"
-        is_active:
-          type: boolean
-          description: Активен ли администратор
-          example: true
-
 security:
   - BearerAuth: []
-

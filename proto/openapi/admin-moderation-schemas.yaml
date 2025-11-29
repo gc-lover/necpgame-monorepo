@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: Admin Moderation Schemas
+  description: Схемы данных для модерации
+  version: 2.0.0
+
+components:
+  schemas:
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reporter_id:
+          type: string
+          format: uuid
+        reported_player_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - resolved
+            - rejected
+        resolved_by:
+          type: string
+          format: uuid
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ResolveReportRequest:
+      type: object
+      required:
+        - status
+        - action
+      properties:
+        status:
+          type: string
+          enum:
+            - resolved
+            - rejected
+        action:
+          type: string
+          description: Действие, предпринятое модератором
+        notes:
+          type: string
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        channel:
+          type: string
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    DeleteMessageRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    BanPlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        duration:
+          type: integer
+          description: Длительность в секундах (NULL для постоянного бана)
+          nullable: true
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    UnbanPlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    Ban:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        admin_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        duration:
+          type: integer
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
