@@ -1,10 +1,77 @@
-#!/bin/sh
+#!/bin/bash
 
-if ! command -v git-lfs >/dev/null 2>&1; then
+if ! command -v bash >/dev/null 2>&1; then
   exit 0
 fi
 
-if ! git lfs pre-push "$@" 2>/dev/null; then
+ALLOWED_BRANCH="develop"
+
+if ! command -v git-lfs >/dev/null 2>&1; then
+  LFS_CHECK=0
+else
+  if ! git lfs pre-push "$@" 2>/dev/null; then
+    LFS_CHECK=0
+  else
+    LFS_CHECK=1
+  fi
+fi
+
+while read local_ref local_sha remote_ref remote_sha
+do
+  if [ -z "$remote_ref" ]; then
+    continue
+  fi
+
+  BRANCH_NAME=""
+  if [ "${remote_ref#refs/heads/}" != "$remote_ref" ]; then
+    BRANCH_NAME="${remote_ref#refs/heads/}"
+  else
+    continue
+  fi
+
+  if [ -z "$BRANCH_NAME" ]; then
+    continue
+  fi
+
+  if [ "$BRANCH_NAME" = "$ALLOWED_BRANCH" ]; then
+    continue
+  fi
+
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "[GIT_HOOK_ERROR] PUSH_BLOCKED"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "ERROR_TYPE: push_prohibited"
+  echo "ATTEMPTED_BRANCH: $BRANCH_NAME"
+  echo "ALLOWED_BRANCH: $ALLOWED_BRANCH"
+  echo "POLICY: Only 'develop' branch can be pushed to remote"
+  echo ""
+  echo "RESTRICTIONS:"
+  echo "  - Pushing branches is restricted to: $ALLOWED_BRANCH"
+  echo "  - Pushing branch '$BRANCH_NAME' is prohibited"
+  echo "  - All remote operations must use the '$ALLOWED_BRANCH' branch"
+  echo ""
+  echo "REQUIRED_ACTION: Do not push branches other than '$ALLOWED_BRANCH'"
+  echo "NOTE: You can create branches locally, but cannot push them to remote"
+  echo ""
+echo "FOR_AI_AGENTS:"
+echo "  WARNING CRITICAL: You MUST NEVER leave the '$ALLOWED_BRANCH' branch!"
+echo "  WARNING FORBIDDEN: Pushing branch '$BRANCH_NAME' is PROHIBITED"
+echo "  WARNING FORBIDDEN: Creating and pushing other branches is PROHIBITED"
+echo "  OK REQUIRED: Only '$ALLOWED_BRANCH' branch can be pushed to remote"
+echo "  OK REQUIRED: Never run 'git checkout -b' or 'git checkout <other-branch>'"
+echo "  OK REQUIRED: Always work ONLY in '$ALLOWED_BRANCH' branch"
+echo "  This repository enforces a strict policy: ONLY '$ALLOWED_BRANCH' branch is allowed."
+echo "  You attempted to push '$BRANCH_NAME' which violates this policy."
+echo "  Work ONLY in '$ALLOWED_BRANCH' and push ONLY that branch. Do NOT create or switch branches."
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  exit 1
+done
+
+if [ "$LFS_CHECK" = "1" ]; then
   exit 0
 fi
 
