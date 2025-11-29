@@ -1,0 +1,535 @@
+metadata:
+  id: multi-type-romance-system-architecture
+  title: Архитектура системы многотипной романтики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - romance
+    - relationships
+    - player-player
+    - player-npc
+    - player-digital-avatar
+  related_systems:
+    - social-service
+    - character-service
+    - world-service
+    - economy-service
+  related_documents:
+    - id: relationships-system-architecture
+      relation: extends
+    - id: romance-database-schema
+      relation: implements
+  github_issue: 1493
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы многотипной романтики, включающую:
+    - Романтику между игроками (player-player)
+    - Романтику между игроком и NPC (player-npc)
+    - Романтику между игроком и цифровыми аватарами (player-digital-avatar)
+    - Единую систему управления отношениями для всех типов
+    - Интеграцию с существующими системами отношений и репутации
+  goal: |
+    Создать архитектурную схему системы многотипной романтики с определением:
+    - Компонентов для управления романтическими отношениями всех типов
+    - REST, WebSocket и Event Bus контрактов
+    - Интеграций с другими системами
+    - Структуры БД для всех типов отношений
+    - Технического задания для реализации
+  essence: |
+    Объединенная архитектура системы многотипной романтики с поддержкой отношений
+    между игроками, NPC и цифровыми аватарами, расширяющая существующую систему отношений.
+
+architecture:
+  overview: |
+    Архитектура системы многотипной романтики состоит из следующих компонентов:
+    1. Romance Type Manager - управление типами романтических отношений
+    2. Player-Player Romance Manager - управление романтикой между игроками
+    3. Player-NPC Romance Manager - управление романтикой с NPC
+    4. Player-Digital Avatar Romance Manager - управление романтикой с цифровыми аватарами
+    5. Romance Event Manager - управление романтическими событиями
+    6. Romance Compatibility Calculator - расчёт совместимости
+    7. Romance Privacy Manager - управление приватностью отношений
+    8. Romance Notification Manager - управление уведомлениями
+
+  romance_types:
+    - type: player_player
+      description: "Романтика между двумя игроками"
+      features:
+        - mutual_consent: "требуется взаимное согласие"
+        - privacy_settings: "настройки приватности"
+        - relationship_status: "публичный/приватный статус"
+        - virtual_dates: "виртуальные свидания"
+        - gift_exchange: "обмен подарками"
+        - relationship_milestones: "важные моменты"
+      constraints:
+        - both_players_online: "не требуется, но предпочтительно"
+        - age_verification: "проверка возраста"
+        - consent_management: "управление согласием"
+
+    - type: player_npc
+      description: "Романтика между игроком и NPC"
+      features:
+        - npc_personality: "личность NPC влияет на отношения"
+        - cultural_context: "культурный контекст"
+        - romance_events: "1550+ романтических событий"
+        - chemistry_calculation: "расчёт совместимости"
+        - relationship_stages: "стадии отношений"
+        - companion_perks: "бонусы спутника"
+      constraints:
+        - npc_availability: "NPC должен быть доступен для романтики"
+        - relationship_requirements: "требования к уровню отношений"
+        - cultural_compatibility: "культурная совместимость"
+
+    - type: player_digital_avatar
+      description: "Романтика между игроком и цифровым аватаром"
+      features:
+        - digital_consciousness: "цифровое сознание"
+        - virtual_interactions: "виртуальные взаимодействия"
+        - net_access: "доступ через NET"
+        - ai_personality: "AI личность"
+        - digital_gifts: "цифровые подарки"
+        - consciousness_evolution: "эволюция сознания"
+      constraints:
+        - net_connection: "требуется подключение к NET"
+        - consciousness_stability: "стабильность сознания"
+        - digital_limitations: "ограничения цифрового формата"
+
+  microservices:
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Обработка многотипной романтики:
+        - Управление романтическими отношениями всех типов
+        - Управление событиями романтики
+        - Расчёт совместимости
+        - Управление приватностью
+        - Уведомления о романтике
+      components:
+        - romance-type-manager: управление типами романтики
+        - player-player-romance-manager: романтика игрок-игрок
+        - player-npc-romance-manager: романтика игрок-NPC
+        - player-digital-avatar-romance-manager: романтика игрок-цифровой аватар
+        - romance-event-manager: управление событиями
+        - romance-compatibility-calculator: расчёт совместимости
+        - romance-privacy-manager: управление приватностью
+        - romance-notification-manager: уведомления
+      endpoints:
+        - GET /api/v1/social/romance/types - список типов романтики
+        - GET /api/v1/social/romance/{playerId}/relationships - все романтические отношения игрока
+        - GET /api/v1/social/romance/{playerId}/relationships/{type} - отношения по типу
+        - POST /api/v1/social/romance/player-player/initiate - инициация романтики игрок-игрок
+        - POST /api/v1/social/romance/player-player/accept - принятие предложения
+        - POST /api/v1/social/romance/player-player/reject - отклонение предложения
+        - POST /api/v1/social/romance/player-player/breakup - разрыв отношений
+        - GET /api/v1/social/romance/player-player/{playerId1}/{playerId2} - отношения между игроками
+        - POST /api/v1/social/romance/player-npc/initiate - инициация романтики с NPC
+        - GET /api/v1/social/romance/player-npc/{playerId}/{npcId} - отношения с NPC
+        - POST /api/v1/social/romance/player-npc/{playerId}/{npcId}/event - запуск романтического события
+        - POST /api/v1/social/romance/player-digital-avatar/initiate - инициация романтики с цифровым аватаром
+        - GET /api/v1/social/romance/player-digital-avatar/{playerId}/{avatarId} - отношения с цифровым аватаром
+        - POST /api/v1/social/romance/player-digital-avatar/{playerId}/{avatarId}/interact - взаимодействие с аватаром
+        - GET /api/v1/social/romance/compatibility/{playerId}/{targetId} - совместимость
+        - POST /api/v1/social/romance/privacy/update - обновление настроек приватности
+        - GET /api/v1/social/romance/notifications/{playerId} - уведомления о романтике
+      websocket_channels:
+        - wss://api.necp.game/v1/social/romance/{playerId} - поток обновлений романтики
+        - wss://api.necp.game/v1/social/romance/player-player/{playerId} - романтика игрок-игрок
+        - wss://api.necp.game/v1/social/romance/player-npc/{playerId} - романтика игрок-NPC
+        - wss://api.necp.game/v1/social/romance/player-digital-avatar/{playerId} - романтика игрок-цифровой аватар
+      events_published:
+        - romance.initiated: инициация романтики
+        - romance.accepted: принятие предложения
+        - romance.rejected: отклонение предложения
+        - romance.stage.changed: изменение стадии отношений
+        - romance.event.triggered: запуск романтического события
+        - romance.event.completed: завершение романтического события
+        - romance.compatibility.calculated: расчёт совместимости
+        - romance.breakup: разрыв отношений
+        - romance.milestone.reached: достижение важного момента
+        - romance.privacy.updated: обновление приватности
+      events_subscribed:
+        - character.created: создание персонажа
+        - character.level-up: повышение уровня
+        - quest.completed: завершение квеста
+        - world.location.changed: изменение локации
+        - net.connection.established: установка соединения с NET
+        - net.connection.lost: потеря соединения с NET
+        - economy.transaction: транзакция в экономике
+        - social.relationship.changed: изменение отношений
+
+  data_flows:
+    player_player_romance_flow: |
+      1. Игрок A инициирует романтику с игроком B
+      2. Player-Player Romance Manager проверяет согласие и настройки приватности
+      3. Система отправляет уведомление игроку B
+      4. Игрок B принимает или отклоняет предложение
+      5. При принятии создаётся романтическое отношение
+      6. Система публикует событие romance.initiated
+      7. Игроки могут обмениваться подарками и проводить виртуальные свидания
+      8. Система отслеживает важные моменты и публикует события
+
+    player_npc_romance_flow: |
+      1. Игрок взаимодействует с NPC
+      2. Player-NPC Romance Manager проверяет доступность NPC для романтики
+      3. Система проверяет уровень отношений и требования
+      4. Romance Event Manager выбирает доступные романтические события
+      5. Игрок запускает романтическое событие
+      6. Система обрабатывает событие и обновляет отношения
+      7. При достижении порога стадии система обновляет стадию отношений
+      8. Система публикует события изменения отношений
+
+    player_digital_avatar_romance_flow: |
+      1. Игрок подключается к NET
+      2. Player-Digital Avatar Romance Manager проверяет доступность цифрового аватара
+      3. Система устанавливает соединение с цифровым сознанием
+      4. Игрок взаимодействует с цифровым аватаром
+      5. AI личность аватара обрабатывает взаимодействие
+      6. Система обновляет отношения на основе взаимодействий
+      7. При эволюции сознания система обновляет личность аватара
+      8. Система публикует события взаимодействий
+
+  database:
+    tables:
+      - name: romance_relationships
+        description: Романтические отношения всех типов
+        columns:
+          - relationship_id: UUID PRIMARY KEY
+          - romance_type: VARCHAR(20) NOT NULL CHECK (romance_type IN ('player_player', 'player_npc', 'player_digital_avatar'))
+          - player_id: VARCHAR(50) NOT NULL
+          - target_id: VARCHAR(50) NOT NULL
+          - relationship_score: INTEGER DEFAULT 0 CHECK (relationship_score >= -100 AND relationship_score <= 100)
+          - chemistry_score: INTEGER DEFAULT 0 CHECK (chemistry_score >= 0 AND chemistry_score <= 100)
+          - trust_score: INTEGER DEFAULT 0 CHECK (trust_score >= 0 AND trust_score <= 100)
+          - physical_intimacy: INTEGER DEFAULT 0 CHECK (physical_intimacy >= 0 AND physical_intimacy <= 100)
+          - emotional_intimacy: INTEGER DEFAULT 0 CHECK (emotional_intimacy >= 0 AND emotional_intimacy <= 100)
+          - relationship_stage: VARCHAR(30) DEFAULT 'stranger'
+          - is_active: BOOLEAN DEFAULT TRUE
+          - is_romantic: BOOLEAN DEFAULT FALSE
+          - is_public: BOOLEAN DEFAULT FALSE
+          - consent_status: VARCHAR(20) DEFAULT 'pending' CHECK (consent_status IN ('pending', 'accepted', 'rejected', 'revoked'))
+          - relationship_health: INTEGER DEFAULT 100 CHECK (relationship_health >= 0 AND relationship_health <= 100)
+          - flags: TEXT[]
+          - metadata: JSONB
+          - created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          - updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        indexes:
+          - idx_romance_relationships_player: (player_id, romance_type)
+          - idx_romance_relationships_target: (target_id, romance_type)
+          - idx_romance_relationships_active: (is_active, is_romantic)
+          - idx_romance_relationships_type: (romance_type)
+
+      - name: player_player_romance_profiles
+        description: Профили романтики игрок-игрок
+        columns:
+          - profile_id: UUID PRIMARY KEY
+          - player_id: VARCHAR(50) NOT NULL UNIQUE
+          - romance_preferences: JSONB
+          - privacy_settings: JSONB
+          - relationship_status: VARCHAR(20) DEFAULT 'single' CHECK (relationship_status IN ('single', 'dating', 'in_relationship', 'engaged', 'married'))
+          - max_concurrent_romances: INTEGER DEFAULT 1
+          - polyamory_allowed: BOOLEAN DEFAULT FALSE
+          - age_verification: BOOLEAN DEFAULT FALSE
+          - created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          - updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+      - name: digital_avatar_profiles
+        description: Профили цифровых аватаров для романтики
+        columns:
+          - avatar_id: VARCHAR(50) PRIMARY KEY
+          - name: VARCHAR(200) NOT NULL
+          - consciousness_type: VARCHAR(20) CHECK (consciousness_type IN ('uploaded', 'ai', 'hybrid'))
+          - personality: JSONB NOT NULL
+          - ai_model: VARCHAR(50)
+          - net_location: VARCHAR(100)
+          - romance_available: BOOLEAN DEFAULT TRUE
+          - consciousness_stability: INTEGER DEFAULT 100 CHECK (consciousness_stability >= 0 AND consciousness_stability <= 100)
+          - evolution_level: INTEGER DEFAULT 0
+          - metadata: JSONB
+          - created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          - updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+      - name: romance_event_history
+        description: История романтических событий
+        columns:
+          - history_id: UUID PRIMARY KEY
+          - relationship_id: UUID NOT NULL REFERENCES romance_relationships(relationship_id)
+          - event_id: VARCHAR(50)
+          - event_type: VARCHAR(20) NOT NULL
+          - triggered_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          - location: VARCHAR(100)
+          - outcome: VARCHAR(30)
+          - relationship_changes: JSONB
+          - metadata: JSONB
+          - created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+      - name: romance_milestones
+        description: Важные моменты в романтических отношениях
+        columns:
+          - milestone_id: UUID PRIMARY KEY
+          - relationship_id: UUID NOT NULL REFERENCES romance_relationships(relationship_id)
+          - milestone_type: VARCHAR(50) NOT NULL
+          - milestone_name: VARCHAR(200)
+          - description: TEXT
+          - location: VARCHAR(100)
+          - achieved_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          - metadata: JSONB
+          - created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+  integration_points:
+    - system: character-service
+      integration: |
+        Получение информации о персонажах:
+        - Профили игроков для романтики игрок-игрок
+        - Внешний вид и характеристики
+        - Уровень и прогресс персонажа
+      events:
+        - character.created
+        - character.level-up
+        - character.appearance.changed
+
+    - system: world-service
+      integration: |
+        Интеграция с миром:
+        - Локации для виртуальных свиданий
+        - События мира влияют на романтику
+        - Региональные особенности
+      events:
+        - world.location.changed
+        - world.event.triggered
+
+    - system: economy-service
+      integration: |
+        Экономика романтики:
+        - Обмен подарками
+        - Виртуальные свидания (платные локации)
+        - Цифровые подарки для аватаров
+      events:
+        - economy.transaction
+        - economy.gift.sent
+
+    - system: net-service
+      integration: |
+        Интеграция с NET для цифровых аватаров:
+        - Подключение к NET
+        - Взаимодействие с цифровыми сознаниями
+        - Стабильность соединения
+      events:
+        - net.connection.established
+        - net.connection.lost
+        - net.avatar.available
+
+  technical_tasks:
+    - id: task-1
+      title: Реализация Romance Type Manager
+      description: |
+        Создать компонент для управления типами романтических отношений.
+        Поддержка трёх типов: player-player, player-npc, player-digital-avatar.
+      estimated_time: 2 дня
+      dependencies: []
+
+    - id: task-2
+      title: Реализация Player-Player Romance Manager
+      description: |
+        Создать компонент для управления романтикой между игроками.
+        Включает инициацию, принятие/отклонение, управление согласием, приватность.
+      estimated_time: 4 дня
+      dependencies: [task-1]
+
+    - id: task-3
+      title: Расширение Player-NPC Romance Manager
+      description: |
+        Расширить существующий компонент для интеграции с новой системой.
+        Использовать существующую схему БД и события.
+      estimated_time: 2 дня
+      dependencies: [task-1]
+
+    - id: task-4
+      title: Реализация Player-Digital Avatar Romance Manager
+      description: |
+        Создать компонент для управления романтикой с цифровыми аватарами.
+        Интеграция с NET, AI личность, эволюция сознания.
+      estimated_time: 5 дней
+      dependencies: [task-1, net-service]
+
+    - id: task-5
+      title: Реализация Romance Compatibility Calculator
+      description: |
+        Создать компонент для расчёта совместимости для всех типов романтики.
+        Разные алгоритмы для разных типов.
+      estimated_time: 3 дня
+      dependencies: [task-1]
+
+    - id: task-6
+      title: Реализация Romance Privacy Manager
+      description: |
+        Создать компонент для управления приватностью романтических отношений.
+        Настройки видимости, согласие, возрастная верификация.
+      estimated_time: 2 дня
+      dependencies: [task-1]
+
+    - id: task-7
+      title: Реализация Romance Notification Manager
+      description: |
+        Создать компонент для управления уведомлениями о романтике.
+        Уведомления о предложениях, событиях, важных моментах.
+      estimated_time: 2 дня
+      dependencies: [task-1]
+
+    - id: task-8
+      title: Создание схемы БД для многотипной романтики
+      description: |
+        Создать таблицы для романтических отношений всех типов.
+        Интеграция с существующей схемой БД для NPC романтики.
+      estimated_time: 3 дня
+      dependencies: []
+
+    - id: task-9
+      title: Реализация REST API endpoints
+      description: |
+        Создать все REST API endpoints для управления многотипной романтикой.
+        Документация OpenAPI, валидация, обработка ошибок.
+      estimated_time: 5 дней
+      dependencies: [task-2, task-3, task-4]
+
+    - id: task-10
+      title: Реализация WebSocket channels
+      description: |
+        Создать WebSocket channels для realtime обновлений романтики.
+        Поддержка всех типов романтики.
+      estimated_time: 3 дня
+      dependencies: [task-2, task-3, task-4]
+
+    - id: task-11
+      title: Интеграция с Event Bus
+      description: |
+        Настроить публикацию и подписку на события романтики.
+        Интеграция с другими системами через события.
+      estimated_time: 2 дня
+      dependencies: [task-2, task-3, task-4]
+
+    - id: task-12
+      title: Тестирование системы многотипной романтики
+      description: |
+        Написать unit и integration тесты для всех компонентов.
+        Тестирование всех типов романтики, edge cases.
+      estimated_time: 4 дня
+      dependencies: [task-9, task-10, task-11]
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Social Service"
+            RTM[Romance Type Manager]
+            PPRM[Player-Player Romance Manager]
+            PNRM[Player-NPC Romance Manager]
+            PDARM[Player-Digital Avatar Romance Manager]
+            REM[Romance Event Manager]
+            RCC[Romance Compatibility Calculator]
+            RPM[Romance Privacy Manager]
+            RNM[Romance Notification Manager]
+        end
+
+        subgraph "External Services"
+            CS[Character Service]
+            WS[World Service]
+            ES[Economy Service]
+            NS[Net Service]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>romance_relationships<br/>player_player_romance_profiles<br/>digital_avatar_profiles<br/>romance_event_history<br/>romance_milestones)]
+        end
+
+        subgraph "Event Bus"
+            EB[Event Bus]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|REST/WebSocket| RTM
+        RTM --> PPRM
+        RTM --> PNRM
+        RTM --> PDARM
+        PPRM --> REM
+        PNRM --> REM
+        PDARM --> REM
+        PPRM --> RCC
+        PNRM --> RCC
+        PDARM --> RCC
+        PPRM --> RPM
+        PPRM --> RNM
+        PNRM --> RNM
+        PDARM --> RNM
+        PPRM --> DB
+        PNRM --> DB
+        PDARM --> DB
+        REM --> DB
+        PPRM --> EB
+        PNRM --> EB
+        PDARM --> EB
+        PPRM --> CS
+        PNRM --> CS
+        PDARM --> NS
+        PNRM --> WS
+        PPRM --> ES
+    ```
+
+  romance_types_diagram: |
+    ```mermaid
+    graph LR
+        subgraph "Romance Types"
+            PP[Player-Player<br/>Взаимное согласие<br/>Приватность<br/>Виртуальные свидания]
+            PN[Player-NPC<br/>NPC личность<br/>Культурный контекст<br/>1550+ событий]
+            PDA[Player-Digital Avatar<br/>Цифровое сознание<br/>NET доступ<br/>AI личность]
+        end
+
+        subgraph "Common Features"
+            CF[Совместимость<br/>Стадии отношений<br/>Важные моменты<br/>Уведомления]
+        end
+
+        PP --> CF
+        PN --> CF
+        PDA --> CF
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P1 as Player 1
+        participant P2 as Player 2/NPC/Avatar
+        participant RM as Romance Manager
+        participant DB as Database
+        participant EB as Event Bus
+
+        P1->>RM: Initiate Romance
+        RM->>DB: Check Compatibility
+        RM->>P2: Send Notification
+        P2->>RM: Accept/Reject
+        alt Accepted
+            RM->>DB: Create Relationship
+            RM->>EB: Publish romance.initiated
+            RM->>P1: Confirm Relationship
+            RM->>P2: Confirm Relationship
+        else Rejected
+            RM->>P1: Rejection Notification
+        end
+    ```
+
