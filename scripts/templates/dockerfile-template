@@ -1,0 +1,44 @@
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache make nodejs npm git ca-certificates tzdata
+
+COPY services/{SERVICE_NAME}/go.mod services/{SERVICE_NAME}/go.sum ./
+RUN go mod download
+
+RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+
+COPY services/{SERVICE_NAME} ./services/{SERVICE_NAME}
+COPY proto ./proto
+
+WORKDIR /app/services/{SERVICE_NAME}
+
+RUN make generate-api || true
+
+RUN go mod tidy
+RUN CGO_ENABLED=0 GOOS=linux go build -o {service-name} -ldflags="-w -s -extldflags '-static'" .
+
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /app
+
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
+COPY --from=builder /app/services/{SERVICE_NAME}/{service-name} /app/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+RUN chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE {HTTP_PORT}/tcp {METRICS_PORT}
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:{METRICS_PORT}/metrics || exit 1
+
+ENTRYPOINT ["/app/{service-name}"]
+

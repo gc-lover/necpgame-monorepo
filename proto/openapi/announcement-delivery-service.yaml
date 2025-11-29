@@ -1,0 +1,98 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service - Delivery API
+  description: API для доставки объявлений
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8096/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: Announcement Delivery
+    description: Доставка объявлений
+
+paths:
+  /liveops/announcements/{announcement_id}/deliver:
+    post:
+      tags:
+        - Announcement Delivery
+      summary: Доставить объявление
+      operationId: deliverAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'announcement-schemas.yaml#/components/schemas/DeliverAnnouncementRequest'
+      responses:
+        '200':
+          description: Объявление доставлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: delivered
+                  recipients_count:
+                    type: integer
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/delivery-status:
+    get:
+      tags:
+        - Announcement Delivery
+      summary: Получить статус доставки объявления
+      operationId: getDeliveryStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус доставки
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/DeliveryStatusResponse'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

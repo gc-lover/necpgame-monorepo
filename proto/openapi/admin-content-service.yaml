@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: Admin Content Service API
+  description: API для управления контентом
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Content Management
+    description: Управление контентом
+
+paths:
+  /content/achievements:
+    get:
+      tags:
+        - Content Management
+      summary: Список достижений
+      operationId: listAchievements
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список достижений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: 'admin-content-schemas.yaml#/components/schemas/AchievementDefinition'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание достижения
+      operationId: createAchievement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-content-schemas.yaml#/components/schemas/CreateAchievementRequest'
+      responses:
+        '201':
+          description: Достижение создано
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-content-schemas.yaml#/components/schemas/AchievementDefinition'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/achievements/{achievement_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление достижения
+      operationId: updateAchievement
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-content-schemas.yaml#/components/schemas/UpdateAchievementRequest'
+      responses:
+        '200':
+          description: Достижение обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-content-schemas.yaml#/components/schemas/AchievementDefinition'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Content Management
+      summary: Удаление достижения
+      operationId: deleteAchievement
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Достижение удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/daily-quests:
+    get:
+      tags:
+        - Content Management
+      summary: Список ежедневных заданий
+      operationId: listDailyQuests
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Список ежедневных заданий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: 'admin-content-schemas.yaml#/components/schemas/DailyQuest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание ежедневного задания
+      operationId: createDailyQuest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-content-schemas.yaml#/components/schemas/CreateDailyQuestRequest'
+      responses:
+        '201':
+          description: Задание создано
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-content-schemas.yaml#/components/schemas/DailyQuest'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/daily-quests/{quest_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление ежедневного задания
+      operationId: updateDailyQuest
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-content-schemas.yaml#/components/schemas/UpdateDailyQuestRequest'
+      responses:
+        '200':
+          description: Задание обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-content-schemas.yaml#/components/schemas/DailyQuest'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/events:
+    get:
+      tags:
+        - Content Management
+      summary: Список глобальных событий
+      operationId: listEvents
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: 'admin-content-schemas.yaml#/components/schemas/GlobalEvent'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Content Management
+      summary: Создание глобального события
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-content-schemas.yaml#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-content-schemas.yaml#/components/schemas/GlobalEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/events/{event_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление глобального события
+      operationId: updateEvent
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-content-schemas.yaml#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Событие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-content-schemas.yaml#/components/schemas/GlobalEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/npcs/{npc_id}/dialogues:
+    get:
+      tags:
+        - Content Management
+      summary: Диалоги NPC
+      operationId: getNPCDialogues
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Диалоги NPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dialogues:
+                    type: array
+                    items:
+                      $ref: 'admin-content-schemas.yaml#/components/schemas/NPCDialogue'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /content/npcs/{npc_id}/dialogues/{dialogue_id}:
+    put:
+      tags:
+        - Content Management
+      summary: Обновление диалога NPC
+      operationId: updateNPCDialogue
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: dialogue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-content-schemas.yaml#/components/schemas/UpdateDialogueRequest'
+      responses:
+        '200':
+          description: Диалог обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-content-schemas.yaml#/components/schemas/NPCDialogue'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

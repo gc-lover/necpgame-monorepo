@@ -6,8 +6,9 @@ metadata:
   labels:
     app: housing-service-go
     version: v1
+    tier: backend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: housing-service-go
@@ -16,12 +17,28 @@ spec:
       labels:
         app: housing-service-go
         version: v1
-        prometheus: scrape
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9093"
+        prometheus.io/path: "/metrics"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: housing-service-go
         image: necpgame-housing-service-go:latest
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         ports:
         - name: http
           containerPort: 8093
@@ -68,19 +85,36 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+        startupProbe:
+          httpGet:
+            path: /metrics
+            port: 9093
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 30
         livenessProbe:
           httpGet:
             path: /metrics
             port: 9093
-          initialDelaySeconds: 10
+          initialDelaySeconds: 30
           periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /metrics
             port: 9093
           initialDelaySeconds: 5
           periodSeconds: 10
-
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -103,4 +137,3 @@ spec:
     protocol: TCP
   selector:
     app: housing-service-go
-

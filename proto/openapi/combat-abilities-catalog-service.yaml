@@ -1,0 +1,238 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Catalog Service API
+  description: |
+    API для каталога боевых способностей и управления лоадаутами.
+    
+    **Основные возможности:**
+    - Получение каталога способностей с фильтрацией
+    - Детальная информация о способности
+    - Создание и обновление лоадаутов
+    - Получение списка лоадаутов персонажа
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Ability Catalog
+    description: Каталог способностей
+  - name: Ability Loadouts
+    description: Лоадауты способностей
+
+paths:
+  /gameplay/combat/abilities/catalog:
+    get:
+      tags:
+        - Ability Catalog
+      summary: Получить каталог способностей
+      description: |
+        Возвращает каталог способностей с возможностью фильтрации по типу, слоту и источнику.
+        Поддерживает пагинацию.
+      operationId: getAbilityCatalog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ability_type
+          in: query
+          schema:
+            $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilityType'
+          description: Фильтр по типу способности
+        - name: slot
+          in: query
+          schema:
+            $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilitySlot'
+          description: Фильтр по слоту
+        - name: source
+          in: query
+          schema:
+            $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilitySource'
+          description: Фильтр по источнику
+        - name: min_rank
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+          description: Минимальный ранг
+        - name: max_rank
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+          description: Максимальный ранг
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - abilities
+                  - total
+                properties:
+                  abilities:
+                    type: array
+                    items:
+                      $ref: 'combat-abilities-schemas.yaml#/components/schemas/Ability'
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Общее количество способностей
+                    example: 50
+                  limit:
+                    type: integer
+                    minimum: 1
+                    example: 20
+                  offset:
+                    type: integer
+                    minimum: 0
+                    example: 0
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/abilities/{abilityId}:
+    get:
+      tags:
+        - Ability Catalog
+      summary: Получить информацию о способности
+      description: |
+        Возвращает детальную информацию о конкретной способности.
+      operationId: getAbilityById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: abilityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор способности
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-abilities-schemas.yaml#/components/schemas/Ability'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/combat/abilities/loadouts:
+    post:
+      tags:
+        - Ability Loadouts
+      summary: Создать или обновить лоадаут способностей
+      description: |
+        Создает новый лоадаут или обновляет существующий для текущего персонажа.
+        Валидирует требования способностей и проверяет доступность.
+      operationId: createOrUpdateAbilityLoadout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilityLoadoutCreate'
+      responses:
+        '200':
+          description: Лоадаут успешно создан или обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilityLoadout'
+        '201':
+          description: Лоадаут успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilityLoadout'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Ability Loadouts
+      summary: Получить список лоадаутов
+      description: |
+        Возвращает список всех лоадаутов для текущего персонажа.
+        Поддерживает фильтрацию по активности и пагинацию.
+      operationId: getAbilityLoadouts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по активности лоадаута
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - loadouts
+                  - total
+                properties:
+                  loadouts:
+                    type: array
+                    items:
+                      $ref: 'combat-abilities-schemas.yaml#/components/schemas/AbilityLoadout'
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Общее количество лоадаутов
+                    example: 5
+                  limit:
+                    type: integer
+                    minimum: 1
+                    example: 20
+                  offset:
+                    type: integer
+                    minimum: 0
+                    example: 0
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+

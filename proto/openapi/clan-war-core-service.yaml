@@ -1,0 +1,176 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service - Core API
+  description: API для основных операций с клановыми войнами
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8092/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: War Manager
+    description: Управление клановыми войнами
+
+paths:
+  /world/clan-war/declare:
+    post:
+      tags:
+        - War Manager
+      summary: Объявить клановую войну
+      operationId: declareWar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'clan-war-schemas.yaml#/components/schemas/DeclareWarRequest'
+      responses:
+        '201':
+          description: Война объявлена
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/ClanWar'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/active:
+    get:
+      tags:
+        - War Manager
+      summary: Получить активные войны
+      operationId: getActiveWars
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Активные войны
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/ActiveWarsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/{war_id}:
+    get:
+      tags:
+        - War Manager
+      summary: Получить информацию о войне
+      operationId: getWar
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о войне
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/ClanWar'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/{war_id}/cancel:
+    post:
+      tags:
+        - War Manager
+      summary: Отменить войну
+      operationId: cancelWar
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'clan-war-schemas.yaml#/components/schemas/CancelWarRequest'
+      responses:
+        '200':
+          description: Война отменена
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/ClanWar'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/wars/{war_id}/resolve:
+    post:
+      tags:
+        - War Manager
+      summary: Завершить войну и определить победителя
+      operationId: resolveWar
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Война завершена
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/WarResolution'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,78 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service - Events API
+  description: API для событий войны
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8092/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: War Events
+    description: События войны
+
+paths:
+  /world/clan-war/events/{war_id}:
+    get:
+      tags:
+        - War Events
+      summary: Получить события войны
+      operationId: getWarEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - clan-war:declared
+              - clan-war:phase-changed
+              - clan-war:battle-started
+              - clan-war:battle-ended
+              - clan-war:territory-captured
+              - clan-war:ended
+              - clan-war:rewards-distributed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События войны
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/WarEventsResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

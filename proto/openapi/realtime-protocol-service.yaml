@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Realtime Service - Protocol API
+  description: API для оптимизации протокола и управления профилями производительности
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8080/api/v1/realtime
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1/realtime
+      description: Продакшен сервер
+
+tags:
+  - name: Protocol
+    description: Оптимизация протокола
+  - name: Performance Profiles
+    description: Управление профилями производительности
+
+paths:
+  /protocol/stats:
+    get:
+      tags:
+        - Protocol
+      summary: Статистика протокола
+      operationId: getProtocolStats
+      parameters:
+        - name: instance_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика протокола
+          content:
+            application/json:
+              schema:
+                $ref: 'realtime-schemas.yaml#/components/schemas/ProtocolStats'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+
+  /protocol/optimize:
+    post:
+      tags:
+        - Protocol
+      summary: Оптимизация протокола
+      operationId: optimizeProtocol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'realtime-schemas.yaml#/components/schemas/OptimizeProtocolRequest'
+      responses:
+        '200':
+          description: Протокол оптимизирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: optimized
+                  bandwidth_saved:
+                    type: number
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+
+  /profiles:
+    get:
+      tags:
+        - Performance Profiles
+      summary: Список профилей производительности
+      operationId: listPerformanceProfiles
+      responses:
+        '200':
+          description: Список профилей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: 'realtime-schemas.yaml#/components/schemas/PerformanceProfile'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /profiles/{profile_id}:
+    get:
+      tags:
+        - Performance Profiles
+      summary: Информация о профиле
+      operationId: getPerformanceProfile
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о профиле
+          content:
+            application/json:
+              schema:
+                $ref: 'realtime-schemas.yaml#/components/schemas/PerformanceProfile'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /profiles/{profile_id}/apply:
+    post:
+      tags:
+        - Performance Profiles
+      summary: Применение профиля
+      operationId: applyPerformanceProfile
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'realtime-schemas.yaml#/components/schemas/ApplyProfileRequest'
+      responses:
+        '200':
+          description: Профиль применен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: applied
+                  instance_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

@@ -1,0 +1,135 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service - Tracking API
+  description: API для отслеживания и статистики объявлений
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8096/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: Announcement Tracking
+    description: Учёт прочтений и статистика
+
+paths:
+  /announcements/{announcementId}/read:
+    post:
+      tags:
+        - Announcement Tracking
+      summary: Отметить объявление как прочитанное
+      operationId: markAnnouncementAsRead
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'announcement-schemas.yaml#/components/schemas/MarkReadRequest'
+      responses:
+        '200':
+          description: Объявление отмечено как прочитанное
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: read
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/click:
+    post:
+      tags:
+        - Announcement Tracking
+      summary: Отследить клик по объявлению
+      operationId: trackAnnouncementClick
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'announcement-schemas.yaml#/components/schemas/TrackClickRequest'
+      responses:
+        '200':
+          description: Клик зафиксирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: tracked
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/stats:
+    get:
+      tags:
+        - Announcement Tracking
+      summary: Получить статистику объявления
+      operationId: getAnnouncementStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика объявления
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/AnnouncementStats'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

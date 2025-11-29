@@ -1,0 +1,173 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service - Publisher API
+  description: API для публикации и планирования объявлений
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8096/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: Announcement Publisher
+    description: Публикация объявлений
+  - name: Announcement Scheduler
+    description: Планирование публикаций
+
+paths:
+  /liveops/announcements/{announcement_id}/publish:
+    post:
+      tags:
+        - Announcement Publisher
+      summary: Опубликовать объявление
+      operationId: publishAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление опубликовано
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/Announcement'
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/schedule:
+    post:
+      tags:
+        - Announcement Publisher
+        - Announcement Scheduler
+      summary: Запланировать публикацию объявления
+      operationId: scheduleAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'announcement-schemas.yaml#/components/schemas/ScheduleAnnouncementRequest'
+      responses:
+        '200':
+          description: Публикация запланирована
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/Announcement'
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/{announcement_id}/archive:
+    post:
+      tags:
+        - Announcement Publisher
+      summary: Архивировать объявление
+      operationId: archiveAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление архивировано
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/Announcement'
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+  /liveops/announcements/scheduled:
+    get:
+      tags:
+        - Announcement Scheduler
+      summary: Получить запланированные объявления
+      operationId: getScheduledAnnouncements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список запланированных объявлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: 'announcement-schemas.yaml#/components/schemas/Announcement'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

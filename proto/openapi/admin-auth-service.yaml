@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Admin Auth Service API
+  description: API для аутентификации и авторизации администраторов
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Authentication
+    description: Аутентификация и авторизация администраторов
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Вход в админ-панель
+      operationId: adminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+            example:
+              username: admin
+              password: secure_password
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Выход из админ-панели
+      operationId: adminLogout
+      responses:
+        '200':
+          description: Успешный выход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: logged_out
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Информация о текущем администраторе
+      operationId: getCurrentAdmin
+      responses:
+        '200':
+          description: Информация об администраторе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+  schemas:
+    AdminLoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 100
+        password:
+          type: string
+          minLength: 8
+          format: password
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT токен для последующих запросов
+        admin:
+          $ref: '#/components/schemas/AdminUser'
+        expires_at:
+          type: string
+          format: date-time
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - ADMIN
+            - MODERATOR
+        is_active:
+          type: boolean
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+

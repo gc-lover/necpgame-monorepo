@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/necpgame/progression-paragon-service-go/pkg/api"
+	prestigeapi "github.com/necpgame/progression-paragon-service-go/pkg/api/prestige"
+	masteryapi "github.com/necpgame/progression-paragon-service-go/pkg/api/mastery"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,22 +37,16 @@ func NewHTTPServer(addr string, paragonService ParagonServiceInterface, prestige
 	router.Use(server.metricsMiddleware)
 	router.Use(server.corsMiddleware)
 
-	api := router.PathPrefix("/api/v1/progression").Subrouter()
+	apiRouter := router.PathPrefix("/api/v1/progression").Subrouter()
 
 	paragonHandlers := NewParagonHandlers(paragonService)
-	api.HandleFunc("/paragon/levels", paragonHandlers.GetParagonLevels).Methods("GET")
-	api.HandleFunc("/paragon/distribute", paragonHandlers.DistributeParagonPoints).Methods("POST")
-	api.HandleFunc("/paragon/stats", paragonHandlers.GetParagonStats).Methods("GET")
+	api.HandlerFromMux(paragonHandlers, apiRouter)
 
 	prestigeHandlers := NewPrestigeHandlers(prestigeService)
-	api.HandleFunc("/prestige/info", prestigeHandlers.GetPrestigeInfo).Methods("GET")
-	api.HandleFunc("/prestige/reset", prestigeHandlers.ResetPrestige).Methods("POST")
-	api.HandleFunc("/prestige/bonuses", prestigeHandlers.GetPrestigeBonuses).Methods("GET")
+	prestigeapi.HandlerFromMux(prestigeHandlers, apiRouter)
 
 	masteryHandlers := NewMasteryHandlers(masteryService)
-	api.HandleFunc("/mastery/levels", masteryHandlers.GetMasteryLevels).Methods("GET")
-	api.HandleFunc("/mastery/{type}/progress", masteryHandlers.GetMasteryProgress).Methods("GET")
-	api.HandleFunc("/mastery/rewards", masteryHandlers.GetMasteryRewards).Methods("GET")
+	masteryapi.HandlerFromMux(masteryHandlers, apiRouter)
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

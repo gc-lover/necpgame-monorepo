@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -189,11 +188,6 @@ func (r *MasteryRepository) GetMasteryRewardsByCharacter(ctx context.Context, ch
 		reward.RewardName = r.getRewardName(reward.RewardType, reward.RewardID)
 		rewards = append(rewards, reward)
 		rewardMap[reward.MasteryType+"_"+strconv.Itoa(reward.Level)+"_"+reward.RewardID] = true
-	}
-
-	masteryTypes := []string{"raid", "dungeon", "world_boss", "pvp", "exploration"}
-	if masteryType != nil {
-		masteryTypes = []string{*masteryType}
 	}
 
 	standardRewards := r.getStandardRewards()

@@ -6,8 +6,9 @@ metadata:
   labels:
     app: support-service-go
     version: v1
+    tier: backend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: support-service-go
@@ -16,68 +17,102 @@ spec:
       labels:
         app: support-service-go
         version: v1
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9097"
+        prometheus.io/path: "/metrics"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: support-service-go
-        image: necpgame-support-service-go:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-        - name: http
-          containerPort: 8087
-          protocol: TCP
-        - name: metrics
-          containerPort: 9097
-          protocol: TCP
-        env:
-        - name: ADDR
-          value: "0.0.0.0:8087"
-        - name: METRICS_ADDR
-          value: ":9097"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: url
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: redis-secrets
-              key: url
-        - name: KEYCLOAK_URL
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: keycloak-url
-        - name: KEYCLOAK_REALM
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: keycloak-realm
-        - name: AUTH_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: auth-enabled
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /metrics
-            port: 9097
-          initialDelaySeconds: 10
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: 9097
-          initialDelaySeconds: 5
-          periodSeconds: 10
-
+        - name: support-service-go
+          image: necpgame-support-service-go:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8087
+              protocol: TCP
+            - name: metrics
+              containerPort: 9097
+              protocol: TCP
+          env:
+            - name: ADDR
+              value: "0.0.0.0:8087"
+            - name: METRICS_ADDR
+              value: ":9097"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: url
+            - name: KEYCLOAK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: keycloak-url
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: keycloak-realm
+            - name: AUTH_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: auth-enabled
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: 9097
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9097
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9097
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -90,14 +125,13 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8087
-    targetPort: 8087
-    protocol: TCP
-  - name: metrics
-    port: 9097
-    targetPort: 9097
-    protocol: TCP
+    - name: http
+      port: 8087
+      targetPort: 8087
+      protocol: TCP
+    - name: metrics
+      port: 9097
+      targetPort: 9097
+      protocol: TCP
   selector:
     app: support-service-go
-

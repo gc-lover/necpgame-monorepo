@@ -1,0 +1,319 @@
+openapi: 3.0.3
+info:
+  title: Admin Economy Service API
+  description: API для управления экономикой
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8089/api/v1/admin
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/admin
+    description: Продакшен сервер
+
+tags:
+  - name: Economy Management
+    description: Управление экономикой
+
+paths:
+  /economy/players/{player_id}/balance:
+    get:
+      tags:
+        - Economy Management
+      summary: Баланс игрока
+      operationId: getPlayerBalance
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Баланс игрока
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-economy-schemas.yaml#/components/schemas/PlayerBalance'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - Economy Management
+      summary: Изменение баланса игрока
+      operationId: updatePlayerBalance
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-economy-schemas.yaml#/components/schemas/UpdateBalanceRequest'
+      responses:
+        '200':
+          description: Баланс изменен
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-economy-schemas.yaml#/components/schemas/PlayerBalance'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/market/activity:
+    get:
+      tags:
+        - Economy Management
+      summary: Активность рынка
+      operationId: getMarketActivity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Активность рынка
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: 'admin-economy-schemas.yaml#/components/schemas/MarketActivity'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/market/suspicious:
+    get:
+      tags:
+        - Economy Management
+      summary: Подозрительные операции
+      operationId: getSuspiciousOperations
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Подозрительные операции
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  operations:
+                    type: array
+                    items:
+                      $ref: 'admin-economy-schemas.yaml#/components/schemas/SuspiciousOperation'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/reports/rmt:
+    get:
+      tags:
+        - Economy Management
+      summary: Отчёты по RMT
+      operationId: getRMTReports
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Отчёты по RMT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: 'admin-economy-schemas.yaml#/components/schemas/RMTReport'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/items:
+    get:
+      tags:
+        - Economy Management
+      summary: Список предметов
+      operationId: listItems
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список предметов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: 'admin-economy-schemas.yaml#/components/schemas/Item'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Economy Management
+      summary: Создание предмета
+      operationId: createItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-economy-schemas.yaml#/components/schemas/CreateItemRequest'
+      responses:
+        '201':
+          description: Предмет создан
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-economy-schemas.yaml#/components/schemas/Item'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+  /economy/items/{item_id}:
+    put:
+      tags:
+        - Economy Management
+      summary: Обновление предмета
+      operationId: updateItem
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'admin-economy-schemas.yaml#/components/schemas/UpdateItemRequest'
+      responses:
+        '200':
+          description: Предмет обновлен
+          content:
+            application/json:
+              schema:
+                $ref: 'admin-economy-schemas.yaml#/components/schemas/Item'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Economy Management
+      summary: Удаление предмета
+      operationId: deleteItem
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Предмет удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

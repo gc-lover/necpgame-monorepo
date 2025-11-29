@@ -1,0 +1,221 @@
+openapi: 3.0.3
+info:
+  title: Admin Players Schemas
+  description: Схемы данных для управления игроками
+  version: 2.0.0
+
+components:
+  schemas:
+    PlayerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        email:
+          type: string
+          format: email
+        level:
+          type: integer
+        status:
+          type: string
+          enum:
+            - active
+            - banned
+            - muted
+            - deleted
+        created_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdatePlayerRequest:
+      type: object
+      properties:
+        character_name:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum:
+            - active
+            - banned
+            - muted
+
+    DeletePlayerRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    PlayerSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: integer
+          nullable: true
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum:
+            - purchase
+            - sale
+            - reward
+            - penalty
+            - transfer
+        currency_type:
+          type: string
+        amount:
+          type: integer
+        balance_after:
+          type: integer
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        quantity:
+          type: integer
+        slot:
+          type: integer
+          nullable: true
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        achievement_id:
+          type: string
+          format: uuid
+        achievement_name:
+          type: string
+        unlocked_at:
+          type: string
+          format: date-time
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    CreateSanctionRequest:
+      type: object
+      required:
+        - sanction_type
+        - reason
+      properties:
+        sanction_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - MUTE
+            - KICK
+        duration:
+          type: integer
+          description: Длительность в секундах (NULL для постоянных)
+          nullable: true
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    Sanction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        admin_id:
+          type: string
+          format: uuid
+        sanction_type:
+          type: string
+          enum:
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - MUTE
+            - KICK
+        duration:
+          type: integer
+          nullable: true
+        reason:
+          type: string
+        is_active:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    RevokeSanctionRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+

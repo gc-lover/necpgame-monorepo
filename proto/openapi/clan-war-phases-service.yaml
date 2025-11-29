@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service - Phases API
+  description: API для управления фазами войны
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8092/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: War Phase Controller
+    description: Управление фазами войны
+
+paths:
+  /world/clan-war/{war_id}/phase:
+    get:
+      tags:
+        - War Phase Controller
+      summary: Получить текущую фазу войны
+      operationId: getWarPhase
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Фаза войны
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/WarPhaseResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /world/clan-war/{war_id}/phase/transition:
+    post:
+      tags:
+        - War Phase Controller
+      summary: Перейти на следующую фазу войны (admin)
+      operationId: transitionWarPhase
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'clan-war-schemas.yaml#/components/schemas/TransitionPhaseRequest'
+      responses:
+        '200':
+          description: Фаза изменена
+          content:
+            application/json:
+              schema:
+                $ref: 'clan-war-schemas.yaml#/components/schemas/WarPhaseResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

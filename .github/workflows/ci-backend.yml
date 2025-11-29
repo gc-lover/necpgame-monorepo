@@ -12,28 +12,24 @@ on:
       - 'proto/**'
 
 jobs:
+  discover-services:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.list.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Discover Go services
+        id: list
+        run: |
+          services=$(find services -maxdepth 1 -type d -name "*-go" -exec basename {} \; | jq -R -s -c 'split("\n")[:-1]')
+          echo "services=$services" >> $GITHUB_OUTPUT
+
   test:
+    needs: discover-services
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service:
-          - character-service-go
-          - inventory-service-go
-          - movement-service-go
-          - matchmaking-go
-          - realtime-gateway-go
-          - ws-lobby-go
-          - achievement-service-go
-          - economy-service-go
-          - support-service-go
-          - social-service-go
-          - reset-service-go
-          - gameplay-service-go
-          - admin-service-go
-          - clan-war-service-go
-          - companion-service-go
-          - voice-chat-service-go
-          - housing-service-go
+        service: ${{ fromJson(needs.discover-services.outputs.services) }}
     
     steps:
       - uses: actions/checkout@v4
@@ -52,27 +48,11 @@ jobs:
         run: go build -o /tmp/${{ matrix.service }} ./...
 
   lint:
+    needs: discover-services
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service:
-          - character-service-go
-          - inventory-service-go
-          - movement-service-go
-          - matchmaking-go
-          - realtime-gateway-go
-          - ws-lobby-go
-          - achievement-service-go
-          - economy-service-go
-          - support-service-go
-          - social-service-go
-          - reset-service-go
-          - gameplay-service-go
-          - admin-service-go
-          - clan-war-service-go
-          - companion-service-go
-          - voice-chat-service-go
-          - housing-service-go
+        service: ${{ fromJson(needs.discover-services.outputs.services) }}
     steps:
       - uses: actions/checkout@v4
       
@@ -85,4 +65,22 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           working-directory: services/${{ matrix.service }}
+
+  validate-standards:
+    name: Validate Standards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x .github/scripts/*.sh
+      
+      - name: Validate Dockerfile Standards
+        run: |
+          .github/scripts/validate-dockerfile.sh
+      
+      - name: Validate K8s Standards
+        run: |
+          .github/scripts/validate-k8s.sh
 

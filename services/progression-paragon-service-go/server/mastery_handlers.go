@@ -3,9 +3,11 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
+	masteryapi "github.com/necpgame/progression-paragon-service-go/pkg/api/mastery"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,18 +23,8 @@ func NewMasteryHandlers(service MasteryServiceInterface) *MasteryHandlers {
 	}
 }
 
-func (h *MasteryHandlers) GetMasteryLevels(w http.ResponseWriter, r *http.Request) {
-	characterIDStr := r.URL.Query().Get("character_id")
-	if characterIDStr == "" {
-		h.respondError(w, http.StatusBadRequest, "character_id is required")
-		return
-	}
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
+func (h *MasteryHandlers) GetMasteryLevels(w http.ResponseWriter, r *http.Request, params masteryapi.GetMasteryLevelsParams) {
+	characterID := uuid.UUID(params.CharacterId)
 
 	levels, err := h.service.GetMasteryLevels(r.Context(), characterID)
 	if err != nil {
@@ -46,28 +38,13 @@ func (h *MasteryHandlers) GetMasteryLevels(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, levels)
+	apiLevels := convertMasteryLevelsToAPI(levels)
+	h.respondJSON(w, http.StatusOK, apiLevels)
 }
 
-func (h *MasteryHandlers) GetMasteryProgress(w http.ResponseWriter, r *http.Request) {
-	characterIDStr := r.URL.Query().Get("character_id")
-	if characterIDStr == "" {
-		h.respondError(w, http.StatusBadRequest, "character_id is required")
-		return
-	}
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
-
-	vars := mux.Vars(r)
-	masteryType := vars["type"]
-	if masteryType == "" {
-		h.respondError(w, http.StatusBadRequest, "mastery type is required")
-		return
-	}
+func (h *MasteryHandlers) GetMasteryProgress(w http.ResponseWriter, r *http.Request, pType masteryapi.GetMasteryProgressParamsType, params masteryapi.GetMasteryProgressParams) {
+	characterID := uuid.UUID(params.CharacterId)
+	masteryType := string(pType)
 
 	progress, err := h.service.GetMasteryProgress(r.Context(), characterID, masteryType)
 	if err != nil {
@@ -85,32 +62,22 @@ func (h *MasteryHandlers) GetMasteryProgress(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, progress)
+	apiProgress := convertMasteryProgressToAPI(progress)
+	h.respondJSON(w, http.StatusOK, apiProgress)
 }
 
-func (h *MasteryHandlers) GetMasteryRewards(w http.ResponseWriter, r *http.Request) {
-	characterIDStr := r.URL.Query().Get("character_id")
-	if characterIDStr == "" {
-		h.respondError(w, http.StatusBadRequest, "character_id is required")
-		return
-	}
-
-	characterID, err := uuid.Parse(characterIDStr)
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "invalid character_id")
-		return
-	}
-
+func (h *MasteryHandlers) GetMasteryRewards(w http.ResponseWriter, r *http.Request, params masteryapi.GetMasteryRewardsParams) {
+	characterID := uuid.UUID(params.CharacterId)
 	var masteryType *string
-	masteryTypeStr := r.URL.Query().Get("mastery_type")
-	if masteryTypeStr != "" {
+	if params.MasteryType != nil {
+		masteryTypeStr := string(*params.MasteryType)
 		masteryType = &masteryTypeStr
 	}
 
 	rewards, err := h.service.GetMasteryRewards(r.Context(), characterID, masteryType)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get mastery rewards")
-		if err.Error() == "invalid mastery type: "+*masteryType {
+		if masteryType != nil && err.Error() == "invalid mastery type: "+*masteryType {
 			h.respondError(w, http.StatusBadRequest, "invalid mastery type")
 			return
 		}
@@ -123,7 +90,161 @@ func (h *MasteryHandlers) GetMasteryRewards(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, rewards)
+	apiRewards := convertMasteryRewardsToAPI(rewards)
+	h.respondJSON(w, http.StatusOK, apiRewards)
+}
+
+func convertMasteryLevelsToAPI(levels *MasteryLevels) masteryapi.MasteryLevels {
+	characterID := openapi_types.UUID(levels.CharacterID)
+	masteries := make([]masteryapi.Mastery, len(levels.Masteries))
+	
+	for i, m := range levels.Masteries {
+		masteryType := masteryapi.MasteryMasteryType(m.MasteryType)
+		masteryLevel := m.MasteryLevel
+		expCurrent := int(m.ExperienceCurrent)
+		expRequired := int(m.ExperienceRequired)
+		
+		var rewards *[]struct {
+			Level      *int    `json:"level,omitempty"`
+			RewardId   *string `json:"reward_id,omitempty"`
+			RewardType *string `json:"reward_type,omitempty"`
+		}
+		if len(m.RewardsUnlocked) > 0 {
+			rewardsList := make([]struct {
+				Level      *int    `json:"level,omitempty"`
+				RewardId   *string `json:"reward_id,omitempty"`
+				RewardType *string `json:"reward_type,omitempty"`
+			}, len(m.RewardsUnlocked))
+			for j, r := range m.RewardsUnlocked {
+				level := r.Level
+				rewardType := r.RewardType
+				rewardID := r.RewardID
+				rewardsList[j] = struct {
+					Level      *int    `json:"level,omitempty"`
+					RewardId   *string `json:"reward_id,omitempty"`
+					RewardType *string `json:"reward_type,omitempty"`
+				}{
+					Level:      &level,
+					RewardType: &rewardType,
+					RewardId:   &rewardID,
+				}
+			}
+			rewards = &rewardsList
+		}
+		
+		masteries[i] = masteryapi.Mastery{
+			MasteryType:       &masteryType,
+			MasteryLevel:      &masteryLevel,
+			ExperienceCurrent: &expCurrent,
+			ExperienceRequired: &expRequired,
+			RewardsUnlocked:   rewards,
+		}
+	}
+
+	return masteryapi.MasteryLevels{
+		CharacterId: &characterID,
+		Masteries:   &masteries,
+	}
+}
+
+func convertMasteryProgressToAPI(progress *MasteryProgress) masteryapi.MasteryProgress {
+	characterID := openapi_types.UUID(progress.CharacterID)
+	masteryType := masteryapi.MasteryProgressMasteryType(progress.MasteryType)
+	masteryLevel := progress.MasteryLevel
+	expCurrent := int(progress.ExperienceCurrent)
+	expRequired := int(progress.ExperienceRequired)
+	totalExperience := int(progress.TotalExperienceEarned)
+	completions := progress.CompletionsCount
+	progressPercent := float32(progress.ProgressPercent)
+	
+	var rewards *[]struct {
+		Level      *int       `json:"level,omitempty"`
+		RewardId   *string    `json:"reward_id,omitempty"`
+		RewardType *string    `json:"reward_type,omitempty"`
+		UnlockedAt *time.Time `json:"unlocked_at,omitempty"`
+	}
+	if len(progress.RewardsUnlocked) > 0 {
+		rewardsList := make([]struct {
+			Level      *int       `json:"level,omitempty"`
+			RewardId   *string    `json:"reward_id,omitempty"`
+			RewardType *string    `json:"reward_type,omitempty"`
+			UnlockedAt *time.Time `json:"unlocked_at,omitempty"`
+		}, len(progress.RewardsUnlocked))
+		for i, r := range progress.RewardsUnlocked {
+			level := r.Level
+			rewardType := r.RewardType
+			rewardID := r.RewardID
+			rewardsList[i] = struct {
+				Level      *int       `json:"level,omitempty"`
+				RewardId   *string    `json:"reward_id,omitempty"`
+				RewardType *string    `json:"reward_type,omitempty"`
+				UnlockedAt *time.Time `json:"unlocked_at,omitempty"`
+			}{
+				Level:      &level,
+				RewardType: &rewardType,
+				RewardId:   &rewardID,
+				UnlockedAt: r.UnlockedAt,
+			}
+		}
+		rewards = &rewardsList
+	}
+
+	return masteryapi.MasteryProgress{
+		CharacterId:        &characterID,
+		MasteryType:        &masteryType,
+		MasteryLevel:       &masteryLevel,
+		ExperienceCurrent: &expCurrent,
+		ExperienceRequired: &expRequired,
+		TotalExperienceEarned: &totalExperience,
+		CompletionsCount:       &completions,
+		ProgressPercent:    &progressPercent,
+		RewardsUnlocked:    rewards,
+	}
+}
+
+func convertMasteryRewardsToAPI(rewards *MasteryRewards) masteryapi.MasteryRewards {
+	characterID := openapi_types.UUID(rewards.CharacterID)
+	
+	rewardItems := make([]struct {
+		Level       *int                              `json:"level,omitempty"`
+		MasteryType *masteryapi.MasteryRewardsRewardsMasteryType `json:"mastery_type,omitempty"`
+		RewardId    *string                           `json:"reward_id,omitempty"`
+		RewardName  *string                           `json:"reward_name,omitempty"`
+		RewardType  *string                           `json:"reward_type,omitempty"`
+		Unlocked    *bool                             `json:"unlocked,omitempty"`
+		UnlockedAt  *time.Time                        `json:"unlocked_at"`
+	}, len(rewards.Rewards))
+	
+	for i, r := range rewards.Rewards {
+		masteryType := masteryapi.MasteryRewardsRewardsMasteryType(r.MasteryType)
+		level := r.Level
+		rewardType := r.RewardType
+		rewardID := r.RewardID
+		rewardName := r.RewardName
+		unlocked := r.Unlocked
+		rewardItems[i] = struct {
+			Level       *int                              `json:"level,omitempty"`
+			MasteryType *masteryapi.MasteryRewardsRewardsMasteryType `json:"mastery_type,omitempty"`
+			RewardId    *string                           `json:"reward_id,omitempty"`
+			RewardName  *string                           `json:"reward_name,omitempty"`
+			RewardType  *string                           `json:"reward_type,omitempty"`
+			Unlocked    *bool                             `json:"unlocked,omitempty"`
+			UnlockedAt  *time.Time                        `json:"unlocked_at"`
+		}{
+			MasteryType: &masteryType,
+			Level:       &level,
+			RewardType:  &rewardType,
+			RewardId:    &rewardID,
+			RewardName:  &rewardName,
+			Unlocked:    &unlocked,
+			UnlockedAt:  r.UnlockedAt,
+		}
+	}
+
+	return masteryapi.MasteryRewards{
+		CharacterId: &characterID,
+		Rewards:     &rewardItems,
+	}
 }
 
 func (h *MasteryHandlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
@@ -139,4 +260,3 @@ func (h *MasteryHandlers) respondError(w http.ResponseWriter, status int, messag
 	}
 	h.respondJSON(w, status, errorResponse)
 }
-

@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
@@ -33,7 +31,7 @@ USER appuser
 EXPOSE 9090
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9090/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:9090/metrics || exit 1
 
 ENTRYPOINT ["/app/matchmaking"]
 

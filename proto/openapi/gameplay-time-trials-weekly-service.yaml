@@ -2,9 +2,12 @@ openapi: 3.0.3
 info:
   title: Gameplay Time Trials Weekly Service API
   description: |
-    API для управления еженедельными временными испытаниями: текущие испытания, история, условия и награды.
+    API для еженедельных временных испытаний (Weekly Time Challenges).
     
-    Еженедельные испытания предоставляют уникальные вызовы с ограниченным временем и специальными условиями.
+    **Основные возможности:**
+    - Получение текущего еженедельного испытания
+    - История еженедельных испытаний
+    - Управление еженедельными испытаниями
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -17,18 +20,17 @@ servers:
     description: Продакшен сервер
 
 tags:
-  - name: Weekly Time Trials
-    description: Еженедельные временные испытания
+  - name: Weekly Challenges
+    description: Еженедельные испытания
 
 paths:
   /time-trials/weekly/current:
     get:
       tags:
-        - Weekly Time Trials
+        - Weekly Challenges
       summary: Получить текущее еженедельное испытание
       description: |
         Возвращает информацию о текущем активном еженедельном испытании.
-        Если испытание не активно, возвращает null.
       operationId: getCurrentWeeklyChallenge
       security:
         - BearerAuth: []
@@ -38,72 +40,88 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WeeklyTimeChallenge'
+                $ref: '#/components/schemas/WeeklyChallengeResponse'
               example:
-                id: 'bb0e8400-e29b-41d4-a716-446655440000'
-                week_start: '2025-12-01T00:00:00Z'
-                week_end: '2025-12-08T00:00:00Z'
-                challenge_type: solo_challenge
-                content_id: '660e8400-e29b-41d4-a716-446655440000'
-                time_limit_ms: 1800000
+                challenge_id: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
+                challenge_type: "time_attack_dungeon"
+                content_id: "f6a7b8c9-d0e1-2345-6789-012345f01234"
+                week_start: "2025-12-01T00:00:00Z"
+                week_end: "2025-12-08T00:00:00Z"
                 conditions:
-                  solo_only: true
-                  class_restriction: null
-                  no_deaths: false
+                  max_time: 1800
+                  difficulty: "hard"
                 rewards:
-                  unique_items:
-                    - item_id: 'cc0e8400-e29b-41d4-a716-446655440000'
-                      name: Weekly Champion Badge
-                  seasonal_currency: 500
-                  cosmetics:
-                    - cosmetic_id: 'dd0e8400-e29b-41d4-a716-446655440000'
-                      name: Speed Demon Title
-                created_at: '2025-12-01T00:00:00Z'
+                  bronze:
+                    time_limit: 1800
+                    rewards: ["title: Bronze Speedrunner"]
+                  silver:
+                    time_limit: 1200
+                    rewards: ["title: Silver Speedrunner"]
+                  gold:
+                    time_limit: 900
+                    rewards: ["title: Gold Speedrunner"]
+                  platinum:
+                    time_limit: 600
+                    rewards: ["title: Platinum Speedrunner", "cosmetic: Speedrun Badge"]
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Еженедельное испытание не активно
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
         '500':
           $ref: 'common.yaml#/components/responses/InternalServerError'
 
   /time-trials/weekly/history:
     get:
       tags:
-        - Weekly Time Trials
+        - Weekly Challenges
       summary: Получить историю еженедельных испытаний
       description: |
-        Возвращает историю еженедельных испытаний с пагинацией.
-        Позволяет просмотреть прошлые испытания и их результаты.
-      operationId: getWeeklyChallengeHistory
+        Возвращает историю еженедельных испытаний с возможностью фильтрации.
+      operationId: getWeeklyChallengesHistory
       security:
         - BearerAuth: []
       parameters:
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
-        - name: weeks_back
+        - name: limit
           in: query
+          required: false
           schema:
             type: integer
             minimum: 1
-            maximum: 52
-            default: 4
-          description: Количество недель назад для получения истории
+            maximum: 100
+            default: 20
+          description: Количество записей
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
       responses:
         '200':
           description: История еженедельных испытаний
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WeeklyChallengeHistoryResponse'
+                $ref: '#/components/schemas/WeeklyChallengesHistoryResponse'
               example:
-                items:
-                  - id: 'bb0e8400-e29b-41d4-a716-446655440000'
-                    week_start: '2025-12-01T00:00:00Z'
-                    week_end: '2025-12-08T00:00:00Z'
-                    challenge_type: solo_challenge
-                    content_id: '660e8400-e29b-41d4-a716-446655440000'
-                    created_at: '2025-12-01T00:00:00Z'
-                total: 52
-                limit: 20
-                offset: 0
+                challenges:
+                  - challenge_id: "g7a8b9c0-e1f2-3456-7890-123456g01234"
+                    challenge_type: "speedrun_raid"
+                    week_start: "2025-11-24T00:00:00Z"
+                    week_end: "2025-12-01T00:00:00Z"
+                    status: "completed"
+                  - challenge_id: "h8b9c0d1-f2e3-4567-8901-234567h01234"
+                    challenge_type: "time_attack_dungeon"
+                    week_start: "2025-11-17T00:00:00Z"
+                    week_end: "2025-11-24T00:00:00Z"
+                    status: "completed"
+                total: 10
         '401':
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '500':
@@ -115,111 +133,163 @@ components:
       $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
 
   schemas:
-    WeeklyTimeChallenge:
+    WeeklyChallengeResponse:
       type: object
+      required:
+        - challenge_id
+        - challenge_type
+        - content_id
+        - week_start
+        - week_end
+        - conditions
+        - rewards
       properties:
-        id:
+        challenge_id:
           type: string
           format: uuid
-          description: ID испытания
-        week_start:
-          type: string
-          format: date-time
-          description: Начало недели
-        week_end:
-          type: string
-          format: date-time
-          description: Конец недели
+          description: ID еженедельного испытания
+          example: "e5f6a7b8-c9d0-1234-5678-901234ef0123"
         challenge_type:
           type: string
-          enum: [solo_challenge, team_challenge, class_challenge]
+          enum:
+            - speedrun_raid
+            - time_attack_dungeon
+            - weekly_time_challenge
           description: Тип испытания
+          example: "time_attack_dungeon"
         content_id:
           type: string
           format: uuid
           description: ID контента
-        time_limit_ms:
-          type: integer
-          minimum: 0
-          description: Ограничение времени в миллисекундах
-        conditions:
-          type: object
-          description: Условия испытания
-          properties:
-            solo_only:
-              type: boolean
-              description: Только одиночное прохождение
-            class_restriction:
-              type: string
-              nullable: true
-              description: Ограничение по классу
-            no_deaths:
-              type: boolean
-              description: Запрет смертей
-          additionalProperties: true
-        rewards:
-          type: object
-          description: Награды за прохождение
-          properties:
-            unique_items:
-              type: array
-              items:
-                type: object
-                properties:
-                  item_id:
-                    type: string
-                    format: uuid
-                  name:
-                    type: string
-            seasonal_currency:
-              type: integer
-              minimum: 0
-            cosmetics:
-              type: array
-              items:
-                type: object
-                properties:
-                  cosmetic_id:
-                    type: string
-                    format: uuid
-                  name:
-                    type: string
-          additionalProperties: true
-        created_at:
-          type: string
-          format: date-time
-          description: Дата создания
-
-    WeeklyChallengeHistoryResponse:
-      allOf:
-        - $ref: 'common.yaml#/components/schemas/PaginationResponse'
-        - type: object
-          properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/WeeklyChallengeSummary'
-
-    WeeklyChallengeSummary:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
+          example: "f6a7b8c9-d0e1-2345-6789-012345f01234"
         week_start:
           type: string
           format: date-time
+          description: Начало недели
+          example: "2025-12-01T00:00:00Z"
         week_end:
           type: string
           format: date-time
-        challenge_type:
-          type: string
-          enum: [solo_challenge, team_challenge, class_challenge]
-        content_id:
+          description: Конец недели
+          example: "2025-12-08T00:00:00Z"
+        conditions:
+          type: object
+          description: Условия испытания
+          additionalProperties: true
+          example:
+            max_time: 1800
+            difficulty: "hard"
+        rewards:
+          type: object
+          description: Награды по уровням
+          properties:
+            bronze:
+              $ref: '#/components/schemas/TimeRewardTier'
+            silver:
+              $ref: '#/components/schemas/TimeRewardTier'
+            gold:
+              $ref: '#/components/schemas/TimeRewardTier'
+            platinum:
+              $ref: '#/components/schemas/TimeRewardTier'
+          example:
+            bronze:
+              time_limit: 1800
+              rewards: ["title: Bronze Speedrunner"]
+            silver:
+              time_limit: 1200
+              rewards: ["title: Silver Speedrunner"]
+            gold:
+              time_limit: 900
+              rewards: ["title: Gold Speedrunner"]
+            platinum:
+              time_limit: 600
+              rewards: ["title: Platinum Speedrunner", "cosmetic: Speedrun Badge"]
+
+    TimeRewardTier:
+      type: object
+      required:
+        - time_limit
+        - rewards
+      properties:
+        time_limit:
+          type: integer
+          description: Лимит времени в секундах
+          minimum: 0
+          example: 1800
+        rewards:
+          type: array
+          items:
+            type: string
+          description: Список наград
+          example: ["title: Bronze Speedrunner"]
+
+    WeeklyChallengeHistoryItem:
+      type: object
+      required:
+        - challenge_id
+        - challenge_type
+        - week_start
+        - week_end
+        - status
+      properties:
+        challenge_id:
           type: string
           format: uuid
-        created_at:
+          description: ID еженедельного испытания
+          example: "g7a8b9c0-e1f2-3456-7890-123456g01234"
+        challenge_type:
+          type: string
+          enum:
+            - speedrun_raid
+            - time_attack_dungeon
+            - weekly_time_challenge
+          description: Тип испытания
+          example: "speedrun_raid"
+        week_start:
           type: string
           format: date-time
+          description: Начало недели
+          example: "2025-11-24T00:00:00Z"
+        week_end:
+          type: string
+          format: date-time
+          description: Конец недели
+          example: "2025-12-01T00:00:00Z"
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - upcoming
+          description: Статус испытания
+          example: "completed"
 
+    WeeklyChallengesHistoryResponse:
+      type: object
+      required:
+        - challenges
+        - total
+      properties:
+        challenges:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyChallengeHistoryItem'
+          description: Список еженедельных испытаний
+        total:
+          type: integer
+          description: Общее количество испытаний
+          minimum: 0
+          example: 10
 
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
+security:
+  - BearerAuth: []

@@ -48,6 +48,8 @@ func main() {
 		logger.WithError(err).Fatal("Failed to initialize time trial service")
 	}
 
+	comboService := server.NewComboService(progressionService.GetDBPool())
+
 	affixScheduler := server.NewAffixScheduler(affixService)
 	affixScheduler.Start()
 
@@ -58,7 +60,7 @@ func main() {
 		logger.Info("Progression experience subscriber started")
 	}
 
-	httpServer := server.NewHTTPServer(addr, progressionService, questService, affixService, timeTrialService)
+	httpServer := server.NewHTTPServer(addr, progressionService, questService, affixService, timeTrialService, comboService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

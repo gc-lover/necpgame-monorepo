@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: Realtime Service - Zones API
+  description: API для управления зонами игры
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8080/api/v1/realtime
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1/realtime
+      description: Продакшен сервер
+
+tags:
+  - name: Zones
+    description: Управление зонами игры
+
+paths:
+  /zones:
+    get:
+      tags:
+        - Zones
+      summary: Список зон
+      operationId: listZones
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - maintenance
+              - full
+        - name: zone_type
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список зон
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zones:
+                    type: array
+                    items:
+                      $ref: 'realtime-schemas.yaml#/components/schemas/Zone'
+                  total:
+                    type: integer
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /zones/{zone_id}:
+    get:
+      tags:
+        - Zones
+      summary: Информация о зоне
+      operationId: getZone
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о зоне
+          content:
+            application/json:
+              schema:
+                $ref: 'realtime-schemas.yaml#/components/schemas/Zone'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /zones/{zone_id}/players:
+    get:
+      tags:
+        - Zones
+      summary: Игроки в зоне
+      operationId: getZonePlayers
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Игроки в зоне
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: 'realtime-schemas.yaml#/components/schemas/ZonePlayer'
+                  total:
+                    type: integer
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+  /zones/{zone_id}/join:
+    post:
+      tags:
+        - Zones
+      summary: Присоединение к зоне
+      operationId: joinZone
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'realtime-schemas.yaml#/components/schemas/JoinZoneRequest'
+      responses:
+        '200':
+          description: Присоединение успешно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: joined
+                  zone:
+                    $ref: 'realtime-schemas.yaml#/components/schemas/Zone'
+                  instance_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: 'common-responses.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common-responses.yaml#/components/responses/Forbidden'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

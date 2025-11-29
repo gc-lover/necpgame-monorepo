@@ -1,0 +1,66 @@
+openapi: 3.0.3
+info:
+  title: Announcement Service - Events API
+  description: API для событий объявлений
+  version: 1.0.0
+  servers:
+    - url: http://localhost:8096/api/v1
+      description: Локальный сервер разработки
+    - url: https://api.necp.game/api/v1
+      description: Продакшен сервер
+
+tags:
+  - name: Announcement Events
+    description: События объявлений
+
+paths:
+  /liveops/announcements/events/{announcement_id}:
+    get:
+      tags:
+        - Announcement Events
+      summary: Получить события объявления
+      operationId: getAnnouncementEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: 'announcement-schemas.yaml#/components/schemas/AnnouncementEventsResponse'
+        '401':
+          $ref: 'common-responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common-responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common-responses.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+
+security:
+  - BearerAuth: []
+

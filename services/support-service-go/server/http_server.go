@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/necpgame/support-service-go/models"
+	supportapi "github.com/necpgame/support-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,12 +40,12 @@ type HTTPServer struct {
 func NewHTTPServer(addr string, ticketService TicketServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
-		addr:         addr,
-		router:       router,
+		addr:          addr,
+		router:        router,
 		ticketService: ticketService,
-		logger:       GetLogger(),
-		jwtValidator: jwtValidator,
-		authEnabled:  authEnabled,
+		logger:        GetLogger(),
+		jwtValidator:  jwtValidator,
+		authEnabled:   authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -58,13 +58,11 @@ func NewHTTPServer(addr string, ticketService TicketServiceInterface, jwtValidat
 		api.Use(server.authMiddleware)
 	}
 
+	supportHandlers := NewSupportHandlers(ticketService)
 	support := api.PathPrefix("/support").Subrouter()
+	supportapi.HandlerFromMux(supportHandlers, support)
 
-	support.HandleFunc("/tickets", server.createTicket).Methods("POST")
-	support.HandleFunc("/tickets", server.getTickets).Methods("GET")
-	support.HandleFunc("/tickets/{id}", server.getTicket).Methods("GET")
 	support.HandleFunc("/tickets/number/{number}", server.getTicketByNumber).Methods("GET")
-	support.HandleFunc("/tickets/{id}", server.updateTicket).Methods("PUT")
 	support.HandleFunc("/tickets/{id}/assign", server.assignTicket).Methods("POST")
 	support.HandleFunc("/tickets/{id}/responses", server.addResponse).Methods("POST")
 	support.HandleFunc("/tickets/{id}/rate", server.rateTicket).Methods("POST")
@@ -106,114 +104,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) createTicket(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	playerID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	var req models.CreateTicketRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.Subject == "" || req.Description == "" {
-		s.respondError(w, http.StatusBadRequest, "subject and description are required")
-		return
-	}
-
-	ticket, err := s.ticketService.CreateTicket(r.Context(), playerID, &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to create ticket")
-		s.respondError(w, http.StatusInternalServerError, "failed to create ticket")
-		return
-	}
-
-	s.respondJSON(w, http.StatusCreated, ticket)
-}
-
-func (s *HTTPServer) getTickets(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		s.respondError(w, http.StatusUnauthorized, "user not authenticated")
-		return
-	}
-
-	playerID, err := uuid.Parse(userID.(string))
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	limit := 50
-	offset := 0
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
-		}
-	}
-	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-			offset = o
-		}
-	}
-
-	statusStr := r.URL.Query().Get("status")
-	if statusStr != "" {
-		status := models.TicketStatus(statusStr)
-		response, err := s.ticketService.GetTicketsByStatus(r.Context(), status, limit, offset)
-		if err != nil {
-			s.logger.WithError(err).Error("Failed to get tickets by status")
-			s.respondError(w, http.StatusInternalServerError, "failed to get tickets")
-			return
-		}
-		s.respondJSON(w, http.StatusOK, response)
-		return
-	}
-
-	response, err := s.ticketService.GetTicketsByPlayerID(r.Context(), playerID, limit, offset)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get tickets")
-		s.respondError(w, http.StatusInternalServerError, "failed to get tickets")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, response)
-}
-
-func (s *HTTPServer) getTicket(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid ticket id")
-		return
-	}
-
-	ticket, err := s.ticketService.GetTicket(r.Context(), id)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get ticket")
-		s.respondError(w, http.StatusInternalServerError, "failed to get ticket")
-		return
-	}
-
-	if ticket == nil {
-		s.respondError(w, http.StatusNotFound, "ticket not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, ticket)
-}
-
 func (s *HTTPServer) getTicketByNumber(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	number := vars["number"]
@@ -222,37 +112,6 @@ func (s *HTTPServer) getTicketByNumber(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get ticket by number")
 		s.respondError(w, http.StatusInternalServerError, "failed to get ticket")
-		return
-	}
-
-	if ticket == nil {
-		s.respondError(w, http.StatusNotFound, "ticket not found")
-		return
-	}
-
-	s.respondJSON(w, http.StatusOK, ticket)
-}
-
-func (s *HTTPServer) updateTicket(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid ticket id")
-		return
-	}
-
-	var req models.UpdateTicketRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		s.respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	ticket, err := s.ticketService.UpdateTicket(r.Context(), id, &req)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to update ticket")
-		s.respondError(w, http.StatusInternalServerError, "failed to update ticket")
 		return
 	}
 
@@ -471,14 +330,14 @@ func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			s.respondError(w, http.StatusUnauthorized, "authorization header required")
+			s.respondErrorJSON(w, http.StatusUnauthorized, "authorization header required")
 			return
 		}
 
 		claims, err := s.jwtValidator.Verify(r.Context(), authHeader)
 		if err != nil {
 			s.logger.WithError(err).Warn("JWT validation failed")
-			s.respondError(w, http.StatusUnauthorized, "invalid or expired token")
+			s.respondErrorJSON(w, http.StatusUnauthorized, "invalid or expired token")
 			return
 		}
 
@@ -494,6 +353,10 @@ func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (s *HTTPServer) respondErrorJSON(w http.ResponseWriter, status int, message string) {
+	s.respondJSON(w, status, map[string]string{"error": message})
+}
+
 type statusRecorder struct {
 	http.ResponseWriter
 	statusCode int
@@ -503,4 +366,3 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
-
