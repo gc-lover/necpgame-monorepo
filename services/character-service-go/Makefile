@@ -51,7 +51,14 @@ verify-api: check-deps
 	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || { echo "WARNING  OpenAPI spec validation failed"; exit 1; }
 	@echo "OK OpenAPI spec is valid"
 
+generate-engram-api: check-deps
+	@echo "Generating Engram API code..."
+	@mkdir -p pkg/api
+	@$(REDOCLY_CLI) bundle $(SPEC_DIR)/character-engram-core-service.yaml -o pkg/api/character-engram-core-service.bundled.yaml || { echo "❌ Failed to bundle OpenAPI spec"; exit 1; }
+	@$(OAPI_CODEGEN) -package api -generate types,gorilla-server -o pkg/api/engram_api.gen.go pkg/api/character-engram-core-service.bundled.yaml || { echo "❌ Failed to generate code"; exit 1; }
+	@echo "OK Generated Engram API code: pkg/api/engram_api.gen.go"
+
 clean:
 	@echo "Cleaning generated files"
-	@rm -f $(BUNDLED_SPEC) $(OUTPUT_FILE)
+	@rm -f $(BUNDLED_SPEC) $(OUTPUT_FILE) pkg/api/*engram*.bundled.yaml pkg/api/engram_api.gen.go
 	@echo "OK Cleaned generated files"

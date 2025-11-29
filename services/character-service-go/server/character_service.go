@@ -24,6 +24,8 @@ type CharacterRepositoryInterface interface {
 
 type CharacterService struct {
 	repo  CharacterRepositoryInterface
+	engramRepo EngramRepositoryInterface
+	engramService EngramServiceInterface
 	cache *redis.Client
 	logger *logrus.Logger
 	keycloakURL string
@@ -43,13 +45,21 @@ func NewCharacterService(dbURL, redisURL, keycloakURL string) (*CharacterService
 	redisClient := redis.NewClient(redisOpts)
 
 	repo := NewCharacterRepository(dbPool)
+	engramRepo := NewEngramRepository(dbPool)
+	engramService := NewEngramService(engramRepo, repo, redisClient)
 
 	return &CharacterService{
 		repo:  repo,
+		engramRepo: engramRepo,
+		engramService: engramService,
 		cache: redisClient,
 		logger: GetLogger(),
 		keycloakURL: keycloakURL,
 	}, nil
+}
+
+func (s *CharacterService) GetEngramService() EngramServiceInterface {
+	return s.engramService
 }
 
 func (s *CharacterService) GetAccount(ctx context.Context, accountID uuid.UUID) (*models.PlayerAccount, error) {
