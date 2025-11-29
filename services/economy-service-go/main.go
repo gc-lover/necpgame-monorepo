@@ -49,6 +49,14 @@ func main() {
 	engramTransferRepo := server.NewEngramTransferRepository(dbPool)
 	engramTransferService := server.NewEngramTransferService(engramTransferRepo, engramCreationRepo, redisClient)
 
+	weaponCombinationsService, err := server.NewWeaponCombinationsService(dbPool, redisURL)
+	if err != nil {
+		logger.WithError(err).Warn("Failed to initialize weapon combinations service")
+		weaponCombinationsService = nil
+	} else {
+		logger.Info("Weapon combinations service initialized")
+	}
+
 	var jwtValidator *server.JwtValidator
 	if authEnabled && keycloakURL != "" {
 		issuer := keycloakURL + "/realms/" + keycloakRealm
@@ -62,7 +70,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, tradeService, jwtValidator, authEnabled, engramCreationService, engramTransferService)
+	httpServer := server.NewHTTPServer(addr, tradeService, jwtValidator, authEnabled, engramCreationService, engramTransferService, weaponCombinationsService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

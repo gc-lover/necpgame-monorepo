@@ -31,13 +31,14 @@ type HTTPServer struct {
 	tradeHandlers       *TradeHandlers
 	engramCreationService EngramCreationServiceInterface
 	engramTransferService EngramTransferServiceInterface
+	weaponCombinationsService WeaponCombinationsServiceInterface
 	logger              *logrus.Logger
 	server              *http.Server
 	jwtValidator        *JwtValidator
 	authEnabled         bool
 }
 
-func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramCreationService EngramCreationServiceInterface, engramTransferService EngramTransferServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramCreationService EngramCreationServiceInterface, engramTransferService EngramTransferServiceInterface, weaponCombinationsService WeaponCombinationsServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	tradeHandlers := NewTradeHandlers(tradeService)
 	
@@ -48,6 +49,7 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 		tradeHandlers:       tradeHandlers,
 		engramCreationService: engramCreationService,
 		engramTransferService: engramTransferService,
+		weaponCombinationsService: weaponCombinationsService,
 		logger:              GetLogger(),
 		jwtValidator:        jwtValidator,
 		authEnabled:         authEnabled,
@@ -69,7 +71,7 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 
 	if server.engramCreationService != nil {
 		economy.HandleFunc("/engrams/create", server.createEngram).Methods("POST")
-		economy.HandleFunc("/engrams/create/cost", server.getEngramCreationCost).Methods("GET")
+		economy.HandleFunc("/engrams/create/cost/{chip_tier}", server.getEngramCreationCost).Methods("GET")
 		economy.HandleFunc("/engrams/create/validate", server.validateEngramCreation).Methods("POST")
 	}
 
@@ -78,6 +80,14 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, jwtValidator
 		economy.HandleFunc("/engrams/{engram_id}/loan", server.loanEngram).Methods("POST")
 		economy.HandleFunc("/engrams/{engram_id}/extract", server.extractEngram).Methods("POST")
 		economy.HandleFunc("/engrams/{engram_id}/trade", server.tradeEngram).Methods("POST")
+	}
+
+	if server.weaponCombinationsService != nil {
+		// TODO: After running `make generate-weapon-combinations-api`, uncomment these lines:
+		// weaponCombinationsHandlers := NewWeaponCombinationsHandlers(server.weaponCombinationsService)
+		// weaponCombinationsAPI := economy.PathPrefix("/weapons").Subrouter()
+		// weaponcombinationsapi.HandlerFromMux(weaponCombinationsHandlers, weaponCombinationsAPI)
+		_ = server.weaponCombinationsService
 	}
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")

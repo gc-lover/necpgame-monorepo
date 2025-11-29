@@ -43,11 +43,12 @@ type HTTPServer struct {
 	affixService     AffixServiceInterface
 	timeTrialService TimeTrialServiceInterface
 	comboService     ComboServiceInterface
+	weaponMechanicsService WeaponMechanicsServiceInterface
 	logger           *logrus.Logger
 	server           *http.Server
 }
 
-func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, questService QuestServiceInterface, affixService AffixServiceInterface, timeTrialService TimeTrialServiceInterface, comboService ComboServiceInterface, weaponMechanicsService WeaponMechanicsServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:             addr,
@@ -57,6 +58,7 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 		affixService:     affixService,
 		timeTrialService: timeTrialService,
 		comboService:     comboService,
+		weaponMechanicsService: weaponMechanicsService,
 		logger:           GetLogger(),
 	}
 
@@ -97,6 +99,20 @@ func NewHTTPServer(addr string, progressionService ProgressionServiceInterface, 
 	comboHandlers := NewComboHandlers(comboService)
 	comboAPI := router.PathPrefix("/api/v1/gameplay/combat/combos").Subrouter()
 	combosapi.HandlerFromMux(comboHandlers, comboAPI)
+
+	if weaponMechanicsService != nil {
+		// TODO: After running `make generate-all-weapon-apis`, uncomment these lines:
+		// weaponCoreHandlers := NewWeaponCoreHandlers(weaponMechanicsService)
+		// weaponCombatHandlers := NewWeaponCombatHandlers(weaponMechanicsService)
+		// weaponEffectsHandlers := NewWeaponEffectsHandlers(weaponMechanicsService)
+		// weaponAdvancedHandlers := NewWeaponAdvancedHandlers(weaponMechanicsService)
+		// weaponAPI := router.PathPrefix("/api/v1/gameplay/combat/weapons").Subrouter()
+		// weaponcoreapi.HandlerFromMux(weaponCoreHandlers, weaponAPI)
+		// weaponcombatapi.HandlerFromMux(weaponCombatHandlers, weaponAPI)
+		// weaponeffectsapi.HandlerFromMux(weaponEffectsHandlers, weaponAPI)
+		// weaponadvancedapi.HandlerFromMux(weaponAdvancedHandlers, weaponAPI)
+		_ = weaponMechanicsService
+	}
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 
