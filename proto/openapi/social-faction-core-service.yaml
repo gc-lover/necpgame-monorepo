@@ -1,0 +1,251 @@
+openapi: 3.0.3
+info:
+  title: Social Faction Core Service
+  description: Основные endpoints для управления фракциями
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Social Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Factions
+    description: Управление фракциями
+
+paths:
+  /social/factions:
+    post:
+      tags:
+        - Factions
+      summary: Создать фракцию
+      description: |
+        Создает новую фракцию с указанным типом и характеристиками.
+      operationId: createFaction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/CreateFactionRequest'
+            example:
+              name: "The Steel Wolves"
+              type: "criminal_band"
+              description: "A ruthless criminal organization controlling the docks"
+              ideology: "Survival of the fittest"
+      responses:
+        '201':
+          description: Фракция успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/Faction'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                name: "The Steel Wolves"
+                type: "criminal_band"
+                status: "active"
+                description: "A ruthless criminal organization controlling the docks"
+                ideology: "Survival of the fittest"
+                leader_id: "660e8400-e29b-41d4-a716-446655440001"
+                created_at: "2025-11-29T12:00:00Z"
+                updated_at: "2025-11-29T12:00:00Z"
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '409':
+          description: Фракция с таким именем уже существует
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Error'
+              example:
+                error: "Faction with this name already exists"
+                code: "FACTION_NAME_CONFLICT"
+
+    get:
+      tags:
+        - Factions
+      summary: Список фракций
+      description: |
+        Возвращает список фракций с возможностью фильтрации и пагинации.
+      operationId: listFactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - criminal_band
+              - professional_guild
+              - political_movement
+              - corporate_alliance
+              - religious_sect
+              - scientific_organization
+          description: Фильтр по типу фракции
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - disbanded
+          description: Фильтр по статусу
+      responses:
+        '200':
+          description: Список фракций
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/FactionListResponse'
+              example:
+                factions:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    name: "The Steel Wolves"
+                    type: "criminal_band"
+                    status: "active"
+                    description: "A ruthless criminal organization"
+                    ideology: "Survival of the fittest"
+                    leader_id: "660e8400-e29b-41d4-a716-446655440001"
+                    created_at: "2025-11-29T12:00:00Z"
+                    updated_at: "2025-11-29T12:00:00Z"
+                total: 1
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+
+  /social/factions/{factionId}:
+    get:
+      tags:
+        - Factions
+      summary: Информация о фракции
+      description: |
+        Возвращает детальную информацию о фракции по её ID.
+      operationId: getFaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      responses:
+        '200':
+          description: Информация о фракции
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/Faction'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                name: "The Steel Wolves"
+                type: "criminal_band"
+                status: "active"
+                description: "A ruthless criminal organization controlling the docks"
+                ideology: "Survival of the fittest"
+                leader_id: "660e8400-e29b-41d4-a716-446655440001"
+                created_at: "2025-11-29T12:00:00Z"
+                updated_at: "2025-11-29T12:00:00Z"
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Factions
+      summary: Обновить фракцию
+      description: |
+        Обновляет информацию о фракции. Только лидер или уполномоченные члены могут обновлять фракцию.
+      operationId: updateFaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'social-faction-schemas.yaml#/components/schemas/UpdateFactionRequest'
+            example:
+              name: "The Steel Wolves Elite"
+              description: "An even more powerful criminal organization"
+      responses:
+        '200':
+          description: Фракция успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: 'social-faction-schemas.yaml#/components/schemas/Faction'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Factions
+      summary: Удалить фракцию
+      description: |
+        Удаляет фракцию. Только лидер может удалить фракцию. Фракция будет переведена в статус 'disbanded'.
+      operationId: deleteFaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции
+      responses:
+        '204':
+          description: Фракция успешно удалена
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+
