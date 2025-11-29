@@ -1,0 +1,599 @@
+metadata:
+  id: media-influencer-npc-system-architecture
+  title: Архитектура системы медийных NPC (инфлюенсеры и стримеры)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-XXT00:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - npc
+    - media
+    - influencer
+    - streamer
+    - player-npc
+  related_systems:
+    - npc-service
+    - social-service
+    - character-service
+    - quest-service
+    - ai-service
+  related_documents:
+    - id: npc-system-architecture
+      relation: extends
+    - id: npc-integration-system-architecture
+      relation: extends
+  github_issue: 1456
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - social
+    - npc
+    - api-designer
+
+summary:
+  problem: |
+    Требуется система, позволяющая медийным игрокам (стримерам, инфлюенсерам) интегрировать
+    своих персонажей в игровой мир как NPC с возможностью переключения между режимом игрока
+    и режимом NPC. Когда игрок офлайн, персонаж автоматически работает как автономный NPC
+    с ИИ-поведением.
+  goal: |
+    Создать архитектурную схему системы медийных NPC с определением:
+    - Компонентов для управления режимами (игрок, NPC, автономный)
+    - Системы NPC Control Panel для управления функциями NPC
+    - ИИ-поведения для автономных NPC
+    - Интеграции с существующими системами NPC и персонажей
+    - REST, WebSocket и Event Bus контрактов
+    - Структуры БД
+    - Технического задания для реализации
+  essence: |
+    Система медийных NPC расширяет существующую систему NPC, добавляя возможность
+    медийным игрокам управлять своими персонажами как NPC, с автоматическим переключением
+    в автономный режим при офлайне.
+
+architecture:
+  overview: |
+    Архитектура системы медийных NPC состоит из следующих компонентов:
+    1. Media NPC Manager - управление медийными NPC
+    2. Mode Switch Manager - переключение между режимами
+    3. NPC Control Panel Manager - управление панелью управления NPC
+    4. Autonomous AI Manager - управление автономным ИИ-поведением
+    5. Role Progression Manager - управление прогрессией ролей
+    6. Media NPC State Manager - управление состоянием медийных NPC
+    7. Integration Manager - интеграция с существующими системами
+
+  operating_modes:
+    - mode: player
+      description: "Режим игрока - медийный игрок играет своим персонажем как обычный игрок"
+      features:
+        - normal_player_functionality: "полный функционал игрока"
+        - can_switch_to_npc_mode: "возможность переключения в режим NPC"
+        - character_progression: "прогрессия персонажа как игрока"
+      restrictions:
+        - cannot_perform_npc_functions: "не может выполнять функции NPC"
+
+    - mode: npc_controlled
+      description: "Режим NPC - медийный игрок управляет персонажем как NPC через Control Panel"
+      features:
+        - npc_control_panel: "специальное меню для управления NPC"
+        - npc_functions: "выполнение функций NPC (квесты, торговля, обучение)"
+        - real_time_control: "управление в реальном времени"
+        - can_switch_to_player_mode: "возможность переключения в режим игрока"
+      restrictions:
+        - limited_player_functionality: "ограниченный функционал игрока"
+        - must_use_control_panel: "обязательное использование Control Panel"
+
+    - mode: autonomous
+      description: "Автономный режим - персонаж работает как NPC с ИИ-поведением при офлайне игрока"
+      features:
+        - ai_behavior: "автоматическое ИИ-поведение"
+        - npc_functions: "выполнение функций NPC автоматически"
+        - role_based_behavior: "поведение на основе роли"
+        - status_based_optimization: "оптимизация на основе статуса персонажа"
+      restrictions:
+        - no_player_control: "нет контроля игрока"
+        - ai_limitations: "ограничения ИИ-поведения"
+
+  npc_roles:
+    - role: teacher
+      description: "Учитель / Наставник"
+      functions:
+        - provide_training: "обучение навыкам"
+        - give_advice: "советы игрокам"
+        - mentor_players: "наставничество"
+      progression:
+        - basic: "базовые навыки обучения"
+        - advanced: "продвинутые техники"
+        - legendary: "легендарный наставник"
+
+    - role: fixer
+      description: "Фиксер"
+      functions:
+        - provide_quests: "выдача квестов"
+        - connect_players: "связь между игроками"
+        - information_broker: "информационный брокер"
+      progression:
+        - basic: "простые квесты"
+        - advanced: "сложные контракты"
+        - legendary: "легендарный фиксер"
+
+    - role: trader
+      description: "Торговец"
+      functions:
+        - buy_sell_items: "покупка/продажа предметов"
+        - special_deals: "специальные предложения"
+        - market_insights: "инсайты рынка"
+      progression:
+        - basic: "базовый ассортимент"
+        - advanced: "редкие предметы"
+        - legendary: "легендарный торговец"
+
+    - role: faction_leader
+      description: "Президент / Лидер фракции"
+      functions:
+        - manage_faction: "управление фракцией"
+        - faction_quests: "фракционные квесты"
+        - diplomatic_relations: "дипломатические отношения"
+      progression:
+        - basic: "малая фракция"
+        - advanced: "средняя фракция"
+        - legendary: "крупная фракция"
+
+    - role: medic
+      description: "Врач / Медик"
+      functions:
+        - heal_players: "лечение игроков"
+        - implant_services: "услуги по имплантам"
+        - medical_advice: "медицинские советы"
+      progression:
+        - basic: "базовое лечение"
+        - advanced: "сложные операции"
+        - legendary: "легендарный медик"
+
+    - role: engineer
+      description: "Инженер"
+      functions:
+        - craft_items: "крафт предметов"
+        - upgrade_equipment: "улучшение оборудования"
+        - technical_advice: "технические советы"
+      progression:
+        - basic: "базовый крафт"
+        - advanced: "сложные модификации"
+        - legendary: "легендарный инженер"
+
+    - role: hacker
+      description: "Хакер"
+      functions:
+        - hacking_services: "услуги хакера"
+        - information_access: "доступ к информации"
+        - security_breach: "взлом систем"
+      progression:
+        - basic: "простые взломы"
+        - advanced: "сложные системы"
+        - legendary: "легендарный хакер"
+
+    - role: informant
+      description: "Информатор"
+      functions:
+        - provide_intel: "предоставление информации"
+        - rumor_network: "сеть слухов"
+        - location_intel: "информация о локациях"
+      progression:
+        - basic: "базовая информация"
+        - advanced: "ценная информация"
+        - legendary: "легендарный информатор"
+
+  npc_control_panel:
+    panel_sections:
+      - section: role_management
+        description: "Управление ролью NPC"
+        functions:
+          - select_role: "выбор роли"
+          - view_role_progression: "просмотр прогрессии"
+          - role_abilities: "способности роли"
+      - section: npc_functions
+        description: "Функции NPC"
+        functions:
+          - quest_management: "управление квестами"
+          - trading_interface: "торговый интерфейс"
+          - dialogue_editor: "редактор диалогов"
+          - service_provider: "предоставление услуг"
+      - section: behavior_settings
+        description: "Настройки поведения"
+        functions:
+          - ai_behavior_config: "конфигурация ИИ-поведения"
+          - schedule_settings: "настройки расписания"
+          - interaction_preferences: "предпочтения взаимодействия"
+      - section: status_management
+        description: "Управление статусом"
+        functions:
+          - view_status: "просмотр статуса"
+          - update_status: "обновление статуса"
+          - reputation_tracking: "отслеживание репутации"
+
+    control_mechanisms:
+      - real_time_control: |
+          - Управление в реальном времени через Control Panel
+          - Мгновенное переключение функций
+          - Мониторинг состояния NPC
+      - scheduled_actions: |
+          - Планирование действий NPC
+          - Автоматическое выполнение по расписанию
+          - Уведомления о запланированных действиях
+      - event_triggers: |
+          - Триггеры действий на основе событий
+          - Реакция на действия игроков
+          - Автоматические ответы на запросы
+
+  autonomous_ai_behavior:
+    behavior_types:
+      - type: role_based
+        description: "Поведение на основе роли"
+        implementation: |
+          - Каждая роль имеет набор поведенческих паттернов
+          - ИИ выбирает действия на основе роли
+          - Приоритизация функций роли
+      - type: status_based
+        description: "Поведение на основе статуса"
+        implementation: |
+          - Высокий статус → больше функций
+          - Низкий статус → базовые функции
+          - Динамическая адаптация под статус
+      - type: context_based
+        description: "Поведение на основе контекста"
+        implementation: |
+          - Анализ текущей ситуации
+          - Адаптация под локацию
+          - Реакция на события мира
+      - type: player_interaction_based
+        description: "Поведение на основе взаимодействий с игроками"
+        implementation: |
+          - Анализ истории взаимодействий
+          - Персонализация под игроков
+          - Улучшение отношений
+
+    ai_decision_making:
+      decision_factors:
+        - role_priority: "приоритет роли"
+        - player_demand: "спрос игроков"
+        - time_of_day: "время суток"
+        - location_context: "контекст локации"
+        - npc_status: "статус NPC"
+        - reputation: "репутация"
+      decision_algorithm: |
+        decision_score = (role_weight * role_priority) +
+                         (demand_weight * player_demand) +
+                         (time_weight * time_relevance) +
+                         (location_weight * location_match) +
+                         (status_weight * status_bonus) +
+                         (reputation_weight * reputation_bonus)
+
+    behavior_optimization:
+      - learning_from_interactions: |
+          - Анализ успешных взаимодействий
+          - Адаптация поведения
+          - Улучшение релевантности действий
+      - performance_monitoring: |
+          - Отслеживание эффективности
+          - Метрики удовлетворенности игроков
+          - Оптимизация на основе метрик
+
+  role_progression:
+    progression_tiers:
+      - tier: basic
+        description: "Базовый уровень"
+        requirements:
+          - character_level: "минимальный уровень персонажа"
+          - role_unlocked: "роль разблокирована"
+        features:
+          - basic_functions: "базовые функции роли"
+          - limited_capacity: "ограниченная вместимость"
+      - tier: advanced
+        description: "Продвинутый уровень"
+        requirements:
+          - character_level: "средний уровень"
+          - role_experience: "опыт в роли"
+          - reputation: "репутация"
+        features:
+          - advanced_functions: "продвинутые функции"
+          - increased_capacity: "увеличенная вместимость"
+          - special_abilities: "специальные способности"
+      - tier: legendary
+        description: "Легендарный уровень"
+        requirements:
+          - character_level: "высокий уровень"
+          - significant_role_experience: "значительный опыт"
+          - high_reputation: "высокая репутация"
+          - unique_achievements: "уникальные достижения"
+        features:
+          - legendary_functions: "легендарные функции"
+          - maximum_capacity: "максимальная вместимость"
+          - unique_abilities: "уникальные способности"
+          - special_events: "специальные события"
+
+    progression_mechanics:
+      - experience_gain: |
+          - Опыт за выполнение функций роли
+          - Опыт за успешные взаимодействия
+          - Опыт за достижения
+      - reputation_impact: |
+          - Репутация влияет на прогрессию
+          - Высокая репутация ускоряет прогрессию
+          - Негативная репутация замедляет
+      - achievement_unlocks: |
+          - Достижения разблокируют новые функции
+          - Уникальные достижения дают бонусы
+          - Цепочки достижений открывают легендарный статус
+
+  microservices:
+    - name: npc-service
+      port: 8095
+      responsibility: |
+        Управление медийными NPC:
+        - Управление режимами работы
+        - NPC Control Panel
+        - Интеграция с существующими NPC системами
+      components:
+        - media-npc-manager: управление медийными NPC
+        - mode-switch-manager: переключение режимов
+        - npc-control-panel-manager: управление Control Panel
+        - media-npc-state-manager: управление состоянием
+
+    - name: ai-service
+      port: 8096
+      responsibility: |
+        ИИ-поведение для автономных NPC:
+        - Автономное поведение
+        - Принятие решений
+        - Оптимизация поведения
+      components:
+        - autonomous-ai-manager: управление автономным ИИ
+        - behavior-engine: движок поведения
+        - decision-maker: принятие решений
+        - learning-system: система обучения
+
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Интеграция с социальными системами:
+        - Репутация медийных NPC
+        - Отношения с игроками
+        - Социальные функции
+      components:
+        - media-npc-reputation-tracker: отслеживание репутации
+        - relationship-manager: управление отношениями
+
+    - name: character-service
+      port: 8081
+      responsibility: |
+        Управление персонажами медийных игроков:
+        - Данные персонажа
+        - Прогрессия персонажа
+        - Статус персонажа
+      components:
+        - character-manager: управление персонажами
+        - progression-tracker: отслеживание прогрессии
+
+    - name: quest-service
+      port: 8083
+      responsibility: |
+        Создание и выдача квестов от медийных NPC:
+        - Создание квестов
+        - Выдача квестов
+        - Отслеживание прогресса
+      components:
+        - quest-creator: создание квестов
+        - quest-provider: выдача квестов
+
+  data_models:
+    - name: MediaNPC
+      fields:
+        - id: UUID
+        - player_id: UUID
+        - character_id: UUID
+        - current_mode: enum (player, npc_controlled, autonomous)
+        - current_role: enum (teacher, fixer, trader, faction_leader, medic, engineer, hacker, informant)
+        - role_tier: enum (basic, advanced, legendary)
+        - role_experience: int
+        - npc_status: json
+        - control_panel_settings: json
+        - ai_behavior_config: json
+        - last_mode_switch: timestamp
+        - last_online: timestamp
+        - created_at: timestamp
+        - updated_at: timestamp
+
+    - name: NPCControlPanelAction
+      fields:
+        - id: UUID
+        - media_npc_id: UUID
+        - action_type: enum (quest_create, trade, dialogue, service)
+        - action_data: json
+        - scheduled_time: timestamp
+        - executed: boolean
+        - executed_at: timestamp
+        - created_at: timestamp
+
+    - name: AutonomousAIBehavior
+      fields:
+        - id: UUID
+        - media_npc_id: UUID
+        - behavior_type: enum (role_based, status_based, context_based, player_interaction_based)
+        - decision_factors: json
+        - last_decision: timestamp
+        - behavior_history: json
+        - performance_metrics: json
+
+    - name: RoleProgression
+      fields:
+        - id: UUID
+        - media_npc_id: UUID
+        - role: enum
+        - current_tier: enum (basic, advanced, legendary)
+        - experience: int
+        - experience_to_next_tier: int
+        - unlocked_functions: array<string>
+        - achievements: array<UUID>
+        - updated_at: timestamp
+
+  api_endpoints:
+    media_npc_management:
+      - GET /api/v1/npc/media/{playerId} - получение медийного NPC игрока
+      - POST /api/v1/npc/media - создание медийного NPC
+      - PUT /api/v1/npc/media/{id} - обновление медийного NPC
+      - GET /api/v1/npc/media/{id}/status - статус медийного NPC
+
+    mode_management:
+      - POST /api/v1/npc/media/{id}/mode/switch - переключение режима
+      - GET /api/v1/npc/media/{id}/mode - текущий режим
+      - GET /api/v1/npc/media/{id}/mode/history - история переключений
+
+    control_panel:
+      - GET /api/v1/npc/media/{id}/control-panel - получение Control Panel
+      - POST /api/v1/npc/media/{id}/control-panel/action - выполнение действия
+      - GET /api/v1/npc/media/{id}/control-panel/actions - список действий
+      - POST /api/v1/npc/media/{id}/control-panel/schedule - планирование действия
+
+    role_management:
+      - GET /api/v1/npc/media/{id}/roles - список ролей
+      - POST /api/v1/npc/media/{id}/roles/select - выбор роли
+      - GET /api/v1/npc/media/{id}/roles/{role}/progression - прогрессия роли
+      - GET /api/v1/npc/media/{id}/roles/{role}/functions - функции роли
+
+    ai_behavior:
+      - GET /api/v1/npc/media/{id}/ai/behavior - текущее поведение
+      - POST /api/v1/npc/media/{id}/ai/behavior/config - конфигурация поведения
+      - GET /api/v1/npc/media/{id}/ai/decisions - история решений
+      - GET /api/v1/npc/media/{id}/ai/performance - метрики производительности
+
+  websocket_events:
+    - media-npc:mode-switched - переключение режима
+    - media-npc:control-panel-updated - обновление Control Panel
+    - media-npc:action-executed - выполнение действия
+    - media-npc:role-progressed - прогрессия роли
+    - media-npc:ai-decision-made - принятие решения ИИ
+
+  event_bus_topics:
+    - media-npc:created - создан медийный NPC
+    - media-npc:mode-switched - переключен режим
+    - media-npc:role-selected - выбрана роль
+    - media-npc:role-progressed - прогрессия роли
+    - media-npc:action-executed - выполнено действие
+    - media-npc:ai-decision - решение ИИ
+    - media-npc:player-offline - игрок офлайн (переход в автономный режим)
+    - media-npc:player-online - игрок онлайн (возможность переключения режима)
+
+  data_synchronization:
+    tick_rate: |
+      - Проверка режима: при событиях (вход/выход игрока)
+      - Автономное поведение: каждые 30 секунд
+      - Обновление состояния: при изменениях
+      - Синхронизация Control Panel: real-time
+
+    network_load: |
+      - Переключение режимов: низкая нагрузка (при событиях)
+      - Автономное поведение: средняя нагрузка (периодическая)
+      - Control Panel: высокая нагрузка (real-time взаимодействие)
+      - Синхронизация состояния: средняя нагрузка (при изменениях)
+
+    caching_strategy: |
+      - Состояние медийного NPC: кэш на 1 минуту
+      - Control Panel данные: кэш на 30 секунд
+      - ИИ-поведение: кэш на 1 минуту
+      - Прогрессия роли: кэш на 5 минут
+
+  integrations:
+    with_npc_service: |
+      - Использование существующих NPC систем
+      - Интеграция с диалоговой системой
+      - Интеграция с торговой системой
+      - Интеграция с системой квестов
+
+    with_character_service: |
+      - Получение данных персонажа
+      - Отслеживание прогрессии
+      - Управление статусом
+
+    with_social_service: |
+      - Интеграция с системой репутации
+      - Управление отношениями
+      - Социальные функции
+
+    with_quest_service: |
+      - Создание квестов от медийных NPC
+      - Выдача квестов игрокам
+      - Отслеживание прогресса
+
+    with_ai_service: |
+      - Автономное ИИ-поведение
+      - Принятие решений
+      - Оптимизация поведения
+
+  technical_tasks:
+    - task: "Расширить npc-service для медийных NPC"
+      description: |
+        Добавить компоненты в npc-service:
+        - Media NPC Manager
+        - Mode Switch Manager
+        - NPC Control Panel Manager
+        - Media NPC State Manager
+      estimated_lines: 400
+
+    - task: "Создать ai-service для автономного поведения"
+      description: |
+        Создать новый сервис или расширить существующий:
+        - Autonomous AI Manager
+        - Behavior Engine
+        - Decision Maker
+        - Learning System
+      estimated_lines: 450
+
+    - task: "Создать структуру БД для медийных NPC"
+      description: |
+        Создать таблицы:
+        - media_npcs
+        - npc_control_panel_actions
+        - autonomous_ai_behaviors
+        - role_progressions
+      estimated_lines: 200
+
+    - task: "Реализовать NPC Control Panel"
+      description: |
+        Создать систему Control Panel:
+        - UI компоненты
+        - API endpoints
+        - Управление действиями
+        - Планирование действий
+      estimated_lines: 350
+
+    - task: "Реализовать автономное ИИ-поведение"
+      description: |
+        Создать систему автономного поведения:
+        - Behavior Engine
+        - Decision Making
+        - Context Analysis
+        - Performance Optimization
+      estimated_lines: 400
+
+    - task: "Реализовать систему прогрессии ролей"
+      description: |
+        Создать систему прогрессии с Role Progression Manager, Experience Tracking, Tier Unlocking
+      estimated_lines: 300
+
+    - task: "Интегрировать с существующими системами"
+      description: |
+        Интеграция с NPC Service, Character Service, Social Service, Quest Service
+      estimated_lines: 250
+
+    - task: "Создать API endpoints и интегрировать с Event Bus"
+      description: |
+        REST API для Media NPC Management, Mode Management, Control Panel, Role Management, AI Behavior.
+        Подписка на player:online/offline, публикация media-npc:* событий
+      estimated_lines: 400
+
