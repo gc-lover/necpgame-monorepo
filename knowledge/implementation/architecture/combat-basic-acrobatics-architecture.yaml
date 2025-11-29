@@ -1,0 +1,578 @@
+metadata:
+  id: combat-basic-acrobatics-architecture
+  title: Архитектура базовых элементов акробатики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - movement
+    - acrobatics
+    - freerun
+    - stamina
+  related_systems:
+    - gameplay-service
+    - movement-service
+    - character-service
+    - progression-service
+  related_documents:
+    - id: combat-freerun-architecture
+      relation: extends
+    - id: analysis-ideas-2025-11-29-vertical-city-architecture-part3-mechanics
+      relation: implements
+  github_issue: 1510
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - client
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру базовых элементов акробатики для вертикального мира:
+    - Wall Run (бег по стенам) - вертикальное перемещение по стенам
+    - Double Jump (двойной прыжок) - второй прыжок в воздухе
+    - Slide (скольжение) - быстрое скольжение по горизонтальным поверхностям
+    Все элементы должны интегрироваться с системой выносливости, боевой системой и системой движения.
+  goal: |
+    Создать архитектурную схему базовых элементов акробатики с определением:
+    - Компонентов для каждого элемента (Wall Run, Double Jump, Slide)
+    - API endpoints для управления элементами
+    - Интеграций с Freerun системой, Stamina Manager, Movement Service
+    - Структуры БД для отслеживания состояний
+    - Технического задания для реализации
+  essence: |
+    Детальная архитектура базовых элементов акробатики, расширяющая общую систему Freerun
+    и обеспечивающая вертикальное перемещение и динамичный геймплей.
+
+architecture:
+  overview: |
+    Архитектура базовых элементов акробатики состоит из следующих компонентов:
+    1. Wall Run Manager - управление бегом по стенам
+    2. Double Jump Manager - управление двойным прыжком
+    3. Slide Manager - управление скольжением
+    4. Acrobatics State Tracker - отслеживание состояний акробатики
+    5. Surface Detection System - определение подходящих поверхностей
+    6. Acrobatics Animation Controller - управление анимациями
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка базовых элементов акробатики:
+        - Управление Wall Run, Double Jump, Slide
+        - Отслеживание состояний акробатики
+        - Определение подходящих поверхностей
+        - Интеграция с выносливостью и движением
+      components:
+        - wall-run-manager: управление бегом по стенам
+        - double-jump-manager: управление двойным прыжком
+        - slide-manager: управление скольжением
+        - acrobatics-state-tracker: отслеживание состояний
+        - surface-detection-system: определение поверхностей
+      endpoints:
+        - POST /api/v1/gameplay/combat/acrobatics/wall-run/start - начало Wall Run
+        - POST /api/v1/gameplay/combat/acrobatics/wall-run/stop - остановка Wall Run
+        - POST /api/v1/gameplay/combat/acrobatics/wall-run/kick - отталкивание от стены
+        - GET /api/v1/gameplay/combat/acrobatics/wall-run/surfaces - доступные поверхности
+        - POST /api/v1/gameplay/combat/acrobatics/double-jump - выполнение Double Jump
+        - GET /api/v1/gameplay/combat/acrobatics/double-jump/available - проверка доступности
+        - POST /api/v1/gameplay/combat/acrobatics/slide/start - начало Slide
+        - POST /api/v1/gameplay/combat/acrobatics/slide/stop - остановка Slide
+        - GET /api/v1/gameplay/combat/acrobatics/state - текущее состояние акробатики
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/acrobatics/{sessionId} - поток состояний акробатики
+      events_published:
+        - combat.acrobatics.wall-run.started: начало Wall Run
+        - combat.acrobatics.wall-run.stopped: остановка Wall Run
+        - combat.acrobatics.wall-run.kick: отталкивание от стены
+        - combat.acrobatics.double-jump: выполнение Double Jump
+        - combat.acrobatics.slide.started: начало Slide
+        - combat.acrobatics.slide.stopped: остановка Slide
+        - combat.acrobatics.stamina-depleted: истощение выносливости
+      events_subscribed:
+        - movement.position-updated: обновление позиции
+        - combat.freerun.stamina: изменение выносливости
+        - progression.skill-updated: обновление навыков
+        - character.implant-activated: активация импланта
+
+  wall_run:
+    description: |
+      Бег по вертикальным поверхностям для быстрого вертикального перемещения.
+    mechanics:
+      activation: |
+        - Активация при приближении к стене во время бега
+        - Автоматическое определение подходящих поверхностей
+        - Проверка угла поверхности (должна быть вертикальной или близкой к вертикали)
+        - Проверка наличия достаточной скорости
+      execution: |
+        - Расход выносливости: 15-20 единиц/сек
+        - Ограничение по времени/расстоянию
+        - Возможность оттолкнуться от стены (wall kick)
+        - Автоматическое завершение при истощении выносливости
+      surface_requirements: |
+        - Вертикальная или близкая к вертикали поверхность
+        - Достаточная площадь для контакта
+        - Отсутствие препятствий
+        - Подходящий материал (не скользкий)
+    integration:
+      freerun_system: |
+        - Использует Freerun Action Manager для базовой обработки
+        - Интегрируется с Freerun Combo System для комбо
+      stamina_manager: |
+        - Расход выносливости: 15-20 единиц/сек
+        - Автоматическая остановка при истощении
+        - Восстановление выносливости после остановки
+      movement_service: |
+        - Синхронизация позиции во время Wall Run
+        - Отслеживание скорости и направления
+        - Интеграция с системой движения
+    control_modes:
+      auto: |
+        - Автоматическое определение поверхностей
+        - Автоматическое начало при приближении
+        - Автоматическое завершение при достижении конца стены
+      manual: |
+        - Ручная активация через ввод игрока
+        - Полный контроль направления и скорости
+        - Ручное завершение
+
+  double_jump:
+    description: |
+      Второй прыжок в воздухе для увеличения высоты и доступа к высоким точкам.
+    mechanics:
+      activation: |
+        - Активация во время прыжка (пока персонаж в воздухе)
+        - Ограничение: только один double jump до приземления
+        - Проверка наличия выносливости
+        - Проверка навыков/имплантов для дополнительных прыжков
+      execution: |
+        - Расход выносливости: 10-15 единиц
+        - Мгновенное выполнение
+        - Изменение траектории в зависимости от ввода
+        - Интеграция с Air Dash для комбо
+      limitations: |
+        - Только один double jump до приземления
+        - Требует наличия выносливости
+        - Может быть улучшен через импланты/навыки (triple jump)
+    integration:
+      gas_system: |
+        - Использует Gameplay Ability System для активации
+        - Интегрируется с системой способностей
+      progression_system: |
+        - Навыки паркура влияют на доступность
+        - Импланты могут предоставлять дополнительные прыжки
+        - Прогрессия навыков увеличивает эффективность
+      implant_system: |
+        - Импланты ног могут предоставлять дополнительные прыжки
+        - Модификаторы имплантов влияют на расход выносливости
+    control_modes:
+      manual: |
+        - Ручная активация через ввод игрока
+        - Направление зависит от ввода
+        - Полный контроль траектории
+
+  slide:
+    description: |
+      Быстрое скольжение по горизонтальным поверхностям для уклонения и быстрого перемещения.
+    mechanics:
+      activation: |
+        - Активация при приседе во время бега
+        - Требует минимальной скорости для начала
+        - Проверка подходящей поверхности (не скользкая)
+      execution: |
+        - Расход выносливости: 5-8 единиц
+        - Сохранение инерции движения
+        - Возможность стрельбы во время скольжения
+        - Автоматическое вставание после скольжения
+        - Интеграция с атаками
+      duration: |
+        - Зависит от скорости и поверхности
+        - Автоматическое завершение при замедлении
+        - Возможность ручного завершения
+    integration:
+      combat_system: |
+        - Возможность стрельбы во время Slide
+        - Специальные атаки при выходе из Slide
+        - Интеграция с комбо-системой
+      movement_service: |
+        - Синхронизация позиции во время Slide
+        - Отслеживание скорости и направления
+        - Интеграция с системой движения
+      animation_system: |
+        - Анимации скольжения
+        - Анимации вставания после Slide
+        - Анимации атак во время Slide
+    control_modes:
+      auto: |
+        - Автоматическое вставание после замедления
+        - Автоматическое определение подходящих поверхностей
+      manual: |
+        - Ручная активация через ввод игрока
+        - Ручное завершение
+        - Полный контроль направления
+
+  data_flows:
+    wall_run_flow: |
+      1. Игрок приближается к стене во время бега
+      2. Surface Detection System определяет подходящую поверхность
+      3. Wall Run Manager проверяет доступность (выносливость, навыки)
+      4. Игрок активирует Wall Run (автоматически или вручную)
+      5. Wall Run Manager начинает отслеживание состояния
+      6. Stamina Manager расходует выносливость (15-20 единиц/сек)
+      7. Movement Service синхронизирует позицию
+      8. Acrobatics State Tracker обновляет состояние
+      9. Gameplay Service публикует событие combat.acrobatics.wall-run.started
+      10. Realtime Gateway отправляет обновление клиентам
+      11. При истощении выносливости или достижении конца стены - остановка
+      12. Gameplay Service публикует событие combat.acrobatics.wall-run.stopped
+
+    double_jump_flow: |
+      1. Игрок находится в воздухе после прыжка
+      2. Игрок активирует Double Jump
+      3. Double Jump Manager проверяет доступность (в воздухе, есть выносливость, не использован)
+      4. Stamina Manager расходует выносливость (10-15 единиц)
+      5. Double Jump Manager применяет импульс вверх/в сторону
+      6. Movement Service обновляет позицию и траекторию
+      7. Acrobatics State Tracker отмечает использование Double Jump
+      8. Gameplay Service публикует событие combat.acrobatics.double-jump
+      9. Realtime Gateway отправляет обновление клиентам
+      10. При приземлении состояние сбрасывается
+
+    slide_flow: |
+      1. Игрок приседает во время бега
+      2. Slide Manager проверяет условия (скорость, поверхность)
+      3. Игрок активирует Slide
+      4. Slide Manager начинает отслеживание состояния
+      5. Stamina Manager расходует выносливость (5-8 единиц)
+      6. Movement Service сохраняет инерцию и обновляет позицию
+      7. Combat System разрешает стрельбу во время Slide
+      8. Acrobatics State Tracker обновляет состояние
+      9. Gameplay Service публикует событие combat.acrobatics.slide.started
+      10. Realtime Gateway отправляет обновление клиентам
+      11. При замедлении или ручном завершении - остановка
+      12. Animation System воспроизводит анимацию вставания
+      13. Gameplay Service публикует событие combat.acrobatics.slide.stopped
+
+  database_structure:
+    tables:
+      - name: acrobatics_wall_run_state
+        description: Состояние Wall Run
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - is_active: BOOLEAN
+          - wall_surface_id: UUID
+          - start_position: JSONB
+          - current_position: JSONB
+          - direction: JSONB
+          - stamina_consumed: INTEGER
+          - duration: INTEGER
+          - started_at: TIMESTAMP
+          - stopped_at: TIMESTAMP
+
+      - name: acrobatics_double_jump_state
+        description: Состояние Double Jump
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - is_available: BOOLEAN
+          - was_used: BOOLEAN
+          - jump_count: INTEGER
+          - max_jumps: INTEGER
+          - last_jump_position: JSONB
+          - last_jump_direction: JSONB
+          - stamina_consumed: INTEGER
+          - last_used_at: TIMESTAMP
+
+      - name: acrobatics_slide_state
+        description: Состояние Slide
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - is_active: BOOLEAN
+          - start_position: JSONB
+          - current_position: JSONB
+          - direction: JSONB
+          - speed: DECIMAL(10,2)
+          - stamina_consumed: INTEGER
+          - duration: INTEGER
+          - started_at: TIMESTAMP
+          - stopped_at: TIMESTAMP
+
+      - name: acrobatics_surfaces
+        description: Определенные поверхности для акробатики
+        columns:
+          - id: UUID PRIMARY KEY
+          - surface_type: ENUM (wall, floor, obstacle)
+          - position: JSONB
+          - normal: JSONB
+          - material: VARCHAR(50)
+          - is_suitable_for_wall_run: BOOLEAN
+          - is_suitable_for_slide: BOOLEAN
+          - detected_at: TIMESTAMP
+
+  integrations:
+    freerun_system: |
+      - Использование Freerun Action Manager для базовой обработки
+      - Интеграция с Freerun Combo System
+      - Использование общих компонентов выносливости
+
+    stamina_manager: |
+      - Расход выносливости для каждого элемента
+      - Автоматическая остановка при истощении
+      - Восстановление выносливости после использования
+
+    movement_service: |
+      - Синхронизация позиций во время акробатики
+      - Отслеживание скорости и направления
+      - Интеграция с системой движения
+
+    combat_system: |
+      - Возможность стрельбы во время Slide и Wall Run
+      - Интеграция с атаками
+      - Специальные атаки при выходе из элементов
+
+    progression_system: |
+      - Навыки паркура влияют на доступность и эффективность
+      - Прогрессия навыков увеличивает возможности
+      - Обновление навыков на основе использования
+
+    implant_system: |
+      - Импланты ног влияют на Double Jump
+      - Импланты рук влияют на Wall Run
+      - Модификаторы имплантов влияют на расход выносливости
+
+    animation_system: |
+      - Анимации для каждого элемента
+      - Плавные переходы между состояниями
+      - Анимации атак во время акробатики
+
+    realtime_gateway: |
+      - Отправка realtime обновлений состояний
+      - Синхронизация позиций
+      - Уведомления о событиях акробатики
+
+technical_specification:
+  subtasks:
+    - id: wall-run-manager
+      title: Реализация менеджера Wall Run
+      description: |
+        Реализация Wall Run Manager с обработкой начала/остановки Wall Run,
+        определением поверхностей, управлением выносливостью и синхронизацией позиций.
+      dependencies: []
+      estimated_effort: 5 days
+      file_size_estimate: 350 lines
+
+    - id: double-jump-manager
+      title: Реализация менеджера Double Jump
+      description: |
+        Реализация Double Jump Manager с проверкой доступности, применением импульса,
+        отслеживанием использования и интеграцией с GAS.
+      dependencies: []
+      estimated_effort: 3 days
+      file_size_estimate: 250 lines
+
+    - id: slide-manager
+      title: Реализация менеджера Slide
+      description: |
+        Реализация Slide Manager с обработкой начала/остановки Slide,
+        сохранением инерции, интеграцией с боевой системой и анимациями.
+      dependencies: []
+      estimated_effort: 4 days
+      file_size_estimate: 300 lines
+
+    - id: surface-detection-system
+      title: Реализация системы определения поверхностей
+      description: |
+        Реализация Surface Detection System с определением подходящих поверхностей
+        для Wall Run и Slide, кэшированием результатов и обновлением в реальном времени.
+      dependencies: []
+      estimated_effort: 4 days
+      file_size_estimate: 280 lines
+
+    - id: acrobatics-state-tracker
+      title: Реализация трекера состояний акробатики
+      description: |
+        Реализация Acrobatics State Tracker с отслеживанием состояний всех элементов,
+        синхронизацией с клиентом и сохранением в БД.
+      dependencies: [wall-run-manager, double-jump-manager, slide-manager]
+      estimated_effort: 3 days
+      file_size_estimate: 200 lines
+
+    - id: acrobatics-api-endpoints
+      title: Реализация API endpoints для акробатики
+      description: |
+        Реализация REST API endpoints для управления элементами акробатики,
+        получения состояний и доступных поверхностей.
+      dependencies: [wall-run-manager, double-jump-manager, slide-manager]
+      estimated_effort: 2 days
+      file_size_estimate: 180 lines
+
+    - id: acrobatics-websocket
+      title: Реализация WebSocket каналов для акробатики
+      description: |
+        Реализация WebSocket каналов для realtime обновлений состояний акробатики,
+        синхронизации позиций и уведомлений о событиях.
+      dependencies: [acrobatics-state-tracker]
+      estimated_effort: 2 days
+      file_size_estimate: 150 lines
+
+    - id: acrobatics-event-bus
+      title: Интеграция с Event Bus для акробатики
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех элементов акробатики.
+      dependencies: [wall-run-manager, double-jump-manager, slide-manager]
+      estimated_effort: 2 days
+      file_size_estimate: 120 lines
+
+    - id: acrobatics-database-schema
+      title: Создание схемы БД для акробатики
+      description: |
+        Создание таблиц БД для состояний Wall Run, Double Jump, Slide и поверхностей
+        с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+      file_size_estimate: 100 lines
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> WRM[Wall Run Manager]
+        GameplayService --> DJM[Double Jump Manager]
+        GameplayService --> SM[Slide Manager]
+        GameplayService --> AST[Acrobatics State Tracker]
+        GameplayService --> SDS[Surface Detection System]
+        
+        WRM --> SM[Stamina Manager]
+        DJM --> SM
+        SM --> SM
+        
+        WRM --> MS[Movement Service]
+        DJM --> MS
+        SM --> MS
+        
+        WRM --> CS[Combat System]
+        SM --> CS
+        
+        WRM --> PS[Progression Service]
+        DJM --> PS
+        SM --> PS
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSAcrobatics[WebSocket<br/>Acrobatics]
+        WSAcrobatics --> GameplayService
+    ```
+
+  wall_run_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant WRM as Wall Run Manager
+        participant SDS as Surface Detection
+        participant SM as Stamina Manager
+        participant MS as Movement Service
+        participant EB as Event Bus
+        
+        C->>WRM: POST /wall-run/start
+        WRM->>SDS: Check surface
+        SDS-->>WRM: Surface available
+        WRM->>SM: Check stamina
+        SM-->>WRM: Stamina OK
+        WRM->>WRM: Start wall run
+        WRM->>MS: Update position
+        WRM->>SM: Consume stamina (15-20/sec)
+        WRM->>EB: Publish wall-run.started
+        WRM-->>C: Wall run active
+        
+        loop During wall run
+            WRM->>SM: Consume stamina
+            WRM->>MS: Update position
+            SM-->>WRM: Stamina status
+        end
+        
+        alt Stamina depleted or end of wall
+            WRM->>WRM: Stop wall run
+            WRM->>EB: Publish wall-run.stopped
+            WRM-->>C: Wall run stopped
+        end
+    ```
+
+  double_jump_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant DJM as Double Jump Manager
+        participant SM as Stamina Manager
+        participant MS as Movement Service
+        participant GAS as GAS System
+        participant EB as Event Bus
+        
+        C->>DJM: POST /double-jump
+        DJM->>DJM: Check in air
+        DJM->>DJM: Check not used
+        DJM->>SM: Check stamina
+        SM-->>DJM: Stamina OK
+        DJM->>GAS: Activate ability
+        DJM->>SM: Consume stamina (10-15)
+        DJM->>MS: Apply impulse
+        DJM->>DJM: Mark as used
+        DJM->>EB: Publish double-jump
+        DJM-->>C: Double jump executed
+        
+        Note over DJM: Reset on landing
+    ```
+
+  slide_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant SLM as Slide Manager
+        participant SM as Stamina Manager
+        participant MS as Movement Service
+        participant CS as Combat System
+        participant EB as Event Bus
+        
+        C->>SLM: POST /slide/start
+        SLM->>SLM: Check speed and surface
+        SLM->>SM: Check stamina
+        SM-->>SLM: Stamina OK
+        SLM->>SLM: Start slide
+        SLM->>MS: Preserve momentum
+        SLM->>SM: Consume stamina (5-8)
+        SLM->>CS: Enable combat
+        SLM->>EB: Publish slide.started
+        SLM-->>C: Slide active
+        
+        loop During slide
+            SLM->>MS: Update position
+            SLM->>CS: Allow combat
+            SLM->>SM: Consume stamina
+        end
+        
+        alt Slowdown or manual stop
+            SLM->>SLM: Stop slide
+            SLM->>CS: Disable combat
+            SLM->>EB: Publish slide.stopped
+            SLM-->>C: Slide stopped
+        end
+    ```
+
