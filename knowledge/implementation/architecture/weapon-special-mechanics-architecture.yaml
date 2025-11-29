@@ -265,7 +265,7 @@ architecture:
       Система использует Event Sourcing для синхронизации состояния специальных механик оружия
       между сервисами и клиентами. Все события сохраняются в Event Store и используются для
       восстановления состояния и репликации.
-    
+
     event_store:
       type: Kafka
       topics:
@@ -285,7 +285,7 @@ architecture:
         - weapon-dual-wielding-events: события двойного оружия
         - weapon-modifiers-events: события модификаторов
         - weapon-combination-matrix-events: события матрицы комбинаций
-    
+
     event_types:
       - WeaponSpecialMechanicsApplied
       - PersistentEffectCreated
@@ -319,7 +319,7 @@ architecture:
     overview: |
       Система использует CQRS для разделения команд (запись) и запросов (чтение).
       Команды обрабатываются через Command Handlers, запросы через Query Handlers.
-    
+
     command_handlers:
       - ApplySpecialMechanicsCommand
       - CreatePersistentEffectCommand
@@ -338,7 +338,7 @@ architecture:
       - FireDualWieldingCommand
       - ApplyWeaponModifierCommand
       - GenerateWeaponCombinationCommand
-    
+
     query_handlers:
       - GetWeaponSpecialMechanicsQuery
       - GetPersistentEffectsQuery
@@ -359,90 +359,90 @@ architecture:
   tickrate_and_network:
     overview: |
       Требования к тикрейту и сетевой нагрузке для различных механик оружия.
-    
+
     tickrate_requirements:
       persistent_effects:
         server_tickrate: 10 Hz
         client_tickrate: 60 Hz
         description: "Персистентные эффекты (DoT) обновляются на сервере 10 раз в секунду, клиент интерполирует"
-      
+
       chain_damage:
         server_tickrate: 60 Hz
         client_tickrate: 60 Hz
         description: "Цепной урон требует высокой частоты для плавности визуализации"
-      
+
       environment_destruction:
         server_tickrate: 30 Hz
         client_tickrate: 60 Hz
         description: "Разрушение окружения обновляется на сервере 30 раз в секунду"
-      
+
       deployable_weapons:
         server_tickrate: 20 Hz
         client_tickrate: 60 Hz
         description: "Размещенное оружие обновляется на сервере 20 раз в секунду"
-      
+
       laser_weapons:
         server_tickrate: 60 Hz
         client_tickrate: 60 Hz
         description: "Лазерное оружие требует высокой частоты для точности"
-      
+
       melee_combat:
         server_tickrate: 60 Hz
         client_tickrate: 60 Hz
         description: "Ближний бой требует высокой частоты для отзывчивости"
-      
+
       elemental_effects:
         server_tickrate: 20 Hz
         client_tickrate: 60 Hz
         description: "Стихийные эффекты обновляются на сервере 20 раз в секунду"
-      
+
       temporal_effects:
         server_tickrate: 10 Hz
         client_tickrate: 60 Hz
         description: "Временные эффекты обновляются на сервере 10 раз в секунду"
-      
+
       projectile_forms:
         server_tickrate: 60 Hz
         client_tickrate: 60 Hz
         description: "Формы проджектайлов требуют высокой частоты для точности"
-    
+
     network_bandwidth:
       persistent_effects:
         bytes_per_tick: 50
         description: "Персистентные эффекты: ID эффекта, цель, урон, время"
-      
+
       chain_damage:
         bytes_per_tick: 200
         description: "Цепной урон: список целей, урон по каждой, визуальные данные"
-      
+
       environment_destruction:
         bytes_per_tick: 500
         description: "Разрушение окружения: ID объекта, тип разрушения, позиция, осколки"
-      
+
       deployable_weapons:
         bytes_per_tick: 100
         description: "Размещенное оружие: ID, позиция, состояние, цели"
-      
+
       laser_weapons:
         bytes_per_tick: 150
         description: "Лазерное оружие: позиция луча, цели, урон, перегрев"
-      
+
       melee_combat:
         bytes_per_tick: 100
         description: "Ближний бой: тип атаки, цель, урон, комбо"
-      
+
       elemental_effects:
         bytes_per_tick: 80
         description: "Стихийные эффекты: тип эффекта, цель, стаки, урон"
-      
+
       temporal_effects:
         bytes_per_tick: 60
         description: "Временные эффекты: тип эффекта, цель, длительность, модификаторы"
-      
+
       projectile_forms:
         bytes_per_tick: 120
         description: "Формы проджектайлов: тип формы, траектория, цели"
-    
+
     optimization_strategies:
       - Использование delta compression для обновлений состояния
       - Приоритизация важных событий (попадания, активации)

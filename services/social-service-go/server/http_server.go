@@ -84,26 +84,28 @@ type SocialServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr          string
-	router        *mux.Router
-	socialService SocialServiceInterface
-	partyService  PartyServiceInterface
-	logger        *logrus.Logger
-	server        *http.Server
-	jwtValidator  *JwtValidator
-	authEnabled   bool
+	addr              string
+	router            *mux.Router
+	socialService     SocialServiceInterface
+	partyService      PartyServiceInterface
+	engramRomanceService EngramRomanceServiceInterface
+	logger            *logrus.Logger
+	server            *http.Server
+	jwtValidator      *JwtValidator
+	authEnabled       bool
 }
 
-func NewHTTPServer(addr string, socialService SocialServiceInterface, partyService PartyServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, socialService SocialServiceInterface, partyService PartyServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramRomanceService EngramRomanceServiceInterface) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
-		addr:          addr,
-		router:        router,
-		socialService: socialService,
-		partyService:  partyService,
-		logger:        GetLogger(),
-		jwtValidator:  jwtValidator,
-		authEnabled:   authEnabled,
+		addr:                addr,
+		router:              router,
+		socialService:       socialService,
+		partyService:        partyService,
+		engramRomanceService: engramRomanceService,
+		logger:              GetLogger(),
+		jwtValidator:        jwtValidator,
+		authEnabled:         authEnabled,
 	}
 
 	router.Use(server.loggingMiddleware)
@@ -201,6 +203,12 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, partyServi
 	social.HandleFunc("/orders/{orderId}/complete", server.completePlayerOrder).Methods("POST")
 	social.HandleFunc("/orders/{orderId}/cancel", server.cancelPlayerOrder).Methods("POST")
 	social.HandleFunc("/orders/{orderId}/review", server.reviewPlayerOrder).Methods("POST")
+
+	if server.engramRomanceService != nil {
+		romanceHandlers := NewEngramRomanceHandlers(server.engramRomanceService)
+		social.HandleFunc("/romance/engrams/{engram_id}/comment", romanceHandlers.EngramRomanceComment).Methods("POST")
+		social.HandleFunc("/romance/engrams/{engram_id}/influence", romanceHandlers.GetEngramRomanceInfluence).Methods("GET")
+	}
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

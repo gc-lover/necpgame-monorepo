@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/social-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -39,6 +40,15 @@ func main() {
 	partyRepo := server.NewPartyRepository(dbPool)
 	partyService := server.NewPartyService(partyRepo)
 
+	redisOpts, err := redis.ParseURL(redisURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to parse Redis URL for Engram Romance service")
+	}
+	redisClient := redis.NewClient(redisOpts)
+	
+	engramRomanceRepo := server.NewEngramRomanceRepository(dbPool)
+	engramRomanceService := server.NewEngramRomanceService(engramRomanceRepo, redisClient)
+
 	if socialService != nil {
 		notificationSubscriber := socialService.GetNotificationSubscriber()
 		if notificationSubscriber != nil {
@@ -63,7 +73,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, socialService, partyService, jwtValidator, authEnabled)
+	httpServer := server.NewHTTPServer(addr, socialService, partyService, jwtValidator, authEnabled, engramRomanceService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

@@ -1,0 +1,178 @@
+package server
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sirupsen/logrus"
+)
+
+type EngramRomanceComment struct {
+	ID               uuid.UUID              `json:"id"`
+	CommentID        uuid.UUID              `json:"comment_id"`
+	EngramID         uuid.UUID              `json:"engram_id"`
+	CharacterID      uuid.UUID              `json:"character_id"`
+	CommentText      string                 `json:"comment_text"`
+	RomanceEventType string                 `json:"romance_event_type"`
+	PartnerID        *uuid.UUID             `json:"partner_id,omitempty"`
+	EventContext     map[string]interface{} `json:"event_context,omitempty"`
+	InfluenceLevel   float64                `json:"influence_level"`
+	CreatedAt        time.Time              `json:"created_at"`
+}
+
+type EngramRomanceInfluence struct {
+	ID                  uuid.UUID   `json:"id"`
+	EngramID            uuid.UUID   `json:"engram_id"`
+	CharacterID         uuid.UUID   `json:"character_id"`
+	RelationshipID      *uuid.UUID  `json:"relationship_id,omitempty"`
+	InfluenceLevel      float64     `json:"influence_level"`
+	InfluenceCategory   string      `json:"influence_category"`
+	EngramType          *string     `json:"engram_type,omitempty"`
+	HelpsRelationship   bool        `json:"helps_relationship"`
+	InterferesRelationship bool     `json:"interferes_relationship"`
+	ImpactPercentage    float64     `json:"impact_percentage"`
+	SpecialEvents       []string    `json:"special_events"`
+	LastUpdated         time.Time   `json:"last_updated"`
+	CreatedAt           time.Time   `json:"created_at"`
+}
+
+type EngramRomanceRepositoryInterface interface {
+	CreateRomanceComment(ctx context.Context, comment *EngramRomanceComment) error
+	GetRomanceInfluence(ctx context.Context, engramID uuid.UUID, relationshipID *uuid.UUID) (*EngramRomanceInfluence, error)
+	CreateOrUpdateRomanceInfluence(ctx context.Context, influence *EngramRomanceInfluence) error
+}
+
+type EngramRomanceRepository struct {
+	db     *pgxpool.Pool
+	logger *logrus.Logger
+}
+
+func NewEngramRomanceRepository(db *pgxpool.Pool) *EngramRomanceRepository {
+	return &EngramRomanceRepository{
+		db:     db,
+		logger: GetLogger(),
+	}
+}
+
+func (r *EngramRomanceRepository) CreateRomanceComment(ctx context.Context, comment *EngramRomanceComment) error {
+	comment.ID = uuid.New()
+	if comment.CommentID == uuid.Nil {
+		comment.CommentID = uuid.New()
+	}
+	comment.CreatedAt = time.Now()
+
+	eventContextJSON, _ := json.Marshal(comment.EventContext)
+
+	_, err := r.db.Exec(ctx,
+		`INSERT INTO social.engram_romance_comments 
+		 (id, comment_id, engram_id, character_id, comment_text, romance_event_type,
+		  partner_id, event_context, influence_level, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		comment.ID, comment.CommentID, comment.EngramID, comment.CharacterID,
+		comment.CommentText, comment.RomanceEventType, comment.PartnerID,
+		eventContextJSON, comment.InfluenceLevel, comment.CreatedAt,
+	)
+
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to create engram romance comment")
+		return err
+	}
+
+	return nil
+}
+
+func (r *EngramRomanceRepository) GetRomanceInfluence(ctx context.Context, engramID uuid.UUID, relationshipID *uuid.UUID) (*EngramRomanceInfluence, error) {
+	var influence EngramRomanceInfluence
+	var relID sql.Null[uuid.UUID]
+	var engramType sql.Null[string]
+	var specialEventsJSON []byte
+
+	query := `SELECT id, engram_id, character_id, relationship_id, influence_level, influence_category,
+			 engram_type, helps_relationship, interferes_relationship, impact_percentage,
+			 special_events, last_updated, created_at
+			 FROM social.engram_romance_influence
+			 WHERE engram_id = $1`
+	args := []interface{}{engramID}
+
+	if relationshipID != nil {
+		query += ` AND relationship_id = $2`
+		args = append(args, *relationshipID)
+	} else {
+		query += ` AND relationship_id IS NULL`
+	}
+
+	err := r.db.QueryRow(ctx, query, args...).Scan(
+		&influence.ID, &influence.EngramID, &influence.CharacterID, &relID,
+		&influence.InfluenceLevel, &influence.InfluenceCategory, &engramType,
+		&influence.HelpsRelationship, &influence.InterferesRelationship,
+		&influence.ImpactPercentage, &specialEventsJSON, &influence.LastUpdated,
+		&influence.CreatedAt,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to get engram romance influence")
+		return nil, err
+	}
+
+	if relID.Valid {
+		influence.RelationshipID = &relID.V
+	}
+	if engramType.Valid {
+		influence.EngramType = &engramType.V
+	}
+	if len(specialEventsJSON) > 0 {
+		json.Unmarshal(specialEventsJSON, &influence.SpecialEvents)
+	}
+
+	return &influence, nil
+}
+
+func (r *EngramRomanceRepository) CreateOrUpdateRomanceInfluence(ctx context.Context, influence *EngramRomanceInfluence) error {
+	influence.LastUpdated = time.Now()
+	if influence.ID == uuid.Nil {
+		influence.ID = uuid.New()
+		influence.CreatedAt = time.Now()
+	}
+
+	specialEventsJSON, _ := json.Marshal(influence.SpecialEvents)
+
+	_, err := r.db.Exec(ctx,
+		`INSERT INTO social.engram_romance_influence 
+		 (id, engram_id, character_id, relationship_id, influence_level, influence_category,
+		  engram_type, helps_relationship, interferes_relationship, impact_percentage,
+		  special_events, last_updated, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		 ON CONFLICT (engram_id, character_id, relationship_id) 
+		 DO UPDATE SET 
+		 influence_level = EXCLUDED.influence_level,
+		 influence_category = EXCLUDED.influence_category,
+		 engram_type = EXCLUDED.engram_type,
+		 helps_relationship = EXCLUDED.helps_relationship,
+		 interferes_relationship = EXCLUDED.interferes_relationship,
+		 impact_percentage = EXCLUDED.impact_percentage,
+		 special_events = EXCLUDED.special_events,
+		 last_updated = EXCLUDED.last_updated`,
+		influence.ID, influence.EngramID, influence.CharacterID, influence.RelationshipID,
+		influence.InfluenceLevel, influence.InfluenceCategory, influence.EngramType,
+		influence.HelpsRelationship, influence.InterferesRelationship, influence.ImpactPercentage,
+		specialEventsJSON, influence.LastUpdated, influence.CreatedAt,
+	)
+
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to create or update engram romance influence")
+		return err
+	}
+
+	return nil
+}
+
+
+

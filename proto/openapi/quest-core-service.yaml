@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine Core Service API
+  description: |
+    API для управления основными операциями с квестами.
+    
+    **Основные возможности:**
+    - Начало квестов
+    - Получение информации о квестах
+    - Завершение и отмена квестов
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com/api/v1
+    description: Gameplay Service (продакшн)
+tags:
+  - name: Quest Management
+    description: Управление квестами
+paths:
+  /gameplay/quests/start:
+    post:
+      tags:
+        - Quest Management
+      summary: Начать квест
+      description: |
+        Начинает новый квест для текущего игрока.
+        Проверяет требования квеста и создаёт инстанс квеста.
+      operationId: startQuest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'quest-schemas.yaml#/components/schemas/StartQuestRequest'
+      responses:
+        '200':
+          description: Квест успешно начат
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/StartQuestResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}:
+    get:
+      tags:
+        - Quest Management
+      summary: Получить информацию о квесте
+      description: |
+        Возвращает информацию о квесте по ID инстанса квеста.
+        Включает состояние, прогресс и детали квеста.
+      operationId: getQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о квесте
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/QuestInstance'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/by-player/{player_id}:
+    get:
+      tags:
+        - Quest Management
+      summary: Получить квесты игрока
+      description: |
+        Возвращает список всех квестов игрока.
+        Поддерживает фильтрацию по состоянию и пагинацию.
+      operationId: getPlayerQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: ID игрока
+          schema:
+            type: string
+            format: uuid
+        - name: state
+          in: query
+          description: Фильтр по состоянию квеста
+          schema:
+            type: string
+            enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, FAILED, CANCELLED]
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список квестов игрока
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/QuestListResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/complete:
+    post:
+      tags:
+        - Quest Management
+      summary: Завершить квест
+      description: |
+        Завершает квест и распределяет награды.
+        Проверяет выполнение всех целей перед завершением.
+      operationId: completeQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: 'quest-schemas.yaml#/components/schemas/CompleteQuestRequest'
+      responses:
+        '200':
+          description: Квест успешно завершён
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/CompleteQuestResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/quests/{quest_id}/cancel:
+    post:
+      tags:
+        - Quest Management
+      summary: Отменить квест
+      description: |
+        Отменяет активный квест.
+        Квест переходит в состояние CANCELLED.
+      operationId: cancelQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          description: ID инстанса квеста
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Квест успешно отменён
+          content:
+            application/json:
+              schema:
+                $ref: 'quest-schemas.yaml#/components/schemas/QuestInstance'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
