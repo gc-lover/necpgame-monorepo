@@ -87,18 +87,20 @@ type HTTPServer struct {
 	addr          string
 	router        *mux.Router
 	socialService SocialServiceInterface
+	partyService  PartyServiceInterface
 	logger        *logrus.Logger
 	server        *http.Server
 	jwtValidator  *JwtValidator
 	authEnabled   bool
 }
 
-func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
+func NewHTTPServer(addr string, socialService SocialServiceInterface, partyService PartyServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
 	server := &HTTPServer{
 		addr:          addr,
 		router:        router,
 		socialService: socialService,
+		partyService:  partyService,
 		logger:        GetLogger(),
 		jwtValidator:  jwtValidator,
 		authEnabled:   authEnabled,
@@ -145,6 +147,14 @@ func NewHTTPServer(addr string, socialService SocialServiceInterface, jwtValidat
 	chatCommandService := NewChatCommandService()
 	chatCommandHandlers := NewChatCommandHandlers(chatCommandService)
 	social.HandleFunc("/chat/commands/execute", chatCommandHandlers.executeChatCommand).Methods("POST")
+
+	partyHandlers := NewPartyHandlers(partyService)
+	social.HandleFunc("/party", partyHandlers.createParty).Methods("POST")
+	social.HandleFunc("/party", partyHandlers.getParty).Methods("GET")
+	social.HandleFunc("/party/{partyId}", partyHandlers.getPartyById).Methods("GET")
+	social.HandleFunc("/party/{partyId}/transfer-leadership", partyHandlers.transferLeadership).Methods("POST")
+	social.HandleFunc("/party/{partyId}/leader", partyHandlers.getPartyLeader).Methods("GET")
+	social.HandleFunc("/party/player/{accountId}", partyHandlers.getPlayerParty).Methods("GET")
 
 	social.HandleFunc("/mail/send", server.sendMail).Methods("POST")
 	social.HandleFunc("/mail/inbox", server.getMails).Methods("GET")

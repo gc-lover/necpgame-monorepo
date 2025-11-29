@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/social-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -29,6 +30,14 @@ func main() {
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize social service")
 	}
+
+	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to initialize database pool for Party service")
+	}
+
+	partyRepo := server.NewPartyRepository(dbPool)
+	partyService := server.NewPartyService(partyRepo)
 
 	if socialService != nil {
 		notificationSubscriber := socialService.GetNotificationSubscriber()
@@ -54,7 +63,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, socialService, jwtValidator, authEnabled)
+	httpServer := server.NewHTTPServer(addr, socialService, partyService, jwtValidator, authEnabled)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
