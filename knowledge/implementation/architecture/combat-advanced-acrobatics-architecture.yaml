@@ -1,0 +1,609 @@
+metadata:
+  id: combat-advanced-acrobatics-architecture
+  title: Архитектура продвинутых элементов акробатики
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-11-29T13:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - combat
+    - movement
+    - acrobatics
+    - freerun
+    - stamina
+    - advanced
+  related_systems:
+    - gameplay-service
+    - movement-service
+    - character-service
+    - progression-service
+  related_documents:
+    - id: combat-freerun-architecture
+      relation: extends
+    - id: combat-basic-acrobatics-architecture
+      relation: extends
+    - id: combat-combos-synergies-architecture
+      relation: integrates
+  github_issue: 1511
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - client
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру продвинутых элементов акробатики для опытных игроков:
+    - Air Dash (воздушный рывок) - рывок в воздухе для изменения траектории
+    - Wall Kick (отталкивание от стены) - отталкивание от стены для изменения направления
+    - Vault (перепрыгивание через препятствия) - плавное перепрыгивание через препятствия
+    Все элементы должны интегрироваться с базовыми элементами акробатики, комбо-системой и боевой системой.
+  goal: |
+    Создать архитектурную схему продвинутых элементов акробатики с определением:
+    - Компонентов для каждого элемента (Air Dash, Wall Kick, Vault)
+    - API endpoints для управления элементами
+    - Интеграций с базовыми элементами, комбо-системой, боевой системой
+    - Структуры БД для отслеживания состояний
+    - Технического задания для реализации
+  essence: |
+    Детальная архитектура продвинутых элементов акробатики, расширяющая базовые элементы
+    и обеспечивающая продвинутый геймплей для опытных игроков.
+
+architecture:
+  overview: |
+    Архитектура продвинутых элементов акробатики состоит из следующих компонентов:
+    1. Air Dash Manager - управление воздушным рывком
+    2. Wall Kick Manager - управление отталкиванием от стены
+    3. Vault Manager - управление перепрыгиванием через препятствия
+    4. Advanced Acrobatics State Tracker - отслеживание состояний продвинутых элементов
+    5. Obstacle Detection System - определение препятствий для Vault
+    6. Dash Combo System - система комбо для Air Dash
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка продвинутых элементов акробатики:
+        - Управление Air Dash, Wall Kick, Vault
+        - Отслеживание состояний продвинутых элементов
+        - Определение препятствий для Vault
+        - Интеграция с комбо-системой и боевой системой
+      components:
+        - air-dash-manager: управление воздушным рывком
+        - wall-kick-manager: управление отталкиванием от стены
+        - vault-manager: управление перепрыгиванием через препятствия
+        - advanced-acrobatics-state-tracker: отслеживание состояний
+        - obstacle-detection-system: определение препятствий
+        - dash-combo-system: система комбо для Air Dash
+      endpoints:
+        - POST /api/v1/gameplay/combat/acrobatics/air-dash - выполнение Air Dash
+        - GET /api/v1/gameplay/combat/acrobatics/air-dash/available - проверка доступности
+        - GET /api/v1/gameplay/combat/acrobatics/air-dash/charges - количество зарядов
+        - POST /api/v1/gameplay/combat/acrobatics/wall-kick - выполнение Wall Kick
+        - GET /api/v1/gameplay/combat/acrobatics/wall-kick/available - проверка доступности
+        - POST /api/v1/gameplay/combat/acrobatics/vault - выполнение Vault
+        - GET /api/v1/gameplay/combat/acrobatics/vault/obstacles - доступные препятствия
+        - GET /api/v1/gameplay/combat/acrobatics/advanced/state - текущее состояние продвинутых элементов
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/combat/acrobatics/advanced/{sessionId} - поток состояний продвинутых элементов
+      events_published:
+        - combat.acrobatics.air-dash: выполнение Air Dash
+        - combat.acrobatics.air-dash.charges-updated: обновление зарядов
+        - combat.acrobatics.wall-kick: выполнение Wall Kick
+        - combat.acrobatics.vault: выполнение Vault
+        - combat.acrobatics.advanced.combo: комбо из продвинутых элементов
+      events_subscribed:
+        - combat.acrobatics.wall-run.started: начало Wall Run
+        - combat.acrobatics.double-jump: выполнение Double Jump
+        - combat.freerun.stamina: изменение выносливости
+        - progression.skill-updated: обновление навыков
+        - character.implant-activated: активация импланта
+
+  air_dash:
+    description: |
+      Рывок в воздухе для изменения траектории и уклонения.
+    mechanics:
+      activation: |
+        - Активация во время прыжка/падения
+        - Может использоваться несколько раз (зависит от навыков/имплантов)
+        - Направление зависит от ввода игрока
+        - Интеграция с Double Jump для комбо
+        - Возможность атаки во время/после dash
+      execution: |
+        - Расход выносливости: 12-15 единиц
+        - Кулдаун: 2-3 секунды (зависит от навыков)
+        - Мгновенное изменение траектории
+        - Сохранение инерции после dash
+      charges: |
+        - Базовое количество: 1 заряд
+        - Может быть увеличено через навыки/импланты
+        - Восстановление зарядов через кулдаун
+        - Максимальное количество: 3-5 зарядов
+    integration:
+      gas_system: |
+        - Использует Gameplay Ability System для активации
+        - Интегрируется с системой способностей
+        - Может быть модифицирован через способности
+      combat_system: |
+        - Возможность атаки во время/после dash
+        - Интеграция с комбо-системой
+        - Специальные атаки при выходе из dash
+      progression_system: |
+        - Навыки паркура влияют на количество зарядов
+        - Навыки влияют на кулдаун и расход выносливости
+        - Прогрессия навыков увеличивает эффективность
+      double_jump: |
+        - Интеграция с Double Jump для комбо
+        - Возможность цепочки: Double Jump → Air Dash → Attack
+        - Бонусы за комбо из движения
+    control_modes:
+      manual: |
+        - Ручная активация через ввод игрока
+        - Направление зависит от ввода
+        - Полный контроль траектории
+
+  wall_kick:
+    description: |
+      Отталкивание от стены для изменения направления и высоты.
+    mechanics:
+      activation: |
+        - Активация во время Wall Run
+        - Изменение направления движения
+        - Дополнительный импульс вверх/в сторону
+        - Интеграция с атаками (wall kick → attack)
+        - Может использоваться для цепочки wall runs
+      execution: |
+        - Расход выносливости: 8-10 единиц
+        - Мгновенное выполнение
+        - Изменение траектории в зависимости от ввода
+        - Возможность цепочки wall runs
+      chain_mechanics: |
+        - Цепочка: Wall Run → Wall Kick → Wall Run
+        - Ограничение по количеству цепочек (зависит от навыков)
+        - Бонусы за цепочки
+    integration:
+      wall_run: |
+        - Интеграция с Wall Run системой
+        - Активация только во время Wall Run
+        - Плавный переход из Wall Run в Wall Kick
+      combat_system: |
+        - Интеграция с атаками после wall kick
+        - Специальные атаки при отталкивании
+        - Интеграция с комбо-системой
+      animation_system: |
+        - Анимации отталкивания от стены
+        - Плавные переходы между состояниями
+        - Анимации атак после wall kick
+    control_modes:
+      manual: |
+        - Ручная активация через ввод игрока
+        - Направление зависит от ввода
+        - Полный контроль траектории
+
+  vault:
+    description: |
+      Плавное перепрыгивание через препятствия для непрерывного движения.
+    mechanics:
+      activation: |
+        - Автоматическое определение препятствий
+        - Активация при приближении к препятствию
+        - Плавная анимация перепрыгивания
+        - Сохранение инерции движения
+        - Возможность стрельбы во время vault
+        - Интеграция с комбо-системой
+      execution: |
+        - Расход выносливости: 5-7 единиц
+        - Автоматическое выполнение при обнаружении препятствия
+        - Плавная анимация перепрыгивания
+        - Сохранение скорости и направления
+      obstacle_detection: |
+        - Автоматическое определение препятствий
+        - Проверка размеров и материала
+        - Кэширование результатов
+    integration:
+      movement_system: |
+        - Интеграция с системой движения
+        - Сохранение инерции движения
+        - Плавные переходы между состояниями
+      combat_system: |
+        - Возможность стрельбы во время vault
+        - Интеграция с комбо-системой
+        - Специальные атаки при выходе из vault
+      animation_system: |
+        - Анимации перепрыгивания через препятствия
+        - Плавные переходы между состояниями
+        - Анимации атак во время vault
+    control_modes:
+      auto: |
+        - Автоматическое определение препятствий
+        - Автоматическое выполнение при обнаружении
+      manual: |
+        - Ручная активация через ввод игрока
+        - Выбор препятствия для перепрыгивания
+
+  data_flows:
+    air_dash_flow: |
+      1. Игрок находится в воздухе (прыжок/падение)
+      2. Игрок активирует Air Dash
+      3. Air Dash Manager проверяет доступность (в воздухе, есть заряды, есть выносливость)
+      4. Air Dash Manager проверяет кулдаун
+      5. Stamina Manager расходует выносливость (12-15 единиц)
+      6. Air Dash Manager применяет импульс в направлении ввода
+      7. Movement Service обновляет позицию и траекторию
+      8. Dash Combo System проверяет комбо
+      9. Combat System разрешает атаки во время/после dash
+      10. Air Dash Manager уменьшает количество зарядов
+      11. Air Dash Manager запускает кулдаун
+      12. Advanced Acrobatics State Tracker обновляет состояние
+      13. Gameplay Service публикует событие combat.acrobatics.air-dash
+      14. Realtime Gateway отправляет обновление клиентам
+      15. При приземлении или восстановлении зарядов - обновление состояния
+
+    wall_kick_flow: |
+      1. Игрок находится в состоянии Wall Run
+      2. Игрок активирует Wall Kick
+      3. Wall Kick Manager проверяет доступность (в Wall Run, есть выносливость)
+      4. Stamina Manager расходует выносливость (8-10 единиц)
+      5. Wall Kick Manager применяет импульс в направлении ввода
+      6. Movement Service обновляет позицию и траекторию
+      7. Wall Run Manager завершает текущий Wall Run
+      8. Combat System разрешает атаки после wall kick
+      9. Advanced Acrobatics State Tracker обновляет состояние
+      10. Gameplay Service публикует событие combat.acrobatics.wall-kick
+      11. Realtime Gateway отправляет обновление клиентам
+      12. Возможность начала нового Wall Run после wall kick
+
+    vault_flow: |
+      1. Игрок приближается к препятствию во время движения
+      2. Obstacle Detection System определяет подходящее препятствие
+      3. Vault Manager проверяет доступность (есть выносливость, подходящее препятствие)
+      4. Игрок активирует Vault (автоматически или вручную)
+      5. Vault Manager начинает анимацию перепрыгивания
+      6. Stamina Manager расходует выносливость (5-7 единиц)
+      7. Movement Service сохраняет инерцию и обновляет позицию
+      8. Combat System разрешает стрельбу во время vault
+      9. Animation System воспроизводит анимацию перепрыгивания
+      10. Advanced Acrobatics State Tracker обновляет состояние
+      11. Gameplay Service публикует событие combat.acrobatics.vault
+      12. Realtime Gateway отправляет обновление клиентам
+      13. После завершения анимации - возврат к нормальному движению
+
+  database_structure:
+    tables:
+      - name: acrobatics_air_dash_state
+        description: Состояние Air Dash
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - current_charges: INTEGER
+          - max_charges: INTEGER
+          - cooldown_until: TIMESTAMP
+          - last_used_at: TIMESTAMP
+          - last_used_position: JSONB
+          - last_used_direction: JSONB
+          - stamina_consumed: INTEGER
+
+      - name: acrobatics_wall_kick_state
+        description: Состояние Wall Kick
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - is_available: BOOLEAN
+          - chain_count: INTEGER
+          - max_chain_count: INTEGER
+          - last_used_at: TIMESTAMP
+          - last_used_position: JSONB
+          - last_used_direction: JSONB
+          - stamina_consumed: INTEGER
+
+      - name: acrobatics_vault_state
+        description: Состояние Vault
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - is_active: BOOLEAN
+          - obstacle_id: UUID
+          - start_position: JSONB
+          - current_position: JSONB
+          - direction: JSONB
+          - stamina_consumed: INTEGER
+          - started_at: TIMESTAMP
+          - completed_at: TIMESTAMP
+
+      - name: acrobatics_obstacles
+        description: Определенные препятствия для Vault
+        columns:
+          - id: UUID PRIMARY KEY
+          - obstacle_type: ENUM (barrier, fence, wall, crate)
+          - position: JSONB
+          - dimensions: JSONB
+          - material: VARCHAR(50)
+          - is_suitable_for_vault: BOOLEAN
+          - detected_at: TIMESTAMP
+
+      - name: acrobatics_advanced_combo_history
+        description: История комбо из продвинутых элементов
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - combo_sequence: JSONB
+          - elements_used: JSONB
+          - bonuses_applied: JSONB
+          - timestamp: TIMESTAMP
+
+  integrations:
+    basic_acrobatics: |
+      - Интеграция с базовыми элементами
+      - Цепочки: Wall Run → Wall Kick → Air Dash
+      - Интеграция с Double Jump
+      - Общие компоненты выносливости
+
+    freerun_system: |
+      - Использование Freerun Action Manager для базовой обработки
+      - Интеграция с Freerun Combo System
+      - Использование общих компонентов выносливости
+
+    stamina_manager: |
+      - Расход выносливости для каждого элемента
+      - Автоматическая остановка при истощении
+      - Восстановление выносливости после использования
+
+    movement_service: |
+      - Синхронизация позиций во время продвинутых элементов
+      - Отслеживание скорости и направления
+      - Интеграция с системой движения
+
+    combat_system: |
+      - Возможность стрельбы во время Vault и Air Dash
+      - Интеграция с атаками после Wall Kick
+      - Специальные атаки при выходе из элементов
+      - Интеграция с комбо-системой
+
+    combos_synergies_system: |
+      - Интеграция с системой комбо и синергий
+      - Бонусы за комбо из продвинутых элементов
+      - Цепочки движений с боевыми комбо
+
+    progression_system: |
+      - Навыки паркура влияют на доступность и эффективность
+      - Прогрессия навыков увеличивает возможности
+      - Обновление навыков на основе использования
+
+    implant_system: |
+      - Импланты влияют на количество зарядов Air Dash
+      - Импланты влияют на кулдауны и расход выносливости
+      - Модификаторы имплантов влияют на эффективность
+
+    animation_system: |
+      - Анимации для каждого элемента
+      - Плавные переходы между состояниями
+      - Анимации атак во время продвинутых элементов
+
+    realtime_gateway: |
+      - Отправка realtime обновлений состояний
+      - Синхронизация позиций
+      - Уведомления о событиях продвинутых элементов
+
+technical_specification:
+  subtasks:
+    - id: air-dash-manager
+      title: Реализация менеджера Air Dash
+      description: |
+        Реализация Air Dash Manager с обработкой активации, управления зарядами,
+        кулдаунов, интеграции с GAS и комбо-системой.
+      dependencies: []
+      estimated_effort: 5 days
+      file_size_estimate: 350 lines
+
+    - id: wall-kick-manager
+      title: Реализация менеджера Wall Kick
+      description: |
+        Реализация Wall Kick Manager с обработкой активации во время Wall Run,
+        управления цепочками, интеграции с боевой системой и анимациями.
+      dependencies: [wall-run-manager]
+      estimated_effort: 4 days
+      file_size_estimate: 300 lines
+
+    - id: vault-manager
+      title: Реализация менеджера Vault
+      description: |
+        Реализация Vault Manager с обработкой автоматического определения препятствий,
+        выполнения перепрыгивания, сохранения инерции и интеграции с боевой системой.
+      dependencies: []
+      estimated_effort: 4 days
+      file_size_estimate: 320 lines
+
+    - id: obstacle-detection-system
+      title: Реализация системы определения препятствий
+      description: |
+        Реализация Obstacle Detection System с определением подходящих препятствий
+        для Vault, кэшированием результатов и обновлением в реальном времени.
+      dependencies: []
+      estimated_effort: 4 days
+      file_size_estimate: 280 lines
+
+    - id: dash-combo-system
+      title: Реализация системы комбо для Air Dash
+      description: |
+        Реализация Dash Combo System с отслеживанием комбо из Air Dash,
+        интеграцией с боевыми комбо и применением бонусов.
+      dependencies: [air-dash-manager]
+      estimated_effort: 3 days
+      file_size_estimate: 250 lines
+
+    - id: advanced-acrobatics-state-tracker
+      title: Реализация трекера состояний продвинутых элементов
+      description: |
+        Реализация Advanced Acrobatics State Tracker с отслеживанием состояний,
+        синхронизацией с клиентом и сохранением в БД.
+      dependencies: [air-dash-manager, wall-kick-manager, vault-manager]
+      estimated_effort: 3 days
+      file_size_estimate: 220 lines
+
+    - id: advanced-acrobatics-api-endpoints
+      title: Реализация API endpoints для продвинутых элементов
+      description: |
+        Реализация REST API endpoints для управления элементами,
+        получения состояний и препятствий.
+      dependencies: [air-dash-manager, wall-kick-manager, vault-manager]
+      estimated_effort: 2 days
+      file_size_estimate: 200 lines
+
+    - id: advanced-acrobatics-websocket
+      title: Реализация WebSocket каналов для продвинутых элементов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений состояний,
+        синхронизации позиций и уведомлений.
+      dependencies: [advanced-acrobatics-state-tracker]
+      estimated_effort: 2 days
+      file_size_estimate: 180 lines
+
+    - id: advanced-acrobatics-event-bus
+      title: Интеграция с Event Bus для продвинутых элементов
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех продвинутых элементов акробатики.
+      dependencies: [air-dash-manager, wall-kick-manager, vault-manager]
+      estimated_effort: 2 days
+      file_size_estimate: 150 lines
+
+    - id: advanced-acrobatics-database-schema
+      title: Создание схемы БД для продвинутых элементов
+      description: |
+        Создание таблиц БД для состояний элементов, препятствий
+        и истории комбо с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+      file_size_estimate: 120 lines
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> ADM[Air Dash Manager]
+        GameplayService --> WKM[Wall Kick Manager]
+        GameplayService --> VM[Vault Manager]
+        GameplayService --> AAST[Advanced Acrobatics State Tracker]
+        GameplayService --> ODS[Obstacle Detection System]
+        GameplayService --> DCS[Dash Combo System]
+        
+        ADM --> SM[Stamina Manager]
+        WKM --> SM
+        VM --> SM
+        
+        ADM --> MS[Movement Service]
+        WKM --> MS
+        VM --> MS
+        
+        ADM --> CS[Combat System]
+        WKM --> CS
+        VM --> CS
+        
+        ADM --> CSS[Combos Synergies System]
+        WKM --> CSS
+        VM --> CSS
+        
+        WKM --> WRM[Wall Run Manager]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSAdvanced[WebSocket<br/>Advanced Acrobatics]
+        WSAdvanced --> GameplayService
+    ```
+
+  air_dash_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant ADM as Air Dash Manager
+        participant SM as Stamina Manager
+        participant MS as Movement Service
+        participant DCS as Dash Combo System
+        participant CS as Combat System
+        participant EB as Event Bus
+        
+        C->>ADM: POST /air-dash
+        ADM->>ADM: Check in air
+        ADM->>ADM: Check charges available
+        ADM->>ADM: Check cooldown
+        ADM->>SM: Check stamina
+        SM-->>ADM: Stamina OK
+        ADM->>SM: Consume stamina (12-15)
+        ADM->>MS: Apply impulse
+        ADM->>ADM: Decrease charges
+        ADM->>ADM: Start cooldown
+        ADM->>DCS: Check combo
+        DCS-->>ADM: Combo status
+        ADM->>CS: Enable combat
+        ADM->>EB: Publish air-dash
+        ADM-->>C: Air dash executed
+        
+        Note over ADM: Recover charges on cooldown
+    ```
+
+  wall_kick_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant WKM as Wall Kick Manager
+        participant WRM as Wall Run Manager
+        participant SM as Stamina Manager
+        participant MS as Movement Service
+        participant CS as Combat System
+        participant EB as Event Bus
+        
+        C->>WKM: POST /wall-kick
+        WKM->>WRM: Check in wall run
+        WRM-->>WKM: Wall run active
+        WKM->>SM: Check stamina
+        SM-->>WKM: Stamina OK
+        WKM->>SM: Consume stamina (8-10)
+        WKM->>MS: Apply impulse
+        WKM->>WRM: End wall run
+        WKM->>CS: Enable combat
+        WKM->>EB: Publish wall-kick
+        WKM-->>C: Wall kick executed
+        
+        Note over WKM: Can start new wall run
+    ```
+
+  vault_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant VM as Vault Manager
+        participant ODS as Obstacle Detection
+        participant SM as Stamina Manager
+        participant MS as Movement Service
+        participant CS as Combat System
+        participant EB as Event Bus
+        
+        C->>VM: POST /vault
+        VM->>ODS: Check obstacles
+        ODS-->>VM: Obstacle available
+        VM->>SM: Check stamina
+        SM-->>VM: Stamina OK
+        VM->>VM: Start vault animation
+        VM->>SM: Consume stamina (5-7)
+        VM->>MS: Preserve momentum
+        VM->>CS: Enable combat
+        VM->>EB: Publish vault
+        VM-->>C: Vault active
+        
+        Note over VM: Auto-complete on animation end
+    ```
+
