@@ -1,0 +1,359 @@
+openapi: 3.0.3
+info:
+  title: Hacking Core Service API
+  description: |
+    API для управления основными операциями системы взлома в NECPGAME.
+    
+    **Основные возможности:**
+    - Инициализация и управление процессом взлома
+    - Управление процессом взлома
+    - Обработка результатов взлома
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com/api/v1
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Hacking
+    description: Управление процессом взлома
+  - name: Process
+    description: Управление процессом взлома
+  - name: Results
+    description: Результаты взлома
+
+paths:
+  /gameplay/hacking/initiate:
+    post:
+      tags:
+        - Hacking
+      summary: Инициализация взлома
+      description: |
+        Инициализирует процесс взлома устройства или сети.
+        Проверяет требования (интеллект, импланты, гаджеты) и создаёт сессию взлома.
+      operationId: initiateHack
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'hacking-schemas.yaml#/components/schemas/InitiateHackRequest'
+      responses:
+        '201':
+          description: Взлом инициализирован
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/HackSession'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/{hackId}/status:
+    get:
+      tags:
+        - Hacking
+      summary: Статус взлома
+      description: |
+        Возвращает текущий статус сессии взлома.
+      operationId: getHackStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Статус взлома
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/HackSession'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/{hackId}/execute:
+    post:
+      tags:
+        - Hacking
+      summary: Выполнение взлома
+      description: |
+        Выполняет шаг взлома или завершает процесс взлома.
+      operationId: executeHack
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'hacking-schemas.yaml#/components/schemas/ExecuteHackRequest'
+      responses:
+        '200':
+          description: Взлом выполнен
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/HackResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/{hackId}/cancel:
+    post:
+      tags:
+        - Hacking
+      summary: Отмена взлома
+      description: |
+        Отменяет активную сессию взлома.
+      operationId: cancelHack
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Взлом отменён
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/{hackId}/process/step:
+    post:
+      tags:
+        - Process
+      summary: Выполнение шага взлома
+      description: |
+        Выполняет один шаг в процессе взлома.
+      operationId: executeHackStep
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'hacking-schemas.yaml#/components/schemas/HackStepRequest'
+      responses:
+        '200':
+          description: Шаг выполнен
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/HackStepResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/{hackId}/process/status:
+    get:
+      tags:
+        - Process
+      summary: Статус процесса взлома
+      description: |
+        Возвращает текущий статус процесса взлома.
+      operationId: getHackProcessStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Статус процесса
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/HackProcessStatus'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/{hackId}/process/retry:
+    post:
+      tags:
+        - Process
+      summary: Повторная попытка взлома
+      description: |
+        Повторяет неудачный шаг взлома.
+      operationId: retryHackStep
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Попытка повторена
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/HackStepResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/{hackId}/result:
+    get:
+      tags:
+        - Results
+      summary: Результат взлома
+      description: |
+        Возвращает результат завершённого взлома.
+      operationId: getHackResult
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Результат взлома
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/HackResult'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/{hackId}/result/apply:
+    post:
+      tags:
+        - Results
+      summary: Применение результата взлома
+      description: |
+        Применяет результат взлома (доступ к устройству, данные, контроль).
+      operationId: applyHackResult
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии взлома
+      responses:
+        '200':
+          description: Результат применён
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/SuccessResponse'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+  
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+

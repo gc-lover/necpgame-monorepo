@@ -1,0 +1,326 @@
+openapi: 3.0.3
+info:
+  title: Hacking Attributes Implants Gadgets Service API
+  description: |
+    API для управления атрибутами, имплантами и гаджетами системы взлома в NECPGAME.
+    
+    **Основные возможности:**
+    - Проверка атрибута интеллект
+    - Управление имплантами для взлома
+    - Управление гаджетами для взлома
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com/api/v1
+    description: Gameplay Service (продакшн)
+
+tags:
+  - name: Attributes
+    description: Проверка атрибутов для взлома
+  - name: Implants
+    description: Управление имплантами для взлома
+  - name: Gadgets
+    description: Управление гаджетами для взлома
+
+paths:
+  /gameplay/hacking/attribute/check:
+    post:
+      tags:
+        - Attributes
+      summary: Проверка атрибута интеллект
+      description: |
+        Проверяет, достаточно ли уровня интеллекта для выполнения взлома.
+      operationId: checkIntelligenceAttribute
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'hacking-schemas.yaml#/components/schemas/CheckAttributeRequest'
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/AttributeCheckResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/attribute/{characterId}/intelligence:
+    get:
+      tags:
+        - Attributes
+      summary: Уровень интеллекта персонажа
+      description: |
+        Возвращает текущий уровень интеллекта персонажа с учётом модификаторов.
+      operationId: getCharacterIntelligence
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        '200':
+          description: Уровень интеллекта
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/IntelligenceLevel'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/implants/{characterId}:
+    get:
+      tags:
+        - Implants
+      summary: Список имплантов для взлома
+      description: |
+        Возвращает список имплантов персонажа, которые могут использоваться для взлома.
+      operationId: getHackingImplants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        '200':
+          description: Список имплантов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: 'hacking-schemas.yaml#/components/schemas/HackingImplant'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/implants/{characterId}/activate:
+    post:
+      tags:
+        - Implants
+      summary: Активация импланта для взлома
+      description: |
+        Активирует имплант для использования в процессе взлома.
+      operationId: activateHackingImplant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'hacking-schemas.yaml#/components/schemas/ActivateImplantRequest'
+      responses:
+        '200':
+          description: Имплант активирован
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/HackingImplant'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/implants/{characterId}/effects:
+    get:
+      tags:
+        - Implants
+      summary: Эффекты имплантов для взлома
+      description: |
+        Возвращает активные эффекты имплантов, влияющие на взлом.
+      operationId: getHackingImplantEffects
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        '200':
+          description: Эффекты имплантов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: 'hacking-schemas.yaml#/components/schemas/ImplantEffect'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/gadgets/{characterId}:
+    get:
+      tags:
+        - Gadgets
+      summary: Список гаджетов для взлома
+      description: |
+        Возвращает список гаджетов персонажа, которые могут использоваться для взлома.
+      operationId: getHackingGadgets
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        '200':
+          description: Список гаджетов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: 'hacking-schemas.yaml#/components/schemas/HackingGadget'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/gadgets/{characterId}/use:
+    post:
+      tags:
+        - Gadgets
+      summary: Использование гаджета для взлома
+      description: |
+        Использует гаджет в процессе взлома.
+      operationId: useHackingGadget
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'hacking-schemas.yaml#/components/schemas/UseGadgetRequest'
+      responses:
+        '200':
+          description: Гаджет использован
+          content:
+            application/json:
+              schema:
+                $ref: 'hacking-schemas.yaml#/components/schemas/GadgetUseResult'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+  /gameplay/hacking/gadgets/{characterId}/effects:
+    get:
+      tags:
+        - Gadgets
+      summary: Эффекты гаджетов для взлома
+      description: |
+        Возвращает активные эффекты гаджетов, влияющие на взлом.
+      operationId: getHackingGadgetEffects
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+      responses:
+        '200':
+          description: Эффекты гаджетов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: 'hacking-schemas.yaml#/components/schemas/GadgetEffect'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
+  
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+    InternalServerError:
+      $ref: 'common.yaml#/components/responses/InternalServerError'
+
