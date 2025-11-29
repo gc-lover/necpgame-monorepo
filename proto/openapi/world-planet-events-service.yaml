@@ -1,0 +1,184 @@
+openapi: 3.0.3
+info:
+  title: World Planet Events Service
+  description: Управление глобальными событиями на планетах
+  version: 1.0.0
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8088/api/v1
+    description: World Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Production API
+
+tags:
+  - name: Planet Events
+    description: Управление глобальными событиями планет
+
+paths:
+  /world/planets/{planetId}/events:
+    post:
+      tags:
+        - Planet Events
+      summary: Создать глобальное событие на планете
+      description: |
+        Создает новое глобальное событие на планете (экономический кризис, политические изменения и т.д.).
+      operationId: createPlanetEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID планеты
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'world-planet-schemas.yaml#/components/schemas/CreatePlanetEventRequest'
+            example:
+              event_type: "economic_crisis"
+              title: "Major Economic Collapse"
+              description: "The planet's economy has collapsed due to resource depletion"
+              impact:
+                economic: -50.0
+                political: -20.0
+                social: -30.0
+      responses:
+        '201':
+          description: Событие успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: 'world-planet-schemas.yaml#/components/schemas/PlanetEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Planet Events
+      summary: Список событий планеты
+      description: |
+        Возвращает список всех глобальных событий на планете.
+      operationId: listPlanetEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID планеты
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - economic_crisis
+              - political_change
+              - natural_disaster
+              - social_revolution
+              - technological_breakthrough
+          description: Фильтр по типу события
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - resolved
+              - cancelled
+          description: Фильтр по статусу
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: 'world-planet-schemas.yaml#/components/schemas/PlanetEvent'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+  /world/planets/{planetId}/events/{eventId}/process:
+    post:
+      tags:
+        - Planet Events
+      summary: Обработать событие планеты
+      description: |
+        Обрабатывает глобальное событие планеты, применяя его влияние и последствия.
+      operationId: processPlanetEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: planetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID планеты
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: 'world-planet-schemas.yaml#/components/schemas/ProcessPlanetEventRequest'
+      responses:
+        '200':
+          description: Событие успешно обработано
+          content:
+            application/json:
+              schema:
+                $ref: 'world-planet-schemas.yaml#/components/schemas/PlanetEvent'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+  responses:
+    BadRequest:
+      $ref: 'common.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: 'common.yaml#/components/responses/Unauthorized'
+    Forbidden:
+      $ref: 'common.yaml#/components/responses/Forbidden'
+    NotFound:
+      $ref: 'common.yaml#/components/responses/NotFound'
+
